@@ -1,23 +1,37 @@
 #!/usr/bin/env python
 
+"""
+Usage:
+
+python botbot_parser.py [log_file_name] [channel_name] [start_date]
+
+ex: python botbot_parser.py fluid-design.log fluid-design 2018-09-20
+
+"""
+
 import datetime
+import sys
+import os
 
-log_file_name = "fluid-design.log"
+log_file_name = sys.argv[1]
 
-# Start date of the logs, th first line will be for this date
-start_date = "2018-09-20"
+channel_name = sys.argv[2]
 
-# Open the file
+# Start date of the logs, the first line will be for this date
+# This could be calculated from the first date in the logs,
+# but not currently doing so
+start_date = sys.argv[3]
 
-# Parse it by day
+# make directory for the parsed files if it doesn't exist
 
-# Dump the botbot log format to an individual file by date
+if not os.path.exists(channel_name):
+    os.makedirs(channel_name)
 
 log_file = open(log_file_name, "r")
 
 # print the first line to file based on the entered start_date
 
-f = open("fluid-design-" + start_date + ".log", "w")
+f = open(channel_name + os.sep + channel_name + "-" + start_date + ".log", "w")
 f.write(log_file.readline())
 f.close()
 
@@ -28,7 +42,7 @@ for line in log_file:
     try:
         # line is a date, update the file we're using
         current_date = datetime.datetime.strptime(line.strip(), "%Y-%m-%d")
-        current_file = open("fluid-design-" + line.strip() + ".log", "w")
+        current_file = open(channel_name + os.sep + channel_name + "-" + line.strip() + ".log", "w")
     except ValueError:
-        # not a date
-        current_file.write(line)
+        # not a date, write it to the file
+        current_file.write(line.strip().replace("\\n", "\n"))
