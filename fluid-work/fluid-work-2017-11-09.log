@@ -1,0 +1,471 @@
+b"2017-11-09T21:31:53 <Bosmon> Justin_o, yes, or really all you need is the event present at the higher level, and then injected down into the createOnEvent component once it is constructed
+2017-11-09T21:32:20 <Justin_o> Bosmon: sure, i have to do some setup and teardown for a test i'm writing for the refactoring of the notification component in GPII-2424.
+2017-11-09T21:32:56 <Justin_o> I need the stub for the chrome api to return a value, but it is used in the modelRelay for my test component. so it has to come before it is created.
+2017-11-09T21:33:49 <Justin_o> And I need the creation process for my test component to finish before my test start, so i also want to wait for onTestCaseStart
+2017-11-09T21:36:19 <Justin_o> in addition to this, i have a similar use case in another test file so wanted to create a grade to hold the structure for setup and teardown, in that case i need to remove contextAwareness checks
+2017-11-09T21:37:36 <Justin_o> actually i might just be able to setup an aggregate event to use for my createOnEvent
+2017-11-09T21:40:51 <Justin_o> okay never mind, that didn't work either, probably for similar reasons
+2017-11-09T21:54:16 * amatas has quit
+2017-11-09T22:39:13 * mrtyler joined the channel
+2017-11-09T22:41:31 * stegru has quit
+2017-11-09T22:45:36 * alanharnum joined the channel
+2017-11-09T23:04:24 * alanharnum joined the channel
+2017-11-09T23:28:11 * stegru joined the channel
+"
+
+b'2017-11-09T17:49:48 <Bosmon> Things like this for example
+2017-11-09T17:49:49 <Bosmon> https://www.researchgate.net/figure/3421901_fig13_Fig-16-Hyperbolic-view
+2017-11-09T17:50:12 <chlorophilia> http://www.onezoom.org/
+2017-11-09T17:51:03 <chlorophilia> the hyperbolic view would be great, i assume much more complex and time-consuming to code vs rejigging the sunburst zoom js
+2017-11-09T17:51:18 <chlorophilia> but certainly it is truer to a cladogram
+2017-11-09T17:51:32 <Bosmon> Yes, we can certainly start by rejigging the sunburst
+2017-11-09T17:51:42 <Bosmon> I\'m more excited by views that promise to give some kinds of "stable landmarks"
+2017-11-09T17:51:53 <Bosmon> The upside of onezoom is that it does this in at least some kind of familiar way
+2017-11-09T17:52:04 <Bosmon> Even if in the end appeals to a space which is just too vast ...
+2017-11-09T17:52:36 <chlorophilia> hahaha, the other problem (which could potentially be solved with scripts) would be taxonomic revision\xe2\x80\xa6 as the relationships are always shifting
+2017-11-09T17:52:39 <Bosmon> I guess it would be helped by one or more overview "thumbnails" indicating "you are here"
+2017-11-09T17:52:55 <Bosmon> Yes we would want the view to be live at all times
+2017-11-09T17:53:00 <Bosmon> As well as fully accessible :)
+2017-11-09T17:53:14 <Bosmon> But one thing that intersects more with our goals as a community are "community-centred views"
+2017-11-09T17:53:24 * gtirloni_ joined the channel
+2017-11-09T17:53:26 <Bosmon> Since inevitably some communities will favour some authorities over others
+2017-11-09T17:54:15 <Bosmon> One would want to be able to "buy in" to certain authorities or exclude others from your view, by fairly simple operations
+2017-11-09T17:54:20 <chlorophilia> well that\xe2\x80\x99s true, (one problem with iNat is its rigidity in this respect)\xe2\x80\xa6 it really encourages a better attitude to have flexibility in selecting species authorities, especially for botanists who should bow to no one taxonomic authority!
+2017-11-09T17:54:55 <Bosmon> As well as perhaps a kind of "authority recommendation system" ...... if you liked THIS authority, well, you\'ll just LOVE this one :)
+2017-11-09T17:55:22 <alanharnum> Bosmon chlorophilia: I can say from research in the past on large SVGs that a lot of performance is related to the number of nodes - so it\'s not uncommon with D3 to destroy and create on the fly to keep the SVG performing efficiently if you\'re exploring a very large dataset
+2017-11-09T17:55:57 <alanharnum> D3 is quite good at managing that kind of visualization where you might have a very large dataset, but only be exploring small slices of it at a time
+2017-11-09T17:56:35 <chlorophilia> great. I guess that fits with what I had proposed\xe2\x80\x94in collapsing species from view until one zooms into the level of genus? Or maybe family is a better idea...
+2017-11-09T17:56:50 <Bosmon> alanharnum - yes I am pretty suspicious of SVG\'s scalability as a whole, (sadly since it is such a promising technology in theory)
+2017-11-09T17:57:41 <alanharnum> Bosmon: It\'s definitely not as scalable at extremely large visualizations - I\'ve heard "performant up to around 10,000 nodes in modern browsers", but not sure I believe that / what it\'s based on
+2017-11-09T17:58:19 <chlorophilia> for now, while operating at < 3,000 spp would we be ok you think?
+2017-11-09T17:59:03 <alanharnum> what does SPP mean in this context?
+2017-11-09T17:59:06 <danayo> chlorophilia! hello! and welcome!
+2017-11-09T17:59:23 <chlorophilia> oi!
+2017-11-09T17:59:32 <Bosmon> plural of species :)
+2017-11-09T17:59:37 <chlorophilia> oh my apologies\xe2\x80\x94talk about accessibility, forgive my jargon
+2017-11-09T17:59:46 <chlorophilia> yes spp = species, or nodes
+2017-11-09T18:00:08 <chlorophilia> in this context
+2017-11-09T18:01:16 <alanharnum> ah - yes. good opportunity for clarification. when I say "nodes" in SVG it wouldn\'t be the same number as the number of species - I mean the definition referred to here: http://apike.ca/prog_svg_js_ref_node.html
+2017-11-09T18:01:44 <alanharnum> essentially, each individual element of the vector graphic - so a single representation of a species might be made up of multiple nodes of lines, shapes, text, etc.
+2017-11-09T18:02:48 <chlorophilia> oh i see\xe2\x80\xa6. so we are talking about a dataset that verges on 10,000 nodes then
+2017-11-09T18:03:07 <chlorophilia> :?
+2017-11-09T18:03:22 <alanharnum> I think visualizng 3000 SPP in a single SVG would definitely run into performance issues - if you were navigating through them similar to the coffee wheel, you\'d be able to do that efficiently by destroying and creating visualizations on an as-needed basis as the dataset is navigated
+2017-11-09T18:03:33 <alanharnum> yeah, if you wanted to put it all on-screen at once
+2017-11-09T18:04:05 <chlorophilia> oh, ok\xe2\x80\x94yes, that was what I was thinking\xe2\x80\xa6 not just for performance but it could be quite flustering. Or maybe just awesome.
+2017-11-09T18:04:21 <alanharnum> chlorophilia: the method I\'m describing is (I think) used by the coffee wheel example, if you were to watch the live source code while interacting with it.
+2017-11-09T18:04:29 <chlorophilia> but anyway, I think destroying nodes is perfectly fine at certain scales
+2017-11-09T18:04:32 <alanharnum> you\'ll see the SVG nodes being destroyed and created as it animates
+2017-11-09T18:05:12 <chlorophilia> Great. Well, it seems like some variation on it could work then.
+2017-11-09T18:05:16 <chlorophilia> Would you like the dataset?
+2017-11-09T18:05:24 <Bosmon> chlorophilia - sure!
+2017-11-09T18:05:51 <chlorophilia> what format would like it in? I have become habituated to Mac so work in Numbers but can send it along in any format
+2017-11-09T18:06:13 <Bosmon> I guess CSV is pretty universal, if it is flat enough to fit in that
+2017-11-09T18:06:38 <chlorophilia> sure. works
+2017-11-09T18:07:01 <Bosmon> I guess it needs to encode relationships between the taxa
+2017-11-09T18:07:08 <Bosmon> Which it will do in some wierd and fruity way of its own : P
+2017-11-09T18:07:37 <chlorophilia> of course this comes with much more information that would be required for the d3
+2017-11-09T18:07:53 <chlorophilia> than*
+2017-11-09T18:08:10 <chlorophilia> email? or\xe2\x80\xa6 can\xe2\x80\x99t remember how IRC does data transfer
+2017-11-09T18:08:19 <Bosmon> hahaha
+2017-11-09T18:08:25 <Bosmon> Perhaps it could go in a gist?
+2017-11-09T18:08:27 <Bosmon> How big is it
+2017-11-09T18:08:55 <alanharnum> http://itol.embl.de uses canvas rather than SVG FE, likely due to performance considerations
+2017-11-09T18:10:22 <chlorophilia> 98 kb compressed
+2017-11-09T18:11:19 <chlorophilia> ooooo iToL
+2017-11-09T18:11:24 * kavya has quit
+2017-11-09T18:11:44 <chlorophilia> the thing is: iToL has major appeal to geeks like me, but i wonder whether d3 might communicate better to a general audience
+2017-11-09T18:12:11 <alanharnum> it is definitely not a friendly tool
+2017-11-09T18:12:17 <alanharnum> it seems academically-targeted
+2017-11-09T18:12:23 <chlorophilia> yeah....
+2017-11-09T18:12:58 <alanharnum> D3\'s strength is the flexibility of what you can do once you figure out the paradigms
+2017-11-09T18:13:06 * alanharnum = big D3 fan.
+2017-11-09T18:13:20 <chlorophilia> well, i must say if I could generate a zoomable d3 of my dataset I would cry with joy. I think it could have great impact as an educational asset for the Galiano community
+2017-11-09T18:14:19 <chlorophilia> have colour values that encode whether species are documented or not would be a powerful dimension, and also a hover-over effect that shows who documented what first\xe2\x80\xa6
+2017-11-09T18:14:55 * gtirloni joined the channel
+2017-11-09T18:15:06 <chlorophilia> the trick is making it dynamic as the datasets is regularly updated
+2017-11-09T18:15:12 <Bosmon> Sure, sure
+2017-11-09T18:15:15 <Bosmon> A bagatelle :)
+2017-11-09T18:15:54 <chlorophilia> hahaha, let me know if I am dreaming too big
+2017-11-09T18:16:24 <alanharnum> I don\'t think it\'s too big at all
+2017-11-09T18:17:10 <alanharnum> I haven\'t done tree-visualization work in D3 before, but https://github.com/d3/d3-hierarchy has a lot of examples
+2017-11-09T18:19:15 <alanharnum> there are also simpler examples that could serve as starting points, like http://bl.ocks.org/d3noob/8375092
+2017-11-09T18:20:18 * gtirloni joined the channel
+2017-11-09T18:21:18 <chlorophilia> ah yes, the tree elements are nice and, again, probably more consistent with the way most people visualize taxonomic data
+2017-11-09T18:22:45 <chlorophilia> the one thing the sunburst has going is the circular array, which is nice
+2017-11-09T18:22:50 <Bosmon> Yes
+2017-11-09T18:22:53 <Bosmon> Circularity is cool
+2017-11-09T18:23:59 <chlorophilia> sorry\xe2\x80\xa6 i am still not sure how to get you this csv?
+2017-11-09T18:24:04 <Bosmon> Oh right
+2017-11-09T18:24:07 <chlorophilia> (three csvs actually)
+2017-11-09T18:24:09 <Bosmon> Talk about jargon :)
+2017-11-09T18:24:14 <Bosmon> I was assuming that you had a github account
+2017-11-09T18:24:17 <Bosmon> But maybe you don\'t? : P
+2017-11-09T18:24:32 <chlorophilia> nope. I can do that if you like
+2017-11-09T18:24:51 <Bosmon> No, not to worry, it\'s too heavyweight just to get a few CSVs around....
+2017-11-09T18:25:44 * kasparnet has quit
+2017-11-09T18:26:30 <chlorophilia> OK shall i just email it to you then?
+2017-11-09T18:26:35 <Bosmon> Just some Google Sheets?
+2017-11-09T18:26:40 <Bosmon> Or similar?
+2017-11-09T18:26:49 <Bosmon> It would be nice to have it somewhere where several of us could get at it
+2017-11-09T18:26:54 <chlorophilia> oh ok
+2017-11-09T18:26:55 <chlorophilia> that works
+2017-11-09T18:32:23 <alanharnum> FUN FACT: you can pull Google Sheets through their API into machine-readable data
+2017-11-09T18:32:34 <alanharnum> so you could possibly hook up a D3 visualization that used the Sheet as a source
+2017-11-09T18:32:42 <alanharnum> thus keeping it up to date quite easily
+2017-11-09T18:32:51 <chlorophilia> hummmm the dataset keeps crashing google sheets :/
+2017-11-09T18:32:59 <Bosmon> Yes, subject to SOP constraints
+2017-11-09T18:34:17 <chlorophilia> ah\xe2\x80\xa6 nm\xe2\x80\xa6 one sec\xe2\x80\xa6 just taking a while
+2017-11-09T18:34:38 <Bosmon> Yes, it can be quite a resources guzzler
+2017-11-09T18:36:08 <chlorophilia> the only thing is I am hesitant to shift my workflow away from Numbers into an online database\xe2\x80\xa6\xe2\x80\xa6\xe2\x80\xa6.
+2017-11-09T18:36:39 <chlorophilia> what would work for me is updating the Google sheet on occasion
+2017-11-09T18:37:24 <chlorophilia> but I would have to basically add all cells in over again, because I don\xe2\x80\x99t know how I would track line-by-line changes
+2017-11-09T18:38:10 <chlorophilia> https://docs.google.com/spreadsheets/d/1PFrevhUqTvl-re9_vEk-aKIUiezpsEJ0K6PjC5c6ahQ/edit?usp=sharing
+2017-11-09T18:38:18 <chlorophilia> I have added the Animalia in...
+2017-11-09T18:38:24 <chlorophilia> I will now add the other groups
+2017-11-09T18:45:12 <Bosmon> yay!
+2017-11-09T18:45:45 <chlorophilia> ok it\xe2\x80\x99s all online! Thanks for keying into this project. I hope it is a useful exercise \xe2\x80\x94and of course I will be happy to credit the IDI or you personally for all your work
+2017-11-09T18:46:25 <chlorophilia> i have a meeting in 15 mins so will have to sign off. feel free to msg me with any questions, etc. I am not sure if this is the best forum, though?
+2017-11-09T18:47:16 <chlorophilia> let me know if there is anything i can do to help you!
+2017-11-09T18:49:11 <Bosmon> we have a small aquatic bird of the family anatidae on our hands :)
+2017-11-09T18:49:16 <Bosmon> No, this is great
+2017-11-09T18:49:22 <Bosmon> WHere do you hang out in general?
+2017-11-09T19:01:58 * chlorophilia joined the channel
+2017-11-09T19:03:22 <Bosmon> Hey chlorophilia welcome back
+2017-11-09T19:03:27 <Bosmon> Do you hang out on any kinds of chat?
+2017-11-09T19:03:35 <Bosmon> Gchat, Skype, etc.?
+2017-11-09T19:04:02 <chlorophilia> oh, i don\xe2\x80\x99t mind using this actually\xe2\x80\xa6 i just was wary of cluttering your workspace with bio galiano stuff
+2017-11-09T19:04:09 <Bosmon> oh no not at all
+2017-11-09T19:04:19 <Bosmon> This chat is our general free-for-all forum
+2017-11-09T19:04:32 <chlorophilia> i am just standing by, delay in getting to my meeting\xe2\x80\x94may disappear in a moment
+2017-11-09T19:04:38 <Bosmon> We can always overflow into #fluid-tech or #fluid-design if we need geeky breakouts
+2017-11-09T19:04:48 <chlorophilia> great!
+2017-11-09T19:05:02 <Bosmon> So feel free to idle here whenever you like etc.
+2017-11-09T19:05:39 <chlorophilia> thanks
+2017-11-09T19:08:35 * javjarfer_ joined the channel
+2017-11-09T19:12:52 * javjarfer__ has quit
+2017-11-09T19:13:28 * javjarfer_ has quit
+2017-11-09T19:23:33 * alanharnum joined the channel
+2017-11-09T19:27:05 <colinclark> alanharnum: your 15 minute whirlwind google maps accessibility assessment from yesterday is a real work of art
+2017-11-09T19:27:10 <colinclark> thank you for that
+2017-11-09T19:28:22 <alanharnum> colinclark: yw! when I think about "things I got from my library degree that are still relevant to my work today", being able to do that kind of thing quickly is one of them
+2017-11-09T19:30:32 <colinclark> :)
+2017-11-09T19:30:44 <colinclark> you have many remarkable talents
+2017-11-09T19:46:06 * danayo joined the channel
+2017-11-09T20:07:49 * alanharnum joined the channel
+2017-11-09T20:10:29 * alanharn_ joined the channel
+2017-11-09T20:30:19 * michelled joined the channel
+2017-11-09T21:08:07 * alanharnum joined the channel
+2017-11-09T21:14:59 * gtirloni joined the channel
+2017-11-09T21:27:57 * sepidehshahi joined the channel
+2017-11-09T21:29:32 <Justin_o> Bosmon: is it possible to have a createOnEvent point at an event from a component that also has a createOnEvent?
+2017-11-09T21:29:41 <Justin_o> Bosmon: i\'m needing this for a test
+2017-11-09T21:29:58 <Justin_o> well potentially needing this
+2017-11-09T21:30:43 <Bosmon> Justin_o - no, the event pointed to by createOnEvent must exist at the point the definition is seen
+2017-11-09T21:31:19 <Justin_o> Bosmon: okay, so i could boil the event i guess
+2017-11-09T21:31:33 <Bosmon> Justin_o - can you explain your use case?
+'
+
+b'2017-11-09T14:37:35 * javjarfer__ joined the channel
+2017-11-09T14:38:33 <stegru> stupid javascript
+2017-11-09T14:40:19 * michelled joined the channel
+2017-11-09T14:41:05 * javjarfer_ has quit
+2017-11-09T14:42:17 <simonjb> this is terrible: new Boolean(false) ? "true" : "false" => "true"
+2017-11-09T14:42:41 <Bosmon> hahaha
+2017-11-09T14:43:00 <Bosmon> I had no idea such abominations were possible until I saw javjarfer__ \'s pull :)
+2017-11-09T14:44:36 * georgitodorov has quit
+2017-11-09T14:47:47 * colinclark joined the channel
+2017-11-09T14:49:11 * kasparnet_ has quit
+2017-11-09T14:49:24 <javjarfer__> stegru, hahaha yes... I didn\'t have any idea until I wondered... wait... what if I\'m assuming it\'s a String? (duck-typing though)
+2017-11-09T14:52:41 * alanharnum joined the channel
+2017-11-09T15:08:04 * yuriy__ has quit
+2017-11-09T15:09:07 * yuriy__ joined the channel
+2017-11-09T15:15:04 <yuriy__> Hi, Bosmon! Sorry to have to add to your list, but I was wondering when we can discuss the communication with Sandra on GPII-2665 (refactor mechanism of handling application errors) and in particular what we can aim to achieve for the upcoming pilot builds considering the time limitations. Unfortunately, I couldn\'t reach out to you while Georgi and Danail were around today. We can maybe discuss with them tomorrow, in the meantime I was curious to hear
+2017-11-09T15:15:04 <yuriy__> if you had any thoughts on the general approach, since my understanding is that the whole refactoring isn\'t going to be a quick thing (cc-ing michelled, who also asked to be involved in discussions)
+2017-11-09T15:23:56 <alanharnum> colinclark, gtirloni or anyone else at the IDRC - have we heard any further details about the VR equpiment we may be getting from Smartlab since the September emails from Jutta? Bert asked because he\'s getting some inquiries from OCAD.
+2017-11-09T15:24:20 <colinclark> No, I haven\'t yet heard anything further from Lizbeth or Jutta
+2017-11-09T15:24:51 * mrtyler joined the channel
+2017-11-09T15:34:55 * amatas_ joined the channel
+2017-11-09T15:36:51 * kasparnet joined the channel
+2017-11-09T15:42:11 * kavya joined the channel
+2017-11-09T15:46:23 * amatas_ has quit
+2017-11-09T16:00:34 * danayo joined the channel
+2017-11-09T16:25:27 <Bosmon> Hi there yuriy__ - yes, I will be dealing with the error refactoring myself
+2017-11-09T16:25:34 <Bosmon> I think Sandra has misunderstood the situation a little
+2017-11-09T16:28:46 <yuriy__> oh, I see
+2017-11-09T16:28:50 <yuriy__> thank you for clearing this up
+2017-11-09T16:32:03 * alanharnum joined the channel
+2017-11-09T16:34:23 <colinclark> hey yuriy__, michelled, jhernandez_: Do we currently show a "busy" spinner of any kind in the GPII?
+2017-11-09T16:34:34 <colinclark> like when someone keys in and we\'re busy setting up the computer?
+2017-11-09T16:36:17 * alanharnum has quit
+2017-11-09T16:36:26 <yuriy__> colinclark: yes, a spinner is displayed in this exact case
+2017-11-09T16:36:36 <yuriy__> or are you asking for another instance?
+2017-11-09T16:36:53 <colinclark> nope, that\'s what I mean
+2017-11-09T16:37:04 <colinclark> Do we display this within an Electron window?
+2017-11-09T16:37:16 <colinclark> i.e. within the context of a regular HTML page?
+2017-11-09T16:38:24 <yuriy__> yes, an Electron browser window is used, which displays HTML content
+2017-11-09T16:42:32 * jhernandez_ has quit
+2017-11-09T16:44:52 <cindyli> amatas: it seems recently our CI running against universal pull requests hits "no space left on device" error more often, at the step "universal-node-production-tests"
+2017-11-09T16:45:32 <cindyli> i hit them yesterday and today again - https://ci.gpii.net/job/universal-node-production-tests/562/console
+2017-11-09T16:46:09 <cindyli> the workaround so far for me is to run CI again until it passes
+2017-11-09T16:46:11 <amatas> let me check
+2017-11-09T16:47:19 <cindyli> thanks
+2017-11-09T16:48:18 <amatas> cindyli: I\'m afraid that the solution is not easy and fast. Mainly because it seems that the VM doesn\'t have enough space for all the stuff that needs to pass the tests
+2017-11-09T16:48:31 <cindyli> ok
+2017-11-09T16:48:46 <amatas> I didn\'t know that it spins up docker containers
+2017-11-09T16:49:42 <colinclark> yuriy__: Awesome, thanks. And what format do we use for the spinning? Are we animating an image using CSS, or is it an SVG, or an animated GIF?
+2017-11-09T16:52:34 <kasparnet> hey yuriy__ - dont know if you followed the conversation between georgi and me earlier
+2017-11-09T16:52:45 <kasparnet> but I finally managed to get windows up and running and test things out
+2017-11-09T16:53:13 <kasparnet> I now have it working (when manually calling updates, pretending to be the PCP) with the cursor size
+2017-11-09T16:53:56 <kasparnet> could you let georgi know, tomorrow? (not sure I\'ll be around to tell him myself)
+2017-11-09T16:54:10 * alanharnum joined the channel
+2017-11-09T16:54:39 <kasparnet> I\'ve updated my branch, so everything *should* just work, as long as the cursor size used is 0 <= x <= 1
+2017-11-09T16:55:15 <kasparnet> (it switches sizes when the value hits 0.333 and 0.666)
+2017-11-09T16:55:34 <yuriy__> that\xc2\xb4s great to hear, kasparnet, I will let him know
+2017-11-09T16:55:44 <yuriy__> colinclark, let me check
+2017-11-09T16:57:10 <michelled> colinclark: it\'s a CSS transform
+2017-11-09T16:57:13 <michelled> it was really fun to do :)
+2017-11-09T16:57:24 <colinclark> can you point me to the source, michelled?
+2017-11-09T16:57:26 <colinclark> thanks :)
+2017-11-09T16:57:29 <colinclark> sounds like a lot of fun
+2017-11-09T16:57:52 <michelled> https://github.com/GPII/gpii-app/blob/master/src/css/message.css
+2017-11-09T16:58:02 <colinclark> is there any reason, if the animation doesn\'t involve just rotating the picture, that we shouldn\'t use an animated SVG?
+2017-11-09T16:58:15 <colinclark> I mean, if it\'s just a picture we have to spin around in a circle, CSS transforms sound perfect
+2017-11-09T16:58:23 <colinclark> but I\'m getting the sense that the new spinner might be slightly more complex
+2017-11-09T16:58:45 <michelled> oh, I didn\'t know about a new spinner
+2017-11-09T16:59:35 <colinclark> well, you know
+2017-11-09T16:59:41 <colinclark> the UX team likes surprises :)
+2017-11-09T16:59:56 <colinclark> from what I understand, people have been commenting on the fact that it was ambiguous which direction the gear was spinning
+2017-11-09T17:00:05 <colinclark> and they wanted something a little better
+2017-11-09T17:00:57 <colinclark> michelled: so which image are you spinning here in this CSS?
+2017-11-09T17:01:02 <michelled> there were reasons, jhung, we talked about it and decided this was the best direction
+2017-11-09T17:01:13 <michelled> but I don\'t remember the reasons now :(
+2017-11-09T17:02:52 <kasparnet> is it supposed to spin one way on login and another on logout...?
+2017-11-09T17:03:19 <kasparnet> else doesn\'t seem like a huge problem that people cant tell which way it\'s turning :)
+2017-11-09T17:03:39 <michelled> colinclark: there is no image. each \'petal\' is a div that is styled using border radius, colour etc.
+2017-11-09T17:03:48 <colinclark> oh wow
+2017-11-09T17:03:54 <alanharnum> michelled colinclark: https://codepen.io/teerapuch/pen/vLJXeR
+2017-11-09T17:04:10 <alanharnum> if you need to spin in a particular direction, CSS-Animate should be able to handle that
+2017-11-09T17:04:35 <alanharnum> it\'s quite well-supported at this point: https://caniuse.com/#feat=css-animation
+2017-11-09T17:04:47 <colinclark> If we get a new image, does anyone see any reason why it shouldn\'t/can\'t be an SVG?
+2017-11-09T17:06:50 <Justin_o> simonjb: what would be a good link or video to share to show someone the nexus
+2017-11-09T17:07:02 <alanharnum> colinclark: I actually think SVG animation support may be less well-supported in existing browsers than CSS-Animate: https://caniuse.com/#feat=svg-smil
+2017-11-09T17:07:33 <mrtyler> amatas: i believe last time gtirloni bumped some disk threshold limit. but that was quite recent (<1 month ago?) so i\'m surprised we\'re hitting the limit again
+2017-11-09T17:07:47 <mrtyler> maybe something else has changed to increase the app\'s appetite for disk space?
+2017-11-09T17:07:50 <alanharnum> colinclark: https://developer.mozilla.org/en-US/docs/Web/SVG/SVG_animation_with_SMIL
+2017-11-09T17:07:55 <mrtyler> cc cindyli
+2017-11-09T17:08:08 <amatas> mrtyler: I\'m checking that
+2017-11-09T17:08:12 <colinclark> Justin_o: The two videos we created are pretty good links. I like the science lab one a lot, in particular
+2017-11-09T17:08:52 <colinclark> Justin_o: https://www.youtube.com/watch?v=NNwc0VYRhUU
+2017-11-09T17:09:00 <colinclark> Who are you showing the Nexus to?
+2017-11-09T17:09:19 <Justin_o> colinclark: thanks
+2017-11-09T17:09:57 <colinclark> the nice part about the science lab video is that we show the Visible Nexus in it
+2017-11-09T17:10:29 <Justin_o> we had a visitor yesterday who is working on something that sounded similar or could maybe work with the nexus. It was a design tool to that visualized how components (e.g. phone, etc. ) could be used together.. is that correct sepidehshahi?
+2017-11-09T17:11:01 <Justin_o> colinclark: that\'s great.. because we wanted to show that part too
+2017-11-09T17:13:27 <colinclark> Sounds great. Who was the visitor, Justin_o?
+2017-11-09T17:13:32 <sepidehshahi> Justin_o: that\xe2\x80\x99s what I understood. He had created a playground that you could drop different components (cell phones, computers, software, hardware, etc.) to see whether they are compatible or not.
+2017-11-09T17:13:54 * alanharnum has quit
+2017-11-09T17:14:17 <sepidehshahi> it was built for designers who want to design interconnected smart systems
+2017-11-09T17:14:20 * alanharnum joined the channel
+2017-11-09T17:15:41 <sepidehshahi> colinclark: he was introduced to IDRC through Jutta and came for the community meeting yesterday. His name is Shahab and recently got his PhD in industrial design from Delft university
+2017-11-09T17:15:51 <colinclark> aha
+2017-11-09T17:15:52 <colinclark> great
+2017-11-09T17:16:01 <colinclark> I did see him there on Vidyo
+2017-11-09T17:16:17 <sepidehshahi> yes :)
+2017-11-09T17:24:56 * jhernandez joined the channel
+2017-11-09T17:33:34 * chlorophilia joined the channel
+2017-11-09T17:34:17 <Bosmon> Oh hey there chlorophilia !
+2017-11-09T17:34:21 <chlorophilia> OLD SCHOOL
+2017-11-09T17:34:21 <Bosmon> I was just thinking of messaging you :)
+2017-11-09T17:34:40 * alanharnum joined the channel
+2017-11-09T17:34:46 <chlorophilia> hahaha I haven\xe2\x80\x99t used IRC in more than a decade
+2017-11-09T17:34:53 <Bosmon> Fantastic
+2017-11-09T17:35:19 <chlorophilia> thanks for providing such wonderful motivation to check it out again. Glad it\xe2\x80\x99s still a thing!
+2017-11-09T17:35:26 <Bosmon> Very much a thing
+2017-11-09T17:35:29 <Bosmon> It is our bread and butter :)
+2017-11-09T17:37:07 <chlorophilia> Well, I think it\xe2\x80\x99s a great privilege to connect with your community. Thanks for reaching out.
+2017-11-09T17:37:22 <Bosmon> Well it is a great privilege to connect to YOU!
+2017-11-09T17:38:46 <Bosmon> So, in advance of any formal collaboration, I wonder if you had an idea for any "bagatelles" .....
+2017-11-09T17:39:03 <Bosmon> Such as, for example, tidying up and publishing the code for your spider diagram and/or making it more data-driven, etc.
+2017-11-09T17:39:18 <Bosmon> I do have time to time for sorts of bagatelles : P
+2017-11-09T17:39:27 <Bosmon> Or perhaps something to help you compile your spreadsheets or authorities....
+2017-11-09T17:39:45 * gtirloni_ joined the channel
+2017-11-09T17:41:40 <amatas> cindyli: the CI server was using an outdated VM template, I\'ve updated it with the hope that now it uses the VM with more space in the hd
+2017-11-09T17:42:34 <chlorophilia> OH WOW!
+2017-11-09T17:42:52 <chlorophilia> Very awesome of you to offer such a thing, albeit a new word for me
+2017-11-09T17:43:34 <Bosmon> Mainly just something to keep a conversation going, with some kind of productive focus ......
+2017-11-09T17:43:39 <cindyli> cool. thanks, amatas
+2017-11-09T17:44:03 <chlorophilia> holy wow. as it happens I just emailed one of the editors at the Biodiversity Data journal re: aggregating taxonomic information such as authorities. I wouldn\xe2\x80\x99t want you to have to reinvent the wheel in the event there are already tools out there. I will keep you posted on that.
+2017-11-09T17:44:17 <chlorophilia> d3 javascripts would be fun, though!
+2017-11-09T17:44:19 <Bosmon> I was just looking at CNC engraving systems that might be good for printing the more or less durable kinds of species labels that one gets in botanical gardens, I might order one to try to experiment with it : P
+2017-11-09T17:44:45 <Bosmon> Sure, we\'ve had (especially alanharnum here) some recent d3 experiments in graphing and chartin
+2017-11-09T17:44:52 <chlorophilia> oh great hahaha, I like that idea\xe2\x80\x94it could really get people curious and engaged, I think
+2017-11-09T17:45:40 <Bosmon> It would be great to be able to print things, for example which as well as the species info had a QR code which led to iNaturalist or some other source of info
+2017-11-09T17:45:51 <Bosmon> Or people could simply, God forbid, facebook the fact that they met a particular speices : P
+2017-11-09T17:45:59 <chlorophilia> Well, if it serves your purposes\xe2\x80\xa6 the spider graph works OK for now; what I\xe2\x80\x99d really love to do is figure out a js overview of the total dataset
+2017-11-09T17:46:06 <Bosmon> Yes yes
+2017-11-09T17:46:11 <Bosmon> That is exactly the kind of thing I\'d love to do : P
+2017-11-09T17:46:38 <chlorophilia> I think you could make a study of your tag idea, by inviting people to \xe2\x80\x98find another specimen of this species\xe2\x80\x99, make it fun and then set up a subproject on iNat to track it
+2017-11-09T17:47:11 <chlorophilia> https://www.jasondavies.com/coffee-wheel/
+2017-11-09T17:48:01 <Bosmon> Oh yes, nice
+2017-11-09T17:48:20 <chlorophilia> This works pretty well\xe2\x80\xa6 down to the level of genus I think. What would make it extraordinary is if when zooming into the genus level it splays out all the species. Splaying all the species at the gross level might be too much, as the dataset already includes ~3,000 spp
+2017-11-09T17:48:32 <Bosmon> Interesction is a bit bizarre
+2017-11-09T17:48:35 <Bosmon> Er
+2017-11-09T17:48:37 <Bosmon> Interaction
+2017-11-09T17:48:49 <Bosmon> In that you can go down many steps with one click, but need to work your way back one at a time
+2017-11-09T17:49:13 <Bosmon> I\'ve been excited by hyperbolic kinds of views, but I expect that kind of thing would require WebGL as well as being less accessible.....
+2017-11-09T17:49:16 <chlorophilia> hahaha well, I mean, I certainly welcome your wizardry in confabulating anything that works better for this application!
+2017-11-09T17:49:45 <chlorophilia> oh, yes, and have you seen the fractal tree of life?
+'
+
+b'2017-11-09T00:11:27 * danayo joined the channel
+2017-11-09T00:23:07 * stegru joined the channel
+2017-11-09T00:36:57 * stegru has quit
+2017-11-09T00:58:12 * danayo joined the channel
+2017-11-09T03:11:04 * mrtyler joined the channel
+2017-11-09T03:11:30 * jhernandez has quit
+2017-11-09T03:13:23 * the-t-in-rtf1 joined the channel
+2017-11-09T03:14:31 * gloob has quit
+2017-11-09T03:38:26 * jhernandez joined the channel
+2017-11-09T05:38:56 * gloob joined the channel
+2017-11-09T06:12:59 * -- BotBot disconnected, possible missing messages --
+2017-11-09T06:21:36 * [o__o] joined the channel
+2017-11-09T06:22:51 * jhernandez has quit
+2017-11-09T07:47:53 * kasparnet_ joined the channel
+2017-11-09T07:56:52 * kasper joined the channel
+2017-11-09T07:58:44 * dandimitrov joined the channel
+2017-11-09T07:59:43 * kasparnet_ has quit
+2017-11-09T08:04:35 * kasper has quit
+2017-11-09T08:16:58 * georgitodorov joined the channel
+2017-11-09T08:52:22 * the-t-in-rtf joined the channel
+2017-11-09T09:01:04 * kasper joined the channel
+2017-11-09T09:15:39 * gtirloni joined the channel
+2017-11-09T09:45:46 * amatas joined the channel
+2017-11-09T10:00:49 * stegru joined the channel
+2017-11-09T10:12:46 <the-t-in-rtf> @gtirloni and @amatas, I can\'t reach the ul-vm any more.
+2017-11-09T10:12:53 <the-t-in-rtf> Ugh, there it goes, finally.
+2017-11-09T10:13:06 <the-t-in-rtf> I lost my connection and it took ages to come back.
+2017-11-09T10:14:11 <amatas> the-t-in-rtf: seems that everything is working now
+2017-11-09T10:14:24 <the-t-in-rtf> yes, I\'ll let you know if it happens again.
+2017-11-09T10:14:52 <amatas> I also realiced that all my connections gave timeout few minutes ago
+2017-11-09T10:15:12 <amatas> ok
+2017-11-09T10:21:22 * javjarfer joined the channel
+2017-11-09T10:22:07 * javjarfer_ joined the channel
+2017-11-09T10:22:22 <gtirloni> firewall was rebooted at 4:05am ET, i\'m investigating an issue. sorry. it should be fine now (reminder: we\'ve a FW maintenace today at 9am ET)
+2017-11-09T10:25:45 * javjarfer has quit
+2017-11-09T10:30:40 <the-t-in-rtf> Yes, that\'s why I pinged you, I thought your watch might be fast... ;)
+2017-11-09T10:30:53 <the-t-in-rtf> 9:30 CET instead of 9:30 ET
+2017-11-09T10:32:08 <gtirloni> haha
+2017-11-09T10:44:12 * kasper has quit
+2017-11-09T11:34:54 * Guest47770 joined the channel
+2017-11-09T11:35:12 * kasper joined the channel
+2017-11-09T11:36:01 * kasper has quit
+2017-11-09T11:37:44 * kasparnet joined the channel
+2017-11-09T11:58:10 * Guest47770 has quit
+2017-11-09T12:05:09 * kasparnet_ joined the channel
+2017-11-09T12:07:11 * kasparnet has quit
+2017-11-09T12:11:27 * alanharnum joined the channel
+2017-11-09T12:13:35 * dandimitrov has quit
+2017-11-09T12:18:20 * the-t-in-rtf joined the channel
+2017-11-09T12:21:52 <georgitodorov> kasparnet_: Hi, Kaspar! We were trying to integrate the current PSP code with your code for updating settings.
+2017-11-09T12:22:29 <georgitodorov> The payload sent from the PSP is correctly decoded. The inferred configuration also seems to be correct.
+2017-11-09T12:22:46 <georgitodorov> However, the update is not applied for some reason.
+2017-11-09T12:24:43 <georgitodorov> We looked through the code of the LifecycleManager and how it was used together with the pcpChannel and everything seemed fine. Any ideas what we might be missing?
+2017-11-09T12:30:08 <kasparnet_> hey georgitodorov
+2017-11-09T12:30:46 <kasparnet_> which solution are you making changes for?
+2017-11-09T12:30:55 <kasparnet_> (i.e. updating)
+2017-11-09T12:33:28 <georgitodorov> kasparnet_: We were trying to update "Magnification" and "Magnifier Enabled" settings in "snapset_4a"
+2017-11-09T12:35:01 <kasparnet_> hmm, those should work (I\'m using the magnifier in my integrations test for the PCP as well)
+2017-11-09T12:35:32 <Bosmon> kasparnet_ - well, it\'s one thing to work in an integration test
+2017-11-09T12:35:38 <Bosmon> And another to actually apply the update to the system :)
+2017-11-09T12:35:43 <kasparnet_> hehe, I know
+2017-11-09T12:36:02 <georgitodorov> What happens is that the magnifier application is simply closed whenever I try to change a setting
+2017-11-09T12:36:14 <kasparnet_> Oh, I see
+2017-11-09T12:36:26 <kasparnet_> so that is partly expected behavior
+2017-11-09T12:36:34 <kasparnet_> (What the hell are you talking about, kasper?)
+2017-11-09T12:36:34 <Bosmon> kasparnet_ - as I suspected this will be the beginning of many hilarious conversations
+2017-11-09T12:36:44 <Bosmon> About the detailed contents of our solutions registry, etc : P
+2017-11-09T12:37:21 <kasparnet_> well - because the magnifier doesn\'t support applying changes on the fly (i.e. modifying a setting in the windows registry doesn\'t actually change the setting in the magnifier)
+2017-11-09T12:37:30 <Bosmon> Given noone has actually ever tried to apply updates to the system except during one brief demo in 2014
+2017-11-09T12:37:54 <kasparnet_> the "update" functionality of the magnifier would be to close the magnifier, apply the new settings and then starting it again
+2017-11-09T12:38:07 <kasparnet_> though it seems the last two steps never happen
+2017-11-09T12:38:25 <Bosmon> kasparnet_ - one out of three isn\'t bad :)
+2017-11-09T12:38:49 <kasparnet_> haha, I know, right?!
+2017-11-09T12:39:20 <georgitodorov> So, these settings should be among those which require a restart of the application in order to be applied?
+2017-11-09T12:39:25 <kasparnet_> if you manually launch the magnifier after having changed the setting, georgitodorov, does it use the new setting?
+2017-11-09T12:39:34 <kasparnet_> yes
+2017-11-09T12:40:25 <georgitodorov> kasparnet_: Yes, in this case the new setting is used
+2017-11-09T12:41:17 <kasparnet_> ok, so perhaps it\'s an issue with starting it again
+2017-11-09T12:41:19 <kasparnet_> just a sec
+2017-11-09T12:41:50 <georgitodorov> kasparnet_: Is there a setting which can be updated on the fly without the need to restart its application?
+2017-11-09T12:44:54 <kasparnet_> georgitodorov, yes, any of the keyboard settings, mousetrailing and cursor size
+2017-11-09T12:45:01 <kasparnet_> high contrast as well, I believe
+2017-11-09T12:45:09 <georgitodorov> Hmm, that\'s strange
+2017-11-09T12:45:41 <georgitodorov> I tried with high contrast and cursor size but they didn\'t change
+2017-11-09T12:46:38 <kasparnet_> sec
+2017-11-09T12:48:42 <kasparnet_> georgitodorov, could you try adding
+2017-11-09T12:48:55 <kasparnet_> "update": [ "configure" ]
+2017-11-09T12:49:02 <kasparnet_> to the cursor size solutions registry entry
+2017-11-09T12:49:06 <kasparnet_> and try again
+2017-11-09T12:49:30 <kasparnet_> it should be at the top level of the solution entry (i.e. alongside "start" and "stop" blocks)
+2017-11-09T12:49:43 <kasparnet_> or well, I guess that doesn\'t have any start and stop blocks
+2017-11-09T12:50:10 <kasparnet_> oh, it does
+2017-11-09T12:50:16 <kasparnet_> so yes, alongside those :)
+2017-11-09T12:53:47 <georgitodorov> kasparnet_ - where should I add this? Where is the solutions registry entry located?
+2017-11-09T12:53:48 <kasparnet_> (in the universal/testData/solutions/win32.json file)
+2017-11-09T12:54:03 <georgitodorov> That was quick :D Thanks
+2017-11-09T12:54:09 <kasparnet_> hehe
+2017-11-09T12:58:44 <georgitodorov> kasparnet_: I added this in the "com.microsoft.windows.cursors" object in this file but the cursor stays the same
+2017-11-09T12:58:47 <Bosmon> Actually win32.json5
+2017-11-09T12:59:12 <georgitodorov> Yes, I added it there
+2017-11-09T12:59:57 <georgitodorov> Actually, the max value for the cursor size in the PSP window is 1 and I don\'t know if the Windows OS will accept fractions for cursor size
+2017-11-09T13:00:13 <georgitodorov> But as this is what the API tells us, I suppose fractions are okay
+2017-11-09T13:04:22 * jhung joined the channel
+2017-11-09T13:06:37 <kasparnet_> hmm
+2017-11-09T13:07:26 <kasparnet_> I\'m trying to get my windows box up and running
+2017-11-09T13:07:48 <kasparnet_> but my internet connection is a bit weird right now
+2017-11-09T13:13:59 <georgitodorov> Okay, no problem. Thanks for taking the time to look into this.
+2017-11-09T13:22:52 <kasparnet_> georgitodorov, will try and switch to something different, brk
+2017-11-09T13:25:41 * kasparnet_ has quit
+2017-11-09T13:27:53 * kasparnet_ joined the channel
+2017-11-09T13:29:14 * Justin_o joined the channel
+2017-11-09T13:30:58 <kasparnet_> georgitodorov, ok - manage to find a better connection
+2017-11-09T13:31:20 <kasparnet_> I\'m installing windows now and will try things out once it\'s properly up and running
+2017-11-09T13:31:44 <georgitodorov> kasparnet_: Great, thank you!
+2017-11-09T13:38:57 * javjarfer_ has quit
+2017-11-09T13:41:34 <georgitodorov> Bosmon: Regarding you comments on the PCP-client PR about creating "main" and "renderer" subdirectories in the "src" folder to group together the different files with respect to the process in which they are used
+2017-11-09T13:42:28 <georgitodorov> Right now we have a "pcp" subdirectory which includes everything for the PSP window itself and everything there is part of the "renderer" process
+2017-11-09T13:42:51 * alanharnum joined the channel
+2017-11-09T13:43:01 * cindyli joined the channel
+2017-11-09T13:43:02 <georgitodorov> The rest of the files in the src folder are related to the main process (with the exception of the wait dialog which is also in the renderer process)
+2017-11-09T13:44:43 * simonjb joined the channel
+2017-11-09T13:45:15 <georgitodorov> Do you want us to rename the "pcp" folder to "renderer" and move the wait dialog there? And also create a "main" subfolder and move the rest of the main process related functionality?
+2017-11-09T13:45:35 <Bosmon> georgitodorov - right, yes please
+2017-11-09T13:45:51 <Bosmon> This would also relieve a lot of general "naming tension" given we were due to rename the pcp folder anyway : P
+2017-11-09T13:46:27 <cindyli> Bosmon: can you review this pull request to see if it makes sense - https://github.com/GPII/universal/pull/562
+2017-11-09T13:46:46 <Bosmon> cindyli - yes, the pull looks good, but I think that kasparnet_ might be on the verge of merging my pull anyway
+2017-11-09T13:46:50 <Bosmon> Although he may not be : P
+2017-11-09T13:46:57 <cindyli> ok
+2017-11-09T13:52:05 <georgitodorov> Bosmon: Another thing related to the naming issue - shall we have a lot of functions whose names start with "gpii.app.pcp". Shall we rename them as well?
+2017-11-09T13:52:14 <kasparnet_> Bosmon, he is
+2017-11-09T13:52:37 <Bosmon> georgitodorov - yes, I think also there is no need to nest them within app
+2017-11-09T13:52:42 <Bosmon> I would recommend "gpii.psp" for those
+2017-11-09T13:54:47 <gtirloni> fluid-everyone: IDRC firewall maintenance starts at 9AM ET. If using any services hosted at the IDRC, please save your work
+2017-11-09T14:07:02 * clown joined the channel
+2017-11-09T14:17:50 * sepidehshahi joined the channel
+2017-11-09T14:21:30 * javjarfer_ joined the channel
+2017-11-09T14:27:39 <gtirloni> fluid-everyone: IDRC firewall maintenance completed.
+2017-11-09T14:27:50 <Justin_o> gtirloni: thanks
+2017-11-09T14:27:55 <clown> thanks gtirloni
+2017-11-09T14:27:57 <kasparnet_> geez, took you long enough gtirloni
+2017-11-09T14:28:13 <gtirloni> oh man
+2017-11-09T14:28:16 <kasparnet_> hehe
+2017-11-09T14:28:23 <gtirloni> :)
+2017-11-09T14:30:05 <Bosmon> Hey there fluid-everyone - wondering if there was any objection to adding this rule to our standard linting: https://eslint.org/docs/rules/no-new-wrappers
+2017-11-09T14:30:38 <Bosmon> Following this discussion with javjarfer_ on a recent pull: https://github.com/GPII/windows/pull/152#pullrequestreview-74771696
+2017-11-09T14:33:00 <stegru> depends on if you look upon the primitive types as being objects
+2017-11-09T14:34:09 <stegru> oh, "That was just for checking strings that were constructed using \'new operator\', then \'typeof check\' will fail for them, since it will return \'object\'"
+2017-11-09T14:34:10 <javjarfer_> Bosmon, I agree that we could avoid unnecessary checks for things that don\'t follow or community guidelines
+2017-11-09T14:35:18 <javjarfer_> stegru, yes, at that point I just though about that possibility, not about it being against our community guidelines
+2017-11-09T14:35:40 <simonjb> Bosmon: I support adding this rule -- I realise that there are some cases where primitive wrapper objects will exist (as in the implicit objects created in the example at the start of the page about the rule) but let\'s not make them ourselves!
+'
+

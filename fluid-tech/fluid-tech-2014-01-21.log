@@ -1,0 +1,107 @@
+b'2014-01-21T00:13:03 * michelled has quit
+2014-01-21T00:13:51 * colinclark joined the channel
+2014-01-21T00:17:22 * kasparnet has quit
+2014-01-21T00:47:51 * colinclark has quit
+2014-01-21T01:36:59 * colinclark joined the channel
+2014-01-21T02:45:19 * colinclark has quit
+2014-01-21T04:23:02 * michelled joined the channel
+2014-01-21T04:23:28 * michelled has quit
+2014-01-21T09:49:01 * kasparnet joined the channel
+2014-01-21T11:37:43 * kasparnet has quit
+2014-01-21T11:37:50 * kasparne_ joined the channel
+2014-01-21T13:51:40 * cindyli joined the channel
+2014-01-21T14:00:17 * colinclark joined the channel
+2014-01-21T14:03:44 * michelled joined the channel
+2014-01-21T15:15:18 * michelled has quit
+2014-01-21T15:15:27 * Jess_ joined the channel
+2014-01-21T15:15:28 * drewwills joined the channel
+2014-01-21T15:17:13 <drewwills> good morning fluid folks... I\'m investigating a JS issue I\'ve been having in a framework that leverages the infusion library, and I found something that looks out of place (to me... a fluid lay person) in Reorderer.js
+2014-01-21T15:17:24 <drewwills> I\'m looking at line 579
+2014-01-21T15:17:36 <drewwills> thatReorderer.dom.fastLocate("grabHandle", item).draggable({
+2014-01-21T15:18:06 * anastasiac joined the channel
+2014-01-21T15:18:12 <drewwills> it looks like it should be simply:  item.draggable({
+2014-01-21T15:18:35 <drewwills> and in fact it seems to clear my issue with that change
+2014-01-21T15:18:40 <drewwills> https://github.com/fluid-project/infusion/blob/master/src/components/reorderer/js/Reorderer.js
+2014-01-21T15:19:03 <drewwills> using the 1.4.0 release btw, but that line is the same
+2014-01-21T15:19:10 <colinclark> What\'s the nature of the issue you\'re seeing, drewwills?
+2014-01-21T15:19:36 <drewwills> in uPortal, portlets on the page are not becoming draggable
+2014-01-21T15:20:05 <drewwills> it definitely used to work, but we\'ve been updating the underlying jQ libs, and it seems it doesn\'t now
+2014-01-21T15:20:14 <colinclark> Ah yes
+2014-01-21T15:20:24 <colinclark> jQuery and jQuery UI have both made breaking API changes
+2014-01-21T15:20:29 <drewwills> we are building a portal theme beased on Bootstrap 3
+2014-01-21T15:20:40 <drewwills> we added jquery-migrate
+2014-01-21T15:20:48 <colinclark> there is a pull request from Bosmon that will be merged into master and included in the 1.5 release
+2014-01-21T15:20:52 <drewwills> and it seems to make a large, positive difference
+2014-01-21T15:20:59 <colinclark> You\'re welcome to back-port these changes to 1.4 if you\'d like, to use the prerelease version (which is quite stable), or to wait for 1.5
+2014-01-21T15:21:15 <drewwills> any timeline for 1.5?
+2014-01-21T15:21:28 <colinclark> We haven\'t set a date yet, no
+2014-01-21T15:21:33 <drewwills> (i know it\'s hard for me to answer questions like that for uP)
+2014-01-21T15:21:35 <colinclark> but we\'re hoping in the next month or so
+2014-01-21T15:21:44 <drewwills> roger -- that would be awesome
+2014-01-21T15:21:47 <drewwills> but...
+2014-01-21T15:21:47 <colinclark> This is the pull request: https://github.com/fluid-project/infusion/pull/448
+2014-01-21T15:22:05 <drewwills> can i trouble you just to look at and consider that line for a bit
+2014-01-21T15:22:12 <colinclark> So that should give you an indication of which APIs jQ regressed on
+2014-01-21T15:22:25 <drewwills> it just seems not quite right
+2014-01-21T15:22:56 <drewwills> what would you call .draggable() on the handle sub-element?  not on the whole (draggable) element?
+2014-01-21T15:23:10 * cindyli has quit
+2014-01-21T15:23:28 <drewwills> not what* above, why*
+2014-01-21T15:23:33 * cindyli joined the channel
+2014-01-21T15:24:42 <colinclark> drewwills: https://github.com/fluid-project/infusion/pull/448/files#diff-4417c3b7ff0307d00187b5569f729503L579
+2014-01-21T15:24:47 <colinclark> You are correct
+2014-01-21T15:26:10 <drewwills> heh.  Do you folks use a non-master branch for dev?
+2014-01-21T15:27:00 <colinclark> Master is our active development branch, and we keep it quite stable
+2014-01-21T15:27:18 <drewwills> ah.  but this change is not in master yet?
+2014-01-21T15:27:26 <colinclark> i.e. all pull requests are accompanied by unit tests, are code reviewed, and are manually tested prior to being merged
+2014-01-21T15:27:34 <colinclark> though we don\'t do full QA cycles on master until release time
+2014-01-21T15:27:45 <colinclark> no, it\'s not yet in master
+2014-01-21T15:27:48 * cindyli has quit
+2014-01-21T15:27:57 <colinclark> michelled, I believe, is in the final throes of her manual testing of that pull request
+2014-01-21T15:28:04 <colinclark> and with good results
+2014-01-21T15:28:10 * cindyli joined the channel
+2014-01-21T15:28:10 <drewwills> awesome
+2014-01-21T15:28:17 <colinclark> But since it\'s such a major change, she\'s been pretty thorough
+2014-01-21T15:28:26 <drewwills> sensible
+2014-01-21T15:28:26 <colinclark> I expect you\'ll see it merged in today or tomorrow
+2014-01-21T15:29:54 <drewwills> and that will merge into master then?  once it has, perhaps I could take a proto-1.5 (off your master) for our current dev on the future uP 4.1... then pull down 1.5 GA in around a month
+2014-01-21T15:31:49 <colinclark> yup, I think that makes a lot of sense, drewwills
+2014-01-21T15:32:11 <drewwills> thanks colin
+2014-01-21T15:32:14 <colinclark> I\'ll get michelled to ping you when she\'s merged it in
+2014-01-21T15:35:01 <drewwills> that would be excellent... I wrote myself a note too :)
+2014-01-21T15:37:40 * drewwills has left the channel
+2014-01-21T15:47:07 * Jess_ has quit
+2014-01-21T16:03:28 * kasparne_ is now known as kasparnet
+2014-01-21T16:06:30 * michelled joined the channel
+2014-01-21T16:26:56 * jessm joined the channel
+2014-01-21T16:52:25 * clown joined the channel
+2014-01-21T16:54:06 * simonjb joined the channel
+2014-01-21T17:08:34 * colinclark_ joined the channel
+2014-01-21T17:08:59 * Bosmon has quit
+2014-01-21T17:08:59 * colinclark has quit
+2014-01-21T17:09:04 * colinclark_ is now known as colinclark
+2014-01-21T17:11:02 * Bosmon joined the channel
+2014-01-21T17:36:53 * anvk joined the channel
+2014-01-21T17:58:34 * cindyli1 joined the channel
+2014-01-21T17:58:36 * cindyli has quit
+2014-01-21T18:45:24 * simonjb has quit
+2014-01-21T18:56:15 * kasparnet has quit
+2014-01-21T18:56:23 * kasparnet joined the channel
+2014-01-21T19:14:56 * colinclark has quit
+2014-01-21T19:17:16 * colinclark joined the channel
+2014-01-21T19:19:41 * simonjb joined the channel
+2014-01-21T19:23:07 * kasparnet has quit
+2014-01-21T19:26:38 * kasparnet joined the channel
+2014-01-21T20:12:18 * colinclark has quit
+2014-01-21T20:13:53 * michelled has quit
+2014-01-21T20:26:06 * kasparnet has quit
+2014-01-21T20:41:57 * colinclark joined the channel
+2014-01-21T21:01:59 * kasparnet joined the channel
+2014-01-21T21:26:19 * anvk has quit
+2014-01-21T21:30:04 * cindyli1 has quit
+2014-01-21T21:52:48 * kasparnet has quit
+2014-01-21T21:57:37 * clown has left the channel
+2014-01-21T22:10:32 * simonjb has quit
+2014-01-21T22:34:37 * jessm has quit
+2014-01-21T22:45:47 * sgithens joined the channel
+'
+

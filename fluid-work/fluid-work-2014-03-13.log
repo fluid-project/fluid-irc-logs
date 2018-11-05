@@ -1,0 +1,203 @@
+b'2014-03-13T21:25:19 <simonjb> Bosmon: got it, thanks!
+2014-03-13T21:25:23 <Bosmon> Although the issue is more with npm\'s behaviour rather than node\'s
+2014-03-13T21:25:42 <Bosmon> We currently have (at least) two separate paths by which infusion is included into the GPII\'s overall image
+2014-03-13T21:25:53 <Bosmon> Firstly as a direct dependency of GPII\'s universal, and then as an indirect dependency of kettle
+2014-03-13T21:26:18 <simonjb> yes, I see that on my filesystem
+2014-03-13T21:26:24 <Bosmon> It used to be the case that the old version of npm detected that the two hashes of these referenced infusion modules were identical, and arranged it so that only one was in fact included
+2014-03-13T21:26:41 <simonjb> I deleted the kettle infusion and was able to get past the error
+2014-03-13T21:26:49 <Bosmon> This behaviour changed within the last few months so that we get two independent copies, which then unfortunately makes the resulting system non-viable
+2014-03-13T21:27:16 <Bosmon> The main way we can see out of this task is to work on a grunt plugin that allows us to bypass npm\'s workflow for this module fetching
+2014-03-13T21:27:23 <Bosmon> out of this problem
+2014-03-13T21:27:44 <Bosmon> Or even most simply a grunt task which just deletes duplicate copies of modules post-installation
+2014-03-13T21:28:00 <simonjb> we\'d still be relying on node\'s module caching, right?
+2014-03-13T21:28:14 <Bosmon> But actually npm is outrageously slow at the task of updating dependencies, and we think that a custom grunt plugin would ease a lot of pain around the community
+2014-03-13T21:28:22 <Bosmon> simonjb - that\'s right, but that can always be depended on
+2014-03-13T21:28:29 <simonjb> ok
+2014-03-13T21:28:39 <Bosmon> Since it is part of the "common modules spec" or whatever it is called these days
+2014-03-13T21:29:30 <simonjb> it\'s not node specific but rather part of the agreed upon js module semantics?
+2014-03-13T21:29:52 <Bosmon> I believe the agreement on that is somewhat wider than just the node community per se, yes
+2014-03-13T21:30:17 <Bosmon> Although probably in practice the node community is by far the vaster majority of people operating js module systems
+2014-03-13T21:30:19 <simonjb> http://wiki.commonjs.org/wiki/Modules
+2014-03-13T21:30:22 <Bosmon> yes
+2014-03-13T21:30:23 <Bosmon> that one
+2014-03-13T21:30:25 <simonjb> ok
+2014-03-13T21:33:46 <Bosmon> Well, I assumed that the caching behaviour was part of this spec
+2014-03-13T21:33:50 <Bosmon> But so far I haven\'t found it yet
+2014-03-13T21:35:35 <simonjb> the nearest I see is "That is to say module.id can be passed to another module, and requiring that must return the original module" but it\'s not clear to me what that means http://wiki.commonjs.org/wiki/Modules/1.1
+2014-03-13T21:35:40 <Bosmon> Ok well, amazingly it seems that it is not part of the spec
+2014-03-13T21:35:55 <Bosmon> Anyway, I think we have no alternative but to depend on it : P
+2014-03-13T21:36:07 <Bosmon> I found this interesting property in the node docs
+2014-03-13T21:36:08 <Bosmon> http://nodejs.org/docs/latest/api/globals.html#globals_require_cache
+2014-03-13T21:36:17 <Bosmon> Which allows you to explicitly flush the cache for a module
+2014-03-13T21:36:23 <Bosmon> This will be quite useful for us later
+2014-03-13T21:36:23 <simonjb> certainly we do depend on it :)
+2014-03-13T21:37:20 <simonjb> thanks Bosmon, each day I understand a little bit more :)
+2014-03-13T21:37:26 <Bosmon> Me too ....
+2014-03-13T21:52:49 * greggy2 joined the channel
+2014-03-13T22:03:48 * simonjb has quit
+2014-03-13T22:04:55 * anvk has quit
+2014-03-13T22:09:52 * michelled joined the channel
+2014-03-13T22:10:37 * colinclark joined the channel
+2014-03-13T22:12:31 * jash4 has quit
+2014-03-13T22:17:19 * michelled has quit
+2014-03-13T22:23:54 * jash4 joined the channel
+2014-03-13T22:25:30 * yzen has quit
+2014-03-13T22:53:53 * jash4 has quit
+2014-03-13T23:00:32 * vjoanna has quit
+2014-03-13T23:04:36 * avtar has quit
+2014-03-13T23:10:25 * Bosmon has quit
+2014-03-13T23:16:22 * Bosmon joined the channel
+'
+
+b'2014-03-13T00:22:32 * yzen joined the channel
+2014-03-13T00:28:08 * yzen has quit
+2014-03-13T00:32:57 * yzen joined the channel
+2014-03-13T00:37:35 * yzen has quit
+2014-03-13T01:01:55 * yzen joined the channel
+2014-03-13T01:07:29 * yzen has quit
+2014-03-13T02:19:57 * yzen joined the channel
+2014-03-13T02:27:37 * yzen has quit
+2014-03-13T03:07:51 * yzen joined the channel
+2014-03-13T03:13:07 * SonicX has quit
+2014-03-13T03:31:22 * SonicX joined the channel
+2014-03-13T04:02:40 * clown joined the channel
+2014-03-13T04:02:58 * clown has left the channel
+2014-03-13T04:40:01 * SonicX has quit
+2014-03-13T05:31:42 * SonicX joined the channel
+2014-03-13T06:02:29 * yzen has quit
+2014-03-13T06:13:14 * jash4 has quit
+2014-03-13T06:26:19 * jash4 joined the channel
+2014-03-13T06:42:01 * jash4 has quit
+2014-03-13T06:42:34 * jash4 joined the channel
+2014-03-13T06:49:07 * jash4 has quit
+2014-03-13T07:43:31 * kasparnet joined the channel
+2014-03-13T07:54:18 * kasparnet has quit
+2014-03-13T09:38:22 * alexeiTruhin joined the channel
+2014-03-13T09:38:29 <alexeiTruhin> hi guys.
+2014-03-13T09:38:41 <alexeiTruhin> Do you have any connection with GSoC?
+2014-03-13T09:41:00 * alexeiTruhinPhon joined the channel
+2014-03-13T09:45:31 * kasparnet joined the channel
+2014-03-13T09:45:54 * alexeiTruhin has quit
+2014-03-13T10:00:29 * alexeiTruhinPhon has quit
+2014-03-13T10:23:25 * kasparnet has quit
+2014-03-13T11:44:45 * amilchev joined the channel
+2014-03-13T12:06:21 * yzen joined the channel
+2014-03-13T12:07:24 * SonicX has quit
+2014-03-13T12:28:53 * anastasiac joined the channel
+2014-03-13T12:38:19 * yzen has quit
+2014-03-13T12:43:28 * cindyli joined the channel
+2014-03-13T12:45:26 * Niharika joined the channel
+2014-03-13T12:57:28 * greggy joined the channel
+2014-03-13T12:58:55 * jessm joined the channel
+2014-03-13T13:10:52 * yzen joined the channel
+2014-03-13T13:41:07 * greggy has quit
+2014-03-13T13:48:29 * colinclark joined the channel
+2014-03-13T13:49:21 * simonjb joined the channel
+2014-03-13T13:55:52 * clown joined the channel
+2014-03-13T13:56:23 * clown is now known as clown_mtg
+2014-03-13T14:05:35 * clown_mtg is now known as clown
+2014-03-13T14:06:45 * danaayotte_ joined the channel
+2014-03-13T14:28:42 * vjoanna joined the channel
+2014-03-13T14:30:49 * colinclark has quit
+2014-03-13T14:32:19 * colinclark joined the channel
+2014-03-13T14:51:03 <clown> jhernandez:  got a moment?  It\'s about that view change to accerciser.
+2014-03-13T15:03:43 * cindyli has quit
+2014-03-13T15:04:04 * cindyli joined the channel
+2014-03-13T15:06:52 * vjoanna has quit
+2014-03-13T15:07:13 * vjoanna joined the channel
+2014-03-13T15:09:43 * greggy joined the channel
+2014-03-13T15:09:55 <jhernandez> clown: sure, let me finish a thing
+2014-03-13T15:10:14 <clown> jhernandez:   no problem, but I\'m no in the gnome a11y meeting...
+2014-03-13T15:10:21 <clown> *now in the meeting
+2014-03-13T15:10:29 <jhernandez> oops
+2014-03-13T15:10:33 <jhernandez> that\'s true
+2014-03-13T15:54:43 <clown> so, jhernandez, do you have time now?
+2014-03-13T16:02:33 <jhernandez> yes!
+2014-03-13T16:02:38 <clown> jhernandez:  I found a bug in the new UI.  I don\'t know if it was in my original patch.  To make a long story short, there is a one line fix.
+2014-03-13T16:02:52 <clown> Should I re-open the bug and upload the patch?
+2014-03-13T16:03:06 <jhernandez> which bug?
+2014-03-13T16:03:15 * clown looks up the number.
+2014-03-13T16:03:18 <jhernandez> well
+2014-03-13T16:03:27 <jhernandez> better question ...
+2014-03-13T16:03:32 <clown> https://bugzilla.gnome.org/show_bug.cgi?id=704550
+2014-03-13T16:03:32 <jhernandez> are you using master
+2014-03-13T16:03:33 <jhernandez> \xc2\xbf?
+2014-03-13T16:03:36 <clown> yes.
+2014-03-13T16:04:25 <jhernandez> ok
+2014-03-13T16:04:57 <jhernandez> but it\'s better if you can file a new one
+2014-03-13T16:05:19 <clown> I can do that too.
+2014-03-13T16:05:30 <jhernandez> better
+2014-03-13T16:05:45 <clown> yes, but what would be best?
+2014-03-13T16:05:48 <clown> ignore that  :-)
+2014-03-13T16:06:00 <jhernandez> and remember that a screenshot is more valuable than thousands of words
+2014-03-13T16:06:02 <jhernandez> :)
+2014-03-13T16:06:27 <clown> It\'s the same screenshot as before.
+2014-03-13T16:06:34 <clown> Unless you mean a screen shot of the error.
+2014-03-13T16:06:49 <jhernandez> yeah, just the error
+2014-03-13T16:07:03 <clown> hokay.  Sometime later this afternoon, then.
+2014-03-13T16:07:10 <clown> thanks jhernandez
+2014-03-13T16:07:30 <jhernandez> thanks to you
+2014-03-13T16:07:32 <jhernandez> clown:
+2014-03-13T16:07:33 <jhernandez> :)
+2014-03-13T16:28:42 * amilchev has left the channel
+2014-03-13T17:06:47 * zubilomen joined the channel
+2014-03-13T17:08:43 * Niharika has left the channel
+2014-03-13T17:25:50 * greggy has quit
+2014-03-13T17:36:24 * colinclark has quit
+2014-03-13T17:37:30 * simonjb has quit
+2014-03-13T17:42:14 * zubilomen has quit
+2014-03-13T17:50:44 * Bosmon has quit
+2014-03-13T17:54:44 * penzic joined the channel
+2014-03-13T17:55:40 * Bosmon joined the channel
+2014-03-13T18:00:46 * simonjb joined the channel
+2014-03-13T18:06:03 <cindyli> hi Bosmon
+2014-03-13T18:12:30 * penzic has quit
+2014-03-13T18:24:09 <clown> jhernandez:  it\'s done:  https://bugzilla.gnome.org/show_bug.cgi?id=726265
+2014-03-13T18:32:51 * igrlogin joined the channel
+2014-03-13T18:33:17 * simonjb has quit
+2014-03-13T18:33:38 * igrlogin has quit
+2014-03-13T18:36:36 * michelled joined the channel
+2014-03-13T18:39:13 * simonjb joined the channel
+2014-03-13T18:51:26 * greggy joined the channel
+2014-03-13T19:11:37 * yzen has quit
+2014-03-13T19:11:58 * danaayotte_ has quit
+2014-03-13T19:26:36 * avtar joined the channel
+2014-03-13T19:28:09 * SonicX joined the channel
+2014-03-13T19:42:30 * yzen joined the channel
+2014-03-13T19:45:07 * SonicX has quit
+2014-03-13T19:49:16 <jhernandez> clown: yay! thanks!
+2014-03-13T19:49:26 <clown> jhernandez:  you\'re welcome.
+2014-03-13T19:49:38 <jhernandez> can\'t take a look at it right now
+2014-03-13T19:49:54 <jhernandez> I\'m about to cook something
+2014-03-13T19:49:55 <jhernandez> :)
+2014-03-13T19:50:03 <clown> cooking is much more important.
+2014-03-13T19:50:07 <clown> ;-)
+2014-03-13T19:50:19 <jhernandez> my girlfriend is asking for something-curry
+2014-03-13T19:50:21 <jhernandez> xDDD
+2014-03-13T19:51:32 <clown> cool
+2014-03-13T19:57:28 * colinclark joined the channel
+2014-03-13T20:24:06 * jash4 joined the channel
+2014-03-13T20:28:06 <colinclark> simonjb: This is our guy: https://github.com/colinbdclark/infusion/blob/master/src/module/fluid.js
+2014-03-13T20:28:23 <simonjb> colinclark: awesome, thanks
+2014-03-13T20:28:37 <colinclark> So we\'re using runInContext()
+2014-03-13T20:30:36 <colinclark> You\'ll find this helpful as well: https://github.com/colinbdclark/infusion/blob/master/src/framework/core/js/Fluid.js#L959-L967
+2014-03-13T20:31:20 * cindyli has quit
+2014-03-13T20:31:24 * danaayotte_ joined the channel
+2014-03-13T20:39:22 * michelled has quit
+2014-03-13T20:41:15 * greggy has quit
+2014-03-13T20:52:30 <simonjb> colinclark: "Modules are cached after the first time they are loaded. This means (among other things) that every call to require(\'foo\') will get exactly the same object returned, if it would resolve to the same file."
+2014-03-13T20:52:38 <simonjb> http://nodejs.org/api/modules.html
+2014-03-13T20:54:09 <simonjb> and "Modules are cached based on their resolved filename. Since modules may resolve to a different filename based on the location of the calling module (loading from node_modules folders), it is not a guarantee that require(\'foo\') will always return the exact same object, if it would resolve to different files."
+2014-03-13T21:05:28 <Bosmon> simonjb - yes, that\'s our man
+2014-03-13T21:05:39 * clown has quit
+2014-03-13T21:05:46 <Bosmon> Unfortunately this part of the specification isn\'t as clearly word as it could be, and the npm behaviour changed between revisions
+2014-03-13T21:08:21 * anastasiac has quit
+2014-03-13T21:10:15 * jessm has quit
+2014-03-13T21:14:24 * danaayotte_ has quit
+2014-03-13T21:14:59 * colinclark has quit
+2014-03-13T21:15:20 <simonjb> thanks Bosmon -- npm changed in that we now get multiple copies of infusion and before we got one?
+2014-03-13T21:16:48 <simonjb> Bosmon: are we are relying on getting access to the same fluid object from multiple requires?
+2014-03-13T21:21:18 <simonjb> Bosmon: are... = and...
+2014-03-13T21:24:59 <Bosmon> simonjb - yes
+'
+

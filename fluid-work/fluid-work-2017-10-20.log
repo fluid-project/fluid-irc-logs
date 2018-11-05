@@ -1,0 +1,284 @@
+b'2017-10-20T20:40:56 <gmoss> mhmm
+2017-10-20T20:42:39 <clown> my guess is:  the browser \'onchange\' event is not firing the first time, but I\'m at loss as to why that would be
+2017-10-20T20:43:05 <clown> when in fact the select value changed.
+2017-10-20T20:46:10 <gmoss> perhaps we\'ll never know.... :]
+2017-10-20T20:46:53 <clown> well, I\'m still reviewing the basics about select elements and their events to see if that triggers any of the things I tore my hair out over, all those years ago.
+2017-10-20T20:48:10 <clown> dumb question:  the value in your test case *is* a change, not a "change" from the current value and then immediately back to that value?
+2017-10-20T20:50:41 <gmoss> the selected indexes are different, and the value of the option at selected index is not the same. the change is indeed a change from one state to another, and not a net zero change as you describe
+2017-10-20T20:54:00 * the-t-in-rtf joined the channel
+2017-10-20T20:54:08 <clown> gmoss, I\'m going to have to bail soon as I have a train to catch.  Sorry I\'m not much help here.
+2017-10-20T20:54:24 <gmoss> clown: no worries, your assistance was appreciated! :)
+2017-10-20T20:58:31 <gmoss> a little closer, maybe: when I manually register an event handler for .change on that element, it won\'t always fire
+2017-10-20T21:01:09 <clown> very strange:  that\'s equivalent to calling "addListener()" or just adding a straight "onchange" attribute to the select and having the listener ignored.
+2017-10-20T21:01:35 <clown> but only  the first time the value is changed.
+2017-10-20T21:01:38 <clown> gahhh
+2017-10-20T21:04:04 <clown> okay, bye gmoss (and fluid-everyone).  Have a nice weekend.
+2017-10-20T21:04:25 <gmoss> bye, clown, and thanks once more for trying!
+2017-10-20T21:04:36 <clown> wlcm
+2017-10-20T21:04:47 * clown has quit
+2017-10-20T21:12:00 * colinclark joined the channel
+2017-10-20T21:12:18 <alanharnum> gmoss: do you have the code up somewhere I can check it out?
+2017-10-20T21:12:48 <gmoss> alanharnum: let me double-check whether my latest remote has the bug present
+2017-10-20T21:20:10 <gmoss> https://github.com/BlueSlug/sjrk-storyTelling/tree/SJRK-13
+2017-10-20T21:20:14 <gmoss> https://issues.fluidproject.org/projects/SJRK/issues/SJRK-13?filter=allissues
+2017-10-20T21:20:45 <gmoss> apologies if my documentation is sub-par, it was hasty
+2017-10-20T21:29:59 <alanharnum> gmoss: OK, so you\'re logging both the select change event and the model change, correct?
+2017-10-20T21:30:21 <alanharnum> I\'m seeing the model change not fire in the scenario describe, but the change event always seems to fire - is that the same thing you\'re seeing?
+2017-10-20T21:30:31 <gmoss> alanharnum: that\'s correct. there\'s an onchange attribute on the select that I\'ve just added, as well as the model listener
+2017-10-20T21:32:17 <gmoss> I see the change event not firing when text is entered in the input, but the model does change. then when i make a new choice in the select, it fires the change event but does not change the model
+2017-10-20T21:33:13 <gmoss> (text entered in the input triggers a model relay that sets the value of the select to "other", which one would expect to fire the change event)
+2017-10-20T21:35:27 * stegru has quit
+2017-10-20T21:37:00 <alanharnum> gmoss: OK, I think there\'s a few things going on, let me try to pull them apart...
+2017-10-20T21:38:06 <gmoss> alanharnum: okay, hopefully it\'s just something silly on my part. if you\'d like, I\'m available for a call
+2017-10-20T21:38:24 <alanharnum> gmoss: yeah, let\'s hop on Vidyo quick, will probably be easier
+2017-10-20T21:38:41 <alanharnum> I haven\'t solved the underlying problem BTW, I just have observations :p
+2017-10-20T21:38:57 <gmoss> alanharnum: my room is open
+2017-10-20T21:39:26 <alanharnum> gmoss: I am in your room! You aren\'t there!
+2017-10-20T21:53:20 * michelled has quit
+2017-10-20T22:01:44 <Bosmon9> Hey there gmoss
+2017-10-20T22:01:54 <gmoss> hi Bosmon9!
+2017-10-20T22:01:58 <Bosmon9> How exactly are are you triggering the change in the state of the select control?
+2017-10-20T22:01:59 * alanharnum has quit
+2017-10-20T22:03:35 <gmoss> I\'ve just spoken with Alan about this, I was using a model relay to trigger the select control\'s initial state change, which was using the jQuery.val() to make the change (which doesn\'t fire the change event). subsequent changes to said select control are via a mouse click on my part
+2017-10-20T22:04:02 <Bosmon9> Ah ok
+2017-10-20T22:04:16 <Bosmon9> You should be aware that jQuery.val() in general is insufficient for this task
+2017-10-20T22:04:22 <gmoss> I\'ve just got off a call with him, and the consensus seems to be that there\'s some weird interference happening on account of one of the model relays I have set up. On Monday I\'ll try to whip up a model listener that does the same thing as that relay
+2017-10-20T22:04:45 <gmoss> duly noted, Bosmon9!
+2017-10-20T22:04:45 <Bosmon9> But perhaps that isn\'t the issue
+2017-10-20T22:04:54 <Bosmon9> You\'ve already discovered that jQuery.val() does not trigger an onchange notification
+2017-10-20T22:04:59 <Bosmon9> So perhaps you already know all you need to know : P
+2017-10-20T22:05:20 <gmoss> well the model was changing appropriately when the relay was being fired, that\'s not the problem we\'re facing. it was that the model wouldn\'t change when i manually chose a new option in the select
+2017-10-20T22:05:43 <Bosmon9> Where in your code is the control in question?
+2017-10-20T22:05:52 <gmoss> one moment please...
+2017-10-20T22:06:14 <Bosmon9> I guess it is this stuff
+2017-10-20T22:06:16 <Bosmon9> https://github.com/BlueSlug/sjrk-storyTelling/blob/SJRK-13/src/js/storyTelling-story-storyEditor.js#L31
+2017-10-20T22:06:17 <gmoss> src\\js\\storyTelling-story-storyEditor.js
+2017-10-20T22:06:19 <Bosmon9> Dear oh dear!
+2017-10-20T22:06:28 <gmoss> correct
+2017-10-20T22:07:04 <Bosmon9> I\'m not surprised that something funny is happening : P
+2017-10-20T22:09:42 <gmoss> Being a neophyte infusion user, I\'m not surprised either ;) I hope it isn\'t too painful for you
+2017-10-20T22:09:54 <Bosmon9> Well, it\'s certainly ambitious....
+2017-10-20T22:10:05 <Bosmon9> I thought long and hard before putting priority fields in modelRelay rules...
+2017-10-20T22:10:44 <Bosmon9> But there\'s just too much going on here
+2017-10-20T22:11:23 <Bosmon9> Priorities are only meaningful when they arbitrate between two rules going in the same direction
+2017-10-20T22:11:30 <Bosmon9> Whereas here you have several rules going in various directions....
+2017-10-20T22:12:34 <Bosmon9> So, this first rule sets "languageFromSelect" to "other" ALL THE TIME ....
+2017-10-20T22:13:07 <Bosmon9> At least, it tries to do it whenever the input value changes....
+2017-10-20T22:13:18 <gmoss> oh, even if languageFromInput has not changed?
+2017-10-20T22:13:20 <gmoss> ah yes
+2017-10-20T22:15:57 <Bosmon9> Then you have a rule which sets "language" to the first out of languageFromInput and languageFromSelect which is defined....
+2017-10-20T22:16:52 <Bosmon9> I guess it is the 2nd rule which is the most dodgy
+2017-10-20T22:17:00 <Bosmon9> Which attempts to both write and read languageFromInput
+2017-10-20T22:17:08 <Bosmon9> And also contains a nested transform
+2017-10-20T22:17:34 <Bosmon9> I know what you are going to say...
+2017-10-20T22:17:47 <gmoss> indeed, it\'s pretty messy. the end goal is to have either what it is the drop-down as the final stored value, unless \'other\' is selected in which case it\'s what\'s entered into the text box.
+2017-10-20T22:17:52 <Bosmon9> "If such a configuration isn\'t supported, why doesn\'t the framework give me an error!"
+2017-10-20T22:18:03 <Bosmon9> And so I can only apologise
+2017-10-20T22:18:21 <gmoss> *"it is" = "is in"
+2017-10-20T22:18:28 <Bosmon9> But in general whether nested transforms are supported is unknown because noone has done it and there are no test cases for such a thing
+2017-10-20T22:19:07 <Bosmon9> So - some general notes - firstly, if you are using the latest framework, your excludeSource: "*" directives should be unnecessary since none of your transforms are invertible
+2017-10-20T22:19:23 <gmoss> this nested transform seems to be working, as the input field is cleared out when expected
+2017-10-20T22:19:23 <Bosmon9> secondly, if you do want to write such a thing, backwards: "never" is a bit more readable
+2017-10-20T22:20:07 <Bosmon9> thirdly, the priorities that for rules that are mapping in the opposite direction will be ignored
+2017-10-20T22:20:39 <Bosmon9> fourthly, if you want to leave a value unchanged, the standard idiom is to arrange for the transform to return `undefined` rather than to read the original value again and return it
+2017-10-20T22:20:59 <Bosmon9> All of this together should at least make the definitions a bit more concise even if they don\'t resolve the problem
+2017-10-20T22:21:47 <Bosmon9> Ironically though, I think to make this a bit safer you will need even MORE state in the model, and even more transforms....
+2017-10-20T22:22:22 <Bosmon9> For example a boolean flag representing whether "other" is selected
+2017-10-20T22:24:16 <gmoss> not the answer I expected, but I will certainly give that a try :) as well as your other recommendations
+2017-10-20T22:24:44 <Bosmon9> I see a risk that your first rule will activate even when the value of "input" is being changed to ""
+2017-10-20T22:27:26 <Bosmon9> Now you have a further debugging risk - I imagine that you put this listener in https://github.com/BlueSlug/sjrk-storyTelling/blob/SJRK-13/src/js/storyTelling-story-storyEditor.js#L85 in order to debug the action of your relay rules
+2017-10-20T22:27:41 <Bosmon9> But unfortunately this will always act too late to be able to observe any of the relay rules operating
+2017-10-20T22:27:43 <gmoss> that\'s correct
+2017-10-20T22:27:58 <Bosmon9> Listeners only get to see the final value of a resolve model once all relay rules have activated and the model has settled to a consistent value
+2017-10-20T22:28:02 <Bosmon9> resolve -> resolved
+2017-10-20T22:28:27 <Bosmon9> So the only way you will be able to observe the process is to write your own relay rule in a custom function and do the logging in there
+2017-10-20T22:28:48 <Bosmon9> Now it seems that you need such a rule in your first rule anyway
+2017-10-20T22:29:04 <gmoss> ah, so even if changes are happening, the listener won\'t do its job unless the state has actually experienced a net changed?
+2017-10-20T22:29:11 <gmoss> *change
+2017-10-20T22:29:14 <Bosmon9> Since it needs to be a function which returns "other" if the input is not "", and returns undefined otherwise
+2017-10-20T22:29:24 <Bosmon9> Although you could actually do this with a valueMapper
+2017-10-20T22:29:28 <Bosmon9> gmoss - yes, exactly
+2017-10-20T22:29:47 <Bosmon9> If at the end of total relay resolution there has been no overall change in the model value you are listening to, you will not get a notification
+2017-10-20T22:30:00 <Bosmon9> Relays appear to happen "instantaneously" from the point of view of listeners
+2017-10-20T22:30:15 <Bosmon9> They are really for constraint satisfaction, not for reaction and processing
+2017-10-20T22:30:15 <gmoss> gotcha
+2017-10-20T22:30:34 <Bosmon9> And this is why it was such a design risk for me to put priorities in, but unfortunately a situation came up where it seemed unavoidable
+2017-10-20T22:30:55 <Bosmon9> But in practice, priorities are only relevant where there are two rules which might activate based on the SAME piece of source state
+2017-10-20T22:31:02 <Bosmon9> And the priority then selects which rules activates first
+2017-10-20T22:31:13 <Bosmon9> rules -> rule
+2017-10-20T22:32:30 <Bosmon9> So yes, if you want to tinker with or observe relay resolution, you will have to write something in a relay - perhaps via flud.transforms.free or some other custom function
+2017-10-20T22:32:46 <Bosmon9> flud -> fluid, sorry I am typing on an unfamiliar laptop : P
+2017-10-20T22:33:22 <gmoss> not to worry :) yes I may try just that, possibly in some combination with Alan\'s suggestion that we try to move that logic to a modelListener
+2017-10-20T22:33:53 <Bosmon9> Well, I think what you\'ve done is right and noble and intent, even if it looks a bit horrific when I see it all written out like this : P
+2017-10-20T22:35:06 <Bosmon9> We REALLY need the expression parser written up in https://issues.fluidproject.org/browse/FLUID-5894
+2017-10-20T22:35:48 <Bosmon9> Anyway, hopefully these are enough pointers to let you fathom what is going on
+2017-10-20T22:36:17 <Bosmon9> Let me know if you discover the framework doing something that doesn\'t make sense given these points
+2017-10-20T22:37:00 <Bosmon9> I\'d try to rewrite your first rule using the valueMapper and do the various other tidyings
+2017-10-20T22:37:02 <gmoss> yes I think it\'s very helpful, and gives me a bit to chew on! I think I\'m hitting the end of my usable brain power for the day (knowing what time it is for you makes this seem laughable)
+2017-10-20T22:37:50 <Bosmon9> Well, it\'s true I shouldn\'t be here, I\'m just up in Cambridge trying to move out another carload of stuff, but I couldn\'t resist installing an IRC client on this spare laptop to see if anything was going on : P
+2017-10-20T22:39:02 <gmoss> lucky for me :)
+2017-10-20T22:39:17 <Bosmon9> Yeah, maybe lucky, or maybe not... : P
+2017-10-20T22:39:35 <Bosmon9> I worry about your 3rd rule too
+2017-10-20T22:39:52 <Bosmon9> You could try writing that literally in code as a free transform to see if it clears things up
+2017-10-20T22:40:12 <Bosmon9> Since the relay system isn\'t really rated to deal with compound transforms (although as you find it might succeed in some cases)
+2017-10-20T22:40:20 <Bosmon9> And that would also be a useful place to stick a debugging statement
+2017-10-20T22:42:21 <Bosmon9> Your 2nd rule should also be expressed with the valueMapper too, I think
+2017-10-20T22:42:33 <gmoss> okay, sure, I\'ll give both of those a shot :)
+2017-10-20T22:43:13 <Bosmon9> Good luck, I\'ll see you on the day dawning....
+2017-10-20T22:43:17 * Bosmon9 has quit
+2017-10-20T23:11:03 * sgithens has quit
+2017-10-20T23:55:13 * stegru joined the channel
+'
+
+b'2017-10-20T02:34:15 * mrtyler joined the channel
+2017-10-20T06:06:20 * amatas joined the channel
+2017-10-20T06:22:25 * georgitodorov joined the channel
+2017-10-20T07:18:05 * the-t-in-rtf joined the channel
+2017-10-20T07:52:20 * stegru joined the channel
+2017-10-20T08:03:58 * kasparnet joined the channel
+2017-10-20T09:07:22 * dandimitrov joined the channel
+2017-10-20T09:17:08 * javjarfer joined the channel
+2017-10-20T09:32:52 * the-t-in-rtf has quit
+2017-10-20T09:41:05 * georgitodorov has quit
+2017-10-20T09:41:17 * georgitodorov joined the channel
+2017-10-20T10:45:21 * javjarfer has quit
+2017-10-20T10:49:07 * javjarfer joined the channel
+2017-10-20T10:59:58 * grrrero joined the channel
+2017-10-20T11:03:27 * javjarfer has quit
+2017-10-20T11:23:09 * javjarfer joined the channel
+2017-10-20T11:27:07 * kasparnet has quit
+2017-10-20T11:41:09 * Justin_o joined the channel
+2017-10-20T11:57:28 * javjarfer has quit
+2017-10-20T12:17:08 * alanharnum joined the channel
+2017-10-20T12:35:41 * cindyli joined the channel
+2017-10-20T12:36:22 * gtirloni joined the channel
+2017-10-20T12:49:27 * the-t-in-rtf joined the channel
+2017-10-20T12:57:16 * jhung joined the channel
+2017-10-20T13:13:04 * the-t-in-rtf has quit
+2017-10-20T13:15:53 * alanharnum has quit
+2017-10-20T13:16:20 * alanharnum joined the channel
+2017-10-20T13:18:23 <Justin_o> Bosmon: I\'ll be heading offline in about 15 min, but I\'ve left some thoughts on the FLUID-6209 JIRA about debouncing https://issues.fluidproject.org/browse/FLUID-6209?focusedCommentId=37434&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-37434
+2017-10-20T13:26:54 * dandimitrov_ joined the channel
+2017-10-20T13:26:54 * dandimitrov has quit
+2017-10-20T13:29:01 * sepidehshahi joined the channel
+2017-10-20T13:38:04 * javjarfer joined the channel
+2017-10-20T13:38:53 * alanharnum joined the channel
+2017-10-20T13:40:15 * dandimitrov_ has quit
+2017-10-20T13:44:29 * georgitodorov has quit
+2017-10-20T13:53:54 * colinclark joined the channel
+2017-10-20T13:57:06 * danayo joined the channel
+2017-10-20T13:57:30 * simonjb joined the channel
+2017-10-20T13:59:38 <alanharnum> pretty big news (via JT) of U of T moving to Canvas from Blackboard: https://memos.provost.utoronto.ca/update-new-learning-management-engine-pdadc-24/
+2017-10-20T13:59:47 <alanharnum> that really brings me back
+2017-10-20T14:01:34 * mrtyler joined the channel
+2017-10-20T14:03:29 * michelled joined the channel
+2017-10-20T14:07:06 * clown joined the channel
+2017-10-20T14:14:11 * michelled has quit
+2017-10-20T14:16:21 * michelled joined the channel
+2017-10-20T14:26:26 * javjarfer_ joined the channel
+2017-10-20T14:26:36 * michelled has quit
+2017-10-20T14:29:56 * javjarfer has quit
+2017-10-20T14:32:29 <clown> gtirloni:  I\'ve tried out the new box and it\'s all good.
+2017-10-20T14:32:35 <clown> I\'ve emailed you some state.
+2017-10-20T14:32:38 <clown> *stats
+2017-10-20T14:32:55 <clown> thanks
+2017-10-20T14:36:05 * colinclark has quit
+2017-10-20T14:47:59 <gtirloni> thx!!
+2017-10-20T15:13:35 * danayo has quit
+2017-10-20T15:15:49 * colinclark joined the channel
+2017-10-20T15:22:43 * danayo joined the channel
+2017-10-20T15:27:04 * michelled joined the channel
+2017-10-20T15:27:08 * michelled has quit
+2017-10-20T15:31:07 * jessm joined the channel
+2017-10-20T15:37:32 * colinclark joined the channel
+2017-10-20T15:38:43 * Justin_o has quit
+2017-10-20T15:43:47 * sepidehshahi has quit
+2017-10-20T15:44:20 * danayo joined the channel
+2017-10-20T15:44:28 * sepidehshahi joined the channel
+2017-10-20T15:51:51 * javjarfer_ has quit
+2017-10-20T16:17:00 * danayo has quit
+2017-10-20T16:18:10 * danayo joined the channel
+2017-10-20T16:19:15 <grrrero> I\'ve been running around so I missed standup! Yesterday I was able to get my PR for Wordpress UIO plugin refresh, and a PR for hte SJRK UIO plugin as well. Talked to Dana about UIO breadcrumbs/panel descs and will hopefully continue discussion today + Jutta and I are going to the Philippine Consulate
+2017-10-20T16:19:19 * colinclark has quit
+2017-10-20T16:21:35 * colinclark joined the channel
+2017-10-20T16:28:04 * the-t-in-rtf joined the channel
+2017-10-20T16:29:09 * michelled joined the channel
+2017-10-20T16:29:12 * michelled has quit
+2017-10-20T16:36:06 * colinclark has quit
+2017-10-20T16:36:58 * colinclark joined the channel
+2017-10-20T16:42:25 * the-t-in-rtf has quit
+2017-10-20T16:48:35 * michelled joined the channel
+2017-10-20T16:51:26 * simonjb joined the channel
+2017-10-20T16:56:55 * colinclark joined the channel
+2017-10-20T17:35:16 * danayo joined the channel
+2017-10-20T17:35:36 * the-t-in-rtf joined the channel
+2017-10-20T17:43:08 * sepidehshahi joined the channel
+2017-10-20T17:43:26 * the-t-in-rtf has quit
+2017-10-20T17:46:16 * colinclark has quit
+2017-10-20T17:48:17 * cindyli has quit
+2017-10-20T17:50:06 * danayo has quit
+2017-10-20T18:02:21 * cindyli joined the channel
+2017-10-20T18:06:03 * colinclark joined the channel
+2017-10-20T18:27:42 * michelled joined the channel
+2017-10-20T18:30:19 <michelled> gtirloni, colinclark, alanharnum: where are we meeting?
+2017-10-20T18:30:37 <colinclark> anywhere is cool with me :)
+2017-10-20T18:30:47 * the-t-in-rtf joined the channel
+2017-10-20T18:31:17 <gtirloni> standup?
+2017-10-20T18:31:28 <colinclark> sure
+2017-10-20T18:52:11 * the-t-in-rtf has quit
+2017-10-20T19:20:31 * sgithens joined the channel
+2017-10-20T19:26:09 * the-t-in-rtf joined the channel
+2017-10-20T19:33:44 * the-t-in-rtf has quit
+2017-10-20T19:35:49 * Bosmon9 joined the channel
+2017-10-20T19:36:23 <Bosmon9> Hi there cindyli - it would be great if you could take a look at another small framework pull :)
+2017-10-20T19:36:26 <Bosmon9> https://github.com/fluid-project/infusion/pull/855
+2017-10-20T19:36:36 <cindyli> sure, Bosmon9
+2017-10-20T19:40:30 <Bosmon9> Thanks so much :)
+2017-10-20T19:53:45 <cindyli> Bosmon9: is this another issue that alanharnum and gmoss ran into?
+2017-10-20T19:59:54 <gmoss> cindyli: this doesn\'t look familiar to me, after reviewing the JIRA. I\'d wait of alanharnum to confirmm though
+2017-10-20T19:59:56 <gmoss> *confirm,
+2017-10-20T20:00:11 <cindyli> ok. thanks, gmoss
+2017-10-20T20:01:12 <gmoss> *of = for
+2017-10-20T20:01:17 <gmoss> no problem, cindyli!
+2017-10-20T20:05:59 * simonjb has quit
+2017-10-20T20:06:54 <Bosmon9> cindyli - this was an issue I ran into whem implementing "embranglements"
+2017-10-20T20:07:06 <cindyli> ok. thanks
+2017-10-20T20:07:13 <Bosmon9> Although I have a feeling that simonjb reported a very similar issue when he was working on the co-occurrence engine for the Nexus
+2017-10-20T20:07:34 <Bosmon9> Since he would have had to write a very similar definition for a dynamic component with directly specified subcomponents...
+2017-10-20T20:16:32 <gmoss> fluid-everyone: I\'m dealing with a very intriguing problem at the moment. Has anyone ever experienced a case where a select element which is hooked up to a component\'s model value via gpii-binder did *not* effect a model change even though the DOM and the selectedIndex changed?
+2017-10-20T20:18:46 <clown> gmoss:  trying to understand \xe2\x80\x94 something changed the select and you are expecting the fluid model to change.  That is the cause is a change in the selecct, and the result is seen in the model?
+2017-10-20T20:19:51 <gmoss> clown: in this case, I\'m changing the select myself, and I\'m expecting the fluid model to change. the model, in some cases, is not changing.
+2017-10-20T20:20:21 <clown> gmoss, right so the flow of information is from a selecct change to the model.
+2017-10-20T20:20:28 <clown> next question:
+2017-10-20T20:20:30 <gmoss> clown: correct
+2017-10-20T20:20:48 <clown> how is a change in a select detected by anything, let alone gpii?
+2017-10-20T20:21:43 <gmoss> clown: i\'m using gpii-binder to bind the dom element to the fluid model: https://github.com/GPII/gpii-binder
+2017-10-20T20:23:00 * clown looks, while trying to remeber how the select element works in general
+2017-10-20T20:24:04 * gmoss is reading the jQuery .change() function doc, since apparently gpii-binder uses that
+2017-10-20T20:24:16 <clown> noting this from the readme:  "\xe2\x80\xa6 you directly set the element\'s value, but only when you have updated the value using browser events and change focus."
+2017-10-20T20:24:57 * clown can\'t remember what the browser event is for a select when it changes value.
+2017-10-20T20:25:47 <gmoss> clown: indeed, I was just poring over that very line... the funny thing is that this "error" is happening only on the first attempt to select a new item in the drop-down. the second attempt is always successful
+2017-10-20T20:26:08 <clown> ah a clue!
+2017-10-20T20:26:16 * amatas has quit
+2017-10-20T20:26:39 <gmoss> so I\'m wondering what difference there is between the first and second attempt. i\'ve tried changing focus to see if that helped, but it did not
+2017-10-20T20:27:00 * clown vague memory that change events on select elements were different on different browsers.
+2017-10-20T20:27:15 <gmoss> clown: indeed. I\'m able to reproduce this issue quite reliably, in fact, and I\'ve added a test to capture it.
+2017-10-20T20:28:45 <gmoss> I\'ve also been able to reproduce this in Firefox and Chrome
+2017-10-20T20:29:12 <gmoss> I feel a bit stymied by this one
+2017-10-20T20:31:39 <clown> well, I know nothing about the gpii.binder.  But I have worked with select elements in the past, and tore out some hair in the process of getting them to work right.  I\'m still trying to remember what the tricky bits were, and looking up the basicx again.
+2017-10-20T20:32:18 <clown> *basics, where that means:  "how do you deal with select elements changeing in just plain vanilla JS"?
+2017-10-20T20:34:06 <gmoss> clown: in the interest of preventing hair loss, it would be great if you recall any of the specifics!
+2017-10-20T20:34:27 <clown> oh, it grows back.  eventually
+2017-10-20T20:34:37 <clown> and repression is a good thing from time to time.
+2017-10-20T20:35:51 * cindyli has quit
+2017-10-20T20:36:01 <clown> here\'s one thing \xe2\x80\x94 there is (was?) a difference between keyboard vs. mouse in terms of when the onchange event occurred.  Is that difference important to your case?
+2017-10-20T20:36:26 * sepidehshahi has quit
+2017-10-20T20:37:16 <gmoss> clown: let me test it out using a keyboard and see if that makes a difference. it certainly doesn\'t make a difference to jqUnit
+2017-10-20T20:37:45 <clown> Here\'s another one:  select elements are implemented as comboboxes in FireFox but as menus in Chrome and Safari.  Does that matter?
+2017-10-20T20:38:24 <gmoss> keyboard manipulation of the ui yields the same result
+2017-10-20T20:38:40 <clown> okay, it\'s not that then.
+2017-10-20T20:39:44 <gmoss> i had suspected it could be related to the modelRelays I have hooked into this component, but that still doesn\'t explain why the modelListener won\'t fire sometimes
+2017-10-20T20:39:57 <gmoss> or at least it\'s not evident to me why that would be the case
+2017-10-20T20:40:24 <clown> hence your initial question.
+'
+

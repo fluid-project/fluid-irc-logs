@@ -1,0 +1,304 @@
+b'2016-09-09T19:04:06 <simonjb> the other was somebody\'s fork
+2016-09-09T19:18:08 * clown has quit
+2016-09-09T19:18:23 * clown joined the channel
+2016-09-09T19:36:07 <avtar> fluid-everyone: if anyone is interested in trying out infusion tests using browsers hosted by saucelabs then please check out https://issues.fluidproject.org/browse/FLUID-5953
+2016-09-09T19:36:40 <avtar> i\'m hoping we can spend some time looking at these issues during next wednesday\'s community meeting
+2016-09-09T19:37:23 <avtar> but it\'ll help save time if people have run the tests themselves before the meeting
+2016-09-09T19:38:23 * sgithens joined the channel
+2016-09-09T19:40:42 * jhung joined the channel
+2016-09-09T19:45:00 * jhung has quit
+2016-09-09T19:52:22 <Bosmon> Hi there avtar
+2016-09-09T19:52:25 <Bosmon> Thanks for the report
+2016-09-09T19:52:28 <avtar> hey Bosmon
+2016-09-09T19:52:38 <Bosmon> My feeling that what is happening is that the test files are not being served to the browser over HTTP
+2016-09-09T19:52:51 <Bosmon> Hmm
+2016-09-09T19:52:54 <Bosmon> I guess this isn\'t right
+2016-09-09T19:53:03 <Bosmon> I see proper URLs in the stack frames
+2016-09-09T19:54:03 <Bosmon> The Firefox test failure doesn\'t make any sense
+2016-09-09T19:54:17 <Bosmon> Since the failure that is reported doesn\'t actually come from the test fixture which is being executed
+2016-09-09T19:54:44 <avtar> i was showing justin yesterday that unfortunately you can\'t reliably reproduce the firefox failure on every run
+2016-09-09T19:55:03 <Bosmon> Somehow it seems that there is not proper isolation between the test fixtures
+2016-09-09T19:55:12 <Bosmon> Is it possible that the test runner is trying to run them concurrently somehow?
+2016-09-09T19:55:51 <Bosmon> The test failure is actually from the previous fixture
+2016-09-09T19:55:56 <Bosmon> Renderer-test.html
+2016-09-09T19:56:05 <avtar> that\'s interesting then
+2016-09-09T19:56:12 <Bosmon> But somehow is being reported as a failure for FluidIoC-test.html
+2016-09-09T19:56:29 <Bosmon> Which I guess is not surprising if somehow the test is being killed off by the runner before it actually completes
+2016-09-09T19:57:29 <avtar> Bosmon: there\'s also this firefox test failure that justin and gtirloni were discussing yesterday https://issues.fluidproject.org/browse/FLUID-5952
+2016-09-09T19:57:33 <alanharnum> Bosmon avtar: I saw that happen previously (test failure is actually from the previous fixture) with the text to speech tests when running all-tests due to jqunit not waiting for an async callback that would execute a test before moving on to the next test group
+2016-09-09T19:57:46 <alanharnum> let me find the conversation it was discussed in
+2016-09-09T19:57:53 <avtar> that also gets reported by firefox provided by sauce labs, but again, not on every run
+2016-09-09T19:58:13 <Bosmon> avtar - the safari failure is actually similar
+2016-09-09T19:58:31 <Bosmon> This is also a failure from Renderer-test.html which is falsely reported in FluidIoC-test.html
+2016-09-09T19:58:55 <Bosmon> So I\'ve only seen these failures before when there is some kind of same origin policy failure that prevents an AJAX call from succeeding
+2016-09-09T19:59:07 <alanharnum> Bosmon avtar: convo here: https://github.com/fluid-project/infusion/pull/732#issuecomment-239905855
+2016-09-09T20:00:23 <Bosmon> The renderer tests will issue AJAX calls for both HTML and JSON files
+2016-09-09T20:00:44 <avtar> Bosmon: after seeing the sauce labs failures i also tried serving an infusion git working directory using python\'s http server and used firefox 48 running on my win10 host
+2016-09-09T20:01:10 <Bosmon> It\'s a shame that the stack traces are so completely hosed in this trace
+2016-09-09T20:01:16 <Bosmon> But I think it\'s pretty clear which test is failing
+2016-09-09T20:02:14 <Bosmon> avtar - I assume you couldn\'t reproduce the failure
+2016-09-09T20:02:33 <avtar> Bosmon: i could
+2016-09-09T20:02:36 <avtar> but not on every run
+2016-09-09T20:02:40 <Bosmon> !
+2016-09-09T20:03:06 <avtar> which is the more frustrating part :P
+2016-09-09T20:03:23 <gtirloni> same for FLUID-5952.. 2 out of 10 most of the time.
+2016-09-09T20:03:56 <alanharnum> that sounds a lot like the variable failures we\'ve seen in other circumstances when tests are using AJAX to load fixture resources
+2016-09-09T20:04:30 <alanharnum> which I believe may be connected to a similar issue to the one i linked above
+2016-09-09T20:05:04 <avtar> https://github.com/fluid-project/infusion/pull/732/commits/5ca02a86e3d6b8520f0e4623726cea0d68c57743
+2016-09-09T20:05:05 <alanharnum> which is the all-tests fixture runner not waiting for an AJAX callback or other asynchronous action before moving on to the next test fixture
+2016-09-09T20:05:07 <avtar> alanharnum: thanks for that
+2016-09-09T20:05:52 <Bosmon> I\'ve just run it 5 times in a row on FF 48 on my Windows machine without failure
+2016-09-09T20:06:01 <Bosmon> It would help if someone could get a proper stack trace from the failure
+2016-09-09T20:06:09 <Bosmon> But I think I can make a reasonable guess about what it is
+2016-09-09T20:06:48 * bens__ has quit
+2016-09-09T20:08:12 <avtar> Bosmon: i\'ll give it a shot
+2016-09-09T20:08:14 <avtar> one sec
+2016-09-09T20:08:22 <Bosmon> Thanks, avtar
+2016-09-09T20:08:29 <Bosmon> There is some real laziness in this test here: https://github.com/fluid-project/infusion/blob/master/tests/framework-tests/renderer/js/RendererTests.js#L1509
+2016-09-09T20:08:53 <Bosmon> As we now know, we have something like a 13ms window in which to finish queueing tests after the initial file load for a jqUnit sequence is complete
+2016-09-09T20:09:08 <Bosmon> This is due to the code with great bogosity inside QUnit
+2016-09-09T20:09:22 <Bosmon> So my guess is that sometimes we make this window and sometimes we don\'t
+2016-09-09T20:09:35 <Bosmon> And that we\'re more likely to miss it on VMs or other machines with slow I/O
+2016-09-09T20:10:07 <Bosmon> Thanks so much for the Infusion pull, simonjb :)
+2016-09-09T20:10:37 <simonjb> you\'re welcome Bosmon :)
+2016-09-09T20:24:18 * stegru joined the channel
+2016-09-09T20:24:51 * alanharnum has quit
+2016-09-09T20:26:30 * kavya has quit
+2016-09-09T20:29:20 * alanharn_ joined the channel
+2016-09-09T20:32:43 <simonjb> Bosmon: I just saw that we have fluid.model.composeSegments() (I missed it before) -- I should probably use that rather than doing the join(".") to convert segs to string? Or is there a better way?
+2016-09-09T20:40:52 <Bosmon> simonjb - you should, if you need to
+2016-09-09T20:40:58 * alanharn_ is now known as alanharnum
+2016-09-09T20:41:01 <Bosmon> But it\'s best to avoid composing a string at all
+2016-09-09T20:41:12 <Bosmon> Oh, this is in componentForPath
+2016-09-09T20:41:16 <Bosmon> It doesn\'t matter in that context
+2016-09-09T20:41:22 * jhung joined the channel
+2016-09-09T20:41:24 <Bosmon> Since periods in component members names are prohibited
+2016-09-09T20:41:59 <simonjb> ok, thanks -- so it\'s reasonable to just leave as is with the join(".") ?
+2016-09-09T20:42:29 <avtar> Bosmon: still trying here
+2016-09-09T20:42:41 <avtar> i could only get it to fail once so far https://gist.githubusercontent.com/anonymous/e27b2298712ac8f6462e7fd105823fe5/raw/fdd75309aefbf0b2490e2f77fef5cbd73fed7d42/gistfile1.txt
+2016-09-09T20:42:51 <Bosmon> simonjb yes, that\'s fine
+2016-09-09T20:42:57 <avtar> but i\'m trying to obtain more info
+2016-09-09T20:43:23 <Bosmon> avtar - still no useful stack trace
+2016-09-09T20:43:37 <Bosmon> I guess it is swallowed into window.onError
+2016-09-09T20:43:44 <Bosmon> I guess the browser doesn\'t have a console that you can view?
+2016-09-09T20:44:36 <avtar> i\'m trying it locally so that that\'s easier to accomplish
+2016-09-09T20:45:18 <Bosmon> ok great
+2016-09-09T20:45:21 <cindyli> Bosmon: is it possible to use kettle for in browser things such as testing?
+2016-09-09T20:45:33 <Bosmon> cindyli - it is not possible
+2016-09-09T20:45:33 * jhung has quit
+2016-09-09T20:45:35 <cindyli> seems very hard
+2016-09-09T20:45:37 <Bosmon> Since it binds to node.js primitives
+2016-09-09T20:45:41 <cindyli> ok
+2016-09-09T20:45:43 <Bosmon> What would you like to use it for?
+2016-09-09T20:45:54 <Bosmon> We can write variants of its test fixture classes that work in the browser
+2016-09-09T20:46:01 <Bosmon> That bind to $.ajax instead
+2016-09-09T20:47:30 <cindyli> Bosmon: i\'m trying to get the new data store for pouch/couch to be able to used in the browser. It\'s the base to fix all other in browser tests for the auth server. the new data store is based off these grades: https://github.com/cindyli/universal/blob/GPII-1821/gpii/node_modules/gpii-oauth2/gpii-oauth2-datastore/src/DbDataStore.js#L23
+2016-09-09T20:47:46 <cindyli> very fundamental thing
+2016-09-09T20:47:53 <cindyli> unless i can override these grades
+2016-09-09T20:48:05 <cindyli> but it will affect the whole workflow
+2016-09-09T20:48:28 <cindyli> suggestions, Bosmon?
+2016-09-09T20:48:46 <Bosmon> cindyli - yes, you could make refactored versions of these grades
+2016-09-09T20:48:55 <Bosmon> There might be a library to help you
+2016-09-09T20:49:32 <Bosmon> cindyli - for example, this one: https://github.com/substack/http-browserify
+2016-09-09T20:51:21 <cindyli> Bosmon: do i understand it correctly that the goal of using libraries like this is to be able to use kettle in browsers?
+2016-09-09T20:51:59 <Bosmon> cindyli - this wouldn\'t allow you to use much of Kettle
+2016-09-09T20:52:04 <cindyli> or do you mean I define a customized "kettle.dataSource.URL" that uses this library
+2016-09-09T20:52:06 <Bosmon> But it would let you use the HTTP testing fixtures that you want to use now
+2016-09-09T20:52:23 <Bosmon> Oh yes, and kettle.dataSource.URL
+2016-09-09T20:52:32 <Bosmon> All you would need to do is "fudge the requires" somehow
+2016-09-09T20:53:36 <cindyli> i\'ve fudged all the requires in my js files but struggling with ones from libraries as kettle
+2016-09-09T20:54:40 <cindyli> Bosmon: so i need to redefine these components: "kettle.dataSource.URL", "kettle.dataSource.CouchDB"
+2016-09-09T20:54:48 <cindyli> does that make sense tho?
+2016-09-09T20:55:04 <Bosmon> cindyli - no
+2016-09-09T20:55:11 <cindyli> lol
+2016-09-09T20:55:27 <Bosmon> The point of this library is that is masquerades as the node HTTP API that these grades depend on
+2016-09-09T20:55:39 <Bosmon> is -> it
+2016-09-09T20:55:59 <cindyli> right
+2016-09-09T20:56:16 <cindyli> but it doesn\'t help to get around the usage of "kettle.dataSource.URL", "kettle.dataSource.CouchDB"
+2016-09-09T20:58:34 * alanharnum has quit
+2016-09-09T20:59:16 <cindyli> Bosmon: i\'m thinking maybe i should simply convert in browser testing to server side testing with nodejs, which seems making more sense in this case. what do you think?
+2016-09-09T21:00:29 <Bosmon> cindyli - well, perhaps - but isn\'t the point of the testing to test the browser pouch implementation?
+2016-09-09T21:00:43 <Bosmon> cindyli - the users would continue to use kettle.dataSource.URL and kettle.dataSource.CouchDB
+2016-09-09T21:03:27 <cindyli> Bosmon: i must miss something here. still don\'t know how to get around the usage of "kettle.dataSource.URL", "kettle.dataSource.CouchDB" grades for in browser testing
+2016-09-09T21:03:41 * clown has quit
+2016-09-09T21:04:11 * jessm has quit
+2016-09-09T21:04:11 * yzen is now known as yzen_
+2016-09-09T21:04:12 <Bosmon> cindyli - take a look at the library I pasted
+2016-09-09T21:04:54 <Bosmon> cindyli - yes, we would need to fudge kettle\'s requires somehow
+2016-09-09T21:05:00 <Bosmon> Which we might just do via browserify itself
+2016-09-09T21:05:12 <Bosmon> It\'s what its designed for after all : P
+2016-09-09T21:08:42 * yzen_ has quit
+2016-09-09T21:10:17 <cindyli> seems this library is able to deal with all kinds of requires. powerful. thanks, Bosmon
+2016-09-09T21:10:39 <Bosmon> cindyli - yes, it is about time we entered the CENTURY OF THE FRUITBAT
+2016-09-09T21:11:02 <cindyli> :)
+2016-09-09T21:22:22 * simonjb has quit
+2016-09-09T21:27:26 * colinclark has quit
+2016-09-09T21:27:33 * cindyli has quit
+2016-09-09T21:32:16 * gtirloni has quit
+2016-09-09T21:38:26 * michelled has quit
+2016-09-09T21:42:03 * jhung joined the channel
+2016-09-09T21:47:07 * colinclark joined the channel
+2016-09-09T21:47:50 * colinclark has quit
+2016-09-09T21:59:48 <avtar> Bosmon: unfortunately i wasn\'t able to reproduce the issue again using the fedora vm but i\'ll try again on monday
+2016-09-09T22:05:51 * the-t-in-rtf joined the channel
+2016-09-09T22:09:39 * sgithens has quit
+2016-09-09T22:25:03 * stegru has quit
+2016-09-09T22:43:12 * jhung joined the channel
+2016-09-09T22:54:58 * amatas has quit
+2016-09-09T23:43:50 * jhung joined the channel
+2016-09-09T23:48:03 * jhung has quit
+2016-09-09T23:56:11 * sgithens joined the channel
+'
+
+b'2016-09-09T00:05:43 * Jess_ joined the channel
+2016-09-09T00:05:55 * Jess_ has quit
+2016-09-09T00:06:02 * sgithens has quit
+2016-09-09T00:38:56 * jhung joined the channel
+2016-09-09T00:43:39 * jhung has quit
+2016-09-09T01:40:07 * jhung joined the channel
+2016-09-09T01:44:28 * jhung has quit
+2016-09-09T01:55:53 * colinclark has quit
+2016-09-09T01:58:45 * colinclark joined the channel
+2016-09-09T02:39:16 * colinclark joined the channel
+2016-09-09T02:40:47 * jhung joined the channel
+2016-09-09T02:45:10 * jhung has quit
+2016-09-09T03:16:57 * sgithens joined the channel
+2016-09-09T03:41:29 * jhung joined the channel
+2016-09-09T03:46:36 * jhung has quit
+2016-09-09T03:59:33 * sgithens has quit
+2016-09-09T04:42:12 * jhung joined the channel
+2016-09-09T04:43:53 * danayo has quit
+2016-09-09T05:29:37 * jhung joined the channel
+2016-09-09T05:34:30 * jhung has quit
+2016-09-09T06:30:48 * jhung joined the channel
+2016-09-09T06:44:22 * kasparnet joined the channel
+2016-09-09T06:55:12 * amatas joined the channel
+2016-09-09T07:31:26 * jhung joined the channel
+2016-09-09T07:38:12 * stegru joined the channel
+2016-09-09T08:32:07 * jhung joined the channel
+2016-09-09T09:32:47 * jhung joined the channel
+2016-09-09T09:37:14 * jhung has quit
+2016-09-09T10:19:17 * jhernandez joined the channel
+2016-09-09T10:23:23 * the-t-in-rtf has quit
+2016-09-09T10:34:02 * jhung joined the channel
+2016-09-09T10:38:52 * jhung has quit
+2016-09-09T10:59:58 * amatas has quit
+2016-09-09T11:02:32 * amatas joined the channel
+2016-09-09T11:10:57 * the-t-in-rtf joined the channel
+2016-09-09T11:34:40 * jhung joined the channel
+2016-09-09T11:56:54 * gtirloni joined the channel
+2016-09-09T12:11:30 * michelled joined the channel
+2016-09-09T12:23:21 * michelled has quit
+2016-09-09T12:27:49 * cindyli joined the channel
+2016-09-09T12:35:21 * jhung joined the channel
+2016-09-09T12:40:03 * jhung has quit
+2016-09-09T12:48:57 * michelled joined the channel
+2016-09-09T13:11:20 * alanharnum joined the channel
+2016-09-09T13:19:21 * colinclark joined the channel
+2016-09-09T13:26:20 * jessm joined the channel
+2016-09-09T13:27:15 * kavya joined the channel
+2016-09-09T13:35:12 * yzen joined the channel
+2016-09-09T13:36:02 * jhung joined the channel
+2016-09-09T13:40:03 * jhung has quit
+2016-09-09T13:45:17 * simonjb joined the channel
+2016-09-09T13:50:41 * Yan_Hu joined the channel
+2016-09-09T14:17:00 * michelled joined the channel
+2016-09-09T14:20:37 * clown joined the channel
+2016-09-09T14:36:41 * jhung joined the channel
+2016-09-09T14:39:56 <clown> avtar, got a minute?
+2016-09-09T14:40:10 <avtar> not really :/ on a call at the moment
+2016-09-09T14:40:18 <clown> okay, later then.
+2016-09-09T14:41:11 * jhung has quit
+2016-09-09T14:50:18 * bens__ joined the channel
+2016-09-09T15:01:48 <jessm> colinclark: michelled: is there a web presence for APCP?
+2016-09-09T15:02:17 <colinclark> Just GPII.net, I think
+2016-09-09T15:03:01 * kasparnet has quit
+2016-09-09T15:15:50 * alanharnum has quit
+2016-09-09T15:18:16 <kavya> colinclark: I am testing gpii demo personas with NFC cards
+2016-09-09T15:18:38 <colinclark> cool!
+2016-09-09T15:18:42 <colinclark> how\'s it going?
+2016-09-09T15:19:11 <kavya> my system is not nfc chip reader configured...so i think i need a device something like Omnikey 3121 USB Card Reader
+2016-09-09T15:19:27 <kavya> to read token from nfc cards
+2016-09-09T15:20:31 <colinclark> yes
+2016-09-09T15:20:34 <kavya> or is there any other way i can do it?
+2016-09-09T15:20:41 * alanharnum joined the channel
+2016-09-09T15:20:56 <colinclark> I think most of us use an ACR122U
+2016-09-09T15:21:09 <colinclark> Sandra, I think, can arrange to have Gregg send you the requisite hardware
+2016-09-09T15:21:20 <colinclark> if you don\'t have a reader, you can\'t key in with the NFC, unfortunately
+2016-09-09T15:21:26 <colinclark> and most computers still don\'t come with them built-in
+2016-09-09T15:23:29 <kavya> I have ACR122u and used it to key in for example sammy..now my card is ready with token
+2016-09-09T15:25:44 <gloob> awesome, I need one of that!
+2016-09-09T15:36:03 <colinclark> kavya: so it sounds like it\'s working?
+2016-09-09T15:36:07 <colinclark> you have everything you need?
+2016-09-09T15:37:56 * jhung joined the channel
+2016-09-09T15:39:13 <kavya> Yes..so i think i can use ACR plug in to system start gpii then wave nfc card(with token sammy) on ACR. It should start sammy preferences(bring up magnifier with 200% zoom in)
+2016-09-09T15:41:03 <kavya> am i doing it right?
+2016-09-09T15:46:28 <kavya> Yes..its working fine
+2016-09-09T15:48:25 * the-t-in-rtf has quit
+2016-09-09T16:35:36 * sgithens joined the channel
+2016-09-09T16:38:38 * jhung joined the channel
+2016-09-09T16:39:56 * yzen is now known as yzen_
+2016-09-09T16:40:58 * yzen_ is now known as yzen
+2016-09-09T16:43:13 * jhung has quit
+2016-09-09T16:46:47 * clown joined the channel
+2016-09-09T17:09:19 * yzen has quit
+2016-09-09T17:15:42 * alanharnum joined the channel
+2016-09-09T17:17:32 * stegru has quit
+2016-09-09T17:28:36 * yzen joined the channel
+2016-09-09T17:39:19 * jhung joined the channel
+2016-09-09T17:43:40 * jhung has quit
+2016-09-09T17:45:22 <colinclark> kavya: Sorry, I missed this earlier\xe2\x80\x94yes, it sounds like you are doing it right!
+2016-09-09T17:46:22 <kavya> thanks colin :)
+2016-09-09T17:53:31 <cindyli> hi Bosmon
+2016-09-09T18:08:15 * gtirloni has quit
+2016-09-09T18:14:46 * alanharnum joined the channel
+2016-09-09T18:15:27 * the-t-in-rtf joined the channel
+2016-09-09T18:28:08 <avtar> clown: ping
+2016-09-09T18:28:26 <clown> avtar: pong
+2016-09-09T18:28:30 <clown> I solved it.
+2016-09-09T18:28:35 <clown> you are no longer needed.
+2016-09-09T18:28:39 <clown> ;-)
+2016-09-09T18:28:40 <avtar> ah ok
+2016-09-09T18:28:46 <avtar> glad to be of service :D
+2016-09-09T18:28:48 * simonjb has quit
+2016-09-09T18:28:55 <clown> turns out I had a too-old version of vagrant.
+2016-09-09T18:29:39 <clown> thanks anyway, avtar.
+2016-09-09T18:29:48 <avtar> you\'re very welcome
+2016-09-09T18:30:51 * sgithens has quit
+2016-09-09T18:32:22 * simonjb joined the channel
+2016-09-09T18:34:48 <simonjb> cindyli: I\'m trying to run docpad locally for infusion-docs but getting an error: getaddrinfo ENOTFOUND <my hostname>
+2016-09-09T18:34:53 <simonjb> have you seen that before?
+2016-09-09T18:35:27 <cindyli> simonjb: did you clone the infusion-docs repo as the "original"
+2016-09-09T18:35:42 <cindyli> no
+2016-09-09T18:35:56 <cindyli> you don\'t need that for running docpad locally
+2016-09-09T18:36:15 <cindyli> give a try
+2016-09-09T18:36:34 <simonjb> when I execute \'npm run docpad\' I get the above error
+2016-09-09T18:39:46 * Yan_Hu has quit
+2016-09-09T18:39:59 * jhung joined the channel
+2016-09-09T18:41:45 <simonjb> maybe I need to add my hostname to /etc/hosts :(
+2016-09-09T18:42:51 * Yan_Hu joined the channel
+2016-09-09T18:44:20 <cindyli> simonjb: it works fine for me. didn\'t see the error. also try removing node_modules/ before starting the first command
+2016-09-09T18:45:00 <cindyli> I hit errors at the "npm install" step with the old node_modules/ content
+2016-09-09T18:45:30 <cindyli> i think due to the upgrade of the node version
+2016-09-09T18:45:52 <simonjb> I did a fresh checkout and no errors at npm install (I think)
+2016-09-09T18:49:13 <cindyli> ah ok
+2016-09-09T18:50:41 <simonjb> thanks cindyli I will keep digging
+2016-09-09T18:52:06 <cindyli> sorry, no help :(
+2016-09-09T18:55:17 <cindyli> simonjb: what was the host name you received "not found" error? mine is http://127.0.0.1, which is localhost, curious how could that be not found
+2016-09-09T18:55:39 <simonjb> it\'s the hostname of my computer
+2016-09-09T18:56:01 <cindyli> ok
+2016-09-09T18:56:13 <simonjb> I enabled debugging and it looks like it\'s trying to run a server bound to my hostname rather than localhost or 127.0.0.1
+2016-09-09T18:56:44 <simonjb> and presumably does a DNS lookup that fails
+2016-09-09T18:59:00 <cindyli> interesting that it uses ur hostname
+2016-09-09T18:59:27 * Yan_Hu has quit
+2016-09-09T18:59:51 <simonjb> cindyli: ok, found it
+2016-09-09T18:59:53 <simonjb> https://github.com/radiodario/docpad/blob/master/src/lib/docpad.coffee#L1082
+2016-09-09T19:00:11 <simonjb> I have a HOSTNAME env var set and it\'s using that
+2016-09-09T19:00:36 <simonjb> if I override the HOSTNAME var it works: HOSTNAME=localhost docpad run...
+2016-09-09T19:01:29 <cindyli> yay! great u figured out
+2016-09-09T19:01:35 <simonjb> thanks cindyli
+2016-09-09T19:01:40 <cindyli> anytime
+2016-09-09T19:03:49 * gtirloni joined the channel
+2016-09-09T19:03:50 <simonjb> better link: https://github.com/docpad/docpad/blob/master/src/lib/docpad.coffee#L1775
+'
+

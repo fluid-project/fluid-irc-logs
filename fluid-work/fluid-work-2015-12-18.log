@@ -1,0 +1,247 @@
+b'2015-12-18T17:25:33 * clown joined the channel
+2015-12-18T17:31:06 <bens__> alanharnum, i\'ve updated readme.md with some specifics for running on bluemix here: https://github.com/pga03/docker-preferences-server
+2015-12-18T17:32:04 <bens__> and if you diff that against gpii-ops/docker-preferences-server you will see all changes.. but i\'ll describe a few of them here
+2015-12-18T17:32:06 * cindyli joined the channel
+2015-12-18T17:32:27 <alanharnum> bens__: thanks - i\'m quite curious
+2015-12-18T17:34:51 <bens__> alanharnum: COUCHDB_HOST environment variable became CLOUDANT_HOST and needs to be of the format https://user:pass@host.com. When you provision a cloudant service in bluemix you get a URL of this form and that is what you should use for the environment variable value. The protocol is specified in the URL and the port is omitted, so we changed the sed substitution in start.sh to accomodate that
+2015-12-18T17:36:05 * anastasiac joined the channel
+2015-12-18T17:39:15 <bens__> there were two issues that caused start.sh to abend because of the -e flag for /bin/sh: 1) bluemix has an issue connecting networking to the containers quickly. we worked around it by calling wait_for_networking.sh in a separate bash script so that curl exit codes other than 0 won\'t trigger the -e flag in start.sh. # Reference: https://developer.ibm.com/answers/questions/183427/calling-out-to-the-internet-from-a-docker-containe/?smartspace=bluemix. The sec
+2015-12-18T17:39:16 <bens__> ond is that some of the test preference files could not be uploaded by kanso in the prime db logic. It seems they were not valid JSON and kanso had parse errors on a few but not all of them. The real fix there is to figure out the parse issue  but in the meantime I moved that to prime_db.sh so we can prime the database but ignore the couple of test file upload errors.
+2015-12-18T17:43:32 <alanharnum> bens__: yeah there are some issues with some of the test files - i don\'t know if it\'s helpful but you might find https://github.com/waharnum/docker-preferences-server-data-loader interesting
+2015-12-18T17:44:17 <alanharnum> that\'s a sidekick container I use to load the test data in the reconfiguration I\'m working on, which splits out the preferences server container itself from the test data loading
+2015-12-18T17:45:32 <bens__> alanharnum: i\'m still investigating this one, but the preferences server had error logs at first that it did not have permissions to access the cloudant user database. This might be a material difference between cloudant and couchdb. the short term fix was to add reader/writer permission for all in cloudant but of course that is not a real fix
+2015-12-18T18:04:30 * alanharnum has quit
+2015-12-18T18:06:01 <Justin_o> anastasiac: how did you mock up the environment variable in the description column
+2015-12-18T18:06:44 <anastasiac> justin, I just added the env var to the description (\xe2\x80\x9cMaps to the XXX environment variable\xe2\x80\x9d) and put the example in a column
+2015-12-18T18:06:49 <anastasiac> Justin_o: ^
+2015-12-18T18:07:03 <anastasiac> I don\xe2\x80\x99t know if \xe2\x80\x9cMaps to\xe2\x80\xa6\xe2\x80\x9d is the right phrasing, but...
+2015-12-18T18:15:11 <Justin_o> anastasiac: i\'m not sure, it seems that the key piece of information there is the environment variable, as this is what an integrator will need to set
+2015-12-18T18:15:16 <Justin_o> i\'d like to make sure that it\'s obvious
+2015-12-18T18:15:50 <anastasiac> Justin_o: how about adding it to the Option Path column?
+2015-12-18T18:15:53 <anastasiac> it\xe2\x80\x99s just so wide
+2015-12-18T18:16:07 <anastasiac> I\xe2\x80\x99m trying to add it to another already wide column
+2015-12-18T18:16:15 <anastasiac> the only other option is to not use a table
+2015-12-18T18:20:03 <Justin_o> anastasiac: what were you thinking of for the no table version?
+2015-12-18T18:20:35 * alanharnum joined the channel
+2015-12-18T18:22:22 <Justin_o> anastasiac: i could also just remove the "Option Path" column form the environment table
+2015-12-18T18:22:48 <Justin_o> anastasiac: someone would have to look things up in the actual config file though, and it wouldn\'t quite match the other config tables
+2015-12-18T18:27:57 * anastasiac has quit
+2015-12-18T18:28:13 * anastasiac joined the channel
+2015-12-18T18:36:46 <anastasiac> Justin_o: I don\xe2\x80\x99t think it makes sense to remove that info
+2015-12-18T18:43:40 * michelled joined the channel
+2015-12-18T18:43:58 * gtirloni_ joined the channel
+2015-12-18T18:46:31 * michelled joined the channel
+2015-12-18T18:46:56 <Justin_o> anastasiac: i just put up a new version, please let me know what you think of the table
+2015-12-18T18:47:05 <Justin_o> it puts the options path and example under the description
+2015-12-18T18:47:07 <anastasiac> thanks, Justin_o, I\xe2\x80\x99ll have a look
+2015-12-18T18:47:14 <Justin_o> anastasiac: thanks
+2015-12-18T18:57:35 <anastasiac> Justin_o: I think this new table works. It\xe2\x80\x99s not ideal (because it\xe2\x80\x99s different than the other two tables), but it\xe2\x80\x99s completely understandable.
+2015-12-18T18:57:46 <anastasiac> Justin_o: did you address the other comments?
+2015-12-18T18:58:35 <anastasiac> ah, looks like it...
+2015-12-18T19:04:41 * cindyli has quit
+2015-12-18T19:08:26 * cindyli joined the channel
+2015-12-18T19:19:11 <Justin_o> anastasiac: thanks for signing off on the docs
+2015-12-18T19:19:17 <Justin_o> i\'m going to head offline now
+2015-12-18T19:19:21 <anastasiac> Justin_o: thanks for writing them!
+2015-12-18T19:19:26 <anastasiac> have a great holiday, Justin_o
+2015-12-18T19:19:47 <Justin_o> anastasiac: thanks, you too :)
+2015-12-18T19:21:43 <colinclark> have a relaly good holiday, Justin_o!
+2015-12-18T19:21:51 <colinclark> really good, too :)
+2015-12-18T19:24:23 <bens__> Justin_o: happy holidays!
+2015-12-18T19:27:35 * sepidehshahi has quit
+2015-12-18T19:37:56 <alanharnum> Justin_o: happy holidays - see you in the new year
+2015-12-18T19:40:23 * gtirloni_ has quit
+2015-12-18T19:55:38 * zamcnema has quit
+2015-12-18T20:06:46 * Yan_Hu has quit
+2015-12-18T20:24:46 * clown joined the channel
+2015-12-18T20:27:26 * anastasiac has quit
+2015-12-18T20:28:12 * anastasiac joined the channel
+2015-12-18T20:29:11 * yzen joined the channel
+2015-12-18T21:04:08 * anvk has quit
+2015-12-18T21:24:26 * Jess_ joined the channel
+2015-12-18T21:27:30 * Justin_o has quit
+2015-12-18T21:29:31 * alanharnum has quit
+2015-12-18T21:30:11 * alanharnum joined the channel
+2015-12-18T21:30:34 * alanharnum joined the channel
+2015-12-18T21:34:37 * alanharn_ joined the channel
+2015-12-18T21:36:30 <anastasiac> Happy BIrthday tomorrow, colinclark!
+2015-12-18T21:38:05 <colinclark> oh, thanks so much, anastasiac!
+2015-12-18T21:39:25 <clown> 29 again, colinclark?
+2015-12-18T21:39:34 <clown> best wishes.
+2015-12-18T21:39:40 <colinclark> clown: It\'s like groundhog day
+2015-12-18T21:39:50 <colinclark> I keep turning 29 over and over again
+2015-12-18T21:40:17 <colinclark> have a really great holiday, clown
+2015-12-18T21:40:22 <colinclark> and also you, anastasiac
+2015-12-18T21:40:46 <clown> thanks, colinclark
+2015-12-18T21:41:44 <bens__> colinclark, happy birthday. my favorite line from groundhog day: "well, my father was a piano mover, so..."
+2015-12-18T21:42:13 <colinclark> bens__: Thanks, man!
+2015-12-18T21:42:21 <colinclark> such a great movie :) :)
+2015-12-18T21:43:28 <alanharn_> happy birthday colinclark!
+2015-12-18T21:43:51 <colinclark> thanks, alanharnum
+2015-12-18T21:44:00 <colinclark> hey alanharnum, have you met Johnny Taylor before?
+2015-12-18T21:44:17 <alanharnum> colinclark: no, but michelled showed me his blog recently
+2015-12-18T21:44:21 <colinclark> oh cool
+2015-12-18T21:44:30 <colinclark> I was just going to suggest that you might dig him
+2015-12-18T21:44:39 <alanharnum> colinclark: this is your birthday cake imo http://giantbattlingrobots.blogspot.ca/2012/03/battletech-cake.html
+2015-12-18T21:45:00 <alanharnum> colinclark: yeah it\'s good stuff
+2015-12-18T21:45:05 <colinclark> zomg, alanharnum
+2015-12-18T21:45:16 <colinclark> that would be the best
+2015-12-18T21:57:04 * yzen is now known as yzen_
+2015-12-18T21:57:44 * bens__ has quit
+2015-12-18T22:02:15 * yzen_ has quit
+2015-12-18T22:07:14 * colinclark has quit
+2015-12-18T22:32:37 * michelled has quit
+'
+
+b'2015-12-18T00:17:28 * cindyli joined the channel
+2015-12-18T00:21:47 * jhernandez joined the channel
+2015-12-18T00:25:17 <cindyli> hi Bosmon
+2015-12-18T00:26:16 <Bosmon> Hi there cindyli
+2015-12-18T00:26:19 <Bosmon> Working very late? : P
+2015-12-18T00:26:28 <cindyli> 7:26pm
+2015-12-18T00:26:41 <cindyli> not very late. u r the one who works really late
+2015-12-18T00:27:08 <cindyli> i\'m using IoC testing framework to write some unit tests
+2015-12-18T00:27:40 <cindyli> at the component instantiation, the component has an ajax call to set a model value
+2015-12-18T00:28:22 <cindyli> i don\'t care the value that\'s set since it\'s in a subcomponent that\'s tested by another unit test
+2015-12-18T00:29:57 <cindyli> however, the change of the model value in the subcomponent triggers the model relay to the parent component, but at then, the test has finished which causes an error to be thrown because the parent component has been destroyed by the testing framework
+2015-12-18T00:30:07 <Bosmon> cindyli - yes, that is quite a familiar issue
+2015-12-18T00:30:23 <Bosmon> The traditional scheme is to guard the interior of the listener by using a "fluid.isDestroyed()" test
+2015-12-18T00:30:33 <Bosmon> It\'s a bit messy and we will improve this kind of thing in the future framework
+2015-12-18T00:31:03 <Bosmon> Right now the only thing which it automatically guarded is the interior of standard event listeners
+2015-12-18T00:31:14 <Bosmon> That is, any event listener notified after component destruction is automatically nulled
+2015-12-18T00:31:37 <Bosmon> But that leaves two major sources of component behaviour which are not guarded - i) interior of invokers, ii) model listeners and relay
+2015-12-18T00:32:59 <Bosmon> In case you are interested in more of the background, here are some relevant JIRAs which you might read:
+2015-12-18T00:33:00 <Bosmon> https://issues.fluidproject.org/browse/FLUID-5333
+2015-12-18T00:33:28 <Bosmon> https://issues.fluidproject.org/browse/FLUID-5592
+2015-12-18T00:34:19 <Bosmon> Actually 5592 suggests that this issue should be solved already
+2015-12-18T00:34:21 <cindyli> very relevant indeed
+2015-12-18T00:34:29 <Bosmon> I see that you merged in the fix yourself : P
+2015-12-18T00:34:49 <Bosmon> cindyli - it would be useful if you could create a branch with the current state of your work so I can investigate it later
+2015-12-18T00:35:00 <Bosmon> In the meantime you can apply the "isDestroyed" workaround
+2015-12-18T00:35:35 <Bosmon> And https://issues.fluidproject.org/browse/FLUID-5578 has some more wandering strategic thinking
+2015-12-18T00:36:06 <Bosmon> The more time passes, the more I am convinced that we should just implement UNIVERSAL ABORTABILITY
+2015-12-18T00:36:35 <Bosmon> Although this requires some improvements to our promises implementation as well - since these are being used more and more, they are yet another source of "potentially abortable behaviour"
+2015-12-18T00:37:33 <Bosmon> YOu will notice that whilst some promises libraries support "cancellation" or "aborting", this is not standard or widespread: https://esdiscuss.org/topic/cancelable-promises
+2015-12-18T00:38:03 <Bosmon> So in your case the ideal would be for the underlying AJAX request to be cancelled as well - that is, whilst it is still in-flight, to ensure it never resolves
+2015-12-18T00:38:04 <cindyli> i\'m reading the fix merged to resolve 5592
+2015-12-18T00:38:12 <Bosmon> Which our future framework will also support : P
+2015-12-18T00:39:32 <Bosmon> cindyli - here you can see an example of this kind of workaround in the main GPII:
+2015-12-18T00:39:32 <Bosmon> https://github.com/amb26/universal/blob/GPII-1318/gpii/node_modules/deviceReporter/src/DeviceReporter.js#L107
+2015-12-18T00:39:54 <Bosmon> It\'s probably the simplest and most direct solution but it is a bit of a mess
+2015-12-18T00:40:24 <Bosmon> Ah wow, here we go - this is the JIRA for NULLABLE PROMISES:
+2015-12-18T00:40:25 <Bosmon> https://issues.fluidproject.org/browse/FLUID-5790
+2015-12-18T00:42:26 <cindyli> NULLABLE PROMISE is a very cool idea
+2015-12-18T00:42:51 <cindyli> so, for now, i only set the model value if the component itself hasn\'t been destroyed
+2015-12-18T00:43:06 <cindyli> trying...
+2015-12-18T00:43:10 <cindyli> what time is it over there
+2015-12-18T00:47:11 <Bosmon> A bit after midnight
+2015-12-18T00:49:14 * jhung joined the channel
+2015-12-18T00:49:25 * jhung has quit
+2015-12-18T01:02:51 <cindyli> you really should go to bed. i will stop bothering you. leave more questions to tomorrow
+2015-12-18T01:02:56 <cindyli> good night
+2015-12-18T01:05:18 <cindyli> certainly. will do, Bosmon
+2015-12-18T01:05:44 <cindyli> i mean to save my current state of the work
+2015-12-18T01:05:49 <Bosmon> cindyli - awesome
+2015-12-18T01:05:50 <cindyli> and continue...
+2015-12-18T01:05:56 <Bosmon> Did the workaround manage to resolve your immediate problem?
+2015-12-18T01:07:00 <cindyli> not for now. i added the workaround to the ajax that i thought causing the problem. but still have the error reported
+2015-12-18T01:07:08 <cindyli> of course, i have more than one ajax calls
+2015-12-18T01:07:20 <cindyli> will continue to play with it
+2015-12-18T01:07:34 <cindyli> you better go to bed
+2015-12-18T01:07:44 <Bosmon> cindyli - what are your AJAX calls fetching?
+2015-12-18T01:07:57 <Bosmon> Are you still working on the privacy UI for review4?
+2015-12-18T01:08:04 <Bosmon> I wonder if you managed to contact kasparnet today
+2015-12-18T01:08:06 <cindyli> it fetches available preference sets
+2015-12-18T01:08:32 <cindyli> no, i didn\'t contact kasper afterwards
+2015-12-18T01:08:42 <cindyli> will do it tomorrow
+2015-12-18T01:09:10 <cindyli> yes, the privacy UI for review4
+2015-12-18T01:10:14 * jhernandez has quit
+2015-12-18T01:11:07 * jhernandez joined the channel
+2015-12-18T01:31:12 * jhernandez has quit
+2015-12-18T01:32:57 * jhernandez joined the channel
+2015-12-18T01:37:47 * jhernandez has quit
+2015-12-18T01:37:57 <cindyli> Bosmon: just wanna share this good news with you. the problem is solved by taking care of a couple of ajax call back using a combination of event firing and fluid.isDestoyed(). thanks for ur always wonderful help. Cheers!!!
+2015-12-18T01:38:45 <Bosmon> cindyli - cool, glad we can have at least some kind of fix
+2015-12-18T01:38:51 <Bosmon> We can work on trying to clean it up a bit tomorrow
+2015-12-18T01:38:54 <cindyli> YAY!
+2015-12-18T01:59:53 * bens_ joined the channel
+2015-12-18T02:51:58 * jhung joined the channel
+2015-12-18T02:52:09 * jhung has quit
+2015-12-18T03:49:54 * bens_ has quit
+2015-12-18T04:27:09 * yzen joined the channel
+2015-12-18T04:54:42 * jhung joined the channel
+2015-12-18T05:31:32 * anvk has quit
+2015-12-18T05:32:23 * anvk joined the channel
+2015-12-18T06:19:00 * yzen is now known as yzen_
+2015-12-18T06:23:26 * yzen_ has quit
+2015-12-18T06:50:32 * amatas joined the channel
+2015-12-18T07:05:08 * the-t-in-rtf joined the channel
+2015-12-18T07:22:03 * the-t-in-rtf has quit
+2015-12-18T07:33:55 * jhernandez joined the channel
+2015-12-18T09:23:54 * the-t-in-rtf joined the channel
+2015-12-18T09:37:40 * the-t-in-rtf has quit
+2015-12-18T09:56:42 * the-t-in-rtf joined the channel
+2015-12-18T11:03:31 * the-t-in-rtf has quit
+2015-12-18T11:12:06 * the-t-in-rtf joined the channel
+2015-12-18T12:12:15 * Justin_o joined the channel
+2015-12-18T12:16:59 * sepidehshahi joined the channel
+2015-12-18T12:18:13 * the-t-in-rtf has quit
+2015-12-18T12:43:05 * cindyli joined the channel
+2015-12-18T12:43:26 * cindyli1 joined the channel
+2015-12-18T13:03:39 * jhung joined the channel
+2015-12-18T13:03:39 * jhung has quit
+2015-12-18T13:28:11 * jhung joined the channel
+2015-12-18T13:38:13 * zamcnema joined the channel
+2015-12-18T13:45:42 * bens__ joined the channel
+2015-12-18T13:58:55 * michelled joined the channel
+2015-12-18T13:59:35 * anastasiac joined the channel
+2015-12-18T14:32:19 * alanharnum joined the channel
+2015-12-18T14:35:52 * sepidehshahi has quit
+2015-12-18T14:37:00 * sepidehshahi joined the channel
+2015-12-18T14:42:47 * yzen joined the channel
+2015-12-18T14:53:12 * jhung is now known as jhung_away
+2015-12-18T14:54:30 * colinclark joined the channel
+2015-12-18T14:55:44 * anastasiac joined the channel
+2015-12-18T14:55:58 * clown joined the channel
+2015-12-18T15:00:00 <Justin_o> colinclark, anastasiac: are we still planning on having the 10am checkin meeting this coming tuesday?
+2015-12-18T15:00:16 <anastasiac> I\xe2\x80\x99m going to be on vacation
+2015-12-18T15:00:25 <colinclark> for whoever is around, yes, Justin_o
+2015-12-18T15:00:36 <Justin_o> colinclark: okay
+2015-12-18T15:06:23 <Justin_o> anastasiac: could you take a look at https://github.com/GPII/docs-first-discovery/pull/3 again
+2015-12-18T15:06:33 <Justin_o> I think I\'ve addressed all of your comments
+2015-12-18T15:06:33 <anastasiac> will do, Justin_o
+2015-12-18T15:06:36 <Justin_o> anastasiac: thanks
+2015-12-18T15:06:45 <anastasiac> the code was merged, right Justin_o?
+2015-12-18T15:07:04 <Justin_o> anastasiac: i made a change to the table, but it\'s still a bit large, let me know if you have some more suggestions on it..
+2015-12-18T15:07:10 <Justin_o> anastasiac: yes, the code was merged
+2015-12-18T15:07:15 <Justin_o> last night
+2015-12-18T15:14:44 <bens__> anastasiac, Justin_o, regarding updating the infusion version in the first discovery tool: it looks like a custom build of infusion is bundled with the FDT at https://github.com/GPII/first-discovery/tree/master/src/lib/infusion. In order to upgrade I think we need to create a new infusion package using the instructions at https://github.com/fluid-project/infusion. And the custom build options for the First Discovery Tool\'s infusion package are documented a
+2015-12-18T15:14:44 <bens__> t https://github.com/GPII/first-discovery/blob/master/src/lib/infusion/VERSION.md
+2015-12-18T15:15:14 <Justin_o> bens__: yes, that\'s correct
+2015-12-18T15:16:43 <Justin_o> bens__: the VERSION.md file isn\'t generated by the Infusion build, so you\'ll want to keep that and update it as necessary (probably just the commit hash)
+2015-12-18T15:20:56 <bens__> good to know. there is also the testing framework from infusion at tests/lib/infusion that needs to be updated.. that looks like more of a file copy rather than building an infusion package
+2015-12-18T15:30:57 <bens__> all, we\'re going to have a short demo at the end of our PGA stand up today. The demo will include instances of a First Discovery Tool (not server) and a Preferences Editor talking with a docker-preferences-server container group which uses a Cloudant service in place of CouchDB. If you\'re interested, the demo will start around 12:10 PM EST and you can join via Zoom at https://zoom.us/j/3935010675
+2015-12-18T15:36:07 <Justin_o> bens__: yes, the tests are a file copy. The tests are not included in custom builds.
+2015-12-18T15:38:11 <Justin_o> fluid-everyone: ^^
+2015-12-18T15:38:28 <Justin_o> bens__: thanks for the invite, I\'m working short day today, but i\'ll try to make it.
+2015-12-18T15:38:38 <bens__> Justin_o: so its essentially for any file at https://github.com/GPII/first-discovery/tree/master/tests/lib/infusion, overwrite it with the same file from https://github.com/fluid-project/infusion/tree/master/tests
+2015-12-18T15:38:47 <gtirloni> bens__: thanks! will be there
+2015-12-18T15:39:48 <alanharnum> bens__: thanks - i should be able to pop in.
+2015-12-18T15:40:33 <Justin_o> bens__: yes, pretty much. I usually delete all the old ones to make sure that if something was removed it doesn\'t linger. Usually there aren\'t too many changes though. so you might find that there is nothing different
+2015-12-18T15:42:57 * Yan_Hu joined the channel
+2015-12-18T15:48:55 * jhung_away is now known as jhung
+2015-12-18T15:55:17 <anastasiac> Justin_o: regarding that table in the FD server docs. I think the table will fit a lot better if the env var itself is included either in the option path column or in the description column. I tried mocking it up in the description column, and it looks pretty reasonable.
+2015-12-18T16:00:57 <anastasiac> Justin_o: did you deploy your GPII-1337 docs branch to your github io?
+2015-12-18T16:14:40 * Jess_ joined the channel
+2015-12-18T16:26:28 * jhung1 joined the channel
+2015-12-18T16:26:28 * jhung has quit
+2015-12-18T16:31:39 * jhung1 joined the channel
+2015-12-18T16:32:38 * alanharnum has quit
+2015-12-18T16:35:20 * jhung has quit
+2015-12-18T16:42:01 * anastasiac has quit
+2015-12-18T16:45:54 * anastasiac joined the channel
+2015-12-18T16:46:00 * alanharnum joined the channel
+2015-12-18T17:14:02 <Justin_o> colinclark, Bosmon, gtirloni, alanharnum: if you\'re interested the demo from the PGA team is happening now https://zoom.us/j/3935010675
+2015-12-18T17:14:52 <alanharnum> so along with configuring cloudBasedUrls, need to configure authServerUrls.preferencesPost
+'
+

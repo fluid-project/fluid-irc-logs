@@ -1,0 +1,145 @@
+b'2018-09-06T00:13:15 * cindyli joined the channel
+2018-09-06T00:13:30 * cindyli has quit
+2018-09-06T00:34:35 * colinclark has quit
+2018-09-06T08:23:48 <the-t-in-rtf> @javjarfer[m] (or anyone, really), when is the last time you tested with ReadWriteGold?
+2018-09-06T08:24:26 <the-t-in-rtf> I am looking at its solutions registry entry by comparison with the JAWS entry, and just want to make sure I\'m comparing rotten apples and fresh oranges.
+2018-09-06T08:26:00 <the-t-in-rtf> Specifically, I\'m trying to figure out this error:
+2018-09-06T08:26:01 <the-t-in-rtf> https://www.pastiebin.com/5b90e48c81793
+2018-09-06T08:26:08 <the-t-in-rtf> "file" argument must be a non-empty string.
+2018-09-06T08:26:32 <the-t-in-rtf> I\'ll pump up the logging to get more details, but it would help to know which (if any) solutions entries have been recently verified working.
+2018-09-06T08:44:16 <the-t-in-rtf> Turns out, it\'s what @stegru and I started discussing yesterday.
+2018-09-06T08:44:33 <the-t-in-rtf> i.e.this entry doesn\'t resolve:
+2018-09-06T08:44:34 <the-t-in-rtf> "command": "\\"${{registry}.HKEY_LOCAL_MACHINE\\\\SOFTWARE\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\App Paths\\\\JAWS2018.exe\\\\}\\""
+2018-09-06T08:45:02 <the-t-in-rtf> It ends up in the logs as: "command": undefined
+2018-09-06T08:45:43 <the-t-in-rtf> I assume someone has tested an entry that uses the registry resolver recently?
+2018-09-06T08:59:39 * dandimitrov joined the channel
+2018-09-06T09:01:11 * dandimitrov has quit
+2018-09-06T09:01:47 * stegru has quit
+2018-09-06T09:05:31 <the-t-in-rtf> Does anyone know a preference set that uses ReadWriteGold that\'s verified working recently?
+2018-09-06T09:05:45 <the-t-in-rtf> i.e. one in universal/testData, like andrei.json?
+2018-09-06T09:06:22 <the-t-in-rtf> https://github.com/GPII/universal/blob/master/testData/preferences/andrei.json5#L8
+2018-09-06T09:14:23 <the-t-in-rtf> andrei seems to work at least for narrator.
+2018-09-06T09:17:08 <the-t-in-rtf> Although it never seems to try anything with RWG.
+2018-09-06T09:19:11 * colinclark joined the channel
+2018-09-06T09:21:17 <the-t-in-rtf> The language setting uses the registry resolver, and catalina.json5 can log in in master.
+2018-09-06T09:21:20 <the-t-in-rtf> trying now with my branch.
+2018-09-06T09:53:44 <the-t-in-rtf> AHA.
+2018-09-06T09:53:53 <the-t-in-rtf> andrei has the same error in my branch.
+2018-09-06T09:54:02 * colinclark joined the channel
+2018-09-06T09:54:42 <the-t-in-rtf> so it\'s the context in which you use the registry resolver that matters
+2018-09-06T09:54:46 <the-t-in-rtf> or at least if it fails for setting language it\'s a silent error.
+2018-09-06T10:02:26 * stegru joined the channel
+2018-09-06T10:04:42 <stegru> the-t-in-rtf, I\'ve used the registry resolver recently, and I think it\'s ok
+2018-09-06T10:04:54 <the-t-in-rtf> Yes, it\'s fine in master.
+2018-09-06T10:05:02 <the-t-in-rtf> I need to understand why it doesn\'t work in my branch.
+2018-09-06T10:05:12 <the-t-in-rtf> I\'m going back to the pull now and looking at the diffs.
+2018-09-06T10:05:23 <stegru> try it without the \'\\\\\' near the end?
+2018-09-06T10:05:37 <stegru> JAWS2018.exe}\\""
+2018-09-06T10:05:40 <the-t-in-rtf> already did that
+2018-09-06T10:05:48 <the-t-in-rtf> it was a good suggestion but didn\'t help.
+2018-09-06T10:05:51 <stegru> does the registry key exist?
+2018-09-06T10:06:01 <the-t-in-rtf> no.
+2018-09-06T10:06:21 <the-t-in-rtf> but it doesn\'t in the VM I created for master either.
+2018-09-06T10:06:26 <the-t-in-rtf> and that doesn\'t crash.
+2018-09-06T10:06:31 <stegru> oh, right
+2018-09-06T10:06:58 <stegru> I would expect it to crash always
+2018-09-06T10:13:51 <stegru> it crashes for me
+2018-09-06T10:13:58 * colinclark has quit
+2018-09-06T10:20:15 <the-t-in-rtf> are you in master, or using something with your INI fix?
+2018-09-06T10:20:56 <the-t-in-rtf> also, where are you running gpii.js from?
+2018-09-06T10:24:34 <stegru> i\'m in your 2225, and (almost) windows master
+2018-09-06T10:25:36 <the-t-in-rtf> and are you running from c:/vagrant or v:/?
+2018-09-06T10:26:05 <the-t-in-rtf> Anyway, it\'s a short day, can we do a screen share together tomorrow say at around 11:00?
+2018-09-06T10:26:06 <stegru> c:vagrant
+2018-09-06T10:26:12 <stegru> yes
+2018-09-06T10:26:15 <the-t-in-rtf> oh, I thought I liked you.
+2018-09-06T10:26:17 <the-t-in-rtf> v:/
+2018-09-06T10:26:20 <the-t-in-rtf> v:
+2018-09-06T10:26:22 <the-t-in-rtf> always v:
+2018-09-06T10:26:37 <the-t-in-rtf> Anyway, we can try that and many other things tomorrow.
+2018-09-06T10:26:44 <the-t-in-rtf> Thanks in advance for your continued help.
+2018-09-06T10:26:48 <stegru> yes, that\'s ok
+2018-09-06T10:27:54 * colinclark joined the channel
+2018-09-06T11:05:37 * Justin_o joined the channel
+2018-09-06T11:11:30 * alanharnum joined the channel
+2018-09-06T11:37:38 * dandimitrov joined the channel
+2018-09-06T11:38:42 * dandimitrov has quit
+2018-09-06T11:42:32 * dandimitrov joined the channel
+2018-09-06T11:43:48 * Bosmon has quit
+2018-09-06T11:55:51 * dandimitrov has quit
+2018-09-06T12:18:46 * colinclark has quit
+2018-09-06T12:35:12 * alanharnum has quit
+2018-09-06T12:37:00 * colinclark joined the channel
+2018-09-06T12:52:25 * cindyli joined the channel
+2018-09-06T13:40:22 * g2szeto joined the channel
+2018-09-06T13:49:58 * alanharnum joined the channel
+2018-09-06T14:03:04 * colinclark has quit
+2018-09-06T14:03:34 * colinclark joined the channel
+2018-09-06T14:15:31 * colinclark has quit
+2018-09-06T14:22:59 * colinclark joined the channel
+2018-09-06T14:25:15 * colinclark has quit
+2018-09-06T14:46:14 * avtar joined the channel
+2018-09-06T14:54:34 * stegru has quit
+2018-09-06T14:55:39 * michelled joined the channel
+2018-09-06T14:57:05 * jhung joined the channel
+2018-09-06T14:58:55 * stegru joined the channel
+2018-09-06T15:02:06 * colinclark joined the channel
+2018-09-06T15:52:39 * clown joined the channel
+2018-09-06T16:02:38 * colinclark has quit
+2018-09-06T16:11:13 * colinclark joined the channel
+2018-09-06T16:19:46 * colinclark has quit
+2018-09-06T16:21:21 * colinclark joined the channel
+2018-09-06T16:22:46 * colinclark has quit
+2018-09-06T16:24:39 * colinclark joined the channel
+2018-09-06T16:32:21 * colinclark has quit
+2018-09-06T16:32:58 * colinclark joined the channel
+2018-09-06T16:35:45 * alanharnum has quit
+2018-09-06T16:42:18 * alanharnum joined the channel
+2018-09-06T16:48:30 * alanharnum has quit
+2018-09-06T16:52:44 * michelled has quit
+2018-09-06T16:56:11 * colinclark has quit
+2018-09-06T17:04:08 * avtar has quit
+2018-09-06T17:06:18 * g2szeto has quit
+2018-09-06T17:13:29 * michelled joined the channel
+2018-09-06T17:13:45 * alanharnum joined the channel
+2018-09-06T17:41:09 * jessm joined the channel
+2018-09-06T18:05:55 * colinclark joined the channel
+2018-09-06T18:06:09 * colinclark has quit
+2018-09-06T18:06:39 * alanharnum has quit
+2018-09-06T18:07:35 * colinclark joined the channel
+2018-09-06T18:09:24 * mrtyler joined the channel
+2018-09-06T18:19:41 * the-t-in-rtf has quit
+2018-09-06T18:23:36 * the-t-in-rtf joined the channel
+2018-09-06T18:24:04 * colinclark has quit
+2018-09-06T18:31:38 * colinclark joined the channel
+2018-09-06T18:33:11 * mrtyler has quit
+2018-09-06T18:38:05 * michelled has quit
+2018-09-06T18:40:31 * michelled joined the channel
+2018-09-06T18:40:33 * alanharnum joined the channel
+2018-09-06T18:52:06 * alanharnum has quit
+2018-09-06T18:57:58 * alanharnum joined the channel
+2018-09-06T19:06:47 * the-t-in-rtf joined the channel
+2018-09-06T19:06:48 * alanharnum has quit
+2018-09-06T19:17:35 * colinclark joined the channel
+2018-09-06T19:24:21 * colinclark has quit
+2018-09-06T19:40:18 * alanharnum joined the channel
+2018-09-06T19:55:27 * alanharnum has quit
+2018-09-06T20:18:44 * alanharnum joined the channel
+2018-09-06T20:37:04 * cindyli has quit
+2018-09-06T20:43:03 * jhung has quit
+2018-09-06T20:43:19 * michelled has quit
+2018-09-06T20:46:50 * michelled joined the channel
+2018-09-06T21:01:22 * clown has quit
+2018-09-06T21:01:23 * the-t-in-rtf has quit
+2018-09-06T21:01:45 * the-t-in-rtf joined the channel
+2018-09-06T21:07:11 * michelled has quit
+2018-09-06T21:07:21 * michelled joined the channel
+2018-09-06T21:11:31 * michelled has quit
+2018-09-06T21:37:55 * alanharnum has quit
+2018-09-06T21:49:32 * jessm has quit
+2018-09-06T22:01:35 * colinclark joined the channel
+2018-09-06T23:14:56 * colinclark joined the channel
+2018-09-06T23:35:45 * colinclark joined the channel
+2018-09-06T23:48:49 * colinclark has quit
+'
+

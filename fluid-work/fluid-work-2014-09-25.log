@@ -1,0 +1,276 @@
+b'2014-09-25T14:12:41 <Bosmon> Are there other types of user "opinion"?
+2014-09-25T14:12:57 <Justin_o> my line 149 looks like opinion: []   // Possible values: like, dislike
+2014-09-25T14:13:01 <Bosmon> There is the "opinion" field which is an array which it seems could include "like" and "dislike"
+2014-09-25T14:13:01 <Bosmon> yes
+2014-09-25T14:13:08 <Justin_o> oh
+2014-09-25T14:13:23 <Justin_o> i guess the comment should be // Possible values: like or dislike
+2014-09-25T14:13:25 <Justin_o> would that be better
+2014-09-25T14:13:45 <Justin_o> it could only be one of them though, but i believe we need the array for the arrayToSetMembership transformation we are using
+2014-09-25T14:14:04 <Bosmon> Well yes, but what does the transformation achieve?
+2014-09-25T14:14:20 <Bosmon> Presumably the transformation only exists because the model value "opinion" is useful somehow
+2014-09-25T14:14:37 <Bosmon> I guess it is the one which ends up in persistence
+2014-09-25T14:15:33 <Justin_o> Bosmon: the model will look something like this
+2014-09-25T14:15:37 <Justin_o> https://www.irccloud.com/pastebin/GB8GELsh
+2014-09-25T14:16:04 <Justin_o> so the transformation is used to set the match and mismatch values in one change
+2014-09-25T14:16:57 <Bosmon> Justin_o - yes - so what is the array version of the value used for?
+2014-09-25T14:17:39 <Justin_o> it\'s just used as an intermediary value to be transformed via the arrayToSetMembership transform
+2014-09-25T14:18:01 <Bosmon> Well, we seem to be going around in circles :)
+2014-09-25T14:18:08 <Bosmon> I can ask again what the transform is used for : P
+2014-09-25T14:18:43 <Justin_o> in the broad sense it allows us to go from {match}.model.isActive = true   to  {feedback}.model.opinion = {match: true, mismatch: false} in a single atomic action so we only get one model change event fired for setting the two opinion values
+2014-09-25T14:18:52 <Bosmon> Clearly both the transform and the array value entail each other\'s existence - the question is, why are either of them there? : P
+2014-09-25T14:18:53 <Justin_o> did that make sense
+2014-09-25T14:19:08 <Bosmon> Justin_o- you could achieve that by simply applying a change holding {match: true, mismatch: false}
+2014-09-25T14:19:43 <Justin_o> Bosmon: that case is easy, it\'s the other that is hard.. when {match}.model.isActive is changed to false
+2014-09-25T14:19:54 <Bosmon> ok
+2014-09-25T14:20:04 <Bosmon> I see
+2014-09-25T14:20:16 <Bosmon> We should probably have some comments explaining this by the modelRelay block
+2014-09-25T14:20:17 <Justin_o> we don\'t know what state the mismatch should be in, but maybe i\'m confusing myself
+2014-09-25T14:20:44 <Bosmon> That is, that the purpose of the array value is to obtain mutual exclusion between the "match" and "mismatch" values
+2014-09-25T14:20:52 <Justin_o> Bosmon: makes sense.. would it be useful for me to restate the whole model communication that we need, perhaps you could think of a simpler solution.
+2014-09-25T14:21:09 <Bosmon> Ok, so I\'ve determined that the real applier id we are interested in is "-513"
+2014-09-25T14:21:20 <Bosmon> This is the applier id attached to the "match" button
+2014-09-25T14:21:55 * clown joined the channel
+2014-09-25T14:22:44 <Justin_o> hmm, mine didn\'t fire
+2014-09-25T14:22:56 <Justin_o> i\'ll run it again and see if it comes back
+2014-09-25T14:24:36 * simonjb has quit
+2014-09-25T14:24:59 <Justin_o> Bosmon: my 513 applier is not fired, at least when the problem occurs
+2014-09-25T14:25:49 <Justin_o> Bosmon: actually i don\'t seem to see it at all.. is the number correct?
+2014-09-25T14:25:55 <Justin_o> i get 512
+2014-09-25T14:26:13 <Bosmon> Hmm
+2014-09-25T14:26:26 <Bosmon> I can\'t imagine that putting in some logging has disturbed the applier number
+2014-09-25T14:26:30 <Bosmon> FOr me it is 513
+2014-09-25T14:26:39 <Bosmon> And I see the "isActive" change setting to true
+2014-09-25T14:26:48 <Justin_o> i commented out the second place you mentioned to put a comment, did i need to put that back in
+2014-09-25T14:26:50 <Bosmon> And now I see what appears to be the wrong value coming out of the relay
+2014-09-25T14:27:05 <Justin_o> Bosmon: ah so that could be the problem
+2014-09-25T14:27:24 <Bosmon> The value output from the relay holds {match: false, mismatch: false}
+2014-09-25T14:28:50 <Justin_o> Bosmon: anyways to restate what should happen with the relays..  match isActive: true -> {match: true, mismatch: false} ,   mismatch isActive: true -> {match: false, mismatch true}... mismatch and match isActive false should ensure that only it\'s corresponding value is false and not change the other
+2014-09-25T14:29:05 <Justin_o> Bosmon: :(
+2014-09-25T14:29:17 <Justin_o> so maybe the relay isn\'t correct
+2014-09-25T14:30:24 * amilchev joined the channel
+2014-09-25T14:31:01 <jhung> anastasiac: merged your FLOE-233.
+2014-09-25T14:31:32 <anastasiac> thanks, jhung
+2014-09-25T14:32:06 <jhung> anastasiac: I have pushed changes to my FLUID-5451 branch. Pull it down and let me what you think of the changes.
+2014-09-25T14:33:42 * slim joined the channel
+2014-09-25T14:36:20 <Bosmon> Hi Justin_o - ok, so it appears there is a bug in the relay system
+2014-09-25T14:36:31 <Bosmon> Unfortunately I don\'t have time to debug it this week
+2014-09-25T14:36:51 <Bosmon> But we can write up a JIRA and perhaps take a fresh branch of this branch state so we don\'t lose it
+2014-09-25T14:37:32 <Bosmon> What I suggest you do is to remove the model relay and "inTransit" field, and replace it with a set of standard modelListeners written in code
+2014-09-25T14:37:50 <Justin_o> Bosmon:  so that part is already there in master.. at least
+2014-09-25T14:37:55 <Bosmon> I guess this will unfortunately be rather similar to what you had written before you put in the relay :(
+2014-09-25T14:37:56 <Bosmon> Right
+2014-09-25T14:38:00 <Bosmon> ok
+2014-09-25T14:38:51 <Justin_o> that\'s alright at least we have a working version
+2014-09-25T14:39:05 <Justin_o> i can keep this branch in my repo though if it\'s helpful for you
+2014-09-25T14:40:29 <Justin_o> Bosmon, anastasiac: where are the docs for kettle i remember we had written something up at a community meeting
+2014-09-25T14:40:50 <Justin_o> Bosmon, anastasiac: is this it http://wiki.fluidproject.org/display/fluid/Notes+on+Kettle
+2014-09-25T14:43:46 <Bosmon> Justin_o - I\'ve written up http://issues.fluidproject.org/browse/FLUID-5517
+2014-09-25T14:44:06 <Bosmon> Could you branch the current state of your repo with a branch named after this JIRA?
+2014-09-25T14:44:31 <Bosmon> Justin_o - these aren\'t our docs for Kettle, no
+2014-09-25T14:44:37 <Bosmon> At least, I\'d certainly hope not : P
+2014-09-25T14:44:50 <Justin_o> Bosmon: do we have anything better :)
+2014-09-25T14:45:03 <Justin_o> Bosmon: alex is going to start looking into using kettle to serve PCP
+2014-09-25T14:45:21 <Bosmon> Justin_o - all I can find is the link leading from our main Kettle page
+2014-09-25T14:45:27 <Bosmon> http://wiki.fluidproject.org/display/fluid/Kettle
+2014-09-25T14:45:35 <Bosmon> points to: http://wiki.gpii.net/index.php/Configuration
+2014-09-25T14:46:17 <Justin_o> Bosmon: thanks
+2014-09-25T14:46:24 <Justin_o> i sent those links along too
+2014-09-25T14:48:24 <Justin_o> Bosmon: by the way i added a link to my branch on FLUID-5517
+2014-09-25T14:56:24 * michelled has quit
+2014-09-25T14:57:57 <Bosmon> Justin_o - thanks - could you create a branch named FLUID-5517 in your repo from your FLOE-230 and link to that instead?
+2014-09-25T14:58:11 <Bosmon> That way we can be sure that we can link to a fixed snapshot
+2014-09-25T15:08:18 * anastasiac_ joined the channel
+2014-09-25T15:11:04 * anastasiac has quit
+2014-09-25T15:11:04 * anastasiac_ is now known as anastasiac
+2014-09-25T15:14:18 * anvk has quit
+2014-09-25T15:14:51 * anvk joined the channel
+2014-09-25T15:44:42 * slim has quit
+2014-09-25T15:59:37 * Bosmon7 has quit
+2014-09-25T16:01:24 * danaayotte_ has quit
+2014-09-25T16:01:50 <Justin_o> Bosmon: sure, no problem.
+2014-09-25T16:03:20 <Justin_o> Bosmon: https://github.com/jobara/metadata/tree/FLUID-5517
+2014-09-25T16:03:23 <Justin_o> i\'ll add it to the jira
+2014-09-25T16:16:01 * jhung has quit
+2014-09-25T17:21:21 * jhung joined the channel
+2014-09-25T17:23:09 * simonjb joined the channel
+2014-09-25T18:25:05 * michelled joined the channel
+2014-09-25T18:41:52 * anastasiac has quit
+2014-09-25T18:43:49 * anastasiac joined the channel
+2014-09-25T18:46:21 <cindyli> Bosmon: i\'ve simplified the model relay in the pull request https://github.com/fluid-project/metadata/pull/41. it\'s ready for another look.
+2014-09-25T19:00:00 * kasparnet has quit
+2014-09-25T19:02:36 * kasparnet joined the channel
+2014-09-25T19:03:51 * kasparnet has quit
+2014-09-25T19:04:25 * kasparnet joined the channel
+2014-09-25T19:20:48 * jhung has quit
+2014-09-25T19:33:32 * kasparnet has quit
+2014-09-25T19:37:01 * kasparnet joined the channel
+2014-09-25T20:02:55 * anvk has quit
+2014-09-25T20:10:40 * michelled has quit
+2014-09-25T20:32:05 * cindyli has quit
+2014-09-25T20:33:03 * michelled joined the channel
+2014-09-25T20:40:45 * kasparnet has quit
+2014-09-25T20:50:59 * kasparnet joined the channel
+2014-09-25T20:59:27 * michelled has quit
+2014-09-25T21:05:55 * clown has quit
+2014-09-25T21:14:01 * anastasiac has quit
+2014-09-25T21:15:40 * yzen has quit
+2014-09-25T21:25:13 * jessm has quit
+2014-09-25T21:51:13 * simonjb has quit
+2014-09-25T22:25:48 * kasparnet has quit
+2014-09-25T22:40:00 * the-t-in-rtf has quit
+2014-09-25T23:41:58 * jhernand1z joined the channel
+2014-09-25T23:44:52 * jhernandez has quit
+'
+
+b'2014-09-25T01:05:44 * michelled joined the channel
+2014-09-25T01:05:53 * michelled has quit
+2014-09-25T01:46:32 * jhernandez has quit
+2014-09-25T07:32:55 * kasparnet joined the channel
+2014-09-25T07:33:59 * kasparnet has quit
+2014-09-25T08:04:47 * kasparnet joined the channel
+2014-09-25T08:50:41 * slim joined the channel
+2014-09-25T08:50:54 * slim has quit
+2014-09-25T08:51:53 * slim joined the channel
+2014-09-25T09:18:00 <slim> sgithens___: thanks for looking at RFID listener
+2014-09-25T09:42:24 * jhernandez joined the channel
+2014-09-25T10:35:19 * heidiv joined the channel
+2014-09-25T10:36:47 * heidiv has quit
+2014-09-25T10:56:59 <slim> kasparnet: ping
+2014-09-25T10:57:04 <kasparnet> slim: pong
+2014-09-25T10:57:36 <slim> A quick Q as I\'m transfering some project time allocation for the liteners
+2014-09-25T10:58:12 <slim> do you thin it fits best in 105.1 Global architecture framework
+2014-09-25T10:58:28 <slim> or 105.4 Architectures\xe2\x80\x99auto-configuration and innovation mechanisms
+2014-09-25T10:58:39 <slim> Or doesn\'t it really mater?
+2014-09-25T11:00:49 <kasparnet> slim: It could go in either -- perhaps it makes most sense to move time to A105.1 as that will allow you more flexibility if some of the work goes beyond A105.4 stuff
+2014-09-25T11:01:15 <slim> kasparnet:  great minds! I\'ll do that.
+2014-09-25T11:01:24 <kasparnet> awesome!
+2014-09-25T11:01:41 <slim> how goes it? Sorry to keep missing meetings.
+2014-09-25T11:14:00 <kasparnet> slim: pretty well - too many meetings, but I\'m also getting some coding done which is really nice
+2014-09-25T11:23:36 <slim> Talking of meetings - who is the C4A yr 3 planning meeting for today. I\'m wondering about attending
+2014-09-25T11:23:48 <slim> yay for code!
+2014-09-25T11:23:59 <slim> kasparnet: ^^
+2014-09-25T11:29:59 * kasparnet has quit
+2014-09-25T11:43:11 * jhung joined the channel
+2014-09-25T11:48:43 * kasparnet joined the channel
+2014-09-25T11:49:06 <kasparnet> slim: sorry, didn\'t see your ping (had run out for pizza)
+2014-09-25T11:49:28 <kasparnet> it\'s just MM teams, Gianna, Gregg, Manuel and I
+2014-09-25T11:50:13 <kasparnet> we\'re going through the plan, trying to finalize what we want to do for the review - and once that\'s done pass it on to the whole consortium -- probably wednesday
+2014-09-25T11:52:08 * michelled joined the channel
+2014-09-25T11:56:31 <slim> kasparnet: Tah - so I get to code :)
+2014-09-25T11:56:33 <slim> MM?
+2014-09-25T11:56:42 <slim> not man month I guess
+2014-09-25T12:04:10 <kasparnet> sorry - matchmakers
+2014-09-25T12:06:47 * slim has quit
+2014-09-25T12:35:00 * cindyli joined the channel
+2014-09-25T12:42:35 * anastasiac joined the channel
+2014-09-25T12:56:31 * anvk joined the channel
+2014-09-25T13:01:45 <Justin_o> Bosmon7: hello
+2014-09-25T13:01:58 <Justin_o> i ran into another confusing issue that you might have some thoughts on
+2014-09-25T13:02:21 <Justin_o> basically i was working on FLOE-230 http://issues.fluidproject.org/browse/FLOE-230
+2014-09-25T13:02:55 <Justin_o> Bosmon7: we were able to implement a model relay, however, now one of the change applier events fires but does nothing
+2014-09-25T13:03:06 * jessm joined the channel
+2014-09-25T13:03:13 <Justin_o> none of the attached listeners ever get fired, although the change applier call is called
+2014-09-25T13:03:33 <Justin_o> and this only happens when you click on the match button when the mismatch dialog is open. everything else works properly
+2014-09-25T13:03:39 <Justin_o> Bosmon7: any ideas?
+2014-09-25T13:17:17 * Bosmon joined the channel
+2014-09-25T13:17:21 * yzen joined the channel
+2014-09-25T13:20:28 * simonjb joined the channel
+2014-09-25T13:20:58 <Bosmon7> Hi Justin_o - does the model actually change?
+2014-09-25T13:30:04 <Justin_o> Bosmon7: hmm.. let me check again
+2014-09-25T13:31:59 <Justin_o> Bosmon7: no the model value doesn\'t change
+2014-09-25T13:32:30 <Bosmon7> Justin_o - in that case you will get no notification
+2014-09-25T13:32:39 <Justin_o> Bosmon7: let me restate that
+2014-09-25T13:32:42 <Bosmon7> The new ChangeApplier doesn\'t fire any listeners if a change has no effect on the model
+2014-09-25T13:32:45 <Justin_o> Bosmon7:  the model value should have changed, but didn\'t
+2014-09-25T13:32:56 * clown joined the channel
+2014-09-25T13:32:57 <Bosmon7> ok
+2014-09-25T13:33:00 <Bosmon7> What change did you fire?
+2014-09-25T13:33:01 <Justin_o> Bosmon7: the call looks like this
+2014-09-25T13:33:02 <Justin_o> that.applier.change("isActive", !that.model.isActive);
+2014-09-25T13:33:09 <Bosmon7> ok
+2014-09-25T13:33:29 * clown has left the channel
+2014-09-25T13:33:33 <Bosmon7> Is the value of !that.model.isActive what you expect, at the time of the call?
+2014-09-25T13:33:59 <Justin_o> Bosmon7: yes
+2014-09-25T13:34:58 <Bosmon7> ok
+2014-09-25T13:35:07 <Justin_o> Bosmon7: i have pushed my branch up if it would be easier to try https://github.com/jobara/metadata/tree/FLOE-230
+2014-09-25T13:35:08 <Bosmon7> Could you check it into a branch, and give me some instructions to reproduce it?
+2014-09-25T13:35:10 <Bosmon7> Thanks
+2014-09-25T13:35:54 <Justin_o> Bosmon7: the problem seems to be arising from this line https://github.com/jobara/metadata/blob/FLOE-230/src/components/feedback/js/bindDialog.js#L308
+2014-09-25T13:36:11 <Justin_o> to reproduce you can just load up the feedback demo
+2014-09-25T13:36:23 <Justin_o> click on the sad face, after the dialog is open, click on the happy face
+2014-09-25T13:36:46 <Justin_o> you\'ll see that the mismatch (sad face) dialog closes, but the match (happy face) doesn\'t open.
+2014-09-25T13:36:57 <Justin_o> if you do this in the other order, happy first then sad, it works properly
+2014-09-25T13:37:18 <Justin_o> Bosmon7: also if you run the feedback tests. i believe the failures are related to this problem
+2014-09-25T13:39:26 * yzen has quit
+2014-09-25T13:39:59 * yzen joined the channel
+2014-09-25T13:40:51 * amilchev has left the channel
+2014-09-25T13:48:30 <the-t-in-rtf> Is there a shorthand to bind the same function and list of arguments to multiple methods (click, keypress, etc.)?
+2014-09-25T13:48:38 <the-t-in-rtf> s/function/listener/
+2014-09-25T13:51:02 <Bosmon7> Hi Justin_o - the reason for the failed change appears to be an immediately following change being emitted from gpii.queuedDataSource.start
+2014-09-25T13:51:36 <Bosmon7> Immediately after the user triggers the change to set the button to be active, it appears that an change holding the opposite value is emitted from the dataSource
+2014-09-25T13:52:01 <Bosmon7> As a hint for debugging, you can place the following code at line 23684 of infusion-custom.js:
+2014-09-25T13:52:11 <Bosmon> console.log("Firing user change ", changeRequest, " to applier ", that);
+2014-09-25T13:52:11 <Bosmon> console.log("Stack: " + new Error().stack);
+2014-09-25T13:52:33 <Justin_o> Bosmon7: thanks... that\'s helpful.
+2014-09-25T13:52:39 <Bosmon> Given that the ChangeApplier is now firing all the time for hover events, this is the only practical sort of way of getting a handle on what is going on
+2014-09-25T13:52:57 <Bosmon> Given that setting breakpoints isn\'t really practical with such a high rate of chang efiring
+2014-09-25T13:53:12 <Bosmon> One day, of course, we will have debugging tools that allow us to instrument these :)
+2014-09-25T13:53:41 <Bosmon> But I have been having a long week sticking logging statements inside framework code, so I may as well share this useful technique
+2014-09-25T13:54:05 <Bosmon> Another useful site is at line 23068
+2014-09-25T13:54:11 <Bosmon> Inside "fluid.model.notifyExternal"
+2014-09-25T13:54:21 <Bosmon> At this point I have
+2014-09-25T13:54:22 <Bosmon> console.log("Notifying change ", change.args, " to listener ", change.listener);
+2014-09-25T13:57:41 <Justin_o> Bosmon7: thanks for the tips. I\'ve added in those console logs and will try again to see how it looks.
+2014-09-25T13:58:04 * jessm has quit
+2014-09-25T13:58:57 <Justin_o> these hover events make for a lot of logs though :(
+2014-09-25T14:00:25 <Bosmon> Justin_o - they do
+2014-09-25T14:00:37 <Bosmon> It\'s helpful to do a "clear" in the Firebug UI just before you trigger the crucial change : P
+2014-09-25T14:01:28 <Bosmon> Then you\'ll only get one extra piece of noise from a "hover" to look at ....
+2014-09-25T14:01:35 <Justin_o> the-t-in-rtf: you could make an invoker and pass this around to the other methods. or you could construct a function that binds the function to the multiple methods
+2014-09-25T14:01:42 <Justin_o> the-t-in-rtf: Bosmon might have some more ideas
+2014-09-25T14:02:08 <Bosmon> Justin_o - as far as I can see, the applier you are interested in is the one with id ending "-470"
+2014-09-25T14:02:09 * danaayotte_ joined the channel
+2014-09-25T14:02:15 <Bosmon> You can expect these ids to remain consistent between runs
+2014-09-25T14:02:53 <Justin_o> Bosmon: oh thanks.. i wasn\'t even looking at that one
+2014-09-25T14:02:56 <Bosmon> If you want more certainty, you can write "onCreate" code in your components which sticks an extra name onto the applier so you can identify it more clearly
+2014-09-25T14:03:58 <Bosmon> Justin_o - here\'s what seemed to be the crucial change as far as I could see:
+2014-09-25T14:04:00 <Bosmon> Firing user change Object { path="isActive", value=false, type="ADD", more...} to applier Object { applierId="18cflyk1-470", holder={...}, changeListeners={...}, more...}
+2014-09-25T14:04:00 <Bosmon> infusio...stom.js (line 23684)
+2014-09-25T14:04:00 <Bosmon> Stack: fluid.makeNewChangeApplier/that.fireChangeRequest@file:///E:/Source/gits/metadata/src/lib/infusion/infusion-custom.js:23685:13
+2014-09-25T14:04:00 <Bosmon> fluid.fireSourcedChange@file:///E:/Source/gits/metadata/src/lib/infusion/infusion-custom.js:23308:13
+2014-09-25T14:04:00 <Bosmon> fluid.changeToApplicable/<.apply@file:///E:/Source/gits/metadata/src/lib/infusion/infusion-custom.js:21634:17
+2014-09-25T14:04:01 <Bosmon> fireToListeners@file:///E:/Source/gits/metadata/src/lib/infusion/infusion-custom.js:18015:21
+2014-09-25T14:04:01 <Bosmon> fluid.makeEventFirer/that.fire@file:///E:/Source/gits/metadata/src/lib/infusion/infusion-custom.js:18116:17
+2014-09-25T14:04:02 <Bosmon> gpii.queuedDataSource.start/<@file:///E:/Source/gits/metadata/src/components/pouchDBDataSource/js/pouchDBDataSource.js:81:17
+2014-09-25T14:04:40 <Bosmon> I believe it is the one setting the state of the clicked button back to "false" although I could have mixed the appliers up
+2014-09-25T14:05:30 <the-t-in-rtf> Thanks, @Justin_o.  I was hoping for a "methods" alternate to bind to an array of event types.  I only have two methods at this point (click and keypress), so I may hold off for now.
+2014-09-25T14:05:31 <Justin_o> Bosmon: i was looking at the spot in the code that you mentioned earlier
+2014-09-25T14:05:32 <Justin_o> https://github.com/jobara/metadata/blob/FLOE-230/src/components/pouchDBDataSource/js/pouchDBDataSource.js#L78
+2014-09-25T14:06:13 <Bosmon> Oh, I see
+2014-09-25T14:06:16 <Justin_o> Bosmon: however this should only be setting the isActive state of the datasource queue not of the button, unless something horrible has gone wrong :(
+2014-09-25T14:06:31 * jessm joined the channel
+2014-09-25T14:06:32 <Bosmon> Perhaps I mixed them up in that case
+2014-09-25T14:06:37 <Bosmon> We certainly do have a lot of applier stuff going on now
+2014-09-25T14:08:07 <Justin_o> Bosmon: there is, and there\'s a lot of model relays in there now too
+2014-09-25T14:08:49 <Justin_o> Bosmon: i should note that this was working before we introduced the new model relay between the isActive state of the match and mismatch dialogs with the model in the parent component
+2014-09-25T14:08:55 <Bosmon> I see
+2014-09-25T14:09:30 <Bosmon> The "inTransit" name is rather unclear
+2014-09-25T14:10:04 <Justin_o> Bosmon: i guess we could rename that to something more appropriate
+2014-09-25T14:10:15 <Justin_o> Bosmon: suggestions are welcome..
+2014-09-25T14:10:31 <Bosmon> I\'m wondering what the strategy is behind the use of the empty string in the rule?
+2014-09-25T14:10:35 <Bosmon> I see options: {
+2014-09-25T14:10:39 <Bosmon> dislike: ""
+2014-09-25T14:10:41 <Bosmon> }
+2014-09-25T14:11:00 <Justin_o> it\'s because it\'s pointing at the root of the model path it has
+2014-09-25T14:11:09 <Bosmon> ok
+2014-09-25T14:11:35 <Justin_o> since we have the target as "{that}.model.isActive"
+2014-09-25T14:11:39 <Justin_o> and want to change this propery
+2014-09-25T14:11:42 <Justin_o> property
+2014-09-25T14:11:45 <Bosmon> Is it ever possible for the "like" and "dislike" buttons to be active at the same time?
+2014-09-25T14:11:54 <Justin_o> Bosmon: no they shouldn\'t
+2014-09-25T14:11:57 <Bosmon> ok
+2014-09-25T14:12:13 <Justin_o> only one or none of them should be set to true at any time
+2014-09-25T14:12:15 <Bosmon> Why is there an array value containing them encoded at line 149 of feedback.js?
+2014-09-25T14:12:40 <Justin_o> Bosmon: is there?
+'
+

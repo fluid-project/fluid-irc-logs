@@ -1,0 +1,473 @@
+b'2014-01-31T23:31:25 <Bosmon> But yes
+2014-01-31T23:31:37 <Bosmon> It uses the last value
+2014-01-31T23:31:47 <Bosmon> As the comment suggests, it doesn\'t really matter which one we pick
+2014-01-31T23:32:05 <colinclark> it\'s a bit shady
+2014-01-31T23:32:09 <Bosmon> :)
+2014-01-31T23:32:10 <Bosmon> Yes
+2014-01-31T23:32:22 <Bosmon> This logic is all somewhat tortuous
+2014-01-31T23:32:29 <Bosmon> All I can say in its favour is - that it used to be worse : P
+2014-01-31T23:32:35 <colinclark> lol
+2014-01-31T23:32:41 <Bosmon> And used to have even less in common with the "generic transaction" workflow
+2014-01-31T23:33:08 <Bosmon> Once we have the "world of explosions" this can all be a lot simpler
+2014-01-31T23:33:37 <Bosmon> Since we won\'t be faced with the crazy task of constantely discovering new transaction members as we\'re halfway through trying to initiate it
+2014-01-31T23:34:18 <Bosmon> I think there is note in my "Technical Notes on the New Changeapplier" that described the various bugs that this code harbours
+2014-01-31T23:40:35 * colinclark has quit
+2014-01-31T23:40:38 * jessm has quit
+'
+
+b'2014-01-31T21:14:43 <colinclark> but anyway
+2014-01-31T21:14:53 <colinclark> so what\'s a developer to do, Bosmon?
+2014-01-31T21:15:38 <Bosmon> Yes, the things which used to fulfil the role of guards are just transformers
+2014-01-31T21:16:13 <colinclark> but what does it mean for developers who thought that what they were doing is declaring invariants for their models
+2014-01-31T21:16:20 <Bosmon> So a thing which decides that Colin\'s address can\'t be changed transforms things that it can\'t be changed from back to itself
+2014-01-31T21:16:33 <colinclark> ok
+2014-01-31T21:16:58 <colinclark> and then a component would be somehow implemented to recognize this lack of a change?
+2014-01-31T21:17:09 <colinclark> and inform the user that it caused a validation error?
+2014-01-31T21:34:13 * jhung joined the channel
+2014-01-31T21:47:52 <Bosmon> colinclark - I guess that\'s an aspect of the design I didn\'t consider
+2014-01-31T21:48:21 <Bosmon> michelled - are you still there? : P
+2014-01-31T21:49:03 <colinclark> Bosmon: ok, i\'ll elaborate the question, then
+2014-01-31T21:49:08 <michelled> I am
+2014-01-31T21:49:10 <colinclark> so given our cat model from the wiki
+2014-01-31T21:49:21 <Bosmon> michelled - cool - I think I\'m just about to finish the pull : P
+2014-01-31T21:51:22 * anvk has quit
+2014-01-31T21:51:28 <colinclark> if you were to change("cats.hugo", {name: "Hugo", colours: ["clearly not the right colour"]}), and, say, the transformation process "lensed out" your change to "colours", would I receive any notification of a change to "hugo?"
+2014-01-31T21:51:36 <michelled> Bosmon: cool! it\'s looking that there are a lot of test breakages and hanging happening on IE
+2014-01-31T21:51:37 <colinclark> as it is implemented in this pull request, I mean?
+2014-01-31T21:51:49 <michelled> I need to do more testing to give you more information
+2014-01-31T21:51:52 <Bosmon> colinclark - none, no
+2014-01-31T21:52:00 <michelled> Bosmon: were you able to test at all on IE?
+2014-01-31T21:52:02 <colinclark> we\'ve had chronic IE failures for a while, I believe
+2014-01-31T21:52:11 <michelled> yes, but these look new
+2014-01-31T21:52:15 <Bosmon> michelled - you might want to look at the IE fix pull first
+2014-01-31T21:52:25 <Bosmon> That\'s been hanging around for a few months too
+2014-01-31T21:52:25 <michelled> or at least, I\'m getting different ones with master and with the 5185 branch
+2014-01-31T21:52:36 <colinclark> that makes sense
+2014-01-31T21:54:03 <michelled> hmmm\xe2\x80\xa6 ok - would be terrible if I pushed 5185 and then looked at the IE fix?
+2014-01-31T21:55:20 * SonicX has quit
+2014-01-31T21:56:40 <Bosmon> michelled - well, a bit terrible : P
+2014-01-31T21:56:44 <Bosmon> Can you tell me what failures you are seeing?
+2014-01-31T21:58:36 <michelled> to be honest, I got fairly frustrated in the testing process and left it. I think I probably need to be a bit fresher to retest IE properly. I was hoping to get away with spot testing it, but that doesn\'t seem likely.
+2014-01-31T21:58:44 <michelled> here\'s one of the errors: http://pastie.org/8686706
+2014-01-31T22:05:20 * kasparnet has quit
+2014-01-31T22:05:42 <Bosmon> Ok
+2014-01-31T22:05:50 <Bosmon> In the meantime - here is the new commit!
+2014-01-31T22:06:19 <Bosmon> michelled - you can ignore that issue until you have merged in the IE fix branch
+2014-01-31T22:06:29 <Bosmon> There is a useful utility in there that will probably help
+2014-01-31T22:06:49 <Bosmon> Any issues you see that seem to be related to focus handling you can ignore for now
+2014-01-31T22:07:28 <Bosmon> colinclark - re your question, neither the old nor the new system had anything built in that would notify you of this
+2014-01-31T22:07:39 <Bosmon> It\'s something we would have to think of as a separate contract for "notifying transformers"
+2014-01-31T22:07:52 <colinclark> it\'s interesting, yes
+2014-01-31T22:08:20 <michelled> thx Bosmon
+2014-01-31T22:08:36 <Bosmon> I guess perhaps part of the idea of supplying all "guards" in the old system with the random "jumble of changeEvents" that we did might have been that they might grub around looking for these kinds of changes
+2014-01-31T22:08:43 <Bosmon> But that wasn\'t coherent at all
+2014-01-31T22:08:54 <Bosmon> This is a kind of issue we\'ll need to tackle separately
+2014-01-31T22:13:13 <Bosmon> michelled - we now have numerous glorious new APIs to both the Tooltips and to the framework in general : P
+2014-01-31T22:13:15 <colinclark> I was imagining that the issue was that guards, in practice, would end up allowing for side effects
+2014-01-31T22:13:44 <colinclark> i.e. that a guard would both be responsible for vetoing a change as well as notifying an application\'s validation layer about the nature of the problem
+2014-01-31T22:13:44 <Bosmon> colinclark - yes - I guess given they were "special things" it was more likely that their contract could be extended to allow for notations
+2014-01-31T22:13:50 <michelled> yes Bosmon - afterDestroy!
+2014-01-31T22:14:02 <Bosmon> But to be honest it\'s no more peculiar to extend the contract of a "transformer" by adding some grades to it
+2014-01-31T22:14:09 <Bosmon> Thankfully we HAVE grades now.....
+2014-01-31T22:15:35 <colinclark> Fair enough
+2014-01-31T22:16:06 <Bosmon> colinclark - there\'s some other stuff we will need alongside this anyway
+2014-01-31T22:16:10 <colinclark> I think the key point is that if guards did provide us some way to track validation-related changes, it was ad-hoc and largely unintentional
+2014-01-31T22:16:18 <colinclark> so we\'re not regressing in any meaningful way
+2014-01-31T22:16:23 <Bosmon> So for example there is currently no capability to "hold up" changes from propagating
+2014-01-31T22:16:40 <Bosmon> As you are reviewing the code, you will run into the "half-transactions" which are the only current thing resembling this
+2014-01-31T22:16:41 <colinclark> ok
+2014-01-31T22:16:46 <colinclark> ok
+2014-01-31T22:16:54 <colinclark> double ok :)
+2014-01-31T22:16:58 <Bosmon> But clearly one doesn\'t necessarily want all changes immediately propagating from any one model to all the ones that it is connected to
+2014-01-31T22:17:16 <Bosmon> So what I am planning for this is a kind of FRP-like "transmitOnEvent" annotation attached to a relay
+2014-01-31T22:19:19 <michelled> Bosmon: this is looking good
+2014-01-31T22:19:57 <michelled> I\'m still seeing the issue with the conditional adjusters demo
+2014-01-31T22:20:03 <Bosmon> ok
+2014-01-31T22:20:09 <michelled> were you thinking that we\'d tackle that after?
+2014-01-31T22:20:11 <Bosmon> Give me the URL of that one again?
+2014-01-31T22:20:23 <michelled> src/instructionalDemos/framework/preferences/conditionalAdjusters2/conditional.html
+2014-01-31T22:20:41 <michelled> open the panel, turn both adjusters on, and close the panel
+2014-01-31T22:20:54 <michelled> there are other ways to get into the same state, but that one is repeatable
+2014-01-31T22:21:23 <michelled> interestingly, this one doesn\'t have the same issue: src/instructionalDemos/framework/preferences/conditionalAdjusters1/
+2014-01-31T22:21:27 <Bosmon> michelled - it seems to work for me
+2014-01-31T22:21:52 <Bosmon> I think this is an issue we should push off to be tackled at the same time as we deal with https://github.com/fluid-project/infusion/pull/443
+2014-01-31T22:21:53 <michelled> really? which browser?
+2014-01-31T22:22:03 <michelled> ok
+2014-01-31T22:22:07 <Bosmon> Since until we resolve that, the prefs framework may be doing any kind of unutterable rubbish
+2014-01-31T22:22:18 <Bosmon> michelled - FF
+2014-01-31T22:22:33 <Bosmon> ah, I saw it now
+2014-01-31T22:22:40 <Bosmon> After opening and closing the 2nd time
+2014-01-31T22:23:02 <michelled> must be timing related
+2014-01-31T22:23:02 <Bosmon> I suspect this is exactly the kind of issue that may be caused by FLUID-4890
+2014-01-31T22:23:05 <Bosmon> Yes
+2014-01-31T22:23:17 <Bosmon> And so I don\'t think it is necessarily related to this pull in a direct way
+2014-01-31T22:23:18 <michelled> ok, I\'m going to push this
+2014-01-31T22:23:21 <michelled> you ok with that?
+2014-01-31T22:23:30 <Bosmon> The pull may have just disturbed the timings to make the failure more likely
+2014-01-31T22:23:36 <michelled> yes
+2014-01-31T22:23:40 <Bosmon> michelled - well, you\'re the reviewer :)
+2014-01-31T22:23:44 <michelled> :)
+2014-01-31T22:24:05 <Bosmon> Perhaps a last-minute bit of linting? : P
+2014-01-31T22:26:19 <michelled> oops - I just pushed it :)
+2014-01-31T22:26:31 <Bosmon> oh well
+2014-01-31T22:26:35 <Bosmon> It\'s a good milestone anyway
+2014-01-31T22:26:42 <michelled> yes :)
+2014-01-31T22:27:04 <Bosmon> Do you have time for a few more little ones?
+2014-01-31T22:27:08 <Bosmon> THis one is quite important and very small
+2014-01-31T22:27:08 <Bosmon> https://github.com/fluid-project/infusion/pull/457
+2014-01-31T22:27:47 <colinclark> The Impersonation of Togo
+2014-01-31T22:28:12 <Bosmon> hahaha
+2014-01-31T22:29:53 <colinclark> michelled: When you\'re looking at this pull request, I think it\'s been filed with the wrong JIRA number
+2014-01-31T22:30:02 <colinclark> it seems like a reasonable fix
+2014-01-31T22:30:19 <colinclark> and makes reference in comments to fixing FLUID-5242
+2014-01-31T22:30:49 <colinclark> but the commit references FLUID-5254
+2014-01-31T22:30:56 <colinclark> they are distinct issues, right Bosmon?
+2014-01-31T22:31:27 <Bosmon> colinclark - well, only somewhat distinct
+2014-01-31T22:31:27 <colinclark> wait
+2014-01-31T22:31:31 <colinclark> sorry
+2014-01-31T22:31:36 <colinclark> I made the typo!
+2014-01-31T22:31:40 <Bosmon> Most of the comments actually refer to FLUID-5254
+2014-01-31T22:31:43 <colinclark> yes, I see the relationship
+2014-01-31T22:31:53 <Bosmon> But one of the refers, moderately correctly, to FLUID-5242
+2014-01-31T22:31:57 <colinclark> somehow I ended up at FLUID-5244, which is distinctly different
+2014-01-31T22:31:59 <Bosmon> Which is the first time a similar issue arose
+2014-01-31T22:32:00 <colinclark> ignore me
+2014-01-31T22:33:08 <Bosmon> The commit which fixed FLUID-5242 actually included a "mouse dropping" featuring the appearance of a "togo" which seems to have no purpose
+2014-01-31T22:33:19 <michelled> I think I\'m too fried to deal with more pulls this evening.
+2014-01-31T22:33:31 <Bosmon> But the reason was that I tried to make the fix for FLUID-5242 using the scheme for FLUID-5254 and then discovered that it had no effect on the issue
+2014-01-31T22:33:37 <colinclark> ok
+2014-01-31T22:34:14 <Bosmon> no worries, michelled - it\'s been a long day!
+2014-01-31T22:34:51 <michelled> it\'s pretty exciting to end the week with the jquery upgrade complete!
+2014-01-31T22:35:13 <michelled> of course, it probably means that all the outstanding pulls now need to be updated
+2014-01-31T22:35:15 <colinclark> it really is, michelled
+2014-01-31T22:35:22 <michelled> but they are all so much smaller, so it shouldn\'t be too bad
+2014-01-31T22:35:37 <colinclark> this model relay one is huge, but I\'m making progress
+2014-01-31T22:35:53 <colinclark> I like the spelling improvements nestled inside it :)
+2014-01-31T22:35:57 <michelled> oh dear - I wonder if you\'ll be wrestling iwht conflicts
+2014-01-31T22:36:15 <Bosmon> spelling improvements?
+2014-01-31T22:36:21 <colinclark> well, that\'ll be my problem, won\'t it michelled?
+2014-01-31T22:36:34 <colinclark> serves me right for leaving a pull request to languish for two months
+2014-01-31T22:36:43 <michelled> I think you can collaborate with Bosmon on in ;)
+2014-01-31T22:37:05 <colinclark> Bosmon: You fixed a misspelling of the word "alignment" in the "linearize demo"
+2014-01-31T22:37:22 <Bosmon> aha : P
+2014-01-31T22:37:35 <colinclark> Proper spelling is good
+2014-01-31T22:37:45 <colinclark> I was reading a blog post from one of Alexey Novak\'s summer students
+2014-01-31T22:37:53 <colinclark> who had an accordion widget
+2014-01-31T22:38:03 <colinclark> which you instantiated by calling new Accordeon()
+2014-01-31T22:38:47 * jhung has quit
+2014-01-31T22:39:25 * michelled has quit
+2014-01-31T22:42:03 <Bosmon> awkward
+2014-01-31T22:43:12 <colinclark> a bit
+2014-01-31T22:43:42 <colinclark> I\'m not quite sure what the component did that the jQuery UI one doesn\'t
+2014-01-31T22:43:52 <colinclark> but it\'s always nice to see people building accessible user interfaces
+2014-01-31T22:43:58 <colinclark> especially students
+2014-01-31T23:30:09 <colinclark> Bosmon: why do you define "transac" outside of the function scope it\'s used in here? https://github.com/fluid-project/infusion/pull/447/files#diff-7b2289f7ae3bef94abff61f13f79f9a3R316
+2014-01-31T23:30:31 <colinclark> especially since you later cover over it
+2014-01-31T23:30:43 <colinclark> ah, you use the last value?
+2014-01-31T23:31:09 <Bosmon> Yes, I guess it isn\'t the best naming
+'
+
+b'2014-01-31T18:39:53 <Justin_o_> and we lose both the unit test and the fix
+2014-01-31T18:40:01 <colinclark> yep, that\'s a good point
+2014-01-31T18:40:03 <Justin_o_> this is a bit of a different issue, than naming of course
+2014-01-31T18:40:09 <Bosmon> Well, nothing is "lost" in github : P
+2014-01-31T18:40:15 <Bosmon> Unless of course they delete their branch
+2014-01-31T18:40:19 <colinclark> just harder to find
+2014-01-31T18:40:29 <Justin_o_> Bosmon: yes.. i tend to do that when my pulls are merged/closed
+2014-01-31T18:41:04 <Justin_o_> colinclark: i think github will close "nested" pulls when one goes in that ha merged in another
+2014-01-31T18:41:15 <Justin_o_> or may merge is the correct term
+2014-01-31T18:41:19 <colinclark> that\'s good
+2014-01-31T18:47:53 * yzen_ has quit
+2014-01-31T18:48:25 <Justin_o_> colinclark: what sort of comment or name would you want on these pull request?
+2014-01-31T18:48:26 * yzen joined the channel
+2014-01-31T18:50:00 <colinclark> I guess all I\'m thinking of is a comment that says "this pull request is waiting on @xyz to make a fix"
+2014-01-31T18:50:16 <Justin_o_> colinclark: okay
+2014-01-31T18:53:12 * yzen has quit
+2014-01-31T18:53:44 * yzen joined the channel
+2014-01-31T18:54:38 <colinclark> Justin_o_: that comment you put on #452 is exactly what I was thinking of, thanks!
+2014-01-31T18:55:12 <Justin_o_> colinclark: cool, thanks
+2014-01-31T18:58:23 * yzen has quit
+2014-01-31T18:59:02 * yzen joined the channel
+2014-01-31T19:27:11 * anvk joined the channel
+2014-01-31T19:29:24 * michelled_ joined the channel
+2014-01-31T19:32:39 * michelled has quit
+2014-01-31T19:32:39 * michelled_ is now known as michelled
+2014-01-31T19:41:43 <Justin_o_> colinclark, michelled, Bosmon: in terms of rebuilding the build scripts for Infusion 1.5... what do you think of removing the css generation and just committing the generated files to the repo?
+2014-01-31T19:42:33 <colinclark> hmm
+2014-01-31T19:42:44 <colinclark> I guess I can\'t quite remember the motivation...
+2014-01-31T19:42:56 <colinclark> Was it to make it easier to produce new themes?
+2014-01-31T19:43:13 <colinclark> Is it difficult to port the CSS generation to Node.js?
+2014-01-31T19:43:26 <colinclark> or is it just, you\'re thinking, not worth the time?
+2014-01-31T19:47:29 <michelled> I think it was the maintenance burden of changes
+2014-01-31T19:47:40 <michelled> needing to make changes to themes in many place
+2014-01-31T19:47:55 <michelled> at that point, I think we were making a lot of modifications to our themes
+2014-01-31T19:49:54 <Justin_o_> michelled: i think you are correct about the reason
+2014-01-31T19:51:01 <Justin_o_> colinclark: i don\'t know how difficult it would be to port, there is an npm version of jscssp although i don\'t know how up-to-date it is.. i figure we\'d still need to hook this up to grunt, and am thinking if we are going to be switching to less or sass in the near future, it isn\'t worth the effort at this point
+2014-01-31T19:51:51 <colinclark> I\'m awfully enamoured these days with just ditching things that aren\'t essential
+2014-01-31T19:52:09 <colinclark> but there is always the issues of babies taking baths and so on
+2014-01-31T19:52:46 <michelled> I\'d be very happy to move to another strategy for reducing maintenance like Less or Sass
+2014-01-31T19:53:01 <Justin_o_> colinclark: i\'m not suggesting we throw away the baby, just hold him out of the water for a bit while we move him from the sink to the tub.
+2014-01-31T19:53:07 <michelled> but it might be overkill right now
+2014-01-31T19:53:13 <colinclark> awww
+2014-01-31T19:53:19 <colinclark> Justin_o_ that\'s the best
+2014-01-31T19:53:42 <colinclark> I think I might cry
+2014-01-31T19:53:46 <Justin_o_> lol
+2014-01-31T19:54:13 <colinclark> michelled has a slightly better memory than I do
+2014-01-31T19:54:23 <colinclark> so I will look to her for sober second thought
+2014-01-31T19:54:33 <colinclark> but I think we can just move on and ditch the CSS generator for now
+2014-01-31T19:55:02 <Justin_o_> michelled, colinclark: part of the problem with switching to sass/less is that it\'s caught up in our decision for a css framework... since foundation and bootstrap them respectively..
+2014-01-31T19:55:03 <michelled> I feel good about ditching the generator - although it would be *very* good if we can document what it was doing for us
+2014-01-31T19:55:15 <michelled> let\'s hope we were forward thinking enough to make that clear somewhere
+2014-01-31T19:55:31 <colinclark> I\'m quite certain we debated the subject in IRC for a while, at the very least
+2014-01-31T19:55:44 <colinclark> but it does point out the risk of these ephemeral media
+2014-01-31T19:56:40 <Justin_o_> botbot seems pretty awesome, but yes, these things can get lost
+2014-01-31T20:05:21 <michelled> Bosmon: you were looking at Justin_o_\'s grunt pull request yesterday. how do you feel about pushing that?
+2014-01-31T20:09:31 <Justin_o_> colinclark, Bosmon, michelled: to summarize i think we\'ve decided to drop the css generation step and commit the generated files to the repo. We will add a README along side them indicating what the generation had done, so that when we start using less/sass we can bring it back.
+2014-01-31T20:11:34 <colinclark> just to clarify, Justin_o_, you\'re saying that in the future we will be able to achieve the same effect as the CSS generator, but with Sass or LESS?
+2014-01-31T20:12:10 <colinclark> and we\'ll do that by, say, defining variables or something and then binding them to different "theme values" or something like that?
+2014-01-31T20:14:11 <Justin_o_> colinclark: yes.. i believe it would work something like that.. i\'m not well versed in css pre compilers yet, so can\'t say definitively how this will be done
+2014-01-31T20:14:22 <colinclark> yeah, me neither
+2014-01-31T20:14:29 <colinclark> which was why my question was so vague
+2014-01-31T20:14:33 <colinclark> ok, you answered it
+2014-01-31T20:14:41 <colinclark> and I think it\'s a reasonable approach given the circumstances
+2014-01-31T20:15:28 <Justin_o_> colinclark: thanks.. i\'ll start working on that in my FLUID-5120 branch
+2014-01-31T20:18:06 <Justin_o_> michelled, colinclark: we should probably also standardize on using markdown or text files for our notes and readmes. what do you think?
+2014-01-31T20:18:19 <colinclark> Markdown sure does look nice
+2014-01-31T20:18:24 <Justin_o_> i don\'t think it\'s critical for the release, but something we should knock off over time
+2014-01-31T20:18:36 <colinclark> I think, in the grand scheme of things, it\'s a really annoying thing
+2014-01-31T20:18:52 <colinclark> in that it seems to have a fairly chaotic community of renderers and overlapping syntax
+2014-01-31T20:18:57 <colinclark> but, in the end, it looks really nice
+2014-01-31T20:19:01 <colinclark> when rendered on Github
+2014-01-31T20:19:07 <colinclark> that\'s my vote ;)
+2014-01-31T20:19:17 <Justin_o_> colinclark: yes.. that is a bit annoying, but you\'re right it is nice looking :)
+2014-01-31T20:19:37 <Justin_o_> i think it\'s still pretty readable when note rendered.. probably no worse than our text documents anyways.. so i\'d vote for markdown too
+2014-01-31T20:19:43 <colinclark> I basically do all my writing in Markdown right now
+2014-01-31T20:19:59 <colinclark> with either IA Writer or documentation which I store in Github
+2014-01-31T20:20:57 <Justin_o_> that\'s cool, does iA Writer render it on the fly?
+2014-01-31T20:20:59 <colinclark> It occurred to me that wikis and even static site generators weren\'t particularly necessary when I could just stick markdown into a Git repository and have Github render it automatically
+2014-01-31T20:21:00 <colinclark> https://github.com/colinbdclark/Flocking/blob/master/docs/responding-to-user-input.md
+2014-01-31T20:21:10 <colinclark> Justin_o_: It sort of renders it on the fly
+2014-01-31T20:21:44 <colinclark> In that you still see the markdown, but you also more or less see its effect. So if I wrote _hi justin_ it would still show the underscores, but format the string in italics.
+2014-01-31T20:24:38 <Justin_o_> oh okay.. that\'s cool.. so you can easily edit it and see the output
+2014-01-31T20:24:49 <colinclark> yup
+2014-01-31T20:25:09 <colinclark> I think someone could easily--and should--create a web app equivalent to iA Writer
+2014-01-31T20:25:25 <colinclark> it\'s an example of how the App Store allows developers to monetize very simple things
+2014-01-31T20:25:29 <colinclark> which is arguably not a bad thing
+2014-01-31T20:25:57 <colinclark> but ten bucks for a full-screen capable markdown editor seems a bit silly, since web apps can do all this and synchronize your data with "the cloud"
+2014-01-31T20:26:39 <Justin_o_> colinclark: speaking of cloud did you see this.. http://www.hackify.org
+2014-01-31T20:27:48 <colinclark> this would be so cool in combination with Flocking
+2014-01-31T20:28:18 <colinclark> each contributor hears the music on their own client, but can make changes to the instruments on the fly and everyone hears them
+2014-01-31T20:30:03 <Justin_o_> colinclark: that would cool
+2014-01-31T20:41:40 <colinclark> Bosmon: Can you remind me again of the semantics of model listener paths?
+2014-01-31T20:41:49 <colinclark> So I can certain define a specific path
+2014-01-31T20:41:55 <colinclark> "cats.hugo"
+2014-01-31T20:42:13 <colinclark> which would inform me of changes that only occur to Hugo himself
+2014-01-31T20:42:31 <colinclark> I can register to listen for "*"
+2014-01-31T20:42:59 <colinclark> which I assume will give me any changes in the model, but presumably in a certain way
+2014-01-31T20:43:15 <colinclark> and then it looks like I can also listen for ""?
+2014-01-31T20:43:55 <Bosmon> colinclark - I guess you are talking about the "new model"
+2014-01-31T20:44:05 <colinclark> yes
+2014-01-31T20:44:13 <colinclark> the one that I hope to be pushing to master soon :)
+2014-01-31T20:44:30 <Bosmon> Yes, placing "*" at the end of your paths affects the way you are notified
+2014-01-31T20:44:44 <Bosmon> Although your notification will in both cases be triggered by "the same set of changes"
+2014-01-31T20:44:55 <Bosmon> Without * you receive a single change notification for the entire subpath
+2014-01-31T20:45:04 <colinclark> okay, so "cats" and "cats.*" are trigged by the same set of changes
+2014-01-31T20:45:04 <Bosmon> With * you receive one separate one for each subobject
+2014-01-31T20:45:20 <colinclark> but "cats.*" will inform me with individual change events for each cat?
+2014-01-31T20:45:23 <colinclark> that\'s what you\'re saying?
+2014-01-31T20:45:23 <Bosmon> right
+2014-01-31T20:45:29 <colinclark> excellent
+2014-01-31T20:45:29 <Bosmon> That is what I am saying
+2014-01-31T20:46:30 <colinclark> Looks like we need to completely rewrite our Change Applier documentation
+2014-01-31T20:46:47 <colinclark> It appears that we never actually documented this aspect
+2014-01-31T20:47:04 <colinclark> and of course the documentation page is filled with methods that are now deprecated
+2014-01-31T20:47:40 <colinclark> Are any other wildcards supported, Bosmon?
+2014-01-31T20:47:52 <Bosmon> That is the only possibility
+2014-01-31T20:48:04 <Bosmon> Yes, I was just about to start on ChangeApplier docs
+2014-01-31T20:48:08 <Bosmon> Just as soon as I get this pull in : P
+2014-01-31T20:51:46 <colinclark> I\'m just adding a very brief couple of examples at the bottom of the API page
+2014-01-31T20:52:05 <colinclark> they won\'t be sufficient for full-fledged documentation, but they should at least document my question here so we can refer back to it
+2014-01-31T20:52:22 <colinclark> there\'s a lot to be said for well-commented example code, I think
+2014-01-31T21:00:01 * SonicX joined the channel
+2014-01-31T21:00:08 * yzen has quit
+2014-01-31T21:03:44 <colinclark> Bosmon: This is probably exceedingly confusing, but I wanted to sketch it up to make sure I\'m very clear: http://wiki.fluidproject.org/display/docs/ChangeApplier+API#ChangeApplierAPI-ListeningforSpecificChanges
+2014-01-31T21:04:36 <Bosmon> colinclark - that seems right, although the new recommended name for triggering changing is just "change()"
+2014-01-31T21:04:40 <Bosmon> I got fed up with the old names
+2014-01-31T21:04:44 <colinclark> ok
+2014-01-31T21:05:09 <colinclark> in practice, people won\'t typically be calling these functions anyway
+2014-01-31T21:05:13 <Bosmon> right
+2014-01-31T21:05:21 <Bosmon> Noone will ever call functions again
+2014-01-31T21:05:26 <colinclark> :)
+2014-01-31T21:05:47 <colinclark> I\'m starting to dislike this editing interface too
+2014-01-31T21:06:04 <colinclark> it seems to frequently put up little tool tips that obscure what I\'m writing
+2014-01-31T21:10:18 <colinclark> Bosmon: I have another question for you if you have time
+2014-01-31T21:10:55 <Bosmon> yup
+2014-01-31T21:11:56 <colinclark> It seems to me that we have a very big conceptual change with the removal of guards
+2014-01-31T21:12:03 <Bosmon> very big, yes
+2014-01-31T21:12:07 <colinclark> we\'ve talked about this before, but again I want to clarify my assumptions
+2014-01-31T21:12:13 <Bosmon> As our Model Transformations Tests say
+2014-01-31T21:12:25 <Bosmon> Elephant: Very good, it is indeed big
+2014-01-31T21:12:34 <colinclark> :)
+2014-01-31T21:12:57 <colinclark> So guards were, as their name suggests, "protectors of state" in some sense
+2014-01-31T21:13:20 <colinclark> whereas now we just transform things
+2014-01-31T21:13:22 <colinclark> is that correct?
+2014-01-31T21:13:40 <colinclark> Presumably our users would have seen guards as a place to define "invariants"
+2014-01-31T21:13:52 <colinclark> to get all Liskovian on your ass
+2014-01-31T21:14:03 <colinclark> Like validation rules
+2014-01-31T21:14:15 <colinclark> and I imagine that validation rules are sort of binary things
+2014-01-31T21:14:37 <colinclark> "NO, YOU CAN\'T CHANGE COLIN\'S ADDRESS," says the bank
+2014-01-31T21:14:41 <colinclark> wait, no, they didn\'t say that
+'
+
+b'2014-01-31T00:19:02 * SonicX joined the channel
+2014-01-31T01:51:43 * kasparnet joined the channel
+2014-01-31T01:56:50 * kasparnet has quit
+2014-01-31T02:14:26 * yzen has quit
+2014-01-31T02:55:16 * SonicX has quit
+2014-01-31T03:26:45 * vjoanna has quit
+2014-01-31T03:45:24 * michelled joined the channel
+2014-01-31T03:45:28 * michelled has quit
+2014-01-31T04:49:07 * jhung has quit
+2014-01-31T07:27:17 * kasparnet joined the channel
+2014-01-31T07:31:30 * kasparnet has quit
+2014-01-31T07:59:12 * yzen joined the channel
+2014-01-31T08:24:43 * Bosmon has quit
+2014-01-31T08:28:51 * Bosmon joined the channel
+2014-01-31T09:00:54 * yzen has quit
+2014-01-31T13:01:29 * jhung joined the channel
+2014-01-31T13:46:11 * kasparnet joined the channel
+2014-01-31T13:57:02 * clown joined the channel
+2014-01-31T14:05:44 * jhung has quit
+2014-01-31T14:07:29 * jhung joined the channel
+2014-01-31T15:01:54 * jessm joined the channel
+2014-01-31T15:27:00 * avtar joined the channel
+2014-01-31T15:35:39 <jhung> anyone here used CiviCRM before? We have a partner looking for some help setting it up.
+2014-01-31T16:06:50 * michelled joined the channel
+2014-01-31T16:24:53 * colinclark joined the channel
+2014-01-31T16:42:49 * yzen joined the channel
+2014-01-31T17:05:25 * michelled has quit
+2014-01-31T17:32:15 * jhernandez has quit
+2014-01-31T17:35:53 * michelled joined the channel
+2014-01-31T17:51:10 <Justin_o_> Bosmon: i\'m wondering if this is a bug https://github.com/fluid-project/infusion/blob/master/src/framework/enhancement/js/ProgressiveEnhancement.js#L130
+2014-01-31T17:52:02 <Justin_o_> since it seems that it will only work if you have the progressiveCheckerOptions supplied at definition of the grade, and any supplied options will be ignored. Is that correct?
+2014-01-31T17:57:42 * yzen has quit
+2014-01-31T17:57:42 * yzen_ joined the channel
+2014-01-31T18:04:12 <Bosmon> Justin_o_ - this code is rubbish, yes
+2014-01-31T18:04:30 <Bosmon> And dates from the era when we could expect to learn anything relevant from a raw call to fluid.defaults
+2014-01-31T18:04:39 <Bosmon> Please do write up a JIRA if you have some time
+2014-01-31T18:05:11 <Justin_o_> Bosmon: okay.. any idea when you might have time to fix it.. we\'ll need to use progressive enhancement for PCP for swapping auxSchemas based on platform
+2014-01-31T18:05:33 <Bosmon> Well, I think it might have something to do with how long it takes us to empty our current stack of pull request reviews : P
+2014-01-31T18:05:52 <colinclark> GUYS GUESS WHAT I\'M DOING
+2014-01-31T18:06:02 <colinclark> And it\'s not "writing reports and papers!"
+2014-01-31T18:06:05 <jessm> Bosmon: we could make a nice snack out of your earlier comment: a fluid drink with raw dates!
+2014-01-31T18:06:23 <Bosmon> :)
+2014-01-31T18:06:47 <colinclark> jessm: You\'re so Ossington and Dundas, with your live raw date smoothies!
+2014-01-31T18:07:08 <jessm> colinclark: mmmmmm
+2014-01-31T18:07:21 <colinclark> No doubt with some boutique mezcal mixed in
+2014-01-31T18:07:30 <Bosmon> OZZINGDON and dunDAS!
+2014-01-31T18:07:42 <jessm> colinclark: i\'ll have you know i had a date smoothie this weekend from michelled \'s \'hood
+2014-01-31T18:07:55 <colinclark> :)
+2014-01-31T18:08:16 <jessm> colinclark: what were you gonna say, you were shouting about somethign ;)
+2014-01-31T18:08:29 <colinclark> GUYS GUESS WHAT I\'M DOING
+2014-01-31T18:08:46 <colinclark> !m colinclark
+2014-01-31T18:08:46 <[o__o]> You\'re doing good work, colinclark!
+2014-01-31T18:08:51 <colinclark> oh wow, thanks!
+2014-01-31T18:09:51 <jessm> colinclark: does it involve cat litter?
+2014-01-31T18:10:03 <colinclark> lol
+2014-01-31T18:10:05 <colinclark> umm
+2014-01-31T18:10:10 <colinclark> I don\'t know how to respond to that
+2014-01-31T18:10:27 <colinclark> Aside from self-flattery
+2014-01-31T18:10:28 <colinclark> !m colinclark
+2014-01-31T18:10:28 <[o__o]> You\'re doing good work, colinclark!
+2014-01-31T18:10:36 <colinclark> I\'m reviewing pull requests
+2014-01-31T18:10:41 <michelled> yay!
+2014-01-31T18:10:49 <michelled> for C4A, right :)
+2014-01-31T18:11:20 <jessm> colinclark: woot woot!
+2014-01-31T18:14:16 <colinclark> michelled: no!
+2014-01-31T18:14:52 <colinclark> I\'m doing the now two month old model relay pull request right now
+2014-01-31T18:15:13 <colinclark> Bosmon\'s been hard at work on some GPII pull requests recently
+2014-01-31T18:15:20 <michelled> nice
+2014-01-31T18:15:51 <michelled> kasparnet and I were talking through the pilots again yesterday and were able to close a bunch of JIRAs for stuff that has made it into master
+2014-01-31T18:15:56 <colinclark> great
+2014-01-31T18:16:07 <colinclark> michelled: Is it safe to assume you\'re planning to get the jQuery upgrade into infusion master today?
+2014-01-31T18:16:19 <Bosmon> colinclark - it\'s up to me
+2014-01-31T18:16:22 <Bosmon> I still have a fix to make
+2014-01-31T18:16:27 <colinclark> oh, ok
+2014-01-31T18:16:28 <Bosmon> I didn\'t quite get through it last night
+2014-01-31T18:16:30 <colinclark> what\'s the issue?
+2014-01-31T18:16:30 <Bosmon> But in theory I\'m awake now
+2014-01-31T18:16:43 <michelled> I\'m sort of tempted to push it as is and open two JIRAs for the issues
+2014-01-31T18:16:43 <colinclark> I know that theoretical feeling
+2014-01-31T18:16:52 <Bosmon> The new tooltip component produces mouse droppings
+2014-01-31T18:17:02 <colinclark> ah
+2014-01-31T18:17:05 <Bosmon> I\'m nearly there
+2014-01-31T18:17:18 <Bosmon> It turned out to require a number of fundamental excursions
+2014-01-31T18:17:27 <Bosmon> IN particular, adding a new "afterDestroy" event to every component : P
+2014-01-31T18:17:28 <colinclark> michelled: It might make sense to look at this one in tandem: https://github.com/fluid-project/infusion/pull/437
+2014-01-31T18:17:40 <colinclark> since you\'ve probably already got your IE testing VMs fired up
+2014-01-31T18:17:59 <colinclark> wow
+2014-01-31T18:18:04 <colinclark> fascinating
+2014-01-31T18:18:16 <Bosmon> It uncovered a fundamental bug in the IoC testing framework
+2014-01-31T18:18:25 <Bosmon> That as far as I can see can\'t be resolved without it
+2014-01-31T18:18:36 <Bosmon> The existing "onDestroy" event fires whilst the component is still in place
+2014-01-31T18:18:48 <Bosmon> But the IoC testing framework was using this to schedule "various destructive effects"
+2014-01-31T18:18:55 * michelled_ joined the channel
+2014-01-31T18:19:00 <colinclark> ah, interesting
+2014-01-31T18:19:08 <Bosmon> For example clobbering the entire markup fixture that the testing tree was attached to
+2014-01-31T18:19:31 <Bosmon> Which then meant that any tooltips attached to the component became "decontextualised in the DOM" before they could be destroyed properly
+2014-01-31T18:19:31 * avtar has quit
+2014-01-31T18:19:39 <colinclark> Justin_o_: Is the reason that you didn\'t review and push this particular pull request because you have commits in it? https://github.com/fluid-project/infusion/pull/446
+2014-01-31T18:19:39 <Bosmon> So jQuery UI would then throw a fit
+2014-01-31T18:20:05 <colinclark> ok
+2014-01-31T18:20:06 <Bosmon> So it seems that we have a requirement for a new lifecycle point which occurs DEFINITELY AFTER all material in a component tree has been fully cleaned up
+2014-01-31T18:20:46 <colinclark> that makes sense
+2014-01-31T18:20:48 * michelled has quit
+2014-01-31T18:20:48 * michelled_ is now known as michelled
+2014-01-31T18:21:47 <Justin_o_> Bosmon: filed a new jira for the progressiveCheckerForComponent and sent a pull request with a unit test http://issues.fluidproject.org/browse/FLUID-5264
+2014-01-31T18:21:59 <Bosmon> Thanks very much, Justin_o_
+2014-01-31T18:22:00 <Justin_o_> colinclark: not sure, but sounds like a good a reason for why I didn\'t
+2014-01-31T18:22:07 <Bosmon> This component needs to be rewritten anyway
+2014-01-31T18:22:11 <colinclark> It\'s an interesting case...
+2014-01-31T18:22:19 <colinclark> Where it looks like you wrote a test and Bosmon made a fix, Justin_o_
+2014-01-31T18:22:54 <colinclark> My impression is that there shouldn\'t be any reason, in a case like this, where the original test writer shouldn\'t review and push the fix
+2014-01-31T18:22:58 <colinclark> but I\'m curious to hear if others disagree
+2014-01-31T18:23:09 <Bosmon> colinclark - I think it\'s perfectly reasonable
+2014-01-31T18:25:18 <colinclark> Justin_o_: So this pull request, looks like it is a proto-example of this kind of exchange. I\'m assuming that you\'ve made a test case, and now you\'re going to coordinate with someone like Bosmon or kasparnet to produce a fix, is that right? https://github.com/fluid-project/infusion/pull/452/files
+2014-01-31T18:25:22 * jhung has quit
+2014-01-31T18:25:45 <colinclark> Or your brand new one, for that matter
+2014-01-31T18:25:59 <colinclark> Which has a remarkably similar title to the other one ;)
+2014-01-31T18:26:45 <colinclark> I wonder if, in the case of these kinds of pull requests, it might make sense to comment on them describing what the state of the pull request is, and who\'s "got the frog" for it?
+2014-01-31T18:30:48 * colinclark has quit
+2014-01-31T18:31:06 * colinclark joined the channel
+2014-01-31T18:31:13 <Justin_o_> colinclark: i\'m fine with that, in the sense that it shouldn\'t prevent the writer of the unit test from reviewing.. assuming that the person supplying the fix looks at the unit test in the process :)
+2014-01-31T18:31:42 <colinclark> Yes, that is presumably part of producing a fix
+2014-01-31T18:32:10 <colinclark> Cool, I\'m glad you think it\'s a good idea
+2014-01-31T18:32:47 <Justin_o_> colinclark: what did you mean about the state of the pull request
+2014-01-31T18:33:08 <colinclark> Well, I mean, if you submit a pull request containing a test case for a bug
+2014-01-31T18:33:26 <colinclark> it might be useful to note that it\'s not ready to be reviewed, but is ready to be fixed by someone
+2014-01-31T18:33:28 <colinclark> if you see what I mean
+2014-01-31T18:33:55 <colinclark> So for example, and I\'m not complaining, it\'s hard to tell what the state of this one is: https://github.com/fluid-project/infusion/pull/452
+2014-01-31T18:34:03 <colinclark> It could be that it\'s just waiting for some attention
+2014-01-31T18:34:18 <colinclark> or it could be fixed by this one: https://github.com/fluid-project/infusion/pull/455
+2014-01-31T18:34:59 <colinclark> As a reviewer who wants to try to knock a few issues off our review backlog, it\'s harder to know what to focus on if the comments of a pull request don\'t describe their status
+2014-01-31T18:35:23 <colinclark> A funny example of this practice is here on this pull request: https://github.com/fluid-project/infusion/pull/447
+2014-01-31T18:35:36 <colinclark> Where Bosmon tells me that the pull request is ready for me to take care of
+2014-01-31T18:35:40 <colinclark> ... in German, no less
+2014-01-31T18:35:59 <colinclark> "Es wartet alles auf dich"
+2014-01-31T18:36:40 <colinclark> Or, according to Google Translate,\xe3\x80\x8c\xe3\x81\x93\xe3\x82\x8c\xe3\x82\x89\xe3\x81\xaf\xe3\x80\x81\xe3\x81\x82\xe3\x81\xaa\xe3\x81\x9f\xe3\x81\xae\xe4\xb8\x8a\xe3\x81\xab\xe3\x81\x99\xe3\x81\xb9\xe3\x81\xa6\xe3\x82\x92\xe5\xbe\x85\xe3\x81\xa4\xe3\x80\x8d in Japanese
+2014-01-31T18:36:55 <Bosmon> But perhaps less melodiously
+2014-01-31T18:37:21 <Justin_o_> colinclark: sure in the case of pull 452 that info is in the jira http://issues.fluidproject.org/browse/FLUID-5250
+2014-01-31T18:37:32 <Justin_o_> unfortunately it wasn\'t pulled into the potential fix
+2014-01-31T18:37:49 <Justin_o_> colinclark: i guess there is a question about how best to supply these unit tests for others to use
+2014-01-31T18:37:59 <colinclark> It really just tickles me that a pull request from kasparnet includes the JSON property {catsAreDecent: true}
+2014-01-31T18:38:14 <colinclark> Justin_o_: I don\'t mind them supplied as pull requests--it makes them very prominent this way
+2014-01-31T18:38:36 <colinclark> I think it\'s mostly a matter of making notes somewhere
+2014-01-31T18:38:45 <Justin_o_> colinclark: maybe in the name itself
+2014-01-31T18:38:51 <Justin_o_> ?
+2014-01-31T18:38:52 <colinclark> Again, I hope I don\'t sound like I\'m complaining
+2014-01-31T18:38:55 <colinclark> just thinking aloud
+2014-01-31T18:39:04 <colinclark> In the name, yes, or in a comment directly on the pull request
+2014-01-31T18:39:04 <Justin_o_> colinclark: yep
+2014-01-31T18:39:45 <Justin_o_> colinclark: i guess we have to be careful about someone making a fix, closing the pull for the unit test, but then their pull is rejected
+'
+

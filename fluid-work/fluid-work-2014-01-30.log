@@ -1,0 +1,405 @@
+b'2014-01-30T21:28:35 <Justin_o_> Bosmon: it basically just assembles a list of file paths representing the set of files
+2014-01-30T21:28:42 <Justin_o_> dependencies for a system
+2014-01-30T21:28:51 <Bosmon> So nonArrayDependencies is not in fact a test fixture as you said?
+2014-01-30T21:29:01 <Bosmon> Is it something that a user of the plugin might use in real life?
+2014-01-30T21:29:16 <Justin_o_> Bosmon: yes.. and it is used as a condition for the test
+2014-01-30T21:29:21 <Bosmon> Ok
+2014-01-30T21:29:36 <Justin_o_> Bosmon: like in infusion we might do fluid.get(model, root) and test it\'s output
+2014-01-30T21:29:44 <Bosmon> So I guess this gets back to the original question, which I should have expressed better -
+2014-01-30T21:29:51 <Justin_o_> well.. that argument list isn\'t right, but i hope it gets to the point
+2014-01-30T21:29:52 <Bosmon> "What is the use case for the task nonArrayDependencies?"
+2014-01-30T21:30:01 <Justin_o_> Bosmon: ah okay
+2014-01-30T21:30:44 <Justin_o_> Bosmon: if you look at the dependency file it uses https://github.com/jobara/grunt-modulefiles/blob/FLUID-5168/test/fixtures/moduleCDependencies.json
+2014-01-30T21:31:00 <Justin_o_> you can see that the dependencies key points at string
+2014-01-30T21:31:18 <Justin_o_> this is to make sure you can use a string instead of having to do ["moduleA"]
+2014-01-30T21:31:18 * anvk has quit
+2014-01-30T21:32:30 <Bosmon> Justin_o_ - but the expectation is that having written "moduleA" is in every way equivalent to having written ["moduleA"], right?
+2014-01-30T21:33:17 * cindyli1 has quit
+2014-01-30T21:33:36 <Justin_o_> Bosmon: yes
+2014-01-30T21:33:52 <Bosmon> Justin_o_ - so why might it be useful for there to be a grunt task exposed which treats them differently?
+2014-01-30T21:34:07 <Justin_o_> Bosmon: there isn\'t
+2014-01-30T21:34:45 <Bosmon> Ok - so what does the "nonArrayDependencies" task actually do then?
+2014-01-30T21:34:49 <Justin_o_> effective what i\'m doing here is equivalent to get(root, "path") and get(root, ["path"]) and testing the output
+2014-01-30T21:35:28 <Justin_o_> Bosmon: it\'s not really a task.. the modulefiles is the task.. nonArrayDependencies is the target
+2014-01-30T21:35:52 <Justin_o_> Bosmon: all of this is just running the modulefiles tasks under different conditions which are evaluated in the tests
+2014-01-30T21:38:12 <Bosmon> Justin_o_ - somehow this is proving hard to understand :)
+2014-01-30T21:38:17 <Bosmon> I guess we should go back to the beginning again : P
+2014-01-30T21:38:28 <Bosmon> "modulefiles" itself is a task, right?
+2014-01-30T21:39:30 <Justin_o_> yes.. it\'s the task the plugin is actually defining
+2014-01-30T21:39:50 <Bosmon> When you say "the task"
+2014-01-30T21:40:17 <Bosmon> Does it not actually define other tasks such as "test", "default", "write" etc.
+2014-01-30T21:41:30 <Justin_o_> Bosmon: i\'ll take one step further back and state that https://github.com/fluid-project/grunt-modulefiles is a grunt plugin.. the plugin allows for you to import a specific task, in this case, "modulefiles", into some other gruntfile
+2014-01-30T21:41:42 <Bosmon> ok, cool
+2014-01-30T21:42:44 <Justin_o_> Bosmon: does that make sense.. so yes, write is also a task, but i guess you can think of it as one that is only used locally to assist with testing modulefiles
+2014-01-30T21:42:50 <Bosmon> Ok, so is it correct to say that entries such as "nonArrayDependencies" is in some way a "sample target" for modulefiles?
+2014-01-30T21:43:07 <Justin_o_> Bosmon: yes you can think of it like that
+2014-01-30T21:43:30 <Bosmon> Ok - so the grunt.initConfig call on line 17 of your gruntfile
+2014-01-30T21:43:51 <Bosmon> Could this be seen as establishing some "defaults" for the tasks that the gruntfile exposes?
+2014-01-30T21:44:42 <Justin_o_> Bosmon: not really, these are the configuration for running those tasks.. the top level keys all correspond to tasks
+2014-01-30T21:45:08 <Justin_o_> there are ways to pass in command line arguments and other things, but they aren\'t happening here
+2014-01-30T21:45:40 <Bosmon> Ok
+2014-01-30T21:45:48 <Bosmon> Well, let me try a different tack : P
+2014-01-30T21:45:49 <Justin_o_> Bosmon:  here you can see how tasks are loaded from external files, and created locally
+2014-01-30T21:45:50 <Justin_o_> https://github.com/fluid-project/grunt-modulefiles/blob/master/Gruntfile.js#L97-L113
+2014-01-30T21:45:54 <Bosmon> I\'m looking at the documentation you\'ve written
+2014-01-30T21:45:57 <Bosmon> Which does look good
+2014-01-30T21:46:20 <Bosmon> In the section "Default Options" you have an example, where there is a use of the "modulefiles" task with a target named "all"
+2014-01-30T21:46:32 <Bosmon> Does this bear any relationship at all to the similarly named target you have in the Gruntfile?
+2014-01-30T21:46:32 * jhung joined the channel
+2014-01-30T21:47:55 <Justin_o_> Bosmon: not really no.. the targets could be named anything.. they are only related in so much that they are configured the same.. i could have called it "testAllCondition"
+2014-01-30T21:48:01 <Justin_o_> or anything else for that matter
+2014-01-30T21:49:57 <Bosmon> Justin_o_ - ok, so the exact role of the initConfig call that you have on line 17 of your Gruntfile remains unclear
+2014-01-30T21:50:09 <Bosmon> In which situations is this "config" that you set up exposed to users of the plugin?
+2014-01-30T21:50:28 <Justin_o_> Bosmon: it isn\'t
+2014-01-30T21:50:47 <Justin_o_> a user of the plugin wouldn\'t use this gruntfile at all
+2014-01-30T21:50:55 <Bosmon> !!
+2014-01-30T21:51:09 <Justin_o_> they would use the task defined in the tasks directory
+2014-01-30T21:51:15 <Bosmon> I think it suddently dawns on me
+2014-01-30T21:51:22 <Bosmon> This is a gruntfile FOR the plugin
+2014-01-30T21:51:25 <Justin_o_> yes
+2014-01-30T21:51:27 <Justin_o_> exactly :)
+2014-01-30T21:51:28 <Bosmon> Rather than something which defines the plugin
+2014-01-30T21:51:33 <Justin_o_> right
+2014-01-30T21:53:33 <Bosmon> Ok, I think I somewhat understand now :)
+2014-01-30T21:53:37 <Bosmon> Thanks for being so patient with me
+2014-01-30T21:54:36 <Justin_o_> Bosmon: :) no problem.. it is a bit of a confusing setup.. it took me a while to write this in the first place trying to sort out all the pieces
+2014-01-30T21:55:22 <Bosmon> I think at various times we misunderstood each other by referring to "the modulefiles task"
+2014-01-30T21:55:38 <Bosmon> Rather than "the particular invocation of the modulefiles task in the Gruntfile"
+2014-01-30T21:55:40 <Justin_o_> yes.. i think so
+2014-01-30T21:55:51 <Justin_o_> yes.. that\'s true.. it was unclear
+2014-01-30T21:56:02 * yzen joined the channel
+2014-01-30T21:56:08 <Justin_o_> sorry about that
+2014-01-30T21:56:39 <Bosmon> Well, these things are always hard to talk about, with a new technology
+2014-01-30T21:56:53 <Bosmon> When one is unclear about the distinction between "things" and "instances of things"
+2014-01-30T21:57:23 <Justin_o_> yes.. i guess that would have been a clearer way to describe them
+2014-01-30T21:57:27 * clown has left the channel
+2014-01-30T21:57:42 <Bosmon> I don\'t know if there any standard "grunt language" that covers this case
+2014-01-30T21:57:54 <Bosmon> "a run of a task" or "an instance of a config" or whatever
+2014-01-30T22:00:53 * yzen has quit
+2014-01-30T22:01:11 <Justin_o_> Bosmon: not sure.. i originally wrote this pull request about 4 months ago.. so i\'m still trying to refresh my memory on lots of parts :)
+2014-01-30T22:01:51 <Justin_o_> Bosmon: i\'m heading out now.. let me know if there you think the plugin is good now, and if you have any other questions.. i\'ll try to get to them when i get to a chance.. thanks
+2014-01-30T22:02:04 <Bosmon> Cheers Justin_o_ - thanks for chatting about it
+2014-01-30T22:02:43 <Justin_o_> np any time...
+2014-01-30T22:04:28 * yzen joined the channel
+2014-01-30T22:05:22 * michelled has quit
+2014-01-30T22:16:51 * jhung has quit
+2014-01-30T22:33:16 * anastasiac has quit
+2014-01-30T22:33:58 * avtar has quit
+2014-01-30T22:38:43 * avtar joined the channel
+2014-01-30T22:47:53 * jessm has quit
+2014-01-30T22:50:38 * SonicX joined the channel
+2014-01-30T22:50:57 * kasparnet has quit
+2014-01-30T22:56:11 * SonicX has quit
+2014-01-30T23:11:04 * [o__o] has left the channel
+2014-01-30T23:12:58 * [o__o] joined the channel
+2014-01-30T23:15:44 * [o__o] has left the channel
+2014-01-30T23:18:24 * [o__o] joined the channel
+2014-01-30T23:22:03 * jhung joined the channel
+2014-01-30T23:23:54 * danaayotte_ has quit
+2014-01-30T23:44:53 * avtar has quit
+'
+
+b'2014-01-30T16:20:19 <colinclark> anastasiac: where did classChange.js come from?
+2014-01-30T16:20:39 <anastasiac> colinclark, it was in the climateChange demo; I think it came from NOAA
+2014-01-30T16:20:49 <colinclark> ah--it certainly stands out
+2014-01-30T16:20:52 <colinclark> ok
+2014-01-30T16:21:02 <anastasiac> yeah, I wasn\'t sure what to do with it
+2014-01-30T16:21:19 <anastasiac> I couldn\'t recall if there was a reason why we left it there in the first place
+2014-01-30T16:21:37 <Justin_o_> colinclark: they\'d have to update those.. when they pull from the project repo they will have the new branch there
+2014-01-30T16:22:21 <colinclark> I guess I don\'t really mind, Justin_o_
+2014-01-30T16:22:33 <Justin_o_> colinclark: i guess what i\'m arguing for is about being clear on what our canonical branch is.. and since master carries the connotation of that.. i think it will lead to confusion both to us, and people coming into the project. Especially when they are not in sync
+2014-01-30T16:22:35 <colinclark> It\'s interesting to think about the fact that branches in Git really are just free
+2014-01-30T16:22:47 <Justin_o_> colinclark: yes.. exactly
+2014-01-30T16:22:52 <colinclark> and that it\'s to come to see a branch like "master" as somehow inherently canonical
+2014-01-30T16:23:03 <colinclark> the only thing to keep in mind is that gh-pages is an exception to the rule here
+2014-01-30T16:23:06 <colinclark> it\'s not free
+2014-01-30T16:23:11 <colinclark> it actually means something very specific
+2014-01-30T16:23:16 <Justin_o_> colinclark: right in terms of github that is
+2014-01-30T16:23:21 <michelled> I don\'t usually care so much about details like this, but I really do feel that the name \'master\' means something useful. interesting that you bring up the NOAA demo
+2014-01-30T16:23:29 <michelled> since it\'s actually the type of thing I\'m thinking of
+2014-01-30T16:23:36 <michelled> we have a \'demo\' branch in infusion
+2014-01-30T16:23:48 <michelled> we were quite careful about pushing to it, but not super careful
+2014-01-30T16:24:14 <michelled> if we have other names branches, they don\'t carry the naming convention of \'master\'
+2014-01-30T16:24:36 <michelled> I suppose it means a two step review then for the the case I was outlining before.
+2014-01-30T16:24:52 <michelled> which is isn\'t necessarily a bad thing
+2014-01-30T16:25:39 <Justin_o_> michelled: yes.. no necessarily a bad thing, since we should be careful about what we publish.. also we should be careful about naming our branches.. in hind site a branch called "demo" isn\'t very descriptive.
+2014-01-30T16:26:06 <michelled> no, it would probably we named with a JIRA number
+2014-01-30T16:26:16 <michelled> which again, changes how we think of it
+2014-01-30T16:27:20 <Justin_o_> michelled: that\'s better, but i might want to add something human readable to that, since most contributors may not go and look it up, or know where to.. so i might call it something like FLUID-XXXX-new-site-launch or something like that...
+2014-01-30T16:27:46 * SonicX joined the channel
+2014-01-30T16:27:59 * yzen joined the channel
+2014-01-30T16:28:00 <Justin_o_> i guess we are both in agreement though that it would have to stay up-to-date with gh-pages branch
+2014-01-30T16:28:09 <Justin_o_> where it made sense
+2014-01-30T16:28:16 <Justin_o_> well it should merge cleanly
+2014-01-30T16:28:29 <michelled> the other thing we\'d need to make clean and train ourselves to remember is that *every* pull request to the ghpages branch is a request to go live
+2014-01-30T16:28:50 <Justin_o_> michelled: yes.. no matter what we do, that is something we have to remember
+2014-01-30T16:29:14 <michelled> well, the responsibility is slightly different if we go with the two step though
+2014-01-30T16:44:24 * kasparne_ joined the channel
+2014-01-30T16:45:19 <Justin_o_> kasparne_:
+2014-01-30T16:45:25 * kasparnet has quit
+2014-01-30T16:45:29 <michelled> Justin_o_: I\'m fine with what ever you think is best. can you send something to list, though, articulating what the process would be for site where we use gh-pages?
+2014-01-30T16:45:42 <Justin_o_> kasparne_: which walkthrough is appropriate for pmt/pcp related unit tests?
+2014-01-30T16:56:05 * yzen has quit
+2014-01-30T17:07:58 <Justin_o_> [o__o]: help
+2014-01-30T17:07:58 <[o__o]> Available plugins: logger, ping, help, bangmotivate (https://botbot.me/freenode/fluid-work/help/)
+2014-01-30T17:08:45 <colinclark> !m Justin_o_
+2014-01-30T17:08:45 <[o__o]> You\'re doing good work, Justin_o_!
+2014-01-30T17:09:01 <Justin_o_> !m colinclark
+2014-01-30T17:09:01 <[o__o]> You\'re doing good work, colinclark!
+2014-01-30T17:09:03 <Justin_o_> :)
+2014-01-30T17:09:06 <colinclark> awww
+2014-01-30T17:09:39 <Justin_o_> colinclark:  i have to say the logs it generates look really good
+2014-01-30T17:10:38 <colinclark> yup
+2014-01-30T17:58:30 * danaayotte_ has quit
+2014-01-30T18:00:16 * danaayotte_ joined the channel
+2014-01-30T18:07:40 <Justin_o_> colinclark: just as a reminder, for the floeproject.org repo you were saying that the master is behind gh-pages?
+2014-01-30T18:08:06 <colinclark> conceptually behind
+2014-01-30T18:08:12 <colinclark> content-wise, it should be accurate
+2014-01-30T18:08:16 <colinclark> save perhaps for some whitespace
+2014-01-30T18:08:17 <Justin_o_> in terms of commits right?
+2014-01-30T18:08:17 <colinclark> but yes
+2014-01-30T18:08:26 <colinclark> two commits behind
+2014-01-30T18:08:57 <Justin_o_> okay.. i\'m going to be pushing up so i\'ll try to get them both in sync again... i\'ll have to wait to see how my recommendation is received on list before i start changing the branches around
+2014-01-30T18:23:15 * anvk has quit
+2014-01-30T18:25:29 * anvk joined the channel
+2014-01-30T18:25:48 * SonicX has quit
+2014-01-30T18:34:57 * colinclark has quit
+2014-01-30T18:37:13 * cindyli1 joined the channel
+2014-01-30T18:37:53 * cindyli has quit
+2014-01-30T18:44:52 * danaayotte_ has quit
+2014-01-30T18:49:18 * kasparne_ has quit
+2014-01-30T18:56:22 * danaayotte_ joined the channel
+2014-01-30T19:07:12 <anastasiac> cindlyli, do you think this captures our discussion, and the use care, accurately? http://issues.fluidproject.org/browse/FLUID-5263
+2014-01-30T19:08:41 <anastasiac> cindlyli1: ^
+2014-01-30T19:19:49 * kasparnet joined the channel
+2014-01-30T19:28:12 <cindyli1> anastasiac: sorry, just saw ur message, will take a look on the jira. just to let u know, I\'ve finished reviewing ur pull request for the climate change demo.
+2014-01-30T19:28:28 <anastasiac> excellent, thanks
+2014-01-30T19:34:33 <cindyli1> anastasiac: a couple of things regarding ur 5263 jira. 1. the b) section in it, I think you meant for demands blocks; 2. in terms of a), after thinking more about it, it\'s possible to use demands block for the schema version of prefsEditor if to-be-applied component is the builder.
+2014-01-30T19:35:19 * SonicX joined the channel
+2014-01-30T19:35:35 <anastasiac> cindyli1, not sure I understand your second point. You mean that we could use demands blocks for the builder itself?
+2014-01-30T19:35:57 <cindyli1> yes, builder itself is a component too
+2014-01-30T19:35:58 <anastasiac> (and thanks for catching the demands/grades mistake)
+2014-01-30T19:36:23 <anastasiac> and demands for the builder itself could override the schemas, cindyli1?
+2014-01-30T19:36:30 <anastasiac> or augment them?
+2014-01-30T19:36:52 <cindyli1> anastasiac: yes, both auxSchema and primarySchema are builder options.
+2014-01-30T19:37:23 <anastasiac> ok, thanks, cindyli1, I\'ll update the JIRA description
+2014-01-30T19:37:29 <cindyli1> thanks, anastasiac
+2014-01-30T19:39:47 * jhung has quit
+2014-01-30T19:41:03 * jhung1 joined the channel
+2014-01-30T19:43:42 <michelled> jessm: here\'s a status update
+2014-01-30T19:44:28 <michelled> the link to the demo on the floe project site has been updated
+2014-01-30T19:44:59 <michelled> unfortunately, a new bug has been discovered
+2014-01-30T19:45:17 <michelled> where if you load the demo in the newest Safari, it crashes the browser
+2014-01-30T19:45:28 <michelled> when TTS is turned on
+2014-01-30T19:45:40 * jhung1 has quit
+2014-01-30T19:51:26 * kasparnet has quit
+2014-01-30T20:19:58 * kasparnet joined the channel
+2014-01-30T20:25:31 * SonicX_ joined the channel
+2014-01-30T20:25:36 * Bosmon joined the channel
+2014-01-30T20:26:06 * SonicX has quit
+2014-01-30T20:26:13 * SonicX_ has quit
+2014-01-30T20:38:21 <jessm> michelled: that\'s a bummer
+2014-01-30T20:38:28 <jessm> michelled: what\'s the plan for that?
+2014-01-30T20:39:27 <michelled> jessm: I was wondering what you thought about its priority compared to our other work. Justin_o_, are you and avtar currently looking into it?
+2014-01-30T20:46:16 <jessm> michelled: well, is it an issue with just that demo version of UIO or of UIO?
+2014-01-30T20:46:48 <michelled> it\'s an issue with tts in UIO which showed up with the new version of Safari
+2014-01-30T20:48:34 <Justin_o_> michelled, jessm: it\'s an issue with that demo access the tts server we have here
+2014-01-30T20:49:11 <Justin_o_> avtar: was going to look to see if it\'s something to do with nginx, i\'m going to try to setup a local festival server to test it on my machine
+2014-01-30T20:50:15 <jessm> Justin_o_: will that yield a sense of how costly fixing it might be?
+2014-01-30T20:50:23 <jessm> costly in terms of effort and time?
+2014-01-30T20:50:41 <Justin_o_> jessm: i don\'t know.. it will help narrow down where the issue is
+2014-01-30T20:58:40 <Bosmon> Hi Justin_o_, cindyli1 - I\'m just looking over your conversation about the grunt plugin
+2014-01-30T20:58:51 <Bosmon> Could you explain the "nonArrayDependencies" option which was added?
+2014-01-30T21:00:30 <Justin_o_> Bosmon: thanks for looking.. that one is a unit test
+2014-01-30T21:00:36 <Justin_o_> or is for the unit tests.
+2014-01-30T21:02:33 <Justin_o_> Bosmon: these are all used for test cases https://github.com/jobara/grunt-modulefiles/blob/FLUID-5168/Gruntfile.js#L34-L88
+2014-01-30T21:05:51 <Bosmon> Justin_o_ - thanks
+2014-01-30T21:06:45 <Bosmon> I guess it wasn\'t clear from its naming and position in the directory structure that this file is filled with test cases
+2014-01-30T21:06:53 <Bosmon> Do you think there\'s something we could do about that?
+2014-01-30T21:18:41 <Justin_o_> Bosmon: i replied to your comment on the pull request.. i think this is common practice for a grunt plugin.
+2014-01-30T21:18:56 <Justin_o_> Bosmon: here\'s an example from one of the core contributed plugins https://github.com/gruntjs/grunt-contrib-uglify/blob/master/Gruntfile.js
+2014-01-30T21:19:44 <Bosmon> Thanks Justin_o_ - could I ask my question again? : P
+2014-01-30T21:19:45 <Justin_o_> Bosmon: i think the gruntfiles for plugins are just for running tests, linting, and things like that. the task that you actually create and distribute is in the tasks directory
+2014-01-30T21:19:50 <Bosmon> "Do you think there\'s something we can do about this?" : P
+2014-01-30T21:20:34 <Justin_o_> Bosmon: :) okay.. not that i can think of at the moment
+2014-01-30T21:20:44 <Bosmon> Ok
+2014-01-30T21:20:46 * anastasiac has quit
+2014-01-30T21:20:51 <Bosmon> Well "I invite you to try to think of something" :)
+2014-01-30T21:21:03 * anastasiac joined the channel
+2014-01-30T21:21:55 <Justin_o_> Bosmon:  the only thing i can think of would be to define the task outside of the grunt file, but you\'d still need to run it in the gruntfile and since all it does is run tests and lint it seems strange..
+2014-01-30T21:22:08 <Justin_o_> Bosmon: also gruntfiles have to be at the root
+2014-01-30T21:22:26 <Bosmon> Justin_o_ - could we perhaps move some of this material into a separate file, and include it from the root file?
+2014-01-30T21:23:00 <Justin_o_> Bosmon: which material would you like to move
+2014-01-30T21:23:17 <Bosmon> Justin_o_ - the test cases
+2014-01-30T21:24:02 <Bosmon> Actually I\'m completely puzzled, since I see you already have a directory named "test" which includes some test fixtures
+2014-01-30T21:24:12 <Bosmon> Could you explain the difference between these and the ones written in the Gruntfile?
+2014-01-30T21:24:24 <Justin_o_> Bosmon: yes.. that\'s exactly right.. the tests are here https://github.com/jobara/grunt-modulefiles/blob/FLUID-5168/test/modulefiles_test.js
+2014-01-30T21:24:53 <Justin_o_> the tasks need to be in the gruntfile to be run
+2014-01-30T21:25:03 <Justin_o_> so the test hooks into those
+2014-01-30T21:26:12 <Bosmon> Justin_o_ - which things do you mean by "the tasks"?
+2014-01-30T21:26:13 <Justin_o_> the tests also have an annoying habit of working with files, which is why i have to write the results out to files and compare contents with expected values
+2014-01-30T21:26:20 <Bosmon> Yes
+2014-01-30T21:26:52 <Justin_o_> Bosmon: yes.. i should be more clear about that.. I want to test the modulefiles task, which is the one i created, and i have several targets. the targets represent the various conditions..
+2014-01-30T21:27:07 <Bosmon> Justin_o_ - what is the meaning of the "modulefiles task"?
+2014-01-30T21:27:28 <Justin_o_> Bosmon: https://github.com/jobara/grunt-modulefiles/blob/FLUID-5168/Gruntfile.js#L35
+2014-01-30T21:27:43 <Bosmon> Yes, I see its definition :)
+2014-01-30T21:27:47 <Bosmon> But I am wondering what its meaning is
+2014-01-30T21:27:51 <Justin_o_> Bosmon: which corresponds to the actual task https://github.com/jobara/grunt-modulefiles/blob/FLUID-5168/tasks/modulefiles.js
+2014-01-30T21:27:54 <Bosmon> What does it do, and who does it to it for?
+2014-01-30T21:28:00 <Bosmon> who does it do it for
+2014-01-30T21:28:08 <Justin_o_> so that\'s the whole plugin :)
+2014-01-30T21:28:32 <Bosmon> Ok
+'
+
+b'2014-01-30T00:08:44 * kasparne_ has quit
+2014-01-30T00:44:56 * avtar has quit
+2014-01-30T00:48:13 * colinclark has quit
+2014-01-30T00:58:42 * yzen has quit
+2014-01-30T01:00:12 * yzen joined the channel
+2014-01-30T01:31:46 * vjoanna joined the channel
+2014-01-30T01:57:36 * yzen has quit
+2014-01-30T02:07:42 * vjoanna has left the channel
+2014-01-30T02:20:08 * colinclark joined the channel
+2014-01-30T03:09:08 * kasparnet joined the channel
+2014-01-30T03:13:29 * kasparnet has quit
+2014-01-30T04:43:47 * SonicX joined the channel
+2014-01-30T05:26:18 * colinclark has quit
+2014-01-30T06:07:31 * SonicX has quit
+2014-01-30T07:15:01 * Bosmon has quit
+2014-01-30T08:06:20 * scott_gonzalez has quit
+2014-01-30T08:49:53 * kasparnet joined the channel
+2014-01-30T09:31:12 * kasparnet has quit
+2014-01-30T09:37:25 * jhernand1z is now known as jhernandez
+2014-01-30T09:38:34 * kasparnet joined the channel
+2014-01-30T10:27:57 * kasparnet has quit
+2014-01-30T10:41:19 * kasparnet joined the channel
+2014-01-30T12:34:25 * jhung joined the channel
+2014-01-30T12:57:01 * kasparnet has quit
+2014-01-30T13:21:29 * kasparnet joined the channel
+2014-01-30T13:40:02 * cindyli joined the channel
+2014-01-30T13:54:35 * jessm joined the channel
+2014-01-30T14:31:51 * anvk joined the channel
+2014-01-30T14:34:13 * danaayotte_ joined the channel
+2014-01-30T14:48:36 * scott_gonzalez joined the channel
+2014-01-30T14:51:59 * michelled joined the channel
+2014-01-30T14:54:29 * anastasiac joined the channel
+2014-01-30T14:57:50 * kasparnet has quit
+2014-01-30T15:04:54 * kasparnet joined the channel
+2014-01-30T15:09:16 * vjoanna joined the channel
+2014-01-30T15:16:46 * clown joined the channel
+2014-01-30T15:30:01 <michelled> jhung: did you get a chance to update the floe project site link to UIO?
+2014-01-30T15:31:22 <jhung> michelled: I\'ll take a look at that now.
+2014-01-30T15:31:32 <michelled> thx jhung
+2014-01-30T15:41:25 <jhung> michelled: I submitted a pull request for master https://github.com/fluid-project/floeproject.org/pull/4
+2014-01-30T15:41:39 <michelled> thanks jhung!
+2014-01-30T15:41:44 <jhung> np michelled
+2014-01-30T15:45:44 <michelled> anastasiac: am I right that floeproject.org is using gh-pages?
+2014-01-30T15:46:04 <anastasiac> yes, michelled
+2014-01-30T15:46:09 <anastasiac> https://github.com/fluid-project/floeproject.org/tree/gh-pages
+2014-01-30T15:46:32 <michelled> so, with the pull request from jhung - does it need to be merged into master and then pushed to both master and gh-pages?
+2014-01-30T15:48:02 <anastasiac> michelled, that\'s a good question. I\'m not sure what the workflow should be when we\'re using gh-pages
+2014-01-30T15:48:06 <jhung> my guess is both michelled? If you merge that pull request to master, I\'ll merge it to ghages and submit a pull request for that.
+2014-01-30T15:48:37 <michelled> what has the process been so far?
+2014-01-30T15:49:18 <anastasiac> well, we\'ve only done this once, michelled :-)
+2014-01-30T15:50:06 <michelled> :) were there 2 pulls?
+2014-01-30T15:50:37 <anastasiac> https://github.com/fluid-project/floeproject.org/network
+2014-01-30T15:51:33 <anastasiac> it looks like we worked off master until we were ready to publish, then merged master into gh-pages, michelled
+2014-01-30T15:51:57 <michelled> ok, so I think it\'s the responsibility of the reviewer to push to both places
+2014-01-30T15:52:03 <michelled> unless we don\'t want to publlish
+2014-01-30T15:52:34 <michelled> so maybe, we should get the person making the pull request to specify on it whether or not to push to ghpages as well
+2014-01-30T15:52:41 <michelled> does that seem reasonable?
+2014-01-30T15:52:59 <michelled> Justin_o_: your kingly opinion would be useful here too :)
+2014-01-30T15:54:26 <anastasiac> seems reasonable to me, I think...
+2014-01-30T15:54:48 <Justin_o_> michelled: okay :) I\'ll have to catch up.
+2014-01-30T15:56:58 <Justin_o_> anastasiac, michelled: maybe we should drop the master branch
+2014-01-30T15:57:06 <Justin_o_> and use gh-pages as master
+2014-01-30T15:57:15 <Justin_o_> sorry.. treat it as master
+2014-01-30T15:57:20 <michelled> Justin_o_: I think there is a difference between the two branches
+2014-01-30T15:57:25 <michelled> CNAME, perhaps?
+2014-01-30T15:57:34 <Justin_o_> michelled: what is the difference
+2014-01-30T15:57:44 <Justin_o_> i think CNAME only works in gh-pages branch either way
+2014-01-30T15:57:49 <Justin_o_> if that\'s what you were worried about
+2014-01-30T15:58:41 * colinclark joined the channel
+2014-01-30T15:58:56 <michelled> https://github.com/fluid-project/floeproject.org/compare/master...gh-pages
+2014-01-30T15:59:07 <michelled> yes, it\'s just the CNAME file
+2014-01-30T15:59:48 <michelled> colinclark: did you intentionally only put the CNAME file in the gh-pages branch for floeproject.org?
+2014-01-30T15:59:52 <michelled> and not in master, that is
+2014-01-30T16:01:09 <colinclark> That\'s not quite what happened
+2014-01-30T16:01:25 <colinclark> Since, as you can see, master does indeed have the CNAME file: https://github.com/fluid-project/floeproject.org/tree/master
+2014-01-30T16:01:34 <colinclark> What\'s missing are the commits
+2014-01-30T16:01:58 <colinclark> Which, yes, I only ended up doing on the gh-pages branch
+2014-01-30T16:02:05 <colinclark> since Github was being rather opaque
+2014-01-30T16:02:19 <colinclark> so you\'ll see that the difference between the two branches is two commits
+2014-01-30T16:02:23 <colinclark> one that removes the CNAME file
+2014-01-30T16:02:25 <colinclark> one that puts it back
+2014-01-30T16:03:13 <michelled> oh, weird. the github diff shouldn\'t be showing me changes.
+2014-01-30T16:03:24 <michelled> at least, I wouldn\'t have expected that.
+2014-01-30T16:03:55 <colinclark> I guess it\'s showing you the history
+2014-01-30T16:04:03 <colinclark> 1 deletion, one addition
+2014-01-30T16:04:29 <colinclark> maybe there\'s whitespace there, I don\'t know?
+2014-01-30T16:04:43 <michelled> ah, could be.
+2014-01-30T16:04:57 <colinclark> I wonder if it\'s a line break at the end of the file
+2014-01-30T16:05:02 <colinclark> Anyway, I probably should have merged my changes from gh-pages back into master, just to avoid confusion like this
+2014-01-30T16:05:02 <Justin_o_> michelled, colinclark: are you okay for this repo and ones like it to not have a master branch.. and to treat gh-pages as the canonical one
+2014-01-30T16:05:24 <michelled> ok, so Justin_o_\'s suggesting of deleting the master branch and only using gh-pages is possible. I suppose the only issue is whether  we would want to be working on master over several pull requests before pushing changes
+2014-01-30T16:05:30 <michelled> I can imagine that might be useful
+2014-01-30T16:05:39 <michelled> if we were doing a lot of changes or had several people working
+2014-01-30T16:05:39 <colinclark> yeah
+2014-01-30T16:05:46 <Justin_o_> michelled: i think that\'s confusing
+2014-01-30T16:05:51 <Justin_o_> michelled: in the sense that it\'s called master
+2014-01-30T16:06:00 <Justin_o_> michelled: we could have a dev branch for example
+2014-01-30T16:06:06 <colinclark> I guess we\'re free to decide what the gh-pages branch "means"
+2014-01-30T16:06:17 <colinclark> but presumably it represents a publishing process
+2014-01-30T16:06:20 <colinclark> if that makes sense
+2014-01-30T16:06:30 <michelled> yes, that\'s what I was thinking.
+2014-01-30T16:06:56 <michelled> the idea of \'master\' to me mean stuff we\'ve signed off on and are happy with
+2014-01-30T16:07:05 <michelled> \'dev\' doesn\'t quite have the same ring
+2014-01-30T16:07:21 <michelled> and the gh-page *could* mean live
+2014-01-30T16:07:26 <Justin_o_> michelled: yes.. i guess i don\'t really know why we need two branches at all
+2014-01-30T16:07:42 * avtar joined the channel
+2014-01-30T16:07:51 <Justin_o_> if master means signed off on, why doesn\'t gh-pages mean this, in terms of this repo
+2014-01-30T16:08:13 <michelled> well, I suppose because we don\'t necessarily want to go live every time
+2014-01-30T16:08:15 <michelled> do we?
+2014-01-30T16:08:22 <Justin_o_> in effect it represents the "master" in terms of it being the version that we expect to be the latest stable
+2014-01-30T16:08:34 <colinclark> I guess that you already have some evidence that in practice, I treated gh-pages as if it were "master" already
+2014-01-30T16:08:37 <colinclark> in that I didn\'t bother to merge some changes into master
+2014-01-30T16:08:39 <Justin_o_> michelled: why not? i guess i\'m not sure why we wouldn\'t
+2014-01-30T16:08:50 <colinclark> Justin_o_: Go live every time?
+2014-01-30T16:09:14 <colinclark> Maybe you\'ve got three developers collaborating on the next, super cool version of a site?
+2014-01-30T16:09:17 <Justin_o_> colinclark: yes, when would we not want to.. if we didn\'t it shouldn\'t be in master either right
+2014-01-30T16:09:36 <colinclark> and so you want the benefit of deciding that some version of it is "canonical"
+2014-01-30T16:09:36 <Justin_o_> colinclark: i would expect them to work in a branch and when that branch was ready it would go into "master"
+2014-01-30T16:09:41 <Justin_o_> same as we do for our other repos
+2014-01-30T16:10:03 <michelled> it means we\'d be stuck with whole hog pulls
+2014-01-30T16:10:19 <michelled> we couldn\'t have individual pulls for certain pages or functionality
+2014-01-30T16:10:44 <Justin_o_> which i guess is the argument for a dev branch
+2014-01-30T16:10:44 <michelled> or, we\'d deploy single page updates individually
+2014-01-30T16:11:59 <Justin_o_> i guess you are worried about breakage between individual pulls
+2014-01-30T16:12:04 <michelled> no
+2014-01-30T16:12:06 <Justin_o_> is that the issue michelled ?
+2014-01-30T16:12:11 <michelled> I\'m not worried about breakage
+2014-01-30T16:12:20 <michelled> I expect a master to be working at all times
+2014-01-30T16:12:29 <michelled> I\'m concerned about linking work too deeply
+2014-01-30T16:12:58 <michelled> I don\'t think we\'d want to update a single page on a site, for example, just updating the \'projects\' page on the fluidproject.org site and not the rest of the site
+2014-01-30T16:13:05 <michelled> but we\'ve already *done* the projects page
+2014-01-30T16:13:17 <michelled> and I\'d hate for it to live in a dev branch for the next 2 months
+2014-01-30T16:13:25 <Justin_o_> michelled: so you are worried about a rolling update of sorts
+2014-01-30T16:13:42 <michelled> yes. one that we\'ve forced upon ourselves
+2014-01-30T16:14:09 <michelled> even, for example, getting some final design sign off.
+2014-01-30T16:14:25 <Justin_o_> michelled: so my argument here is that master has the connotation of being the latest most stable build, but in terms of this repo that actually is gh-pages
+2014-01-30T16:14:25 <michelled> we might be happy with a bunch of stuff, but want to pass it by someone for final tweaks
+2014-01-30T16:14:43 <michelled> but the implication is our live public site
+2014-01-30T16:14:58 <michelled> so we can\'t make any modifications to the \'master\' in this case unless we want to update our public site
+2014-01-30T16:15:12 <Justin_o_> michelled: right so we create a branch called site-redesign, and it sits there till it\'s in, when it\'s done we merge and drop that branch
+2014-01-30T16:15:37 <colinclark> ok, so here\'s a question
+2014-01-30T16:15:50 <colinclark> Assuming we went with your approach, Justin_o_
+2014-01-30T16:16:00 <colinclark> repositories that are hosted on Github Pages all lack a master
+2014-01-30T16:16:24 <colinclark> let\'s say, in the future, we decided that GH Pages actually wasn\'t quite the bee\'s knees that we think it currently is
+2014-01-30T16:16:33 <colinclark> and we went back to just hosting the repository normally
+2014-01-30T16:17:00 <colinclark> would you find it weird to have a beast with no master and only a gh-pages repository?
+2014-01-30T16:17:08 <colinclark> and, in fact, would that actually mean something unintended
+2014-01-30T16:17:16 <colinclark> i.e. that Github should actually publish the page
+2014-01-30T16:17:32 <Justin_o_> colinclark: i don\'t think so.. since you could just then create a master branch from gh-pages, and drop gh-pages
+2014-01-30T16:18:00 <colinclark> and would that impact people\'s forks and/or cloned repositories?
+'
+

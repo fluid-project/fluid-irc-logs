@@ -1,0 +1,277 @@
+b'2016-07-18T17:25:00 <gtirloni> jhung: is that because of friendly URLs?
+2016-07-18T17:25:10 <avtar> colinclark: https://developer.github.com/v3/repos/statuses/#create-a-status
+2016-07-18T17:25:11 <jhung> colinclark: if the tabs go directly to the first content page, attempting to load the index.html should do\xe2\x80\xa6?
+2016-07-18T17:25:44 <avtar> looks like the bot will need some push access
+2016-07-18T17:25:46 <avtar> "Note that the repo:status OAuth scope grants targeted access to Statuses without also granting access to repository code, while the repo scope grants permission to code as well as statuses."
+2016-07-18T17:25:47 <colinclark> ok
+2016-07-18T17:25:48 <jhung> keep the redirect? probably now. So maybe we\'ll still need a landing page.
+2016-07-18T17:25:53 <colinclark> avtar: I don\'t love it
+2016-07-18T17:25:57 <colinclark> jhung: Yes, that\'s fine
+2016-07-18T17:26:03 <avtar> colinclark: understandable :)
+2016-07-18T17:26:09 <colinclark> presumably those links will never actually be exposed to the world
+2016-07-18T17:26:18 <colinclark> and thus could only be accessible by someone hacking the URL space, which is fine
+2016-07-18T17:26:56 <colinclark> avtar: So what\'s your recommendation...
+2016-07-18T17:26:59 <jhung> colinclark: thanks. I\'ll make the changes now danayo michelled
+2016-07-18T17:27:08 <colinclark> set the bot\'s privileges on the org or on each appropriate repository?
+2016-07-18T17:27:15 <colinclark> I guess probably the latter, avtar?
+2016-07-18T17:27:18 <colinclark> cool jhung
+2016-07-18T17:27:25 * wale joined the channel
+2016-07-18T17:27:38 <michelled> thx jhung!
+2016-07-18T17:27:48 <danayo> great jhung, wasn\'t sure what you meant about attempting to load index.html
+2016-07-18T17:28:00 <avtar> i suggest we add the account with the necessary privileges to each of the repos, let the ci build queue settle down (there are 6 jobs remaining), and then trigger a few more after that
+2016-07-18T17:28:05 <avtar> colinclark: ^
+2016-07-18T17:28:16 <colinclark> avtar: seems reasonable
+2016-07-18T17:28:52 <colinclark> avtar: It seems the Github UI has decided to invite the gpii-bot as a collaborator
+2016-07-18T17:29:17 <colinclark> so currently it says, for the universal repository, that it is "Awaiting gpii-bot\'s response"
+2016-07-18T17:29:30 <colinclark> smart though the bot is, presumably it doesn\'t actually have an email account :P
+2016-07-18T17:29:33 <colinclark> maybe it does
+2016-07-18T17:29:50 <colinclark> Is there anything else I need to do?
+2016-07-18T17:30:29 <jhung> danayo: index.html is the default page that\'s loaded if someone tries to load an URL without a specific html file. In the case of the Guide, we don\'t have index pages, rather the user jumps directly to a content page. The rediect was there to mimic this behaviour, but as colin brought up, it creates some complications. So I\'m going to fix the navigation now to load the content page directly instead of loading a non-existant index.
+2016-07-18T17:31:13 * jhung has quit
+2016-07-18T17:33:22 <avtar> colinclark: nope
+2016-07-18T17:33:27 <avtar> i have access to the account
+2016-07-18T17:33:28 <avtar> one sec
+2016-07-18T17:42:37 * kasparnet joined the channel
+2016-07-18T17:47:33 * yzen_ is now known as yzen
+2016-07-18T17:48:12 * kasparnet has quit
+2016-07-18T17:49:54 <colinclark> avtar: I\'ve just added it to linux, windows, universal, and nexus
+2016-07-18T17:50:03 <avtar> ok checking
+2016-07-18T17:50:05 <colinclark> are there any other repositories it should have collaborator access to?
+2016-07-18T17:51:42 <avtar> no, those should be it
+2016-07-18T17:51:55 <avtar> i\'ll need to change the nexus one because we\'re still using simon\'s account https://github.com/GPII/ci-service/blob/master/jenkins_jobs/nexus.yml#L18
+2016-07-18T17:56:48 * yzen has quit
+2016-07-18T17:57:55 * michelled has quit
+2016-07-18T18:02:09 * jhung joined the channel
+2016-07-18T18:03:02 * scott_gonzalez has quit
+2016-07-18T18:05:56 * kasparnet joined the channel
+2016-07-18T18:10:04 * scott_gonzalez joined the channel
+2016-07-18T18:12:34 * yzen joined the channel
+2016-07-18T18:16:51 * michelled joined the channel
+2016-07-18T18:17:07 * kasparnet has quit
+2016-07-18T18:17:10 * alanharnum joined the channel
+2016-07-18T18:21:19 <avtar> amatas, colinclark, gtirloni: i\'m going to have take gpii\'s ci server offline
+2016-07-18T18:21:31 <colinclark> uh oh
+2016-07-18T18:21:32 <colinclark> how come?
+2016-07-18T18:21:43 <amatas> avtar, ok
+2016-07-18T18:22:19 <avtar> this http://docs.openstack.org/infra/jenkins-job-builder/properties.html#properties behavior seems to not be consistent with how the service was set up before the redeploy from a few days ago
+2016-07-18T18:23:20 <avtar> in that child jobs don\'t seem to have access to the github url property from multijobs anymore
+2016-07-18T18:23:57 <colinclark> ah
+2016-07-18T18:30:51 <colinclark> avtar: should we stop the bot from spamming us all too? :)
+2016-07-18T18:33:30 * alanharnum has quit
+2016-07-18T18:33:53 <avtar> colinclark: sounds good
+2016-07-18T18:34:45 * simonjb joined the channel
+2016-07-18T18:52:25 * danayo has quit
+2016-07-18T18:56:06 * wale has quit
+2016-07-18T19:00:32 * jhung joined the channel
+2016-07-18T19:01:12 * danayo joined the channel
+2016-07-18T19:04:07 * wannabeCitizen has quit
+2016-07-18T19:04:39 * michelled has quit
+2016-07-18T19:16:18 * wale joined the channel
+2016-07-18T19:16:40 * jhung1 joined the channel
+2016-07-18T19:17:31 * jhung has quit
+2016-07-18T19:26:53 * alanharnum joined the channel
+2016-07-18T19:32:05 <avtar> amatas, colinclark, gtirloni: i\'m going to bring the ci bot back but this time only for the gpii/linux repository
+2016-07-18T19:32:20 <colinclark> bring on the email party, avtar
+2016-07-18T19:32:22 <colinclark> :)
+2016-07-18T19:32:27 <avtar> here it comes
+2016-07-18T19:37:39 * jhung joined the channel
+2016-07-18T19:38:27 * jhung1 has quit
+2016-07-18T19:50:59 <avtar> colinclark: looking better now https://ci.gpii.net/job/linux-tests/1/
+2016-07-18T19:51:28 <avtar> and no complaints in the logs about github account permissions
+2016-07-18T19:52:52 <bens__> avtar, will the bot automatically build and test PRs created to the windows repo?
+2016-07-18T19:53:24 <avtar> bens__: as long as the pr was created by an admin or a trusted user
+2016-07-18T19:53:47 <avtar> if not then an admin will have to verify a PR\'s changes and then ask the ci server to build/test
+2016-07-18T19:54:13 * jhung joined the channel
+2016-07-18T19:54:16 <bens__> avtar, thanks. and that is so cool
+2016-07-18T19:54:24 <avtar> yw :)
+2016-07-18T19:59:18 <colinclark> there\'s two successes now, avtar
+2016-07-18T19:59:21 <colinclark> this is getting hot
+2016-07-18T19:59:28 <colinclark> and way less spammy
+2016-07-18T19:59:55 <avtar> yes
+2016-07-18T20:00:50 <avtar> in retrospect i should have probably started with the repository with fewer PRs first
+2016-07-18T20:01:41 <colinclark> :)
+2016-07-18T20:01:55 <colinclark> what\'s a 190 emails or so, anyway?
+2016-07-18T20:02:00 <colinclark> no big deal
+2016-07-18T20:04:03 <avtar> emails just mean that someone cares about you
+2016-07-18T20:07:50 * bens__ has quit
+2016-07-18T20:08:50 * jhung joined the channel
+2016-07-18T20:25:13 * anvk has quit
+2016-07-18T20:26:03 <avtar> colinclark: the linux PRs have been processed
+2016-07-18T20:26:52 <avtar> we can try the windows ones
+2016-07-18T20:27:02 <avtar> and universal PRs last
+2016-07-18T20:28:59 * TPark has quit
+2016-07-18T20:37:30 * jhung has quit
+2016-07-18T20:39:11 * jessm has quit
+2016-07-18T20:44:49 * Yan_Hu has quit
+2016-07-18T20:46:36 * godfrey_ has quit
+2016-07-18T20:54:32 * clown has quit
+2016-07-18T20:55:46 * sepidehshahi has left the channel
+2016-07-18T21:49:49 <gloob> late for the party?
+2016-07-18T21:50:09 <gtirloni> with jenkins, it\'s party time 24x7
+2016-07-18T21:50:17 <gloob> like I like it
+2016-07-18T21:50:26 <gtirloni> but without the fun
+2016-07-18T21:50:30 <gtirloni> :)
+2016-07-18T21:50:30 <gloob> oh
+2016-07-18T22:00:37 * yzen is now known as yzen_
+2016-07-18T22:00:44 * simonjb has quit
+2016-07-18T22:15:56 * amatas has quit
+2016-07-18T22:40:34 * wale has quit
+2016-07-18T23:35:07 * yzen_ is now known as yzen
+2016-07-18T23:35:14 * yzen is now known as yzen_
+2016-07-18T23:39:31 * yzen_ has quit
+2016-07-18T23:46:06 * alanharnum joined the channel
+2016-07-18T23:50:52 * alanharnum has quit
+'
+
+b'2016-07-18T02:46:47 * jhernandez has quit
+2016-07-18T03:09:48 * michelled joined the channel
+2016-07-18T03:24:48 * michelled has quit
+2016-07-18T04:55:57 * yzen joined the channel
+2016-07-18T05:28:50 * kasparnet joined the channel
+2016-07-18T05:33:10 * kasparnet has quit
+2016-07-18T06:14:38 * yzen is now known as yzen_
+2016-07-18T06:21:03 * yzen_ has quit
+2016-07-18T06:33:16 * the-t-in-rtf joined the channel
+2016-07-18T06:39:31 * the-t-in-rtf has quit
+2016-07-18T07:13:09 * kasparnet joined the channel
+2016-07-18T07:14:26 * the-t-in-rtf joined the channel
+2016-07-18T07:18:06 * kasparnet has quit
+2016-07-18T07:20:44 * jhernandez joined the channel
+2016-07-18T11:05:57 * gtirloni joined the channel
+2016-07-18T12:46:57 * anvk joined the channel
+2016-07-18T12:49:22 * wale joined the channel
+2016-07-18T12:49:36 * TPark joined the channel
+2016-07-18T13:03:16 * jessm joined the channel
+2016-07-18T13:06:33 * godfrey_ joined the channel
+2016-07-18T13:06:53 * colinclark joined the channel
+2016-07-18T13:07:48 * yzen joined the channel
+2016-07-18T13:08:53 * jhung joined the channel
+2016-07-18T13:11:02 * michelled joined the channel
+2016-07-18T13:22:11 <godfrey_> Morning, jhung we have a rough draft for the assistive device (general info) section for the handbook. Heres a link for the google doc https://docs.google.com/document/d/1rHR1B3761fssD4SLS8QUonSx4PejrtqszwcxysJZMOE/edit?usp=sharing
+2016-07-18T13:22:27 <godfrey_> jhung: your feedback is much appreciated
+2016-07-18T13:23:46 <jhung> Sure godfrey_ I\'ll take a look. Thanks!
+2016-07-18T13:36:08 * sepidehshahi joined the channel
+2016-07-18T13:40:04 * colinclark has quit
+2016-07-18T13:42:42 * colinclark joined the channel
+2016-07-18T13:44:37 * danayo joined the channel
+2016-07-18T13:50:59 * yzen is now known as yzen_
+2016-07-18T13:54:27 * Yan_Hu joined the channel
+2016-07-18T13:58:12 * yzen_ has quit
+2016-07-18T14:00:32 * simonjb joined the channel
+2016-07-18T14:02:26 * alanharnum joined the channel
+2016-07-18T14:09:26 * simonjb has quit
+2016-07-18T14:14:36 * yzen joined the channel
+2016-07-18T14:19:40 * bens__ joined the channel
+2016-07-18T14:27:06 * from-fluid-IRC has left the channel
+2016-07-18T14:27:18 * from-fluid-IRC joined the channel
+2016-07-18T14:28:02 * from-fluid-IRC has left the channel
+2016-07-18T14:28:15 * from-fluid-IRC joined the channel
+2016-07-18T14:36:39 * Bosmon joined the channel
+2016-07-18T14:40:14 <avtar> colinclark: ping
+2016-07-18T14:40:19 <colinclark> hey!
+2016-07-18T14:40:57 <colinclark> how\'s it going, avtar?
+2016-07-18T14:41:23 <avtar> pretty well
+2016-07-18T14:41:29 <colinclark> awesome
+2016-07-18T14:41:40 <avtar> i wanted to check in regarding https://github.com/GPII/ci-service/pull/16 and whether making those changes to the ci system should happen soon
+2016-07-18T14:42:15 <colinclark> I think we\'re good to go, don\'t you?
+2016-07-18T14:42:29 <avtar> i think so
+2016-07-18T14:42:35 <colinclark> Sounds like you didn\'t get any concerns raised on the list
+2016-07-18T14:42:40 <colinclark> I can merge this today if you\'d like
+2016-07-18T14:42:45 <avtar> that would be awsome
+2016-07-18T14:42:51 <colinclark> ok, cool
+2016-07-18T14:43:13 <avtar> my preference would be earlier in the day just in case issues arise
+2016-07-18T14:43:19 <colinclark> ok :)
+2016-07-18T14:43:49 <colinclark> michelled: Remind me again; the due date for our Prosperity4All Nexus and QI videos... end of the month?
+2016-07-18T14:45:42 <michelled> colinclark: yep. It might be august 2nd or something like that
+2016-07-18T14:48:17 <colinclark> ok
+2016-07-18T14:48:51 <colinclark> i\'m bringing in all 400 GB of footage we\'ve got
+2016-07-18T14:49:14 <colinclark> and I\'ll set up a machine with Final Cut Pro on it
+2016-07-18T14:49:24 <colinclark> I think I can get the audio and video synced in the next day or two
+2016-07-18T14:49:41 <colinclark> and then presumably we can all work on the editing
+2016-07-18T14:51:50 <michelled> cool! I\'m looking forward to learning some new skills
+2016-07-18T14:54:39 <colinclark> me too :)
+2016-07-18T14:59:18 * clown joined the channel
+2016-07-18T15:01:27 <michelled> alanharnum, danayo, jhung: planning
+2016-07-18T15:02:50 * alanharnum joined the channel
+2016-07-18T15:13:15 * amatas joined the channel
+2016-07-18T15:24:00 * sepidehshahi has quit
+2016-07-18T15:34:04 * colinclark has quit
+2016-07-18T15:41:13 * alanharnum has quit
+2016-07-18T15:42:32 * alanharnum joined the channel
+2016-07-18T15:42:50 * wale has quit
+2016-07-18T15:45:45 * sepidehshahi joined the channel
+2016-07-18T15:46:16 * alanharnum has quit
+2016-07-18T15:47:29 * alanharnum joined the channel
+2016-07-18T15:52:52 * the-t-in-rtf has quit
+2016-07-18T16:36:06 <jhung> gtirloni: Thanks a lot! http://guide.inclusivedesign.ca/ looks great.
+2016-07-18T16:36:50 <gtirloni> \\o/
+2016-07-18T16:37:00 <jhung> \\m/
+2016-07-18T16:54:51 <michelled> wow! the design guide looks great! thanks everyone!
+2016-07-18T16:55:23 <michelled> jhung: any idea why I get a redirect message when I click on one of the tabs?
+2016-07-18T16:55:31 <danayo> woohooo!
+2016-07-18T16:55:48 <danayo> thanks gtirloni
+2016-07-18T16:55:55 <jhung> michelled: lemme see
+2016-07-18T16:57:10 <jhung> michelled: ah. Because it is a redirect. Trying to access ./practices/index.html redirects you to ./practices/Collaborate.html
+2016-07-18T16:57:42 <jhung> I wonder if we can restyle that redirect message so it doesn\'t look so much like an error.
+2016-07-18T16:58:21 <jhung> Right now the behaviour is correct (it\'s intended). That redirect page you see briefly can be better.
+2016-07-18T17:00:30 * colinclark joined the channel
+2016-07-18T17:00:37 <jhung> gtirloni: do you know if there\'s any way I can restyle the redirect page? Is it a matter of creating a 301.html page?
+2016-07-18T17:01:42 <gtirloni> it\'s not a server-side redirect, it\'s using a client-side http redirect, right? I think it\'s a matter of editing those index.html files in each directory
+2016-07-18T17:03:36 <gtirloni> $ egrep -l -r \'This page\' *
+2016-07-18T17:03:36 <gtirloni> activities/index.html
+2016-07-18T17:03:36 <gtirloni> lib/jqueryui/index.html
+2016-07-18T17:03:36 <gtirloni> practices/index.html
+2016-07-18T17:03:36 <gtirloni> principles/index.html
+2016-07-18T17:03:36 <gtirloni> tools/index.html
+2016-07-18T17:03:53 <colinclark> avtar: Shall I go for it?
+2016-07-18T17:04:03 <avtar> colinclark: yup
+2016-07-18T17:04:24 <jhung> gtirloni: ah got it. Currently there isn\'t any index.html for those directories, which explains the default looking redirect.
+2016-07-18T17:04:53 <colinclark> it\'s in avtar
+2016-07-18T17:04:55 <colinclark> this will be exciting
+2016-07-18T17:05:04 <michelled> !
+2016-07-18T17:05:53 <colinclark> avtar: I just talked to the bot
+2016-07-18T17:05:57 <colinclark> very exciting
+2016-07-18T17:06:01 <colinclark> https://github.com/GPII/universal/pull/461
+2016-07-18T17:07:37 <colinclark> lots \'o failures
+2016-07-18T17:07:42 <colinclark> but it\'s all very efficient, it seems
+2016-07-18T17:11:07 <jhernandez> hey
+2016-07-18T17:11:24 <jhernandez> I\'m receiving a lot of updates from our shiny new gpii-bot on Github
+2016-07-18T17:11:29 <jhernandez> very exciting!!
+2016-07-18T17:11:33 <amatas> ohmy...
+2016-07-18T17:11:46 * wannabeCitizen joined the channel
+2016-07-18T17:11:53 <jhernandez> excellent job guys! :)
+2016-07-18T17:12:11 <jhernandez> only a thing ....
+2016-07-18T17:12:32 <jhernandez> I\'d say gpii-bot deserves an icon :P
+2016-07-18T17:12:54 <michelled> it certainly is talkative :)
+2016-07-18T17:13:29 <amatas> h-0005 is shaking as a washing machine
+2016-07-18T17:14:00 <avtar> colinclark: is the bot a collaborator for each of those repositories?
+2016-07-18T17:14:17 <colinclark> avtar: I don\'t know
+2016-07-18T17:14:20 <colinclark> I shall check
+2016-07-18T17:14:49 <michelled> jhung, why do we want the redirect?
+2016-07-18T17:15:39 <colinclark> avtar: Is a "read" collaborator sufficient for the bot?
+2016-07-18T17:17:52 <avtar> colinclark: i tested with more privileges
+2016-07-18T17:17:54 <avtar> https://github.com/jenkinsci/ghprb-plugin/blob/master/README.md#pre-installation
+2016-07-18T17:18:19 <colinclark> needs to have push rights, I wonder why?
+2016-07-18T17:18:46 <avtar> the bot can merge changes if instructed but i\'m assuming people will want to do that using their own accounts
+2016-07-18T17:19:14 <jhung> michelled: because the first page to be leaded in each section is a specific page in that section. We don\'t have "landing" / index pages for those sections.
+2016-07-18T17:19:19 <avtar> i\'m seeing errors that the bot couldn\'t update the commit status on pull requests :/
+2016-07-18T17:19:37 <jhung> It didn\'t seem right to duplicate content from one page into an index.html file and have 2 copies michelled.
+2016-07-18T17:19:55 <michelled> jhung, I think it will feel broken to redirect - can we put the link to the page we are interested in directly?
+2016-07-18T17:20:20 <avtar> colinclark: "the user account does not have write access to the repo."
+2016-07-18T17:20:55 <colinclark> jhung, michelled: Yeah, it does seem strange from a user experience perspective to have redirects on each of the tabs
+2016-07-18T17:21:09 <colinclark> especially because the redirect pages themselves end up in the user\'s history
+2016-07-18T17:22:09 <colinclark> avtar: I\'m still confused
+2016-07-18T17:22:20 <jhung> danayo and I were hoping to avoid having landing pages or indexes for those sections. But from what you\'re suggesting I guess we can\'t avoid it colinclark michelled.
+2016-07-18T17:23:10 <michelled> jhung: I agree that we shouldn\'t duplicate content
+2016-07-18T17:23:20 <michelled> what I\'m not understanding, is why we can\'t link directly
+2016-07-18T17:23:26 * yzen is now known as yzen_
+2016-07-18T17:23:33 <jhung> The idea was to have the user get right into the content without having to go through another click / page.
+2016-07-18T17:23:48 <danayo> jhung - can we not link directly to the first page on the list?
+2016-07-18T17:23:56 <colinclark> yeah
+2016-07-18T17:23:59 <colinclark> jhung: Is there a reason the links on each tab don\'t just point to the page you\'re redirecting to?
+2016-07-18T17:24:18 <jhung> colinclark: because that\'d be too easy. :D
+2016-07-18T17:24:21 <colinclark> So for example, the Tools tab could like directly to http://guide.inclusivedesign.ca/tools/UXWalkthroughs.html
+2016-07-18T17:24:22 <michelled> hahaha
+2016-07-18T17:24:25 <colinclark> jhung: hahaha :)
+'
+

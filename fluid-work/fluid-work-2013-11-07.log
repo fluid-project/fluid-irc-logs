@@ -1,0 +1,285 @@
+b'2013-11-07T16:20:15 <Bosmon7> Other than these 3 issues I think the pull looks fine
+2013-11-07T16:20:48 <Justin_o> Bosmon7: in the case of the sub panels i would expect the defaults to be valid, but i think it would be better if they were merged
+2013-11-07T16:20:51 <Justin_o> what do you think?
+2013-11-07T16:22:05 <Bosmon7> Justin_o - ok, I see the issue, you are inspecting the nested options set "ahead of time" ....
+2013-11-07T16:22:19 <Justin_o> Bosmon7: yes.. exactly
+2013-11-07T16:22:35 <Bosmon7> Ok
+2013-11-07T16:23:03 <Bosmon7> In that case you should make a better attempt to simulate the real action of the framework at this point, although it will actually be quite hard to be completely accurate
+2013-11-07T16:23:33 <Bosmon7> Since in addition to the options you can see, you could expect to have to account for the effects of any "distributeOptions" blocks which may have been elsewhere in the tree
+2013-11-07T16:23:42 <Bosmon7> And, were they still existing, any demands blocks : P
+2013-11-07T16:23:49 <Justin_o> Bosmon7: :(
+2013-11-07T16:24:21 <Justin_o> it would be easier if i was working with the actual component instance, but in case of the isPanel function, i\'m not sure i can
+2013-11-07T16:24:42 <Justin_o> there are some cases that have to run before hand.. at time of gradeMerging
+2013-11-07T16:25:55 <Bosmon7> Justin_o - as a first pass, I suggest you make a utility function which strings together the action of i) fluid.getGradedDefaults, ii) fluid.merge
+2013-11-07T16:26:04 <Bosmon7> That should be "faithful" enough to be good for now
+2013-11-07T16:26:51 <Bosmon7> You can supply the typeName and any gradeNames in the subcomponent record to fluid.getGradedDefaults to get a more accurate default
+2013-11-07T16:27:06 <Bosmon7> And then merge that with the subcomponent\'s actual options using the mergePolicy that you can find in it
+2013-11-07T16:27:16 <Bosmon7> Although this will still be inaccurate in a few important ways
+2013-11-07T16:27:34 <Bosmon7> It would be better in the long term if you could think of a way of doing this "as the component instantiates" rather than ahead of time
+2013-11-07T16:30:14 <Justin_o> Bosmon7: i\'ll investigate where i can make use of actual components instead, the only spot where I know that won\'t work is for things that are used to generate dynamic grades. At the moment that is in the fluid.prefs.compositePanel.assembleDistributeOptions function. There\'s another one coming in my FLUID-5205 branch as well.
+2013-11-07T16:31:58 <Justin_o> Bosmon7: switching to use live components will also have the other issue of needing to rerun these functions when FLUID-5205 lands because of it\'s support for creating and destroying subpanels
+2013-11-07T16:32:31 <Bosmon7> Justin_o - couldn\'t the generation of the dynamic grades also be done "live", by means of a contextualised invoker?
+2013-11-07T16:33:00 <Justin_o> hmm.. what does that mean
+2013-11-07T16:33:59 <Bosmon7> Justin_o - I mean, a gradeName which holds the name of an invoker
+2013-11-07T16:34:10 <Bosmon7> An actually "dynamic grade"
+2013-11-07T16:35:20 <Justin_o> Bosmon7: i\'m not sure i follow..
+2013-11-07T16:35:43 <Bosmon7> Justin_o - a gradeName which has the form of something like {that}.anInvoker
+2013-11-07T16:36:03 <Justin_o> Bosmon7: i think we had problems before when trying to add invokers with a dynamic grade because the invokers block is resolved ahead of time to facilitate calling it in the dynamic grade
+2013-11-07T16:36:14 <Justin_o> Bosmon7: well i do have that
+2013-11-07T16:36:21 <Bosmon7> Justin_o - I\'m sorry, yes, I had been hoping to revisit that issue today
+2013-11-07T16:36:30 <Bosmon7> Since I thought that it might have been fixed by some other recent work
+2013-11-07T16:36:36 <Justin_o> oh
+2013-11-07T16:36:36 <Bosmon7> Unfortunately I think I have run out of time for now
+2013-11-07T16:36:46 <Justin_o> :(
+2013-11-07T16:36:54 <Justin_o> that\'s too bad.. when do you think you\'ll be back
+2013-11-07T16:37:14 <Bosmon7> I might reappear for a bit on Monday
+2013-11-07T16:38:24 <Justin_o> Bosmon7: okay.. hope you have a good weekend.. do you think if i can address the issues you\'ve mentioned now that michelled could push it in?
+2013-11-07T16:38:32 <Bosmon7> Justin_o - yes
+2013-11-07T16:39:06 <Bosmon7> If you can replace those sites where you make a raw call to the defaults, with, in both locations, a call to a common utility function which makes a better attempt at options merging, that will be fine
+2013-11-07T16:44:26 <avtar> anastasiac: this http://sphinx-doc.org/ is the project michelled referred to
+2013-11-07T16:47:11 <avtar> and free hosting of docs generated using sphinx is provided by this project https://read-the-docs.readthedocs.org/en/latest/getting_started.html
+2013-11-07T16:47:41 <Justin_o> Bosmon7: thanks.. i\'ll work on that
+2013-11-07T17:01:00 * [o__o] has left the channel
+2013-11-07T17:03:00 * [o__o] joined the channel
+2013-11-07T17:04:01 <cindyli> or it would be like:
+2013-11-07T17:04:01 <cindyli> "always": ["subPanel5"],
+2013-11-07T17:04:01 <cindyli> "subPanel5": ["subPanel6"]
+2013-11-07T17:04:02 <cindyli> "subPanel6": ["subPanel7", "subPanel8"]
+2013-11-07T17:04:21 <cindyli> my code is currently assuming the former.
+2013-11-07T17:04:31 <cindyli> Justin_o: ^
+2013-11-07T17:05:19 * [o__o] has left the channel
+2013-11-07T17:07:27 * [o__o] joined the channel
+2013-11-07T17:07:36 <cindyli> cool
+2013-11-07T17:10:58 <cindyli> Justin_o: changes on aux builder for 5205 has been pushed up - https://github.com/cindyli/infusion/commit/69469500098d72789efaacf9f9473613a17bcfe4
+2013-11-07T17:11:14 <cindyli> actually, https://github.com/cindyli/infusion/tree/FLUID-5205
+2013-11-07T17:11:27 <Justin_o> cindyli: thanks
+2013-11-07T17:11:31 <cindyli> np
+2013-11-07T17:40:25 * kasparnet has quit
+2013-11-07T17:46:30 * kasparnet joined the channel
+2013-11-07T17:48:44 * sgithens has quit
+2013-11-07T18:29:37 * mrvisser has quit
+2013-11-07T18:30:12 * mrvisser joined the channel
+2013-11-07T18:34:15 * mrvisser has quit
+2013-11-07T18:38:23 * mrvisser joined the channel
+2013-11-07T19:15:19 <Justin_o> Bosmon7: are you still around?
+2013-11-07T19:20:08 * kasparnet has quit
+2013-11-07T19:21:08 * yzen has quit
+2013-11-07T19:39:30 * sgithens joined the channel
+2013-11-07T20:00:28 * mrvisser has quit
+2013-11-07T20:01:04 * mrvisser joined the channel
+2013-11-07T20:05:25 * mrvisser has quit
+2013-11-07T20:10:14 * mrvisser joined the channel
+2013-11-07T20:11:10 * yzen joined the channel
+2013-11-07T20:17:33 <Justin_o> cindyli: your pull request handles FLUID-5190 and FLUID-5903?
+2013-11-07T20:19:46 <cindyli> Justin_o: it handles 5190 & 5203
+2013-11-07T20:21:04 <Justin_o> cindyli: thanks
+2013-11-07T20:30:05 * the-t-in-rtf has quit
+2013-11-07T20:51:48 * sgithens has quit
+2013-11-07T21:18:31 * jhernandez has quit
+2013-11-07T21:21:31 * sgithens joined the channel
+2013-11-07T21:44:29 <colinclark> hey sgithens, are you around?
+2013-11-07T21:46:10 <sgithens> colinclark: hey
+2013-11-07T21:46:16 <colinclark> IT WORKS!
+2013-11-07T21:46:17 <sgithens> !
+2013-11-07T21:46:24 <sgithens> IRC ?
+2013-11-07T21:46:27 <colinclark> :)
+2013-11-07T21:46:37 <colinclark> MASTER!
+2013-11-07T21:46:48 <colinclark> I had to write a horrific bash function
+2013-11-07T21:46:49 <sgithens> FONT?
+2013-11-07T21:46:54 <colinclark> and talkback!
+2013-11-07T21:46:58 <sgithens> :)
+2013-11-07T21:47:06 <sgithens> what did you have to write a bash function for?
+2013-11-07T21:47:06 <colinclark> It\'s really, really exciting
+2013-11-07T21:47:13 <sgithens> :)
+2013-11-07T21:47:17 <colinclark> No more ESExplorer!
+2013-11-07T21:47:19 <sgithens> that\'s awesome
+2013-11-07T21:47:21 <sgithens> oh sweet
+2013-11-07T21:47:24 <sgithens> you mounted the directory
+2013-11-07T21:47:26 <colinclark> yes
+2013-11-07T21:47:27 <sgithens> r/w
+2013-11-07T21:47:29 <colinclark> with bash
+2013-11-07T21:47:36 <sgithens> you should totally push that up
+2013-11-07T21:47:39 <sgithens> :)
+2013-11-07T21:47:44 <colinclark> michelled can attest to what an achievement that is for this point, point, click, clicker
+2013-11-07T21:47:48 <sgithens> did you get if rom javi
+2013-11-07T21:47:58 <michelled> :)
+2013-11-07T21:48:31 <colinclark> I based it on that email he sent in response to you on the architecture list
+2013-11-07T21:48:39 <sgithens> awesome!
+2013-11-07T21:50:05 <colinclark> I\'ll make a pull request shortly
+2013-11-07T21:50:18 <sgithens> I will totally test and merge that tonight
+2013-11-07T21:50:44 * clown_mtg has left the channel
+2013-11-07T21:51:06 <colinclark> thanks, if you have time
+2013-11-07T21:51:44 <sgithens> Next on my merge list was Javi\'s UI for the activity, but I cna probably do both
+2013-11-07T21:52:14 <sgithens> also, because I don\'t want ot use ES Explorer anymore either
+2013-11-07T21:52:16 <sgithens> :)
+2013-11-07T21:53:03 * cindyli has quit
+2013-11-07T22:00:41 * anvk has quit
+2013-11-07T22:12:06 * greggy has quit
+2013-11-07T22:16:31 * sgithens has quit
+2013-11-07T22:23:45 * colinclark has quit
+2013-11-07T22:29:23 * mrvisser has quit
+2013-11-07T22:29:58 * mrvisser joined the channel
+2013-11-07T22:31:40 * anastasiac has quit
+2013-11-07T22:34:22 * michelled has quit
+2013-11-07T22:34:56 * mrvisser has quit
+2013-11-07T22:41:25 * yzen has quit
+2013-11-07T22:52:24 * danaayotte has quit
+2013-11-07T23:00:53 * mrvisser joined the channel
+2013-11-07T23:09:20 * mrvisser has quit
+2013-11-07T23:36:43 * mrvisser joined the channel
+2013-11-07T23:45:03 * mrvisser has quit
+2013-11-07T23:51:00 * vjoanna has quit
+'
+
+b'2013-11-07T00:23:09 * sgithens joined the channel
+2013-11-07T01:29:06 * thealphanerd has quit
+2013-11-07T02:03:39 * thealphanerd joined the channel
+2013-11-07T02:03:45 * thealphanerd has quit
+2013-11-07T02:04:33 * thealphanerd joined the channel
+2013-11-07T02:04:40 * thealphanerd has quit
+2013-11-07T02:05:52 * thealphanerd joined the channel
+2013-11-07T02:39:46 * thealphanerd has quit
+2013-11-07T02:50:41 * thealphanerd joined the channel
+2013-11-07T03:15:31 * colinclark joined the channel
+2013-11-07T04:01:40 * colinclark has quit
+2013-11-07T04:46:08 * kasparnet joined the channel
+2013-11-07T05:02:31 * kasparnet has quit
+2013-11-07T07:02:55 * thealphanerd has quit
+2013-11-07T07:47:08 * thealphanerd joined the channel
+2013-11-07T09:07:25 * amilchev joined the channel
+2013-11-07T10:10:37 * thealphanerd has quit
+2013-11-07T11:00:22 * jhernandez joined the channel
+2013-11-07T11:08:56 * jhernandez has quit
+2013-11-07T12:12:11 * mrvisser joined the channel
+2013-11-07T13:19:42 * mrvisser has quit
+2013-11-07T13:20:17 * mrvisser joined the channel
+2013-11-07T13:24:50 * mrvisser has quit
+2013-11-07T13:28:13 * Bosmon7 joined the channel
+2013-11-07T13:35:44 * anvk joined the channel
+2013-11-07T13:40:24 <Justin_o> Bosmon7: hello.. i\'ve been wondering how namespacing works with modelListeners
+2013-11-07T13:40:59 <Bosmon7> Justin_o - I imagine that it will fail with the current implementation
+2013-11-07T13:43:16 <Bosmon7> In general I advise you not to depend on it until the new ChangeApplier is implemented
+2013-11-07T13:43:28 <Bosmon7> It\'s possible that if you tried it now you might get some results
+2013-11-07T13:43:33 * cindyli joined the channel
+2013-11-07T13:43:37 <Bosmon7> It would help if you could describe your use case
+2013-11-07T13:43:45 <Bosmon7> Gosh, doesn\'t everyone get into work early : P
+2013-11-07T13:44:56 <Justin_o> Bosmon7: will you start coming in early now too :)
+2013-11-07T13:45:09 <Bosmon7> Not for much longer
+2013-11-07T13:45:54 <Justin_o> Bosmon7: :( i\'ll try to take advantage while i can then
+2013-11-07T13:46:23 <Justin_o> Bosmon7: so i\'m using the modelListeners for my composite panel work, for the creation of of sub panels based on model values
+2013-11-07T13:47:26 <Justin_o> Bosmon7: you can see it here https://github.com/jobara/infusion/blob/FLUID-5205/src/framework/preferences/js/Panels.js#L310-L314
+2013-11-07T13:47:34 <Justin_o> currently i\'m just stuffing them into an array
+2013-11-07T13:48:00 <Justin_o> i still have to write unit tests for this.. so for now i\'m only assuming that this actually works
+2013-11-07T13:48:51 <Bosmon7> Justin_o - you have the wrong syntax
+2013-11-07T13:48:58 <Bosmon7> ModelListeners is a hash whose key is the model path
+2013-11-07T13:48:59 <Bosmon7> Not an array
+2013-11-07T13:49:34 <Bosmon7> I guess you meant to write modelListeners[pref] on that highlighted line
+2013-11-07T13:49:40 <Bosmon7> Anyway, what use do you have for the namespace?
+2013-11-07T13:50:03 <Justin_o> ah yes.. thanks for spotting that..
+2013-11-07T13:50:40 <Justin_o> then i could assign these to unique namespaces instead of the array... i suppose for this case it doesn\'t really matter.. as i doubt we\'d want them to be deleted or overridden
+2013-11-07T13:51:26 <Justin_o> Bosmon7: but i was curious about it when looking at the modelListeners.. also what does gaurdSource do?
+2013-11-07T13:51:38 <Bosmon7> It was actually hard for me to think of a clear use case for selectively overriding model listeners
+2013-11-07T13:51:45 <Bosmon7> Especially given that they are all listening to variously different paths
+2013-11-07T13:52:09 <Bosmon7> I thought we needed this functionality carried over from conventional listeners, but I managed to convince myself in the new implementation that we probably don\'t
+2013-11-07T13:52:24 <Bosmon7> The path "guardSource" allows you to prevent a listener triggering for a change with a particular "source"
+2013-11-07T13:52:38 <Bosmon7> You can ask cindyli about this since she has experience of the old utilities with the videoPlayer : P
+2013-11-07T13:53:37 <Justin_o> Bosmon7: okay... so i probably won\'t need to worry about it and if i run into something i\'ll check with cindyli
+2013-11-07T13:53:52 <Justin_o> Bosmon7: any comments on my general approach for FLUID-5205
+2013-11-07T13:55:21 <Justin_o> I think these are the changes specific to FLUID-5205 https://github.com/jobara/infusion/compare/FLUID-5200...FLUID-5205
+2013-11-07T13:55:25 <Bosmon7> Justin_o - thanks
+2013-11-07T13:55:47 <Justin_o> i\'m probably going to remove the custom refreshView, i don\'t think i\'ll need the extra event anymore
+2013-11-07T13:55:49 * amilchev has left the channel
+2013-11-07T13:56:13 * sgithens has quit
+2013-11-07T13:56:37 <Bosmon7> Justin_o - the name "fluid.prefs.compositePanel.subPanelCreationTiming" seems misleading
+2013-11-07T13:56:46 * mrvisser joined the channel
+2013-11-07T13:56:49 <Bosmon7> It doesn\'t seem to really return anything related to timing : P
+2013-11-07T13:57:23 <Justin_o> Bosmon7: it sets the createOnEvent properties
+2013-11-07T13:57:25 <Bosmon7> And also the general approach seems a bit wobbly, in that it seems odd to render parts of panels and then only hide them later if you find they are "inactive"
+2013-11-07T13:57:46 <Bosmon7> Justin_o - it seems to do a good deal more than that
+2013-11-07T13:58:49 <Justin_o> Bosmon7: i\'m not sure of a way around that.. see the template for the composite panel has the containers for the sub panels to render into.. we don\'t want those to show up if the panels themselves aren\'t rendered
+2013-11-07T13:59:17 <Justin_o> Bosmon7: and at the same time they need to be present when the component is created (but not rendered) since the sub panels require the dom container for initialization
+2013-11-07T13:59:38 <Justin_o> Bosmon7: also any recommendations for a more suitable name
+2013-11-07T13:59:50 <Bosmon7> Justin_o - well, what does it do :)
+2013-11-07T14:01:11 <Justin_o> Bosmon7: it adds the events that will be used to for the createOnEvent, adds the createOnEvent properties, binds modelListener events and handles these as well as afterRender and onCreate for knowing when to trigger the create event or destroy the component
+2013-11-07T14:01:30 <Justin_o> Bosmon7: it really does quite a bit
+2013-11-07T14:01:48 <Justin_o> Bosmon7: maybe something like subPanelLifeCycleBindings
+2013-11-07T14:02:06 <Bosmon7> Sounds reasonable
+2013-11-07T14:07:38 <Justin_o> Bosmon7: okay.. thanks.. i\'ll change that.. going back to the other issue with the hiding of the containers.. do you have more thoughts on that?
+2013-11-07T14:07:43 <Justin_o> or anything else for that matter
+2013-11-07T14:09:06 <Bosmon7> The approach looks broadly reasonable
+2013-11-07T14:09:16 <Bosmon7> Some commenting wouldn\'t go amiss, since this logic is fairly intricate
+2013-11-07T14:10:09 <Justin_o> Bosmon7: okay.. that also makes sense.. thanks
+2013-11-07T14:31:30 <Justin_o> Bosmon7: made some changes based on your feedback https://github.com/jobara/infusion/compare/FLUID-5200...FLUID-5205
+2013-11-07T14:35:46 * anastasiac joined the channel
+2013-11-07T14:36:15 * yzen joined the channel
+2013-11-07T14:36:32 * jhernandez joined the channel
+2013-11-07T14:38:28 * yzen has quit
+2013-11-07T14:38:46 * yzen joined the channel
+2013-11-07T14:41:56 * sgithens joined the channel
+2013-11-07T14:43:36 <Bosmon7> Hi there yzen
+2013-11-07T14:43:40 <yzen> Bosmon7: hi
+2013-11-07T14:43:59 <Bosmon7> Unfortunately it looks like I can\'t resolve FLUID-5208 after all :(
+2013-11-07T14:44:05 * danaayotte joined the channel
+2013-11-07T14:44:06 <yzen> oh noes
+2013-11-07T14:44:13 <Bosmon7> I\'m not sure what the reason was that I thought I couldn\'t do it before
+2013-11-07T14:44:22 <Bosmon7> But certainly there are now new reasons why I can\'t do it : P
+2013-11-07T14:44:36 <yzen> right
+2013-11-07T14:44:42 <Bosmon7> There\'s just too much special-case processing for the "listeners" block now that implies it must be directly visible under the correct name
+2013-11-07T14:44:42 <yzen> i found another bug that i will file
+2013-11-07T14:44:47 <yzen> re dynamic grades
+2013-11-07T14:45:05 <Bosmon7> For example we now have "expandCompact" as well as "annotateListeners"
+2013-11-07T14:45:10 <yzen> if i refer to {arguments} in members the do not get expanded
+2013-11-07T14:45:31 <Bosmon7> And so if the "listeners" block just consists of an IoC reference, its contents would "sneak in under the covers" without being pre-processed properly
+2013-11-07T14:45:53 <Bosmon7> Unfortunately I got 90% of the way through the implementation work before discovering that it was impossible : P
+2013-11-07T14:46:04 <yzen> ok
+2013-11-07T14:46:13 <Bosmon7> yzen - what would you like "arguments" to evaluate to?
+2013-11-07T14:46:27 <yzen> well no what i mean is that they just done get expanded
+2013-11-07T14:46:31 <yzen> in dynamic grades
+2013-11-07T14:46:45 <Bosmon7> ok
+2013-11-07T14:46:47 <yzen> if i mention them in members block
+2013-11-07T14:47:32 <Bosmon7> Do you mean in expanders?
+2013-11-07T14:47:38 <Bosmon7> That is, in expanders in the members block
+2013-11-07T14:47:57 <yzen> no
+2013-11-07T14:48:13 <Bosmon7> Ok, if they are not in an expander, what should the value of "arguments" be?
+2013-11-07T14:48:24 <yzen> brb
+2013-11-07T14:49:20 * jhung joined the channel
+2013-11-07T15:07:22 * clown joined the channel
+2013-11-07T15:07:32 * clown is now known as clown_mtg
+2013-11-07T15:16:11 * vjoanna joined the channel
+2013-11-07T15:20:43 * avtar joined the channel
+2013-11-07T15:23:24 <anastasiac> Justin_o, cindyli, I think the composite panels documentation page is ready to share, but I believe that there are still outstanding branches that would need to be merged before master actually works properly with composite panels, is that correct? And if so, should I hold off on letting the architecture list know about the composite panels until master is updated?
+2013-11-07T15:23:41 * michelled joined the channel
+2013-11-07T15:46:22 <Justin_o> anastasiac: the fixes for those bugs you\'ve found haven\'t gone in yet..
+2013-11-07T15:46:30 <Justin_o> anastasiac: perhaps we should wait for those
+2013-11-07T15:47:01 <anastasiac> ok, Justin_o, that\'s what I suspected
+2013-11-07T15:47:02 <anastasiac> thanks
+2013-11-07T15:59:57 * the-t-in-rtf joined the channel
+2013-11-07T16:03:23 * colinclark joined the channel
+2013-11-07T16:06:52 * jhung has left the channel
+2013-11-07T16:09:04 <Bosmon7> yzen
+2013-11-07T16:09:19 <yzen> Bosmon7:
+2013-11-07T16:09:28 <Bosmon7> How is your "arguments" issue?
+2013-11-07T16:10:13 <michelled> Bosmon7: we need to push Justin_o and cindyli\'s 5200 branch
+2013-11-07T16:10:22 <Justin_o> https://github.com/fluid-project/infusion/pull/432
+2013-11-07T16:10:28 <michelled> he was just about to take me through all the details of the fixes that they\'ve done
+2013-11-07T16:10:30 <Bosmon7> michelled - I\'d like to get some clarity on that
+2013-11-07T16:10:41 <michelled> what were you wondering Bosmon7?
+2013-11-07T16:10:55 <Justin_o> Bosmon7, michelled: we also need this one in after that https://github.com/fluid-project/infusion/pull/431
+2013-11-07T16:11:02 <Bosmon7> michelled - just what other commits it depends on in and in what order
+2013-11-07T16:11:16 <Bosmon7> I think Justin_o had mentioned there was an interdependence between that and cindyli\'s textfieldSlider work
+2013-11-07T16:11:38 <yzen> Bosmon7: ill make a JIRA and describe my case with an example
+2013-11-07T16:11:42 <yzen> it will be more obvious
+2013-11-07T16:11:54 <Bosmon7> yzen - thanks!
+2013-11-07T16:11:55 <Justin_o> Bosmon7: my understanding is that https://github.com/fluid-project/infusion/pull/431 is dependent on https://github.com/fluid-project/infusion/pull/432
+2013-11-07T16:14:57 <Bosmon7> I guess I\'m hesitant to comment too much on something which is so urgent, especially if it is working
+2013-11-07T16:15:11 <Bosmon7> But I wonder if you could explain the use of the component defaults at line 286
+2013-11-07T16:15:21 <Bosmon7> https://github.com/fluid-project/infusion/pull/432/files#diff-4ea13c1c02992def09fa53326d6d5de8R286
+2013-11-07T16:15:47 <Bosmon7> This seems in principle dodgy and I am wondering why it is not sufficient to inspect the options which are actually there?
+2013-11-07T16:17:41 <Justin_o> Bosmon7: i\'ll try to remember if there was a specific reason
+2013-11-07T16:18:55 <Justin_o> Bosmon7: the options there are the supplied options as opposed to the components default options.
+2013-11-07T16:19:42 <Bosmon7> Justin_o - is it not likely that the actually present options are more relevant than the defaults?
+2013-11-07T16:19:57 <Bosmon7> It seems that going for the defaults is liable to cause "unexpected effects" for the integrator
+2013-11-07T16:19:59 <Justin_o> Bosmon7: i suppose they are both relevant
+2013-11-07T16:20:08 <Bosmon7> I have commented the other place where you have used defaults too
+'
+

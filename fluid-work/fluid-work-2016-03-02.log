@@ -1,0 +1,461 @@
+b'2016-03-02T23:17:39 * richardschwerdtf has quit
+2016-03-02T23:25:07 * yzen is now known as yzen_
+2016-03-02T23:29:29 * yzen_ has quit
+'
+
+b'2016-03-02T22:11:02 <colinclark> Flocking is probably the worst example of this, since it really has two lives
+2016-03-02T22:11:08 <alanharnum> i\'m not opposed to it; it makes me slightly tetchy, but i think that\'s more principle than genuine attack vector
+2016-03-02T22:11:17 <colinclark> it\'s sketchy in principle
+2016-03-02T22:11:19 <colinclark> probably fine in practice
+2016-03-02T22:11:25 <colinclark> I mean, when you think about it...
+2016-03-02T22:11:42 <colinclark> A real web library should itself be suitable for deploying on the web :)
+2016-03-02T22:12:02 <colinclark> Flocking is not quite like this, since it actually builds native modules for use in Node.js apps
+2016-03-02T22:12:11 <colinclark> so you\'re actually deploying binaries
+2016-03-02T22:12:17 <colinclark> which is really quite lame
+2016-03-02T22:12:36 <colinclark> I\'ve talked to Bosmon about this a lot in the past
+2016-03-02T22:12:43 <alanharnum> the browser vs. node distinction seems to be getting increasingly blurred
+2016-03-02T22:12:49 <alanharnum> but that\'s another thing
+2016-03-02T22:12:49 <colinclark> yeah, in some ways
+2016-03-02T22:13:02 <colinclark> and I kept imagining a much smarter build system that could be powered by npm
+2016-03-02T22:13:12 <alanharnum> from my perspective, the "how do I assemble" question is the big one
+2016-03-02T22:13:14 <colinclark> yes
+2016-03-02T22:13:26 <colinclark> So that, for example, you as the Chart Authoring Tool developer can write some custom metadata in package.json
+2016-03-02T22:13:43 <colinclark> saying "I want the following parts of Flocking, and the following parts of Infusion"
+2016-03-02T22:13:45 <colinclark> and
+2016-03-02T22:13:49 <alanharnum> both for my development work when I\'m building something that uses Infusion + external libraries (and maybe should be treating Infusion as an external library as well), and when I\'m deploying that
+2016-03-02T22:13:55 <colinclark> "assemble me a single file with these things
+2016-03-02T22:14:01 <colinclark> but ultimately this is what tools like Browserify do
+2016-03-02T22:14:14 <colinclark> I have a feeling that, longer term, we adopt one of these
+2016-03-02T22:14:31 <colinclark> my impression for your case is that you should be a) treating Infusion as an external library
+2016-03-02T22:14:36 <colinclark> b) treating yourself as an external library :)
+2016-03-02T22:14:39 <colinclark> if that makes any sense
+2016-03-02T22:14:56 <alanharnum> yup
+2016-03-02T22:15:02 <colinclark> in that you should make a distinction between the "tool" and the components that make up the tool
+2016-03-02T22:15:07 <colinclark> from the perspective of physical dependencies
+2016-03-02T22:15:13 <alanharnum> i do like the look of Browserify in certain ways
+2016-03-02T22:15:25 <colinclark> but it gets really tricky, because of course you don\'t want to maintain a dozen Git repositories--it starts to get hairy fast
+2016-03-02T22:15:26 <alanharnum> it has a very clear logic to it and tries to model the node require() behaviour
+2016-03-02T22:15:44 <colinclark> modules are the worst
+2016-03-02T22:15:45 <colinclark> :)
+2016-03-02T22:15:55 <colinclark> I was telling avtar today that it\'s all just performance
+2016-03-02T22:16:00 <alanharnum> i think i\'d have a firmer opinion on this if i grasped the node ecology better
+2016-03-02T22:16:01 <colinclark> this AMD/CMD stuff in the browser
+2016-03-02T22:16:48 <colinclark> so much of it boils down to people ultimately saying "my developers are dumb, I need technologies to keep them from ruining my code base"
+2016-03-02T22:16:50 <colinclark> :)
+2016-03-02T22:16:53 <alanharnum> i am also hesitant to solve a problem prematurely
+2016-03-02T22:16:56 <colinclark> yeah
+2016-03-02T22:17:08 <colinclark> My impression is that first we should just deploy node_modules
+2016-03-02T22:17:08 <alanharnum> and at the moment this isn\'t so complicated that npm + grunt can\'t handle the problem case
+2016-03-02T22:17:28 <colinclark> secondly we should have a simple way to declaratively whitelist stuff in a node module via gpii-express or kettle
+2016-03-02T22:17:41 <colinclark> by then we\'ll hit a fork in the road
+2016-03-02T22:18:05 <colinclark> either we start building more custom tooling for managing subsets of a code base and doing concat and minify
+2016-03-02T22:18:28 <colinclark> by placing the delcarative metadata somewhere available to a build system
+2016-03-02T22:18:36 <colinclark> or we adopt browserify
+2016-03-02T22:18:42 <colinclark> I have no idea
+2016-03-02T22:18:44 <colinclark> these are just impressions
+2016-03-02T22:19:34 <alanharnum> well, they match with mine :)
+2016-03-02T22:19:52 <alanharnum> i think this space is in such turmoil and overengineering right now that staying somewhat clear of it is probably safest
+2016-03-02T22:20:12 <alanharnum> i feel like the npm folks could put out a viable solution to front end dependencies like, tomorrow
+2016-03-02T22:20:13 <colinclark> I think you\'d have a legitimate case for filing an issue with Flocking saying "I want to consume this as a web module via NPM without all this node-specific stuff being built"
+2016-03-02T22:20:21 * bens__ has quit
+2016-03-02T22:20:35 <colinclark> I\'ll probably need to maintain multiple node packages within the repo, but I think it\'s doable
+2016-03-02T22:20:48 <colinclark> a couple year ago I merged flocking and node-flocking together
+2016-03-02T22:21:10 <colinclark> It is a totally real point to say "we shouldn\'t just deploy random junk in node_modules"
+2016-03-02T22:21:22 <colinclark> and I imagine any attempt to not do that immediately takes us directly to the next phase
+2016-03-02T22:21:31 <colinclark> which is declaring and performing custom builds
+2016-03-02T22:21:54 <colinclark> Interestingly, Infusion\'s custom build system is pretty good
+2016-03-02T22:21:57 <colinclark> if not yet properly factored
+2016-03-02T22:22:13 <colinclark> in that it is already powered by declarations in JSON of dependencies amongst components
+2016-03-02T22:22:37 <alanharnum> yeah, that\'s some of what i meant about possibly just rolling our own
+2016-03-02T22:22:43 <colinclark> yeah
+2016-03-02T22:23:00 <alanharnum> I dig the idea of an IoC based system for doing things like concatenation, minification, etc
+2016-03-02T22:23:08 <alanharnum> those are transforms, and Infusion is good at transforms
+2016-03-02T22:23:08 <colinclark> me too
+2016-03-02T22:23:14 <colinclark> but it\'s hard to know
+2016-03-02T22:23:24 <colinclark> I still have a feeling we\'ll be using Browserify before too long
+2016-03-02T22:23:26 <colinclark> with some custom tooling
+2016-03-02T22:24:14 <alanharnum> Browserify seems to have the strongest handle on extending npm-specific paradigm to frontend
+2016-03-02T22:24:18 <colinclark> anyway, if the-t-in-rtf1 ends up getting excited
+2016-03-02T22:24:29 <alanharnum> i can foresee npm more or less adopting that approach wholesale
+2016-03-02T22:24:40 <colinclark> and providing some kind of router for gpii-express
+2016-03-02T22:25:00 <colinclark> it would probably at least help with the lingering concern about deploying node_modules
+2016-03-02T22:25:21 <colinclark> I have all kinds of problems in my applications where i have to make custom builds of Infusion, of Flocking, of osc.js, of all kinds of stuff
+2016-03-02T22:25:32 <colinclark> knowing which one contains jQuery (or not), etc.
+2016-03-02T22:25:32 <alanharnum> custom builds of Infusion :( :( :(
+2016-03-02T22:25:44 <colinclark> triple sad?
+2016-03-02T22:25:46 <colinclark> :)
+2016-03-02T22:25:48 <alanharnum> every time i had to make one of those for chartAuthoring I made :( :( :(
+2016-03-02T22:25:52 <colinclark> ah
+2016-03-02T22:25:52 <colinclark> yeah
+2016-03-02T22:26:09 <colinclark> it\'d be nicer if you were just filling something out in your package.json, like this:
+2016-03-02T22:26:36 <alanharnum> i will talk to gtirloni about his feelings about just serving up node_modules directories in nginx
+2016-03-02T22:26:42 <colinclark> postinstallBuilds: { infusion: ["framework", "inline-edit", "cats"] }
+2016-03-02T22:27:06 <colinclark> I wonder if we could just set up some nginx rule by mime type
+2016-03-02T22:27:06 <alanharnum> yeah
+2016-03-02T22:27:17 <colinclark> consisting of images, html, css, javascript and other things we love
+2016-03-02T22:27:24 <alanharnum> very easy
+2016-03-02T22:27:29 <colinclark> this is, i agree, a total hack
+2016-03-02T22:27:53 <alanharnum> you could have a general config rule that said "don\'t serve anything that isn\'t a plaintext .js file from node_modules".
+2016-03-02T22:28:19 <colinclark> right
+2016-03-02T22:28:21 <alanharnum> js+css+html, etc
+2016-03-02T22:28:39 <alanharnum> so you basically say "serve only static assets from node_modules"
+2016-03-02T22:28:44 <alanharnum> and block requests for anything else
+2016-03-02T22:28:50 <colinclark> I\'ll think about what I can do to avoid native builds for Flocking-related stuff when you\'re only deploying for the web
+2016-03-02T22:28:53 <alanharnum> and hack the computer of anyone who tries
+2016-03-02T22:28:56 <colinclark> it will speed up your npm installs
+2016-03-02T22:29:00 <alanharnum> (nginx is getting really smart)
+2016-03-02T22:29:02 <gtirloni> we\'re free to have nginx in our environment, but would be a requirement for other developers/environments?
+2016-03-02T22:29:10 <gtirloni> *nginx rules
+2016-03-02T22:29:17 <alanharnum> i think this is more a concern for our environment than anything else
+2016-03-02T22:29:22 <colinclark> for now
+2016-03-02T22:29:32 <colinclark> I think for other environments, we really do need a good solution to custom builds
+2016-03-02T22:29:48 <alanharnum> we\'ll likely have to think more about this shortly for the QI metrics
+2016-03-02T22:30:19 <colinclark> yeah
+2016-03-02T22:30:20 <alanharnum> since one eventual goal of that is to deliver something via JSONP that can drop metrics information into a client site without that client site needing to know what Infusion even is
+2016-03-02T22:30:36 <colinclark> yup
+2016-03-02T22:30:43 <colinclark> same for charts output by the chart authoring tool
+2016-03-02T22:30:52 <colinclark> it would generate a little script block or iframe, and that\'s that
+2016-03-02T22:31:07 <alanharnum> little script block > iframe
+2016-03-02T22:31:13 <colinclark> yes
+2016-03-02T22:31:15 <colinclark> I was just going to say :)
+2016-03-02T22:31:17 <alanharnum> given the choice, I will always choose JSONP over iframes
+2016-03-02T22:31:20 <colinclark> +1
+2016-03-02T22:32:41 <alanharnum> debugging anything in an iframe: http://devopsreactions.tumblr.com/post/139476901765/trying-to-identify-a-problem-without-adequate
+2016-03-02T22:33:55 <gtirloni> sorry, someone was at the door here
+2016-03-02T22:34:08 <gtirloni> i don\'t have any concerns with us using some custom nginx rules in our websites
+2016-03-02T22:34:28 <gtirloni> it\'s super easy.. we just have to add a new type of static site and adapt the jinja2 template
+2016-03-02T22:34:54 <colinclark> alanharnum: this point from Bosmon yesterday is pretty important, I\'m just realizing
+2016-03-02T22:34:58 <colinclark> and things are starting to make more sense
+2016-03-02T22:35:04 <colinclark> "We can\'t depend on the exact path of a module in the filesystem to remain stable within node_modules, given drift in npm strategies and the overall dependence structure"
+2016-03-02T22:35:23 <colinclark> gtirloni: What\'s a jinja2 template, out of curiosity?
+2016-03-02T22:35:31 * colinclark feels like a square
+2016-03-02T22:36:15 <colinclark> alanharnum: You certainly can\'t depend between npm 2 and 3 on paths being at all stable (in npm 2 they\'re hierarchical)
+2016-03-02T22:36:25 <colinclark> I guess in npm3 they\'re "mostly" flat, but can move
+2016-03-02T22:36:52 <alanharnum> colinclark: jinja2 is a templating language a lot of Python web frameworks (like Flask) use
+2016-03-02T22:36:57 <gtirloni> colinclark: ah, it\'s the nginx config file in the form of a jinja2 template -- https://github.com/inclusive-design/ops/tree/master/ansible/roles/staticsite/templates
+2016-03-02T22:36:58 <alanharnum> it\'s also the templating language used by Ansible
+2016-03-02T22:37:09 <colinclark> ahhh!
+2016-03-02T22:37:26 <colinclark> so ansible has some means to render the templates into valid, say, nginx configs
+2016-03-02T22:37:29 <colinclark> or any other kind, I imagine
+2016-03-02T22:37:33 <alanharnum> yup, exactly
+2016-03-02T22:37:44 <colinclark> man, I can\'t wait to ansiblize my DO droplet
+2016-03-02T22:38:06 <colinclark> there\'s a lot of complex machinery involved in hosting a website like this: http://colinclark.org/
+2016-03-02T22:38:13 <alanharnum> any time we do an application configuration file with Ansible, we\'re building the final config file via jinja2 + various Ansible parameters
+2016-03-02T22:38:34 <colinclark> what does the ansible delcaration look like to operate this, alanharnum?
+2016-03-02T22:38:39 <colinclark> again, just out of curiosity
+2016-03-02T22:38:41 <alanharnum> i recommend taking advantage of my personal site hosting service: http://colin_clark.inlibraries.com/
+2016-03-02T22:38:56 <alanharnum> colinclark: http://docs.ansible.com/ansible/template_module.html
+2016-03-02T22:39:00 <colinclark> alanharnum: hahahaha
+2016-03-02T22:39:41 <colinclark> "Stakeholders Listen When You Speak the Language of Colin Clark!"
+2016-03-02T22:39:41 <colinclark> erm
+2016-03-02T22:39:42 <colinclark> :P
+2016-03-02T22:39:54 <alanharnum> a big part of Ansible\'s power in my experience is that the templating is really good and flexible
+2016-03-02T22:40:20 <alanharnum> so you can use it to efficiently manage basically anything that\'s managable with text-based config files
+2016-03-02T22:44:12 * alanharnum "heads home" (goes downstairs to cook dinner)
+2016-03-02T22:59:15 * lliskovoi_ joined the channel
+'
+
+b'2016-03-02T17:36:51 * alanharnum joined the channel
+2016-03-02T17:37:21 <Ioan_> yes, my question is what can I do now? what would be the steps needed for GSoC appliance
+2016-03-02T17:37:50 <colinclark> Well, generally the way this would work is try to come up with a plan and structure for the project
+2016-03-02T17:37:55 <colinclark> what exactly it would involve, etc.
+2016-03-02T17:38:11 <colinclark> One of the goals of a good GSoC project is that it\'s self-contained
+2016-03-02T17:38:17 <colinclark> not too ambitious, but also not boring :)
+2016-03-02T17:38:39 <colinclark> I think I mentioned that cindyli has done a lot of work in this area, but she\'s away this week sick
+2016-03-02T17:38:59 <Ioan_> yes, you mentioned she\'s home sick
+2016-03-02T17:39:13 <colinclark> simonjb or michelled may also have some ideas about what sorts of things could constitute a good self-contained project related to security, cloud storage, and UI Options
+2016-03-02T17:39:56 <colinclark> I guess part of it, Ioan_, would also involve you orienting yourself to UIO and thinking of some ideas for a project
+2016-03-02T17:40:08 <colinclark> there is of course also the projects we\'ve already designed
+2016-03-02T17:40:25 <Ioan_> listed on ideas page ?
+2016-03-02T17:40:28 <colinclark> yup
+2016-03-02T17:40:59 <colinclark> danayo: Do you have a link to the UIO security wireframes you were working on, just to give Ioan_ something to see some ideas for where we were going?
+2016-03-02T17:41:35 <danayo> sure colinclark one sec
+2016-03-02T17:43:21 <danayo> colinclark, Ioan_: https://www.dropbox.com/s/i4c3pni6cnnwuts/uioptions%20GPII%20integration.pdf?dl=0
+2016-03-02T17:51:03 * gabrielmancini has quit
+2016-03-02T17:51:35 * gabrielmancini joined the channel
+2016-03-02T17:55:43 * gabrielmancini has quit
+2016-03-02T17:56:46 * richardschwerdtf has quit
+2016-03-02T18:05:35 <Ioan_> about the "export" button, is there a difference between "export my new pref to GPII" (available when adjustments are made ) and between "exports" appearing bellow ?
+2016-03-02T18:06:57 <colinclark> jhung: do you have a preferred time to chat?
+2016-03-02T18:10:36 <Ioan_> danayo, ^^
+2016-03-02T18:11:39 <danayo> no Ioan_, they have the same functionality. the export button on the tab allows the user to be flagged (to unsaved prefs) when the panel is closed
+2016-03-02T18:13:38 * richardschwerdtf joined the channel
+2016-03-02T18:14:45 * richardschwerdtf has quit
+2016-03-02T18:19:20 <abhibansal53> hello
+2016-03-02T18:19:26 * jessm joined the channel
+2016-03-02T18:20:01 <abhibansal53> how do i know the mentor allotted to a particular gscoc idea??
+2016-03-02T18:21:17 * richardschwerdtf joined the channel
+2016-03-02T18:21:40 * gabrielmancini joined the channel
+2016-03-02T18:28:46 <danayo> they are listed on the wiki page abhibansal53
+2016-03-02T18:29:28 <abhibansal53> but there email id is not listed there
+2016-03-02T18:36:05 <danayo> Ioan_:  re your question about those wireframes - they are not associated with any currently posted GSoC project, I think you and colinclark were proposing a new project related to UIO and security?
+2016-03-02T18:38:48 <jhung> colinclark, Justin_o - I am free to chat
+2016-03-02T18:39:23 <Justin_o> jhung: I think we\'re aiming to chat at 2pm
+2016-03-02T18:39:40 <jhung> ok. Sounds good Justin_o
+2016-03-02T18:39:55 <danayo> abhibansal53: I believe you should be able to access mentor email addresses on the GSoC site, is that right Justin_o?
+2016-03-02T18:40:27 <Ioan_> danayo,  colinclark suggested me to propose a project about UIO and security (because of my master\'s degree in Security which is about to start )
+2016-03-02T18:43:10 <Justin_o> danayo, abhibansal53: hmm.. not sure if students have access to mentors e-mail addresses on the GSoC site.  abhibansal53 the mentors all hang out in the IRC channel though, so if you need to send them something via e-mail you could probably arrange to get the e-mail address by asking them here.
+2016-03-02T18:43:55 * richardschwerdtf has quit
+2016-03-02T18:44:28 <abhibansal53> ok,i just wanted to contact the mentor for Project idea - \'Game for First Discovery of Preferences\'
+2016-03-02T18:44:50 <abhibansal53> i am interested in this idea and want to know more
+2016-03-02T18:45:45 * michelled joined the channel
+2016-03-02T18:46:29 <Justin_o> abhibansal53: ah perfect, you\'re already talking to us :) danayo and I will be mentoring that project.
+2016-03-02T18:46:52 <abhibansal53> ah nice
+2016-03-02T18:47:12 <abhibansal53> so can you please tell me more about this idea
+2016-03-02T18:47:20 <abhibansal53> from where should i begin?
+2016-03-02T18:54:21 <Justin_o> abhibansal53: i guess you should make sure you understand the project idea and what it entails, look over the source code and documentation for Infusion and the preferences framework in particular ( there are some links on the ideas page ), and review the mockups. Also think about how you\'ll accomplish the project from both a technical and user experience
+2016-03-02T18:54:21 <Justin_o> point of view.
+2016-03-02T18:56:01 <abhibansal53> actually i am not fully able to understand the project requirement.Can you please elaborate what exactly does the project is trying to accomplish?
+2016-03-02T18:57:27 <Ioan_> danayo, between choosing "Implement UI / Learner Options Responsive Design" project and coming with my own idea involving Security, I must say I am tempted to choose your project.
+2016-03-02T18:58:40 <Ioan_> should I wait for simonjb or michelled to come online to ask them for some ideas, or should I get into details about your UI project ? what do you recommend me ?
+2016-03-02T18:58:58 * richardschwerdtf joined the channel
+2016-03-02T19:00:07 * richardschwerdtf has quit
+2016-03-02T19:00:08 * yzen joined the channel
+2016-03-02T19:01:45 * gabrielmancini has quit
+2016-03-02T19:02:31 * gabrielmancini joined the channel
+2016-03-02T19:02:33 <danayo> Ioan_: unfortunately the two people who would be best to discuss the technical aspects with you are not around today - but take a look at this https://wiki.gpii.net/w/Security_Dashboard
+2016-03-02T19:03:04 <Justin_o> abhibansal53: to start with you might want to have a better understand of what we mean by preference setting.. so take this demo for example http://build.fluidproject.org/infusion/demos/prefsFramework/
+2016-03-02T19:03:17 <danayo> and probably best to contact simonjb and or cindyli when they\'re back in the channel Ioan_
+2016-03-02T19:03:45 <Justin_o> abhibansal53 if you use the "+ show display preference" tab at the top right you\'ll get a panel that allows you to customize the page.
+2016-03-02T19:04:40 <abhibansal53> oh,this is cool :-)
+2016-03-02T19:05:08 <abhibansal53> so our game should use this kind of preferences?
+2016-03-02T19:05:35 * gabrielmancini has quit
+2016-03-02T19:06:11 * gabrielmancini joined the channel
+2016-03-02T19:06:18 * gabrielmancini has quit
+2016-03-02T19:06:30 * gabrielmancini joined the channel
+2016-03-02T19:08:38 <Justin_o> abhibansal53: the game is a way of getting people into understanding how to set preferences. They may or may not be the same ones that you see in this demo.
+2016-03-02T19:09:27 <Justin_o> abhibansal53: you might also want to look at http://gpii.net which is the broader project of being able to set/apply your personal preferences everywhere.
+2016-03-02T19:09:44 <abhibansal53> ok,so we have to build a game to teach people how to use this preference framework in an interactive manner?
+2016-03-02T19:10:26 <Justin_o> abhibansal53: not exactly teaching them how to use the preferences framework per se, but about the idea of setting preferences
+2016-03-02T19:11:05 <Justin_o> abhibansal53: here\'s an example of our First Discovery Tool, which was one idea of how to bring a user into setting their preferences for the first time. http://build.fluidproject.org/first-discovery/demos/
+2016-03-02T19:13:49 <abhibansal53> oh,i have gone through it
+2016-03-02T19:14:15 <abhibansal53> it\'s nice,but i think it\'s not that much interesting from a user perspective
+2016-03-02T19:14:36 <danayo> exactly abhibansal53  - so we want to make it FUN
+2016-03-02T19:14:42 <danayo> like discovery cats
+2016-03-02T19:15:31 <abhibansal53> oh,then it\'s going to be a very interesting idea to work on :-)
+2016-03-02T19:16:10 <abhibansal53> so i think my first step should be to become more familiar with infusion and preference framework
+2016-03-02T19:16:42 <danayo> I believe so abhibansal53
+2016-03-02T19:17:07 <Justin_o> abhibansal53: yes, that sounds like a good place to start
+2016-03-02T19:17:10 * colinclark joined the channel
+2016-03-02T19:17:44 <abhibansal53> ok,then for time being i\'ll start with that
+2016-03-02T19:18:20 <jhung> colinclark, Justin_o - meet in colinclark\'s room?
+2016-03-02T19:18:33 <colinclark> sure!
+2016-03-02T19:20:36 * gabrielmancini has quit
+2016-03-02T19:21:10 * gabrielmancini joined the channel
+2016-03-02T19:23:41 * alanharnum joined the channel
+2016-03-02T19:25:34 * gabrielmancini has quit
+2016-03-02T19:31:38 * alanharn_ joined the channel
+2016-03-02T19:34:50 <sepidehshahi> fluid-everyone the community meeting today will be about redesigning the IDRC website
+2016-03-02T19:49:10 <colinclark> Bosmon: Can I safely review and merge this one first? https://github.com/fluid-project/infusion/pull/669
+2016-03-02T19:49:51 <Bosmon> colinclark - yes
+2016-03-02T19:50:00 <colinclark> great thanks
+2016-03-02T19:55:41 * colinclark_ joined the channel
+2016-03-02T19:58:00 * colinclark has quit
+2016-03-02T20:01:55 * richardschwerdtf joined the channel
+2016-03-02T20:07:13 * michelled joined the channel
+2016-03-02T20:17:29 * gabrielm_ joined the channel
+2016-03-02T20:22:03 * gabrielm_ has quit
+2016-03-02T20:29:19 * clown joined the channel
+2016-03-02T20:52:54 * richardschwerdtf has quit
+2016-03-02T21:15:21 * colinclark joined the channel
+2016-03-02T21:24:45 * anvk has quit
+2016-03-02T21:32:37 * richardschwerdtf joined the channel
+2016-03-02T21:37:37 * lliskovoi joined the channel
+2016-03-02T21:48:13 * sepidehshahi has left the channel
+2016-03-02T21:50:40 * rahulgoyal joined the channel
+2016-03-02T21:56:49 * Ioan_ has quit
+2016-03-02T21:56:51 * clown has quit
+2016-03-02T21:58:25 <colinclark> alanharnum: hey
+2016-03-02T21:58:37 <alanharnum> colinclark: hey sir
+2016-03-02T21:58:44 <colinclark> do you have a sec for me to ask you a few questions, or are you headed off for the day soon?
+2016-03-02T21:59:05 <alanharnum> i\'m meeting with michelled and avtar right now but i can hit you up after that
+2016-03-02T21:59:14 <colinclark> oh yes, of course
+2016-03-02T21:59:15 <colinclark> sorry
+2016-03-02T21:59:31 <colinclark> just wanted to talk here at some point about the dependency management thread on fluid-work
+2016-03-02T21:59:33 <colinclark> pretty interesting
+2016-03-02T22:00:42 * rahulgoyal has quit
+2016-03-02T22:05:56 <alanharnum> colinclark: ok, done done
+2016-03-02T22:06:01 <alanharnum> yeah, it\'s pretty interesting
+2016-03-02T22:06:12 <alanharnum> did you see the chat antranig and i had in channel about it?
+2016-03-02T22:06:19 <colinclark> no, I didn\'t!
+2016-03-02T22:06:23 <colinclark> I should probably read that first, then
+2016-03-02T22:06:25 <colinclark> when was it?
+2016-03-02T22:06:31 <alanharnum> let me find it, one sec
+2016-03-02T22:06:41 <colinclark> I having trouble fitting all the pieces together
+2016-03-02T22:06:50 <colinclark> which is a good thing
+2016-03-02T22:07:09 <colinclark> Do you have an impression of how much of the functionality we ultimately want is provided by Browserify
+2016-03-02T22:07:13 <alanharnum> colinclark: https://botbot.me/freenode/fluid-work/2016-03-01/?msg=61306744&page=3
+2016-03-02T22:07:23 <colinclark> thank you
+2016-03-02T22:07:32 <alanharnum> i think it\'s more that i don\'t even have an impression of how much functionality we ultimately want :)
+2016-03-02T22:07:40 <alanharnum> beyond "don\'t stuff D3 and Flocking directly into the repo" :)
+2016-03-02T22:07:42 <colinclark> yeah
+2016-03-02T22:07:53 <colinclark> My impression is that there are a lot of interrelated parts
+2016-03-02T22:07:58 <colinclark> builds are a big part of this
+2016-03-02T22:08:09 <alanharnum> Browserify, at first glance, seems really opinionated about how things should be, not necessarily in a good way
+2016-03-02T22:08:18 <colinclark> yeah, that\'s always been the real worry
+2016-03-02T22:08:29 <alanharnum> very insistent on commonjs format, etc etc
+2016-03-02T22:08:32 <colinclark> yup
+2016-03-02T22:08:35 <colinclark> Infusion\'s build system is actually quite powerful in terms of knowing about optional modules and so on
+2016-03-02T22:08:45 <colinclark> but it completely fails in terms of being able to integrate with things like NPM
+2016-03-02T22:09:04 <colinclark> and of course it\'s actually "builds" that address half of your problem, I think
+2016-03-02T22:09:11 <colinclark> which I imagine is partially
+2016-03-02T22:09:44 <colinclark> "How do I assemble a variety of scripts from a variety of libraries into a minimal image suitable for deployment?"
+2016-03-02T22:09:46 <alanharnum> one of the things that occured to me when Bosmon was describing those new features is we might simply be able to write our own with a few lines of Infusion with the module keys features he described
+2016-03-02T22:09:57 <alanharnum> yeah, precisely
+2016-03-02T22:10:18 <colinclark> My impression, in terms of the short term approach is to just serve up node_modules directories
+2016-03-02T22:10:23 <colinclark> I don\'t think that\'s a bad thing
+2016-03-02T22:10:44 <colinclark> and if we were to have some kind of convenient router for this with either Kettle or gpii-express, it wouldn\'t be so bad
+'
+
+b'2016-03-02T00:09:57 * kasparnet has quit
+2016-03-02T01:06:11 * gabrielmancini joined the channel
+2016-03-02T01:10:46 * kasparnet joined the channel
+2016-03-02T01:15:10 * kasparnet has quit
+2016-03-02T02:23:22 * gabrielmancini has quit
+2016-03-02T02:27:19 * lliskovoi joined the channel
+2016-03-02T02:30:21 * gabrielmancini joined the channel
+2016-03-02T02:39:19 * colinclark has quit
+2016-03-02T02:39:21 * gabrielmancini has quit
+2016-03-02T02:39:56 * gabrielmancini joined the channel
+2016-03-02T02:39:57 * colinclark joined the channel
+2016-03-02T02:44:16 * gabrielmancini has quit
+2016-03-02T02:56:48 * bens__ has quit
+2016-03-02T03:05:02 * michelled joined the channel
+2016-03-02T03:39:53 * colinclark has quit
+2016-03-02T03:39:59 * colinclark_ joined the channel
+2016-03-02T03:40:50 * scott_gonzalez has quit
+2016-03-02T03:42:08 * kasparnet joined the channel
+2016-03-02T03:46:34 * kasparnet has quit
+2016-03-02T03:55:15 * scott_gonzalez joined the channel
+2016-03-02T05:43:36 * kasparnet joined the channel
+2016-03-02T05:49:00 * kasparnet has quit
+2016-03-02T07:44:48 * kasparnet joined the channel
+2016-03-02T07:49:25 * kasparnet has quit
+2016-03-02T07:55:03 * kasparnet joined the channel
+2016-03-02T07:59:09 * kasparnet has quit
+2016-03-02T08:00:06 * kasparnet joined the channel
+2016-03-02T08:09:45 * amatas joined the channel
+2016-03-02T08:13:18 * kasparnet has quit
+2016-03-02T09:04:39 * the-t-in-rtf has quit
+2016-03-02T09:04:41 * the-t-in-rtf1 joined the channel
+2016-03-02T09:48:46 * kasparnet joined the channel
+2016-03-02T10:06:59 * kasparnet has quit
+2016-03-02T10:18:21 * kasparnet joined the channel
+2016-03-02T11:40:51 * gabrielmancini joined the channel
+2016-03-02T11:45:28 * gabrielmancini has quit
+2016-03-02T12:02:55 * michelled joined the channel
+2016-03-02T12:26:56 * abhibansal53 joined the channel
+2016-03-02T12:27:02 * kasparnet has quit
+2016-03-02T12:34:31 * Justin_o joined the channel
+2016-03-02T12:51:06 * the-t-in-rtf1 has quit
+2016-03-02T12:51:11 * the-t-in-rtf joined the channel
+2016-03-02T12:51:47 * kasparnet joined the channel
+2016-03-02T12:55:42 * the-t-in-rtf has quit
+2016-03-02T12:55:52 * the-t-in-rtf joined the channel
+2016-03-02T12:57:37 * bens__ joined the channel
+2016-03-02T13:12:12 * bens__ has quit
+2016-03-02T13:27:51 * gabrielmancini joined the channel
+2016-03-02T13:28:28 * gabrielmancini has quit
+2016-03-02T13:28:44 * gabrielmancini joined the channel
+2016-03-02T13:29:29 * gtirloni joined the channel
+2016-03-02T13:34:07 * richardschwerdtf joined the channel
+2016-03-02T13:42:19 * alanharnum joined the channel
+2016-03-02T13:44:35 * jhung joined the channel
+2016-03-02T14:00:06 * the-t-in-rtf has quit
+2016-03-02T14:00:07 * the-t-in-rtf1 joined the channel
+2016-03-02T14:02:29 * sepidehshahi joined the channel
+2016-03-02T14:04:27 * the-t-in-rtf1 has quit
+2016-03-02T14:04:45 * the-t-in-rtf joined the channel
+2016-03-02T14:13:45 * simonjb joined the channel
+2016-03-02T14:22:59 * richardschwerdtf has quit
+2016-03-02T14:23:23 * richardschwerdtf joined the channel
+2016-03-02T14:24:46 * bens__ joined the channel
+2016-03-02T14:25:14 * michelled joined the channel
+2016-03-02T14:27:40 * clown joined the channel
+2016-03-02T14:27:54 * clown has left the channel
+2016-03-02T14:38:36 * Jess_ joined the channel
+2016-03-02T14:57:27 * danayo joined the channel
+2016-03-02T15:05:54 * yzen joined the channel
+2016-03-02T15:09:14 * dins joined the channel
+2016-03-02T15:09:34 <dins> Hi
+2016-03-02T15:10:01 * richardschwerdtf has quit
+2016-03-02T15:10:43 <dins> I would like to join with fluid and contribute for GSOC projects
+2016-03-02T15:11:06 <dins> Currently I\'m a third year students, studying software eng.
+2016-03-02T15:13:53 <dins> I would like to "Accessible, Responsive Music UI Controls" projects
+2016-03-02T15:14:03 * clown joined the channel
+2016-03-02T15:14:33 <dins> can someone help me to understand more about this
+2016-03-02T15:15:39 <dins> currently I\'m a UI developer, more qualified in Javascript and CSS
+2016-03-02T15:16:17 * gabrielmancini has quit
+2016-03-02T15:16:51 * gabrielmancini joined the channel
+2016-03-02T15:17:07 <dins> since I\'m also a sort of a musician and aware about waveform and envelopes
+2016-03-02T15:17:19 <dins> I think this would be a great challenge to me
+2016-03-02T15:18:09 <dins> highly appreciate any kind help from someone to get started
+2016-03-02T15:21:27 * gabrielmancini has quit
+2016-03-02T15:23:55 * richardschwerdtf joined the channel
+2016-03-02T15:24:27 <Justin_o> dins: hello, thanks for your interest in our GSoC project ideas
+2016-03-02T15:24:45 * the-t-in-rtf has quit
+2016-03-02T15:25:03 * the-t-in-rtf joined the channel
+2016-03-02T15:25:28 <avtar> alanharnum, michelled: are you free at some point after the community meeting to chat?
+2016-03-02T15:25:39 <alanharnum> avtar michelled: yup
+2016-03-02T15:26:54 * kasparnet has quit
+2016-03-02T15:27:21 * kasparnet joined the channel
+2016-03-02T15:28:49 <dins> Justin_o\t, can u help me to set up the project
+2016-03-02T15:29:14 <dins> to work on this project
+2016-03-02T15:29:42 <dins> I followed thisngs which are in https://wiki.fluidproject.org/display/fluid/Contributing+to+a+Fluid+Component
+2016-03-02T15:29:57 <dins> but, a litle bit confusing
+2016-03-02T15:30:16 <dins> how to run it, or whether it\'s the correct way
+2016-03-02T15:30:52 * Yan_Hu joined the channel
+2016-03-02T15:30:58 <dins> Justin_o   , appreciate your help
+2016-03-02T15:31:15 <Justin_o> dins: were you confused with how to run Infusion?
+2016-03-02T15:31:32 <dins> yes
+2016-03-02T15:31:36 * alanharn_ joined the channel
+2016-03-02T15:32:05 <dins> I could find even a better documentation
+2016-03-02T15:32:51 <Justin_o> dins: this is the documentation site for Fluid Infusion http://docs.fluidproject.org/infusion/development/
+2016-03-02T15:33:09 <Justin_o> perhaps this tutorial will be helpful http://docs.fluidproject.org/infusion/development/tutorial-gettingStartedWithInfusion/GettingStartedWithInfusion.html
+2016-03-02T15:34:29 <Justin_o> For the project you\'re interested in you\'ll likely want to build your components using Fluid Infusion, so having an understand of how it works is a good starting point.
+2016-03-02T15:35:12 <Justin_o> For more specifics on the project you can also ping michelled, here in the channel
+2016-03-02T15:35:24 * Jess_ has quit
+2016-03-02T15:36:30 <dins> Thanks Justin_o........... I think I saw these too................ but, I skiped
+2016-03-02T15:36:39 <dins> how mad am I
+2016-03-02T15:36:41 <dins> :)
+2016-03-02T15:37:36 <Justin_o> :) no problem..
+2016-03-02T15:39:10 <dins> and also I need a small another information too
+2016-03-02T15:39:27 <dins> would that be a envelop visualizer
+2016-03-02T15:39:47 <dins> or a music editor (Manscript)
+2016-03-02T15:40:03 <dins> Just wanted to clarify
+2016-03-02T15:40:46 <dins> I think the requirement is a wave controller or a envelope editor
+2016-03-02T15:40:50 <dins> am I correct
+2016-03-02T15:41:33 <dins> but, it could have been nice to have a music editor too
+2016-03-02T15:41:37 <dins> :)
+2016-03-02T15:41:48 <Justin_o> dins: probably best to talk to michelled about that one
+2016-03-02T15:41:55 <Justin_o> from the project idea "This project will involve the creation of a small collection of high-quality, responsive, SVG or DOM-based musical user interface controls such as knobs, sliders, x/y pads, button matrices, envelope editors, or waveform viewers."
+2016-03-02T15:42:37 <Justin_o> but you\'d have some freedom on what exactly is created, but I think it\'s probably best to talk through that with michelled
+2016-03-02T15:43:09 <Justin_o> but it\'s definitely good to think about these ideas
+2016-03-02T15:43:30 <dins> Hi michelled,
+2016-03-02T15:44:22 <dins> could you please give a help to clarify this
+2016-03-02T15:46:42 * colinclark joined the channel
+2016-03-02T16:12:46 * richardschwerdtf has quit
+2016-03-02T16:15:37 * richardschwerdtf joined the channel
+2016-03-02T16:16:32 * lliskovoi joined the channel
+2016-03-02T16:16:34 * richardschwerdtf has quit
+2016-03-02T16:18:56 * ioan joined the channel
+2016-03-02T16:18:57 * richardschwerdtf joined the channel
+2016-03-02T16:20:03 * richardschwerdtf has quit
+2016-03-02T16:23:37 * the-t-in-rtf has quit
+2016-03-02T16:23:50 * the-t-in-rtf joined the channel
+2016-03-02T16:36:32 * richardschwerdtf joined the channel
+2016-03-02T16:42:31 * anvk joined the channel
+2016-03-02T16:43:52 * sepidehshahi joined the channel
+2016-03-02T17:05:53 * alanharnum joined the channel
+2016-03-02T17:06:39 * gabrielmancini joined the channel
+2016-03-02T17:11:17 * alanhar__ joined the channel
+2016-03-02T17:26:04 * the-t-in-rtf has quit
+2016-03-02T17:26:06 * the-t-in-rtf1 joined the channel
+2016-03-02T17:31:47 * alanhar__ has quit
+2016-03-02T17:32:34 * Guest90036 is now known as Ioan_
+2016-03-02T17:35:00 <colinclark> Hey Ioan_, how\'s it going?
+2016-03-02T17:35:14 <Ioan_> ready to change the world :)
+2016-03-02T17:35:18 <colinclark> :) :)
+2016-03-02T17:35:32 <colinclark> So yesterday we talked briefly about the idea of some kind of custom project related to UI Options and security, GPII, that sort of thing
+'
+

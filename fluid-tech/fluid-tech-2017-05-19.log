@@ -1,0 +1,94 @@
+b'2017-05-19T06:55:20 * the-t-in-rtf joined the channel
+2017-05-19T07:02:56 * amatas joined the channel
+2017-05-19T08:23:19 * kasparnet joined the channel
+2017-05-19T08:28:22 * kasparnet has quit
+2017-05-19T08:28:37 * kasparnet joined the channel
+2017-05-19T08:46:25 * stegru joined the channel
+2017-05-19T08:46:56 * kasparnet has quit
+2017-05-19T11:16:23 * gtirloni joined the channel
+2017-05-19T11:41:36 * kasparnet joined the channel
+2017-05-19T11:45:57 * kasparnet has quit
+2017-05-19T11:51:17 * jessm joined the channel
+2017-05-19T12:21:12 * alanharnum joined the channel
+2017-05-19T12:34:48 * cindyli joined the channel
+2017-05-19T12:42:42 * gtirloni joined the channel
+2017-05-19T12:55:50 * michelled joined the channel
+2017-05-19T13:31:17 * colinclark joined the channel
+2017-05-19T13:33:20 * clown joined the channel
+2017-05-19T14:41:58 * mrtyler joined the channel
+2017-05-19T14:45:08 <mrtyler> amatas: hello
+2017-05-19T14:45:25 <mrtyler> i started making gitlab do things: https://gitlab.com/idi-ops/gpii-terraform-live/builds/16682120
+2017-05-19T14:45:32 <mrtyler> i have some questions
+2017-05-19T14:46:07 <mrtyler> 1. it looks like this job output doesn\'t show up until the job is done, which is pretty annoying for long-running jobs like i have. is there some other way to see the output? are there build logs on h5 somewhere?
+2017-05-19T14:46:52 <mrtyler> 2. i watched ps on h5 after the build started but i didn\'t see my processes running, just a bunch of vbox building tasks. any idea what\'s up with that?
+2017-05-19T14:55:52 <amatas> Hi mrtyler
+2017-05-19T14:56:07 <mrtyler> buenas
+2017-05-19T14:56:24 <mrtyler> CUIDADO
+2017-05-19T14:56:35 <mrtyler> /antranig :p
+2017-05-19T14:57:20 <amatas> 1. weird, the builds of windows VMs are showed as they are throwing a line
+2017-05-19T14:57:23 <amatas> :D
+2017-05-19T14:57:39 <mrtyler> i can\'t think of anything unusual that my scripts would be doing
+2017-05-19T14:57:54 <mrtyler> https://github.com/idi-ops/gpii-terraform-live/blob/master/.gitlab-ci.yml
+2017-05-19T14:58:51 <amatas> mm, you didn\'t add the "stages" block
+2017-05-19T14:59:16 <amatas> I don\'t remember if they are mandatory
+2017-05-19T14:59:30 <gtirloni> maybe related? https://gitlab.com/gitlab-org/gitlab-ci-multi-runner/issues/1862
+2017-05-19T14:59:49 <mrtyler> "By default it runs a pipeline with three stages: build, test, and deploy. You don\'t need to use all three stages; stages with no jobs are simply ignored.
+2017-05-19T14:59:52 <mrtyler> " --https://docs.gitlab.com/ee/ci/quick_start/README.html#getting-started-with-gitlab-ci
+2017-05-19T15:01:40 <mrtyler> gtirloni: good find. let\'s see if bundler has any settings for this, but it seems pretty weird that this would be a problem
+2017-05-19T15:01:49 <mrtyler> like why would bundler be buffering output?
+2017-05-19T15:02:05 <mrtyler> it doesn\'t appear to buffer things when i run it interactively -- i.e. it\'s not like there\'s a bunch of lag and then a bunch of output
+2017-05-19T15:02:33 <amatas> ok
+2017-05-19T15:03:22 <mrtyler> hm here\'s the ticket that guy opened on the bundler end :) https://github.com/fastlane/fastlane/issues/7652
+2017-05-19T15:04:59 <amatas> mrtyler: I\'m re-running the test again
+2017-05-19T15:05:10 <mrtyler> ok
+2017-05-19T15:05:31 <amatas> and I can see how the chunks of logs are appearing as they are executed
+2017-05-19T15:05:47 <amatas> not line by line, but it\'s almost on live
+2017-05-19T15:08:00 <mrtyler> i missed it
+2017-05-19T15:08:12 <mrtyler> i\'ma kick it again and watch
+2017-05-19T15:08:25 <amatas> ok
+2017-05-19T15:08:59 <mrtyler> definitely better
+2017-05-19T15:09:05 <mrtyler> plus things showed up in ps output this time
+2017-05-19T15:09:22 <amatas> I did nothing I promess
+2017-05-19T15:09:23 <mrtyler> that\'s... fun
+2017-05-19T15:09:31 <mrtyler> ok well thanks guys
+2017-05-19T15:09:36 <amatas> perhaps because it\'s friday?
+2017-05-19T15:09:39 <mrtyler> heh
+2017-05-19T15:09:48 <mrtyler> so *are* there any logs or other methods for debugging gitlab-runner?
+2017-05-19T15:09:53 <mrtyler> in general?
+2017-05-19T15:10:27 <amatas> I believe that gitlab-ci-runner throws all the logs to the systemd-journal
+2017-05-19T15:10:55 <mrtyler> ah of course
+2017-05-19T15:10:56 <amatas> journalctl -r -u gitlab-ci-runner (or something similar)
+2017-05-19T15:11:46 <amatas> also what I did other times is to set as gitlab-ci user and exec the commands in the build directory
+2017-05-19T15:11:58 <mrtyler> sure
+2017-05-19T15:12:05 <mrtyler> hey this doesn\'t look great... May 19 15:11:10 h-0005.tor1.inclusivedesign.ca gitlab-ci-multi-runner[1983]: time="2017-05-19T15:11:10Z" level=warning msg="Checking for jobs... failed" runner=ab434075 status="4
+2017-05-19T15:12:12 <mrtyler> uh
+2017-05-19T15:12:16 <mrtyler> nice copy/paste, systemd
+2017-05-19T15:12:34 <mrtyler> anyway here\'s the punch line:
+2017-05-19T15:12:35 <mrtyler> Checking GitLab compatibility... not-compatible" reason="GitLab Runner >= 9.0 can be used ONLY with GitLab CE/EE >= 9.0" result=401
+2017-05-19T15:12:51 <amatas> mmmm, this morning gitlab.com had a heads up about the upgrading to a new release
+2017-05-19T15:13:11 <mrtyler> fwiw i can\'t find any logs related to my builder in there, just tthat ^ error over and over
+2017-05-19T15:13:57 <amatas> that is weird, as it\'s working right now... mmmm
+2017-05-19T15:46:41 * michelled has quit
+2017-05-19T16:26:40 * colinclark joined the channel
+2017-05-19T16:44:39 * michelled joined the channel
+2017-05-19T16:44:43 * michelled has quit
+2017-05-19T16:46:40 * michelled joined the channel
+2017-05-19T17:02:58 * colinclark joined the channel
+2017-05-19T17:06:52 * stegru has quit
+2017-05-19T18:03:08 * colinclark joined the channel
+2017-05-19T18:19:32 * amatas has quit
+2017-05-19T18:31:14 * colinclark joined the channel
+2017-05-19T18:32:23 * Jess__ joined the channel
+2017-05-19T19:47:42 * michelled has quit
+2017-05-19T20:24:13 * Jess__ joined the channel
+2017-05-19T20:27:17 * Jess__ joined the channel
+2017-05-19T20:40:37 * alanharnum has quit
+2017-05-19T20:44:37 * colinclark joined the channel
+2017-05-19T20:45:44 * michelled joined the channel
+2017-05-19T21:05:21 * noveens joined the channel
+2017-05-19T21:34:56 * colinclark_ joined the channel
+2017-05-19T21:36:00 * michelled has quit
+2017-05-19T21:59:03 * stegru joined the channel
+2017-05-19T22:47:17 * michelled joined the channel
+'
+

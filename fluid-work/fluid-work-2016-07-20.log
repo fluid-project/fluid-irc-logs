@@ -1,0 +1,277 @@
+b'2016-07-20T17:00:53 * colinclark_ joined the channel
+2016-07-20T17:01:13 <clown> bens__:  I have to go to another telecon right now.  I\'ll look at the link and get back to you.  Thanks!
+2016-07-20T17:01:21 * clown is now known as clown_mtg
+2016-07-20T17:04:54 * colinclark_ has quit
+2016-07-20T17:06:46 * alanharnum has quit
+2016-07-20T17:11:42 * alanharnum joined the channel
+2016-07-20T17:13:00 * jhung has quit
+2016-07-20T17:18:20 * kasparnet has quit
+2016-07-20T17:21:11 * sepidehshahi joined the channel
+2016-07-20T17:55:56 * yzen is now known as yzen_
+2016-07-20T17:59:22 * simonjb joined the channel
+2016-07-20T18:01:27 * colinclark joined the channel
+2016-07-20T18:04:35 <bens__> hi sgithens,  on the Windows.Networking.Proximity (issue 396 w/ edge.js) were you looking for a second set of eyes on the syntax issue, using a WinRT dll, or both?
+2016-07-20T18:08:04 <sgithens> bens__ I guess maybe both.  I\'m pretty sure I ended up getting the syntax figured out.  Mostly if someone can successfully pull in that assembly I was trying to use.  However, I\'m not sure if it would be available on a machine that doesn\'t have a builtin NFC/proximity device or not.  I would hope that it would still be there, but just show no registered devices...
+2016-07-20T18:08:06 <sgithens> or something
+2016-07-20T18:08:30 * jhung joined the channel
+2016-07-20T18:08:49 * kasparnet joined the channel
+2016-07-20T18:10:56 <sgithens> bens__ : These Windows.Networking.Proximity calls are specifically what I want to get called from edge:  https://github.com/sgithens/gpii-windows-8/blob/master/GPIIWindows8/GPIIProximityListener.cs#L8
+2016-07-20T18:11:17 <sgithens> Then I can just bake this in to our local node app
+2016-07-20T18:12:01 <sgithens> At the this point I\'ve moved the rest of this repository to running inside an Electron App, expect for the Proximity Listener bit
+2016-07-20T18:15:00 <bens__> sgithens, the syntax is an easy fix. if you\'re not using lambda expressions in line you need to meet the convention edgejs uses which means a class named Startup and a method named Invoke. https://gist.github.com/benjaminstokes/fccc724702b4f76e728b7fd23273a812
+2016-07-20T18:15:34 <bens__> i\'ll have to dig more on the proximity library. what system are you running on? windows 10, 8?
+2016-07-20T18:16:34 * the-t-in-rtf has quit
+2016-07-20T18:17:38 <sgithens> bens__ Cool, thanks.   It could be either windows 8 or 10.  We\'ve decided to use 10 for our upcoming release so probably best to start testing on there.
+2016-07-20T18:18:04 * jhung has quit
+2016-07-20T18:20:11 * jhung joined the channel
+2016-07-20T18:24:47 * kasparnet has quit
+2016-07-20T18:24:53 * clown_mtg has quit
+2016-07-20T18:28:18 * yzen_ is now known as yzen
+2016-07-20T18:29:05 * clown joined the channel
+2016-07-20T18:31:44 * clown is now known as clown_mtg
+2016-07-20T18:32:23 * simonjb has quit
+2016-07-20T18:32:50 * jhung joined the channel
+2016-07-20T18:36:16 * sepidehshahi_ joined the channel
+2016-07-20T18:36:44 * simonjb joined the channel
+2016-07-20T18:38:57 * sepidehshahi has quit
+2016-07-20T18:45:30 <bens__> sgithens, what OS did you work on that Windows 8 repo with? I\'m guessing now windows 7?
+2016-07-20T18:45:53 <bens__> s/now/not
+2016-07-20T18:47:54 <sgithens> bens__ Both windows 8 and 10
+2016-07-20T18:48:11 <sgithens> I maybe only compiled it on windows 8, but we\'ve been running it on both
+2016-07-20T18:49:18 <bens__> i think its going to be possible.. but i need to get myself a windows 8 or + vm to sketch it out
+2016-07-20T18:50:12 <bens__> fairly certain the .net code will have to be compiled ahead of time.. which isn\'t an issue really it just makes prototyping a bit harder
+2016-07-20T18:54:33 * simonjb has quit
+2016-07-20T18:55:50 * the-t-in-rtf joined the channel
+2016-07-20T18:56:03 * yzen is now known as yzen_
+2016-07-20T18:57:41 <sgithens> bens__ feel free to just use windows 10
+2016-07-20T18:57:54 <sgithens> I doubt I\'ll be using windows 8 again for the project in a long time
+2016-07-20T18:58:33 <sgithens> Do you know what\'s different about the Networking.Proximity library that it would have to be compiled rather than just interpreted on the fly?
+2016-07-20T18:59:31 * bens__ has quit
+2016-07-20T19:01:33 * yzen_ has quit
+2016-07-20T19:11:25 * sepidehshahi joined the channel
+2016-07-20T19:13:37 * simonjb joined the channel
+2016-07-20T19:15:41 * yzen joined the channel
+2016-07-20T19:20:35 <Justin_o> colinclark: if you have a few minutes could you please take a look at this https://github.com/fluid-project/infusion/pull/729
+2016-07-20T19:26:17 * the-t-in-rtf has quit
+2016-07-20T19:26:35 * jessm has quit
+2016-07-20T19:39:56 * clown_mtg is now known as clown
+2016-07-20T19:40:32 * bens__ joined the channel
+2016-07-20T19:42:59 <bens__> sgithens, you have to jump through a hoop or two to pull the WinRT libs in as references from a non-windows-store app
+2016-07-20T19:43:42 <bens__> described here: http://www.hanselman.com/blog/HowToCallWinRTAPIsInWindows8FromCDesktopApplicationsWinRTDiagram.aspx
+2016-07-20T19:47:19 <clown> bens__, this is one of things I am looking for (thread state):  https://msdn.microsoft.com/en-us/library/system.diagnostics.processthread.threadstate(v=vs.110).aspx
+2016-07-20T19:47:43 <clown> and, that can be found via the process\'s threads from the document url you sent earlier.
+2016-07-20T19:48:12 <clown> that is, it looks like one can ask for a processes threads, and then, in turn query them.
+2016-07-20T19:51:27 <bens__> clown, whats the general use case.. i think you said its part of the process reporter? Are you polling every N seconds/minutes/etc for all processes running? Are you looking for a specific process (like by name)?
+2016-07-20T19:53:29 <clown> yes, I am looking by name.  That much I have working.  Once I\'ve found the process, I want to know its state.
+2016-07-20T19:55:39 * michelled joined the channel
+2016-07-20T19:57:34 <bens__> clown, i\'ll get an example together that\'ll do that w/ edge
+2016-07-20T19:59:07 <clown> bens__, cool thanks!.
+2016-07-20T19:59:50 <clown> bens__, regarding your question about the general use case:  I have written a fluid component that can be used to poll for GPII solutions -- which ones are running, which ones have stopped, etc.
+2016-07-20T20:00:04 <clown> And, that all works on linux.
+2016-07-20T20:00:29 <clown> The only thing I need to "bootstrap" it on Windows is to get a list of processes, and some information about them (eg., their state).
+2016-07-20T20:01:48 <clown> Using node-ffi, I can get that list, the names of the proceesses (e.g., notepad.exe), the full path to the process.  I\'m currently missing the state.
+2016-07-20T20:02:13 * sepidehshahi joined the channel
+2016-07-20T20:02:20 * alanharn_ joined the channel
+2016-07-20T20:03:18 <clown> although, part of me is thinking:  If it\'s in the process list, it\'s state is "running", and if it\'s not, then it\'s "not running".  :-)
+2016-07-20T20:04:01 * clown argh  not it\'s , but its.
+2016-07-20T20:06:56 <bens__> clown, i could see there being a difference between windows and linux states. i just found this on google: http://www.macdesign.net/academic/it4813/it4813-Submitted/IT4813-u03a1-Process_States.html
+2016-07-20T20:07:29 * clown looks
+2016-07-20T20:16:05 * jhung joined the channel
+2016-07-20T20:19:21 * TPark has quit
+2016-07-20T20:19:22 * godfrey_ has quit
+2016-07-20T20:24:58 <clown> bens__, thanks for that article.  It points to a potential problem with my component.  Namely, it\'s assuming the linux states.
+2016-07-20T20:25:31 <clown> I"ll have to isolate that in the linux vs. windows implementations to use the proper states depending on the OS.
+2016-07-20T20:28:58 * Jess_ joined the channel
+2016-07-20T20:32:43 * wannabeCitizen has quit
+2016-07-20T20:41:20 * danayo has quit
+2016-07-20T20:41:32 * Yan_Hu has quit
+2016-07-20T20:42:29 <bens__> hey clown, take a look at this gist: https://gist.github.com/benjaminstokes/fbedb80cfb14a77ee7884a73c66d4a1d
+2016-07-20T20:43:53 <bens__> looks like the environment variables couldn\'t be serialized to json.. nothing we can\'t fix if we need them, but that is the sort of info we can get. other properties could be added too.. i just picked a few that looked useful
+2016-07-20T20:44:22 <clown> wow, that\'s a lot of info.  :-)
+2016-07-20T20:45:16 <bens__> hehehe.. we can also trim it down :)
+2016-07-20T20:45:16 <clown> I see what you mean by serializing to json \xe2\x80\x94 lots of [Object]
+2016-07-20T20:47:30 * colinclark has quit
+2016-07-20T20:47:39 <bens__> yeah.. those are IDictionary<string, string> types. I wonder if that is a depth limit on the serialization that can be tweaked.. or we could serialize it ourselves.
+2016-07-20T20:48:33 <clown> well, that makes me think that using edge.js is a better approach than what I\'ve been doing with node-ffi.
+2016-07-20T20:50:23 <clown> shoot.  I have to start wrapping up in order to catch my train home, bens__
+2016-07-20T20:50:49 <bens__> clown, it seems to me that there is less code required in the edge.js approach over node-ffi to do the same thing.. and that code is a little easier to follow, despite having another layer
+2016-07-20T20:52:00 <bens__> clown, don\'t miss the train.. we can catch up later
+2016-07-20T20:52:18 <clown> one last question before I drop off about https://gist.github.com/benjaminstokes/fbedb80cfb14a77ee7884a73c66d4a1d#file-edgejs-process-info-sketch-L166
+2016-07-20T20:52:39 <clown> the call Process.GetProcessesByName() built-in, or did you write it?
+2016-07-20T20:52:58 <bens__> built in to the .net framework
+2016-07-20T20:53:16 <bens__> upper case Process there is the System.Diagnostics.Process class
+2016-07-20T20:54:21 <clown> okay, thanks.
+2016-07-20T20:54:54 <clown> I\'ll catch you later \xe2\x80\x94 have a good evening (depending on where you are).  Thanks again, bens__
+2016-07-20T21:07:12 * Jess_ has quit
+2016-07-20T21:07:37 * yzen is now known as yzen_
+2016-07-20T21:12:51 * yzen_ has quit
+2016-07-20T21:23:21 * alanharn_ has quit
+2016-07-20T21:26:09 * jhung has quit
+2016-07-20T21:29:33 * alanharnum joined the channel
+2016-07-20T21:33:47 * Jess_ joined the channel
+2016-07-20T21:35:53 * alanharnum has quit
+2016-07-20T21:42:57 * wannabeCitizen joined the channel
+2016-07-20T21:45:12 * sepidehshahi has quit
+2016-07-20T22:06:35 * simonjb joined the channel
+2016-07-20T22:22:29 * simonjb has quit
+2016-07-20T22:36:57 * danayo joined the channel
+2016-07-20T22:40:08 * gtirloni has quit
+2016-07-20T23:09:29 * yzen joined the channel
+2016-07-20T23:15:42 * yzen has quit
+2016-07-20T23:30:28 * Justin_o has quit
+2016-07-20T23:36:22 * alanharnum joined the channel
+2016-07-20T23:43:00 * sgithens has quit
+'
+
+b'2016-07-20T00:57:47 * jhung joined the channel
+2016-07-20T01:25:16 * jhernandez has quit
+2016-07-20T01:28:19 * colinclark joined the channel
+2016-07-20T01:30:02 * colinclark has quit
+2016-07-20T01:34:28 * jhernandez joined the channel
+2016-07-20T02:33:36 * michelled joined the channel
+2016-07-20T03:38:48 * michelled has quit
+2016-07-20T04:15:23 * wannabeCitizen joined the channel
+2016-07-20T04:55:20 * from-fluid-IRC has quit
+2016-07-20T04:55:33 * PaliwalSparsh joined the channel
+2016-07-20T04:56:13 * from-fluid-IRC joined the channel
+2016-07-20T05:05:55 * from-fluid-IRC has left the channel
+2016-07-20T05:06:20 * from-fluid-IRC joined the channel
+2016-07-20T05:32:31 * PaliwalSparsh has quit
+2016-07-20T05:47:17 * wannabeCitizen has quit
+2016-07-20T06:05:28 * the-t-in-rtf joined the channel
+2016-07-20T06:21:42 * the-t-in-rtf has quit
+2016-07-20T06:48:20 * the-t-in-rtf joined the channel
+2016-07-20T07:52:45 * the-t-in-rtf has quit
+2016-07-20T07:53:02 * the-t-in-rtf joined the channel
+2016-07-20T08:02:57 * kasparnet joined the channel
+2016-07-20T08:04:00 * kasparnet has quit
+2016-07-20T08:04:39 * kasparnet joined the channel
+2016-07-20T08:09:36 * kasparnet has quit
+2016-07-20T08:12:20 * kasparnet joined the channel
+2016-07-20T08:16:33 * kasparne_ joined the channel
+2016-07-20T08:16:33 * kasparnet has quit
+2016-07-20T10:00:32 <kasparne_> morning Bosmon
+2016-07-20T10:57:38 <Bosmon> kasparne_ - morning, KASPARD DE LA TROP TOT DE LE MATIN!
+2016-07-20T10:58:38 <kasparne_> hehe, I\'m not sure this qualifies as "Trop tot de la matin" :D
+2016-07-20T10:58:41 <kasparne_> hey man
+2016-07-20T10:58:47 <kasparne_> how did the wedding go?
+2016-07-20T11:01:32 <kasparne_> Bosmon: ok - back here.
+2016-07-20T11:01:41 <kasparne_> so I was looking at https://github.com/GPII/universal/pull/457
+2016-07-20T11:01:49 <kasparne_> and have adressed most of the comments
+2016-07-20T11:02:02 <kasparne_> but there is one thing I\'m not quite certain how to go about
+2016-07-20T11:02:11 <Bosmon> Yes, which I have just referred to in my upcoming journal pull...
+2016-07-20T11:02:20 <kasparne_> ooh cool
+2016-07-20T11:02:28 <kasparne_> how is that one going btw?
+2016-07-20T11:02:47 <kasparne_> anyway, I\'m not quite certain how to do about the fullSolutionsRegistry
+2016-07-20T11:03:16 <kasparne_> ie. to what extend I should pass it around vs. whether I should query the registry every time I want to use it
+2016-07-20T11:04:06 <kasparne_> right now, I\'ve stuck it on to the payload that is passed around in the system pre-matchmaking.. But removing it before actually sending it to the matchmaker (as we dont need the full registry at that point anymore)
+2016-07-20T11:12:44 <Bosmon> It\'s going sort of ok
+2016-07-20T11:12:56 <Bosmon> Writing the tests for it is perhaps somewhat harder than actually implementing it
+2016-07-20T11:13:20 <Bosmon> I\'ve implemented an EXPLODING SETTINGS HANDLER
+2016-07-20T11:13:33 <Bosmon> https://gist.github.com/amb26/4899d172aaf31fa0ba849f433ced0a17
+2016-07-20T11:14:05 <Bosmon> It\'s ok to stick the solutions registry onto the payload, and no real need to remove iot
+2016-07-20T11:14:06 <Bosmon> it
+2016-07-20T11:14:18 <Bosmon> Under "megapayloadism" we tend to consider the megapayload to be immutable
+2016-07-20T11:19:59 <kasparne_> Bosmon: keeping the full solutions registry attached though, I ran into an issue with payload size
+2016-07-20T11:20:06 <kasparne_> sec
+2016-07-20T11:20:48 <kasparne_> https://issues.gpii.net/browse/GPII-1880
+2016-07-20T11:20:53 <kasparne_> there it is
+2016-07-20T11:30:40 <kasparne_> Bosmon: ^
+2016-07-20T11:32:11 <kasparne_> oops - sorry - just saw your comment on the JIRA
+2016-07-20T11:50:57 * kasparne_ has quit
+2016-07-20T12:06:22 * kasparnet joined the channel
+2016-07-20T12:08:47 <Bosmon> kasparnet - do you remember a JIRA about faults relating to trying to logout too quickly after a login, or while a login is still in progress?
+2016-07-20T12:09:03 <Bosmon> I realised that this is a huge class of problem that our current system is open to
+2016-07-20T12:09:59 <kasparnet> hmmm.. I can do a bit of digging -- I remember issues related to that, but I think it was actually the other way around - logging in too quickly after logging out
+2016-07-20T12:10:07 <kasparnet> which screwed up read write gold
+2016-07-20T12:10:11 <kasparnet> that took a while to shut down
+2016-07-20T12:12:29 <kasparnet> Bosmon: I cant find any JIRAs
+2016-07-20T12:12:39 <kasparnet> but it\'s a good point, that it\'s a big issue
+2016-07-20T12:12:55 <Bosmon> Yes, the opposite could easily be a problem too
+2016-07-20T12:13:12 <Bosmon> It really requires a fundamentally different architecture than the one we\'ve got
+2016-07-20T12:13:27 * Justin_o joined the channel
+2016-07-20T12:24:34 * michelled joined the channel
+2016-07-20T12:26:17 * DinukaDeSilva joined the channel
+2016-07-20T12:27:16 <kasparnet> Bosmon: I would have expected it to be a lot simpler ... I guess we would need to know when settings are applied/applications are launched, but once we know that, howcome it\'s not just a matter of checking that we\'re done with logging in/out before attempting to do another log in/out?
+2016-07-20T12:37:54 <Bosmon> kasparnet - sure
+2016-07-20T12:38:03 <Bosmon> Let\'s think on this a bit : P
+2016-07-20T12:38:15 <Bosmon> Say we discover that we are *not* done with logging in/out
+2016-07-20T12:38:18 <Bosmon> What should we do then?
+2016-07-20T12:46:03 <kasparnet> we should respond to the login request with some appropriate error code
+2016-07-20T12:46:07 <kasparnet> and text
+2016-07-20T12:46:27 <kasparnet> :)
+2016-07-20T12:48:12 * wale joined the channel
+2016-07-20T12:50:35 * gtirloni joined the channel
+2016-07-20T12:56:45 * yzen joined the channel
+2016-07-20T13:16:02 * alanharnum joined the channel
+2016-07-20T13:17:37 * kasparnet has quit
+2016-07-20T13:19:46 * yzen is now known as yzen_
+2016-07-20T13:25:02 * yzen_ has quit
+2016-07-20T13:35:38 * jessm joined the channel
+2016-07-20T13:40:37 * michelled has quit
+2016-07-20T13:42:26 * yzen joined the channel
+2016-07-20T13:45:05 * gtirloni has quit
+2016-07-20T13:46:15 * TPark joined the channel
+2016-07-20T13:46:45 * godfrey_ joined the channel
+2016-07-20T13:48:00 * clown joined the channel
+2016-07-20T13:48:20 * gtirloni joined the channel
+2016-07-20T13:49:19 * jhung joined the channel
+2016-07-20T13:51:52 * danayo joined the channel
+2016-07-20T13:54:53 * sepidehshahi joined the channel
+2016-07-20T14:00:04 * clown1 joined the channel
+2016-07-20T14:00:05 * clown has quit
+2016-07-20T14:00:23 * bens__ joined the channel
+2016-07-20T14:00:51 * clown joined the channel
+2016-07-20T14:02:31 * simonjb joined the channel
+2016-07-20T14:04:29 <simonjb> hi sepidehshahi, will you be joining us?
+2016-07-20T14:05:04 <sepidehshahi> Hi simonjb, I\xe2\x80\x99m in SP1 meeting. I\xe2\x80\x99ll join as soon as this meeting is done.
+2016-07-20T14:05:10 <simonjb> cool
+2016-07-20T14:05:36 <sepidehshahi> I had some comments about the design and send them to Dinuka yesterday
+2016-07-20T14:05:51 <simonjb> yes, I saw, thank you
+2016-07-20T14:14:48 * wale has quit
+2016-07-20T14:22:12 * colinclark joined the channel
+2016-07-20T14:22:28 * Yan_Hu joined the channel
+2016-07-20T14:27:41 * michelled joined the channel
+2016-07-20T14:29:39 * from-fluid-IRC has left the channel
+2016-07-20T14:29:51 * from-fluid-IRC joined the channel
+2016-07-20T14:39:03 * kasparnet joined the channel
+2016-07-20T14:42:26 * alanharnum has quit
+2016-07-20T14:42:51 * alanharnum joined the channel
+2016-07-20T14:43:41 * yzen_ joined the channel
+2016-07-20T14:44:09 * the-t-in-rtf has quit
+2016-07-20T14:46:42 * yzen has quit
+2016-07-20T14:52:37 * jhung is now known as jhung_mtg
+2016-07-20T14:56:03 * wale joined the channel
+2016-07-20T14:59:26 <simonjb> sepidehshahi: we had some technical issues but have just started meeting, if you were able to join us -- we\'re meeting in Google Hangouts
+2016-07-20T14:59:47 <simonjb> we: Dinuka and myself
+2016-07-20T15:00:10 <sepidehshahi> simonjb: I\xe2\x80\x99m still in the SP1 call. I\xe2\x80\x99ll join you as soon as I finish probably soon
+2016-07-20T15:06:24 <sepidehshahi> simonjb: could you please add me to the hangout session?
+2016-07-20T15:10:32 * wannabeCitizen joined the channel
+2016-07-20T15:18:32 * wannabeCitizen has quit
+2016-07-20T15:22:10 * wannabeCitizen joined the channel
+2016-07-20T15:33:57 * alanharnum has quit
+2016-07-20T15:44:42 * sepidehshahi has quit
+2016-07-20T15:44:58 * alanharnum joined the channel
+2016-07-20T15:54:36 * sepidehshahi joined the channel
+2016-07-20T15:55:34 * yzen_ has quit
+2016-07-20T16:01:45 * the-t-in-rtf joined the channel
+2016-07-20T16:07:16 * colinclark joined the channel
+2016-07-20T16:25:19 * yzen joined the channel
+2016-07-20T16:32:30 <Bosmon> kasparnet - I found that https://issues.gpii.net/browse/GPII-687 is one of this kind of login/logout issue
+2016-07-20T16:34:04 * sgithens joined the channel
+2016-07-20T16:34:20 <bens__> sgithens, hello
+2016-07-20T16:34:27 <sgithens> bens__ Hola!
+2016-07-20T16:37:15 * alanharnum has quit
+2016-07-20T16:38:47 <kasparnet> Bosmon: ah - I always thought that was mouse-cursor/theme conflict issue
+2016-07-20T16:39:06 * sepidehshahi joined the channel
+2016-07-20T16:41:40 * alanharnum joined the channel
+2016-07-20T16:47:44 * clown waves at bens__
+2016-07-20T16:49:10 * sepidehshahi has quit
+2016-07-20T16:52:57 <bens__> hi clown
+2016-07-20T16:54:57 * colinclark_ joined the channel
+2016-07-20T16:54:59 * colinclark_ is now known as colinclark
+2016-07-20T16:55:40 <bens__> clown: are the properties you\'re looking for listed here? any others you need? https://msdn.microsoft.com/en-us/library/system.diagnostics.process_properties(v=vs.110).aspx
+2016-07-20T16:55:56 * jhung_mtg is now known as jhung
+2016-07-20T17:00:48 * colinclark has quit
+'
+

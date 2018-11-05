@@ -1,0 +1,287 @@
+b'2018-09-13T15:53:52 <jhernandez> or was this just the attempt to fix the values for the hi-dpi screens for the demo?
+2018-09-13T15:54:23 <jhernandez> (and make the tests happy)
+2018-09-13T15:54:26 <jhernandez> ?
+2018-09-13T15:54:59 <stegru> yes, I think the windows one also needs to be in - I\'m not sure why it isn\'t, so let me check
+2018-09-13T15:56:19 <stegru> yes, there\'s nothing wrong with it, from what i can see
+2018-09-13T15:57:08 <stegru> no wait.. i was looking at universal
+2018-09-13T15:57:24 <stegru> oh i was supposed to
+2018-09-13T15:57:36 <stegru> everything is ok
+2018-09-13T15:58:42 <stegru> without the universal pr merge, dpi will break
+2018-09-13T16:01:10 <stegru> it\'s mostly changes to preferences.. making them work with the new numbering of dpi. apart from a test, there\'s no code change
+2018-09-13T16:06:24 <jhernandez> windows one it\'s in
+2018-09-13T16:08:41 <jhernandez> so you\'re saying that we need the universal portion as well, isn\'t it?
+2018-09-13T16:10:51 <jhernandez> stegru: ^
+2018-09-13T16:11:04 <stegru> yes
+2018-09-13T16:12:18 <jhernandez> ok, correct me if I\'m wrong but, if we use current windows/master against current universal/master we will get test failures, isn\'t it?
+2018-09-13T16:13:03 <jhernandez> will test it right away
+2018-09-13T16:14:05 <stegru> yes, I think it might fail
+2018-09-13T16:14:19 <jhernandez> stegru: btw (and unrelated), do you have an npm account? if not, it would be great if you create one, just in case we need you to produce dev releases of any of our gpii components
+2018-09-13T16:14:28 <stegru> no, i don\'t
+2018-09-13T16:14:35 <jhernandez> ok, got it (will test then)
+2018-09-13T16:15:50 <jhernandez> okay, no rush, but do create one when you find the time - I think that Bosmon would need to add you to the gpii organization
+2018-09-13T16:16:26 <stegru> right
+2018-09-13T16:17:05 <Bosmon> Easy enough
+2018-09-13T16:18:30 * jhernandez has quit
+2018-09-13T16:18:57 * jhernandez joined the channel
+2018-09-13T16:22:02 <Bosmon> It\'s done
+2018-09-13T16:23:01 <Bosmon> gtirloni et al - we used to pin npm versions because they behave badly when used internal gpii/node_modules directories together with git-sourced dependencies
+2018-09-13T16:23:11 <Bosmon> After we stopped using git-sourced dependences the problem went away
+2018-09-13T16:29:00 <Justin_o> Bosmon: thanks for clearing that up
+2018-09-13T16:47:03 <jhernandez> stegru: just tested windows/master and there are no failures
+2018-09-13T16:48:23 <jhernandez> so I think we should decide on whether we need (or want) https://github.com/GPII/universal/pull/643 to be merged or not
+2018-09-13T16:49:53 <jhernandez> just left a comment on the pr
+2018-09-13T16:59:27 * jhung has quit
+2018-09-13T17:10:37 * michelled joined the channel
+2018-09-13T17:11:04 * jhung joined the channel
+2018-09-13T17:23:44 * michelled joined the channel
+2018-09-13T17:29:26 * avtar joined the channel
+2018-09-13T17:36:15 * danayo joined the channel
+2018-09-13T17:48:02 <Justin_o> jhernandez: hello.. wonder if you might have any ideas on how to fix this. I recently updated to the latest LTS version of node v8.12.0 Now the web socket tests in UIO+ are failing. Seems that the web sockets aren\'t connecting to the test server.
+2018-09-13T17:48:30 <Justin_o> https://github.com/GPII/gpii-chrome-extension/blob/master/tests/node/wsConnectorTests.js
+2018-09-13T18:57:51 <gmoss> Justin_o: I\'m going to leave out the work of getting the multilingual functionality into the separated panel of the Using Grades example, for now. I\'ve spun it off into FLUID-6341: https://issues.fluidproject.org/browse/FLUID-6341
+2018-09-13T18:58:11 <gmoss> I\'ve left it a little broad intentionally
+2018-09-13T19:04:13 <Justin_o> gmoss: thanks for filing the new JIRA
+2018-09-13T19:04:55 <gmoss> no problem at all Justin_o. I\'ve added it to our board so we don\'t lose track of it
+2018-09-13T19:07:41 <Justin_o> thanks that\'s a good idea
+2018-09-13T19:29:05 * sepidehshahi has quit
+2018-09-13T19:34:06 * g2szeto has quit
+2018-09-13T19:53:53 <gtirloni> "Remote Code Execution in Alpine Linux" -- https://justi.cz/security/2018/09/13/alpine-apk-rce.html
+2018-09-13T20:10:19 <gmoss> Bosmon: I believe I\'m encountering a case of the bug reported in FLUID-5633, and I\'ve left a comment. cindyli has taken her leave for the day, it seems, but if you have a moment, could you let me know if I\'ve missed anything or if this is indeed a case of the same bug cropping up again?
+2018-09-13T20:10:37 <gmoss> https://issues.fluidproject.org/browse/FLUID-5633
+2018-09-13T20:12:35 * cindyli joined the channel
+2018-09-13T20:14:11 <gmoss> cindyli: ^^^
+2018-09-13T20:18:26 <cindyli> what error do you get, gmoss
+2018-09-13T20:19:13 <cindyli> and on which test in the sequence?
+2018-09-13T20:23:31 <gmoss> cindyli: the same error described in the jira, "Cannot read property \'execute\' of undefined" and I believe after the last item in the sequence. When debugging it showed five items in the sequence but it was attempting to access at position 5, i.e. out of bounds. This seems very close to the issue in the jira
+2018-09-13T20:25:28 <cindyli> gmoss: i\'m thinking if it\'s possible to get rid of the first listener binding for "{prefsEditorBaseTest prefsEditor messageLoader}.events.onResourcesLoaded" by checking "defaultLocale" at the 2nd test in the sequence with the "onReady" event
+2018-09-13T20:25:43 <cindyli> as a temp work around of the problem
+2018-09-13T20:31:40 <gmoss> cindyli: that did fix the problem for now, thanks!
+2018-09-13T20:31:50 <gmoss> I believe I still have found a case of that bug continuing to exist, though
+2018-09-13T20:33:01 <gmoss> Am I correct in thinking that the expected behaviour is that the first listener will unbind after it has been handled, and that the second time around (sequence position 5) should be bound as if it were any other event?
+2018-09-13T20:33:18 <gmoss> that\'s what I expected at least haha :)
+2018-09-13T20:37:08 <cindyli> that\'s what i expected too :)
+2018-09-13T20:43:43 <Bosmon> gmoss, cindyli - it\'s more likely to be FLUID-5502 rather than FLUID-5633
+2018-09-13T20:43:59 <Bosmon> SInce my feeling was that we were likely to have flushed out all instances of the latter
+2018-09-13T20:44:42 <Bosmon> Well ok
+2018-09-13T20:44:45 <Bosmon> I see you are right
+2018-09-13T20:44:54 <Bosmon> THere must be a further case we have forgotten about
+2018-09-13T20:46:15 <Bosmon> I guess multi-component selectors are quite lightly tested
+2018-09-13T20:46:22 <gmoss> Bosmon: I can confirm that adding a call to fluid.identity() between the listeners does not solve the issue, assuming that would stop the bug in 5502 from presenting
+2018-09-13T20:46:47 <Bosmon> gmoss - yes well you have properly alternated active and passive fixtures anyway, so FLUID-5502 isn\'t relevant
+2018-09-13T20:46:57 <Bosmon> Amazingly there must be a 5th unpatched subcase of FLUID-5633
+2018-09-13T20:47:16 <Bosmon> What a minefield of bugs this facility is, I\'m glad our community is small enough that we can encounter them gradually :)
+2018-09-13T20:47:18 <gmoss> I\'m not sure how to feel about this haha
+2018-09-13T20:48:02 <gmoss> but I\'m glad our community is here to work on the bugs as we find them
+2018-09-13T20:48:13 <Bosmon> Sure
+2018-09-13T20:48:16 <Bosmon> It\'s better than many cases
+2018-09-13T20:48:22 <Bosmon> The community will look at this bug over the weekend :)
+2018-09-13T20:48:33 <gmoss> excellent, thank you!
+2018-09-13T20:48:55 <gmoss> in the meantime, I will use cindyli\'s fix
+2018-09-13T20:49:26 <Bosmon> gmoss - it would be interesting to see if the issue is also resolved by removing the first part of the selector
+2018-09-13T20:49:55 <Bosmon> That is, by having it read just the same as the one in the 5th sequence element
+2018-09-13T20:49:56 <gmoss> Bosmon: the first part of the first selector?
+2018-09-13T20:50:00 <gmoss> trying..
+2018-09-13T20:50:04 <Bosmon> Cool, thanks
+2018-09-13T20:50:34 <gmoss> it yields an entirely different error, and one which I\'ve encountered a number of times
+2018-09-13T20:50:39 <Bosmon> !
+2018-09-13T20:50:48 <Bosmon> Oh yes
+2018-09-13T20:50:49 <Bosmon> I know
+2018-09-13T20:50:52 <gmoss> the first time I refer to {prefsEditor}, I have to specify its parent
+2018-09-13T20:50:53 <Bosmon> It forces construction of the component
+2018-09-13T20:51:06 <gmoss> but only the first time
+2018-09-13T20:51:09 <Bosmon> Yes
+2018-09-13T20:51:15 <Bosmon> Ok, what happens if you leave out the 2nd component
+2018-09-13T20:51:28 <Bosmon> I assume that "messageLoader" is still actually unique in the tree
+2018-09-13T20:51:38 <gmoss> "Cannot read property \'execute\' of undefined"
+2018-09-13T20:51:51 <gmoss> {messageLoader} is unique in the tree iirc, yes
+2018-09-13T20:52:10 <Bosmon> You get the overrun if you leave out the 2nd component too?
+2018-09-13T20:52:17 <gmoss> there\'s a templateLoader, and they are both fluid.resourceLoader
+2018-09-13T20:52:19 <gmoss> yes
+2018-09-13T20:52:23 <Bosmon> Fascinating
+2018-09-13T20:52:26 <gmoss> {prefsEditorBaseTest messageLoader}
+2018-09-13T20:52:32 <gmoss> that\'s what you meant, correct?
+2018-09-13T20:52:41 <Bosmon> Yes, that\'s what I mean
+2018-09-13T20:52:52 <Bosmon> You aren\'t by some tiny chance working with some crufty unpatched version of Infusion?
+2018-09-13T20:53:28 <gmoss> it\'s up to date with master, I believe
+2018-09-13T20:53:48 <gmoss> I fetched this morning, but I\'ll check again to be 100% sure
+2018-09-13T20:53:58 <Bosmon> Ok, that\'s fine
+2018-09-13T20:54:00 <Bosmon> Very odd
+2018-09-13T20:55:19 <gmoss> there were some commits from Justin_o\'s PR earlier today but that didn\'t affect the issue
+2018-09-13T20:55:24 <Bosmon> OK
+2018-09-13T20:55:44 <Bosmon> Would you be able to check in a failing version of your code under a branch named for this JIRA?
+2018-09-13T20:56:01 <Bosmon> It would make it a lot easier to make a failing test case since I can\'t really guess at the failure mechanism
+2018-09-13T20:56:23 <gmoss> named for FLUID-5633, that is?
+2018-09-13T20:56:27 <Bosmon> Yes
+2018-09-13T20:56:33 <gmoss> certainly. I\'ll do that now
+2018-09-13T20:56:38 <Bosmon> Cheers
+2018-09-13T20:56:40 <Bosmon> Thanks, gmoss
+2018-09-13T20:56:45 <gmoss> thank you, Bosmon!
+2018-09-13T21:03:04 <gmoss> Bosmon: I\'ve commented on the Jira with a link to the new branch - https://github.com/BlueSlug/infusion/tree/FLUID-5633
+2018-09-13T21:03:16 <Bosmon> gmoss - awesome, thanks
+2018-09-13T21:03:34 <gmoss> I hope you can reproduce the bug!
+2018-09-13T22:04:32 * danayo has quit
+'
+
+b'2018-09-13T00:18:19 * stegru has quit
+2018-09-13T00:19:45 * stegru joined the channel
+2018-09-13T01:47:18 * sepidehshahi joined the channel
+2018-09-13T04:04:20 * sepidehshahi has quit
+2018-09-13T08:17:19 * dandimitrov joined the channel
+2018-09-13T09:32:21 * dandimitrov has quit
+2018-09-13T09:43:20 * dandimitrov joined the channel
+2018-09-13T10:08:04 <jhernandez> stegru: morning
+2018-09-13T10:08:12 <stegru> hello
+2018-09-13T10:08:22 <jhernandez> quick question, have you seen this before? https://pastebin.com/JbCSUHmc
+2018-09-13T10:08:39 <jhernandez> that\'s when creating the installer
+2018-09-13T10:08:54 <stegru> never seen anything like that
+2018-09-13T10:09:08 <stegru> but I\'m guessing it\'s because the path is too long
+2018-09-13T10:09:18 <jhernandez> yeah
+2018-09-13T10:09:21 <jhernandez> me too
+2018-09-13T10:10:03 <jhernandez> in any case, looks like there\'s some redundancy going on
+2018-09-13T10:10:58 <jhernandez> C:\\installer\\packager\\morphic-app-win32-ia32\\resources\\app\
+ode_modules\\gpii-grunt-mdjson-lint\
+ode_modules\\gpii-grunt-lint-all\
+ode_modules\\gpii-grunt-mdjson-lint\
+ode_modules\\gpii-grunt-lint-all\
+ode_modules\\gpii-grunt-mdjson-lint\
+ode_modules\\json5\\lib\\require.js
+2018-09-13T10:11:29 <stegru> oh yes
+2018-09-13T10:12:15 <jhernandez> well rather than redundancy, circular dependencies
+2018-09-13T10:13:37 <stegru> is this feds-audit?
+2018-09-13T10:14:08 <stegru> oh.. i bet it\'s due to "morphic" being a little longer than "gpii"
+2018-09-13T10:14:28 * dandimitrov has quit
+2018-09-13T10:15:33 * dandimitrov joined the channel
+2018-09-13T10:15:52 * dandimitrov has quit
+2018-09-13T10:18:05 <stegru> jhernandez: HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\FileSystem@LongPathsEnabled=1
+2018-09-13T10:19:03 <jhernandez> heh, really?
+2018-09-13T10:19:07 <jhernandez> let me test that
+2018-09-13T10:19:33 <stegru> https://www.howtogeek.com/266621/how-to-make-windows-10-accept-file-paths-over-260-characters/
+2018-09-13T10:20:49 <stegru> but, I don\'t think this will help when gpii is installed
+2018-09-13T10:21:15 <stegru> it will be better to fix the problem
+2018-09-13T10:22:45 <stegru> nice.. it works after you log-in again
+2018-09-13T10:23:36 <jhernandez> hmm
+2018-09-13T10:50:03 <jhernandez> well, it crashes after applying the fix, "heat.exe : error HEAT5059: The file \'C:\\installer\\temp\\Morphic\\windows\\resources\\app\
+ode_modules\\gpii-grunt-mdjson-lint\
+ode_modules\\gpii-grunt-lint-all\
+ode_modules\\gpii-grunt-mdjson-lint\
+ode_modules\\gpii-grunt-lint-all\
+ode_modules\\gpii-grunt-mdjson-lint\\.idea\\inspectionProfiles\\Project_Default.xml\' "
+2018-09-13T10:50:22 <jhernandez> even though I change the name to be just "morphic"
+2018-09-13T10:54:28 <the-t-in-rtf> I think I need to update gpii-grunt-mdjson-lint to make gpii-grunt-lint-all a dev dependency
+2018-09-13T10:54:40 <the-t-in-rtf> it\'s super perverse that it\'s resolving itself that way.
+2018-09-13T10:55:01 <the-t-in-rtf> I mean, it\'s depending on a package that depends on it and picking up its own code from there.
+2018-09-13T10:55:20 <the-t-in-rtf> but it may also be that we need to use the loadNpmTasksProperly function to help grunt suck less.
+2018-09-13T10:55:36 <the-t-in-rtf> Let\'s try the first thing first.
+2018-09-13T10:56:24 <jhernandez> the-t-in-rtf: I agree, it\'s an insane npm resolution
+2018-09-13T10:57:44 <the-t-in-rtf> https://github.com/GPII/gpii-grunt-lint-all/blob/master/src/load-npm-tasks-properly.js#L9
+2018-09-13T10:57:57 <the-t-in-rtf> you already have access to that in any package that uses gpii-grunt-lint-all
+2018-09-13T11:07:03 * Justin_o joined the channel
+2018-09-13T11:08:22 <the-t-in-rtf> https://issues.gpii.net/browse/GPII-3348
+2018-09-13T11:08:36 <the-t-in-rtf> I will create a dev release for you to test in a few minutes.
+2018-09-13T11:09:02 <the-t-in-rtf> I have to do it twice, update and dev release gpii-grunt-mdjson-lint, and then update and dev release gpii-grunt-lint-all, so it\'ll be a bit.
+2018-09-13T11:10:07 <the-t-in-rtf> especially if grunt decides to be grunt along the way.
+2018-09-13T11:12:15 <jhernandez> heh
+2018-09-13T11:12:20 <jhernandez> thanks the-t-in-rtf!
+2018-09-13T11:12:48 <the-t-in-rtf> so, personal question, have you ever used one of those guitar->midi devices?
+2018-09-13T11:12:58 <the-t-in-rtf> Just wondering how you\'d like playing one of my setups with your guitar.
+2018-09-13T11:12:59 <the-t-in-rtf> ;)
+2018-09-13T11:20:32 <the-t-in-rtf> OK, seems to work, try this version of gpii-grunt-lint-all, blow away node_modules, etc.
+2018-09-13T11:20:36 <the-t-in-rtf> 1.0.5-dev.20180913T111528Z.0b48f94
+2018-09-13T11:20:58 * michelled joined the channel
+2018-09-13T11:25:22 <jhernandez> the-t-in-rtf: oh, great, thanks for the quick dev release! :)
+2018-09-13T11:25:45 <jhernandez> and no, never used any guitar->midi thing before
+2018-09-13T11:25:53 <the-t-in-rtf> oh, we may have to work that out then.
+2018-09-13T11:26:06 <jhernandez> but yeah, why not
+2018-09-13T11:26:07 <the-t-in-rtf> just imagine playing a gospel choir with  your guitar
+2018-09-13T11:27:48 <jhernandez> even though it\'s true that there zillions of different pedals, I\'ve always thought that it would be better to have a bunch of them at once, running on a RaspberryPi thing or the like
+2018-09-13T11:28:16 <the-t-in-rtf> or you could just use a DAW once you get the MIDI pickup.
+2018-09-13T11:28:24 <jhernandez> yes
+2018-09-13T11:29:07 <jhernandez> there really nice midi pickups out there, but I tried one once and didn\'t like it too much
+2018-09-13T11:29:16 <jhernandez> probably it wasn\'t a good one
+2018-09-13T11:29:56 <jhernandez> but I really like the real sound of the guitar and a nice tube amp, that\'s all I need
+2018-09-13T11:31:49 <the-t-in-rtf> I understand.
+2018-09-13T11:32:08 <jhernandez> there are guitar players that splits the line and takes one into a computer, they apply whatever effect to the signal and send it back to the main line all the way up through the amp
+2018-09-13T11:32:24 <jhernandez> and I really like this idea
+2018-09-13T11:41:33 <the-t-in-rtf> Anyway, for the pull, do please try the new version and let me know how it goes.
+2018-09-13T11:42:29 <the-t-in-rtf> depending on where you are you may need a little help adjusting your grunt globs.
+2018-09-13T11:49:45 <jhernandez> the-t-in-rtf: I would need to push the update through 3 repos, but I\'m testing if I\'m getting the same circular thing by just pulling universal
+2018-09-13T11:54:38 * dandimitrov joined the channel
+2018-09-13T12:02:00 <jhernandez> nope, it\'s only when npm installing from gpii-app
+2018-09-13T12:02:45 <jhernandez> just bumped the grunt-gpii-lint-all in gpii-app, let\'s see what I end up with
+2018-09-13T12:03:18 <jhernandez> btw, the-t-in-rtf check out this guy\'s set up https://youtu.be/JAMijOtsZvY?t=12m46s
+2018-09-13T12:07:54 <jhernandez> ok, looks like 1.0.5-dev.20180913T111528Z.0b48f94 made the trick
+2018-09-13T12:07:59 <jhernandez> awesome!
+2018-09-13T12:08:01 <jhernandez> :)
+2018-09-13T12:09:51 * jhernandez has quit
+2018-09-13T12:10:15 <the-t-in-rtf> great, glad to hear it.
+2018-09-13T12:10:24 * jhernandez joined the channel
+2018-09-13T12:10:25 <the-t-in-rtf> that video was worth it just for the Keith McMillen foot pedal.
+2018-09-13T12:10:40 <the-t-in-rtf> I plan to make something similar with the MS Assistive controller.
+2018-09-13T12:11:21 * cindyli joined the channel
+2018-09-13T12:38:50 * alanharnum joined the channel
+2018-09-13T12:57:20 <Justin_o> alanharnum: hello
+2018-09-13T12:58:14 <Justin_o> i\'m looking into the issue of the prepare step not running for the FLUID-6338 PR. I updated my local vagrant and ran vagrant up, but it doesn\'t look like the prepare step was run there either
+2018-09-13T12:58:36 <Justin_o> so it looks like it\'s not exclusive to CI anyways
+2018-09-13T12:59:15 <jhernandez> the-t-in-rtf: heh, yeah, the foot pedal it\'s a real deal thing
+2018-09-13T13:00:29 <jhernandez> and yes, you can see the kind of things guitarists are doing these days. most of the time we just want a real and warm guitar-amp sound while "effects" are just for specific moments
+2018-09-13T13:00:32 <Justin_o> alanharnum: looking at the console logs it looks like the prepare step just doesn\'t happen. It just finishes after install.. but running npm install directly on my machine does trigger the prepare step.. maybe i should try running npm install in the vm directly.
+2018-09-13T13:02:22 <Justin_o> alanharnum: i think i found the problem.. the VM is running NPM 3.10.10 but prepare was introduced in NPM 4 https://docs.npmjs.com/misc/scripts
+2018-09-13T13:02:32 <Justin_o> alanharnum: how can we update npm in the vm?
+2018-09-13T13:03:10 * michelled has quit
+2018-09-13T13:08:26 * Jess_ joined the channel
+2018-09-13T13:16:49 <alanharnum> Justin_o: OK, that makes sense - let me look at what\'s needed to update the VM\'s NPM
+2018-09-13T13:19:49 * jhung joined the channel
+2018-09-13T13:23:30 <Justin_o> alanharnum: thanks
+2018-09-13T13:25:27 * sepidehshahi joined the channel
+2018-09-13T13:28:03 * simonjb joined the channel
+2018-09-13T13:37:21 <alanharnum> Justin_o: is it reasonable to just roll this change to the VM config into your existing PR, or should I make a separate one?
+2018-09-13T13:37:57 <Justin_o> alanharnum: if it\'s just a change that can be added to my PR, sure i can add it
+2018-09-13T13:38:12 <Justin_o> i thought it might require a new box
+2018-09-13T13:42:21 <alanharnum> Justin_o: no, all you should need to do is remove line 9 at https://github.com/fluid-project/infusion/blob/master/provisioning/vars.yml
+2018-09-13T13:42:30 <alanharnum> that pins the NPM version
+2018-09-13T13:42:36 * g2szeto joined the channel
+2018-09-13T13:42:46 <alanharnum> with that removed, it should use the same one that comes with the node lts branch
+2018-09-13T13:43:14 <alanharnum> i\'m double-checking that this is all that\'s needed on my local but that should do it
+2018-09-13T13:47:45 <Justin_o> alanharnum: thanks, i made the changed. i\'m going to run my vm again to test it. If that works I\'ll push up the change to the PR.
+2018-09-13T13:50:01 <alanharnum> Justin_o: ok - it appears to have worked for me, let me know how it goes for you
+2018-09-13T13:50:23 <Justin_o> alanharnum: will do.. need to rebuild the vm, which takes a bit of time, but it\'s running now so hopefully not much longer
+2018-09-13T13:50:30 <Justin_o> but i\'ll run the tests first as well
+2018-09-13T14:07:41 * michelled joined the channel
+2018-09-13T14:19:06 <gtirloni> i think that pinned version was there because we tried to keep the npm version the same in GPII and Fluid? not sure
+2018-09-13T14:19:31 <gtirloni> everything i\'ve tried for fluid semed to work fine with the latest, which I think was 6.4
+2018-09-13T14:20:26 <alanharnum> Justin_o: looks like the tests at issue are passing now in CI
+2018-09-13T14:21:00 <Justin_o> alanharnum: great thanks :)
+2018-09-13T14:21:22 <Justin_o> cindyli: could you please review this PR https://github.com/fluid-project/infusion/pull/931 You should also test out the dev release in the  PR description to make sure you can install infusion as a dependency via npm.
+2018-09-13T14:21:25 <alanharnum> will wait for the whole thing to finish before saying that for sure, but seems to have been the issue, thank you for pinpointing it
+2018-09-13T14:21:51 <Justin_o> alanharnum: no problem, thanks for the help tracking it down and finding the fix
+2018-09-13T14:23:33 <alanharnum> gtirloni: it looks like GPII moved to just using the same NPM as node-lts back in May, but the Infusion config wasn\'t updated
+2018-09-13T14:24:41 <alanharnum> actually even further back than that
+2018-09-13T14:25:31 <gtirloni> ah, that\'s nice. I thought there were still some issues that required npm3
+2018-09-13T14:26:15 <cindyli> ok, Justin_o
+2018-09-13T14:26:17 <Justin_o> gtirloni: there was something to do with the way they have those static node_modules directories, but they worked around it. can\'t remember how now though
+2018-09-13T14:26:35 <Justin_o> the-t-in-rtf, Bosmon, or jhernandez: would probably know
+2018-09-13T14:26:46 <Justin_o> cindyli: thanks
+2018-09-13T14:28:56 <the-t-in-rtf> I think early on there might have been problems, but I can\'t remember any since npm@5
+2018-09-13T14:29:16 <the-t-in-rtf> (with the ./gpii/node_modules pattern we use in universal and other places)
+2018-09-13T14:29:21 <gtirloni> Justin_o: interesting, just saw this https://github.com/yarnpkg/rfcs/pull/101
+2018-09-13T14:30:02 <jhernandez> Justin_o: yeah, I don\'t think bumping npm should be a problem
+2018-09-13T14:30:18 <jhernandez> we had different sources of problems
+2018-09-13T14:31:20 <jhernandez> and in addition to npm not behaving well with git refs, I remember that we had to perform some parallel updates in our npm artifacts after fixing some issues when resolving infusion
+2018-09-13T14:31:42 <jhernandez> that\'s all I can remember right now
+2018-09-13T14:31:55 <jhernandez> :)
+2018-09-13T14:35:44 * michelled1 joined the channel
+2018-09-13T14:35:44 * michelled has quit
+2018-09-13T14:35:48 <Justin_o> the-t-in-rtf, jhernandez: thanks
+2018-09-13T14:36:07 <Justin_o> gtirloni: that issue linked to a new installer from npm as well https://blog.npmjs.org/post/178027064160/next-generation-package-management
+2018-09-13T14:38:15 * dandimitrov has quit
+2018-09-13T14:42:57 * danayo joined the channel
+2018-09-13T14:47:25 * clown joined the channel
+2018-09-13T15:09:56 * michelled1 has quit
+2018-09-13T15:10:13 * michelled joined the channel
+2018-09-13T15:28:05 * michelled has quit
+2018-09-13T15:30:32 * michelled joined the channel
+2018-09-13T15:52:45 <jhernandez> stegru: just to double check, this one https://github.com/GPII/universal/pull/643/files should have been merged in tandem with https://github.com/GPII/windows/pull/190
+2018-09-13T15:52:47 <jhernandez> right?
+2018-09-13T15:52:58 <stegru> hold on
+'
+

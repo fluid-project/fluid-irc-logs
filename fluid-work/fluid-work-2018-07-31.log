@@ -1,0 +1,250 @@
+b'2018-07-31T15:43:11 * avtar has quit
+2018-07-31T15:43:37 <dandimitrov> cindyli: \xe2\x80\xa6 And in case I\xe2\x80\x99m keyed in with a proper user, changes take effect
+2018-07-31T15:44:43 <cindyli> dandimitrov: is that when you need the snapshotting functionality?
+2018-07-31T15:45:41 * michelled has quit
+2018-07-31T15:46:10 * jhung joined the channel
+2018-07-31T15:47:18 * klown joined the channel
+2018-07-31T15:49:30 <dandimitrov> cindyli: I\xe2\x80\x99d say no. I thought that when you\xe2\x80\x99re not keyed in (you\xe2\x80\x99re with the noUser user) changing a setting would take effect on the machine
+2018-07-31T15:49:48 <Bosmon> dandimitrov - that was certainly the intention
+2018-07-31T15:50:12 <Bosmon> cindyli - I\'d suggest that we shelve your work on the login queue for now and circle back to getting your integration branch suitable for the end of the week
+2018-07-31T15:51:21 <cindyli> no problem
+2018-07-31T15:51:48 <cindyli> Bosmon: we should talk about the details about snapshotting
+2018-07-31T15:53:39 * alanharnum joined the channel
+2018-07-31T15:56:50 * sepidehshahi joined the channel
+2018-07-31T15:56:52 <cindyli> Bosmon: our save the world pad provides enough info for me to start on snapshotting. so no talk for now
+2018-07-31T16:01:26 * michelled joined the channel
+2018-07-31T16:02:51 <dandimitrov> Bomson: And one other thing about the userErrors - I\'ve implemented the simplest approach of simply requiring the "%gpii-user-errors/bundles/GPII_userErrors_messageBundle_en.json5" which I think is good enough for now but it won\'t make use of different translations of the user errors (as I\'m requiring single file). Should I leave it this way for now, what do you think?
+2018-07-31T16:03:18 <dandimitrov> We could discuss a better approach in the future that either uses our mega bundle (which requires some more work done in our grunt task to support module references such as "%gpii-user-errors/bundles") or something different...
+2018-07-31T16:04:54 <Bosmon> dandimitrov - I think a long-term approach of weaving these core bundles into your megabundle makes sense
+2018-07-31T16:06:31 <Bosmon> cindyli - awesome
+2018-07-31T16:06:56 <Bosmon> cindyli - and do you have some tests which exercise the UserUpdate cycle for the noUser?
+2018-07-31T16:07:04 <Bosmon> This could be helpful to diagnose dandimitrov\'s current problem
+2018-07-31T16:07:44 * sepidehshahi has quit
+2018-07-31T16:09:11 <dandimitrov> Bosmon: I\xe2\x80\x99ve started some work on that but require bothers me - https://github.com/danailbd/gpii-app/blob/refactor/improved_mega_bundle_build_task/Gruntfile.js#L41 , but I can\xe2\x80\x99t think of another way of geting the \xe2\x80\x9c%gpii\xe2\x80\xa6\xe2\x80\x9d paths
+2018-07-31T16:09:56 <Bosmon> dandimitrov - I think the require is actually reasonable
+2018-07-31T16:10:07 <Bosmon> And if there are any issues with it we should try to solve them
+2018-07-31T16:10:19 <Bosmon> There isn\'t any other sane way to get the modules loaded than to actually load them
+2018-07-31T16:10:54 <cindyli> Bosmon: i don\'t have any tests for noUser yet
+2018-07-31T16:11:04 <cindyli> sorry, dandimitrov
+2018-07-31T16:11:20 <Bosmon> cindyli - ok - perhaps that is a good next step - and it would also help to validate your work on the queue later on
+2018-07-31T16:11:43 <cindyli> yes, Bosmon. adding tests into the queue branch is the next step
+2018-07-31T16:12:03 <Bosmon> cindyli - I meant into the integration branch
+2018-07-31T16:12:09 <Bosmon> Since this is where we are currently having the problems
+2018-07-31T16:12:23 <cindyli> what problem the test should address?
+2018-07-31T16:12:32 <cindyli> should discover
+2018-07-31T16:12:35 * yuriy__ joined the channel
+2018-07-31T16:12:36 * yuriy__ has quit
+2018-07-31T16:12:43 <Bosmon> cindyli - dandimitrov reported earlier that he can\'t get changes to noUser settings to act on the system
+2018-07-31T16:13:08 <cindyli> dandimitrov: do you get errors?
+2018-07-31T16:13:59 <dandimitrov> cindyli: I don\xe2\x80\x99t see any
+2018-07-31T16:14:11 <cindyli> ok
+2018-07-31T16:15:17 <dandimitrov> cindyli: I could show you what happens over a skype call?
+2018-07-31T16:15:35 * yuriy has quit
+2018-07-31T16:17:49 <cindyli> dandimitrov: that would be greate
+2018-07-31T16:20:29 * sepidehshahi joined the channel
+2018-07-31T16:24:13 * jhung joined the channel
+2018-07-31T16:49:47 <Justin_o> the-t-in-rtf: i\'m looking at your latest dev release for gpii-grunt-lint-all
+2018-07-31T16:50:04 <Justin_o> should it automatically ignore node_modules now and if so for which types of sources?
+2018-07-31T17:10:50 * dandimitrov has quit
+2018-07-31T17:18:48 <the-t-in-rtf> to be specific, it should ignore ./node_modules for all types
+2018-07-31T17:19:03 <the-t-in-rtf> we also have other node_modules directories that shouldn\'t be ignored.
+2018-07-31T17:19:40 <the-t-in-rtf> @Justin_o ^^^
+2018-07-31T17:20:33 <Justin_o> the-t-in-rtf: thanks, i\'ll try again with fluid-publish. it seemed to go into the node_modules though for at least some of the sources, but I\'ll try again and let you know. I have to run out for a bit though so it might be a bit later today
+2018-07-31T17:28:12 <stegru> Bosmon: I\'ve got this application zoom feature working - how do you think the qss should invoke it? I\'m thinking about a settingsHandler, meaning no changes to gpii-app.. but this thing is an action, rather than a preferences. do you have any strong onions?
+2018-07-31T17:28:39 <stegru> or opinions, preferably
+2018-07-31T17:29:38 * sepidehshahi joined the channel
+2018-07-31T17:35:47 * cindyli has quit
+2018-07-31T18:02:34 * avtar joined the channel
+2018-07-31T18:05:31 * alanharnum joined the channel
+2018-07-31T18:13:16 * alanharnum joined the channel
+2018-07-31T18:22:27 * alanharnum has quit
+2018-07-31T18:24:06 * colinclark has quit
+2018-07-31T18:26:29 * cindyli joined the channel
+2018-07-31T19:00:44 * alanharnum joined the channel
+2018-07-31T19:02:16 * alf has quit
+2018-07-31T19:02:27 * colinclark joined the channel
+2018-07-31T19:02:54 <Justin_o> the-t-in-rtf: I\'m testing out your dev release of gpii-grunt-lint-all ( 1.0.1-dev.20180731T094032Z.112cde7 ). I\'m still finding that doing things like "**/*.js" will go into the node_modules for the lintspaces test. Also "**/*.md" goes into node modules for the markdownlint test. "**/*.json" goes into node_modules as well for the jsonlint task.
+2018-07-31T19:08:00 <the-t-in-rtf> @Justin_o, please commit what you have and reply to my comment on the pull, I\'ll look at it tomorrow.
+2018-07-31T19:08:23 <Justin_o> the-t-in-rtf: okay will do
+2018-07-31T19:08:43 <the-t-in-rtf> and thanks for trying it out.
+2018-07-31T19:08:52 <Justin_o> np
+2018-07-31T19:28:17 <Bosmon> stegru - my thought is that this thing isn\'t a settings handler at all
+2018-07-31T19:28:21 <Bosmon> Because it has no current value
+2018-07-31T19:28:34 <Bosmon> My plan was for you to simply expose a global function that the QSS will frob on directly
+2018-07-31T19:28:47 <Bosmon> Whatever this thing does, it has absolutely nothing to do with the core preferences state
+2018-07-31T19:28:52 <Bosmon> And I think Gregg is clear about this as well
+2018-07-31T19:32:53 <stegru> yes great, that\'s how I was thinking, Bosmon.
+2018-07-31T19:33:58 <stegru> now that I\'ve actually thought about it
+2018-07-31T19:36:25 <Justin_o> Bosmon: would you have time to look at my PRs for Infusion? At this point, the one for low contrast themes is most critical https://github.com/fluid-project/infusion/pull/915
+2018-07-31T19:36:32 <Justin_o> also thanks for merging my universal PR
+2018-07-31T19:37:51 <Bosmon> Justin_o - oh yes, 6297 looks very good now
+2018-07-31T19:37:55 <Bosmon> I\'ll just do a quick test and merge
+2018-07-31T19:39:00 <Justin_o> Bosmon: thanks :)
+2018-07-31T19:45:55 * sepidehshahi joined the channel
+2018-07-31T20:03:40 <gmoss> Justin_o: whenever alanharnum returns, I\'m ready to discuss things
+2018-07-31T20:04:05 <Justin_o> okay i\'m ready
+2018-07-31T20:12:11 * jhung joined the channel
+2018-07-31T20:17:05 * mrtyler has quit
+2018-07-31T20:17:29 * michelled has quit
+2018-07-31T20:26:44 * colinclark joined the channel
+2018-07-31T20:33:43 * jhung has quit
+2018-07-31T21:05:12 * klown has quit
+2018-07-31T21:08:29 * alanharnum joined the channel
+2018-07-31T21:19:20 * alanharnum joined the channel
+2018-07-31T22:08:56 * mrtyler joined the channel
+2018-07-31T23:01:14 * colinclark has quit
+2018-07-31T23:02:35 * avtar has quit
+'
+
+b'2018-07-31T01:28:33 * danayo joined the channel
+2018-07-31T01:36:10 * sepidehshahi joined the channel
+2018-07-31T01:48:35 * colinclark joined the channel
+2018-07-31T02:18:46 * colinclark has quit
+2018-07-31T02:25:40 * colinclark joined the channel
+2018-07-31T02:40:02 * danayo joined the channel
+2018-07-31T02:51:34 * michelled joined the channel
+2018-07-31T02:52:58 * colinclark joined the channel
+2018-07-31T02:56:06 * danayo has quit
+2018-07-31T03:37:16 * colinclark has quit
+2018-07-31T04:26:52 * jeevan_ joined the channel
+2018-07-31T05:38:55 * mrtyler has quit
+2018-07-31T08:32:48 * gtirloni_ joined the channel
+2018-07-31T08:34:27 * gtirloni has quit
+2018-07-31T09:44:03 * yuriy__ joined the channel
+2018-07-31T09:59:30 * dandimitrov joined the channel
+2018-07-31T10:23:25 * alf joined the channel
+2018-07-31T10:24:58 * alf has quit
+2018-07-31T10:27:50 * alf joined the channel
+2018-07-31T10:28:27 * alf has quit
+2018-07-31T10:28:43 * alf joined the channel
+2018-07-31T10:57:27 * yuriy has quit
+2018-07-31T10:57:31 * yuriy__ has quit
+2018-07-31T10:57:52 * yuriy joined the channel
+2018-07-31T10:58:24 * yuriy__ joined the channel
+2018-07-31T11:07:40 * alf has quit
+2018-07-31T11:08:49 * alf joined the channel
+2018-07-31T11:25:09 * dandimitrov has quit
+2018-07-31T11:36:55 * dandimitrov joined the channel
+2018-07-31T11:53:13 <dandimitrov> Hey, Bosmon, would you mind a question or two regarding the user errors :?
+2018-07-31T12:02:47 * michelled joined the channel
+2018-07-31T12:05:19 <stegru> jhernandez_: about 3243, there may be a small problem with invoking gpii-app.exe directly - for the pilots, I\'ve added a little hack to start.cmd that sets an environment variable to put the logs in a different directory
+2018-07-31T12:06:16 <jhernandez_> stegru: okay
+2018-07-31T12:06:37 <jhernandez_> mmm
+2018-07-31T12:07:33 <jhernandez_> and does the gpii-app process is aware of the env variable? if so, how?
+2018-07-31T12:15:44 * alanharnum joined the channel
+2018-07-31T12:16:21 <stegru> jhernandez_: it was something like %APPDATA that I changed, so the logs get written to a special place
+2018-07-31T12:17:31 <jhernandez_> ok ok
+2018-07-31T12:18:02 <stegru> when will the pilots get their next update, jhernandez_ ?
+2018-07-31T12:19:15 <jhernandez_> stegru: mmm, not sure
+2018-07-31T12:20:02 <stegru> let\'s not worry about them for now
+2018-07-31T12:20:15 <jhernandez_> I mean, I haven\'t received any indications for building anything different than what we are working on right now
+2018-07-31T12:21:28 <jhernandez_> so I expect the pilots to receive an update with the QSS and so on, but I guess they (the pilots team) need to decide whether they are going to use the QSS/PSP or not
+2018-07-31T12:22:20 <jhernandez_> so yes, don\'t worry about them for now
+2018-07-31T12:22:30 <jhernandez_> btw, stegru, I\'ve just re-tested your language pr with everything up to date and worked great
+2018-07-31T12:22:36 <stegru> ok
+2018-07-31T12:22:39 <stegru> oh nice one
+2018-07-31T12:28:34 * cindyli joined the channel
+2018-07-31T12:37:51 * dandimitrov has quit
+2018-07-31T12:42:32 * dandimitrov joined the channel
+2018-07-31T12:58:48 * dandimitrov has quit
+2018-07-31T13:03:04 <jhernandez_> stegru: thanks for updating the prs that fast ;)
+2018-07-31T13:03:26 <stegru> funny, we just made the same comment.. deleting mine
+2018-07-31T13:03:59 <jhernandez_> haha
+2018-07-31T13:07:47 * alanharnum has quit
+2018-07-31T13:11:43 * Justin_o joined the channel
+2018-07-31T13:13:18 * jhung joined the channel
+2018-07-31T13:15:52 * dandimitrov joined the channel
+2018-07-31T13:19:57 * sepidehshahi joined the channel
+2018-07-31T13:22:40 * jhung joined the channel
+2018-07-31T13:34:10 * colinclark joined the channel
+2018-07-31T13:38:04 * avtar joined the channel
+2018-07-31T13:45:00 * cindyli has quit
+2018-07-31T13:49:00 <jhung> fluid-everyone: there is no community design crit today.
+2018-07-31T13:54:18 * clown joined the channel
+2018-07-31T13:59:23 * yuriy__ has quit
+2018-07-31T13:59:43 * gtirloni_ joined the channel
+2018-07-31T14:03:51 * cindyli joined the channel
+2018-07-31T14:05:26 * dandimitrov has quit
+2018-07-31T14:06:05 * michelled joined the channel
+2018-07-31T14:27:14 * dandimitrov joined the channel
+2018-07-31T14:47:28 * clown joined the channel
+2018-07-31T14:53:29 * alanharnum joined the channel
+2018-07-31T14:58:17 * clown1 joined the channel
+2018-07-31T15:01:36 * jhung1 joined the channel
+2018-07-31T15:02:24 <michelled> fluid-everyone: the IDRC planning meeting will start soon
+2018-07-31T15:02:51 * clown joined the channel
+2018-07-31T15:06:19 * Bosmon joined the channel
+2018-07-31T15:07:59 <Bosmon> Hi there dandimitrov
+2018-07-31T15:08:25 <Bosmon> cindyli
+2018-07-31T15:08:36 <cindyli> hi Bosmon
+2018-07-31T15:08:52 <dandimitrov> Hey
+2018-07-31T15:12:05 <cindyli> Bosmon: as you are being silent, i will start my question. I had an interesting problem that has been resolved using timeout() with 1ms, but i think still worth to ask for ur advice.
+2018-07-31T15:12:09 <Bosmon> Sorry to be away, someone was working on the kitchen which knocked out the power in the house
+2018-07-31T15:12:25 <Bosmon> cindyli - if that was your solution, I expect it would be useful to talk about the problem indeed :)
+2018-07-31T15:12:29 <cindyli> your house has been undergoing renovation for ages
+2018-07-31T15:12:42 <Bosmon> Yes, for ages
+2018-07-31T15:13:11 <cindyli> here\'s the code that keys in a "noUser" immediately when no actual user is keyed in the system: https://github.com/cindyli/universal/blob/GPII-3193-proper/gpii/node_modules/lifecycleManager/src/UserLogonRequest.js#L179
+2018-07-31T15:13:39 <gtirloni> avtar: thanks for the PR review! could someone with infusion commit access merge this if it looks okay? https://github.com/fluid-project/infusion/pull/918
+2018-07-31T15:14:31 <cindyli> this occurs after a logout request. also, keying in with noUser will trigger the matchmaking process that first sends a kettle request to /device endpoint
+2018-07-31T15:15:21 <cindyli> the problem is, when the /device request gets returned, it somehow binds with the previous logout kettle request that has been destroyed
+2018-07-31T15:15:39 <cindyli> which causes the noUser key-in to fail
+2018-07-31T15:15:49 <Bosmon> cindyli .... well..... it shouldn\'t
+2018-07-31T15:16:26 <cindyli> shouldn\'t but happening
+2018-07-31T15:17:05 <cindyli> if i place this block of code https://github.com/cindyli/universal/blob/GPII-3193-proper/gpii/node_modules/lifecycleManager/src/UserLogonRequest.js#L176-L183 in setTimeout() with 1ms, /device works well
+2018-07-31T15:17:24 <Bosmon> cindyli - terrible
+2018-07-31T15:17:35 <Bosmon> So where is the stuff that used to be in FlowManagerRequests.js?
+2018-07-31T15:17:48 <cindyli> Matchmaking.js
+2018-07-31T15:17:51 <cindyli> i renamed it
+2018-07-31T15:18:00 <cindyli> in the same dir as before
+2018-07-31T15:18:03 <Bosmon> I see
+2018-07-31T15:18:05 <Bosmon> Still in FlowManager
+2018-07-31T15:18:42 <cindyli> i also splt the old UserLogonStateChange.js to UserLogonStateChange.js and UserLogonHandlers.js
+2018-07-31T15:18:56 <cindyli> UserLogonHandlers.js only contains kettle request handlers
+2018-07-31T15:19:20 <cindyli> while the other one has the matchmaking related handling
+2018-07-31T15:19:51 <cindyli> honestly, i feel UserLogonStateChange.js and MatchMaking.js should be moved to lifecycleManager directory now
+2018-07-31T15:20:05 <Bosmon> cindyli - correct
+2018-07-31T15:20:06 <cindyli> i leave them there because i think you will say no
+2018-07-31T15:20:16 <Bosmon> No, we suggested doing exactly that during our call
+2018-07-31T15:20:24 <cindyli> ok, will move them
+2018-07-31T15:20:35 <Bosmon> I\'m looking for the code which actually queries the device reporter...
+2018-07-31T15:20:56 <Bosmon> I see the event on "gpii.flowManager.matchMaking"
+2018-07-31T15:21:10 <cindyli> UserLogonStateChange.js, line 204
+2018-07-31T15:21:54 <Bosmon> Wow
+2018-07-31T15:21:58 <Bosmon> That\'s a pretty dreadful place for it
+2018-07-31T15:24:36 <Bosmon> This code is so due for a thorough spring cleaning......
+2018-07-31T15:24:51 <cindyli> i can move it to https://github.com/cindyli/universal/blob/GPII-3193-proper/gpii/node_modules/flowManager/src/UserLogonStateChange.js#L138
+2018-07-31T15:25:14 <Bosmon> It really belongs in the thing called "MatchMaking" since it is part of its dataflow
+2018-07-31T15:25:49 <Bosmon> dandimitrov - you had a question about UserErrors?
+2018-07-31T15:27:17 <Bosmon> cindyli - so, let\'s try to figure out how this could possibly go wrong
+2018-07-31T15:27:39 <Bosmon> But also, I was trying to think whether it made sense to try to redirect you a bit in the short term
+2018-07-31T15:27:58 <Bosmon> Since it sounds like there might be some functionality which could be added to your "phase 1" branch which might assist in the upcoming demo
+2018-07-31T15:28:08 <cindyli> i can try matchMaking too. i guess this listener was moved out of matchMaking because untrusted version wants to override it - https://github.com/cindyli/universal/blob/GPII-3193-proper/gpii/node_modules/flowManager/src/UntrustedFlowManager.js#L107-L114
+2018-07-31T15:28:29 <cindyli> but we can adjust priority to fit it back
+2018-07-31T15:29:26 <dandimitrov> Bosmon: Yep, first about the KeyInFail error, I see there\'s a message in the bundle for it but I can\'t see it fired anywhere
+2018-07-31T15:30:50 <dandimitrov> I guess it could be fired somewhere around here: https://github.com/GPII/universal/blob/master/gpii/node_modules/gpii-oauth2/gpii-oauth2-authz-server/src/AuthorizationService.js#L82
+2018-07-31T15:32:58 * mrtyler joined the channel
+2018-07-31T15:33:44 <Bosmon> dandimitrov - well this is just one of a number of possible contributing causes to keyin failure
+2018-07-31T15:34:28 <Bosmon> We should probably fix this in cindyli\'s integration branch that you are currently working with
+2018-07-31T15:34:56 <Bosmon> Right now keyin failures are only reported at the HTTP level
+2018-07-31T15:35:01 <Bosmon> cindyli - is this right?
+2018-07-31T15:35:26 <cindyli> checking\xe2\x80\xa6
+2018-07-31T15:36:08 <Bosmon> dandimitrov, cindyli - I think the appropriate place to fire the KeyInFail error is actually here: https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/UserLogonStateChange.js#L34
+2018-07-31T15:36:17 <Bosmon> Which would probably be a helpful short-term fix
+2018-07-31T15:36:48 <Bosmon> cindyli - I was thinking that it might be helpful for the upcoming demo if you could circle back for a couple of days to work on the "snapshotting" functionality that we had written up in the pirate pad
+2018-07-31T15:37:03 <Bosmon> That is, the ability to read all the settings which the QSS depends on at the beginning of the noUser session
+2018-07-31T15:37:09 <Bosmon> dandimitrov - do you think that makes sense?
+2018-07-31T15:37:19 <Bosmon> We spoke about this at the QSS meeting yesterday
+2018-07-31T15:37:21 <dandimitrov> I made a patch myself using the http response but it\xe2\x80\x99s quite ugly
+2018-07-31T15:37:28 <Bosmon> And it seemed like it was a priority at the time
+2018-07-31T15:38:15 <dandimitrov> Yes, from what I remember the QSS is with higher priority
+2018-07-31T15:38:27 <dandimitrov> here\xe2\x80\x99s the patch for the Key in error https://github.com/danailbd/gpii-app/blob/feature/QSS/src/main/app.js#L374
+2018-07-31T15:38:37 <cindyli> Bosmon: seems keyin failure is not fired at all in the universal code
+2018-07-31T15:38:55 <cindyli> i can add this report
+2018-07-31T15:40:03 * alanharnum joined the channel
+2018-07-31T15:40:32 <dandimitrov> cindyli: I\xe2\x80\x99m testing the noUser now and QSS setting changes seem not to be applied\xe2\x80\xa6
+2018-07-31T15:40:46 <Bosmon> dandimitrov - thanks - you mean, the snapshotting is high priority?
+2018-07-31T15:41:22 <dandimitrov> Oh, yes, sorry, the snapshotting
+2018-07-31T15:42:27 * jhung1 has quit
+2018-07-31T15:42:53 * klown has quit
+'
+

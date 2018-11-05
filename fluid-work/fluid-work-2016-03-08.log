@@ -1,0 +1,406 @@
+b'2016-03-08T18:38:47 <simonjb> great
+2016-03-08T18:39:06 <simonjb> do I just pass an array as the first arg?
+2016-03-08T18:40:08 <Bosmon7> simonjb - here it is
+2016-03-08T18:40:27 <Bosmon7> You need to use the full "spec" form
+2016-03-08T18:40:36 <Bosmon7> To get access to "segs"
+2016-03-08T18:40:39 <simonjb> ah
+2016-03-08T18:40:54 <Bosmon7> Although watch out that this area changed a little recently, with colinclark\'s merge of my update
+2016-03-08T18:41:15 <Bosmon7> It is backwards compatible with the old impl but a little more complex
+2016-03-08T18:41:26 <Bosmon7> In that it is now possible for a single listener to match on multiple paths
+2016-03-08T18:41:33 <Bosmon7> A long-awaited feature requested by cindyli : P
+2016-03-08T18:41:46 <simonjb> do we have docs on the "spec form?
+2016-03-08T18:42:13 <cindyli> YAY
+2016-03-08T18:42:31 <simonjb> (or point me at the impl and I can take a look there)
+2016-03-08T18:44:02 <Bosmon7> simonjb - not very clearly, no - http://docs.fluidproject.org/infusion/development/ChangeApplierAPI.html#programmatic-style-for-listening-to-changes
+2016-03-08T18:44:24 <Bosmon7> There was never much expectation that people would use the programmatic form of registration
+2016-03-08T18:44:31 <Bosmon7> But it certainly should be better documented than it is
+2016-03-08T18:44:53 <Bosmon7> The impl is at the link I pasted "in my mind"
+2016-03-08T18:44:58 <simonjb> :)
+2016-03-08T18:44:59 <Bosmon7> Bizarrely I see that I did not actually paste it just now
+2016-03-08T18:45:30 <Bosmon7> Anyway here it ACTUALLY is https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/DataBinding.js#L1413
+2016-03-08T18:46:11 * abhibansal53 has quit
+2016-03-08T18:46:11 <simonjb> cool, thanks
+2016-03-08T18:46:42 <simonjb> Bosmon7: and would applier.change() take a similar spec form of segs?
+2016-03-08T18:46:48 * abhibansal53 joined the channel
+2016-03-08T18:47:32 <Bosmon7> simonjb - change accepts segs too, yes
+2016-03-08T18:47:55 <simonjb> in the same { segs: ... } form?
+2016-03-08T18:48:26 * nrda has quit
+2016-03-08T18:50:29 <Bosmon7> simonjb - https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/DataBinding.js#L1340
+2016-03-08T18:50:30 <Bosmon7> Yes
+2016-03-08T18:52:56 <simonjb> awesome (and thanks for the code links -- it\'s part of infusion that I\'d like to drive deeper into to understand better)
+2016-03-08T18:54:01 <simonjb> For the looking up of component by path I\'m using fluid.globalInstantiator.pathToComponent[]
+2016-03-08T18:54:03 <simonjb> https://github.com/simonbates/nexus/blob/master/src/Nexus.js#L154
+2016-03-08T18:54:24 <simonjb> I was taking a look through https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/FluidIoC.js
+2016-03-08T18:55:03 <simonjb> but I\'m not sure yet how it would deal with escaped paths -- do you know what the expectation there would be?
+2016-03-08T18:55:45 <simonjb> I will keep reading the code -- but when I have you here, I think I\'d just ask!
+2016-03-08T18:55:56 <simonjb> Bosmon7 ^
+2016-03-08T18:55:59 <Bosmon7> simonjb - we have a rather mixed model at the moment
+2016-03-08T18:56:04 <simonjb> ok
+2016-03-08T18:56:16 <Bosmon7> the core IoC system does not deal with escaped paths, possibly from a misplaced desire for efficiency
+2016-03-08T18:56:23 <Bosmon7> The data binding system does use escaped paths throughout
+2016-03-08T18:56:27 * yzen_ joined the channel
+2016-03-08T18:57:04 <Bosmon7> It\'s reasonable for you to implement the nexus "properly" and have it always interpret paths as escaped
+2016-03-08T18:57:12 <Bosmon7> And then just convert them to "segs" when handing off to framework APIs
+2016-03-08T18:57:53 <simonjb> does that mean that there could be problems though with IoC references to paths containing escapes?
+2016-03-08T18:58:08 <Bosmon7> simonjb - there would be, yes
+2016-03-08T18:58:33 <simonjb> ok
+2016-03-08T18:58:54 * clown_ joined the channel
+2016-03-08T18:58:59 <simonjb> so for now, we will enable to Nexus to construct components at paths with escapes
+2016-03-08T18:59:50 <simonjb> though there may be issues addressing those components in IoC expressions?
+2016-03-08T18:59:58 <simonjb> am I understanding?
+2016-03-08T19:00:28 <simonjb> and we can address that in the future?
+2016-03-08T19:00:41 <Bosmon7> simonjb - yes
+2016-03-08T19:00:57 <Bosmon7> The core impl has been "mostly" factored to centralise this strategy in one place - here - https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/FluidIoC.js#L924
+2016-03-08T19:01:02 <simonjb> cool, thanks for your help Bosmon7
+2016-03-08T19:01:12 <Bosmon7> Although I see looking around that there are still a few stray references
+2016-03-08T19:02:40 <Bosmon7> The official line is that the IoC system "does not support" components which have periods in their member names
+2016-03-08T19:03:10 <Bosmon7> Or references to options material which is of this kind
+2016-03-08T19:22:06 * the-t-in-rtf joined the channel
+2016-03-08T19:23:00 * the-t-in-rtf has quit
+2016-03-08T19:24:21 * the-t-in-rtf joined the channel
+2016-03-08T19:31:23 * sepidehshahi joined the channel
+2016-03-08T19:37:19 <simonjb> Bosmon7: I\'m looking at applier.change and not seeing a way to provide the path in segs
+2016-03-08T19:37:57 <simonjb> you pointed me to https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/DataBinding.js#L1340
+2016-03-08T19:38:25 <Bosmon7> simonjb - this requires the "spec" form as well
+2016-03-08T19:38:55 <Bosmon7> Or rather the "changeRequest" form
+2016-03-08T19:38:56 <simonjb> am I right in thinking that the function being called when I use foo.applier.change is https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/DataBinding.js#L1345L1352
+2016-03-08T19:39:14 <Bosmon7> simonjb - that\'s the one, yes
+2016-03-08T19:39:39 <simonjb> the changeRequest object is built from the args
+2016-03-08T19:39:48 <Bosmon7> simonjb - sorry yes, I meant to say you need to invoke applier.fireChangeRequest
+2016-03-08T19:39:52 <simonjb> ah
+2016-03-08T19:39:54 <simonjb> ok
+2016-03-08T19:40:11 <simonjb> it\'s ok for me to fire that directly and bypass the change() function?
+2016-03-08T19:40:25 <Bosmon7> simonjb - yes, they are meant to be "peer" APIs
+2016-03-08T19:40:31 <simonjb> excellent
+2016-03-08T19:40:34 <simonjb> thanks
+2016-03-08T19:40:52 <Bosmon7> simonjb - it\'s even somewhat documented : P
+2016-03-08T19:40:53 <Bosmon7> http://docs.fluidproject.org/infusion/development/ChangeApplierAPI.html#programmatic-style-for-triggering-a-change
+2016-03-08T19:41:28 <simonjb> excellent, I missed that in the docs
+2016-03-08T19:41:31 <simonjb> thanks again
+2016-03-08T19:42:02 * clown joined the channel
+2016-03-08T19:43:28 <Bosmon7> You\'re somewhat in the area of "the framework for enthusiasts" here, but we should definitely tighen up the docs .....
+2016-03-08T19:45:54 <simonjb> ALL TESTS CONCLUDED PASS
+2016-03-08T19:46:58 <simonjb> I had modified my tests to use model paths with escaped periods in them
+2016-03-08T19:47:15 <simonjb> now passing again
+2016-03-08T19:48:13 <simonjb> TDD FTW
+2016-03-08T20:03:50 * kasparne_ has quit
+2016-03-08T20:04:26 * kasparnet joined the channel
+2016-03-08T20:06:59 * the-t-in-rtf has quit
+2016-03-08T20:11:40 * the-t-in-rtf joined the channel
+2016-03-08T20:51:11 * clown joined the channel
+2016-03-08T20:56:44 * the-t-in-rtf has quit
+2016-03-08T21:16:27 * abhibansal53 has quit
+2016-03-08T21:24:24 * clown joined the channel
+2016-03-08T21:30:09 <Bosmon7> simonjb - awesome :)
+2016-03-08T21:30:12 * anvk has quit
+2016-03-08T21:40:53 * kasparne_ joined the channel
+2016-03-08T21:43:33 * kasparnet has quit
+2016-03-08T22:26:08 * sepidehshahi has left the channel
+2016-03-08T23:14:27 * simonjb has quit
+2016-03-08T23:44:02 * alanharnum has quit
+'
+
+b'2016-03-08T15:01:33 <Justin_o> Jitesh_: do you have any specific questions?
+2016-03-08T15:02:00 <Jitesh_> As i was surfing net i Found out the project problem could be solved with HTML 5 speech recognition api and speech api...right
+2016-03-08T15:03:19 * michelled joined the channel
+2016-03-08T15:03:43 <Justin_o> Jitesh_: i\'d say that the project doesn\'t require that, but it\'s an interesting idea, in particular for alternate access. We used the web speech api for the  first discovery tool to make it self voicing http://build.fluidproject.org/first-discovery/demos/
+2016-03-08T15:05:30 * Awesome_A has quit
+2016-03-08T15:06:06 <Jitesh_> al right so what would be the game all about? is it the same "Discovering cats" game or i need to think of a game myself..
+2016-03-08T15:06:43 * Awesome_A joined the channel
+2016-03-08T15:07:13 <jhung> @Awesome_A: I updated FLUID-4991. I hope it\'s a bit more clear.
+2016-03-08T15:07:17 <jhung> https://issues.fluidproject.org/browse/FLUID-4991
+2016-03-08T15:09:39 <Justin_o> Jitesh_: you have some flexibility there. You\'re welcome to use "Discovery cats" or come up with a new idea. You may want to talk it over with danayo when she\'s available. Also, whatever you come up with it must meet the criteria of the project.
+2016-03-08T15:10:37 * danayo joined the channel
+2016-03-08T15:12:39 * klown joined the channel
+2016-03-08T15:14:22 <dins> michelled: Hi
+2016-03-08T15:14:51 <dins> michelled: could you find a time to look at what I sent
+2016-03-08T15:16:21 * jhung has left the channel
+2016-03-08T15:16:34 * jhung joined the channel
+2016-03-08T15:25:17 * Yan_Hu joined the channel
+2016-03-08T15:37:18 * simonjb joined the channel
+2016-03-08T15:40:23 <Justin_o> avtar: did you ever have trouble connecting certain USB keys to a windows vm?
+2016-03-08T15:40:56 <avtar> to be honest i\'ve never had to so i\'m not sure :P
+2016-03-08T15:41:21 <Justin_o> avtar: you\'re so lucky ;)
+2016-03-08T15:41:32 <michelled> hi dins
+2016-03-08T15:41:44 <michelled> I was just looking at what you sent - looks like a good start
+2016-03-08T15:41:47 <avtar> Justin_o: what\'s happening?
+2016-03-08T15:41:55 <michelled> what plans do you have for it going forward?
+2016-03-08T15:42:42 <michelled> simonjb, Justin_o, sepidehshahi: dins has started to play around with making a new UI control https://github.com/Dinuka2013513/music-ctrls
+2016-03-08T15:42:52 <Justin_o> avtar: one of my USB keys will connect fine.. i have another that will connect, but is not accessible. It shows up as no media in disk management.
+2016-03-08T15:43:27 <avtar> and there are usb filters present for both/
+2016-03-08T15:43:30 <avtar> ?
+2016-03-08T15:43:47 <Justin_o> avtar: i\'ve formatted it on other machines, including a windows machine, but still have issues.
+2016-03-08T15:44:06 <Justin_o> i don\'t have filters set up for either.. i just eject manually on my host machine and then connect to the vm
+2016-03-08T15:44:23 <Justin_o> avtar: also it did work at least once, so i\'m not sure why then and not other times.
+2016-03-08T15:45:58 <avtar> if i were to guess i would say it\'s a temperamental usb drive
+2016-03-08T15:46:42 <avtar> there were specific ones from bert that were used for gpii demos that worked each time
+2016-03-08T15:46:54 <avtar> whereas a select few would never get detected
+2016-03-08T15:47:01 <Justin_o> avtar: ah, could be the same issue then
+2016-03-08T15:47:10 <Justin_o> avtar: thanks
+2016-03-08T15:49:50 <Jitesh_> @danayo Hello
+2016-03-08T15:50:12 <dins> actually most of the controllers which are required are already there in someother libraries as also mentioned in the ideas page
+2016-03-08T15:50:57 <danayo> hello Jitesh_
+2016-03-08T15:51:23 <dins> So, my plane is to do them using more html and svg, with a responsive design without using canvas
+2016-03-08T15:51:54 <dins> to make them more adaptable
+2016-03-08T15:52:41 <dins> but, also would it be a good idea of having both html and svg
+2016-03-08T15:52:48 * Awesome_A has quit
+2016-03-08T15:52:57 <Jitesh_> danayo: I was wondering if you could help me with getting started with Game for First Discovery of Preferences as Gsoc project
+2016-03-08T15:53:41 <avtar> Justin_o: np
+2016-03-08T15:53:50 <dins> I though like that, because, when applying styles and all for SVG, it\'s not that easy to users like just css
+2016-03-08T15:54:16 <dins> so, I my plan is to use svg only when it\'s really needed
+2016-03-08T15:55:27 <gtirloni> Justin_o: have you got usb 3.0 support enabled? i\'d try disabling it.. i have had usb 2.0 sticks that failed to work on a 3.0 port with vbox
+2016-03-08T15:55:29 <danayo> sure Jitesh_, I\xe2\x80\x99d suggest that you start by becoming familiar with Infusion and the Preferences framework in particular. http://docs.fluidproject.org/infusion/development/PreferencesFramework.html
+2016-03-08T15:55:32 <dins> michelled: would it be fine to go with a combination of both svg and html
+2016-03-08T15:56:13 <danayo> And you could check out The First Discovery Tool which is another example of a tool that brings a user into the process of setting their preferences (structured more as a wizard than an interactive game). Hopefully it will help you get the idea Jitesh_  http://build.fluidproject.org/first-discovery/demos/
+2016-03-08T15:56:26 <Justin_o> gtirloni: i\'m using USB 2.0 in the vm
+2016-03-08T15:56:51 <Justin_o> and connecting through a USB 2.0 port on my monitor or keyboard.
+2016-03-08T15:56:54 <Justin_o> same results for both
+2016-03-08T15:57:02 <danayo> Jitesh_: You\'ll also find other related demos for UI Options and the Preferences Framework on http://build.fluidproject.org
+2016-03-08T15:57:36 <Jitesh_> danyo: alright thanks for your kind help:)
+2016-03-08T15:57:47 <gtirloni> Justin_o: you may have to use diskpart.exe to manually create a partition. it\'s another issue i\'ve seen where not even the disk management app can create a partition
+2016-03-08T15:57:49 <danayo> sure Jitesh_ , and as you go through the documentation, source code, demos, and the current design mock up you should start to think of how you\xe2\x80\x99ll approach the project, what the user experience should be, what technologies are needed, how to make it accessible, and etc.
+2016-03-08T15:58:04 <Justin_o> gtirloni: ah thanks.. i\'ll try that
+2016-03-08T15:58:39 <Jitesh_> danayo: sure, i would do that
+2016-03-08T16:02:03 * wgoh joined the channel
+2016-03-08T16:03:25 * sepidehshahi joined the channel
+2016-03-08T16:04:02 <danayo> just saw your ealier discussion in the channel Jitesh_ : wanted to clarify that the goal of the game is to make a fun interactive experience for introducing a user to the experience of setting digital preferences. as Justin_o mentioned, it doesn\'t have to be cats (though many of us around here seem to love them). you can work with the existing wireframes/designs, or come up with something new
+2016-03-08T16:04:24 <wgoh> @jhung: Hi Jon, I am interested in working on "Implement UI/Learner Option Responsive Design" project.
+2016-03-08T16:05:23 * Awesome_A joined the channel
+2016-03-08T16:05:29 <wgoh> I am Winston, a final year Computer Science student at National University of Singapore. I have a year of experience in Silicon Valley working as a front-end developer using AngularJS and Bootstrap. I also have experience working with Sass, MaterializeCSS and media queries.
+2016-03-08T16:08:58 * wgoh has quit
+2016-03-08T16:10:22 <michelled> dins, yes, that sounds reasonable to me. There are other things that would be really good to do such as make the control also work with the mouse, add ARIA to it so that it works with a screen reader, and build the component in a way that makes it easier to modify
+2016-03-08T16:10:35 <simonjb> hi dins, I had a look at your music-ctrls work -- really nice start and thanks for sharing it
+2016-03-08T16:11:08 <simonjb> as michelled says, it would be great to take it a bit further
+2016-03-08T16:11:42 <simonjb> are you familiar with ARIA?
+2016-03-08T16:11:47 <dins> yes
+2016-03-08T16:12:13 <dins> I have used it..........  but not in-depth
+2016-03-08T16:12:23 <dins> I\'m already a UI developer
+2016-03-08T16:12:51 <simonjb> ok, great, do you have experience testing with ARIA and assistive technologies such as screen readers?
+2016-03-08T16:12:53 <dins> since this is just a start up to demonstrate, I didn\'t do that much
+2016-03-08T16:12:54 <dins> :)
+2016-03-08T16:13:42 <Jitesh_> danayo: olright danayo, I would talk regarding the project and discuss how would i go about it, very soon
+2016-03-08T16:14:39 <dins> using a bit..............I have used JAWS
+2016-03-08T16:14:56 <simonjb> cool
+2016-03-08T16:15:23 <simonjb> adding ARIA support would be one next step that you could take
+2016-03-08T16:15:42 * abhibansal53 joined the channel
+2016-03-08T16:15:44 <dins> ok
+2016-03-08T16:15:45 <simonjb> dins: do you have experience writing automated tests?
+2016-03-08T16:15:55 <dins> yes
+2016-03-08T16:16:15 <simonjb> that would also be really great to include
+2016-03-08T16:16:51 <simonjb> those are some ideas, if you\'d like to take the work a little further
+2016-03-08T16:16:58 <simonjb> thanks for your work so far
+2016-03-08T16:17:01 <dins> yeah
+2016-03-08T16:17:07 <dins> thanks a lot simonjb
+2016-03-08T16:17:36 <dins> I\'l add them and update you soon
+2016-03-08T16:18:02 <dins> :)
+2016-03-08T16:40:13 * Awesome_A has quit
+2016-03-08T16:40:42 * Awesome_A joined the channel
+2016-03-08T16:41:32 * sakshamsaxena joined the channel
+2016-03-08T16:41:46 * alanharnum joined the channel
+2016-03-08T16:43:43 * sepidehshahi joined the channel
+2016-03-08T17:00:16 * Awesome_A has quit
+2016-03-08T17:01:10 * the-t-in-rtf has quit
+2016-03-08T17:04:13 <Justin_o> gtirloni, avtar: just to keep you up-to-date with my USB drive drama...  http://superuser.com/questions/871850/usb-flash-drive-not-working-or-is-appearing-as-an-empty-disk-drive-disk-managem
+2016-03-08T17:05:30 <Justin_o> i\'m guessing the issue i\'m running into has something to do with the controller and NAND flash on this particular USB drive. It works when connected to a host machine (Mac or Windows) just not through the VM. So something with the VM is probably causing it.
+2016-03-08T17:07:12 <gtirloni> on my dell laptop i have usb 2.0 and 3.0 ports, so there is a special usb stick that will only work inside a vm if i plug it into the usb 2.0 port.. i\'m guessing apple hardware is all usb 3.0 now? otherwise i would try that
+2016-03-08T17:08:00 <gtirloni> or vice-versa. i got a new usb 3.1 external disk that refuses to work properly with usb 2.0 in a vm :/
+2016-03-08T17:13:03 * kasparne_ joined the channel
+2016-03-08T17:16:09 * kasparnet has quit
+2016-03-08T17:18:04 * Jitesh_ has quit
+2016-03-08T17:18:36 * nrda has quit
+2016-03-08T17:25:04 <Justin_o> gtirloni: the usb ports on the MacBooks are all USB 3.0, but the peripherals i have are all usb 2.0 (keyboard, thunderbolt display).
+2016-03-08T17:25:31 <Justin_o> i guess i could try it directly from the macbook and see if that works
+2016-03-08T17:30:23 * Saksham_ joined the channel
+2016-03-08T17:33:41 * sakshamsaxena has quit
+2016-03-08T17:35:10 * Saksham_ has quit
+2016-03-08T18:01:52 * akshay_ has quit
+2016-03-08T18:02:58 * michelled joined the channel
+2016-03-08T18:07:12 <Justin_o> danayo, michelled: are we having a PGA checkin today?
+2016-03-08T18:07:28 <danayo> oops yes Justin_o
+2016-03-08T18:08:10 <Justin_o> danayo: thanks, i can\'t remember.. do we do these meetings in fluid-standup?
+2016-03-08T18:08:23 <danayo> yes
+2016-03-08T18:09:22 <simonjb> hey Bosmon, Bosmon7
+2016-03-08T18:10:28 <Justin_o> https://wiki.fluidproject.org/display/fluid/PGA+Task+Order+%230003+QA+Testing+Tasks
+2016-03-08T18:22:52 <Justin_o> https://issues.gpii.net/browse/GPII-1641?filter=10800
+2016-03-08T18:26:12 <Bosmon7> Hey there simonjb
+2016-03-08T18:26:26 <simonjb> hey! I hear you\'re in the US!
+2016-03-08T18:26:34 <Bosmon7> simonjb - you hear correctly!
+2016-03-08T18:27:12 <simonjb> Bosmon7: thanks very much for your comments on the nexus pull
+2016-03-08T18:27:19 <simonjb> I\'ve been working through them
+2016-03-08T18:27:26 <Bosmon7> simonjb - awesome
+2016-03-08T18:27:38 <simonjb> and wanted to chat with you about path escaping and segments
+2016-03-08T18:27:43 <Bosmon7> oh yes
+2016-03-08T18:28:15 <simonjb> Bosmon7: could we do video chat? if that doesn\'t work, then here is fine also
+2016-03-08T18:28:47 <simonjb> Bosmon7: sorry, I should have asked: do you have time to talk though this some time soon?
+2016-03-08T18:29:59 <Bosmon7> simonjb - sure
+2016-03-08T18:30:48 <simonjb> Bosmon7: great, would you prefer here or vidyo?
+2016-03-08T18:31:39 <Bosmon7> Perhaps we can chat here for a bit since I am moving around?
+2016-03-08T18:31:47 <simonjb> for sure
+2016-03-08T18:31:52 <Bosmon7> It could be good to have a record in any case
+2016-03-08T18:32:08 <simonjb> yes, agreed -- that\'s always a good reason to use IRC
+2016-03-08T18:33:18 * nrda joined the channel
+2016-03-08T18:34:57 <simonjb> Bosmon7: I started on changing my code to standardise on the segment version of paths -- the motivation being that I would parse once if given a path as a string and then the parsing is done and I know that it was done
+2016-03-08T18:35:28 <simonjb> so, first question: does that seem like a reasonable approach?
+2016-03-08T18:36:17 <Bosmon7> simonjb - yes, that\'s reasonable and how the framework typically works
+2016-03-08T18:36:22 <simonjb> great
+2016-03-08T18:36:35 <Bosmon7> The versions of paths named "segs" are typically considered authoritative
+2016-03-08T18:37:25 <simonjb> great, that\'s what it looked like to me -- I renamed my modelPath -> modelPathSegs
+2016-03-08T18:37:36 <simonjb> https://github.com/simonbates/nexus/blob/master/src/Nexus.js#L114
+2016-03-08T18:38:12 <simonjb> once, I headed down that path, I hit some places where I wasn\'t sure how to use the segs version
+2016-03-08T18:38:26 <Bosmon7> Yes
+2016-03-08T18:38:33 <simonjb> can I use segs for applier.modelChanged.addListener()?
+2016-03-08T18:38:41 <Bosmon7> Yes, you can
+'
+
+b'2016-03-08T00:22:58 * alanharnum joined the channel
+2016-03-08T00:35:14 * kasparnet joined the channel
+2016-03-08T00:40:09 * kasparnet has quit
+2016-03-08T01:36:47 * kasparnet joined the channel
+2016-03-08T01:40:49 * kasparnet has quit
+2016-03-08T02:21:36 * yzen joined the channel
+2016-03-08T02:26:15 * yzen has quit
+2016-03-08T02:38:20 * kasparnet joined the channel
+2016-03-08T02:42:54 * kasparnet has quit
+2016-03-08T03:24:04 * yzen joined the channel
+2016-03-08T04:12:37 * yzen joined the channel
+2016-03-08T05:15:20 * yzen is now known as yzen_
+2016-03-08T05:19:37 * yzen_ has quit
+2016-03-08T05:26:58 * Jitesh_ joined the channel
+2016-03-08T05:27:09 <Jitesh_> Hello there
+2016-03-08T05:27:16 <Jitesh_> :)
+2016-03-08T05:27:52 <Jitesh_> I wanted to contribute to fluid projects in GSoc \'16
+2016-03-08T05:28:53 <Jitesh_> Could you please help me as I am really interested in Game for first discovery for prefrences
+2016-03-08T05:29:27 <Jitesh_> What would be the game all about??
+2016-03-08T05:30:03 <Jitesh_> How can i start contributing to the project...
+2016-03-08T05:30:09 <Jitesh_> thanks
+2016-03-08T06:01:27 * kasparnet joined the channel
+2016-03-08T06:06:01 * kasparnet has quit
+2016-03-08T06:12:30 * dins joined the channel
+2016-03-08T06:12:50 * dins has quit
+2016-03-08T06:23:48 * akshay_ joined the channel
+2016-03-08T06:24:28 * Jitesh_ has quit
+2016-03-08T06:56:09 <akshay_> I went through the infusion Github repository, read the docs and went through the code.
+2016-03-08T06:59:15 <akshay_> Long back I made a game using Blockly.js and after going through the docs I have a good idea of how will I integrate the preference framework with a Phaser based game.
+2016-03-08T07:00:57 <akshay_> I also went through the various demos and I know I have a complete understanding of what is wanted in the game.
+2016-03-08T07:04:27 <akshay_> I am working on the UI/UX and gameplay and I hope I would be able to come up with a few snapshots and show you a demo working part.
+2016-03-08T07:08:50 * akshay_ has quit
+2016-03-08T07:45:52 * kasparnet joined the channel
+2016-03-08T07:49:23 * kasparnet has quit
+2016-03-08T07:49:44 * kasparnet joined the channel
+2016-03-08T07:51:16 * kasparnet has quit
+2016-03-08T07:59:14 * akshay_ joined the channel
+2016-03-08T08:00:47 * kasparnet joined the channel
+2016-03-08T08:14:06 * the-t-in-rtf joined the channel
+2016-03-08T08:16:07 * kasparnet has quit
+2016-03-08T08:19:37 * kasparnet joined the channel
+2016-03-08T08:26:54 * dins joined the channel
+2016-03-08T08:37:44 * kasparnet has quit
+2016-03-08T08:51:44 * amatas joined the channel
+2016-03-08T09:18:11 * wgoh__ joined the channel
+2016-03-08T09:19:05 * wgoh__ has quit
+2016-03-08T09:22:23 * wgoh joined the channel
+2016-03-08T09:29:53 * sakshamsaxena joined the channel
+2016-03-08T09:34:40 * wgoh has quit
+2016-03-08T09:39:17 * sakshamsaxena has quit
+2016-03-08T09:51:07 * dins joined the channel
+2016-03-08T09:51:20 * dins has quit
+2016-03-08T10:18:07 * Jitesh_ joined the channel
+2016-03-08T10:30:31 * Awesome_A joined the channel
+2016-03-08T10:48:02 <gloob> akshay_: how that works? the game, I mean
+2016-03-08T10:48:13 <gloob> akshay_: is there any code reference in github or somewhere?
+2016-03-08T11:41:52 * kasparnet joined the channel
+2016-03-08T12:02:36 * gabrielmancini joined the channel
+2016-03-08T12:02:58 * the-t-in-rtf has quit
+2016-03-08T12:15:07 * nrda joined the channel
+2016-03-08T12:20:29 * kasparnet has quit
+2016-03-08T12:25:46 * the-t-in-rtf joined the channel
+2016-03-08T12:26:02 * kasparnet joined the channel
+2016-03-08T12:31:30 * Awesome_A has quit
+2016-03-08T12:42:56 * Awesome_A joined the channel
+2016-03-08T13:09:17 * gtirloni joined the channel
+2016-03-08T13:10:47 * jhung joined the channel
+2016-03-08T13:15:28 * dins joined the channel
+2016-03-08T13:15:48 * dins has quit
+2016-03-08T13:16:28 * Justin_o joined the channel
+2016-03-08T13:27:56 <Justin_o> akshay_: did you see danayo\'s reply to you yesterday?
+2016-03-08T13:37:02 * akshay_ has quit
+2016-03-08T13:37:30 * Jitesh_ has quit
+2016-03-08T13:37:40 * akshay_ joined the channel
+2016-03-08T13:38:45 <akshay_> Yes justin I have read it.
+2016-03-08T13:43:24 <akshay_> After going through the various demos of Infusion and preference framework I have a fair idea of what I have to do and am working on designing the architecture of the game.
+2016-03-08T13:44:13 <akshay_> As well as I\'m working on the UI/UX and gameplay part.
+2016-03-08T13:46:09 <akshay_> In the game basically the user would set up certain preferences which in itself would be fun and interactive and implemented like a game
+2016-03-08T13:48:25 <akshay_> and then user would be guided to a game which would be based on those preferences.
+2016-03-08T13:50:11 <akshay_> Base on these links : http://build.fluidproject.org/videoPlayer/demos/Mammals.html and http://build.fluidproject.org/prefsEditors/demos/explorationTool/
+2016-03-08T13:52:14 <akshay_> the preference framework is being used only to modify certain section of the web page like size and text style and line spacing
+2016-03-08T13:53:20 <akshay_> but in the game it would be used to set up preferences or rather options which would alter the gameplay.
+2016-03-08T13:55:17 <akshay_> So can the game be an educational game to improve vocabulary of the kids or to improve the mathematical skills or to teach graph problems and the gameplay would be based on the preferences that the user set?
+2016-03-08T13:57:02 * jessm joined the channel
+2016-03-08T13:57:40 <akshay_> I think I would be more clear with my points if I include some wireframes or snapshots. I\'m working on it and I\'ll do it in a few hours.
+2016-03-08T13:57:54 * yzen joined the channel
+2016-03-08T14:00:24 * anvk joined the channel
+2016-03-08T14:01:20 * dins joined the channel
+2016-03-08T14:12:03 * yzen is now known as yzen_
+2016-03-08T14:13:12 <dins> Hi Justin_o , for our proposal
+2016-03-08T14:13:13 <dins> as a start up
+2016-03-08T14:13:15 <dins> should we develop or should we come up with UX designs
+2016-03-08T14:13:16 <dins> which one should we focus more
+2016-03-08T14:16:25 * yzen_ has quit
+2016-03-08T14:19:41 * cindyli joined the channel
+2016-03-08T14:22:47 * sepidehshahi joined the channel
+2016-03-08T14:24:52 <Justin_o> dins: hmm.. I believe you\'ll have freedom to come up with your designs, but you could also talk to one of our designers about them
+2016-03-08T14:26:05 * gabrielmancini has quit
+2016-03-08T14:26:51 <Justin_o> akshay_: thanks, wireframes would help. In general preferences could be any customized setting. You could look at gpii.net for a broader example of preference settings.
+2016-03-08T14:27:51 <jhung> Awesome_A: Hi there. Yesterday you messaged me. I replied but didn\'t hear a response. Is there something I can help with?
+2016-03-08T14:28:25 <Justin_o> akshay_: the main goal is to teach/inform about the idea of setting preferences and possibly to come out with a gpii preferences set... but the idea of making an education game as well sounds interesting. It would be interesting to see what danayo also thinks about your ideas.
+2016-03-08T14:28:31 * the-t-in-rtf has quit
+2016-03-08T14:28:35 * alanharnum joined the channel
+2016-03-08T14:34:43 <dins> Justin_o: Could you please let me know how to contact designers
+2016-03-08T14:34:56 <dins> are they on #fluid-design
+2016-03-08T14:35:21 * yzen joined the channel
+2016-03-08T14:35:41 <dins> or, are there any specific people we should contact
+2016-03-08T14:38:52 <Awesome_A> Hi jhung
+2016-03-08T14:39:50 <Awesome_A> Hi everyone!
+2016-03-08T14:40:22 <jhung> Hi Awesome_A. Welcome to the channel. Can I help you with anything?
+2016-03-08T14:40:52 <Awesome_A> I went through the demos and the issues (bugs) linked to the project
+2016-03-08T14:41:17 <Awesome_A> I noticed some issues are not explicit or well explained
+2016-03-08T14:41:49 <jhung> Awesome_A: ok. Maybe I can help with that. Which issues are you looking at?
+2016-03-08T14:42:02 * Jitesh joined the channel
+2016-03-08T14:42:28 <Justin_o> dins: they\'re in both channels
+2016-03-08T14:42:37 <Awesome_A> link to images are not working and I will suggest if someone adds an image he/she should encircle the part(s) to illustrate
+2016-03-08T14:43:02 <Awesome_A> an example is https://issues.fluidproject.org/browse/FLUID-4991
+2016-03-08T14:43:09 <jhung> Awesome_A: that would be a problem. :) Let me take a look.
+2016-03-08T14:43:40 * dins joined the channel
+2016-03-08T14:44:31 <jhung> Awesome_A: I see. A while ago we did an upgrade to the bug tracker and many of the attached images were lost in the process. I\'ll see if I can find and reproduce the screen shot.
+2016-03-08T14:44:48 <Justin_o> jhung: i was talking to gtirloni a bit about that yesterday. We had some issues when migrating some of the servers and it seems that some of the JIRA attachments were lost. We should try to recreate the screenshots for these as we find them.
+2016-03-08T14:44:52 <Awesome_A> I didn\'t make the remark about the shadow. It seem to be ok. On less I didn\'t pay much attention
+2016-03-08T14:45:05 <Justin_o> jhung: seems you already knew :)
+2016-03-08T14:45:33 <jhung> Awesome_A: What we hope is that the instructions are clear enough in the big that the screen shot isn\'t needed. But sometimes the instructions or descriptions in the bug aren\'t enough.
+2016-03-08T14:46:04 <Awesome_A> yes
+2016-03-08T14:46:30 <Awesome_A> Thanks for the warm welcome (^_^)
+2016-03-08T14:46:49 <jhung> Awesome_A: I also see a 404 for the github link too. This jira you found is not doing very good! :) I\'ll try to fix that up.
+2016-03-08T14:47:01 <Awesome_A> Ok
+2016-03-08T14:48:01 <Awesome_A> please visit this one too https://issues.fluidproject.org/browse/FLUID-5035
+2016-03-08T14:48:08 * Jitesh has quit
+2016-03-08T14:49:19 <Awesome_A> Jhung I did understand this issue too https://issues.fluidproject.org/browse/FLUID-4019
+2016-03-08T14:49:20 * jitesh joined the channel
+2016-03-08T14:50:01 <jhung> Awesome_A: Thanks! There are going to be lots of issues like this where the images are missing or the links are broken. :) We hope the bug reporter did a good job at describing the issue so the bug fixer can work even without those images or links.
+2016-03-08T14:50:23 <Awesome_A> "Image Reorderer container should not be restricted to just Form elements" can you please suggest other elements
+2016-03-08T14:53:01 <jhung> Awesome_A: let me see...
+2016-03-08T14:54:33 <Awesome_A> ok
+2016-03-08T14:55:40 <jhung> Awesome_A: for FLUID-4019, the Component should allow any use of container not just the <form> element. So anything like a <div>, <span>, <section>.
+2016-03-08T14:56:07 <Awesome_A> ok
+2016-03-08T14:56:11 * the-t-in-rtf joined the channel
+2016-03-08T14:56:17 <jhung> the intent is to not restrict people into using a <form> element - they should be able to use whatever container they want Awesome_A
+2016-03-08T14:56:35 <jhung> I\'ll update the jira with this detail.
+2016-03-08T14:56:46 <Awesome_A> nice
+2016-03-08T14:57:16 * Jitesh_ joined the channel
+2016-03-08T14:57:22 * the-t-in-rtf has quit
+2016-03-08T14:58:10 * jitesh has quit
+2016-03-08T14:59:42 <jhung> Thanks for pointing that out Awesome_A. We try to be as thorough as possible in our bug reports, but FLUID-4019 wasn\'t one of them. :) I\'ve updated it now. I\'ll take a look at those other issues you pointed out.
+2016-03-08T15:00:04 <Jitesh_> @justin Hello
+2016-03-08T15:00:20 <Justin_o> Jitesh_: hello
+2016-03-08T15:00:26 * the-t-in-rtf joined the channel
+2016-03-08T15:01:03 <Jitesh_> Actually i wanted to contribute to Game for First Discovery of Preferences as Gsoc Project. Could you please help me how to proceed:)
+'
+

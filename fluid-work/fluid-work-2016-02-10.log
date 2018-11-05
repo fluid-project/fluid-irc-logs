@@ -1,0 +1,400 @@
+b'2016-02-10T21:15:40 <cindyli> includeSource: "init"
+2016-02-10T21:15:51 <cindyli> but i don\'t think that means init only. Bosmon, insights?
+2016-02-10T21:15:52 <colinclark> aha
+2016-02-10T21:17:49 <cindyli> colinclark: if you need an init-only model listener, can you just use onCreate event instead of model listeners?
+2016-02-10T21:18:11 <colinclark> I suppose I could, yes
+2016-02-10T21:18:17 <cindyli> ok cool
+2016-02-10T21:18:21 <colinclark> I don\'t think I even need it, the more I think about it
+2016-02-10T21:18:26 <colinclark> but it got me thinking
+2016-02-10T21:26:15 <Bosmon> cindyli - no - onCreate is not the same as model init time
+2016-02-10T21:26:50 <cindyli> Bosmon: isn\'t the model inited at the component instantiation?
+2016-02-10T21:27:02 <Bosmon> cindyli - "around the same time of"
+2016-02-10T21:27:12 <Bosmon> Unfortunately given the current framework, you can\'t depend on whether it is done before or after onCreate
+2016-02-10T21:27:14 <colinclark> :)
+2016-02-10T21:27:14 <colinclark> "details"
+2016-02-10T21:27:17 <Bosmon> It is one of our most serious bugs
+2016-02-10T21:27:21 <cindyli> ah, i see
+2016-02-10T21:27:30 <Bosmon> But yes, includeSource: "init" will do what colinclark wants
+2016-02-10T21:27:49 <cindyli> Bosmon: colinclark wants a init only
+2016-02-10T21:27:52 <colinclark> I\'m not quite sure how to do what I think I want to do
+2016-02-10T21:27:54 <colinclark> so I won\'t do it
+2016-02-10T21:27:59 <cindyli> haha
+2016-02-10T21:28:07 <cindyli> sounds smart!!
+2016-02-10T21:28:11 <colinclark> but basically I have a component whose model represents the x and y coordinates of some source of "user input"
+2016-02-10T21:28:21 <colinclark> For now, it\'s the mouse\'s position
+2016-02-10T21:28:31 <colinclark> but in the future, it will be simonjb\'s headtracker
+2016-02-10T21:28:44 <colinclark> and I draw this DOM element and move it around based on the changing model values
+2016-02-10T21:29:01 <colinclark> and I thought "maybe it would be nice for the user not to see this DOM element until they actually start moving it"
+2016-02-10T21:29:12 <colinclark> so that it doesn\'t start in one place and then jerk around to some other location
+2016-02-10T21:29:26 <Bosmon> colinclark - fascinating, yes
+2016-02-10T21:29:29 <colinclark> but the model\'s init time isn\'t actually the right time
+2016-02-10T21:29:40 <Bosmon> Actually even our little "worked example" for the Nexus illustrates a similar issue
+2016-02-10T21:29:46 <jhung> alanharnum: is there a chart authoring demo I can link to for the Floe site?
+2016-02-10T21:29:52 <Bosmon> That of acquiring the "phase" of a 2-state button on init
+2016-02-10T21:29:57 <colinclark> the right time is the first (and only) time the model\'s value _changes_
+2016-02-10T21:30:06 <colinclark> right
+2016-02-10T21:30:15 <alanharnum> jhung: http://build.fluidproject.org/chartAuthoring/demos/
+2016-02-10T21:30:16 <colinclark> two real situations are possible
+2016-02-10T21:30:24 <colinclark> 1. the stream of position values could have been started ages ago
+2016-02-10T21:30:26 <alanharnum> newly updated after PR merge with all the sonification pieces
+2016-02-10T21:30:35 <colinclark> 2. the stream of position values might not start until way in the future
+2016-02-10T21:30:40 <colinclark> who knows, right?
+2016-02-10T21:31:04 <jhung> alanharnum: beautiful. thanks!
+2016-02-10T21:32:30 <Bosmon> colinclark - the input stream may or may not have a value at the time you start observing it (that is, its value may or may not be \'undefined\')
+2016-02-10T21:32:38 <Bosmon> But if it has a value at that point, don\'t you want that value?
+2016-02-10T21:32:50 <colinclark> I guess I do, yes
+2016-02-10T21:33:07 <Bosmon> So really you just want the first value that isn\'t undefined
+2016-02-10T21:33:14 <Bosmon> WHich I guess reduces to your question from last week
+2016-02-10T21:33:18 <colinclark> I suppose that is correct
+2016-02-10T21:33:28 <colinclark> yes, conditional model listeners
+2016-02-10T21:33:49 <Bosmon> ALthough in this case I think the problem is much simpler
+2016-02-10T21:33:52 <colinclark> I guess this means my relays really are incorrect, too
+2016-02-10T21:34:10 <Bosmon> You just want a rule which transduces the model value from undefined/not undefined to the visibility of the square
+2016-02-10T21:34:37 <colinclark> sphere
+2016-02-10T21:34:41 <Bosmon> sphere!
+2016-02-10T21:34:42 <colinclark> simonjb does squares
+2016-02-10T21:34:44 <colinclark> I\'m all about spheres
+2016-02-10T21:34:47 <Bosmon> !!
+2016-02-10T21:34:58 <Bosmon> You are all about them
+2016-02-10T21:35:01 <Bosmon> Or else they are all about you
+2016-02-10T21:35:11 <colinclark> triangles, too
+2016-02-10T21:35:16 <colinclark> that\'s Hugo\'s thing more
+2016-02-10T21:35:17 <colinclark> but still
+2016-02-10T21:35:31 <colinclark> That is one of his many nicknames
+2016-02-10T21:35:33 <colinclark> Mr. Triangles
+2016-02-10T21:36:30 <colinclark> I guess there really is a correctness problem with my whole design, since in its fervour to be CODELESS, it fails to deal with undefined values
+2016-02-10T21:36:33 <colinclark> https://github.com/fluid-studios/flocking-nexus-headtracker-synth/pull/1/files#diff-df309f78738ead64bb3d166d9bc543c0R28
+2016-02-10T21:36:41 * simonjb has quit
+2016-02-10T21:36:53 * anvk has quit
+2016-02-10T21:37:15 <colinclark> but I guess I could implement some kind of a transform that lenses undefines to zero
+2016-02-10T21:37:51 * simonjb joined the channel
+2016-02-10T21:39:54 * Bosmon2 joined the channel
+2016-02-10T21:42:28 * amatas_ joined the channel
+2016-02-10T21:45:07 * alanharnum joined the channel
+2016-02-10T21:47:39 * alanharnum has quit
+2016-02-10T21:47:45 * alanharnum joined the channel
+2016-02-10T21:48:30 * amatas has quit
+2016-02-10T21:48:31 * Bosmon has quit
+2016-02-10T21:48:32 * ewbjr has quit
+2016-02-10T21:48:33 * sgithens has quit
+2016-02-10T21:55:36 <simonjb> colinclark: I\'ve added the head-tracker-synth as a submodule to my nexus-examples repo will now start on integration with AsTeRICS https://github.com/simonbates/nexus-examples/commit/8952c8050ad69fe42722f899cf86c24dab4c2e94
+2016-02-10T21:57:03 * ewbjr joined the channel
+2016-02-10T21:57:46 * bgoldowsky joined the channel
+2016-02-10T21:59:14 * bgoldowsky has quit
+2016-02-10T22:00:04 * sgithens joined the channel
+2016-02-10T22:04:54 <simonjb> colinclark: what do you think is the best way for me to integrate? should I work in your repo? or instead make my own container HTML and override the tracker component at trackSynth construction?
+2016-02-10T22:06:07 <simonjb> trackerSynth
+2016-02-10T22:08:41 * clown has quit
+2016-02-10T22:28:25 * michelled has quit
+2016-02-10T22:34:25 * jhung joined the channel
+2016-02-10T23:01:46 * amatas_ has quit
+2016-02-10T23:35:31 * jhung joined the channel
+2016-02-10T23:45:50 * Bosmon7 joined the channel
+2016-02-10T23:48:48 * yzen is now known as yzen_
+2016-02-10T23:53:38 * yzen_ has quit
+'
+
+b'2016-02-10T17:36:28 <Justin_o> avtar: that sounds like something i usually say
+2016-02-10T17:36:39 <avtar> :D :D
+2016-02-10T17:37:16 <Justin_o> avtar: where are you tracking those issues?
+2016-02-10T17:38:09 <avtar> a fluid infusion jira should be fine
+2016-02-10T17:38:34 <avtar> sorry, my attention is a bit divided at the moment..  trying to listen to what kasparnet is saying on the arch call
+2016-02-10T17:39:04 <Justin_o> avtar: you\'re not supposed to tell him you aren\'t paying full attention
+2016-02-10T17:44:36 * michelled joined the channel
+2016-02-10T17:46:52 <Justin_o> avtar: https://issues.fluidproject.org/browse/FLUID-5856
+2016-02-10T17:47:10 <Justin_o> avtar: feel free to make changes to that
+2016-02-10T17:47:16 <avtar> thank youuuu
+2016-02-10T17:55:02 * sepidehshahi has quit
+2016-02-10T17:58:00 * sepidehshahi joined the channel
+2016-02-10T18:03:12 <colinclark> hey cindyli
+2016-02-10T18:03:17 <colinclark> kasparnet has a question for you
+2016-02-10T18:03:52 <colinclark> he thought it might be awesome if you can lend a hand at some point with reviewing the MASSIVE PULL REQUEST
+2016-02-10T18:04:23 <colinclark> now that you\'re a bonafide GPII security expert
+2016-02-10T18:10:29 * alanharnum has quit
+2016-02-10T18:16:45 <kasparnet> hey cindyli
+2016-02-10T18:17:28 <kasparnet> yeah - so this is related to Antranigs big pull, updating it to support the latest version of kettle, the nodejs LTS version, along with a ton of improvements to the codebase
+2016-02-10T18:17:45 <kasparnet> this is the monster: https://github.com/GPII/universal/pull/425
+2016-02-10T18:17:50 * sepidehshahi has quit
+2016-02-10T18:17:57 <kasparnet> so a good chunk of it already has reviewers assigned
+2016-02-10T18:18:15 <kasparnet> but we\'re short on someone who is able to review the security portion of it
+2016-02-10T18:18:31 <kasparnet> (I guess, mostly the stuff in the */flowmanager folder
+2016-02-10T18:21:52 * sepidehshahi joined the channel
+2016-02-10T18:23:53 <gtirloni> Justin_o jhung: when you posted to the community list, did you get email bounce errors?
+2016-02-10T18:31:46 <jhung> gtirloni: I didn\'t get errors.
+2016-02-10T18:32:24 <gtirloni> jhung: cool thanks
+2016-02-10T18:42:34 * amatas_ has quit
+2016-02-10T18:47:40 * alanharnum joined the channel
+2016-02-10T18:51:59 <cindyli> sorry, kasparnet, just saw ur message about Bosmon\'s pull request
+2016-02-10T18:52:13 <cindyli> do you want me to review the security portion?
+2016-02-10T18:52:23 <kasparnet> cindyli: yeah, exactly
+2016-02-10T18:52:44 <cindyli> sure, i can give a try. kasparnet
+2016-02-10T18:52:57 <kasparnet> simonjb, Bosmon and I will be happy to answer any questions, etc.
+2016-02-10T18:53:04 <cindyli> might seek simonjb\'s advice when needed
+2016-02-10T18:53:10 <kasparnet> yeah
+2016-02-10T18:53:13 <cindyli> thanks, guys
+2016-02-10T18:53:31 <kasparnet> thanks so much, cindyli
+2016-02-10T18:53:36 <cindyli> anytime :)
+2016-02-10T18:56:34 <simonjb> I\'m totally available cindyli
+2016-02-10T18:59:20 <colinclark> hey simonjb, do we have a JIRA ticket for this Nexus demo?
+2016-02-10T19:01:21 <cindyli> thanks, simonjb
+2016-02-10T19:01:47 <simonjb> colinclark: I don\'t have a JIRA ticket for the demo, the nearest I have is one for the AsTeRICS component https://issues.gpii.net/browse/GPII-1543
+2016-02-10T19:02:04 <colinclark> Okay, I\'ll file an issue and relate the two
+2016-02-10T19:02:10 <simonjb> thanks colinclark
+2016-02-10T19:02:18 <colinclark> I now have the interface for you
+2016-02-10T19:02:26 <simonjb> great!
+2016-02-10T19:02:44 <colinclark> So I think you can start working on it shorly
+2016-02-10T19:02:49 <colinclark> while I actually start to make it make music
+2016-02-10T19:02:49 <simonjb> thanks very much
+2016-02-10T19:03:01 <colinclark> basically, there is a "pointer" component
+2016-02-10T19:03:15 <colinclark> which has a model with relative x and y values
+2016-02-10T19:03:24 <colinclark> i.e. normalized between 0 and 1.0
+2016-02-10T19:04:20 <colinclark> and if you relay a model to it with values in this range, it will convert these to the DOM coordinates and move a funny orange ball around the page
+2016-02-10T19:04:32 <colinclark> and soon enough, this ball will trigger NOTES
+2016-02-10T19:04:42 <colinclark> pings or beeps or perhaps squawks, I\'m not sure
+2016-02-10T19:05:04 <simonjb> awesome
+2016-02-10T19:05:10 <colinclark> I was thinking maybe Merzbow samples would be good, simonjb?
+2016-02-10T19:05:14 * kasparnet has quit
+2016-02-10T19:05:30 <simonjb> yeah, I\'m sure that would go down well
+2016-02-10T19:05:52 <colinclark> we\'ll have to ship a marshall stack to stuttgart for you
+2016-02-10T19:06:41 <simonjb> maybe if Chris from Vienna would be there, I think he might dig some Merzbow
+2016-02-10T19:06:52 <colinclark> will he not be there?
+2016-02-10T19:07:04 <simonjb> I know Martin will be
+2016-02-10T19:07:43 <simonjb> but I don\'t think I saw his name on the list of attendees though I might have missed
+2016-02-10T19:07:50 <colinclark> In seriousness, I think I\'ll use a pentatonic scale, maybe a gamelan slendro
+2016-02-10T19:08:14 <colinclark> and a very simple synth
+2016-02-10T19:08:24 <simonjb> that would be great colinclark
+2016-02-10T19:08:33 * kasparnet joined the channel
+2016-02-10T19:19:34 * simonjb has quit
+2016-02-10T19:24:19 <Justin_o> jhung: looking over your FLUID-5720 pull request. Just noticed that the ModalDialogs file just has the md extension and not a handlebars extension.. is that intentional?
+2016-02-10T19:24:53 <jhung> Justin_o: yes. it is. Docpad will just render it as an HTML document.
+2016-02-10T19:25:06 <jhung> there\'s also no handlebars content in that doc.
+2016-02-10T19:25:14 <Justin_o> jhung: okay thanks
+2016-02-10T19:27:40 <Justin_o> fluid-everyone: This weeks community meeting will be about prepping and testing an Infusion 2.0 release.
+2016-02-10T19:28:25 <avtar> Justin_o: i need to grab lunch but i\'m hoping to be back soon
+2016-02-10T19:28:38 <Justin_o> avtar: okay, we\'ll save lots of testing for you :)
+2016-02-10T19:29:03 <Bosmon> colinclark - why not.... PELOGG : P
+2016-02-10T19:29:19 <Bosmon> And then you can sound a "4" if the head tracker detects that the subject has fallen asleep
+2016-02-10T19:29:31 <colinclark> hahaha
+2016-02-10T19:29:52 <colinclark> I guess I was somehow stuck on a pentatonic sound
+2016-02-10T19:30:14 <colinclark> but I guess there are five-note pelog "subsets"
+2016-02-10T19:30:34 <colinclark> right now I have a matrix of 9 "controller pads"
+2016-02-10T19:30:45 <colinclark> so I\'m not sure either 5 or 7 notes is ideal
+2016-02-10T19:30:45 <Justin_o> jhung: merged https://github.com/fluid-project/docs-inclusive-learning/pull/6
+2016-02-10T19:31:17 <Justin_o> jhung: i didn\'t close the JIRA yet because i think you need to do something to deploy the site still
+2016-02-10T19:32:25 * kasparnet has quit
+2016-02-10T19:33:23 <jhung> thanks Justin_o. yep. Once it\'s deployed I will close it.
+2016-02-10T19:34:40 * Yan_Hu has quit
+2016-02-10T19:34:45 * clown_ has quit
+2016-02-10T19:35:35 * cindyli1 joined the channel
+2016-02-10T19:36:42 * clown joined the channel
+2016-02-10T19:37:15 * cindyli has quit
+2016-02-10T19:38:30 <colinclark> Bosmon: Do you feel like having a quick peek at this? https://github.com/colinbdclark/head-tracker-synth
+2016-02-10T19:38:30 <Justin_o> jhung: thanks
+2016-02-10T19:38:48 <colinclark> it is as-yet silent, but I\'d be happy for any preliminary comments on the code
+2016-02-10T19:38:57 <Bosmon> hi colinclark
+2016-02-10T19:38:59 <Bosmon> wot no pull request? : P
+2016-02-10T19:39:06 <Justin_o> Bosmon, colinclark: will you be joining the community meeting.. had a couple questions regarding what gets into the Infusion 2.0 release
+2016-02-10T19:39:09 <colinclark> I can make one if you want
+2016-02-10T19:39:13 * alanharnum joined the channel
+2016-02-10T19:39:42 <colinclark> I wonder where this repository should live?
+2016-02-10T19:39:51 <colinclark> Justin_o: I can join briefly if you have questions, yes
+2016-02-10T19:40:02 <Bosmon> colinclark - in that "mythical organisation" perhaps
+2016-02-10T19:40:02 <colinclark> but I can\'t stay for the whole meeting today--to many crunch deadlines :)
+2016-02-10T19:40:05 <Justin_o> colinclark: thanks, it\'ll just be for the start of things anyways
+2016-02-10T19:40:14 <colinclark> on my way
+2016-02-10T19:40:21 <Justin_o> thanks
+2016-02-10T19:43:44 * simonjb joined the channel
+2016-02-10T19:50:27 <Justin_o> test plans: https://wiki.fluidproject.org/display/fluid/Testing+Fluid+Components
+2016-02-10T19:50:56 <Justin_o> test task: https://wiki.fluidproject.org/display/fluid/Testing+Tasks
+2016-02-10T19:53:34 * yzen joined the channel
+2016-02-10T19:54:36 * the-t-in-rtf1 joined the channel
+2016-02-10T19:54:53 * the-t-in-rtf has quit
+2016-02-10T20:02:19 * the-t-in-rtf1 has quit
+2016-02-10T20:08:47 * the-t-in-rtf joined the channel
+2016-02-10T20:16:30 <colinclark> Bosmon: How about this? https://github.com/fluid-studios/flocking-nexus-headtracker-synth/pull/1
+2016-02-10T20:16:46 <colinclark> It will be our first early, initial experiments in what danayo and I discussed a while ago
+2016-02-10T20:17:02 <colinclark> of having a portion of our community dedicated to creative projects and tools
+2016-02-10T20:17:36 <danayo> FUN
+2016-02-10T20:17:56 <colinclark> I don\'t know what it really means
+2016-02-10T20:18:03 <colinclark> which is why I say "experiment"
+2016-02-10T20:18:25 <colinclark> since if asked to definte the relationship between "the Fluid project" and "Fluid Studios," I\'d have trouble clearly articulating it
+2016-02-10T20:18:54 <colinclark> but I guess for now we can think of this as precisely the sort of thing that happens in a studio
+2016-02-10T20:19:41 <colinclark> creative experimentation
+2016-02-10T20:26:45 <Bosmon> sounds great, colinclark
+2016-02-10T20:27:45 <Jess_> gtirloni: alanharnum: do you two have ideas re: WebRTC and Dawn\xe2\x80\x99s email that might be chat-able this week?
+2016-02-10T20:30:46 <alanharnum> Jess_: times that work for meeting, you mean?
+2016-02-10T20:31:05 <alanharnum> ah didn\'t see last email
+2016-02-10T20:31:33 <Jess_> alanharnum: yes, time. and i imagine we can share what thoughts we have now and if she needs more, can have a follow-up
+2016-02-10T20:31:49 <alanharnum> any time on Friday should be fine for me - nothing blocked for the day
+2016-02-10T20:32:17 <alanharnum> early morning would be best for me personally so i\'ve got the rest of day focused
+2016-02-10T20:37:02 <Jess_> alanharnum: ok
+2016-02-10T20:56:36 <simonjb> Justin_o: https://issues.fluidproject.org/browse/FLUID-5857
+2016-02-10T20:56:57 <simonjb> Justin_o: does that look like it is filled in correctly regarding the fields?
+2016-02-10T20:57:05 <simonjb> I set the priority to Minor
+2016-02-10T20:57:59 * the-t-in-rtf has quit
+2016-02-10T20:58:30 * alanharnum has quit
+2016-02-10T21:01:56 * alanharnum joined the channel
+2016-02-10T21:04:03 <Justin_o> simonjb: looks good, thanks for adding that
+2016-02-10T21:05:16 <Justin_o> fluid-everyone: Thanks for the help testing today. Really appreciate it. We managed to find some issues including a blocker https://issues.fluidproject.org/browse/FLUID-5821
+2016-02-10T21:05:55 <Justin_o> Unfortunately the fix will likely touch a central function of the framework, which means we\'ll have to restart our testing after it is fixed.
+2016-02-10T21:13:03 <colinclark> hey cindyli
+2016-02-10T21:13:12 <cindyli> hi colinclark
+2016-02-10T21:13:30 <colinclark> do you know if it\'s possible to have a model listener that only listens to the init event?
+2016-02-10T21:13:44 <colinclark> I\'ve made ones before that exclude init
+2016-02-10T21:14:17 <cindyli> i sort of rmb there\'s an initOnly, need to make sure it\'s for model listeners. checking\xe2\x80\xa6
+2016-02-10T21:14:30 <cindyli> oh, that\'s for model relay
+2016-02-10T21:15:40 <cindyli> colinclark: there\'s this one for model listeners
+'
+
+b'2016-02-10T00:28:16 * jhernand1z joined the channel
+2016-02-10T00:30:00 * jhernandez has quit
+2016-02-10T00:46:03 * colinclark joined the channel
+2016-02-10T01:04:17 * jhung joined the channel
+2016-02-10T01:04:17 * jhung has quit
+2016-02-10T01:15:26 * colinclark joined the channel
+2016-02-10T01:15:26 * colinclark has quit
+2016-02-10T01:32:17 * danayo joined the channel
+2016-02-10T02:00:22 * colinclark joined the channel
+2016-02-10T02:02:39 * alanharnum joined the channel
+2016-02-10T02:06:56 * alanharnum has quit
+2016-02-10T03:03:56 * colinclark joined the channel
+2016-02-10T03:23:16 * yzen joined the channel
+2016-02-10T03:24:08 * colinclark has quit
+2016-02-10T03:33:49 * colinclark joined the channel
+2016-02-10T06:17:04 * colinclark joined the channel
+2016-02-10T06:17:04 * colinclark has quit
+2016-02-10T06:32:12 * kasparnet joined the channel
+2016-02-10T06:36:03 * yzen is now known as yzen_
+2016-02-10T06:38:30 * amatas joined the channel
+2016-02-10T06:40:36 * yzen_ has quit
+2016-02-10T06:49:03 * kasparnet has quit
+2016-02-10T06:53:58 * kasparnet joined the channel
+2016-02-10T07:03:23 * kasparnet has quit
+2016-02-10T07:28:09 * scott_gonzalez has quit
+2016-02-10T07:35:10 * scott_gonzalez joined the channel
+2016-02-10T07:39:01 * kasparnet joined the channel
+2016-02-10T08:41:08 * the-t-in-rtf joined the channel
+2016-02-10T10:16:55 * kasparne_ joined the channel
+2016-02-10T10:17:23 * kasparnet has quit
+2016-02-10T10:17:47 * kasparnet joined the channel
+2016-02-10T10:18:18 * gtirloni joined the channel
+2016-02-10T10:21:58 * kasparne_ has quit
+2016-02-10T12:37:21 * jhung joined the channel
+2016-02-10T13:27:24 * Justin_o joined the channel
+2016-02-10T13:32:44 * Jess_ joined the channel
+2016-02-10T13:53:20 * alanharnum joined the channel
+2016-02-10T13:53:48 * yzen joined the channel
+2016-02-10T13:59:47 * sepidehshahi joined the channel
+2016-02-10T14:02:49 * cindyli joined the channel
+2016-02-10T14:16:34 * yzen is now known as yzen_
+2016-02-10T14:20:55 * yzen_ has quit
+2016-02-10T14:34:41 * apater has quit
+2016-02-10T14:39:40 * yzen joined the channel
+2016-02-10T14:42:58 <Justin_o> jhung: left another comment on https://github.com/fluid-project/docs-inclusive-learning/pull/6
+2016-02-10T14:43:07 <Justin_o> also are you considering publishing this to NPM?
+2016-02-10T14:43:25 <Justin_o> I\'m wondering if we should think more about the name in the package.json file as well
+2016-02-10T14:44:19 <jhung> Justin_o: yes. publishing it to npm is on the to-do list.
+2016-02-10T14:46:23 * danayo joined the channel
+2016-02-10T14:46:57 <Justin_o> jhung: in that case i wonder if we should settle on a namespace.. i\'m thinking docs- might be a big generic
+2016-02-10T14:47:01 <Justin_o> sorry, bit not big
+2016-02-10T14:47:36 <Justin_o> maybe look at https://www.npmjs.com to see if it\'s already being used by anything
+2016-02-10T14:48:16 <jhung> Justin_o: agreed. Let\'s visit that when we get to that task. I recall anastasiac and I having this discussion and coming up with a name was challenging.
+2016-02-10T14:50:16 * michelled joined the channel
+2016-02-10T14:51:51 <Justin_o> is there a JIRA for publishing, if not can you file one and add the need to revisit the name to it
+2016-02-10T14:52:17 <jhung> Yes there should be a jira for it already.
+2016-02-10T14:58:57 <jhung> @Justin_o: it\'s here https://issues.fluidproject.org/browse/FLUID-5830
+2016-02-10T14:59:49 * Jess_ joined the channel
+2016-02-10T15:02:36 * sepidehshahi joined the channel
+2016-02-10T15:02:38 * Yan_Hu joined the channel
+2016-02-10T15:08:49 <jhung> updated pull request Justin_o. https://github.com/fluid-project/docs-inclusive-learning/pull/6
+2016-02-10T15:11:53 * sepidehshahi joined the channel
+2016-02-10T15:19:21 <Justin_o> danayo, michelled: did you want to talk about the FD/Prefs Server integration stuff
+2016-02-10T15:22:34 <danayo> Justin_o! sorry, we have a dashboard meeting in 8 minutes - can we meet after standup? michelled?
+2016-02-10T15:23:20 <Justin_o> danayo: i\'ll probably be going to the PGA meeting at 12, but i could either meet between the standup and that or between PGA standup and 1pm
+2016-02-10T15:23:43 <Justin_o> sorry those are all in Eastern time
+2016-02-10T15:23:51 <danayo> got it Justin_o
+2016-02-10T15:24:07 <danayo> my brain is on Eastern time :)
+2016-02-10T15:24:52 * the-t-in-rtf has quit
+2016-02-10T15:27:08 <Justin_o> danayo: :) thanks... must mess with your sleep cycles though ;)
+2016-02-10T15:27:36 <Justin_o> Bosmon: anything that we still need to get into master before we freeze for release testing today?
+2016-02-10T15:28:05 <Justin_o> I still have this on my plate, but I don\'t think it should hold up a release https://issues.fluidproject.org/browse/FLUID-5799 what do you think.
+2016-02-10T15:28:29 <Bosmon> Justin_o - that\'s fine, it\'s not part of Infusion anyway
+2016-02-10T15:28:59 <Justin_o> Bosmon: well it will be used by infusion to publish itself, but i assume what\'s there is adequate for now
+2016-02-10T15:29:15 <Bosmon> Justin_o - sure
+2016-02-10T15:29:30 <Bosmon> Although for full releases this doesn\'t offer very much above "npm publish" anyway
+2016-02-10T15:29:31 <Justin_o> Bosmon: any of these need to get in https://github.com/fluid-project/infusion/pulls
+2016-02-10T15:30:10 <Bosmon> Justin_o - I think FLUID-5832 should go in
+2016-02-10T15:30:21 <Bosmon> Doesn\'t look like it needs much above improved docs and a bit of testing
+2016-02-10T15:31:53 <Justin_o> Bosmon: agreed that it should go in, i was briefly talking to michelled about that this morning.
+2016-02-10T15:33:11 <Justin_o> Bosmon, michelled: I wish we could have got FLUID-5680 and FLUID-5682 in as well
+2016-02-10T15:33:31 <Bosmon> Justin_o - I don\'t see why we can\'t
+2016-02-10T15:33:57 <Justin_o> Bosmon: do you think we could get them into master within 4hrs?
+2016-02-10T15:34:04 * simonjb joined the channel
+2016-02-10T15:35:05 <Bosmon> Justin_o - we could try : P
+2016-02-10T15:35:13 * michelled joined the channel
+2016-02-10T15:35:15 <Justin_o> Bosmon: that\'s true
+2016-02-10T15:35:48 <Justin_o> Bosmon: is it just the typo that\'s left to fix in this one? https://github.com/fluid-project/infusion/pull/640
+2016-02-10T15:36:38 * kasparnet has quit
+2016-02-10T15:36:51 <Bosmon> Justin_o - perhaps
+2016-02-10T15:36:55 <Bosmon> There may be conflicts too
+2016-02-10T15:36:56 * colinclark joined the channel
+2016-02-10T15:37:37 <Justin_o> Bosmon: i\'ll try to take a look at that now.. the other pull request is dependent on this one anyways
+2016-02-10T15:37:46 <Bosmon> Justin_o - awesome, thanks
+2016-02-10T15:37:59 <cindyli> alanharnum: i\'ve finished reviewing ur pull request and left some comments. can you let me know when it\'s ready for another round. thanks.
+2016-02-10T15:38:07 <alanharnum> cindyli: will do, thanks
+2016-02-10T15:38:11 <cindyli> thanks, alanharnum
+2016-02-10T15:51:51 <Justin_o> Bosmon: would you mind to take another look at https://github.com/fluid-project/infusion/pull/640
+2016-02-10T15:51:57 <Justin_o> i\'ve fixed the typo and updated it with master
+2016-02-10T15:55:04 <colinclark> simonjb: Are you ok if I am to get something working today with a "mouse pointer" component as the source of position data, and then you can write your own component to map the incoming head tracker data from the Nexus?
+2016-02-10T15:55:44 <simonjb> colinclark: yes, totally, that would be great
+2016-02-10T15:55:48 <colinclark> ok
+2016-02-10T15:56:04 <colinclark> I made some progress last night, and will continue today
+2016-02-10T15:56:13 <simonjb> nice, thanks very much
+2016-02-10T15:56:33 <colinclark> I\'m working here: https://github.com/colinbdclark/head-tracker-synth
+2016-02-10T15:56:49 <colinclark> just an HTML mockup now, but it should be pretty straightforward to implement
+2016-02-10T15:56:59 <colinclark> famous last words
+2016-02-10T16:01:41 * kasparnet joined the channel
+2016-02-10T16:03:58 * the-t-in-rtf joined the channel
+2016-02-10T16:28:27 * yzen_ joined the channel
+2016-02-10T16:31:11 * yzen has quit
+2016-02-10T16:32:26 * jhernand1z has quit
+2016-02-10T16:45:10 * michelled has quit
+2016-02-10T16:47:38 * amatas_ joined the channel
+2016-02-10T16:49:17 * jhernandez joined the channel
+2016-02-10T16:51:52 <cindyli> Justin_o: when you ran "grunt tests", do you get this failure:
+2016-02-10T16:51:54 <cindyli> not ok 42 Firefox 44.0 - Component Tests: ./component-tests/reorderer/html/LayoutReorderer-test.html
+2016-02-10T16:51:54 * sepidehshahi joined the channel
+2016-02-10T16:52:06 <simonjb> danayo: this is what I was able to find for APCP https://drive.google.com/file/d/0B7GlZD-XKf0wUnRZUFNtN2R4WUk/view
+2016-02-10T16:52:07 <Justin_o> cindyli: yes, i got that one consistently
+2016-02-10T16:52:30 <danayo> thanks simonjb !
+2016-02-10T16:52:33 <Justin_o> i wonder if it\'s an issue with fedora
+2016-02-10T16:52:37 <Justin_o> cindyli: ^
+2016-02-10T16:53:02 <Bosmon> Hi Justin_o - so I merged in FLUID-5682 - thanks for updating that
+2016-02-10T16:53:06 <simonjb> danayo: gregg send this out when he announced the project on the c4a and p4a mailing lists in October
+2016-02-10T16:53:11 <Bosmon> I guess this just leaves us to have an attempt on https://github.com/fluid-project/infusion/pull/620
+2016-02-10T16:53:29 <danayo> great simonjb
+2016-02-10T16:53:29 <Justin_o> avtar: for the testem stuff, is it possible to launch the private browsing/incognito versions of the browsers.. that way the history and caches won\'t be retained between runs
+2016-02-10T16:53:47 <Justin_o> Bosmon: excellent, thanks
+2016-02-10T16:54:33 <Justin_o> Bosmon: i\'ll start to look at https://github.com/fluid-project/infusion/pull/620
+2016-02-10T16:54:38 <danayo> ah and I found the press release too simonjb sepidehshahi http://www.ed.gov/news/press-releases/us-department-education-awards-20-million-increase-access-information-and-communication-technologies-individuals-disabilities
+2016-02-10T16:54:47 <Justin_o> Bosmon: there might be some actual work left for that one though
+2016-02-10T16:54:50 <Bosmon> Thanks, Justin_o
+2016-02-10T16:55:11 <danayo> which I will link from our landing page sepidehshahi
+2016-02-10T16:55:26 <sepidehshahi> danayo: thanks
+2016-02-10T16:57:17 <simonjb> ah great, thanks danayo
+2016-02-10T16:58:05 <avtar> Justin_o: i think that should be possible as long as the browsers in question can be launched in private browsing or incognito modes from the command line
+2016-02-10T16:58:26 <avtar> i\'m not 100% sure at the moment but for chrome i think the option is --incognito
+2016-02-10T16:59:03 <avtar> then the custom launch options will need to be listed in the testem config https://github.com/testem/testem/blob/master/examples/saucelabs/testem.json#L12-L78
+2016-02-10T16:59:58 * clown joined the channel
+2016-02-10T17:02:17 <Justin_o> avtar: https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#-private
+2016-02-10T17:03:01 <Justin_o> avtar: http://digiwonk.wonderhowto.com/how-to/start-any-web-browser-private-mode-for-fast-incognito-browsing-0155209/
+2016-02-10T17:03:51 <alanharnum> cindyli: asked a question about the PR feedback - just grab me if it\'s easier to explain face to face
+2016-02-10T17:04:00 <cindyli> sure, alanharnum
+2016-02-10T17:24:33 <amatas_> simonjb, I\'ve increase the recursion level of the static content of CI. I think that there are less broken links, but still left some
+2016-02-10T17:25:02 <simonjb> thanks amatas_
+2016-02-10T17:26:42 <amatas_> simonjb, are you interested in some specific links? perhaps I should focus to retrieve only some parts of the dashboard.
+2016-02-10T17:27:25 <simonjb> amatas_: let me take a look and get back to you
+2016-02-10T17:28:51 <amatas_> ok, write them down in a comment of the jira issue if you don\'t mind
+2016-02-10T17:33:00 <avtar> Justin_o: looks good. if you could create a jira for that that would be awesome
+'
+

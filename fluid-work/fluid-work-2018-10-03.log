@@ -1,0 +1,316 @@
+b"2018-10-03T20:49:56 * sepidehshahi has quit
+2018-10-03T20:56:08 * michelled has quit
+2018-10-03T21:03:22 * colinclark joined the channel
+2018-10-03T21:06:45 * Jess_ has quit
+2018-10-03T22:16:08 * avtar has quit
+2018-10-03T22:29:52 * colinclark has quit
+2018-10-03T22:30:22 * colinclark joined the channel
+2018-10-03T22:59:48 <sgithens> I introduced a sequenceDelay listener for them and now it's working!
+2018-10-03T23:22:48 * Justin_o has quit
+2018-10-03T23:58:07 * danayo has quit
+"
+
+b'2018-10-03T13:02:06 <cindyli> Bosmon: this error looks familiar. last time it was caused by a race condition between "snapset_1a" login and "noUser" login after a logout, and both "snapset_1a" and "noUser" ended up logging into the system, which caused a later failure at logging out "snapset_1a"
+2018-10-03T13:02:31 <cindyli> i remembered, last time was from the journal integration test
+2018-10-03T13:03:02 <cindyli> this was the fix - https://github.com/GPII/universal/blob/master/tests/JournalIntegrationTests.js#L470-L475
+2018-10-03T13:03:18 <cindyli> i will take a look at danailbd/fix/qssTests branch
+2018-10-03T13:06:31 * clown joined the channel
+2018-10-03T13:31:24 * sepidehshahi joined the channel
+2018-10-03T13:37:46 * simonjb joined the channel
+2018-10-03T13:38:01 <Bosmon> THanks, cindyli!
+2018-10-03T13:38:42 <Bosmon> stegru, dandimitrov has tried updating us to electron 3.0.2 and got a fairly familiar-looking error: https://pastebin.com/CdEAyuqU
+2018-10-03T13:38:58 <Bosmon> I can\'t remember offhand what is involved in getting ref to build in the electron toolchain ....
+2018-10-03T13:40:58 <stegru> I think the thing you\'re thinking of would be a different error... something to do with a version mismatch
+2018-10-03T13:44:24 * jhung has quit
+2018-10-03T13:48:02 <Justin_o> the-t-in-rtf: thanks for the review. What are the enumLabels used for. Want to get an idea for what to use. i.e. a simple label or something more descriptive
+2018-10-03T13:48:21 <the-t-in-rtf> @Justin_o, enum describes the literal values that are accepted.
+2018-10-03T13:48:30 <the-t-in-rtf> which are often like 0,1,2, shorthand
+2018-10-03T13:48:42 <the-t-in-rtf> enum labels are user-facing descriptions of what each option means
+2018-10-03T13:48:46 <the-t-in-rtf> and generally fairly short
+2018-10-03T13:48:50 <the-t-in-rtf> like "on", "off"
+2018-10-03T13:49:01 <the-t-in-rtf> or "with sprinkles", "without sprinkles"
+2018-10-03T13:49:12 <the-t-in-rtf> I tend to title case them, but that\'s just style.
+2018-10-03T13:49:27 <Justin_o> so for example the contrast themes.. we have "bw" is "black on white" sufficient
+2018-10-03T13:49:31 <the-t-in-rtf> "Firehose Enabled", "Firehose Disabled"
+2018-10-03T13:49:44 <Justin_o> or should it be more like "black foreground colour on a white background"
+2018-10-03T13:49:50 <the-t-in-rtf> I would prefer "Black on White" for consistency with my other work, but that\'s me.
+2018-10-03T13:49:55 <the-t-in-rtf> The longer is probably fine.
+2018-10-03T13:50:10 <the-t-in-rtf> I think "colour" can be safely omitted from that example.
+2018-10-03T13:50:18 <Justin_o> okay thanks
+2018-10-03T13:50:40 <the-t-in-rtf> I sent my preference for "Black on White" as an example, I didn\'t mean that I preferred the short version.
+2018-10-03T13:51:05 <the-t-in-rtf> only that I prefer title case.
+2018-10-03T13:51:22 <Justin_o> the-t-in-rtf: okay thanks, that last part was my next question
+2018-10-03T13:51:35 <the-t-in-rtf> yeah, timing thing, I hit enter right after your message appeared
+2018-10-03T13:53:05 <Justin_o> yah.. it happens
+2018-10-03T13:55:51 * avtar joined the channel
+2018-10-03T13:56:05 * cindyli joined the channel
+2018-10-03T14:04:01 * -- BotBot disconnected, possible missing messages --
+2018-10-03T14:06:03 * [o__o] joined the channel
+2018-10-03T14:13:24 <cindyli> Bosmon: running "npm run test:noCoverage" from danail/fix/qssTests branch, which only runs "gpii.tests.app.testDefs" (https://github.com/danailbd/gpii-app/blob/fix/qssTests/tests/IntegrationTests.js#L102) throws this error:
+2018-10-03T14:13:25 <cindyli> 07:04:46.426:  Test case listener has not responded after 5000ms - at sequence pos 10 of 10 sequence element {
+2018-10-03T14:13:25 <cindyli> "changeEvent": "{that}.app.tray.menu.applier.modelChanged",
+2018-10-03T14:13:25 <cindyli> "path": "preferenceSetsMenuItems",
+2018-10-03T14:13:25 <cindyli> "args": [
+2018-10-03T14:13:25 <cindyli> "{that}.app.tray.menu.model.menuTemplate"
+2018-10-03T14:13:25 <cindyli> ],
+2018-10-03T14:13:25 <cindyli> "listener": "gpii.tests.app.testMenu"
+2018-10-03T14:13:26 * colinclark joined the channel
+2018-10-03T14:13:26 <cindyli> } of fixture GPII application integration tests
+2018-10-03T14:14:37 <cindyli> i guess it should be at the end to see "Got logout request from user snapset_1a, but the user noUser is logged in. So ignoring the request.". but hasn\'t got there yet
+2018-10-03T14:14:46 <cindyli> do you see this error?
+2018-10-03T14:33:08 * alanharnum has quit
+2018-10-03T14:41:56 * danayo joined the channel
+2018-10-03T15:03:25 * jhung joined the channel
+2018-10-03T15:30:32 * clown is now known as clown_mtg
+2018-10-03T15:49:27 * michelled has quit
+2018-10-03T16:06:30 * michelled joined the channel
+2018-10-03T16:08:52 <Bosmon> cindyli - the error occurs before that point
+2018-10-03T16:08:56 <Bosmon> The error is the reason for that hang
+2018-10-03T16:09:04 <Bosmon> Scroll up a couple of pages and you will see some ======
+2018-10-03T16:09:18 <cindyli> ah i see. got it
+2018-10-03T16:12:33 * kk joined the channel
+2018-10-03T16:23:00 * dandimitrov has quit
+2018-10-03T16:31:30 <Justin_o> Bosmon: how did you produce this failure https://github.com/GPII/gpii-chrome-extension/pull/13#discussion_r220733056
+2018-10-03T16:31:55 <Justin_o> was it from npm test and if so how were you able to narrow it down. I\'m not seeing such a clear error message
+2018-10-03T16:32:31 <Bosmon> Yes it was just in npm test
+2018-10-03T16:34:29 <Justin_o> Bosmon: my log says
+2018-10-03T16:34:33 <Justin_o> https://www.irccloud.com/pastebin/u07Sj69Z/
+2018-10-03T16:34:42 <Justin_o> how did you get it to show the actual output?
+2018-10-03T16:34:58 <Bosmon> I think I managed to jam the browser partway through the test and then look in its console
+2018-10-03T16:38:18 * jhung joined the channel
+2018-10-03T16:42:18 <Justin_o> ah okay... i\'ll see if i can do something like that, thanks
+2018-10-03T16:47:27 <Justin_o> the-t-in-rtf: by the way, I\'m finding that if I update to the latest testem v2.12.0 in the gpii-chrome-extension repo that the npm tests just halt. It looks like chrome doesn\'t launch. Is that a known issue?
+2018-10-03T16:52:52 <the-t-in-rtf> no.
+2018-10-03T16:53:11 <the-t-in-rtf> let me try it with gpii-testem itself, just a sec.
+2018-10-03T16:53:16 * michelled joined the channel
+2018-10-03T16:53:52 <Justin_o> i wonder if it\'s something with the configuration i have. It setup to only run chrome because it has some things specific to chrome right now.
+2018-10-03T16:54:15 <the-t-in-rtf> I can easily confirm whether the package itself works.
+2018-10-03T16:54:18 <the-t-in-rtf> it\'s no trouble.
+2018-10-03T16:55:15 <Justin_o> the-t-in-rtf: https://github.com/GPII/gpii-chrome-extension/blob/master/tests/browser/testem.js
+2018-10-03T16:55:16 <Justin_o> thanks
+2018-10-03T16:55:57 <the-t-in-rtf> The tests for gpii-testem pass with the new testem.  I\'m in the toddler-heavy portion of the evening, so my replies may be slow in comoing.
+2018-10-03T16:55:58 <the-t-in-rtf> coming
+2018-10-03T16:56:12 <the-t-in-rtf> I believe you can  use a launch option instead of skipping everything else.
+2018-10-03T16:56:13 <Justin_o> no worries
+2018-10-03T16:56:21 <Justin_o> oh
+2018-10-03T16:57:38 <the-t-in-rtf> Is there an associated pull?
+2018-10-03T16:57:53 <the-t-in-rtf> I mean, it\'s nice to have a place to leave comments and look at the changes as they happen.
+2018-10-03T17:02:54 * colinclark has quit
+2018-10-03T17:08:18 * sepidehshahi_ joined the channel
+2018-10-03T17:11:56 * sepidehshahi has quit
+2018-10-03T17:11:56 * sepidehshahi_ is now known as sepidehshahi
+2018-10-03T17:13:44 <Justin_o> the-t-in-rtf: not specifically no.. i\'ve been updating dependencies in my two open PRs though, maybe you can add a comment to this one https://github.com/GPII/gpii-chrome-extension/pull/13
+2018-10-03T17:13:51 <Justin_o> i\'m trying to figure out a test failure there anyways
+2018-10-03T17:16:30 <the-t-in-rtf> great, I have it open for the morning.
+2018-10-03T17:19:26 <the-t-in-rtf> one thought, have you tried running Testem in non-CI mode?
+2018-10-03T17:19:35 <the-t-in-rtf> it\'s pretty helpful in diagnosing problems
+2018-10-03T17:19:52 <the-t-in-rtf> i.e. node node_modules/testem/testem.js --file path/to/testem.js
+2018-10-03T17:20:05 <the-t-in-rtf> you then just open it in a browser.
+2018-10-03T17:37:16 * jhernandez has quit
+2018-10-03T17:37:46 <sgithens> the-t-in-rtf: Not sur eif you saw this earlier one but I wanted to double check my understanding: for gpii-express-user\'s test environment, everything is running in the original node process that started the tests correct? The express listener port, the pouchdb listener port, the mail server port.  None of those test servers are being spawned or exec\'d into separate processes or threads right?
+2018-10-03T17:39:28 <the-t-in-rtf> ask alan about the logs
+2018-10-03T17:39:33 <the-t-in-rtf> I answered at length
+2018-10-03T17:39:34 <the-t-in-rtf> :P
+2018-10-03T17:39:46 <the-t-in-rtf> Anyway, they all run in the same v8 instance.
+2018-10-03T17:40:22 <sgithens> the-t-in-rtf: Oh ok thanks, I didn\'t see any highligths to me, but I\'ll go back and scan through
+2018-10-03T17:40:30 <the-t-in-rtf> yeah, I miss botbot.me
+2018-10-03T17:40:37 <the-t-in-rtf> especially the searches
+2018-10-03T17:40:52 <the-t-in-rtf> no need, man, the summary is enough
+2018-10-03T17:40:59 <the-t-in-rtf> as far as I know, it\'s all in one instance.
+2018-10-03T17:40:59 <sgithens> I mean, I have this cloud based IRC so it should never disconnect
+2018-10-03T17:41:14 <sgithens> what does it have to do with logs?
+2018-10-03T17:41:23 <the-t-in-rtf> alan is logging this chat
+2018-10-03T17:41:31 <sgithens> oh
+2018-10-03T17:41:32 <the-t-in-rtf> or working on a method of doing so.
+2018-10-03T17:48:42 * Jess_ joined the channel
+2018-10-03T17:51:16 <sgithens> the-t-in-rtf: So, I looked at the logs, which match up with my irccloud account but I didnt\' see anything you had mentioned about the v8 and test proccesses.  But just knowing they all run in the same one is fine
+2018-10-03T17:51:30 <sgithens> I just wanted to eliminate a few potential causes
+2018-10-03T18:06:38 * colinclark joined the channel
+2018-10-03T18:13:32 * colinclark has quit
+2018-10-03T18:16:50 * clown joined the channel
+2018-10-03T18:18:58 * clown joined the channel
+2018-10-03T18:29:07 * colinclark joined the channel
+2018-10-03T18:34:03 <Justin_o> fluid-everyone: at the community meeting today colinclark, Bosmon, and Philip will be talking about On Continuing Creativity and What Lies in the Path of the Revolution: Thinking through the hard problems of designing, using, and changing software in practice
+2018-10-03T18:34:28 <Justin_o> collaborative meeting notes at https://wiki.fluidproject.org/pages/viewpage.action?pageId=169345406
+2018-10-03T18:35:00 * colinclark has quit
+2018-10-03T18:36:48 * jhung joined the channel
+2018-10-03T18:39:47 * sepidehshahi has quit
+2018-10-03T18:46:49 * kk has quit
+2018-10-03T19:09:32 <the-t-in-rtf> @sgitthens, that\'s weird, I guess my client goofed.  It\'s clearly in my local window, but didn\'t make it to botbot.me.
+2018-10-03T19:09:39 <the-t-in-rtf> @sgithens
+2018-10-03T19:09:56 <sgithens> bizarre
+2018-10-03T19:10:21 <the-t-in-rtf> yes, you can\'t trust anything these days.
+2018-10-03T19:10:26 <sgithens> the-t-in-rtf: I really am giong to get that jack when I head out again tonight
+2018-10-03T19:10:33 <the-t-in-rtf> dewd.
+2018-10-03T19:10:42 <the-t-in-rtf> if you don\'t have it by tomorrow I\'m ordering five.
+2018-10-03T19:10:47 <sgithens> hahahahaha
+2018-10-03T19:44:17 <sgithens> the-t-in-rtf Bosmon : Ok, I finally figured out whats happening.  Since my test uses the promise-based function api call that uses a DataSource, we had mentioned before that it should probably jqUnit.stop() and and start() since it has to make a call. However, that was the right idea, but not enough. I need actually pause the fluid IoC sequence steps.  The issue is that they were blowing right through everything, and then
+2018-10-03T19:44:17 <sgithens> de-provisioning the pouchdb instance at the end, which is why I could sort of connect to it, but not actually see any database file.  I tried putting it at the top of the sequence, followed by a bunch of random webdriver sequences, and it works there because there is enough leeway.  I\'m guessing there is already a mechanism for doing this since the sequences stop, or at least wait for the webdriver calls, so I\'ll go look
+2018-10-03T19:44:17 <sgithens> at the docs for it again.
+2018-10-03T19:44:20 <sgithens> phew
+2018-10-03T19:52:45 * colinclark joined the channel
+2018-10-03T20:19:45 * colinclark_ joined the channel
+2018-10-03T20:23:01 * colinclark has quit
+2018-10-03T20:23:01 * colinclark_ is now known as colinclark
+2018-10-03T20:26:23 * colinclark has quit
+2018-10-03T20:27:09 * colinclark joined the channel
+2018-10-03T20:34:09 * michelled joined the channel
+2018-10-03T20:34:36 <Justin_o> gmoss: I\'m heading off now, I was going to take a look at the FLUID-6300 issue, but I\'m wondering how our conversation with michelled and alan would for FLUID-6312 might impact it.
+2018-10-03T20:36:17 * sepidehshahi joined the channel
+2018-10-03T20:38:15 * simonjb joined the channel
+2018-10-03T20:39:16 * colinclark has quit
+2018-10-03T20:40:36 * colinclark joined the channel
+'
+
+b'2018-10-03T00:45:31 * colinclark joined the channel
+2018-10-03T00:49:50 * colinclark has quit
+2018-10-03T06:37:51 * georgitodorov joined the channel
+2018-10-03T07:13:04 * georgitodorov has quit
+2018-10-03T07:13:55 * georgitodorov joined the channel
+2018-10-03T07:19:30 * the-t-in-rtf has quit
+2018-10-03T07:32:47 * the-t-in-rtf joined the channel
+2018-10-03T07:35:53 <georgitodorov> Bosmon: Hey, Antranig! I did some further investigation in the hanging "volume" test about which we talked yesterday.
+2018-10-03T07:36:44 <georgitodorov> After taking a closer look at the log file on my machine, I saw that the "event": "solution-failed" was also present there
+2018-10-03T07:37:55 <georgitodorov> However, I saw that on a VM the "volume" setting was not present at all in the PSP
+2018-10-03T07:39:01 <georgitodorov> The idea in my test was that the volume setting was the first one in the PSP and the magnifier was the second. The test hangs because different events are fired when changing these two settings. And the volume event never arrives
+2018-10-03T07:39:33 <georgitodorov> On my machine though the volume setting is present in the PSP. I also tried uninstalling JAWS and the setting was still there
+2018-10-03T07:40:06 <georgitodorov> So I guess something on the Core\'s side is determining whether a setting is applicable to the given machine and if not, it is not sent at all via the PSPChannel
+2018-10-03T07:41:10 <the-t-in-rtf> @georgitodorov, you also have to reset pouch when you pull down new settings and solutions data
+2018-10-03T07:41:22 <the-t-in-rtf> it makes it appear that data is there when it\'s not or vice versa
+2018-10-03T07:41:34 <the-t-in-rtf> I assume you\'ve been doing that on each refresh?
+2018-10-03T07:41:51 <the-t-in-rtf> or are you running in another mode that doesn\'t use pouch?
+2018-10-03T07:43:02 <georgitodorov> the-t-in-rtf: I am using the "gpii.config.untrusted.development.dynamicDR.all.local" configuration and just did a reset. The volume setting is still there on my native Windows 10 machine
+2018-10-03T07:48:04 <georgitodorov> Bosmon: I can rewrite the test to use a different setting from a different snapset (e.g. "Cursor Size" or "Self voicing") but I am not sure whether there is a bigger problem and hence if this is the correct solution.
+2018-10-03T08:10:48 * jhernandez has quit
+2018-10-03T08:13:56 * the-t-in-rtf has quit
+2018-10-03T08:16:08 * jhernandez joined the channel
+2018-10-03T08:16:28 <Bosmon> Hi georgitodorov - you should not be using the dynamicDR configuration for your tests because this will lead the test results to be machine-dependent
+2018-10-03T08:17:07 <Bosmon> But indeed we should look into why the dynamicDR reports the volume solution as installed when it is not
+2018-10-03T08:18:15 <jhernandez> Bosmon: it\'s being reported because the dynamic DR finds the "alwaysInstalled" policy in com.microsoft.windows.volumeControl
+2018-10-03T08:18:29 <Bosmon> jhernandez - right
+2018-10-03T08:18:58 <georgitodorov> Bosmon: Okay, there was some confusion about which config we had to use for the tests and I remember changing it on purpose.
+2018-10-03T08:20:24 <Bosmon> We only introduced this solution so that the PSP would display the correct controls for some snapsets
+2018-10-03T08:20:24 <Bosmon> It has never actually been implemented
+2018-10-03T08:20:24 <Bosmon> It\'s still not clear though why the use of the volume setting causes a failure, it should just act as a mock
+2018-10-03T08:20:24 <Bosmon> You say "The test hangs because different events are fired when changing these two settings. And the volume event never arrives"
+2018-10-03T08:20:24 <Bosmon> Can you give more detail here?
+2018-10-03T08:20:24 <jhernandez> but yeah, the dynamicDR shouldn\'t be used in tests
+2018-10-03T08:20:25 <georgitodorov> Should we be using "gpii.config.development.all.local.json5" for the tests or something else?
+2018-10-03T08:23:22 <georgitodorov> Bosmon: The test is trying to click on the volume control input but instead (because this input is missing), it is actually clicking on the magnifier\'s input
+2018-10-03T08:24:05 <georgitodorov> The root of the hanging of the test is that there is 1 instead of 2 settings present in the PSP
+2018-10-03T08:24:34 <georgitodorov> But I can use a different snapset and rewrite the test
+2018-10-03T08:24:36 <jhernandez> georgitodorov: what user are you keying-in for that test? (if any)
+2018-10-03T08:25:05 <georgitodorov> jhernandez: "multi_context"
+2018-10-03T08:27:20 * the-t-in-rtf joined the channel
+2018-10-03T08:27:22 <jhernandez> the control "must" be there
+2018-10-03T08:27:33 <jhernandez> (the one for the volume)
+2018-10-03T08:28:26 <jhernandez> as far as I can see, everything is in place, so I\'m not sure why you are not getting such control
+2018-10-03T08:29:40 <georgitodorov> jhernandez: You are trying with a VM, right?
+2018-10-03T08:29:45 <jhernandez> georgitodorov: yes
+2018-10-03T08:30:11 <jhernandez> hold a sec, booting up my vm now
+2018-10-03T08:30:11 <georgitodorov> jhernandez: Which configuration are you using?
+2018-10-03T08:30:16 <jhernandez> will check it here
+2018-10-03T08:31:13 <jhernandez> I\'m running the gpii-app with this universal config: gpii.config.untrusted.development.dynamicDR.all.local
+2018-10-03T08:31:25 <jhernandez> this is, all running local + dynamicDR
+2018-10-03T08:32:25 <georgitodorov> jhernandez: As Bosmon said, the dynamic DR leads to this machine-specific result
+2018-10-03T08:32:30 <jhernandez> yes
+2018-10-03T08:32:39 <georgitodorov> it appears that on your VM the setting is supported for some reason
+2018-10-03T08:33:49 <jhernandez> georgitodorov: I can confirm that the volume control is there in the PSP
+2018-10-03T08:33:50 <georgitodorov> Bosmon: Two questions. 1. Should we be using  "gpii.config.development.all.local.json5" config for all tests? 2. Should I rewrite the test to alter a different setting (e.g. Cursor Size)?
+2018-10-03T08:34:17 <jhernandez> I\'m running the gpii with npm start and with the universal config I pasted above
+2018-10-03T08:35:49 <jhernandez> georgitodorov: I think that for the tests you must use gpii.config.development.all.local.json5 and provide a fixed static device reporter data via an installedSolutions.json5 file
+2018-10-03T08:37:24 <jhernandez> in any case, let\'s see what Bosmon thinks
+2018-10-03T08:37:38 <Bosmon> jhernandez - you are right, yes
+2018-10-03T08:37:48 <Bosmon> The dynamicDR configuration is appropriate for production
+2018-10-03T08:37:56 <Bosmon> And the tests should use a static deviceReporter
+2018-10-03T08:38:20 <Bosmon> And as a result you shouldn\'t need to rewrite the tests
+2018-10-03T08:38:56 <Bosmon> However it would still be good to know what the cause of the failure is - is it simply that the test has been written to not expect the volume control to be there?
+2018-10-03T08:39:27 <Bosmon> It\'s odd that we get the "solution-failed" event back from the metrics, since this solution is a mock for which every action should succeed
+2018-10-03T08:40:39 <georgitodorov> Bosmon: The test expects both the volume and the magnifier to be there.
+2018-10-03T08:40:57 <georgitodorov> But the volume is not present at all and actually my test is not altering the value of the volume setting
+2018-10-03T08:41:15 <Bosmon> georgitodorov - ok, well in that case moving to the static device reporter shouldn\'t cause a change in this behaviour
+2018-10-03T08:41:30 <georgitodorov> The volume failure comes from keying in
+2018-10-03T08:41:41 <Bosmon> ok, I see
+2018-10-03T08:41:48 <jhernandez> georgitodorov: I\'m not having that behavior with dynamicDR
+2018-10-03T08:41:57 <jhernandez> let me try with a different config
+2018-10-03T08:49:34 <Bosmon> Hmm
+2018-10-03T08:49:41 <Bosmon> I think there is actually a bug in the noSettingsHandler : P
+2018-10-03T08:51:30 * the-t-in-rtf has quit
+2018-10-03T08:53:47 <jhernandez> ok
+2018-10-03T08:53:49 <Bosmon> Yes, this is interesting, the metrics system makes its own independent check as to whether the solution was applied by looking into the session state
+2018-10-03T08:54:02 <jhernandez> first thing, the solution-failed happens with both configs
+2018-10-03T08:54:06 <Bosmon> And because of the bug in the noSettingsHandler, it correctly determines that it wasn\'t
+2018-10-03T08:54:10 <Bosmon> Yes, this is what I would expect
+2018-10-03T08:54:15 <jhernandez> but I\'m getting the volume control
+2018-10-03T08:55:02 <Bosmon> And I think the other issue is then, because of this bug, the session state never updates and therefore no settings control is emitted
+2018-10-03T08:55:15 <Bosmon> I will write this up and ask cindy to look at this later today
+2018-10-03T08:55:20 <jhernandez> only when using the gpii.config.untrusted.development.dynamicDR.all.local
+2018-10-03T08:55:31 <Bosmon> In the meantime you can move on to the next bug in the test set
+2018-10-03T08:56:14 <jhernandez> if I use gpii.config.development.all.local.json5 I don\'t even get the morphic tray icon at all
+2018-10-03T08:56:27 <jhernandez> JFYI
+2018-10-03T09:05:10 * dandimitrov joined the channel
+2018-10-03T09:05:10 * the-t-in-rtf joined the channel
+2018-10-03T09:09:52 <Bosmon> OK, I have written up https://issues.gpii.net/browse/GPII-3422
+2018-10-03T09:11:01 <georgitodorov> Bosmon: Thank you!
+2018-10-03T09:11:32 <georgitodorov> jhernandez: I am getting the same result - the tray icon is not displayed at all. Investigating now
+2018-10-03T09:11:42 <Bosmon> It should only be a small amount of work, in the meantime we can look at the other causes of test failures, I think cindy produced a very good writeup last night
+2018-10-03T09:16:22 <jhernandez> Bosmon: thanks for writing up GPII-3422
+2018-10-03T09:17:11 <Bosmon> If only we could still say **DAMN YOU, KASPARNETTT**
+2018-10-03T09:17:14 <Bosmon> I miss him
+2018-10-03T09:17:14 <jhernandez> yes, I think that this is the very first time we are really calling and passing prefs to the noSettingsHandler
+2018-10-03T09:17:21 <jhernandez> heh
+2018-10-03T09:17:39 <jhernandez> same here, missing him a lot
+2018-10-03T09:20:22 * jhernandez has quit
+2018-10-03T09:20:52 * jhernandez joined the channel
+2018-10-03T10:15:20 <georgitodorov> Bosmon: Okay, here is next thing which is not working as expected
+2018-10-03T10:15:38 <georgitodorov> When using the static instead of the dynamic DR for the tests, the key out operation fails
+2018-10-03T10:15:48 <georgitodorov> I get the following error: "Got logout request from user snapset_1a, but the user noUser is logged in. So ignoring the request."
+2018-10-03T11:05:29 * Justin_o joined the channel
+2018-10-03T11:44:08 <Bosmon> georgitodorov - is this checked in to your branch?
+2018-10-03T11:44:19 <georgitodorov> Bosmon: yes
+2018-10-03T12:01:18 * georgitodorov has quit
+2018-10-03T12:01:57 * alanharnum joined the channel
+2018-10-03T12:29:59 * jhung joined the channel
+2018-10-03T12:45:10 <Justin_o> Bosmon, jhernandez: has anything changed with logging in users. I\'m trying to test out UIO+ in the windows vm, but can\'t seem to get anything logged in
+2018-10-03T12:45:37 <Bosmon> Justin_o - I assume you mean via the HTTP endpoints
+2018-10-03T12:45:42 <Justin_o> Bosmon: yes
+2018-10-03T12:46:07 <Bosmon> Is this with the most recent gpii-windows build that is in npm?
+2018-10-03T12:46:34 <Justin_o> Bosmon: i\'m just using the windows repo and running vagrant.. is there a better way to get a windows vm?
+2018-10-03T12:46:53 <Bosmon> That should be fine
+2018-10-03T12:47:43 <Justin_o> Bosmon: maybe the url I\'m using is wrong.. i used "localhost:8081/users/uioPlusCommon/login"
+2018-10-03T12:47:55 <Bosmon> And what do you see in the logs
+2018-10-03T12:48:05 <Justin_o> nothign
+2018-10-03T12:48:13 <Justin_o> it doesn\'t seem to be reaching GPII at all
+2018-10-03T12:48:33 <Bosmon> Justin_o - typo, I imagine
+2018-10-03T12:48:39 <Bosmon> It should be /user/x/login
+2018-10-03T12:48:50 <Bosmon> https://wiki.gpii.net/w/Flow_Manager#Login_.28local_only.29
+2018-10-03T12:49:05 <Justin_o> that doesn\'t seem to do anything either
+2018-10-03T12:49:28 <Justin_o> in chrome it just says "Waiting for localhost..."
+2018-10-03T12:50:30 <Justin_o> Bosmon: I tried in firefox too, same problem
+2018-10-03T12:50:59 <Justin_o> Bosmon: and nothing showing up in powershell to indicate that the server was pinged
+2018-10-03T12:51:14 <Justin_o> is there a user that should definitely work that i could try?
+2018-10-03T12:55:30 <Bosmon> Hi Justin_o - I just tested it out and it works fine for me
+2018-10-03T12:55:38 <Bosmon> I tried logging in and out with sammy and uioPlusCommon
+2018-10-03T12:55:50 * cindyli joined the channel
+2018-10-03T12:55:53 <Bosmon> Perhaps you have some other application running on port 8081, or a stray copy of the application in memory?
+2018-10-03T12:56:05 <Justin_o> Bosmon: very strange.. i went to restart gpii.. hit ctrl-c and things started working.. but i had to do the same thing after trying to logout
+2018-10-03T12:56:08 <Justin_o> so seems something is getting stuck
+2018-10-03T12:56:22 <Justin_o> Bosmon: this is a fresh windows vm
+2018-10-03T12:56:28 <Bosmon> Justin_o - perhaps you had blocked the application\'s console output by selecting some text
+2018-10-03T12:56:44 <Bosmon> If you do this on Windows, it will jam all I/O for the process
+2018-10-03T12:57:06 <Justin_o> really!?
+2018-10-03T12:57:12 <Justin_o> maybe that was it.. let me try again
+2018-10-03T12:57:22 <Bosmon> Justin_o - it\'s a bit astonishing, but this is true :)
+2018-10-03T12:57:36 <Bosmon> A bizarre hangover of Windows\' 30-yr-old I/O infrastructure
+2018-10-03T12:58:24 <Justin_o> Bosmon: i think that might have been it because things seem to be working now..
+2018-10-03T12:58:38 <Bosmon> Justin_o - yes, it is a thing you have to be very careful about
+2018-10-03T12:58:45 <Bosmon> Although doing it deliberately can occasionally be useful : P
+2018-10-03T12:58:49 <jhernandez> Justin_o: I think you\'re just hitting the evil "select mode in powershell/command prompt"
+2018-10-03T12:58:59 <Bosmon> Hi there cindyli - so we have a new bug report from Astea this morning :)
+2018-10-03T12:59:09 <jhernandez> :P
+2018-10-03T12:59:30 <Bosmon> cindyli - if you can check out the current today\'s status in danailbd/fix/qssTests of gpii-app
+2018-10-03T12:59:42 <Bosmon> Something very odd happens when invoking the lifecycleManager\'s "performLogout" method
+2018-10-03T12:59:47 <Justin_o> jhernandez: evil indeed
+2018-10-03T13:00:16 <Bosmon> Despite the fact there is genuinely a user logged on, the method returns in failure with "Got logout request from user snapset_1a, but the user noUser is logged in. So ignoring the request"
+'
+

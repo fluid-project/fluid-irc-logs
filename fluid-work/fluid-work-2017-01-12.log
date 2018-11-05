@@ -1,0 +1,329 @@
+b'2017-01-12T19:28:23 * clown joined the channel
+2017-01-12T19:29:20 * simonjb joined the channel
+2017-01-12T19:41:31 * alanharnum joined the channel
+2017-01-12T19:58:41 * kasparnet joined the channel
+2017-01-12T20:09:48 * cindyli joined the channel
+2017-01-12T20:14:12 <Justin_o> new opera browser http://www.opera.com/computer/neon
+2017-01-12T20:20:20 * alanharnum joined the channel
+2017-01-12T20:23:30 * alanharnum joined the channel
+2017-01-12T20:34:47 * michelled has left the channel
+2017-01-12T20:48:27 * clown joined the channel
+2017-01-12T20:56:08 * simonjb joined the channel
+2017-01-12T21:05:25 * stegru has quit
+2017-01-12T21:14:14 * stegru joined the channel
+2017-01-12T21:33:16 * the-t-in-rtf joined the channel
+2017-01-12T21:56:08 * alanharnum joined the channel
+2017-01-12T22:03:59 * alanharnum joined the channel
+2017-01-12T22:07:02 * alanharnum joined the channel
+2017-01-12T22:11:02 * alanharnum joined the channel
+2017-01-12T22:33:47 * alanharnum joined the channel
+2017-01-12T22:42:51 * yzen is now known as yzen_
+2017-01-12T22:43:27 * kasparnet has quit
+2017-01-12T22:47:07 * yzen_ has quit
+2017-01-12T23:37:55 * Justin_o has quit
+'
+
+b'2017-01-12T17:40:04 <mrtyler> i think it\'s better if "a build" remains focused on one square in the matrix
+2017-01-12T17:40:05 <gloob> or something like, vagrant -THEWINDOWS8MACHINE up
+2017-01-12T17:40:27 <mrtyler> and then use the CI framework (or whatever) to spin up one "build" per os
+2017-01-12T17:40:32 <mrtyler> or os/npm version/... combo
+2017-01-12T17:40:39 <gloob> we have more
+2017-01-12T17:40:45 <gloob> we have os/bitness
+2017-01-12T17:40:49 <mrtyler> sure
+2017-01-12T17:40:57 <mrtyler> my point is that you don\'t combine 32-bit and 64-bit in the same build
+2017-01-12T17:41:16 <mrtyler> handle them separately, ideally in parallel
+2017-01-12T17:41:26 <gloob> sure
+2017-01-12T17:41:35 <amatas> 4 OSes * 2 bitness = 8 environments
+2017-01-12T17:41:39 <stegru> some of my bugs have required a real 32-bit machine, rather than running node32
+2017-01-12T17:41:45 <stegru> ..on 64
+2017-01-12T17:41:54 <gloob> stegru: I feel you, bro
+2017-01-12T17:41:57 <gloob> :)
+2017-01-12T17:42:12 <mrtyler> actually here\'s a question: do we have one set of powershell that works on all windows versions and bitnesses? or are there separate scripts? or a lot of "if win7: do X; if win8: do Y; ..." ?
+2017-01-12T17:42:38 <mrtyler> stegru: i\'ve seen that, even though i suspect microsoft enthusiasts would tell you such a situation is "impossible" ;)
+2017-01-12T17:42:43 * danayo joined the channel
+2017-01-12T17:42:45 <amatas> stegru, couldn\'t  you reproduce the bug in a 32-bit VM?
+2017-01-12T17:42:55 <gloob> we have a provisioning set of powershell scripts, that are ready for take into account bitnesses but at the moment is just Windows 10/64 bits with nodejs in 32 bits mode oriented
+2017-01-12T17:43:22 <mrtyler> gloob: so exactly one square in the matrix?
+2017-01-12T17:43:35 <mrtyler> and no testing of 64 bit nodejs on 64 bit windows?
+2017-01-12T17:43:42 <gloob> probably a lot of switchs or more probably one special file by version
+2017-01-12T17:43:48 <stegru> sorry, when i said "real" i mean "really 32bit, not 32bit node on 64bit" - vm was fine
+2017-01-12T17:44:00 <amatas> ok, understood
+2017-01-12T17:44:22 <mrtyler> gloob: i think that\'s pretty unfortunate / exactly why it would be good to use a "real" CM tool (e.g. ansible)
+2017-01-12T17:44:41 <mrtyler> that abstracts out the differences between win7/win8/win10
+2017-01-12T17:44:54 <gloob> mrtyler: anyway at the moment is fully speculative, we need to close the circle
+2017-01-12T17:44:58 <amatas> mrtyler, the pain is that there are different versions of powershell between environments
+2017-01-12T17:45:09 <amatas> for example chocolatey doesn\'t run fine in windows 7
+2017-01-12T17:45:32 <stegru> mrtyler: personally, I provision my machines using a shitty batch file. i then take a snapshot so i don\'t need to do it again
+2017-01-12T17:45:33 <amatas> which makes the actual powershell scripts useless
+2017-01-12T17:45:41 <mrtyler> gloob: agreed. i don\'t want to drive this but maybe avtar or amatas can add it to the agenda for an appropriate meeting?
+2017-01-12T17:45:58 <mrtyler> stegru: i would love for you to not have to do that :)
+2017-01-12T17:46:16 * yzen is now known as yzen_
+2017-01-12T17:46:16 <mrtyler> amatas: that\'s pretty annoying
+2017-01-12T17:46:33 <mrtyler> amatas: do you think the situation would be better if we had ansible doing the work instead of custom PS?
+2017-01-12T17:46:50 <stegru> me too, mrtyler, but i add my own things to it. for the "official" vagrant box, i do use "vagrant up".. but i then add my own things to it
+2017-01-12T17:46:59 <mrtyler> i think you were on board when we talked about this the other day
+2017-01-12T17:47:06 * Yan_Hu joined the channel
+2017-01-12T17:47:13 <mrtyler> stegru: interesting. what kind of "your own things"?
+2017-01-12T17:47:24 <gloob> mrtyler: I suggest to add to the agenda of next devops meeting
+2017-01-12T17:47:25 <mrtyler> stuff to make ad-hoc testing easier i guess?
+2017-01-12T17:47:54 <mrtyler> gloob: that seems like a good place to discuss. let\'s see if i can find where that agenda lives...
+2017-01-12T17:48:04 <gloob> mrtyler: in the collective brain
+2017-01-12T17:48:09 <mrtyler> :(
+2017-01-12T17:48:22 <stegru> cygwin, nfs, windows remote debugger, textpad
+2017-01-12T17:48:28 <gloob> gtirloni: do we have an agenda for the devops meeting somewhere?
+2017-01-12T17:50:08 <mrtyler> stegru: so i guess cygwin/textpad to make things more comfortable inside the vm, winrdb for debugging, and nfs for sharing files b/t host and guest?
+2017-01-12T17:50:08 <amatas> mrtyler, I think that use Ansible it\'s almost the same as PS because it uses PS internally: https://github.com/ansible/ansible/tree/devel/lib/ansible/modules/windows
+2017-01-12T17:50:39 <mrtyler> amatas: but *we* don\'t have to write the PS. someone has done it for us. that\'s a huge win in my book
+2017-01-12T17:50:39 * yzen_ has quit
+2017-01-12T17:50:55 <mrtyler> i\'m not worried about PS as a technology. i\'m worried about the liability of us having to write PS
+2017-01-12T17:51:19 <stegru> mrtyler: yes. but, don\'t bother thinking about including that in a box for me
+2017-01-12T17:51:34 <mrtyler> instead i\'d prefer us to focus on writing ansible, which we already do anyway
+2017-01-12T17:51:48 <gloob> plus one
+2017-01-12T17:52:02 <mrtyler> stegru: right, those don\'t belong in production so they don\'t belong in the "official" vm that is supposed to act like production
+2017-01-12T17:52:04 <gloob> and if you need to write PS write in the ansible context and get it upstream
+2017-01-12T17:52:14 <mrtyler> ^ yup
+2017-01-12T17:52:34 <stegru> mrtyler: ok good - i wasn\'t making a request, just saying what i do
+2017-01-12T17:52:51 <mrtyler> stegru: yup, totally. and i\'m trying to understand your workflow a bit so that\'s helpful
+2017-01-12T17:52:51 <gloob> I need to leave, catch you later
+2017-01-12T17:52:58 <mrtyler> bye ale
+2017-01-12T17:53:22 <stegru> manana
+2017-01-12T17:53:22 <mrtyler> stegru: i guess it would be nice if the QI stuff made it easy for you to add those pieces for local testing?
+2017-01-12T17:53:27 <gloob> stegru: que?
+2017-01-12T17:53:41 <stegru> ke?
+2017-01-12T17:53:47 <amatas> haha
+2017-01-12T17:54:01 <stegru> mrtyler: erm...
+2017-01-12T17:54:12 <mrtyler> stegru: do you ever worry about invalidating your testing by changing the environment? say, if your code accidentally relies on something installed by winrdb?
+2017-01-12T17:54:36 <mrtyler> or i guess you could rely on the CI system to catch that kind of problem
+2017-01-12T17:54:48 <amatas> well, ansible can be used as a normal python module. I\'m assuming that we could get most of features of Ansible if we only run it locally using a python script.
+2017-01-12T17:55:07 <stegru> yes definately, mrtyler. it\'s on my mind, so i use snapshots for the vm. "very clean" and "workable"
+2017-01-12T17:55:28 * kasparnet joined the channel
+2017-01-12T17:55:38 <mrtyler> amatas: "Note running Ansible from a Windows control machine is NOT a goal of the project. Refrain from asking for this feature, as it limits what technologies, features, and code we can use in the main project in the future. A Linux control machine will be required to manage Windows hosts.
+2017-01-12T17:55:45 <mrtyler> --http://docs.ansible.com/ansible/intro_windows.html
+2017-01-12T17:55:56 <mrtyler> so i\'m not sure your statement is accurate
+2017-01-12T17:56:18 <stegru> i don\'t use "vagrant up" (except for provisioning the win10) to re-create windows, because it just takes too long. so i take a snapshot on the first install, and just roll-back.
+2017-01-12T17:56:30 <mrtyler> stegru: aha. interesting
+2017-01-12T17:57:06 * Kobi joined the channel
+2017-01-12T17:57:34 <stegru> which reminds me, i also disable auto-updates - otherwise the stupid thing installs updates as soon as i power it up
+2017-01-12T17:57:49 <amatas> yes, I know I mean something like this but in a windows host: https://serversforhackers.com/running-ansible-programmatically
+2017-01-12T17:59:01 <amatas> stegru, all that info seems very useful for me, as we can build a windows VM with all the tools needed to avoid provisioning time.
+2017-01-12T18:00:04 <stegru> amatas: good, but for me my provisioning time is a one-off thing
+2017-01-12T18:00:57 <stegru> it\'s only when you roll out a new vagrant box. my 7, 8.1, and other 10 vms are already done, and i just revert to the "fresh" snapshot
+2017-01-12T18:01:24 * clown joined the channel
+2017-01-12T18:01:26 * clown is now known as clown_mtg
+2017-01-12T18:01:35 <mrtyler> amatas: i only skimmed it but that looks pretty hacky to me. regardless, i\'m more concerned with the WHAT (use powershell or ansible or something else for windows CM) than the HOW (implementation details of making ansible or powershell or something else do windows CM)
+2017-01-12T18:02:08 * David123_ joined the channel
+2017-01-12T18:04:13 <stegru> sorry my wife is shouting me down for tea, i can describe my whole work-flow in an email if you\'re that interested.. but as far as i\'m concerned i\'m already happy with what I have
+2017-01-12T18:05:03 <amatas> ok thanks stegru, that email is not necessary ATM
+2017-01-12T18:05:12 <mrtyler> agreed, just looking for some background
+2017-01-12T18:05:28 * cindyli joined the channel
+2017-01-12T18:05:36 <stegru> ok. i\'m not a normal use-case anyway
+2017-01-12T18:05:44 <amatas> mrtyler, I only was proposing solutions with the tools that we actually use.
+2017-01-12T18:06:09 <mrtyler> amatas: sure, except we don\'t actually use ansible for windows machines ;)
+2017-01-12T18:06:13 <mrtyler> (currently)
+2017-01-12T18:06:47 * alanharnum joined the channel
+2017-01-12T18:07:04 <amatas> :D yes, that is a detail
+2017-01-12T18:07:42 <amatas> I\'m not very familiar with CMs for windows
+2017-01-12T18:07:42 <clown_mtg> Justin_o:  FYI:  https://www.w3.org/wiki/ARIA_1.1_Testable_Statements
+2017-01-12T18:07:49 * michelled joined the channel
+2017-01-12T18:08:01 <mrtyler> amatas: right, because there kind of aren\'t any :\\
+2017-01-12T18:08:26 <mrtyler> even something like MOM is not, afaik, as sophisticated as something like puppet or ansible
+2017-01-12T18:08:43 <mrtyler> plus MOM is hella expensive and requires that you drink all the microsoft kool-ade for management
+2017-01-12T18:08:50 <amatas> also seems that MS doesn\'t provide a open system to do so
+2017-01-12T18:09:05 <mrtyler> at least that\'s how it was. i haven\'t looked at this space in ~5 years or so
+2017-01-12T18:22:40 <gtirloni> gloob mrtyler amatas colinclark: there is a folder in the gpii\'s pad for infrastructure meetings (https://pad.gpii.net/mypads/?/mypads/group/gpii-infrastructure-meetings-iqt4nbr/view).  i\'ve created a pad for the next meeting which we can use to add the topics people want to discuss
+2017-01-12T18:23:46 <gtirloni> mrtyler amatas stegru: this is what ansible (and much of MS tools) use behind the scenes: https://msdn.microsoft.com/en-us/powershell/dsc/overview
+2017-01-12T18:24:17 <Justin_o> clown_mtg: thanks.. so that\'s the results of the tests? is that manually or automatically generated
+2017-01-12T18:25:16 <Justin_o> lliskovoi: clown_mtg just shared this with me and it might be useful to you, https://www.w3.org/wiki/ARIA_1.1_Testable_Statements
+2017-01-12T18:25:42 <clown_mtg> Justin_o:  that\'s a list of the expected values for the tests.  Not sure if those statements are automatically generated or not.
+2017-01-12T18:25:48 <clown_mtg> the results page is elsewhere.
+2017-01-12T18:25:53 <Justin_o> clown_mtg: ah okay
+2017-01-12T18:25:54 <clown_mtg> I\'ll look for it after my meeting.
+2017-01-12T18:26:04 <amatas> thanks gtirloni
+2017-01-12T18:26:17 <amatas> time to leave, see you tomorrow guys
+2017-01-12T18:26:23 <gtirloni> cya
+2017-01-12T18:26:38 <Justin_o> clown_mtg: thanks
+2017-01-12T18:26:49 <lliskovoi> thanks Justin_o, clown_mtg, this looks great! would love some help deciphering those tables at some point
+2017-01-12T18:31:55 <gtirloni> amatas colinclark mrtyler gloob: pad for next week\'s infra meeting https://pad.gpii.net/p/2017-01-16-plm4nnx
+2017-01-12T18:32:26 <mrtyler> gtirloni: thanks
+2017-01-12T18:33:23 * kasparnet has quit
+2017-01-12T18:33:34 <gtirloni> mrtyler: if you have account at pad.gpii.net, i can make you admin of that folder too
+2017-01-12T18:34:16 <mrtyler> gtirloni: i\'ll make one
+2017-01-12T18:35:11 <mrtyler> gtirloni: login is troscoe
+2017-01-12T18:36:02 <gtirloni> mrtyler: cool, you should have full admin access to it now (i don\'t know if it should show up automatically in your area)
+2017-01-12T18:36:16 <mrtyler> it did, i think
+2017-01-12T18:36:21 <gtirloni> awesome, thanks
+2017-01-12T18:36:26 <mrtyler> under My Folders
+2017-01-12T18:41:14 <Justin_o> Kobi, David123_: whether or not you like Star Wars, this happens to be one of the better descriptions of CSS specificity ( https://stuffandnonsense.co.uk/archives/css_specificity_wars.html )
+2017-01-12T18:56:14 * jhung1 joined the channel
+2017-01-12T18:58:31 <Kobi> Justin_o:  That\'s helpful, thank you
+2017-01-12T18:58:38 * jhung has quit
+2017-01-12T19:00:07 <gtirloni> TIL npm v4 exists (comes with node v7)
+2017-01-12T19:01:32 * yzen joined the channel
+2017-01-12T19:11:06 * jhung joined the channel
+2017-01-12T19:12:32 <colinclark> gtirloni: Just seeing your earlier question
+2017-01-12T19:12:43 <colinclark> We should use the wiki if possible
+2017-01-12T19:13:01 <colinclark> interestingly, I had a fascinating discussion with Gregg today in which he told me "The wiki saved the day!"
+2017-01-12T19:13:07 <colinclark> when he was presenting to a funder
+2017-01-12T19:13:15 <colinclark> so we should continue to ensure that the wiki saves the day
+2017-01-12T19:13:45 <gtirloni> colinclark: for the meeting notes?
+2017-01-12T19:14:32 <gtirloni> colinclark: e.g. by referencing them this way too? https://wiki.gpii.net/w/Weekly_Integration_Meeting_Notes
+2017-01-12T19:15:40 <colinclark> gtirloni: yup, exactly
+2017-01-12T19:15:52 <colinclark> I mean, the sorts of things that usually save the day in the wiki are design documents
+2017-01-12T19:16:10 <colinclark> but having access to meeting notes and sketches is a good way to ensure that design documents sprout in the wiki instead of, say, Google Docs
+2017-01-12T19:16:11 <colinclark> :)
+2017-01-12T19:17:48 <gtirloni> cool, agreed! i\'ll create something for the infra meetings
+2017-01-12T19:19:11 * alanharnum joined the channel
+'
+
+b'2017-01-12T00:00:19 * yzen is now known as yzen_
+2017-01-12T00:04:47 * yzen_ has quit
+2017-01-12T00:27:15 * danayo joined the channel
+2017-01-12T00:35:11 <avtar> hey danayo
+2017-01-12T00:46:29 * danayo joined the channel
+2017-01-12T00:46:53 * stegru has quit
+2017-01-12T02:25:05 * kook_ has quit
+2017-01-12T02:25:33 * danayo joined the channel
+2017-01-12T02:38:12 * kook_ joined the channel
+2017-01-12T03:13:12 * colinclark joined the channel
+2017-01-12T03:16:32 * danayo joined the channel
+2017-01-12T03:29:37 * yzen joined the channel
+2017-01-12T03:44:56 * danayo joined the channel
+2017-01-12T05:28:01 * yzen is now known as yzen_
+2017-01-12T05:28:02 * yzen_ is now known as yzen
+2017-01-12T05:28:47 * yzen is now known as yzen_
+2017-01-12T05:33:05 * yzen_ has quit
+2017-01-12T07:33:21 * amatas joined the channel
+2017-01-12T08:14:11 * the-t-in-rtf joined the channel
+2017-01-12T08:55:18 * the-t-in-rtf joined the channel
+2017-01-12T08:59:59 * kasparnet joined the channel
+2017-01-12T09:04:54 * the-t-in-rtf1 joined the channel
+2017-01-12T09:30:38 * yzen joined the channel
+2017-01-12T09:34:51 * yzen has quit
+2017-01-12T10:10:05 * stegru joined the channel
+2017-01-12T10:30:37 * the-t-in-rtf joined the channel
+2017-01-12T10:34:07 * the-t-in-rtf1 joined the channel
+2017-01-12T12:02:46 * kook_ has quit
+2017-01-12T12:08:01 * the-t-in-rtf joined the channel
+2017-01-12T12:51:22 * gtirloni joined the channel
+2017-01-12T13:30:37 <gloob> stegru: that\'s an interesting use case, make it easier to debug node in vagrant machine from the host
+2017-01-12T13:30:43 * sgithens has quit
+2017-01-12T13:31:42 <stegru> yes, i can just start debugging and stepping through in my IDE with a single key
+2017-01-12T13:42:16 * Justin_o joined the channel
+2017-01-12T13:46:10 * kook_ joined the channel
+2017-01-12T13:56:09 * jhung joined the channel
+2017-01-12T14:04:25 * cindyli joined the channel
+2017-01-12T14:05:30 * Jess_ joined the channel
+2017-01-12T14:08:05 * clown joined the channel
+2017-01-12T14:24:53 * alanharnum joined the channel
+2017-01-12T14:32:05 * yzen joined the channel
+2017-01-12T14:42:22 * kook_ has quit
+2017-01-12T14:47:51 * colinclark joined the channel
+2017-01-12T14:50:06 * Caren joined the channel
+2017-01-12T14:57:18 * Caren has left the channel
+2017-01-12T15:04:45 * danayo joined the channel
+2017-01-12T15:06:03 * lliskovoi joined the channel
+2017-01-12T15:14:05 * michelled joined the channel
+2017-01-12T15:28:29 * kasparnet has quit
+2017-01-12T15:39:54 <michelled> cindyli: can I get some help from you when you are available?
+2017-01-12T15:44:14 * cindyli joined the channel
+2017-01-12T15:44:38 <cindyli> michelled: is now good?
+2017-01-12T15:47:04 <michelled> yes - can you come to my desk?
+2017-01-12T15:49:04 * alanharnum joined the channel
+2017-01-12T16:05:27 * mrtyler joined the channel
+2017-01-12T16:08:51 * the-t-in-rtf joined the channel
+2017-01-12T16:09:40 * simonjb joined the channel
+2017-01-12T16:12:48 * alanharnum joined the channel
+2017-01-12T16:13:23 * the-t-in-rtf has quit
+2017-01-12T16:40:49 * cindyli joined the channel
+2017-01-12T16:43:06 * colinclark joined the channel
+2017-01-12T16:44:47 * the-t-in-rtf joined the channel
+2017-01-12T16:48:25 * alanharnum joined the channel
+2017-01-12T16:58:27 <alanharnum> Bosmon / colinclark: https://issues.fluidproject.org/browse/FLOE-497 - I\'ve been doing some dependency updating to chartAuthoring and have seen some issues that may exist at the intersection of recent IoC changes and Flocking.
+2017-01-12T16:58:32 <alanharnum> any insight would be appreciated.
+2017-01-12T16:59:05 <colinclark> which version of Flocking are you using, alanharnum?
+2017-01-12T16:59:59 <alanharnum> colinclark: https://github.com/colinbdclark/Flocking/commit/18e94e6fb7a51f0b37c8e69063eb00ff6d1badce - the latest commit hash (this work originated in the email discussion you had w/Avtar & Gio just after i went on vacation pre-break)
+2017-01-12T17:00:09 <colinclark> Can you make sure you\'re testing with #5644a8a93df8461ec2596679f51754512f185f8e?
+2017-01-12T17:00:21 <colinclark> Flocking\'s master has not yet been updated to Infusion 2.0.0
+2017-01-12T17:00:58 <alanharnum> will try that right now
+2017-01-12T17:01:00 <colinclark> jhung: My current UX team meeting is running a little late, but I shouldn\'t be too much longer
+2017-01-12T17:01:02 <colinclark> thanks
+2017-01-12T17:01:08 <colinclark> sorry that Flocking is lagging
+2017-01-12T17:01:10 <colinclark> I\'m so close!
+2017-01-12T17:01:34 <alanharnum> no worries - i probably should have asked you sooner if there was more recent work than master :p
+2017-01-12T17:02:53 <alanharnum> but i did learn more about the IoC internals
+2017-01-12T17:03:08 <alanharnum> and i wanted to make sure i knew exactly where the failure was happening
+2017-01-12T17:03:29 <colinclark> jhung: Looks like about 5 minutes
+2017-01-12T17:03:36 <jhung> sure colinclark. np
+2017-01-12T17:03:40 <colinclark> sorry about that!
+2017-01-12T17:03:56 <alanharnum> colinclark: updating to your development branch of Flocking seems to have resolved the issue
+2017-01-12T17:04:02 <colinclark> there you go :)
+2017-01-12T17:04:25 <alanharnum> \xe2\x95\xb1\xe2\x95\xb1\xe2\x94\x8f\xe2\x95\xae
+2017-01-12T17:04:25 <alanharnum> \xe2\x95\xb1\xe2\x95\xb1\xe2\x94\x83\xe2\x94\x83
+2017-01-12T17:04:25 <alanharnum> \xe2\x96\x89\xe2\x94\x81\xe2\x95\xaf\xe2\x94\x97\xe2\x94\x81\xe2\x95\xae
+2017-01-12T17:04:27 <alanharnum> \xe2\x96\x89\xe2\x94\x88\xe2\x94\x88\xe2\x94\x88\xe2\x94\x88\xe2\x94\x83
+2017-01-12T17:04:29 <alanharnum> \xe2\x96\x89\xe2\x95\xae\xe2\x94\x88\xe2\x94\x88\xe2\x94\x88\xe2\x94\x83
+2017-01-12T17:04:31 <alanharnum> \xe2\x95\xb1\xe2\x95\xb0\xe2\x94\x81\xe2\x94\x81\xe2\x94\x81\xe2\x95\xaf
+2017-01-12T17:04:36 <colinclark> woah
+2017-01-12T17:04:43 <colinclark> alanharnum: is an ascii artist!
+2017-01-12T17:05:23 <stegru> is that a thumb, or a finger?
+2017-01-12T17:05:37 <alanharnum> a thumb
+2017-01-12T17:05:45 <alanharnum> i think the \xe2\x96\x89 represent a sleeve
+2017-01-12T17:07:58 <mrtyler> oh see i thought it was a bottle of liquor
+2017-01-12T17:08:05 * scott_gonzalez has quit
+2017-01-12T17:08:12 <mrtyler> as in "my code works, let\'s have a drink" :)
+2017-01-12T17:08:14 * scott_gonzalez joined the channel
+2017-01-12T17:08:34 <alanharnum> the polymorphous interpretations possible of ASCII art are one of the sources of its power
+2017-01-12T17:08:56 <mrtyler> _________
+2017-01-12T17:08:56 <mrtyler> < agreed. >
+2017-01-12T17:08:56 <mrtyler> ---------
+2017-01-12T17:08:56 <mrtyler> \\   ^__^
+2017-01-12T17:08:56 <mrtyler> \\  (oo)\\_______
+2017-01-12T17:08:58 <mrtyler> (__)\\       )\\/\\
+2017-01-12T17:09:01 <mrtyler> ||----w |
+2017-01-12T17:09:03 <mrtyler> ||     ||
+2017-01-12T17:12:11 * kavya joined the channel
+2017-01-12T17:17:29 <stegru> takes me back to the 90s
+2017-01-12T17:18:09 * clown joined the channel
+2017-01-12T17:18:53 <gloob> should I bring up figlet weapon?
+2017-01-12T17:20:28 <gloob> mrtyler: "my code works", where?
+2017-01-12T17:20:46 <gloob> ok, enough bad jokes for today
+2017-01-12T17:21:05 <mrtyler> gloob: we would also have accepted: "my code works" [citation needed]
+2017-01-12T17:22:01 <stegru> there\'s a figlet npm package
+2017-01-12T17:22:08 <gloob> oh no
+2017-01-12T17:22:24 <stegru> can we think of an accessibility angle for it?
+2017-01-12T17:22:38 <stegru> make text bigger in a console
+2017-01-12T17:22:51 <gloob> so now you can fire a stream of characters using a non-blocking IO model
+2017-01-12T17:23:11 <gloob> stegru: well, there\'s some relationship with DPI and magnification
+2017-01-12T17:23:34 <stegru> wait, yes.. this is how i\'ll implement fontSize
+2017-01-12T17:23:53 <stegru> for DOS users
+2017-01-12T17:23:55 <gloob> for text canvas
+2017-01-12T17:25:42 <gloob> I\'m thinking another approach, we can pipe all the desktop graphic representation through aalib and then apply the figlet filter for dpi scaling
+2017-01-12T17:29:01 <mrtyler> accessibility angle for figlet: making text equally unreadable for those with good vision and thos with low vision
+2017-01-12T17:29:34 <mrtyler> altho i think gloob could get a few million in funding for his startup based on aalib/figlet dpi scaling
+2017-01-12T17:30:57 <gloob> using farms of gpu in the cloud
+2017-01-12T17:31:09 <gloob> you can run it in a rpi if you want!
+2017-01-12T17:34:11 <mrtyler> http://vignette2.wikia.nocookie.net/walkingdead/images/3/3f/Shut-up-and-take-my-money.jpg/revision/latest/scale-to-width-down/2000?cb=20140829235648
+2017-01-12T17:34:44 <gloob> Internet of Things, compatible
+2017-01-12T17:35:54 <amatas> aalib can make accessible an image if you go enough far from the screen. A workmate used a NSFW desktop wallpaper with a very low DPI, you only notice what it was if you saw the screen from the other corner of the room.
+2017-01-12T17:36:04 <gloob> mrtyler: by the way pretty good synthesis of the configuration formats and other stuff. Point 3 is one that needs decision I guess
+2017-01-12T17:36:33 <mrtyler> amatas: that is amazing. a modern day Monet
+2017-01-12T17:36:45 <mrtyler> gloob: thanks!
+2017-01-12T17:36:54 <gloob> Dali and ascii art, the book
+2017-01-12T17:36:56 <mrtyler> gloob: yeah part 3 is the only part that should be controversial right now, i guess
+2017-01-12T17:37:32 <mrtyler> one reaeson i mentioned it is because the-t-in-rtf (i think) is supposedly getting close to wanting multiple windows vms
+2017-01-12T17:37:40 <mrtyler> managed together
+2017-01-12T17:37:54 <mrtyler> therefore, there will be some work in that PowerShell area
+2017-01-12T17:38:12 <mrtyler> therefore, a good time to consider whether we want to do one-off PS work vs make ansible do it vs other alternatives
+2017-01-12T17:38:31 <gloob> the problem is that, Powershell solution is use and throw outside of windows
+2017-01-12T17:38:44 <stegru> i\'ve already at the point of multiple windows vms
+2017-01-12T17:38:50 <mrtyler> right. no code reuse, no consistency in environemntal spin-up
+2017-01-12T17:38:50 <gloob> we all are
+2017-01-12T17:38:57 <gloob> we need windows7, 8 and 10
+2017-01-12T17:39:01 <gloob> in the same repository
+2017-01-12T17:39:12 <mrtyler> multiple windows vms simultaneously?
+2017-01-12T17:39:12 <gloob> in parallel, running tests, burning your fingers!
+2017-01-12T17:39:29 <mrtyler> i didn\'t talk about it in the email but i recommend caution here too
+2017-01-12T17:39:36 <gloob> no simultaneously but using the same toolchain I guess
+2017-01-12T17:40:03 <stegru> mine all run simultaneously if i\'m testing something
+'
+

@@ -1,0 +1,437 @@
+b'2014-08-13T18:24:15 <Bosmon> If you can\'t fork it, you will have to go with the "applying emptySubcomponent" route
+2014-08-13T18:24:36 <colinclark> "unbound material", can you elaborate?
+2014-08-13T18:24:50 <Bosmon> colinclark - IoC references to material which is not actually defined in the grade
+2014-08-13T18:25:21 <colinclark> aha, ok
+2014-08-13T18:25:38 <colinclark> Luckily in this case I can indeed fork it
+2014-08-13T18:26:10 <Bosmon> It\'s an interesting use case to think about, though
+2014-08-13T18:26:24 <Bosmon> We don\'t really have very advanced support for removing things, only for accumulating things
+2014-08-13T18:27:00 <Bosmon> And typically all of our "facade-building" only goes one way, too
+2014-08-13T18:27:12 <Bosmon> That is, to facilitate the creation of facades that can make many things appear as one thing
+2014-08-13T18:27:29 <Bosmon> To make a thing originally conceived of as one thing appear as many things seems somewhat harder
+2014-08-13T18:27:47 <Bosmon> Could you paste an example of the configuration you\'d want to reuse?
+2014-08-13T18:28:49 <colinclark> yup
+2014-08-13T18:28:50 <colinclark> one sec
+2014-08-13T18:30:41 <colinclark> This is the sprawling top-level component: https://github.com/TheAlphaNerd/Piano/blob/master/js/instrument.js#L19-L256
+2014-08-13T18:31:06 <colinclark> Thank goodness for Infusion, otherwise the whole project would be code for this top-level component
+2014-08-13T18:31:10 <colinclark> but at least here I should be able to choose
+2014-08-13T18:31:40 <colinclark> I want the "piano," "highlighter," and "arpeggiator" components
+2014-08-13T18:31:47 <colinclark> Quite possibly the eventBinder, too
+2014-08-13T18:31:54 <colinclark> given that this was written back in 2012
+2014-08-13T18:32:20 <colinclark> yeah, it looks like I want the event binder too
+2014-08-13T18:32:25 <Bosmon> colinclark - fascinating
+2014-08-13T18:32:31 <colinclark> which could now be rewritten entirely declaratively
+2014-08-13T18:32:34 <colinclark> https://github.com/TheAlphaNerd/Piano/blob/master/js/eventBinder.js
+2014-08-13T18:32:41 <Bosmon> I guess there isn\'t a really sound reason for some of the subcomponents to only have some of the events propagated to them?
+2014-08-13T18:33:05 <colinclark> I think he propagated the events that the subcomponents were capable of understanding
+2014-08-13T18:33:15 <colinclark> I suppose I could just send them all along
+2014-08-13T18:33:19 * vjoanna has quit
+2014-08-13T18:34:04 <colinclark> The thing about the top-level component is that it does represent "too much dependency"
+2014-08-13T18:34:18 <colinclark> in that you can see it has quite a monstrous model, filled with the state of the other components
+2014-08-13T18:34:45 <colinclark> but from the perspective of giving a simple interface, I guess this was a sort of all-in-one facade on the component
+2014-08-13T18:34:51 <colinclark> subcomponents, I mean
+2014-08-13T18:35:20 * vjoanna joined the channel
+2014-08-13T18:35:36 <Bosmon> Yes
+2014-08-13T18:35:45 <Bosmon> this would have been written before we had either model relay, or IoCSS
+2014-08-13T18:36:17 <Bosmon> Before we even had default postInitFunctions, before we even abolished them : P
+2014-08-13T18:38:39 <colinclark> conceptually abolished them
+2014-08-13T18:40:29 <colinclark> Perhaps I\'ll start by just making a grade that distributes the entire model and events to the subcomponents I want
+2014-08-13T18:41:09 <colinclark> And when I update the fork, ensure that there\'s some reasonable structure to the model that I can use to "slice it up" to the subcomponents in the future
+2014-08-13T18:44:13 <colinclark> It does seem fairly important, Bosmon, to have a means to remove things
+2014-08-13T18:44:25 <colinclark> some day
+2014-08-13T19:14:16 * slim__ joined the channel
+2014-08-13T19:17:38 * simonjb joined the channel
+2014-08-13T19:28:34 <Bosmon> Yes
+2014-08-13T19:28:41 <Bosmon> We will definitely have better ways to remove things
+2014-08-13T19:28:51 <Bosmon> The model pull over the weekend is perhaps one of the first steps to that
+2014-08-13T19:32:52 <colinclark> so Doc
+2014-08-13T19:33:06 <colinclark> while you were away, I did quite a lot of slicing to the "instrument grade"
+2014-08-13T19:33:15 <colinclark> splitting it up into the basic configuration required for all types of "instruments"
+2014-08-13T19:33:27 <colinclark> and separate ones for the "grid" and "keyboard" interfaces
+2014-08-13T19:33:44 <colinclark> as well as one called "automm.withArpeggiator" so that users can mix in an arpeggiator if they so desire
+2014-08-13T19:33:55 <colinclark> I suppose the naming of the latter could be better
+2014-08-13T19:35:53 <colinclark> anyway, I\'m wondering about what strategies are available for partitioning out events
+2014-08-13T19:36:12 <colinclark> I would, in principle, be happy enough to share the whole boatload of events from the "facade" component
+2014-08-13T19:36:25 <colinclark> but I guess I can\'t just make a reference to "{that}.events" and expect a coherent result
+2014-08-13T19:36:31 <colinclark> so what are my options, Bosmon?
+2014-08-13T19:37:45 <Bosmon> colinclark - so yes, we don\'t currently support exporting wholesale references to categories of configuration - such as "events" or "listeners"
+2014-08-13T19:37:49 <Bosmon> This is described by http://issues.fluidproject.org/browse/FLUID-5208
+2014-08-13T19:37:52 <Bosmon> But this may well be a good thing
+2014-08-13T19:38:02 <colinclark> It struck me as incoherent when I tried
+2014-08-13T19:38:17 <colinclark> in that it raises questions like "do I want to share onCreate?"
+2014-08-13T19:38:22 <Bosmon> Whilst you do have to parcel out the event references one by one, you can share this parcelling operation itself by baking it into a grade
+2014-08-13T19:38:23 <colinclark> and other silly things
+2014-08-13T19:38:29 <Bosmon> Right, I think it would make a wholesale mess
+2014-08-13T19:38:35 <colinclark> I agree
+2014-08-13T19:38:51 <Bosmon> This is what we came to refer to as "interactional grades" or "participant grades"
+2014-08-13T19:39:03 * slim__ has quit
+2014-08-13T19:39:06 <Bosmon> That is, a grade which exists only to mediate interactions amongst other grades which co-appear in a particular relationship
+2014-08-13T19:39:49 <Bosmon> So for example, you can make a grade which consists solely of the wiring necessary to embed a "baseInstrument" as a subcomponent in a thing like your overall "instruments" facade
+2014-08-13T19:39:57 <Bosmon> Including, for example, the parts which read:
+2014-08-13T19:40:00 <Bosmon> events: {
+2014-08-13T19:40:11 <Bosmon> onPlay: "{parent}.events.onPlay"
+2014-08-13T19:40:11 <Bosmon> etc.
+2014-08-13T19:40:26 * slim__ joined the channel
+2014-08-13T19:40:31 <Bosmon> This can then be "auto-distributed" down from the facade to all the individuals
+2014-08-13T19:40:48 <Bosmon> Say that they all enjoy a grade of "automm.instrument"
+2014-08-13T19:41:01 <Bosmon> And you have given this "participant grade" a name of something like "automm.participantInstrument"
+2014-08-13T19:41:06 <Bosmon> Then in "instruments" you can write:
+2014-08-13T19:41:11 <Bosmon> distributeOptions: {
+2014-08-13T19:41:38 <Bosmon> record: {
+2014-08-13T19:41:50 <Bosmon> gradeNames: "automm.participantInstrument"
+2014-08-13T19:41:53 <Bosmon> },
+2014-08-13T19:42:12 <Bosmon> target: "{that automm.instrument}.options"
+2014-08-13T19:42:14 <Bosmon> }
+2014-08-13T19:42:16 <Bosmon> hey presto
+2014-08-13T19:42:22 <Bosmon> "automatic participant grades" : P
+2014-08-13T19:42:39 <colinclark> ah yes
+2014-08-13T19:42:40 <colinclark> :)
+2014-08-13T19:42:51 <colinclark> fuck, refactoring is fun
+2014-08-13T19:43:33 <Bosmon> it is now :)
+2014-08-13T19:48:01 <Bosmon> simonjb - would you still like to have a chat about killing processes on Windows?
+2014-08-13T19:48:30 <simonjb> Bosmon: actually, yes, that would be awesome
+2014-08-13T19:49:07 <jhung> anastasiac: The CK-12 content we have chosen has a link to a simulation on this page http://simulations.ck12.org/RelativeVelocity/. Any idea how best to embed this in our HTML markup so we can have it as a copy in our EPUB?
+2014-08-13T19:50:26 <simonjb> Bosmon: call me on skype when it works for you?
+2014-08-13T19:50:31 <Bosmon> jhung - that would be an iframe, I believe :)
+2014-08-13T19:50:56 <Bosmon> The method of choice, for embedding GWT content....
+2014-08-13T19:52:19 <jhung> Thanks Bosmon
+2014-08-13T19:53:10 <anastasiac> jhung, this is some odd markup. It look slike it\'s using <video> and <canvas> elements inside obsenely nested tables, with iframes used for the script tags\xe2\x80\xa6
+2014-08-13T19:53:55 <anastasiac> but it\'s all just html
+2014-08-13T19:55:24 <anastasiac> and it\'s not very well designed\xe2\x80\xa6 very confusing...
+2014-08-13T19:56:03 <jhung> hmmm.
+2014-08-13T19:56:59 <jhung> anastasiac: I\'m going to look to see if we can find an alternative. Looking at Phet now.
+2014-08-13T20:00:48 <jhung> anastasiac: This simulation of Phet may be a good alternative. http://phet.colorado.edu/en/simulation/forces-and-motion-basics
+2014-08-13T20:01:12 * slim__ has quit
+2014-08-13T20:03:59 <anastasiac> jhung, that\'s a good one
+2014-08-13T20:04:32 <jhung> We would be able to use the HTML 5 version directly.
+2014-08-13T20:08:17 * danaayotte_ has quit
+2014-08-13T20:12:37 * slim__ joined the channel
+2014-08-13T20:24:04 * slim__ has quit
+2014-08-13T20:36:54 * anvk has quit
+2014-08-13T20:49:31 * danaayotte_ joined the channel
+2014-08-13T21:04:47 * yzen has quit
+2014-08-13T21:10:09 * michelled has quit
+2014-08-13T21:15:59 * Justin_o has quit
+2014-08-13T21:27:22 * anastasiac has quit
+2014-08-13T21:35:03 * jhung has quit
+2014-08-13T21:36:39 * danaayotte_ has quit
+2014-08-13T21:43:35 * colinclark has quit
+2014-08-13T21:47:36 * simonjb has quit
+2014-08-13T21:52:03 * kasparnet has quit
+2014-08-13T21:54:11 * vjoanna has quit
+2014-08-13T21:54:59 * yzen joined the channel
+2014-08-13T21:57:12 * vjoanna joined the channel
+2014-08-13T22:03:38 * yzen has quit
+2014-08-13T22:16:00 * colinclark joined the channel
+2014-08-13T22:23:06 * vjoanna has quit
+2014-08-13T22:27:04 * michelled joined the channel
+2014-08-13T23:10:41 * michelled has quit
+2014-08-13T23:14:28 * jash4[Tejas] has quit
+2014-08-13T23:31:02 * kasparnet joined the channel
+2014-08-13T23:44:32 * michelled joined the channel
+2014-08-13T23:44:33 * michelled has quit
+'
+
+b'2014-08-13T14:26:33 <colinclark> ok, cool
+2014-08-13T14:26:54 <colinclark> sorry to ask twice, simonjb :)
+2014-08-13T14:33:16 <colinclark> Bosmon: I can\'t tell if you were able to explain your comments to Justin_o here regarding the pull request
+2014-08-13T14:33:40 <colinclark> perhaps you could point out to us what parts of the show/hide component are salient?
+2014-08-13T14:34:11 <Bosmon> colinclark - I did actually have to update my npm, it\'s true
+2014-08-13T14:34:21 <colinclark> ah, interesting
+2014-08-13T14:34:24 <Bosmon> But I think it happened sufficiently long ago that I forgot the timing and the reason for it
+2014-08-13T14:43:47 <simonjb> Bosmon: what version of npm are you running with node 0.8.25?
+2014-08-13T14:44:07 <Bosmon> simonjb - I have 1.4.20
+2014-08-13T14:44:16 <simonjb> cool
+2014-08-13T15:11:52 * kasparnet has quit
+2014-08-13T15:12:19 * kasparnet joined the channel
+2014-08-13T15:15:17 * michelled joined the channel
+2014-08-13T15:28:38 * kasparnet has quit
+2014-08-13T15:29:05 * kasparnet joined the channel
+2014-08-13T15:29:11 * jhung1 is now known as jhung
+2014-08-13T15:37:08 * kasparnet has quit
+2014-08-13T15:37:46 * vjoanna has quit
+2014-08-13T15:44:00 * colinclark has quit
+2014-08-13T15:46:28 * vjoanna joined the channel
+2014-08-13T15:50:58 * kasparnet joined the channel
+2014-08-13T15:51:35 * michelled has quit
+2014-08-13T15:52:35 * michelled joined the channel
+2014-08-13T16:03:58 * danaayotte has quit
+2014-08-13T16:05:25 <michelled> Bosmon, jhernandez, simonjb, slim___: architecture meeting
+2014-08-13T16:06:19 * kasparnet has quit
+2014-08-13T16:06:29 <slim___> michelled: I\'ve nothing to report but happy to join
+2014-08-13T16:06:50 * kasparnet joined the channel
+2014-08-13T16:12:22 <Justin_o> Bosmon: I\'m still not quite clear what it is exactly that you want me to do for FLOE-207.  If you could point me at what it is in particular that you\'d like, that should help.
+2014-08-13T16:13:51 <slim___> michelled: please remind me of the meeting URL - it\'s not in the calendar :(
+2014-08-13T16:14:46 <michelled> https://www3.gotomeeting.com/join/705233502
+2014-08-13T16:16:01 <Bosmon> Hi Justin_o
+2014-08-13T16:16:44 * colinclark joined the channel
+2014-08-13T16:17:23 <Bosmon> Yes, you would place flags in the model to govern this
+2014-08-13T16:18:43 <Bosmon> Very similar to the structure shown in the videoPlayer file referenced, only you would have areas "isFocused" and "isHovered" (or similar names of your choice) to organise the state
+2014-08-13T16:18:55 <Bosmon> https://github.com/fluid-project/videoPlayer/blob/master/js/VideoPlayer_showHide.js#L26
+2014-08-13T16:20:43 <Justin_o> Bosmon: thanks for the clarification. Wouldn\'t this add to the code though since we\'d need a model listener for both states and to keep the existing handlers but repurpose them to change the model state?
+2014-08-13T16:20:53 <Bosmon> Justin_o - the listeners would go into this framework
+2014-08-13T16:20:57 <Bosmon> And not into the component itself
+2014-08-13T16:21:16 <Bosmon> And eventually these would be contributed into the core framework so they would appear just once
+2014-08-13T16:22:16 <Justin_o> Bosmon: okay.. i\'ll try to work something out for that.
+2014-08-13T16:22:28 <Bosmon> Justin_o - cheers - it should be very helpful!
+2014-08-13T16:25:12 * jash4[Tejas] joined the channel
+2014-08-13T16:29:59 <michelled> Justin_o: you may be interested to see that we are starting to us the assignee feature in github for pull requests in GPII: https://github.com/GPII/universal/pulls
+2014-08-13T16:37:17 <Justin_o> michelled: cool.. how is that working so far
+2014-08-13T16:37:52 <michelled> I suppose we\'ll see - but it should help when looking at long lists of pull requests
+2014-08-13T16:41:34 <slim___> great
+2014-08-13T16:45:33 <Justin_o> michelled: that\'s true
+2014-08-13T16:47:40 <slim___> Cambridge? UK? When?
+2014-08-13T16:57:53 * vjoanna has quit
+2014-08-13T16:58:37 * danaayotte_ joined the channel
+2014-08-13T17:00:46 * simonjb has quit
+2014-08-13T17:04:13 * vjoanna joined the channel
+2014-08-13T17:05:15 * slim___ has quit
+2014-08-13T17:14:11 * vjoanna has quit
+2014-08-13T17:15:17 * vjoanna joined the channel
+2014-08-13T17:20:37 * jhernandez has quit
+2014-08-13T17:26:43 <Justin_o> Bosmon: for modelListeners how do i listen to something like {isFocused: {icon: true}}
+2014-08-13T17:26:52 <Justin_o> where i just want to listen to the state of icon
+2014-08-13T17:28:19 <Bosmon> You should listen to the path "isFocused.icon"
+2014-08-13T17:28:46 * michelled has quit
+2014-08-13T17:30:23 <Justin_o> Bosmon: how does it distinguish between that being a model path versus a namespace?
+2014-08-13T17:31:08 <Bosmon> Justin_o - we don\'t support namespaces in models - unless you supply custom configuration to the ChangeApplier
+2014-08-13T17:31:45 <Justin_o> Bosmon: what about this https://github.com/fluid-project/infusion/blob/master/src/components/overviewPanel/js/OverviewPanel.js#L73-L76
+2014-08-13T17:32:02 <Bosmon> Justin_o - yes
+2014-08-13T17:32:20 * kasparnet has quit
+2014-08-13T17:32:27 <Justin_o> Bosmon:  but the model there is only showPanel https://github.com/fluid-project/infusion/blob/master/src/components/overviewPanel/js/OverviewPanel.js#L73-L76
+2014-08-13T17:32:38 <Justin_o> sorry https://github.com/fluid-project/infusion/blob/master/src/components/overviewPanel/js/OverviewPanel.js#L70-L72
+2014-08-13T17:33:12 <Bosmon> Justin_o - looks like a bug to me
+2014-08-13T17:33:27 * anvk joined the channel
+2014-08-13T17:33:35 <Justin_o> Bosmon: in the modelListeners or the component?
+2014-08-13T17:33:45 <Bosmon> A bug in the component, relying on a bug in the ChangeApplier
+2014-08-13T17:33:52 <Bosmon> In fact I fixed this bug at the weekend
+2014-08-13T17:34:01 <Bosmon> So it\'s probably this component will fail now
+2014-08-13T17:34:06 <Justin_o> Bosmon: :(
+2014-08-13T17:34:07 <Justin_o> okay
+2014-08-13T17:34:11 <Justin_o> let me see
+2014-08-13T17:34:42 <Justin_o> Bosmon: it seems to work still http://build.fluidproject.org/infusion/demos/overviewPanel/
+2014-08-13T17:34:43 <Justin_o> i think
+2014-08-13T17:37:09 <Bosmon> Justin_o - looks like the build site has not been updated
+2014-08-13T17:37:24 <Bosmon> oh wait
+2014-08-13T17:38:43 * vjoanna has quit
+2014-08-13T17:38:50 <jhung> anastasiac: I have pushed up my EPUB html content to my repo https://github.com/jhung/EPUB
+2014-08-13T17:38:52 <Bosmon> Ah yes
+2014-08-13T17:38:59 <Bosmon> Justin_o - it only works because the component is bound to the old applier
+2014-08-13T17:39:01 <Bosmon> Which still has the bug
+2014-08-13T17:39:10 <anastasiac> thanks, jhung
+2014-08-13T17:39:15 <Bosmon> That is, OverviewPanel isn\'t a RelayComponent
+2014-08-13T17:39:31 <Justin_o> Bosmon: oh i see.. so relayComponents should work like this now
+2014-08-13T17:39:32 <Bosmon> If you want namespaces in ModelListeners, you\'ll have to use the long form for a listener record
+2014-08-13T17:39:46 <Justin_o> what\'s the long form?
+2014-08-13T17:40:09 <Justin_o> Bosmon: i guess i\'ll have to update to the latest infusion for the feedback tool too
+2014-08-13T17:41:01 <Bosmon> Justin_o - the so-called "namespace" isn\'t having any effect - it is attempting to evaluate a subpath of the boolean "showPanel" and it only reacts to the change because of a framework bug
+2014-08-13T17:41:10 <Bosmon> In the old framework, invalidating any path also invalidated any subpaths
+2014-08-13T17:41:17 <Bosmon> Regardless of whether there were any changed values there or not
+2014-08-13T17:41:42 <Bosmon> This bug was fixed at the weekend, but will only affect users of the new ChangeApplier
+2014-08-13T17:43:45 <Bosmon> Justin_o - it seems there is a hole in our docs
+2014-08-13T17:43:59 <Bosmon> https://github.com/fluid-project/infusion-docs/blob/master/InfusionEventSystem.md
+2014-08-13T17:44:09 <Bosmon> This page describes a "listener specification" but doesn\'t say what one is
+2014-08-13T17:44:58 <Bosmon> And, for example, this page on our old docs site has a broken link to "priorities"
+2014-08-13T17:44:59 <Bosmon> http://wiki.fluidproject.org/display/Infusion14/Events
+2014-08-13T17:45:34 <Bosmon> I guess I\'ll prepare a pull request
+2014-08-13T17:45:41 <Justin_o> Bosmon: here\'s the latest version of that page, but it also has the broken link http://wiki.fluidproject.org/display/docs/Events
+2014-08-13T17:45:46 <Justin_o> Bosmon: thanks
+2014-08-13T17:46:16 <Justin_o> Bosmon: if i\'m trying to programatically make a model change do i still use that.applier.requestChange(path, value)?
+2014-08-13T17:46:53 <Bosmon> Justin_o - the preferred name for the API is "change" - https://github.com/fluid-project/infusion-docs/blob/master/ChangeApplierAPI.md
+2014-08-13T17:47:01 <Bosmon> But yes, that is how it works
+2014-08-13T17:51:16 * vjoanna joined the channel
+2014-08-13T17:51:42 <Justin_o> Bosmon: thanks
+2014-08-13T18:04:36 <Justin_o> Bosmon: I\'ve made changes to the FLOE-207 branch, I hope things are better now.
+2014-08-13T18:04:44 <Justin_o> https://github.com/fluid-project/metadata/pull/33
+2014-08-13T18:06:28 * michelled joined the channel
+2014-08-13T18:08:15 * michelled has quit
+2014-08-13T18:09:03 * michelled joined the channel
+2014-08-13T18:15:51 * slim__ joined the channel
+2014-08-13T18:16:06 * slim__ has quit
+2014-08-13T18:18:22 <colinclark> Hey Bosmon, time for a quick dumbass question or two?
+2014-08-13T18:18:37 <Bosmon> colinclark - certainly
+2014-08-13T18:18:56 <Bosmon> Although in this world inhabited by SOCKKRATES, it is almost impossible by definition that any question could be dumbass : P
+2014-08-13T18:18:57 <colinclark> So I have a rather big top-level component that someone wrote
+2014-08-13T18:19:04 <colinclark> which aggregates together lots of subcomponents
+2014-08-13T18:19:10 <colinclark> and distributes events to them and the like
+2014-08-13T18:19:19 <colinclark> I\'d like to create a "minimal" version of this component
+2014-08-13T18:19:39 * kasparnet joined the channel
+2014-08-13T18:19:47 <colinclark> Can I create a subgrade that somehow ellides these unneeded subcomponents
+2014-08-13T18:19:48 <colinclark> ?
+2014-08-13T18:21:38 <Bosmon> colinclark - you can just supply "fluid.emptySubcomponent" on top of their principal type name
+2014-08-13T18:21:45 <colinclark> ah, that still works :P
+2014-08-13T18:21:47 <Bosmon> We haven\'t really revisited this area of the framework since the very earliest days
+2014-08-13T18:21:52 <Bosmon> But it should really be improved
+2014-08-13T18:21:57 <colinclark> I guess this is a comment entirely out of principle
+2014-08-13T18:22:01 <colinclark> but I don\'t even want these subcomponents
+2014-08-13T18:22:08 <colinclark> theoretically, they should all be autonomous
+2014-08-13T18:22:09 <Bosmon> Yes
+2014-08-13T18:22:20 <colinclark> I just want to reuse the configuration in the top-level component for those I do want
+2014-08-13T18:22:28 <Bosmon> Fascinating
+2014-08-13T18:22:37 <colinclark> since there\'s a lot of boilerplate involving passing events along from parent to child
+2014-08-13T18:22:42 <Bosmon> ok
+2014-08-13T18:22:52 <Bosmon> You could just factor that boilerplate itself out in a grade
+2014-08-13T18:22:53 <Bosmon> into
+2014-08-13T18:23:06 <Bosmon> Rather than have to buy into the components only to eliminate them
+2014-08-13T18:23:14 <colinclark> ok
+2014-08-13T18:23:19 <colinclark> So this is an interesting case of reuse
+2014-08-13T18:23:23 <Bosmon> As per my discovery of "participant grades" earlier in the year : P
+2014-08-13T18:23:33 <colinclark> So, let\'s play all theoretical-like
+2014-08-13T18:23:38 <Bosmon> When I discovered that exactly the thing I had recommended everyone not to do was precisely the thing that we really wanted to do
+2014-08-13T18:23:48 <colinclark> Let\'s say that I don\'t actually have a fork of this monster component
+2014-08-13T18:23:51 <Bosmon> Which is to create grades with "unbound material"
+2014-08-13T18:24:03 <Bosmon> ok
+2014-08-13T18:24:06 <colinclark> I guess I really am left with cutting and pasting the configuration that I need from it?
+'
+
+b'2014-08-13T00:00:33 * yzen_ has quit
+2014-08-13T00:06:36 * jhung joined the channel
+2014-08-13T00:30:04 * colinclark has quit
+2014-08-13T01:01:55 * jash4[Tejas] has quit
+2014-08-13T01:18:51 * yzen joined the channel
+2014-08-13T01:30:48 * yzen has quit
+2014-08-13T03:21:21 * jhung has quit
+2014-08-13T03:23:01 * yzen joined the channel
+2014-08-13T07:48:52 * kasparnet joined the channel
+2014-08-13T07:50:04 * kasparne_ joined the channel
+2014-08-13T07:50:04 * kasparnet has quit
+2014-08-13T08:08:36 * Bosmon has quit
+2014-08-13T08:12:18 * Bosmon joined the channel
+2014-08-13T08:13:22 * kasparne_ has quit
+2014-08-13T08:17:23 * kasparnet joined the channel
+2014-08-13T08:30:17 * jhernandez joined the channel
+2014-08-13T09:34:42 * jhernandez has quit
+2014-08-13T09:38:45 * amilchev has quit
+2014-08-13T09:42:21 * amilchev joined the channel
+2014-08-13T09:44:27 * slim__ joined the channel
+2014-08-13T10:00:26 * kasparnet has quit
+2014-08-13T10:07:13 * kasparnet joined the channel
+2014-08-13T10:23:55 * kasparnet has quit
+2014-08-13T10:30:34 * kasparnet joined the channel
+2014-08-13T11:06:05 * Justin_o joined the channel
+2014-08-13T11:11:40 * amilchev has quit
+2014-08-13T11:15:50 * amilchev joined the channel
+2014-08-13T11:51:57 * yzen has quit
+2014-08-13T11:59:40 * kasparnet has quit
+2014-08-13T12:04:09 * yzen joined the channel
+2014-08-13T12:05:13 * kasparnet joined the channel
+2014-08-13T12:08:16 * jhernandez joined the channel
+2014-08-13T12:11:33 * michelled joined the channel
+2014-08-13T12:33:34 * amilchev has quit
+2014-08-13T12:36:14 * amilchev joined the channel
+2014-08-13T12:40:47 * michelled has quit
+2014-08-13T12:41:22 * slim__ has quit
+2014-08-13T12:41:29 * slim___ joined the channel
+2014-08-13T12:42:59 <slim___> sgithens: ping
+2014-08-13T12:44:42 * jhung joined the channel
+2014-08-13T12:44:59 * vjoanna joined the channel
+2014-08-13T12:46:18 * yzen has quit
+2014-08-13T12:46:24 * jhung1 joined the channel
+2014-08-13T12:49:16 * jhung has quit
+2014-08-13T12:52:16 <Justin_o> kasparnet, Bosmon: i tried adding an svg to the gpii wiki. It shows up in the editor but not on the page. Any ideas? http://wiki.gpii.net/w/PrefsEditor_to_prefsServer_communication
+2014-08-13T12:52:55 <Justin_o> Bosmon: by the way, feel free to edit that page as needed. It is trying to show the requirements from our conversation last week, although by now I\'m not sure I remember all the details.
+2014-08-13T13:01:28 <slim___> Justin_o: kasparnet Bosmon: SVG might need to be enabled - https://www.mediawiki.org/wiki/Manual:Image_Administration#SVG
+2014-08-13T13:02:17 <Justin_o> slim___: thanks... kasparnet let me know if you can enable that. If not I can convert the svg to some other type.
+2014-08-13T13:03:55 <kasparnet> hi Justin_o: I\'m seeing this on the wiki http://wiki.gpii.net/w/File:PresEditor-prefsServer.svg
+2014-08-13T13:04:24 <kasparnet> will check if I can see if it\'s generally disabled, or if it\'s an issue with thumbnail creation
+2014-08-13T13:04:37 <Justin_o> kasparnet: thanks
+2014-08-13T13:04:41 <kasparnet> but if it\'s not enabled, I dont have perms to do so, as it requires shs access to the server
+2014-08-13T13:04:45 <Justin_o> and yes, that\'s the file i want to show
+2014-08-13T13:05:00 <Justin_o> kasparnet: ah.. something for avtar?
+2014-08-13T13:05:10 <kasparnet> Justin_o: yup
+2014-08-13T13:05:28 <Justin_o> kasparnet: hmm.. he\'s away right now.. maybe i should just convert the file to another type
+2014-08-13T13:05:53 <kasparnet> Justin_o: so according to this http://wiki.gpii.net/w/Special:Upload it SHOULD be permitted Permitted file types: gif, png, jpg, jpeg, svg, xls, xlsx, doc, docx, ppt, pptx, odt, odp, ods, odg, pdf
+2014-08-13T13:05:58 <kasparnet> does it contain javascript?
+2014-08-13T13:06:21 <kasparnet> -- I read on slim___\'s link that svgs with js werent allowed
+2014-08-13T13:06:48 <Justin_o> kasparnet: it shouldn\'t
+2014-08-13T13:06:57 <kasparnet> but I guess it might now work due to an issue with an imagemagick module not loaded (or whatever that err msg said)
+2014-08-13T13:07:11 <Justin_o> yes.. seemed like that could be the case
+2014-08-13T13:07:40 <kasparnet> Justin_o: so it might be better to convert to png or something - or upload somewhere else and reference with a link
+2014-08-13T13:07:50 <kasparnet> sorry for not being more helpful
+2014-08-13T13:11:00 * yzen joined the channel
+2014-08-13T13:11:07 <Justin_o> kasparnet: no worries.. I\'ve uploaded a png version instead
+2014-08-13T13:12:04 <Justin_o> kasparnet: any idea how to delete the old one?
+2014-08-13T13:12:45 <Justin_o> i guess i just don\'t have permission
+2014-08-13T13:13:11 <kasparnet> Justin_o: should be deleted now
+2014-08-13T13:13:18 <Justin_o> kasparnet: thanks
+2014-08-13T13:13:53 * slim___ thinks is a shame to not use SVG
+2014-08-13T13:14:45 <kasparnet> Justin_o: just bumped your privs as well
+2014-08-13T13:14:50 <kasparnet> slim___: +1
+2014-08-13T13:15:18 * slim___ I seem to be collecting underscores :)
+2014-08-13T13:17:09 <Bosmon> Justin_o , the-t-in-rtf1 - I wanted to mention that michelled merged this pull request yesterday which was prompted by problems that the two of you had using the model listener system last week
+2014-08-13T13:17:10 <Bosmon> https://github.com/fluid-project/infusion/pull/553
+2014-08-13T13:17:43 <Bosmon> There is a new annotation "excludeSource: init" which you can now use to avoid the problematic notification when a component starts up
+2014-08-13T13:17:52 <Bosmon> There is new documentation to explain the features in this pull request: https://github.com/fluid-project/infusion-docs/pull/29
+2014-08-13T13:18:31 <Justin_o> Bosmon: thanks so much for that
+2014-08-13T13:19:40 <Bosmon> This is similar to the "source tracking facility" that we had in the old ChangeApplier but the mechanism is quite different so I thought it was best to use different configuration to express it
+2014-08-13T13:21:24 <Justin_o> Bosmon: the options look reasonable. I have a question about the init source.. if the component itself has a default model value.. (e.g. true or false) will this source still fire a change event if we exclude init?
+2014-08-13T13:21:48 <Bosmon> Justin_o - the annotation refers to all changes during initialisation, regardless of the source of the values
+2014-08-13T13:22:00 <Bosmon> If you exclude init, you will get no notification during this entire process
+2014-08-13T13:22:28 <Justin_o> Bosmon: okay so this "During this change, the listener will observe the value of the model changing from undefined to its consistent initial value, during the overall process of component construction" was just an example of a change
+2014-08-13T13:23:10 <Bosmon> Well, it is a description of the entire initialisation process
+2014-08-13T13:23:20 <Bosmon> With the new applier, initialisation takes places a single transaction
+2014-08-13T13:23:27 <Bosmon> Regardless of how many sources there are for an initial value
+2014-08-13T13:33:48 * colinclark joined the channel
+2014-08-13T13:44:13 * danaayotte joined the channel
+2014-08-13T13:46:55 * simonjb joined the channel
+2014-08-13T14:00:59 <Bosmon> Hi there simonjb!
+2014-08-13T14:01:03 <Bosmon> Sorry I missed you yesterday
+2014-08-13T14:01:18 <simonjb> Bosmon: no problem
+2014-08-13T14:01:56 <simonjb> Bosmon: I\'m just writing up a response to Christophe on the architecture list with the steps that worked for me for the updated GPII Windows Grunt build
+2014-08-13T14:02:09 <Bosmon> simonjb - thanks
+2014-08-13T14:02:41 * anastasiac joined the channel
+2014-08-13T14:02:49 <Bosmon> Do we require more details in the readme?
+2014-08-13T14:07:39 <simonjb> Bosmon: I think the readme is reasonable -- there are some hassles with updating the npm version that comes with 0.8.25
+2014-08-13T14:07:57 <Bosmon> Oh yes
+2014-08-13T14:08:03 <Bosmon> I had forgotten about that
+2014-08-13T14:08:12 <Bosmon> Which version does come with 0.8.25?
+2014-08-13T14:09:43 <Justin_o> Bosmon: could you explain a bit more about what you\'d like to see for this comment you left on the FLOE-207 pull request https://github.com/fluid-project/metadata/pull/33#discussion_r16009498
+2014-08-13T14:09:50 <sgithens> slim__ san
+2014-08-13T14:10:00 <Bosmon> Justin_o - I\'m not sure I can say much more
+2014-08-13T14:10:01 <sgithens> hmm slim___
+2014-08-13T14:10:02 <simonjb> Bosmon: 1.2.30
+2014-08-13T14:10:08 <Bosmon> "Some sort of declarative configuration" would be nice
+2014-08-13T14:10:17 <Justin_o> Bosmon: I had misnamed a couple of the namespaces which probably made things seem more similar.. i\'ve fixed that now
+2014-08-13T14:10:23 <Justin_o> Bosmon: wondering if it is still an issue
+2014-08-13T14:10:38 <Bosmon> Justin_o - I was speaking about the handlers bound to focus and blur
+2014-08-13T14:10:43 <Bosmon> And their effects
+2014-08-13T14:10:49 <slim___> sgithens:
+2014-08-13T14:10:55 <slim___> sgithens: ho
+2014-08-13T14:11:18 <Justin_o> Bosmon: okay.. so not about them and the hover handlers?
+2014-08-13T14:11:29 <Bosmon> Those too
+2014-08-13T14:11:30 <slim___> sgithens: I just wanted to get back to your old Skype message
+2014-08-13T14:11:40 <Justin_o> Bosmon: so they are adding different styles.. does that matter?
+2014-08-13T14:11:52 <sgithens> Oh right, I got very close to testing your pull request on gpii/windows in visual studio lsat night
+2014-08-13T14:11:57 <sgithens> I hope to try and build it tonight
+2014-08-13T14:12:07 <sgithens> did you have anything else you needed to add to the pull?
+2014-08-13T14:12:13 <slim___> sgithens: I\'m way behind, but now caught up on emials so back to hacking on the listener
+2014-08-13T14:12:15 <sgithens> since it\'s taken us a while to get to it? slim___
+2014-08-13T14:12:21 <slim___> no image yet but RSN
+2014-08-13T14:15:16 <slim___> sgithens: did you mean *my* pull request? That\'s old and I need to do a new one.
+2014-08-13T14:15:32 <slim___> DOun\'t will be usable tonight
+2014-08-13T14:16:01 <slim___> sgithens: BUT what do you need? Just NTAG reading? I can priortise that
+2014-08-13T14:17:41 <sgithens> slim___: Ok I\'ll hold off on trying it
+2014-08-13T14:17:49 <Bosmon> simonjb - thanks for the instructions
+2014-08-13T14:17:50 <sgithens> I think NTAG is the current priority
+2014-08-13T14:17:51 <Justin_o> Bosmon: are you saying you\'d like the hover and focus states to be in the model
+2014-08-13T14:18:05 <simonjb> Bosmon: reply to Christophe sent; the hassle with npm will go away once we are on node 0.10
+2014-08-13T14:18:10 <sgithens> I think some would argue we need the mifare support still, but going forward I think most new stuff will be NTAG
+2014-08-13T14:18:16 <Bosmon> What issues did you find with npm 1.4.12?
+2014-08-13T14:18:34 <sgithens> slim___ It\'s combined with the USB listener now as well right?
+2014-08-13T14:19:02 <slim___> sgithens: I already pulled the USB code
+2014-08-13T14:19:42 <slim___> sgithens: good point - MiFair + NTAG and not just NTAG
+2014-08-13T14:20:08 <colinclark> simonjb: You make reference to issues with some versions of npm--that you tried with 1.4.12 and it didn\'t work. What specifically didn\'t work?
+2014-08-13T14:22:11 <simonjb> Bosmon, colinclark: the spinner was broken in the Windows console -- instead of spinning in place, it started a new line for each update of the spinner; and installs didn\'t finish (quite possibly due to the extra console noise slowing it down -- but I gave it quite a bit of time); I didn\'t investigate further and instead tried an older version
+2014-08-13T14:22:21 <colinclark> oh wow
+2014-08-13T14:22:22 <colinclark> ok
+2014-08-13T14:22:33 <colinclark> So where are we at with Node 0.10.x support, simonjb?
+2014-08-13T14:22:46 <colinclark> at what point will this awkwardness all go away?
+2014-08-13T14:23:04 <simonjb> colinclark: once we are on 0.10 I think we should be good
+2014-08-13T14:23:34 <colinclark> and Bosmon, why didn\'t you encounter these kinds of issues while working with the new Grunt scripts? Just because you\'re running a suitably old version of Node that you never update?
+2014-08-13T14:23:42 <simonjb> colinclark: the 0.10 update is blocked by Bosmon\'s stop gap solution for asynchronous settings handlers
+2014-08-13T14:23:57 <colinclark> oh yes
+2014-08-13T14:23:58 <colinclark> that\'s right
+2014-08-13T14:25:29 <slim___> kasparnet: I updated that estimate for you. Soz It was delayed
+2014-08-13T14:25:46 <kasparnet> cool, thanks slim___
+2014-08-13T14:26:18 <simonjb> Bosmon, colinclark: I\'ll reply to my email with details on the 1.4.12 issues as you both asked and others might like to know
+'
+

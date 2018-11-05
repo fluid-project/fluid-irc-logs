@@ -1,0 +1,233 @@
+b'2017-02-13T17:58:06 <colinclark> that makes sense
+2017-02-13T17:59:52 <colinclark> So is it right to imagine, cindyli, that the app itself should be "mode" aware? i.e. this is a configuration issue for the app itself, so in its production mode it should not render the menu?
+2017-02-13T18:02:23 <cindyli> having a look on michelled\'s branch to make sure what i suggest would work...
+2017-02-13T18:02:57 <cindyli> michelled: is this the one - https://github.com/michelled/gpii-app/tree/GPII-2092
+2017-02-13T18:03:58 <cindyli> colinclark, michelled, we can create 2 versions of gpii.app: one has the menu subcomponent, the other doesn\'t have
+2017-02-13T18:04:17 <michelled> cindyli, use this branch: https://github.com/michelled/gpii-app/tree/GPII-1596
+2017-02-13T18:04:24 <michelled> it\'s the one I\'ve made the pull request with
+2017-02-13T18:04:33 <michelled> I\'ll merge my other branches into it when they are ready
+2017-02-13T18:04:34 <colinclark> two different grades, cindyli? one which represents production and the other, development?
+2017-02-13T18:04:37 <cindyli> when you distribute gpii.app as a subcomponent of flow manager here https://github.com/michelled/gpii-app/blob/GPII-1596/configs/app.json#L6
+2017-02-13T18:04:40 <cindyli> yes, colinclark
+2017-02-13T18:04:48 <colinclark> sweet, i am following :)
+2017-02-13T18:05:07 <cindyli> in the production, distribute the one that doesn\'t have the menu subcomponent
+2017-02-13T18:05:14 <cindyli> in the dev, distribute the other one
+2017-02-13T18:05:23 <colinclark> sounds sensible
+2017-02-13T18:05:58 <cindyli> so, you will have 2 config files in "configs" dir for these different configs
+2017-02-13T18:07:57 <michelled> cindyli: we want the \'menu\' subcomponent regardless - it\'s the values in the actual menu that we want to change
+2017-02-13T18:08:12 <michelled> is this still best done with distribute options?
+2017-02-13T18:09:07 <cindyli> ok, michelled, my first thought is, make whatever part you\'d like to be flexible a component and making gpii.app versions with/without it
+2017-02-13T18:09:37 <cindyli> let me know if it\'s hard to do.
+2017-02-13T18:10:03 <michelled> ok cindyli thx
+2017-02-13T18:11:33 <jhernandez> stegru: FYI, just added a comment into https://issues.gpii.net/browse/GPII-2200
+2017-02-13T18:12:16 <jhernandez> I don\'t see any other way to fix that problem
+2017-02-13T18:12:29 * kasparnet has quit
+2017-02-13T18:14:30 <jhernandez> Bosmon: in fact, I\'d still say that this is problem in the gpii-app itself, since we\'re also missing the log from the initialization stage of universal
+2017-02-13T18:14:59 <jhernandez> which I think it\'s important to have recorder into our logfiles
+2017-02-13T18:15:07 <jhernandez> *recorded
+2017-02-13T18:17:04 * Yan_Hu joined the channel
+2017-02-13T18:18:48 <stegru> thanks javjarfer
+2017-02-13T18:18:54 <stegru> sorry, jhernandez i meant
+2017-02-13T18:20:39 <javjarfer> stegru, haha np
+2017-02-13T18:32:36 * sai joined the channel
+2017-02-13T18:32:53 * sai has left the channel
+2017-02-13T18:33:28 <michelled> cindyli: I now have two versions \'menuInApp\' and \'menuInAppDev\' https://github.com/michelled/gpii-app/blob/GPII-1596-config/src/app.js#L205
+2017-02-13T18:34:55 <michelled> so now I need to change they type of the \'menu\' subcomponent based on whether we are in development or production mode https://github.com/michelled/gpii-app/blob/GPII-1596-config/src/app.js#L41
+2017-02-13T18:37:38 <cindyli> michelled: i think the easier way is to add the grade you created for the flexible part as a grade of this menu component. so it would always be the same "menu" type with/without an addon grade
+2017-02-13T18:40:21 <michelled> cindyli: do you have an example? I don\'t understand what you are suggesting
+2017-02-13T18:41:04 <cindyli> drafting an example. one sec...
+2017-02-13T18:43:58 <cindyli> michelled: assume you\'ve created a grade component named "gpii.app.menuAddon" for the flexible part of the menu
+2017-02-13T18:44:37 <cindyli> this menuAddon by default is not part of "gpii.app.menuInApp"
+2017-02-13T18:44:55 <cindyli> you will then have 2 config files in the "configs" dir
+2017-02-13T18:45:37 <cindyli> the one for not having the menuAddon is what you have now
+2017-02-13T18:45:48 <cindyli> the new one will look like this: http://pastebin.com/qCjfGhqQ
+2017-02-13T18:46:07 <cindyli> see line 10-13
+2017-02-13T18:47:06 <michelled> interesting
+2017-02-13T18:47:10 <michelled> thx cindyli
+2017-02-13T18:48:20 <cindyli> anytime. let me know if it doesn\'t make sense to your use case
+2017-02-13T18:52:18 * avtar joined the channel
+2017-02-13T18:53:35 * kavya joined the channel
+2017-02-13T19:31:08 * the-t-in-rtf joined the channel
+2017-02-13T19:34:23 * cindyli1 joined the channel
+2017-02-13T19:36:36 <Bosmon> jhernandez - I imagine we can solve the headline issue pretty easily
+2017-02-13T19:36:42 <Bosmon> By just moving the location of the logging statement
+2017-02-13T19:36:50 <Bosmon> Dealing with logging the startup of universal is more problematic
+2017-02-13T19:39:22 <jhernandez> Bosmon: yeah, this is what I\'ve done - moving the location fixes the issue to get the os information into the log file
+2017-02-13T19:39:55 * kavya has quit
+2017-02-13T19:42:14 <jhernandez> and yes, in relation to the startup of universal, a quick fix can be to make the gpii-app\'s logging module not depending on universal to determine the directory where the logs are being stored
+2017-02-13T19:42:41 <michelled> cindyli1: I\'ve implemented your suggestion. It means that if people want to run the app in dev mode, they need to change the config file here: https://github.com/michelled/gpii-app/blob/GPII-1596-config/main.js#L28
+2017-02-13T19:42:59 <michelled> I think that is what you expected, correct?
+2017-02-13T19:45:47 <cindyli1> michelled: it would be nice if main.js can be refactored to be like https://github.com/GPII/universal/blob/master/index.js#L78-L86
+2017-02-13T19:46:14 <cindyli1> so users can config which config file to be used using NODE_ENV
+2017-02-13T19:47:35 <michelled> sounds good cindyli1
+2017-02-13T19:47:48 <cindyli1> thank YOU, michelled
+2017-02-13T20:00:13 * yzen has quit
+2017-02-13T20:17:10 * stegru has quit
+2017-02-13T20:19:43 * michelled joined the channel
+2017-02-13T20:23:25 * yzen joined the channel
+2017-02-13T20:44:54 * michelled joined the channel
+2017-02-13T20:48:09 * stegru joined the channel
+2017-02-13T21:05:21 * sgithens joined the channel
+2017-02-13T21:25:53 * michelled joined the channel
+2017-02-13T22:20:41 * kasparnet joined the channel
+2017-02-13T22:32:34 * kasparnet has quit
+2017-02-13T22:42:22 * avtar joined the channel
+2017-02-13T22:58:14 * yzen is now known as yzen_
+2017-02-13T23:02:37 * yzen_ has quit
+2017-02-13T23:18:22 * michelled has quit
+2017-02-13T23:51:24 * Jess_ joined the channel
+2017-02-13T23:56:55 * javjarfer has quit
+'
+
+b'2017-02-13T00:10:23 * stegru has quit
+2017-02-13T00:19:09 * kasparne_ has quit
+2017-02-13T04:22:01 * sgithens joined the channel
+2017-02-13T06:21:23 * wdfwefewvfgew joined the channel
+2017-02-13T06:21:25 * wdfwefewvfgew has left the channel
+2017-02-13T06:25:45 * the-t-in-rtf joined the channel
+2017-02-13T06:33:37 * the-t-in-rtf has quit
+2017-02-13T08:33:55 * amatas joined the channel
+2017-02-13T08:45:53 * the-t-in-rtf joined the channel
+2017-02-13T08:48:58 * stegru joined the channel
+2017-02-13T09:23:22 * kasparnet joined the channel
+2017-02-13T09:23:56 * kasparnet has quit
+2017-02-13T09:24:06 * kasparnet joined the channel
+2017-02-13T09:24:48 * kasparne_ joined the channel
+2017-02-13T09:25:13 * kasparnet has quit
+2017-02-13T09:25:46 * kasparnet joined the channel
+2017-02-13T09:29:16 * kasparne_ has quit
+2017-02-13T09:45:06 * kasparnet has quit
+2017-02-13T10:28:26 * kasparnet joined the channel
+2017-02-13T11:12:49 * javjarfer joined the channel
+2017-02-13T11:17:26 * jhernandez joined the channel
+2017-02-13T12:09:32 * gtirloni joined the channel
+2017-02-13T12:57:39 * kasparnet has quit
+2017-02-13T13:27:30 * -- BotBot disconnected, possible missing messages --
+2017-02-13T13:30:25 * -- BotBot disconnected, possible missing messages --
+2017-02-13T13:33:18 * -- BotBot disconnected, possible missing messages --
+2017-02-13T13:35:21 * [o__o] joined the channel
+2017-02-13T13:45:30 * jhung joined the channel
+2017-02-13T14:00:55 * jhernandez has quit
+2017-02-13T14:02:06 * jhernandez joined the channel
+2017-02-13T14:03:20 * Jess_ joined the channel
+2017-02-13T14:08:24 * cindyli joined the channel
+2017-02-13T14:24:03 * simonjb joined the channel
+2017-02-13T14:32:52 * yzen joined the channel
+2017-02-13T14:45:50 * jhung has quit
+2017-02-13T14:45:50 * jhernandez has quit
+2017-02-13T14:45:50 * jhung joined the channel
+2017-02-13T14:45:50 * jhernandez joined the channel
+2017-02-13T14:46:23 * avtar1 joined the channel
+2017-02-13T14:46:36 * avtar1 joined the channel
+2017-02-13T14:50:25 * michelled joined the channel
+2017-02-13T14:55:23 * mrtyler joined the channel
+2017-02-13T14:58:27 * kasparnet joined the channel
+2017-02-13T15:01:04 * clown joined the channel
+2017-02-13T15:02:35 * kasparnet has quit
+2017-02-13T15:32:53 * colinclark joined the channel
+2017-02-13T15:49:04 <Justin_o> Bosmon: i\'m looking some more at the tests for FLUID-6125
+2017-02-13T15:49:09 <Justin_o> i\'m finding that there are edge cases
+2017-02-13T15:49:20 <Bosmon> Justin_o - quite so :)
+2017-02-13T15:49:51 <Justin_o> there are issues where it\'s rounding up, but should be rounding down. I managed to make a modification that addresses those that I have tests for, but now one of the other tests is failing
+2017-02-13T15:50:18 <Bosmon> Justin_o - yes
+2017-02-13T15:50:27 <Bosmon> Did you try out the snippet you found in that npm module, in comparison?
+2017-02-13T15:50:28 <Justin_o> because 1.005 - 1 produces 0.004999999999999893 instead of 0.005
+2017-02-13T15:50:41 <Justin_o> Bosmon: not yet, but was thinking of doing that too
+2017-02-13T15:50:46 <Justin_o> maybe i should just do that now
+2017-02-13T15:51:24 <Bosmon> It\'s great that you are accumulating all these important test cases
+2017-02-13T15:52:33 <Justin_o> thanks... :)  though I wish things would just work
+2017-02-13T15:52:42 <Bosmon> ha
+2017-02-13T15:56:44 * kavya joined the channel
+2017-02-13T15:58:33 <kavya> Hi,Can someone let me know..
+2017-02-13T15:59:19 <kavya> What should be the behavior of GPII when user y tries to key in when user x is already keyed in
+2017-02-13T16:00:12 <Justin_o> Bosmon: it doesn\'t work either, but i think it\'s because it\'s significant digits instead number of decimal places.. so there is some differences with the logic in general
+2017-02-13T16:00:44 <Justin_o> hard to compare exactly but it also seems to be having some trouble with negative numbers
+2017-02-13T16:01:12 <stegru> kavya: the current behaviour is nothing
+2017-02-13T16:03:07 <kavya> stegru: Yes, the current behaviour when logging in with USB or NFC is nothing when user is already signed in
+2017-02-13T16:03:43 <kavya> When logging in using URL the browser displays message saying user x is already logged in
+2017-02-13T16:04:21 <kavya> the installer version which we have now with GPII-app has list of users in contextual menu
+2017-02-13T16:05:12 <kavya> when using these users, the application signs out user x and then logins with user y
+2017-02-13T16:07:53 <Justin_o> Bosmon: this one might work https://www.npmjs.com/package/round-to
+2017-02-13T16:08:25 <kavya> for example,when user elod is keyed in. If we try to login with elmer from this menu, gpii signs out elod first and then signs in with elmer and applies high contast settings
+2017-02-13T16:08:57 <kavya> Which behavior should we go ahead with?
+2017-02-13T16:09:26 <michelled> kavya: those names are placeholders
+2017-02-13T16:09:35 <michelled> they are supposed to be replaced with snapsets
+2017-02-13T16:09:54 <michelled> I know that the UX team is still working through the snapsets
+2017-02-13T16:10:07 <michelled> these snapsets will work differently than a regular user account
+2017-02-13T16:10:34 * the-t-in-rtf joined the channel
+2017-02-13T16:11:02 <michelled> if it would help, I could put in placeholder snapserts? I was holding out so that we don\'t have to do the work twice.
+2017-02-13T16:11:35 <the-t-in-rtf> I so want a snapsert, it\'s sounds like a crisp, minty cookie.
+2017-02-13T16:12:16 <michelled> ha! I think we could arrange that too :)
+2017-02-13T16:12:38 <kavya> Michelle: Could you tell me the difference between placeholders and snapsets?
+2017-02-13T16:13:30 <michelled> kavya: what I mean by placeholder is an interim, no vetted, solution
+2017-02-13T16:14:32 <michelled> kavya: the snapsets are going to be groupings of settings that a user could try out as a starting point for their optimization
+2017-02-13T16:17:59 <michelled> kavya: in a very ancient version of UI Options, one of the designers had toyed with some of these options such as \'high visualization\' and \'comfort\'  https://wiki.fluidproject.org/display/fluid/User+Interface+Options+Wireframes+-+Iteration+1
+2017-02-13T16:18:11 <michelled> we decided not to go this route, but I think snapsets are along the same idea
+2017-02-13T16:20:13 <kavya> ok..now i think i understood why we have different behavior for other users
+2017-02-13T16:20:35 * kasparnet joined the channel
+2017-02-13T16:21:04 <colinclark> Last I saw, the "composition" of the snapsets (i.e. exactly which settings will be collected togeher under a given snapset name) hadn\'t yet been settled on, but they will contain things like magnification, font size, line spacing, screen scaling mouse pointer size, highlight and TTS, layout simplification, and so on.
+2017-02-13T16:21:47 <Bosmon> Justin_o - sure - it even has test cases!
+2017-02-13T16:22:10 <Justin_o> Bosmon: so it seems that it rounds away from zero
+2017-02-13T16:22:20 <Bosmon> Although you\'re stuck having to decide which direction it rounds in
+2017-02-13T16:22:20 <Bosmon> Yes
+2017-02-13T16:22:24 <Justin_o> which i guess is fine, i\'ll just leave a comment and some documentation about it
+2017-02-13T16:22:39 <Justin_o> what do you think?
+2017-02-13T16:23:31 <Justin_o> Bosmon: also i think i can just adapt this one line https://github.com/sindresorhus/round-to/blob/master/index.js#L17
+2017-02-13T16:24:14 <Justin_o> it\'s MIT Licensed do i just need to leave a comment and point to this repo? Or something more?
+2017-02-13T16:24:25 <kavya> Thanks Michelle..
+2017-02-13T16:36:12 * yzen is now known as yzen_
+2017-02-13T16:43:09 * kavya has quit
+2017-02-13T16:55:11 * simonjb joined the channel
+2017-02-13T16:56:28 * kasparnet has quit
+2017-02-13T17:02:35 * kasparnet joined the channel
+2017-02-13T17:03:00 <Bosmon> Justin_o - comment with licence plus authors plus link, I think
+2017-02-13T17:07:25 * yzen_ has quit
+2017-02-13T17:12:05 * kasparnet has quit
+2017-02-13T17:39:08 <Bosmon> Hi there cindyli - thanks for dealing with so many of these
+2017-02-13T17:39:13 <Bosmon> Today has brought another little one :)
+2017-02-13T17:39:14 <Bosmon> https://github.com/fluid-project/infusion/pull/810/files
+2017-02-13T17:39:33 <cindyli> sure, Bosmon
+2017-02-13T17:42:44 * michelled joined the channel
+2017-02-13T17:46:00 * yzen joined the channel
+2017-02-13T17:46:42 * yzen has quit
+2017-02-13T17:46:46 <colinclark> ok, jhernandez, gloob_, michelled, talk to me about "config modes" for HST
+2017-02-13T17:47:04 <colinclark> what mode do we currently run the GPII in for the HST tests?
+2017-02-13T17:47:19 * yzen joined the channel
+2017-02-13T17:47:37 <gloob_> I have a pending reply to an issue, right?
+2017-02-13T17:47:40 <gloob_> question is
+2017-02-13T17:49:02 <gloob> we are talking about this https://github.com/GPII/gpii-app/blob/hst-2017/configs/app.json#L13
+2017-02-13T17:49:05 <gloob> no?
+2017-02-13T17:50:24 <gloob> the problem come from the device reporter, jhernandez made the suggestions, I will let him to explain his rationale
+2017-02-13T17:51:07 <michelled> colinclark: as gloob linked to, the \'dr.production\' config
+2017-02-13T17:51:18 <michelled> here\'s the textual explanation : https://github.com/GPII/universal/blob/master/gpii/configs/gpii.config.all.development.dr.production.txt
+2017-02-13T17:51:23 <jhernandez> oh
+2017-02-13T17:51:53 <jhernandez> that\'s because we agreed on using the dynamic device reporter by default
+2017-02-13T17:52:25 <michelled> jhernandez: do you mean by default for the app? or by default for hst testing?
+2017-02-13T17:52:32 <michelled> I wasn\'t in the conversation where this was talked about
+2017-02-13T17:52:34 <gloob> sorry but I need to take care of Luc\xc3\xada for these two hours...
+2017-02-13T17:53:03 <colinclark> ok, so is it fairly trivial to write some kind of context check in order to not render the "snapset" menu in this context?
+2017-02-13T17:53:24 <michelled> yep
+2017-02-13T17:53:32 <colinclark> you know how to, michelled?
+2017-02-13T17:53:57 <michelled> well, I know it will be trivial - but I haven\'t used our context awareness yet
+2017-02-13T17:54:00 <michelled> :)
+2017-02-13T17:54:02 <jhernandez> well, this decision came long time ago, and it applies to the installer
+2017-02-13T17:54:14 <jhernandez> https://issues.gpii.net/browse/GPII-2081
+2017-02-13T17:54:21 <colinclark> cindyli could maybe help, michelled?
+2017-02-13T17:54:25 <colinclark> she seems to know a lot about these sorts of thigns
+2017-02-13T17:55:00 <cindyli> catching up ..
+2017-02-13T17:55:10 <colinclark> the short version, cindyli:
+2017-02-13T17:55:30 <colinclark> we\'ve been asked to not render the menu in the GPII that shows the different preference set names, in the context of HST testing
+2017-02-13T17:55:32 * kasparnet joined the channel
+2017-02-13T17:55:37 <colinclark> but I think the menu is VERY helpful for development
+2017-02-13T17:55:43 <michelled> jhernandez, colinclark: so do we want to ship the app with a default of everything in development mode except for the device reporter?
+2017-02-13T17:56:13 <colinclark> so we\'ll want to have some kind of contextual-sensitivity in which the menu is not rendered in production mode
+2017-02-13T17:56:47 <jhernandez> michelled: yes, this way we won\'t try to i.e.: configure and launch jaws (or nvda, or read&write gold, etc) if it\'s not installed
+2017-02-13T17:56:49 <michelled> it might make more sense, then, to use production mode for hst - don\'t you think?
+2017-02-13T17:56:57 <colinclark> I guess it\'s a kind of "production mode" for the app, perhaps
+2017-02-13T17:57:11 <cindyli> colinclark, michelled, i think 2 ways to do it
+2017-02-13T17:57:18 <cindyli> 1. distributeOptions
+2017-02-13T17:57:33 <cindyli> only distribute the menu when gpii runs in the dev mode
+2017-02-13T17:57:43 <cindyli> 2. context awareness
+2017-02-13T17:57:50 <cindyli> i think 1 might be easier
+'
+

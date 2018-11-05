@@ -1,0 +1,283 @@
+b'2014-08-25T17:02:00 * clown joined the channel
+2014-08-25T17:02:06 * clown is now known as clown_mtg
+2014-08-25T17:19:14 <cindyli> hi Bosmon
+2014-08-25T17:20:53 <cindyli> or Bosmon7
+2014-08-25T17:22:44 * michelled has quit
+2014-08-25T17:31:48 * anastasiac has quit
+2014-08-25T17:37:36 * kasparnet joined the channel
+2014-08-25T17:39:31 * anastasiac joined the channel
+2014-08-25T17:39:53 * michelled joined the channel
+2014-08-25T17:43:36 <michelled> jhung: do you know where the overview panel wireframes are?
+2014-08-25T17:44:06 <jhung> I think so, let me find them michelled
+2014-08-25T17:47:02 * kasparnet has quit
+2014-08-25T17:51:43 <jhung> michelled: Here it is: http://wiki.fluidproject.org/display/fluid/Branding Follow the "Fluid Website Mockup" link. The overview panel is on page 7 of the PDF
+2014-08-25T17:51:54 <michelled> thanks!
+2014-08-25T17:52:07 <jhung> np
+2014-08-25T17:58:51 * danaayotte has quit
+2014-08-25T18:36:20 <michelled> jhung: is this the sim you\'ve been looking at? https://phet.colorado.edu/sims/html/forces-and-motion-basics/latest/forces-and-motion-basics_en.html
+2014-08-25T18:37:38 <Bosmon> Hi there cindyli
+2014-08-25T18:38:53 <cindyli> hey, Bosmon, i\'m in the middle of creating a unit test to demonstrate an issue with the model transformation. to check with you:
+2014-08-25T18:38:55 <cindyli> http://pastie.org/9501724
+2014-08-25T18:39:09 <cindyli> does this transformation ok to you?
+2014-08-25T18:39:14 <cindyli> "look" ok
+2014-08-25T18:39:44 <cindyli> but it seems valueMapper doesn\'t accept compound value for the output
+2014-08-25T18:39:56 <Bosmon> cindyli - you should remember this issue from last time :)
+2014-08-25T18:39:59 <cindyli> i receive empty objects in outputs
+2014-08-25T18:40:05 <Bosmon> Don\'t you remember it?
+2014-08-25T18:40:07 <Bosmon> We even have JIRAs : P
+2014-08-25T18:40:16 <cindyli> what??? do we???
+2014-08-25T18:40:29 <Bosmon> So, firstly, to make this set of rules work, you need to wrap the output in "literalValue"
+2014-08-25T18:40:42 <Bosmon> You can compare this with your impl for the metadata component
+2014-08-25T18:40:48 <Bosmon> Secondly, I don\'t think this use of valueMapper is necessary
+2014-08-25T18:41:27 <Bosmon> i think you can do it all with a standard arrayToBooleans expander
+2014-08-25T18:41:52 * danaayotte_ joined the channel
+2014-08-25T18:42:18 <Bosmon> To be sure, you can do it this way too
+2014-08-25T18:44:29 <Bosmon> cindyli - here is the JIRA
+2014-08-25T18:44:31 * clown_mtg has quit
+2014-08-25T18:44:36 <Bosmon> Actually perhaps I misremember the context of this issue
+2014-08-25T18:44:44 <Bosmon> And it was actually Justin_o who originally reported it, not you
+2014-08-25T18:45:10 <Bosmon> It looks like in the metadata panel, you wrote the compound values at the input end, and not the output end
+2014-08-25T18:45:17 <cindyli> yes
+2014-08-25T18:45:28 <Bosmon> And so you didn\'t encounter this issue
+2014-08-25T18:45:34 <cindyli> no
+2014-08-25T18:45:50 <cindyli> did you find the jira related to the output compound?
+2014-08-25T18:45:52 <Bosmon> But I think that the arrayToSetMembership transform should do everything you need here
+2014-08-25T18:45:56 <Bosmon> oh sorry
+2014-08-25T18:46:00 <Bosmon> I didn\'t paste the actual link!
+2014-08-25T18:46:05 <Bosmon> http://issues.fluidproject.org/browse/FLUID-5250
+2014-08-25T18:46:14 <Bosmon> That\'s the problem with doing things "in your mind"
+2014-08-25T18:46:32 <Bosmon> This issue is also related: http://issues.fluidproject.org/browse/FLUID-5300
+2014-08-25T18:47:00 <Bosmon> Anyway, the same issue applies to the "output value" of every transformer
+2014-08-25T18:47:15 <Bosmon> Currently, by default, it is interpreted as a transformation map, rather than a literal object
+2014-08-25T18:47:46 <cindyli> ok, adding a literalValue wrapper should solve the problem?
+2014-08-25T18:47:51 <Bosmon> cindyli - yes
+2014-08-25T18:48:01 <cindyli> and, can we use arrayToSetMembership?
+2014-08-25T18:48:06 <Bosmon> cindyli yes, and yes
+2014-08-25T18:48:07 <cindyli> 1. the input is not an array
+2014-08-25T18:48:19 <cindyli> 2. the output is a compound value
+2014-08-25T18:48:20 <Bosmon> cindyli - you can just wrap it in an array
+2014-08-25T18:48:23 <Bosmon> a 1-element array
+2014-08-25T18:48:34 <Bosmon> The output will just be a hash of boolean flags
+2014-08-25T18:48:48 <Bosmon> Which is that natural output of arrayToSetMembership
+2014-08-25T18:48:53 <Bosmon> So you can consider it "compound" at that level
+2014-08-25T18:49:22 <Bosmon> You can continue with valueMapper + literalValue, or you can, I believe, just simplify it to a standard arrayToSetMembership with a 1-element array
+2014-08-25T18:49:44 <cindyli> in the case of "none", we need to output {match: false, mismatch: false}
+2014-08-25T18:49:57 <Bosmon> cindyli - my plan is that there will be a 3rd flag called "none"
+2014-08-25T18:50:06 <Bosmon> So you will in fact output {match: false, mismatch: false, none: true}
+2014-08-25T18:50:13 <Bosmon> And not use the 3rd flag for rendering
+2014-08-25T18:50:26 <cindyli> ah, i see.
+2014-08-25T18:50:42 <cindyli> how can you be so smart
+2014-08-25T18:50:47 <cindyli> no fair
+2014-08-25T18:50:54 <Bosmon> I hope it will not require smartness to operate this system!
+2014-08-25T18:51:00 <Bosmon> It is intended to be natural and obvious : P
+2014-08-25T18:51:08 <Bosmon> Hopefully over time it will start to seem that way ......
+2014-08-25T18:51:10 <cindyli> sounds like i\'m too dumb ;(
+2014-08-25T18:52:27 <Bosmon> To be sure, it took me half a day to understand how we can do this "easily" : P
+2014-08-25T18:52:36 <Bosmon> But I think we will all get better with practice
+2014-08-25T18:52:44 <cindyli> +1
+2014-08-25T18:52:45 <Bosmon> And with an increasing gallery of successful examples
+2014-08-25T18:53:18 <Bosmon> And, of course, in the end, a UI which constructs these transforms automatically, given a couple of examples :)
+2014-08-25T18:53:45 <cindyli> sounds beautiful
+2014-08-25T18:54:11 <Bosmon> Given everything has a declarative form, these examples will be easy to index and regenerate
+2014-08-25T18:54:41 <Bosmon> I did actually have a crisis on Friday when I thought that it might be impossible to deal with this simple example in our system : P
+2014-08-25T18:55:05 <Bosmon> But it\'s interesting how simply choosing an "appropriate form" for a model makes seemingly intractible problems just go away
+2014-08-25T18:55:05 <cindyli> fortunately, you figured out \xe2\x80\xa6 ;)
+2014-08-25T18:55:25 <Bosmon> Well, it\'s promising that the system is more powerful than we realise : P
+2014-08-25T18:55:59 <Bosmon> It\'s a sure sign of a system that has some legs to it that it can do things which you thought were impossible at the outset
+2014-08-25T19:13:53 * clown joined the channel
+2014-08-25T19:37:38 * anastasiac has quit
+2014-08-25T19:39:29 * kasparnet joined the channel
+2014-08-25T19:40:17 * michelled has quit
+2014-08-25T19:45:24 <Justin_o> cindyli: could you please code review my pull request for FLOE-208 https://github.com/fluid-project/metadata/pull/37
+2014-08-25T19:45:39 <cindyli> sure, Justin_o
+2014-08-25T19:47:31 <Justin_o> cindyli: thanks
+2014-08-25T19:47:45 <cindyli> np
+2014-08-25T19:52:32 <Justin_o> made a small change a pushed up
+2014-08-25T20:18:01 * michelled joined the channel
+2014-08-25T20:18:34 * anvk has quit
+2014-08-25T20:36:34 * jhernandez joined the channel
+2014-08-25T20:40:03 * cindyli has quit
+2014-08-25T20:47:05 * jhung has quit
+2014-08-25T20:54:42 * clown has quit
+2014-08-25T20:57:23 * simonjb has quit
+2014-08-25T21:04:49 * jhung joined the channel
+2014-08-25T21:19:22 * slim has quit
+2014-08-25T21:25:23 * yzen_ joined the channel
+2014-08-25T21:28:26 * yzen has quit
+2014-08-25T21:29:50 * yzen_ has quit
+2014-08-25T21:33:22 * kasparne_ joined the channel
+2014-08-25T21:35:02 * jhung has quit
+2014-08-25T21:36:45 * kasparnet has quit
+2014-08-25T21:44:10 * jhung joined the channel
+2014-08-25T21:56:48 * the-t-in-rtf1 has quit
+2014-08-25T21:57:28 * danaayotte__ joined the channel
+2014-08-25T21:58:17 * the-t-in-rtf joined the channel
+2014-08-25T22:00:25 * yzen joined the channel
+2014-08-25T22:00:34 * danaayotte_ has quit
+2014-08-25T22:05:19 * Bosmon8 joined the channel
+2014-08-25T22:05:32 * danaayotte_ joined the channel
+2014-08-25T22:06:11 * Justin_o has quit
+2014-08-25T22:07:33 * danaayotte__ has quit
+2014-08-25T22:08:04 * Bosmon7 has quit
+2014-08-25T22:10:12 * yzen has quit
+2014-08-25T22:20:54 * jessm has quit
+2014-08-25T22:22:12 * danaayotte_ has quit
+2014-08-25T22:24:40 * michelled has quit
+2014-08-25T22:26:53 * kasparne_ has quit
+2014-08-25T23:06:25 * jhung has quit
+2014-08-25T23:36:23 * jhung joined the channel
+2014-08-25T23:59:17 * jhung has quit
+'
+
+b'2014-08-25T02:31:42 * jhernandez has quit
+2014-08-25T08:23:17 * amilchev has left the channel
+2014-08-25T08:45:43 * slim joined the channel
+2014-08-25T09:21:01 * jhernandez joined the channel
+2014-08-25T09:21:47 * Bosmon has quit
+2014-08-25T09:21:54 * slim has quit
+2014-08-25T09:22:24 * slim joined the channel
+2014-08-25T09:25:08 * Bosmon joined the channel
+2014-08-25T10:12:52 * jhernandez has quit
+2014-08-25T10:17:43 * kasparnet joined the channel
+2014-08-25T10:44:03 * jhernandez joined the channel
+2014-08-25T10:49:25 * kasparnet has quit
+2014-08-25T10:58:03 * kasparnet joined the channel
+2014-08-25T11:03:06 * Bosmon has quit
+2014-08-25T11:10:40 * Bosmon joined the channel
+2014-08-25T11:17:46 * jhernandez has quit
+2014-08-25T11:26:39 * kasparne_ joined the channel
+2014-08-25T11:29:08 * kasparn__ joined the channel
+2014-08-25T11:30:22 * kasparnet has quit
+2014-08-25T11:30:52 * kasparne_ has quit
+2014-08-25T11:51:26 * amilchev joined the channel
+2014-08-25T12:04:43 * michelled joined the channel
+2014-08-25T12:05:09 * jhung joined the channel
+2014-08-25T12:40:13 * Justin_o joined the channel
+2014-08-25T12:50:01 * cindyli joined the channel
+2014-08-25T12:52:40 <Bosmon> Hi, cindyli, Justin_o - would you like a quick chat about the feedback work?
+2014-08-25T12:54:24 <cindyli> sure, Bosmon. Justin_o is away from his desk. maybe once he comes back ...
+2014-08-25T12:54:39 <Bosmon> ok
+2014-08-25T12:54:50 <Bosmon> Unfortunately I have a security meeting in about 5 mins so it will probably have to be later
+2014-08-25T12:55:02 * jessm joined the channel
+2014-08-25T12:55:04 <Bosmon> But I was just wanting to check we were on track and doing ok :)
+2014-08-25T12:55:13 <Bosmon> perhaps we can do it at 10 EDT
+2014-08-25T12:55:27 <Bosmon> michelled, could you do that as well?
+2014-08-25T12:56:23 <michelled> Bosmon: we have a weekly floe planning meeting at 11 where we were going to go through that
+2014-08-25T12:56:30 <Bosmon> oh ok
+2014-08-25T12:56:31 <michelled> is it better for you if we change the time?
+2014-08-25T12:56:33 <Bosmon> I\'ll come to that then
+2014-08-25T12:56:34 <Bosmon> It\'s ok
+2014-08-25T12:56:38 <michelled> ok, great
+2014-08-25T12:57:02 <Bosmon> cindyli - as a quick update, I realised just after you went home on Friday that our model updating problems are really very simple
+2014-08-25T12:57:07 <Bosmon> We are just updating the wrong form of the model
+2014-08-25T12:57:30 <Bosmon> The feedback buttons shouldn\'t update a hash of booleans, but simply a model that consists of a single string
+2014-08-25T12:57:39 <Bosmon> Very similar situation to the audio metadata problem we had earlier
+2014-08-25T12:57:54 <Bosmon> The model can take on the values "like", "dislike" or "none"
+2014-08-25T12:58:02 <Bosmon> Activating any of the buttons sets the model to the respective field
+2014-08-25T12:58:08 <Bosmon> Deactivating any of the buttons sets it to "none"
+2014-08-25T12:58:47 <Bosmon> The visual state of the buttons, however, is derived from the booleans - and we just use the standard "arrayToBooleans" expander to relate the two views of the model
+2014-08-25T12:59:05 <Bosmon> It is really very simple, and hopefully we will just get better about thinking about these situations more quickly
+2014-08-25T12:59:22 <Bosmon> The oddity here is that the visual state of the UI is derived from a different view of the model to the one we update when the UI is operated
+2014-08-25T12:59:32 <Bosmon> Perhaps that\'s what made the solution hard to think of
+2014-08-25T13:00:56 * yzen joined the channel
+2014-08-25T13:02:02 * simonjb joined the channel
+2014-08-25T13:02:22 * Bosmon7 joined the channel
+2014-08-25T13:02:23 <cindyli> Bosmon: i will think about this strategy.
+2014-08-25T13:02:39 <cindyli> Bosmon and Justin_o, i created two jiras regarding how the feedback tool can be improved:
+2014-08-25T13:02:41 <cindyli> http://issues.fluidproject.org/browse/FLOE-226
+2014-08-25T13:02:43 <cindyli> http://issues.fluidproject.org/browse/FLOE-227
+2014-08-25T13:02:50 <cindyli> feel free to make changes
+2014-08-25T13:04:00 * simonjb has quit
+2014-08-25T13:05:07 * simonjb joined the channel
+2014-08-25T13:12:10 * anvk joined the channel
+2014-08-25T13:12:55 <Justin_o> cindyli: thanks cindy, those both sound like good ideas
+2014-08-25T13:13:06 * yzen has quit
+2014-08-25T13:13:52 <cindyli> thanks to Bosmon, his ideas. :P
+2014-08-25T13:13:57 <Justin_o> cindyli: is build.fluidproject.org down for you?
+2014-08-25T13:14:11 <cindyli> yes, it\'s down, Justin_o
+2014-08-25T13:16:15 <Justin_o> cindyli: :(
+2014-08-25T13:27:27 * yzen joined the channel
+2014-08-25T13:42:57 <Justin_o> cindyli: i just saw avtar\'s e-mail.. looks like it will be down till the end of day
+2014-08-25T13:43:14 <cindyli> ah ok
+2014-08-25T13:45:30 * anastasiac joined the channel
+2014-08-25T13:54:55 <anastasiac> good morning, jhung. Question for you about the EPUB simulation work: Should the simulation HTML file work straight out of the repo if I just open it in a browser, or have there been modifications made that mean it will only launch in the context of the EPUB archive
+2014-08-25T13:54:56 <anastasiac> ?
+2014-08-25T13:55:34 <jhung> anastasiac: the HTML file should work straight in a browser.
+2014-08-25T13:57:12 <anastasiac> hm. I\xe2\x80\x99m getting syntax errors on the CDATA line and the sim is not loading, jhung
+2014-08-25T13:57:38 <jhung> ah.
+2014-08-25T13:58:24 * danaayotte joined the channel
+2014-08-25T13:59:03 <jhung> That\'s right. EPUB requires that to load scripts anastasiac.
+2014-08-25T13:59:54 <anastasiac> so what does that mean, jhung? That the sim isn\xe2\x80\x99t actually expected to work in a browser?
+2014-08-25T14:00:33 <jhung> anastasiac: that\'s right.
+2014-08-25T14:01:11 <anastasiac> ok, gotcha. Hows the a11y work on the sim going, jhung? I was chatting with michelled on Friday, and she said that making interactive stuff accessible is a top priority for the epub work
+2014-08-25T14:01:14 <jhung> Ideally Pandoc should be adding it, but it doesn\'t anastasiac
+2014-08-25T14:01:43 <jhung> anastasiac: I was just going to get started on that today. Maybe we can chat about it and see how we can divide work?
+2014-08-25T14:01:59 <anastasiac> jhung, did you see my email to the list about pandoc?
+2014-08-25T14:02:34 <jhung> reading now anastasiac
+2014-08-25T14:07:00 <jhung> ah that\'s problematic anastasiac.
+2014-08-25T14:09:08 <anastasiac> what are your thoughts, jhung?
+2014-08-25T14:09:24 <jhung> I was talking to OpenStax and they use Docbook XML format to encode the content. Then they export that XML into EPUB anastasiac.
+2014-08-25T14:09:41 <jhung> I\'ll forward you the email thread.
+2014-08-25T14:10:25 <jhung> They have limitations too anastasiac but it may be worth investigating as a possible alternative.
+2014-08-25T14:11:46 <anastasiac> as an aside, jhung, I\xe2\x80\x99m getting a stack overflow trying to build the simulation into an epub, and I\xe2\x80\x99m not having any luck increasing the stack size; it just hangs. Any tips?
+2014-08-25T14:11:48 <jhung> We can try calibre anastasiac. Perhaps it does a better job at not mangling our markup.
+2014-08-25T14:12:04 <jhung> Yes. Check the notes wiki doc.
+2014-08-25T14:12:08 <jhung> There
+2014-08-25T14:12:17 <jhung> \'s a command to increase the stack size anastasiac
+2014-08-25T14:12:36 <anastasiac> yes, jhung, I tried that, but the command seems to just hang
+2014-08-25T14:14:00 <jhung> anastasiac: the +RTS -K100m -RTS didn\'t work? Hmmm let me try with my local copy.
+2014-08-25T14:14:30 <anastasiac> it hangs, jhung. At least, it just doesn\xe2\x80\x99t come back
+2014-08-25T14:14:37 <anastasiac> I don\xe2\x80\x99t know what it\xe2\x80\x99s doing
+2014-08-25T14:16:38 <jhung> works for me anastasiac I ran: pandoc +RTS -K100m -RTS 03-forces-simulation.html -t html -w epub3 -o 03-forces-simulation.epub -R
+2014-08-25T14:17:14 <jhung> anastasiac: brb going to change locations.
+2014-08-25T14:17:16 * jhung has quit
+2014-08-25T14:17:38 <anastasiac> ah, ok, I was just using that command by itself. Works now
+2014-08-25T14:18:02 <anastasiac> so jhung, tell me more about the relationship between OpenStax and our exemplar efforts
+2014-08-25T14:18:28 * jhung joined the channel
+2014-08-25T14:20:19 <jhung> anastasiac: here\'s what I\'m thinking:
+2014-08-25T14:21:32 <jhung> It seems we have two streams of work: making inclusive content, and figuring out a usable workflow.
+2014-08-25T14:22:32 <jhung> If pandoc is giving us issues then maybe we should start looking at alternatives\xe2\x80\xa6 including a manual process anastasiac?
+2014-08-25T14:23:42 <anastasiac> jhung, a \xe2\x80\x9cmanual\xe2\x80\x9d process is basically what I was thinking of, though automating the manual process, perhaps using grunt, would be good.
+2014-08-25T14:24:24 * michelled has quit
+2014-08-25T14:24:50 <anastasiac> I\xe2\x80\x99m still not entirely clear on what the priorities of this EPUB work is, jhung: whether or not we should focus on producing an accessible exemplar, regardless of how we do it, or whether we should be focusing on searching for the best tools to help. I was going to ask michelled for her input, but she just left the channel :-)
+2014-08-25T14:25:37 <anastasiac> jhung, one thing michelled did say is that figuring out how to make interactive stuff accessible is a priority for the epub work, so getting that physics simulation more accessible is important.
+2014-08-25T14:26:05 <anastasiac> I think we should probably just switch to \xe2\x80\x9cmanually\xe2\x80\x9d building an epub zip file for now, and document out experiences and processes
+2014-08-25T14:26:26 <jhung> anastasiac: agreed. I think that\'s what our focus should be.
+2014-08-25T14:28:18 <jhung> So we should convert our HTML into EPUB valid XML files and author those directly anastasiac? Since we would not be using a tool to convert.
+2014-08-25T14:28:43 <jhung> Which is too bad because authoring in HtML is familiar to many people.
+2014-08-25T14:30:05 <anastasiac> jhung, does EPUB3 require XML? The files pandoc produced were XHTML, and I found that if I pasted the HTML5 back into the body, it still worked
+2014-08-25T14:30:28 * sgithens_ joined the channel
+2014-08-25T14:30:46 <jhung> Sorry, I meant XHTML anastasiac.
+2014-08-25T14:32:22 <anastasiac> ok, jhung, why don\xe2\x80\x99t I spend a little bit of time investigating our options for allowing people to author good html5 and still easily produce an epub3? I\xe2\x80\x99ll familiarize myself a bit more with the epub3 xhtml profile, etc
+2014-08-25T14:32:25 * sgithens has quit
+2014-08-25T14:33:21 <jhung> anastasiac: sounds good. I\'ll work on improving the inclusiveness of the simulation.
+2014-08-25T14:35:00 * simonjb has quit
+2014-08-25T14:42:28 * kasparn__ has quit
+2014-08-25T14:58:23 <jhung> anastasiac: for the simulation, to make it more inclusive, we would provide a storyboard of the simulation (still image with a text description) of interesting moments. This way it can be a visual summary for those who have access to the simulation, as well as an alternative for those who need it.
+2014-08-25T14:58:52 * simonjb joined the channel
+2014-08-25T14:59:00 <anastasiac> jhung, is there anything we can do to make the simulation keyboard accessible?
+2014-08-25T15:02:12 <jhung> anastasiac: I haven\'t investigated deeply. We first would need the un-minified version of the source code which we do not have.
+2014-08-25T15:03:05 <anastasiac> ugh
+2014-08-25T15:03:07 <jhung> anastasiac: also I think authors / publishers will be using inaccessible scripts a lot, so we would probably want to demonstrate "quick win" practices.
+2014-08-25T15:04:24 <jhung> anastasiac: getting the un-minified source probably won\'t be hard\xe2\x80\xa6 but adapting it to be keyboard accessible may not be easy (there is 20K+ lines of code).
+2014-08-25T15:04:35 <anastasiac> ugh
+2014-08-25T15:04:49 <anastasiac> ok, jhung, I guess let\xe2\x80\x99s see what else we can do
+2014-08-25T15:06:48 <jhung> that\'s what I was thinking with the storyboard idea anastasiac. It provides an accessible alternative in different modalities. We could also produce a video of the simulation and use floe video player to provide transcripts and captions \xe2\x80\xa6 but that requires a bit more work to produce.
+2014-08-25T15:07:00 <anastasiac> yeah
+2014-08-25T15:18:35 * anastasiac_ joined the channel
+2014-08-25T15:20:33 * anastasiac has quit
+2014-08-25T15:20:33 * anastasiac_ is now known as anastasiac
+2014-08-25T15:25:12 * clown joined the channel
+2014-08-25T15:44:06 * cindyli has quit
+2014-08-25T16:16:35 * cindyli joined the channel
+2014-08-25T16:17:21 * michelled joined the channel
+2014-08-25T16:22:33 <jhung> anastasiac: I found an interesting physics exercise on OpenStax. It\'s actually a JavaScript exercise (source code included) which the student is encouraged to program themselves and modify to see the effects. Perhaps we can adapt it? http://cnx.org/contents/cf7fe6a1-d979-4b18-adb0-7fbbd6e0db7e@2
+2014-08-25T16:22:43 <jhung> The simulation outputs an SVG.
+2014-08-25T16:23:22 <anastasiac> Sounds interesting, jhung. Is it actually an interactive simulation, or a programming exercise?
+2014-08-25T16:24:00 <jhung> anastasiac: it\'s a programming exercise, but I\'m wondering how much work is involved to make it interactive.
+2014-08-25T16:25:16 <anastasiac> good question, jhung. Let\xe2\x80\x99s start the process of getting the source code from PHET, but if you have to wait, perhaps you could learn a bit more about this content
+2014-08-25T16:26:10 * kasparnet joined the channel
+2014-08-25T16:49:39 * clown has quit
+2014-08-25T17:00:24 * kasparnet has quit
+'
+

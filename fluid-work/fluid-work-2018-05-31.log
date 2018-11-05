@@ -1,0 +1,322 @@
+b"2018-05-31T20:30:17 <gtirloni> clown: the centos7 box doesn't include a desktop environment. in any case, only gpii-nexus is using it
+2018-05-31T20:30:44 <clown> good to know, gtirloni
+2018-05-31T20:40:00 * colinclark joined the channel
+2018-05-31T20:48:21 * jeevan_ joined the channel
+2018-05-31T21:04:43 * alanharnum joined the channel
+2018-05-31T21:10:07 * jhung joined the channel
+2018-05-31T21:10:07 * jhung has quit
+2018-05-31T21:25:48 * danayo joined the channel
+2018-05-31T21:33:20 * alanharnum joined the channel
+2018-05-31T21:50:03 * janardan has quit
+2018-05-31T21:56:16 * javjarfer has quit
+2018-05-31T22:09:45 * mrtyler joined the channel
+2018-05-31T22:18:04 * jeevan_ has quit
+2018-05-31T22:49:57 * danayo joined the channel
+2018-05-31T22:56:56 * colinclark has quit
+2018-05-31T23:22:35 * stegru has quit
+"
+
+b'2018-05-31T15:36:49 <javjarfer> oh, then the fork is the most viable thing xD
+2018-05-31T15:37:09 <mrtyler> hello, reading log
+2018-05-31T15:37:19 <stegru> all doit is used for is invoking node in the desktop, rather than hidden in another one
+2018-05-31T15:37:29 <stegru> is that correct, amatas[m] ?
+2018-05-31T15:37:44 <stegru> you\'re not using it for remote execution, since that\'s what winrm is for
+2018-05-31T15:38:33 <amatas[m]> right stegru
+2018-05-31T15:38:51 * michelled joined the channel
+2018-05-31T15:39:22 <stegru> it just so happens that I have code that can do that
+2018-05-31T15:39:58 <amatas[m]> if I remember well, we included doit for running the test process in the same desktop session using always the same environment
+2018-05-31T15:40:31 <stegru> psexec does that same, but it doesn\'t send stdout
+2018-05-31T15:40:55 <amatas[m]> you can run any command without doit
+2018-05-31T15:41:00 <mrtyler> javjarfer: i don\'t really know anything about doit or the windows ci process, so not sure i\'m the best person to advise here
+2018-05-31T15:41:25 <mrtyler> i am in favor of not using a 7 year old piece of abandonware, and i would be surprised if there\'s not a different tool that could be used instead
+2018-05-31T15:41:50 <mrtyler> however, a one-line patch and a custom build may be cheaper than replacing doit at this time. if so, that seems like a reasonable solution
+2018-05-31T15:41:51 <stegru> mrtyler: you just described most of npm packages that are used ;)
+2018-05-31T15:42:07 <amatas[m]> but be aware of that every time that you invoke a winrm command it creates a new session
+2018-05-31T15:42:08 <javjarfer> mrtyler, okay, that it looks that we all agree that we should do something with doit
+2018-05-31T15:42:37 <mrtyler> stegru: i am in favor of not using 7 year old abandonware whether it is a windows executable or an npm module, hth :)
+2018-05-31T15:43:25 <stegru> perhaps it\'s not abandoned, but so perfect it hasn\'t had a bug in 7 years
+2018-05-31T15:43:41 <javjarfer> hahaha well, then we need more packages like that
+2018-05-31T15:44:18 <javjarfer> but it\'s also so perfect that people doesn\'t even give stars to it, because it\'s confirming a well known fact
+2018-05-31T15:44:31 <mrtyler> if we reimplement all of gpii in TeX, we can probably get donald knuth to endorse us ;)
+2018-05-31T15:44:42 <mrtyler> (TeX is the only software i know that\'s been "done" for >7 years)
+2018-05-31T15:47:15 <javjarfer> xDDD TeX... I must confess I have always used LaTeX and never "needed" TeXC
+2018-05-31T15:47:20 <javjarfer> TeX*
+2018-05-31T15:47:40 <avtar> hi all, just saw the chat here
+2018-05-31T15:48:06 <avtar> i think the github repo you\'re looking at is an unofficial clone
+2018-05-31T15:48:06 <stegru> I have nothing against wearing latex
+2018-05-31T15:48:12 <avtar> the project repo lives here https://git.tartarus.org/?p=simon/doit.git
+2018-05-31T15:48:50 <avtar> last commit was 6 months ago
+2018-05-31T15:54:12 <javjarfer> avtar, that are much better news
+2018-05-31T15:55:57 <avtar> :)
+2018-05-31T16:01:59 <mrtyler> oh boy it\'s gitweb!
+2018-05-31T16:02:08 <mrtyler> simon tatham... isn\'t that the PuTTY guy?
+2018-05-31T16:02:33 <javjarfer> I\'m going to report this to the repo that avtar has pasted
+2018-05-31T16:02:34 <mrtyler> i wonder why he doesn\'t like github?
+2018-05-31T16:02:47 <javjarfer> mrtyler, it is! I have just checked it
+2018-05-31T16:04:02 <javjarfer> so, Bosmon, stegru, amatas[m], custom build while they answer? Or we left this open until know what they think about this?
+2018-05-31T16:04:21 <Bosmon> javjarfer - custom build I think, since this issue is urgent
+2018-05-31T16:04:23 <stegru> well, we can\'t wait
+2018-05-31T16:04:27 <Bosmon> We can\'t trust any CI run until this problem is resolved
+2018-05-31T16:04:42 <javjarfer> okay, then a fork is the way to go
+2018-05-31T16:04:59 <javjarfer> GPII-DoIt?
+2018-05-31T16:05:29 <Bosmon> Sure
+2018-05-31T16:05:37 <Bosmon> or gpii-doit if it needs to go into npm
+2018-05-31T16:06:35 <stegru> I might have a simpler solution... just create a small application that does the small feature we use doit for
+2018-05-31T16:06:45 <javjarfer> Nice, I can\'t create repository for it in GPII in Github
+2018-05-31T16:06:51 <javjarfer> if anyone have the permissions
+2018-05-31T16:07:06 <javjarfer> stegru, well, if we can use it like doit
+2018-05-31T16:08:21 <stegru> we\'ll see
+2018-05-31T16:08:45 * alanharnum has quit
+2018-05-31T16:09:12 <javjarfer> are you going to make a repository in Github for it?
+2018-05-31T16:09:12 * alanharnum joined the channel
+2018-05-31T16:11:20 <stegru> I can\'t
+2018-05-31T16:11:38 <stegru> just do it in your own
+2018-05-31T16:16:24 <javjarfer> I can\'t too, I don\'t have permissions
+2018-05-31T16:17:05 <jhernandez_> javjarfer:  stegru what do you want/need?
+2018-05-31T16:17:16 * alanharnum joined the channel
+2018-05-31T16:17:22 <stegru> your body and soul
+2018-05-31T16:17:39 <mrtyler> you\'re gonna need to contribute more to his mortgage imo
+2018-05-31T16:17:48 <stegru> i already do
+2018-05-31T16:18:03 <mrtyler> wow the EU is weird
+2018-05-31T16:18:16 <stegru> Bosmon javjarfer: fancy skipping the windows meeting?
+2018-05-31T16:19:51 <Bosmon> Yes I fancy skipping it
+2018-05-31T16:19:55 <jhernandez_> stegru: I\'m fine - heading the airport soon, mom is coming :)
+2018-05-31T16:19:59 <Bosmon> You\'ve done enough damage on windows for today :)
+2018-05-31T16:20:30 <jhernandez_> Bosmon: +1
+2018-05-31T16:20:59 <javjarfer> Bosmon, stegru haha well, for me it\'s okay to skip it, we know everything it\'s being done in windows this days so...
+2018-05-31T16:21:27 <stegru> good, i\'ll eat my tea
+2018-05-31T16:21:36 <jhernandez_> so, I had in mind sharing my experience with windows 1803 update
+2018-05-31T16:21:40 <stegru> "dinner", for javi
+2018-05-31T16:21:49 <javjarfer> jhernandez_, create a repo in GPII organization for the tool maybe
+2018-05-31T16:21:49 <stegru> no thanks, jhernandez_
+2018-05-31T16:21:54 <javjarfer> but don\'t know how to call it
+2018-05-31T16:22:28 <stegru> javjarfer, just get it fixed and compiled, then we\'ll worry about putting the code somewhere
+2018-05-31T16:22:41 <jhernandez_> but I guess that we can wait for the next MS "Tuesday\'s patch"
+2018-05-31T16:22:44 <javjarfer> stegru, fair enough
+2018-05-31T16:23:00 <javjarfer> doing it
+2018-05-31T16:23:20 <stegru> doit ;)
+2018-05-31T16:23:26 <jhernandez_> doit.ps1
+2018-05-31T16:26:55 <stegru> javjarfer: perhaps also clone my crashing PR, add the new doitclient to it, and put something in the provisioning script to copy it to c:\\windows
+2018-05-31T16:27:17 <stegru> just as a way to slip it in to the VM to test it
+2018-05-31T16:27:22 <javjarfer> yes, it\'s a great start
+2018-05-31T16:29:39 <stegru> we\'ll know it\'s a success if it fails ;)
+2018-05-31T16:29:48 * colinclark joined the channel
+2018-05-31T16:33:46 <javjarfer> yes, I\'m doing it right now
+2018-05-31T16:51:43 * alanharnum has quit
+2018-05-31T16:52:09 * alanharnum joined the channel
+2018-05-31T16:56:26 * alanharnum has quit
+2018-05-31T17:00:13 * janardan joined the channel
+2018-05-31T17:27:44 * alanharnum joined the channel
+2018-05-31T17:51:17 <Bosmon> Hey there cindyli - it\'s good to have you back :)
+2018-05-31T17:51:36 <cindyli> thanks, Bosmon
+2018-05-31T17:51:48 <cindyli> i will have a pull request for you soon
+2018-05-31T17:52:17 <Bosmon> That\'s great
+2018-05-31T17:52:23 <Bosmon> for reusing the preferences files?
+2018-05-31T17:52:32 <Bosmon> Sorry about my other filings
+2018-05-31T17:52:39 <Bosmon> I got quite confused while you were away : P
+2018-05-31T17:52:40 <cindyli> here it is - https://github.com/GPII/universal/pull/615
+2018-05-31T17:53:06 <cindyli> sorry about my confusing readme. improved in this pull request. let me know
+2018-05-31T17:53:12 <Bosmon> That\'s fine
+2018-05-31T17:53:29 <Bosmon> I know that in theory I reviewed this code, but somehow forgot many of the things you told me : P
+2018-05-31T17:53:30 <cindyli> it might still not clear enough.
+2018-05-31T17:53:40 <Bosmon> On the other hand, if it wasn\'t clear enough to me, it probably won\'t be clear to others either
+2018-05-31T17:53:47 <cindyli> agreed
+2018-05-31T17:54:16 <Bosmon> Would you be able to review my "User Errors" pull https://github.com/GPII/universal/pull/609 ?
+2018-05-31T17:54:39 <cindyli> sure
+2018-05-31T17:54:49 <Bosmon> Great, thanks
+2018-05-31T17:55:39 <cindyli> Bosmon: can you merge in the master into this pull request
+2018-05-31T17:55:43 <cindyli> there are some conflicts
+2018-05-31T17:55:50 <Bosmon> yes
+2018-05-31T17:59:46 <Bosmon> cindyli - it\'s merged up
+2018-05-31T18:00:08 <cindyli> thanks
+2018-05-31T18:06:21 * rutvi joined the channel
+2018-05-31T18:14:28 * colinclark joined the channel
+2018-05-31T18:20:10 * colinclark has quit
+2018-05-31T18:21:46 * alanharnum joined the channel
+2018-05-31T18:25:07 * colinclark joined the channel
+2018-05-31T18:26:30 * alanharnum joined the channel
+2018-05-31T18:36:30 * colinclark has quit
+2018-05-31T18:41:40 * colinclark joined the channel
+2018-05-31T19:05:46 * VictorA_NG joined the channel
+2018-05-31T19:19:34 * colinclark joined the channel
+2018-05-31T19:31:33 * jhung joined the channel
+2018-05-31T19:53:58 <sgithens> Welcome back Cindy Li!
+2018-05-31T19:58:13 * VictorA_NG has quit
+2018-05-31T20:07:27 <gtirloni> clown: hi! does this ring any bells? https://ci.gpii.net/job/linux-acceptance-tests/166/console
+2018-05-31T20:07:45 * clown looks
+2018-05-31T20:08:08 <gtirloni> clown: newer f28 box with updated gnome-shell and packagekit
+2018-05-31T20:08:57 <clown> gtirloni:  I think this has to do with the JIRA I created earlier today, and pull request.
+2018-05-31T20:09:14 <clown> Namely, packagkit service is being masked in the box.
+2018-05-31T20:09:25 <clown> but, it needs to be running in gpii-linux.
+2018-05-31T20:10:10 <gtirloni> weird, i thought we had re-enabled it in gpii-linux only
+2018-05-31T20:10:25 <gtirloni> when we had the out of memory incident and disabled PK in the box
+2018-05-31T20:10:57 <clown> gtirloni:  If you did, I couldn\'t find it.  So I added a script to the Vagrantfile (for gpii-linux)
+2018-05-31T20:11:02 <gtirloni> hmm my memory is blurry on that one though, maybe i forgot to actually do that
+2018-05-31T20:11:08 <clown> I see you fired up my PR changes\xe2\x80\xa6
+2018-05-31T20:11:11 <clown> just now.
+2018-05-31T20:11:42 <gtirloni> yep, just to get a new build
+2018-05-31T20:12:01 <gtirloni> ok, i\'d bet i forgot to actually do that, thanks for spotting this! PK definitely needs to be enabled for gpii-linux
+2018-05-31T20:12:22 <clown> But yes, I remember talking about your re-enabling it just for linux, but I don\'t remember how you did it.  Was that month ago or so?
+2018-05-31T20:12:51 <gtirloni> yeah, i think so.. when i broke it, ha
+2018-05-31T20:13:13 <gtirloni> that PR looks good to me, thanks for submitting it
+2018-05-31T20:13:46 <clown> you\'re welcome (and thanks for the +1)
+2018-05-31T20:15:05 <clown> gtirloni, here is where I believe packagkit is disabled, for fedora:  https://github.com/idi-ops/packer-fedora/blob/master/scripts/INFRA-150.sh#L4
+2018-05-31T20:15:46 <clown> but, that is for *all* the uses of a fedora box \xe2\x80\x94 universal, infusion, linux, (anyone else?)
+2018-05-31T20:16:04 <clown> and, it\'s fine for universal and infusion.  but not for linux
+2018-05-31T20:16:10 <gtirloni> yep, that\'s it
+2018-05-31T20:17:52 <clown> gtirloni:  I\'m not sure if there is a gpii that uses the CentOS box.  If so, it would need a similar fix.
+2018-05-31T20:22:28 * mrtyler joined the channel
+'
+
+b'2018-05-31T01:15:38 * alanharnum joined the channel
+2018-05-31T02:11:40 * mrtyler joined the channel
+2018-05-31T03:34:29 * mrtyler joined the channel
+2018-05-31T05:25:35 * mrtyler has quit
+2018-05-31T05:42:23 * mrtyler joined the channel
+2018-05-31T06:39:06 <the-t-in-rtf> link?
+2018-05-31T09:08:20 * stegru joined the channel
+2018-05-31T09:31:37 <Bosmon> stegru - is it as simple as that?
+2018-05-31T09:33:22 <stegru> I don\'t know yet, Bosmon.. I got and idle gpii-windows to crash by changing the high-contrast repeatedly, from outside GPII
+2018-05-31T09:33:51 <stegru> and that code only gets invoked if not running under electron
+2018-05-31T09:34:27 <Bosmon> stegru - pretty interesting
+2018-05-31T09:34:31 <Bosmon> Why is it not invoked under electron?
+2018-05-31T09:35:08 <Bosmon> Ah I see
+2018-05-31T09:35:13 <Bosmon> It has its own message loop
+2018-05-31T09:35:15 <Bosmon> v.v.interesting
+2018-05-31T09:35:22 <stegru> yes, electron provides one
+2018-05-31T09:35:59 <stegru> it\'s not a very good one, but better than nothing - it\'s only needed for the USB and metrics
+2018-05-31T09:37:28 <stegru> but, when I fixed it yesterday the tests still crashed
+2018-05-31T09:37:28 <Bosmon> OK, so you wrote this in December and it got merged as "in-process user listeners" in March
+2018-05-31T09:37:33 <Bosmon> Fits the timelines fairly well
+2018-05-31T09:37:57 <stegru> yeh
+2018-05-31T09:39:37 <javjarfer[m]> For whatever reason, I\'m missing Bosmon  messages here, sorry if I didn\'t answer you to something Bosmon, I realized just now asking to stegru
+2018-05-31T09:41:22 * javjarfer joined the channel
+2018-05-31T09:42:40 <javjarfer> It looks like timelines match really well, but doesn\'t explain yet while tests still crashed yesterday for stegru
+2018-05-31T09:42:52 <Bosmon> Shame
+2018-05-31T09:42:59 <Bosmon> Seems like a really plausible cause
+2018-05-31T09:44:24 <stegru> i think there\'s another bug, too
+2018-05-31T09:44:34 <Bosmon> ok
+2018-05-31T09:44:41 <javjarfer> Bosmon, haha shame
+2018-05-31T09:44:48 <Bosmon> Any signs that your fix at least reduces the frequency of the problem?
+2018-05-31T09:44:51 <javjarfer> stegru, do you think it could be in the same code?
+2018-05-31T09:44:54 <stegru> this definitely causes a crash: https://gist.github.com/stegru/1e109fd2c41556d77e3ec75db77ea43c
+2018-05-31T09:44:59 <stegru> maybe
+2018-05-31T09:45:46 <javjarfer> waiting that process causes a crash?
+2018-05-31T09:46:08 <javjarfer> the dangling process we were talking yesterday?
+2018-05-31T09:46:10 <stegru> it repeatedly sets the high-contrast on and off
+2018-05-31T09:46:20 <javjarfer> ooh
+2018-05-31T09:46:30 <stegru> it\'s the same process, but unrelated to what we\'re doing
+2018-05-31T09:46:31 <javjarfer> okay, it keeps causing a crash in the system doing that
+2018-05-31T09:46:44 <stegru> I bet if I made something that just sends windows messages, it would also cause the crash
+2018-05-31T09:46:48 <javjarfer> yes yes, true
+2018-05-31T09:49:35 <Bosmon> Still, this sounds like great progress
+2018-05-31T09:51:39 <javjarfer> Bosmon, I was hallucinated when stegru said to me this morning, looks like we are closer
+2018-05-31T10:06:59 <stegru> 1 in 31 crashes so far
+2018-05-31T10:07:43 <javjarfer> great, was the first execution?
+2018-05-31T10:37:21 * gtirloni joined the channel
+2018-05-31T11:33:14 * mrtyler joined the channel
+2018-05-31T12:15:43 * mrtyler joined the channel
+2018-05-31T12:20:25 * mrtyler has quit
+2018-05-31T12:36:41 * jhung joined the channel
+2018-05-31T12:47:25 * cindyli joined the channel
+2018-05-31T13:01:43 * colinclark joined the channel
+2018-05-31T13:15:17 * clown joined the channel
+2018-05-31T13:21:33 <javjarfer> Bosmon, we think we got it
+2018-05-31T13:21:52 <Bosmon> javjarfer - brilliant
+2018-05-31T13:23:57 <javjarfer> Bosmon, yeah... finally. We have a file with 65 clean acceptanceTests executions, and also hundreds of times of stegru personal test sending windows messages with the "HighContrast" feature
+2018-05-31T13:24:02 <javjarfer> 0 issues
+2018-05-31T13:24:10 <Bosmon> Superb
+2018-05-31T13:24:14 <Bosmon> It was the Buffer issue?
+2018-05-31T13:24:25 <javjarfer> I was indeed
+2018-05-31T13:24:54 <stegru> writing to a reference to a buffer, instead of the actual buffer
+2018-05-31T13:24:55 <javjarfer> Buffer issue due to extra referencing + memory not zeroed due to the old Buffer node API
+2018-05-31T13:26:08 <javjarfer> Yes stegru thought it could be two differents bugs, and indeed we had then, because the buffer wasn\'t zeroed, so maybe sometimes the memory zone was secure, but further calls to following methods using the not zeroed struct lead to another kind of crash
+2018-05-31T13:34:01 <javjarfer> Bosmon, I\'m going to write the JIRA for the return code when segfault, I need to go back to previous opens pulls I have
+2018-05-31T13:34:20 <javjarfer> I\'m going to finish that small one I have for the retrying and then go back to internationalization
+2018-05-31T13:34:32 <Bosmon> javjarfer - so we do get exit code 0?
+2018-05-31T13:34:34 <Bosmon> Or what
+2018-05-31T13:34:41 * colinclark joined the channel
+2018-05-31T13:34:52 <javjarfer> Bosmon, don\'t know yet
+2018-05-31T13:35:32 <javjarfer> I was going to spend some time into it after updating the others pulls, should I put it in the top of the list?
+2018-05-31T13:36:30 <javjarfer> also, I think we should have something like mock tests for our native API, just for having a strong test in the endpoints that have probe to be so sensible and difficult to debug
+2018-05-31T13:36:58 <javjarfer> What are the feelings about that?
+2018-05-31T13:37:22 <Bosmon> javjarfer - I think incorrect exit code checking has to be treated as urgent, yes
+2018-05-31T13:37:30 <Bosmon> It invalidates the use of CI on all other work
+2018-05-31T13:37:39 <javjarfer> Bosmon, Okay, doing it right now then
+2018-05-31T13:38:10 <Bosmon> Awesome javjarfer, thanks so much!
+2018-05-31T13:45:25 * avtar joined the channel
+2018-05-31T13:50:32 <javjarfer> Bosmon, yw!
+2018-05-31T14:01:18 * simonjb joined the channel
+2018-05-31T14:25:15 <stegru> jhernandez_: I\'m wondering if there\'s any purpose in having the installer for gpii-windows?
+2018-05-31T14:26:25 * alanharnum joined the channel
+2018-05-31T14:28:14 * neuralmilkhotel joined the channel
+2018-05-31T14:34:19 <jhernandez_> stegru: hey
+2018-05-31T14:34:30 <stegru> hola
+2018-05-31T14:36:24 <jhernandez_> well, when we started delivering the gpii-app installer I started to think that the windows one was not going to be required anymore
+2018-05-31T14:36:41 <javjarfer> Bosmon, stegru has furiously overtake me by the right (English style) on the research for the crash exit code, so I have put him as assignee in the JIRA issue GPII-3091
+2018-05-31T14:36:52 <jhernandez_> if you\'re proposing to get rid of it, you have a +1 from my side
+2018-05-31T14:37:32 <stegru> jhernandez_: it just makes CI take forever and a day
+2018-05-31T14:37:38 <stegru> javjarfer: why can\'t you do it?
+2018-05-31T14:37:51 <jhernandez_> stegru: totally agree
+2018-05-31T14:39:26 <javjarfer> jhernandez_, stegru yes, +1 here, I don\'t see the need of having it in CI
+2018-05-31T14:40:14 <javjarfer> stegru, I think you meant jhernandez_
+2018-05-31T14:40:23 <stegru> i meant you
+2018-05-31T14:40:36 <stegru> consider it removed: GPII-3092
+2018-05-31T14:41:28 <javjarfer> So you meant the researh for the crash exit code
+2018-05-31T14:41:31 <javjarfer> ??
+2018-05-31T14:42:01 <javjarfer> Because you already had a PR researching the issue, if you want I can continue from that point, or I can assist
+2018-05-31T14:42:07 <javjarfer> whatever you prefer
+2018-05-31T14:43:12 <javjarfer> well, your PR have now an answer "doitclient.exe : doit: remote error: GetExitCodeProcess failed"
+2018-05-31T14:43:22 <javjarfer> crash but no results of error in CI
+2018-05-31T14:44:22 <javjarfer> If the process segfaults doIt doesn\'t return a proper error code
+2018-05-31T14:44:48 <javjarfer> and we don\'t consider doit not being able to return an error code, a error code xD
+2018-05-31T14:50:48 <Bosmon> I\'ve forgotten what the "doitclient.exe" does
+2018-05-31T14:51:11 <Bosmon> Yes, certainly axe the plain windows installer
+2018-05-31T14:54:20 <stegru> it starts gpii in the context of the user session, rather than that of the "vagrant winrm" command
+2018-05-31T14:54:27 <javjarfer[m]> just execute the command remotely
+2018-05-31T14:54:37 * jessm joined the channel
+2018-05-31T14:54:38 <stegru> doitclient isn\'t returning the error code
+2018-05-31T14:54:47 <javjarfer> well, that\'s more acurrate than my description
+2018-05-31T14:55:31 <stegru> I think we need the assistance of amatas[m]
+2018-05-31T14:58:18 <amatas[m]> hi!
+2018-05-31T15:00:30 <javjarfer> hi! amatas[m]
+2018-05-31T15:00:35 <stegru> amatas[m]: sorry, didn\'t mean to ping you yet, but the doitclient.exe command in do.ps1 isn\'t returning the exit code of node
+2018-05-31T15:00:53 <javjarfer> we are just wondering about how to do that
+2018-05-31T15:01:11 <javjarfer> I see in the client code here https://github.com/russelldavis/DoIt/blob/master/doitclient.c
+2018-05-31T15:01:32 <javjarfer> that it has this paramater " wcmd <command>     start Windows CLI process and return output" is the one we are using?
+2018-05-31T15:02:02 <stegru> ok, so "start" isn\'t returning the exit code?
+2018-05-31T15:02:41 <stegru> nevermind, talking nonsense
+2018-05-31T15:04:16 <javjarfer> stegru, where is the do.ps1 script located?
+2018-05-31T15:04:28 <stegru> c:\\windows\\
+2018-05-31T15:04:29 <amatas[m]> javjarfer: https://github.com/GPII/ci-service/blob/master/jenkins_jobs/gpii-app.yml#L71
+2018-05-31T15:04:58 <amatas[m]> javjarfer: https://github.com/idi-ops/packer-windows/blob/master/doit/do.ps1
+2018-05-31T15:07:42 <javjarfer> thanks amatas[m]
+2018-05-31T15:08:01 <javjarfer> I think we might be running into some issue due to $lastExitCode
+2018-05-31T15:09:14 * mrtyler joined the channel
+2018-05-31T15:10:51 * colinclark joined the channel
+2018-05-31T15:11:08 <stegru> it\'s this: https://github.com/russelldavis/DoIt/blob/master/doit.c#L263, then https://github.com/russelldavis/DoIt/blob/master/doit.c#L537
+2018-05-31T15:11:08 <javjarfer> mybad... I was thinking in another situation... $lastExitCode seems fine there
+2018-05-31T15:11:59 <javjarfer> oh, okay, then we should have a -1
+2018-05-31T15:12:02 <javjarfer> as the return code
+2018-05-31T15:12:10 <javjarfer> -1 should be error
+2018-05-31T15:15:37 <stegru> no, that\'s on the server code.. the client side just prints out that error and returns 0
+2018-05-31T15:15:43 <stegru> https://github.com/russelldavis/DoIt/blob/master/doitclient.c#L1232
+2018-05-31T15:16:18 <javjarfer> oh... what...
+2018-05-31T15:16:19 <javjarfer> https://github.com/russelldavis/DoIt/blob/master/doitclient.c#L1232
+2018-05-31T15:16:31 <javjarfer> sorry, repasted, wanted to past other thing
+2018-05-31T15:16:57 <javjarfer> why??? which is the point of returning a string if not able to return a error code?
+2018-05-31T15:17:22 <javjarfer> Is this Exceptions reimplemented in C?
+2018-05-31T15:18:20 <javjarfer> Should we have a fork of that project with that corrected? or should we report it as an issue?
+2018-05-31T15:24:01 * mrtyler joined the channel
+2018-05-31T15:34:35 <javjarfer> What do you think amatas[m] , mrtyler, stegru, Bosmon, should we change the behavior of DoIt in place or submit a issue to the project?
+2018-05-31T15:34:54 <Bosmon> javjarfer what do you mean by "in place"?
+2018-05-31T15:35:12 <stegru> a custom build of doit?
+2018-05-31T15:35:23 <javjarfer> Forking the project and changing the line that stegru has pointed
+2018-05-31T15:35:25 <javjarfer> yes
+2018-05-31T15:36:03 <stegru> what are the other options?
+2018-05-31T15:36:15 <Bosmon> Well, do both obviously : P
+2018-05-31T15:36:22 <amatas[m]> the project seems to be dead (last commit is from 7 years ago)
+2018-05-31T15:36:29 <Bosmon> !
+2018-05-31T15:36:36 <Bosmon> We adopted a dead project from 7 years ago?! : P
+'
+

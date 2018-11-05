@@ -1,0 +1,300 @@
+b'2017-10-25T19:50:59 <Bosmon> But my best answer as things stand today is for you to supply a "contextAware limitRange transform"
+2017-10-25T19:51:15 <Bosmon> Since I imagine you will have properly done all the computations about stuff sucking before the component begins to instantiate
+2017-10-25T19:51:41 <colinclark> well, I think it\'s even better than that on almost all browsers
+2017-10-25T19:51:45 <colinclark> (except Safari)
+2017-10-25T19:51:53 <Bosmon> So this will allow you to mix in a grade, via contextAwareness, that has a "modelRelay to self" attached to this model value
+2017-10-25T19:52:01 <colinclark> ok
+2017-10-25T19:52:09 <colinclark> so, again being concrete, all Web Audio Nodes report a maxChannelCount value
+2017-10-25T19:52:15 <colinclark> and it\'s always accurate except in Safair
+2017-10-25T19:52:18 <Bosmon> I see that limitRange is not in our docs
+2017-10-25T19:52:24 <colinclark> so Safari I can make contextually unique
+2017-10-25T19:52:30 <Bosmon> sucks
+2017-10-25T19:52:58 <colinclark> but then I guess I can just use a straight limitRange transform that uses the node\'s maxChannelCount to set the limit
+2017-10-25T19:52:58 <Bosmon> But here it is: https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/ModelTransformationTransforms.js#L615
+2017-10-25T19:53:02 <colinclark> perfect
+2017-10-25T19:53:14 <colinclark> this, I will implement right away and live with the Safari bug for now
+2017-10-25T19:53:23 <colinclark> so, I can\'t tell if I\'m crazy
+2017-10-25T19:53:32 <Bosmon> Doesn\'t seem to be upcoming in a docs pull either :(
+2017-10-25T19:53:44 <colinclark> but I am finding it immensely useful to think through the requirements for Signaletic by implementing a prototype of it in Infusion
+2017-10-25T19:53:55 <Bosmon> colinclark - well, that\'s pretty interesting
+2017-10-25T19:54:02 <colinclark> with the idea, I guess, that it will be clear what kind of a "subset" of Infusion we will need for it
+2017-10-25T19:54:14 <colinclark> but I guess this will require a certain amount of reflection and discipline
+2017-10-25T19:54:17 <Bosmon> And I think is reminiscent of the way I debugged shader code by writing a kind of pseudo-dialect of it in JavaScript
+2017-10-25T19:54:23 <colinclark> ah, fascinating
+2017-10-25T19:54:31 <Bosmon> It took about 2 seconds to render a postage-stamp sized image
+2017-10-25T19:54:36 <colinclark> right, I remember that
+2017-10-25T19:54:42 <Bosmon> As compared to being able to render full screen well above frame rate : P
+2017-10-25T19:54:50 <colinclark> Having not use the "pure" Web Audio API much, I can\'t fully see the problem space
+2017-10-25T19:54:50 <Bosmon> But it would have been impossible without this technique
+2017-10-25T19:55:04 <Bosmon> I was rambling on to sgithens 2 nights about about the importance of "approach" : P
+2017-10-25T19:55:13 <colinclark> and by implementing something simple first in Infusion, I can at least understand how we\'d want the pieces to fit together
+2017-10-25T19:55:19 <colinclark> I am already learning a lot :)
+2017-10-25T19:55:31 <colinclark> Tell me about "approach" :)
+2017-10-25T19:55:31 <Bosmon> As being the crucial determiner, perhaps above intellect and knowledge, in success or failure on many kinds of project : P
+2017-10-25T19:55:45 <colinclark> I mean, clearly one needs to have one
+2017-10-25T19:55:50 <colinclark> and to be reflective enough to know what it is :P
+2017-10-25T19:55:52 <Bosmon> I was telling him about how I totally failed, throughout my teenage years, in ever writing an assembler program which worked
+2017-10-25T19:55:54 <colinclark> and to be able to articulate it
+2017-10-25T19:55:58 <colinclark> wow
+2017-10-25T19:56:04 <Bosmon> And this repeated failure has to be ascribed to failure of APPROACH : P
+2017-10-25T19:56:30 <Bosmon> I would just try to code some ludicrously ambitious thing, such as a flood fill algorithm which required nested loops and possibly even a stack
+2017-10-25T19:56:38 <colinclark> aha
+2017-10-25T19:56:41 <Bosmon> And then it would fail, corrupting all system memory
+2017-10-25T19:56:50 <colinclark> as bad assembly programs tend to do
+2017-10-25T19:56:53 <Bosmon> I would then have to load everything back in from an AUDIO CASSTTE taking about 8 minutes : P
+2017-10-25T19:56:59 <colinclark> hahaha
+2017-10-25T19:57:01 <Bosmon> And then do this again until I got too frustrated to continue
+2017-10-25T19:57:20 <colinclark> so, assuming you stuck with assembler, what would the change in approach have had to be?
+2017-10-25T19:57:28 <Bosmon> To my credit, I did try coding this on paper first
+2017-10-25T19:57:37 <colinclark> very good
+2017-10-25T19:57:48 <Bosmon> But yes, I should have tried to make a working implementation in some more tractable, vastly slower language
+2017-10-25T19:58:07 <Bosmon> Unfortunately in those days I wasn\'t particularly clear on how the isomorphism between subsets of languages might work
+2017-10-25T19:58:13 <colinclark> not to have built up your algorithm from simpler units that were tractable in assembly?
+2017-10-25T19:58:31 <Bosmon> And I guess had no confidence that I could reliably code in, say, BASIC, in a way which was going to have a one-for-one direct translation to assembler
+2017-10-25T19:58:40 <colinclark> right
+2017-10-25T19:59:16 <colinclark> I\'m not sure I can reliably code in Infusion in a way that can have a one-for-one direct translation into this non-existent Signaletic implementation :)
+2017-10-25T19:59:23 <colinclark> but at least we will have some hard examples of "don\'t do this"
+2017-10-25T19:59:31 <colinclark> and "this is essential to the system being able to function"
+2017-10-25T19:59:37 <Bosmon> Despite having had a comparable experience with writing shader code as I had had with assembler in 1988, I guess I\'ve just had more experience "in general" to be clear about how expressions in different languages might work
+2017-10-25T19:59:46 <colinclark> interesting
+2017-10-25T20:00:34 <Bosmon> ON which note I can highly recommend this video which Marijn tweeted about a couple of days ago
+2017-10-25T20:00:37 <Bosmon> https://www.youtube.com/watch?v=eAcDWcaezXY
+2017-10-25T20:00:50 <Bosmon> Which completely humbled me about how few of these idioms I\'d heard of
+2017-10-25T20:00:59 <Bosmon> LINDA is particularly interesting
+2017-10-25T20:01:07 <Bosmon> And you could say even offers a kind of precedent for "selectors"
+2017-10-25T20:01:20 <colinclark> oh interesting
+2017-10-25T20:01:23 <Bosmon> Although there is no materialised tree structure as such
+2017-10-25T20:01:32 <Bosmon> The speaker is actually very scathing about Linda
+2017-10-25T20:01:48 <colinclark> on what grounds?
+2017-10-25T20:01:55 <Bosmon> But her kind of "student-crowd-sourced book" looks as if it would be very interesting
+2017-10-25T20:02:00 <Bosmon> Well, it\'s hard to say on what grounds
+2017-10-25T20:02:16 <Bosmon> But she editorialises the claims of the developers in a way which she doesn\'t for any other language
+2017-10-25T20:02:26 <Bosmon> Things like "This is a plus, in the eyes of the authors"
+2017-10-25T20:02:49 <Bosmon> And emphasises how "wacky" and "way out" it is to have a total decoupling between the producers and consumers of state
+2017-10-25T20:03:40 <Bosmon> Personally I\'d given up on bringing shared-memory systems into the fold
+2017-10-25T20:03:48 <Bosmon> But it\'s interesting to see that there are some approaches to it
+2017-10-25T20:04:24 <colinclark> ah, interesting
+2017-10-25T20:24:27 * dandimitrov joined the channel
+2017-10-25T20:31:36 <simonjb> Bosmon, colinclark: back in my PhD days, I experimented with a Linda-inspired system for Java called JavaSpaces
+2017-10-25T20:31:39 <simonjb> https://www.javaworld.com/article/2076533/data-storage/make-room-for-javaspaces--part-1.html
+2017-10-25T20:31:44 <colinclark> oh wow
+2017-10-25T20:32:00 * michelled joined the channel
+2017-10-25T20:32:07 <colinclark> Jini!
+2017-10-25T20:32:17 <simonjb> yeah, many years ago :)
+2017-10-25T20:32:28 <colinclark> and now we have the philips hue :)
+2017-10-25T20:33:00 <colinclark> Didn\'t Sun demonstrate Jini-enabled lightbulbs back when they were promoting it?
+2017-10-25T20:33:34 <colinclark> I must have made that up
+2017-10-25T20:34:27 <simonjb> it\'s very possible
+2017-10-25T20:34:33 <colinclark> it\'s pretty interesting, the more I randomly google for this
+2017-10-25T20:35:06 <colinclark> There\'s also the problem of creating Jini "objects" for everything that might be included in a network. Each object - a small piece of software written in Sun\'s Java computer language - explains what the thing itself can do, and provides a way to operate it. Writing a Jini object for a light bulb might be fairly simple, but writing one for a car engine or digital video camera will be harder, and creating all the objects needed "will take a lot of
+2017-10-25T20:35:07 <colinclark> work over many years", says Joy.
+2017-10-25T20:35:21 <colinclark> This is kind of the pure expression of OO :)
+2017-10-25T20:35:31 <colinclark> an Object for every object
+2017-10-25T20:35:35 <simonjb> I think I still have a copy of David Gelernter\'s book Mirror Worlds somewhere
+2017-10-25T20:36:10 <colinclark> oh man
+2017-10-25T20:36:12 <colinclark> this is wild
+2017-10-25T20:36:46 <colinclark> 1993
+2017-10-25T20:36:58 <colinclark> shit, just reading the publisher\'s description is fascinating
+2017-10-25T20:38:14 <simonjb> it\'s been ages since I read it but I remember it being pretty interesting
+2017-10-25T20:38:27 <colinclark> I think the 90s are back
+2017-10-25T20:38:31 <colinclark> and not just vapourwave
+2017-10-25T20:38:37 <simonjb> VR!
+2017-10-25T20:38:41 <colinclark> yes
+2017-10-25T20:38:51 <simonjb> and AI
+2017-10-25T20:39:01 <colinclark> yes!
+2017-10-25T20:40:01 <colinclark> I\'m just trying to get my head around all the consequences of Gelernter\'s concept of "reality"
+2017-10-25T20:40:36 <simonjb> https://en.wikipedia.org/wiki/Virtual_reality#/media/File:VPL_DataSuit_1.jpg
+2017-10-25T20:40:49 <colinclark> this is very topical
+2017-10-25T20:41:06 <colinclark> michelled passed along the Vi Hart video you sent
+2017-10-25T20:41:11 <colinclark> it was so fantastic
+2017-10-25T20:41:23 <colinclark> but I got stuck on one thing
+2017-10-25T20:41:27 * Jess_ joined the channel
+2017-10-25T20:41:36 <colinclark> her idea of the body being part of the VR systems she is using
+2017-10-25T20:41:51 <simonjb> yeah, it\'s great -- I hadn\'t realised that she was doing such interesting work in VR
+2017-10-25T20:41:57 <colinclark> so amazing
+2017-10-25T20:42:11 <colinclark> it seems to me that the real issue is that body becomes totally "ocularized" with headsets and even AR-style approaches
+2017-10-25T20:42:32 <colinclark> in that it becomes something to be "recognized" using video-based computer vision techniques
+2017-10-25T20:42:44 <colinclark> whereas I really miss the idea of Caves
+2017-10-25T20:42:48 <colinclark> or perhaps these hilarious suits
+2017-10-25T20:43:04 <colinclark> in that the body at least, in a suit like this, is as equally instrumented as the eyes are
+2017-10-25T20:43:09 <colinclark> at least externally
+2017-10-25T20:43:29 <colinclark> anyway, the restorative yoga office is brilliant
+2017-10-25T20:43:57 <colinclark> and suggested to me that the proprioceptive body is still largely unaccounted for in an interesting way :)
+2017-10-25T20:46:23 <simonjb> when I discovered her VR work, I was reading back through her twitter stream and this one struck me as very interesting: https://twitter.com/vihartvihart/status/842089424410222592
+2017-10-25T20:46:25 * michelled joined the channel
+2017-10-25T20:46:31 <simonjb> "For our embodied learning VR stuff, we wanna consider what body skills we\'re amplifying in there. So we\'re reading up on embodied cognition."
+2017-10-25T20:47:12 * michelled has quit
+2017-10-25T20:47:24 * alanharnum joined the channel
+2017-10-25T20:47:43 * sepidehshahi joined the channel
+2017-10-25T20:50:02 * the-t-in-rtf joined the channel
+2017-10-25T20:51:25 <colinclark> very interesting
+2017-10-25T20:52:57 * dandimitrov has quit
+2017-10-25T21:04:48 * mrtyler joined the channel
+2017-10-25T21:28:05 <gmoss> alanharnum or colinclark did either of you take any notes from yesterday\'s SJRK partner\'s call? I\'m trying to organize mine and post them on the wiki page, would be great to incorporate any of yours :)
+2017-10-25T21:28:18 <colinclark> i did not :(
+2017-10-25T21:28:52 <alanharnum> gmoss: I took some notes, but they are at home on my laptop :(
+2017-10-25T21:29:18 <gmoss> doh, okay, thanks either way alanharnum colinclark! Alan we can always incorporate them after the fact
+2017-10-25T21:29:25 <colinclark> :)
+2017-10-25T21:35:29 <gmoss> btw, I think my wife showed me Vi Hart years and years ago, her work is always interesting to me and struck me as a very accessible way to demonstrate mathematical concepts :) it\'s neat to see that she\'s weighing in on VR, I wasn\'t aware she was into that either. I\'ll have to check it out!
+2017-10-25T21:35:32 * stegru has quit
+2017-10-25T21:45:32 * alanharnum joined the channel
+2017-10-25T22:42:06 * avtar has quit
+2017-10-25T22:54:48 * Justin_o has quit
+2017-10-25T22:57:39 * javjarfer joined the channel
+2017-10-25T23:25:10 * grrrero has quit
+2017-10-25T23:31:02 * javjarfer has quit
+2017-10-25T23:51:21 * colinclark joined the channel
+'
+
+b'2017-10-25T00:50:41 * sgithens has quit
+2017-10-25T01:36:03 * sgithens joined the channel
+2017-10-25T02:38:51 * mrtyler joined the channel
+2017-10-25T03:22:34 * sgithens has quit
+2017-10-25T08:15:38 * dandimitrov joined the channel
+2017-10-25T08:19:06 * georgitodorov joined the channel
+2017-10-25T09:05:38 * amatas joined the channel
+2017-10-25T09:06:15 * amatas has quit
+2017-10-25T09:07:22 * stegru joined the channel
+2017-10-25T09:07:46 * amatas joined the channel
+2017-10-25T11:16:33 * the-t-in-rtf joined the channel
+2017-10-25T11:28:33 * georgitodorov has quit
+2017-10-25T11:28:45 * georgitodorov joined the channel
+2017-10-25T11:34:44 <dandimitrov> Hi, Bosmon, I\'d like to ask whether there is a mechanism in the `lifeCycleManager` for notifying about keyIn failure?
+2017-10-25T11:34:51 <dandimitrov> We\'ve implemented an Electron "tray ballon" notification for KeyIn error, but it follows our current DEV workflow (through the KeyIn endpoint). We imagine that in a real-world scenario, the psp electron process should be notified via the socket or another place about an occurred KeyIn error.
+2017-10-25T11:37:02 <Bosmon> Hi there dandimitrov - the central point where there is notification of a keyin failure is here in the userLogonHandling: https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/UserLogonStateChange.js#L34
+2017-10-25T11:38:00 <Bosmon> The request grade type is this one: https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/UserLogonStateChange.js#L275
+2017-10-25T11:38:11 <Bosmon> The comment here is helpful since we do not have "types" : P
+2017-10-25T11:40:03 <Bosmon> But both varieties of the flowManger configuration will have requests which inherit via "gpii.flowManager.userLogonHandling.stateChangeHandler"
+2017-10-25T11:40:32 <Bosmon> In general you want to add yourself as a listener to the "onError" event of this request type
+2017-10-25T11:40:50 <Bosmon> The LifecycleManager isn\'t involved since it never gets any notification of the start of a lifecycle if there is a keyin error
+2017-10-25T11:44:04 <Bosmon> The next question is - "How can I bind as a listener to this request?"
+2017-10-25T11:45:44 <Bosmon> And the answer is - via an options distribution, which, for example, has a target of (from the point of view of the PCPChannel) {flowManager requests gpii.flowManager.userLogonHandling.stateChangeHandler}.options.listeners.onError
+2017-10-25T11:45:49 <Bosmon> Or some similar selector
+2017-10-25T11:49:15 <dandimitrov> hmmm, we\'ll give it a try
+2017-10-25T11:49:25 <dandimitrov> Thanks, Bosmon
+2017-10-25T11:51:19 <Bosmon> dandimitrov - you can see an example of a similar kind of binding in the PCPChannel here: https://github.com/amb26/universal/blob/13a8f45683f88c6cf5ae6ff68f3eee8dff5cbc05/gpii/node_modules/flowManager/src/PCPChannel.js#L52
+2017-10-25T11:51:47 <Bosmon> The name "{flowManager}.pcpChannel" will be visible from the request site so I suggest that you stick your event listener somewhere around there
+2017-10-25T11:52:17 <Bosmon> That is, to add some kind of event on the PCPChannel, for example, onKeyInError, and add that as a listener to the relevant request
+2017-10-25T12:20:44 * jhung joined the channel
+2017-10-25T12:24:58 * Justin_o joined the channel
+2017-10-25T12:26:13 * alanharnum joined the channel
+2017-10-25T12:40:12 * Jess_ joined the channel
+2017-10-25T12:45:17 <Justin_o> Bosmon: hello
+2017-10-25T13:01:35 * cindyli joined the channel
+2017-10-25T13:04:48 * simonjb joined the channel
+2017-10-25T13:20:02 * clown joined the channel
+2017-10-25T13:37:22 * georgitodorov has quit
+2017-10-25T13:39:09 * georgitodorov joined the channel
+2017-10-25T13:42:27 <cindyli> Bosmon: r u there?
+2017-10-25T14:03:44 * the-t-in-rtf joined the channel
+2017-10-25T14:09:20 * colinclark joined the channel
+2017-10-25T14:18:15 <cindyli> amatas: i cannot edit a gpii wiki page, hitting the same issue as last time: Your IP address has been automatically blocked because it was used by another user
+2017-10-25T14:18:20 <cindyli> Autoblocked because your IP address has been recently used by "https://wiki.gpii.net/index.php?title=User:Tayagisala&action=edit&redlink=1".
+2017-10-25T14:18:39 <cindyli> can you help to unblock? thanks
+2017-10-25T14:21:27 * michelled joined the channel
+2017-10-25T14:27:44 * georgitodorov has quit
+2017-10-25T14:37:40 * alanharnum has quit
+2017-10-25T14:37:43 * kavya joined the channel
+2017-10-25T14:40:56 * mrtyler joined the channel
+2017-10-25T14:45:05 <dandimitrov> Bosmon, it\'s me again, could you take a peek at (about the keyin error handling) https://github.com/danailbd/gpii-app/pull/8/files
+2017-10-25T15:01:43 * yuriy joined the channel
+2017-10-25T15:02:07 * the-t-in-rtf joined the channel
+2017-10-25T15:04:10 <Bosmon> dandimitrov - sure
+2017-10-25T15:05:07 <Bosmon> Hi dandimitrov - well, it will work, but it\'s a bit crass : P
+2017-10-25T15:05:39 <Bosmon> Firstly calling the uncaughtExceptionHandler manually is likely to lead to inconsistencies in the future
+2017-10-25T15:05:54 <Bosmon> Secondly, you are destroying any information from the original error which might be useful for further processing
+2017-10-25T15:06:44 <Bosmon> Well, I guess there is past form for this, in tersm of the existing EADDRINUSE code made by stegru .........
+2017-10-25T15:07:36 <Bosmon> So I guess this would pass code review in the terms that you hadn\'t made the existing situation any worse
+2017-10-25T15:08:06 <Bosmon> But really there is a problem using uncaught exception handlers for everyday business, in that node.js doesn\'t guarantee that the VM is usable after a genuine uncaught exception is triggered
+2017-10-25T15:08:11 <Bosmon> So we\'re going to have to think this
+2017-10-25T15:08:26 <Bosmon> If we have time at the end of today\'s architecture meeting let\'s make it an agenda item
+2017-10-25T15:08:35 <Bosmon> think -> rethink
+2017-10-25T15:12:20 * javjarfer joined the channel
+2017-10-25T15:12:23 <stegru> really, the EADDRINUSE was a hack.. for the HST
+2017-10-25T15:13:44 <stegru> javjarfer: have you noticed anything strange with MSDN today?
+2017-10-25T15:14:21 <javjarfer> stegru, hi! good afternoon, I have just saw that my pr for 1053 has failed in the installer building phase "windows-create-vm"
+2017-10-25T15:14:29 <javjarfer> mmm not really
+2017-10-25T15:14:39 <javjarfer> slowly than usual maybe?
+2017-10-25T15:14:50 <javjarfer> slower than*
+2017-10-25T15:15:01 <javjarfer> but that is not so remarkable xD
+2017-10-25T15:15:23 * grrrero joined the channel
+2017-10-25T15:15:57 <stegru> dandimitrov: could you add any error messages into this document please? we need to maintain a list of them, so they can be re-worded by UX (or even translated)
+2017-10-25T15:16:01 <stegru> https://docs.google.com/spreadsheets/d/1d63BScq3yVXqopKEqlnPHZtH3Tb2SiT8DR3HCap4PPA/edit?usp=sharing
+2017-10-25T15:16:57 <stegru> javjarfer: i\'ve searched for a few API calls, and they\'re missing off google (they\'re normally #1), but instead i see a page on docs.microsoft.com
+2017-10-25T15:18:57 <javjarfer> stegru, that is really weird, I haven\'t observed that
+2017-10-25T15:19:28 <javjarfer> maybe Microsoft is going to actually re-write theirs docs for humans?
+2017-10-25T15:20:05 <stegru> i have an "i\'m feeling lucky" search, like "site:msdn.microsoft.com <keyword>", and it\'s now faulty
+2017-10-25T15:20:20 <stegru> i\'d prefer they re-wrote it for developers, not humans ;)
+2017-10-25T15:21:25 * alanharnum joined the channel
+2017-10-25T15:21:44 <javjarfer> haha yes, good one
+2017-10-25T15:32:23 * alanharnum joined the channel
+2017-10-25T15:33:55 <yuriy> stegru: thank you, I added the text for the error in the document
+2017-10-25T15:34:05 <stegru> :*
+2017-10-25T15:36:21 * alanharnum has quit
+2017-10-25T15:37:56 <yuriy> Bosmon: unfortunately, this time it will only be me on the call, but if we end up discussing this, I can pass it along to the georgitodorov and dandimitrov
+2017-10-25T15:46:53 * alanharnum joined the channel
+2017-10-25T15:47:27 <alanharnum> grrrero, your responsive UIO changes are deployed to https://github.com/fluid-project/sojustrepairit.org - looks good to me! thanks
+2017-10-25T15:48:59 <dandimitrov> Bosmon, do you refer to the manual fire of `onUncaughtException` with the `uncaughtExceptionHandler`. Yeah, I agree it\'s a mess
+2017-10-25T15:49:38 <dandimitrov> But is the `distributeOptions` part ok?
+2017-10-25T15:57:06 <dandimitrov> Ideally, we imagined that we\'d have an invoker or sth on the `app` for general handling (i.e. show the ballon notification) of errors, thus avoiding some strange low-level event firing ^
+2017-10-25T15:59:08 <dandimitrov> We also had trouble adding any args to the attached listener. Is it possible to do such thing via `distributeOptions`?
+2017-10-25T16:00:04 * the-t-in-rtf has quit
+2017-10-25T16:01:45 <Bosmon> dandimitrov - yes, the distributeOptions is perfect
+2017-10-25T16:02:08 <Bosmon> dandimitrov, yes, you can args - but bear in mind that any args you add there will be resolved from the point of view of the target
+2017-10-25T16:02:14 <Bosmon> What args would you like to add?
+2017-10-25T16:03:10 <dandimitrov> I was thinking of the `tray` object, or some wrapper
+2017-10-25T16:04:47 <dandimitrov> in order to have access to the tray balloon, which is more of a temporal solution as I imagine this notification container is more likely to change^
+2017-10-25T16:05:08 * yuriy has quit
+2017-10-25T16:05:20 * yuriy joined the channel
+2017-10-25T16:07:54 <Bosmon> dandimitrov - it might be better to bind all of those things in the event listener which you will eventually write ...
+2017-10-25T16:08:34 * dandimitrov has quit
+2017-10-25T16:08:57 * alanharnum joined the channel
+2017-10-25T16:23:00 <grrrero> Thanks alanharnum!!
+2017-10-25T16:26:05 * colinclark joined the channel
+2017-10-25T16:49:40 * sgithens joined the channel
+2017-10-25T16:52:08 <Justin_o> cindyli: for your meeting about nock.. we currently use mockjax in infusion https://github.com/jakerella/jquery-mockjax and have used sinon.js for other mocking in other places http://sinonjs.org It may be worthwhile to evaluate those against/with nock.
+2017-10-25T16:52:18 <Justin_o> Also could be useful to know if we should switch off of any of the above
+2017-10-25T16:52:23 * sgithens has quit
+2017-10-25T16:53:04 <cindyli> thanks, Justin_o, do you know where we use sinon.js
+2017-10-25T16:53:24 <cindyli> i know jquery-mockjax is used everywhere in infusion tests
+2017-10-25T16:56:07 <Justin_o> uio+ uses a variant chrome-sinon, but i can\'t remember where else we\'ve tried it out
+2017-10-25T16:56:34 * Jess_ joined the channel
+2017-10-25T16:57:08 <Justin_o> cindyli: ^
+2017-10-25T16:58:06 <cindyli> cool. thanks, Justin_o
+2017-10-25T17:00:37 <Justin_o> cindyli: sinon is used in fluid-publish https://github.com/fluid-project/fluid-publish
+2017-10-25T17:01:54 <cindyli> ok
+2017-10-25T17:05:17 * kasparnet_ joined the channel
+2017-10-25T17:06:20 * michelled has quit
+2017-10-25T17:08:50 * kasparnet has quit
+2017-10-25T17:09:17 * alanharnum joined the channel
+2017-10-25T17:14:05 * alanharnum joined the channel
+2017-10-25T17:31:54 * michelled joined the channel
+2017-10-25T17:32:26 * amatas has quit
+2017-10-25T17:41:34 * avtar joined the channel
+2017-10-25T17:56:05 * sepidehshahi joined the channel
+2017-10-25T18:17:27 * cindyli joined the channel
+2017-10-25T18:28:03 * cindyli has quit
+2017-10-25T18:36:27 * javjarfer has quit
+2017-10-25T18:40:21 * stegru has quit
+2017-10-25T18:41:02 * stegru joined the channel
+2017-10-25T18:46:33 * the-t-in-rtf joined the channel
+2017-10-25T18:49:40 * the-t-in-rtf has quit
+2017-10-25T19:30:26 * alanharnum joined the channel
+2017-10-25T19:31:07 * michelled joined the channel
+2017-10-25T19:48:08 <colinclark> Bosmon: I\'ve probably asked you this kind of question before over the years
+2017-10-25T19:48:16 <colinclark> related to the semantic of the Change Applier
+2017-10-25T19:48:37 <Bosmon> Hi there colinclark
+2017-10-25T19:48:42 <colinclark> I have a case that I am working on where one may set the model to a particular value
+2017-10-25T19:48:49 <colinclark> I\'ll be somewhat concrete
+2017-10-25T19:48:50 <Bosmon> Yes, often just before we are leaving a crowded subway train, etc : P
+2017-10-25T19:48:53 <colinclark> hahaha
+2017-10-25T19:49:00 <colinclark> model: { channelCount: 2 }
+2017-10-25T19:49:29 <colinclark> So, optimistically, you might say, "well, I have a four-channel sound card, so I\'d like to set this value to 4"
+2017-10-25T19:49:51 <colinclark> but for whatever reason, such as some browsers sucking, it may be impossible to actually set this value appropriately
+2017-10-25T19:50:09 <colinclark> what does one do to express this to the user, in context of the change applier?
+2017-10-25T19:50:22 <Bosmon> Well
+2017-10-25T19:50:32 <Bosmon> That\'s a pretty tough semantic question, from the point of view of today\'s applier
+2017-10-25T19:50:39 <colinclark> yes :)
+2017-10-25T19:50:48 <colinclark> in the past, this was more explicit with guards, I guess
+'
+

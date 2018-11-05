@@ -1,0 +1,292 @@
+b'2014-02-25T19:52:09 * clown joined the channel
+2014-02-25T19:52:34 <clown> greggy1:  http://www.the-art-of-web.com/css/format-dl/#section_2
+2014-02-25T19:54:02 * clown is now known as clown_mtg
+2014-02-25T19:54:18 <kasparnet> michelled: hmm... perhaps .. though I would\'ve thought it only use the preferences server
+2014-02-25T19:54:30 <kasparnet> I guess it could be using the MM\'s as well
+2014-02-25T19:54:49 <kasparnet> Justin_o: oh crap
+2014-02-25T19:55:48 <kasparnet> I\'m not sure what the solution should be here
+2014-02-25T19:56:04 <kasparnet> I mean, even the desired behavior is unclear to me
+2014-02-25T19:56:34 <kasparnet> but the /login call should ALWAYS be to localhost as far as I can figure out
+2014-02-25T19:56:46 <kasparnet> since it doesn\'t make any sense to make to a remote machine
+2014-02-25T19:57:14 <kasparnet> the big quesiton is where the prefs should be fetched from
+2014-02-25T19:57:29 <kasparnet> .. it seems natural to use a proxy on the localhost
+2014-02-25T19:58:03 <kasparnet> but on the other hand, we want the PMT to be able to run online, and I dont think we require the GPII to be installed on the machine
+2014-02-25T19:58:43 <kasparnet> (ofc we DO require it to support the "apply and save" functionality, but I guess we\'d need a "save" only option if it\'s running online ... all post pilots)
+2014-02-25T19:59:19 <kasparnet> anyway, I\'m wondering if we\'re at the point where we should do hacks for this to work
+2014-02-25T19:59:52 <kasparnet> michelled, Justin_o: ^
+2014-02-25T20:00:05 <kasparnet> for the pilots, this would mean always expecting login/logout to happen on localhost
+2014-02-25T20:00:09 <Justin_o> kasparnet: what hack did you have in mind.. and what\'s the deadline for it (which i guess was yesterday)
+2014-02-25T20:00:18 <kasparnet> and preferences fetching always happening on remote prefs server
+2014-02-25T20:00:42 <kasparnet> well - tomorrow evening we\'re gonna go through everything
+2014-02-25T20:00:52 <kasparnet> so that\'s the definitive deadline
+2014-02-25T20:01:11 <Justin_o> kasparnet: what time is that for us.. noonish?
+2014-02-25T20:01:43 <kasparnet> Justin_o: yeah
+2014-02-25T20:02:10 <kasparnet> Justin_o: well actually
+2014-02-25T20:02:30 <kasparnet> I\'m gonna fly thursday morning - very early, and we\'re gonna go through things before you get up
+2014-02-25T20:02:35 <kasparnet> on thursday
+2014-02-25T20:02:48 <kasparnet> so theoretically stuff could make it in wednesday evening
+2014-02-25T20:02:50 <kasparnet> your time
+2014-02-25T20:03:26 <Justin_o> ah okay
+2014-02-25T20:03:52 <colinclark> kasparnet: I don\'t think there\'s much of a hack that really needs to happen here
+2014-02-25T20:04:04 <colinclark> it\'s my understand that the PMT isn\'t currently prepared to run on a remote web server
+2014-02-25T20:04:21 <colinclark> it should be able to, and I really can\'t see any reason why it we won\'t want to do this in the future
+2014-02-25T20:04:51 <colinclark> it will entail adding the PMT server to the list of accepted cross-origin requests for the Preferences Server, I believe
+2014-02-25T20:05:12 <colinclark> But in the meantime, I was under the impression that no one has ever bothered to test the PMT anywhere but on the local device
+2014-02-25T20:05:43 <colinclark> in which case it doesn\'t seem terribly hacky to imagine that in this configuration, the PMT would access the preferences server via the Flow Manager
+2014-02-25T20:05:55 <colinclark> Am I missing something?
+2014-02-25T20:06:02 <colinclark> seems like that\'s what you\'re saying, too
+2014-02-25T20:06:16 <Justin_o> colinclark: the issue i\'m seeing right now is with login, saving seems to work with the remote preferences server
+2014-02-25T20:06:25 <colinclark> Right
+2014-02-25T20:06:34 <colinclark> the Preferences Server doesn\'t have any concept of logging in
+2014-02-25T20:06:41 <Justin_o> colinclark: if there is a proxy so that PMT/PCP always goes to localhost, then nothing will have to change on this side
+2014-02-25T20:07:02 <colinclark> A log in request can only sensibly be sent by the PMT/PCP to the local Flow Manager
+2014-02-25T20:07:04 <Justin_o> colinclark: yep that\'s what i figure... but locally the urls all have the same structure
+2014-02-25T20:07:09 <kasparnet> colinclark: what\'s more sketchy is that it seems the flowmanager currently (at least in the \'production\' mode) wont function as a proxy for the prefs server
+2014-02-25T20:07:18 <colinclark> why not?
+2014-02-25T20:07:47 <kasparnet> haven\'t figured that out yet, perhaps it\'s just me doing something wrong
+2014-02-25T20:08:00 <kasparnet> but posting to localhost:8081/user/ gives an error
+2014-02-25T20:08:08 <colinclark> interesting and lame
+2014-02-25T20:08:12 <kasparnet> hahahahaha
+2014-02-25T20:08:15 <kasparnet> indeed
+2014-02-25T20:08:28 <colinclark> I just don\'t understand why on earth someone hasn\'t built a real freaking server for the PMT
+2014-02-25T20:08:58 <colinclark> It would give us a significant amount of flexibility in these cases
+2014-02-25T20:09:31 <colinclark> but I guess, aside from writing it in JSF, it\'s just out of reach for anyone but those of us having this conversation right now :)
+2014-02-25T20:10:27 <Justin_o> colinclark: when you say PMT do you mean PMT/PCP or really just PMT
+2014-02-25T20:10:45 <colinclark> Well, that\'s a good question, Justin_o
+2014-02-25T20:10:56 <colinclark> They\'re separate things
+2014-02-25T20:11:28 <colinclark> They both need to be structured so that they aren\'t just a pile of HTML running on someone random WAMP or node.js file system web server
+2014-02-25T20:12:23 <colinclark> The PCP will be a "chromeless" web application
+2014-02-25T20:12:25 <colinclark> using Node Webkit or some equivalent tool
+2014-02-25T20:12:39 <colinclark> This will presumably provide it with expanded privileges, since it\'s only ever intended to run as a local application
+2014-02-25T20:12:39 <colinclark> the PMT should really be a Kettle-based server
+2014-02-25T20:13:03 <colinclark> And then we could easily write a handler than can make direct calls to the Preferences Server and do away with all of this kind of stuff
+2014-02-25T20:13:13 <colinclark> including the ubiquitous CORS requirements we have
+2014-02-25T20:13:19 <colinclark> If I\'m making any sense
+2014-02-25T20:13:31 <colinclark> Crazy idea, which I\'m sure michelled will have some thoughts on
+2014-02-25T20:13:43 <colinclark> but why don\'t we just write a little Kettle app for the PMT?
+2014-02-25T20:13:47 <Justin_o> colinclark: PCP will also need to save, but i\'m guessing your saying as a chromeless app it will have less restrictions
+2014-02-25T20:13:51 <colinclark> and then you can have all the stuff you want, like multiple configurations
+2014-02-25T20:13:54 * cindyli has quit
+2014-02-25T20:14:01 <colinclark> Justin_o: Yes, that\'s right
+2014-02-25T20:14:18 <Justin_o> colinclark: so i\'m not sure we can do that by tomorrow evening though..
+2014-02-25T20:14:56 <Justin_o> colinclark: also, any idea of chromeless apps are accessible?
+2014-02-25T20:15:12 * cindyli joined the channel
+2014-02-25T20:15:34 <colinclark> Presumably they inherit whatever accessibility characteristics their host rendering engine contains
+2014-02-25T20:15:37 <colinclark> but I\'ve never tested it
+2014-02-25T20:17:57 <colinclark> Justin_o: So it sounds like we need to focus on figuring out whether or not there\'s a bug with the Flow Manager when running in production mode
+2014-02-25T20:18:11 <colinclark> in terms of it proxying to the Preferences Server?
+2014-02-25T20:21:06 <Justin_o> colinclark: that makes sense
+2014-02-25T20:21:10 <colinclark> ok
+2014-02-25T20:21:11 <colinclark> who is doing that work?
+2014-02-25T20:21:22 <colinclark> If we find we\'re stuck, I can probably whip up a Kettle app for us
+2014-02-25T20:21:35 <colinclark> but I think you\'re probably right to say that it\'s not our best option with a day to go
+2014-02-25T20:21:41 <Justin_o> colinclark: good question, hopefully someone who knows how the flow manager works :)
+2014-02-25T20:21:53 <colinclark> kasparnet: are you looking at it?
+2014-02-25T20:21:57 <Justin_o> colinclark: yep, we\'re unfortunately pressed for time again
+2014-02-25T20:22:06 <colinclark> :(
+2014-02-25T20:22:21 <colinclark> no unit tests, no clear integration, no proper server
+2014-02-25T20:22:25 <colinclark> That\'s risky
+2014-02-25T20:22:38 <colinclark> I\'m sure we\'re all a little freaked out
+2014-02-25T20:24:48 <Justin_o> colinclark: that about sums it up, but there\'s also a bunch of TODOs in the code if you want to get a bit more scared
+2014-02-25T20:25:31 <kasparnet> colinclark: I can take a look tomorrow
+2014-02-25T20:25:46 <colinclark> thanks kasparnet
+2014-02-25T20:25:48 <kasparnet> colinclark: dont have much more juice in me today
+2014-02-25T20:25:56 <colinclark> yes, no kidding
+2014-02-25T20:29:27 <Justin_o> kasparnet: i have about another 30 minutes to my day, anything i can help you with till then?
+2014-02-25T20:35:07 <Justin_o> kasparnet: by the way, this may have some bearing on what chris will need to do for http://issues.gpii.net/browse/GPII-625
+2014-02-25T20:55:43 <Justin_o> kasparnet: i wonder if the issue has to do with the lack of io.json in the production config for the flow manager configuration as well as some other changes that are in the dev grade supplied to the kettle app.
+2014-02-25T21:03:50 <colinclark> Bosmon and kasparnet and jessm: So I posted this page to the wiki today: http://wiki.gpii.net/index.php/Security_and_Privacy
+2014-02-25T21:04:33 <jessm> colinclark: woah, heavy
+2014-02-25T21:04:56 <Bosmon> Wow, thanks colinclark
+2014-02-25T21:05:07 <colinclark> It was a Cloud4All deliverable, but I think it\'s helpful for thinking about our general approach to security
+2014-02-25T21:07:19 <colinclark> and it is the only C4A deliverable I have made in Word instead of in the wiki first
+2014-02-25T21:07:25 <colinclark> so I apologize for that
+2014-02-25T21:08:29 <Bosmon> Well, it looks great
+2014-02-25T21:08:45 <colinclark> I have heard from Marcel again
+2014-02-25T21:08:50 <Bosmon> !
+2014-02-25T21:08:55 <colinclark> so i will direct him to this as the only plan for secruity
+2014-02-25T21:09:00 <colinclark> he can follow it or ignore
+2014-02-25T21:09:01 <Bosmon> haven\'t?
+2014-02-25T21:09:04 <colinclark> but we are pursuing it
+2014-02-25T21:09:06 <colinclark> have
+2014-02-25T21:09:40 <colinclark> He\'d like to integrate his security gate with "the rest of the architecture"
+2014-02-25T21:09:47 <colinclark> but again, we\'re going to pursue this approach
+2014-02-25T21:11:57 * clown_mtg has quit
+2014-02-25T21:22:29 * the-t-in-rtf joined the channel
+2014-02-25T21:30:18 * anvk has quit
+2014-02-25T21:37:06 * cindyli has quit
+2014-02-25T21:52:02 * michelled has quit
+2014-02-25T21:55:28 * sgithens has quit
+2014-02-25T21:56:02 * jhernand1z is now known as jhernandez
+2014-02-25T22:00:19 * the-t-in-rtf has quit
+2014-02-25T22:04:15 * the-t-in-rtf joined the channel
+2014-02-25T22:09:04 * the-t-in-rtf has quit
+2014-02-25T22:10:49 * danaayotte_ has quit
+2014-02-25T22:11:08 * colinclark has quit
+2014-02-25T22:14:43 * sgithens joined the channel
+2014-02-25T22:18:34 * danaayotte_ joined the channel
+2014-02-25T22:34:44 * yzen has quit
+2014-02-25T22:35:46 * sgithens has quit
+2014-02-25T22:48:54 * danaayotte_ has left the channel
+2014-02-25T22:56:02 * jessm has quit
+2014-02-25T23:05:05 * Justin_o has quit
+2014-02-25T23:20:48 * vjoanna has quit
+2014-02-25T23:33:52 * sgithens joined the channel
+2014-02-25T23:48:16 * sgithens has quit
+2014-02-25T23:48:33 * sgithens joined the channel
+2014-02-25T23:53:27 * simonjb has quit
+2014-02-25T23:59:58 * michelled joined the channel
+'
+
+b"2014-02-25T00:09:29 * jhung joined the channel
+2014-02-25T00:37:15 * jhung has quit
+2014-02-25T04:04:32 * yzen joined the channel
+2014-02-25T06:26:10 * yzen has quit
+2014-02-25T08:20:50 * kasparnet joined the channel
+2014-02-25T08:54:01 * kasparnet has quit
+2014-02-25T09:02:59 * kasparnet joined the channel
+2014-02-25T09:48:30 * kasparnet has quit
+2014-02-25T10:02:41 * kasparnet joined the channel
+2014-02-25T10:32:49 * kasparnet has quit
+2014-02-25T10:33:29 * kasparnet joined the channel
+2014-02-25T11:06:58 * jhernand1z joined the channel
+2014-02-25T11:10:17 * jhernandez has quit
+2014-02-25T11:49:05 * chrispetsos joined the channel
+2014-02-25T11:49:27 <chrispetsos> hey @kasparnet, i'm here
+2014-02-25T12:10:58 <kasparnet> @chrispetsos oops, sorry, didn't see your ping
+2014-02-25T12:11:06 <kasparnet> so i just had a question about this pull request: https://github.com/GPII/prefsEditors/pull/36/files
+2014-02-25T12:11:12 <kasparnet> There is a merge conflict
+2014-02-25T12:11:46 <kasparnet> http://pastie.org/8776937
+2014-02-25T12:12:15 <kasparnet> I'm expecting that what we'd want after the merge is the lines 21-25 as they are in that pastie
+2014-02-25T12:12:34 <kasparnet> (and hence deleting line 13-20 and line 26)
+2014-02-25T12:12:40 <kasparnet> is that correct?
+2014-02-25T12:12:44 <kasparnet> @chrispetsos ^
+2014-02-25T12:13:42 <chrispetsos> @kasparnet i'm having a look at it right now
+2014-02-25T12:13:58 <kasparnet> cool, thanks chrispetsos
+2014-02-25T12:14:36 <chrispetsos> kasparnet you know what? i'm having difficulties reading this pastie, i'll update the pull request myself OK?
+2014-02-25T12:18:06 <kasparnet> sure, thanks chrispetsos
+2014-02-25T12:27:52 <chrispetsos> kasparnet it should be OK now. You should be able to merge it in automatically...
+2014-02-25T12:28:04 <kasparnet> awesome! Thanks chrispetsos
+2014-02-25T12:29:43 * jhernand1z is now known as jhernandez
+2014-02-25T12:29:58 <kasparnet> chrispetsos: it looks like demos/pcp/demo.js and demo/pcp/index.html are set to be removed now... is this on purpose?
+2014-02-25T12:30:06 <kasparnet> or did this just happen when merging with master
+2014-02-25T12:30:59 * jhernandez waves kasparnet and chrispetsos
+2014-02-25T12:31:08 <kasparnet> hey jhernandez
+2014-02-25T12:31:22 <chrispetsos> kasparnet no it's OK to remove those, PCP demo is now within prefsEditor demo
+2014-02-25T12:31:32 <chrispetsos> hey jhernandez
+2014-02-25T12:32:24 <kasparnet> chrispetsos: yeah - ok, checking the diff on my own machine, it looks like it's just github screwing it up
+2014-02-25T12:32:28 <kasparnet> thanks
+2014-02-25T12:32:35 <jhernandez> kasparnet: do you mind if I review https://github.com/GPII/universal/pull/226 ?
+2014-02-25T12:34:52 <kasparnet> jhernandez: no - that would be awesome!!
+2014-02-25T12:54:34 <jhernandez> kasparnet: ok - done
+2014-02-25T13:06:26 * chrispetsos has quit
+2014-02-25T13:09:05 * kasparnet has quit
+2014-02-25T13:13:14 * kasparnet joined the channel
+2014-02-25T13:24:53 * sgithens joined the channel
+2014-02-25T13:33:25 * michelled joined the channel
+2014-02-25T13:38:49 * cindyli joined the channel
+2014-02-25T13:39:07 * Justin_o joined the channel
+2014-02-25T13:46:29 <Justin_o> kasparnet: I'm trying to test our the remote preferences server with PMT but having no luck at the moment. I switched to using the production config by modifying this https://github.com/GPII/linux/blob/master/gpii.js#L22
+2014-02-25T13:48:01 <Justin_o> kasparnet: but i get a 404 error on an OPTIONS request to http://localhost:8081/user/
+2014-02-25T13:48:20 <Justin_o> kasparnet: any thoughts?
+2014-02-25T13:49:44 <Justin_o> kasparnet: the production config for the flow manager doesn't include io.json. https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/configs/production.json#L20-L22 Is this the problem?
+2014-02-25T13:52:16 <Justin_o> kasparnet: just modified the above reference to include io.json. The only difference is that now i get a 404 error on a POST request to http://localhost:8081/user/
+2014-02-25T13:53:24 * jessm joined the channel
+2014-02-25T13:59:21 <kasparnet> Justin_o: sorry - was on a call
+2014-02-25T13:59:31 <Justin_o> kasparnet: no problem, figured you were
+2014-02-25T13:59:40 <kasparnet> ... it seems it's attempting to get the preferences from the local preferences server
+2014-02-25T14:01:25 <Justin_o> kasparnet: i had thought, although i don't really know how this works, that we always make calls locally from PMT/PCP and what that hits is a proxy for the actual prefs server being used
+2014-02-25T14:01:27 <Justin_o> is that correct?
+2014-02-25T14:02:18 * vjoanna joined the channel
+2014-02-25T14:02:50 <kasparnet> yeah, I guess that would be sensible
+2014-02-25T14:03:08 * danaayotte joined the channel
+2014-02-25T14:10:59 * sgithens has quit
+2014-02-25T14:19:16 * yzen joined the channel
+2014-02-25T14:47:39 * clown joined the channel
+2014-02-25T14:48:24 <Justin_o> kasparnet: i guess i'm not sure how it works still.. should the PMT and PCP being hitting the prefs server url directly? or is it proxies?
+2014-02-25T14:55:17 * sgithens joined the channel
+2014-02-25T14:57:19 * vjoanna has quit
+2014-02-25T14:57:53 * vjoanna joined the channel
+2014-02-25T14:57:53 * vjoanna has quit
+2014-02-25T15:01:56 * colinclark joined the channel
+2014-02-25T15:17:37 * vjoanna joined the channel
+2014-02-25T15:19:53 * yzen has quit
+2014-02-25T15:39:06 * simonjb joined the channel
+2014-02-25T15:43:39 * yzen joined the channel
+2014-02-25T15:49:31 <kasparnet> Justin_o: checking
+2014-02-25T15:53:34 * amilchev joined the channel
+2014-02-25T15:56:21 * michelled has quit
+2014-02-25T15:59:22 * avtar joined the channel
+2014-02-25T16:08:09 * sgithens has quit
+2014-02-25T16:15:26 * danaayotte has quit
+2014-02-25T16:16:30 * anvk joined the channel
+2014-02-25T16:21:41 * amilchev has left the channel
+2014-02-25T16:28:37 <clown> cindyli, simonjb:  http://connect.ocad.ca/fluid-work
+2014-02-25T16:38:13 * sgithens joined the channel
+2014-02-25T16:49:11 <Justin_o> cindyli: did i hear that you got the checkboxes and radio buttons all fixed up for GPII-600?
+2014-02-25T16:49:34 <cindyli> no, radio buttons are fixed but not checkboxes
+2014-02-25T16:49:39 <cindyli> working on live regions
+2014-02-25T16:49:49 <Justin_o> ah okay.. well that's getting closer at least :)
+2014-02-25T16:49:54 <cindyli> ya
+2014-02-25T16:50:00 <Justin_o> i guess the checkboxes are going to be harder if you have to start changing the panels around
+2014-02-25T16:50:36 <cindyli> exactly, we may need to chat about that again
+2014-02-25T16:51:46 * michelled joined the channel
+2014-02-25T16:52:50 * danaayotte_ joined the channel
+2014-02-25T16:58:58 * kasparnet has quit
+2014-02-25T17:01:31 * kasparnet joined the channel
+2014-02-25T17:15:49 * michelled has quit
+2014-02-25T17:19:57 <Justin_o> cindyli: okay let me know if/when you want to talk
+2014-02-25T17:20:21 <Justin_o> kasparnet: did you find out anything about connecting to the remote preferences server from PMT/PCP?
+2014-02-25T17:37:18 <cindyli> Justin_o: have time to chat?
+2014-02-25T17:37:23 <Justin_o> cindyli: sure
+2014-02-25T17:37:36 <cindyli> Justin_o: skyping u
+2014-02-25T17:37:43 <Justin_o> cindyli: okay
+2014-02-25T17:40:26 * yzen has quit
+2014-02-25T17:51:51 * danaayotte_ has quit
+2014-02-25T18:13:53 * jhernand1z joined the channel
+2014-02-25T18:20:38 * vjoanna has quit
+2014-02-25T18:21:36 * jhernandez has quit
+2014-02-25T18:23:37 * vjoanna joined the channel
+2014-02-25T18:27:00 * colinclark has quit
+2014-02-25T18:29:04 * michelled joined the channel
+2014-02-25T18:32:00 * danaayotte_ joined the channel
+2014-02-25T18:32:33 * simonjb has quit
+2014-02-25T18:36:08 <cindyli> danaayotte_ and michelled, do you have a few minutes to chat with me about an accessibility related question for PMT PCP?
+2014-02-25T18:36:42 <danaayotte_> sure cindyli
+2014-02-25T18:36:44 <michelled> sure
+2014-02-25T18:36:56 <cindyli> thanks, can we do it at my desk if you don't mind
+2014-02-25T18:45:45 * simonjb joined the channel
+2014-02-25T18:50:32 * kasparnet has quit
+2014-02-25T18:53:49 * yzen joined the channel
+2014-02-25T18:58:26 * yzen has quit
+2014-02-25T19:02:52 * yzen joined the channel
+2014-02-25T19:09:19 * colinclark joined the channel
+2014-02-25T19:18:29 * yzen has quit
+2014-02-25T19:21:50 * kasparnet joined the channel
+2014-02-25T19:22:07 <Justin_o> michelled: i couldn't get the PMT/PCP working with the remove prefs server via configuration to universal. However I was able to get the PMT to save to the remote prefs server by changing GpiiSession.js to point at the remote prefs server instead of localhost. This worked to let me save a user, but PCP didn't seem to pick it up.
+2014-02-25T19:24:46 * yzen joined the channel
+2014-02-25T19:35:53 <michelled> Justin_o: hmmm\xe2\x80\xa6 I wonder if there's something hardcoded in PCP
+2014-02-25T19:37:37 <Justin_o> michelled: there is for web sockets, but i don't think we are really using those... could be mistaken though.
+2014-02-25T19:38:05 <Justin_o> michelled: also, there isn't really a way to change between production and development for PCP/PMT like there is for the rest of the GPII
+2014-02-25T19:38:48 * clown has quit
+2014-02-25T19:39:46 <michelled> Justin_o: that sounds like an over sight
+2014-02-25T19:40:05 <Justin_o> michelled: i mean there isn't a config file that we can just run them with
+2014-02-25T19:40:13 <Justin_o> we don't have a kettle app for it for example
+2014-02-25T19:41:58 <Justin_o> gpii.prefs.gpiiSession does take it as an option, but you would still have to have some way of knowing which environment you were running in to know what to change it to. PCP does have it hardcoded unfortunately for the web sockets :(
+2014-02-25T19:44:38 <michelled> Justin_o: can you get it work by modifying that?
+2014-02-25T19:44:50 <Justin_o> michelled: ah.. so the pcp wasn't picking it up because the token wasn't added to the URL, when loading the PCP
+2014-02-25T19:45:34 <Justin_o> so it looks like it doesn't fully work in PMT, the user isn't being logged in locally, which may be because i'm not using configuration for the the remote prefs server for the rest of gpii
+2014-02-25T19:45:38 <Justin_o> let me try to change both
+2014-02-25T19:46:43 <kasparnet> Justin_o: sorry for leaving you hanging
+2014-02-25T19:47:25 <Justin_o> kasparnet: no problem.. any info on the expected setup that should work with the remote prefs server?
+2014-02-25T19:48:19 <kasparnet> nope - I expected the production mode to work, but at least it doesn't seem to work with the PCP and PMT
+2014-02-25T19:48:25 <kasparnet> as you have also confirmed
+2014-02-25T19:48:39 <kasparnet> it seems the flowmanager doesn't pick up that URI at all
+2014-02-25T19:49:47 <kasparnet> Justin_o: and even trying to run the system normally in production mode doesn't seem to be properly working
+2014-02-25T19:50:00 <Justin_o> kasparnet: :(
+2014-02-25T19:50:39 <michelled> kasparnet: avtar hasn't redeployed masters yet
+2014-02-25T19:50:43 <michelled> could that be the issue?
+2014-02-25T19:50:56 <michelled> the prefs server is running master, but the other things are review 2 branch
+2014-02-25T19:50:57 <Justin_o> kasparnet: in terms of PMT/PCP it looks like the login fails. So if i modify PMT to use preferences.gpii.net as the base url it tries to login via a GET request to http://preferences.gpii.net/user/<token>/login which returns a 404
+"
+

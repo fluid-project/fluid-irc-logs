@@ -1,0 +1,203 @@
+b"2017-03-09T19:53:48 <gtirloni> we can move away from rpm packages and use pip directly
+2017-03-09T19:53:50 <mrtyler> or is it smart enough to notice that jinja2 is already available (via pip)
+2017-03-09T19:54:00 <mrtyler> hm
+2017-03-09T19:54:00 <gtirloni> yum will pull that back, yea
+2017-03-09T19:54:44 <gtirloni> http://docs.ansible.com/ansible/pip_module.html
+2017-03-09T19:55:03 <gtirloni> you can have a playbook in the ops repo that connects to the target/future ansible host and install the pip packages
+2017-03-09T19:55:29 <mrtyler> right but theoretically that playbook needs to rpm -e ansible
+2017-03-09T19:55:38 <mrtyler> which seems... sketchy
+2017-03-09T19:55:42 <gtirloni> why?
+2017-03-09T19:55:50 <mrtyler> alternately, we could try to leave the rpm ansible and jinja installed and just *also* pip install them
+2017-03-09T19:55:53 <mrtyler> but idk what that will do
+2017-03-09T19:56:19 <mrtyler> i.e. how do i make sure i'm always using the pip ansible rather than the rpm ansible
+2017-03-09T19:56:45 <gtirloni> removing the rpm package through the playbook seems fair to ensure that
+2017-03-09T19:57:22 <mrtyler> i guess i'm worried about the case where i run the playbook, it fails partway through, and now i can't run the playbook again because ansible is uninstalled
+2017-03-09T19:57:31 <mrtyler> maybe this is a weird edge case that i should not worry about
+2017-03-09T19:57:35 <mrtyler> ok so the plan
+2017-03-09T19:57:40 <gtirloni> you would be running the playbook from your laptop, right?
+2017-03-09T19:57:54 <mrtyler> uh i guess
+2017-03-09T19:58:03 <mrtyler> i would expect to run it from i40 itself tho!
+2017-03-09T19:58:07 <mrtyler> that's where we run ansible playbooks
+2017-03-09T19:58:15 <gtirloni> chicken-egg problem :)
+2017-03-09T19:58:16 <mrtyler> to avoid network connection problems in the middle, etc
+2017-03-09T19:58:32 <mrtyler> i'll try to make that work anyway i guess
+2017-03-09T19:58:42 <gtirloni> you'd be running the ansible bootstrapping playbook from your laptop to bootstrap the ansible control host.. and after that, you'd run all other playbooks from the control host
+2017-03-09T19:59:02 <mrtyler> i mean, that makes this easier
+2017-03-09T19:59:10 <mrtyler> it'd be nice to not have to worry. like maybe i can just do it
+2017-03-09T19:59:27 <mrtyler> i'll give it a shot, but not handling the self-upgrade case is also fine, so i'll do that if i can't make the more advanced case work
+2017-03-09T19:59:35 <gtirloni> relevant: releva
+2017-03-09T19:59:39 <gtirloni> relevant: https://github.com/debops/ansible-bootstrap
+2017-03-09T19:59:54 <mrtyler> - playbook for i40 that: rpm -e ansible jinja ; yum install pip; pip install ansible jinja
+2017-03-09T20:00:06 <mrtyler> - run that against i40, then run grafana on i40 against i23, hope it works
+2017-03-09T20:00:10 <mrtyler> that's the plan
+2017-03-09T20:00:14 <mrtyler> did i get everything?
+2017-03-09T20:00:19 <gtirloni> ok, that seems fair..
+2017-03-09T20:00:21 <gtirloni> i think that's ok
+2017-03-09T20:01:10 <mrtyler> ok, i'll try that after lunch :)
+2017-03-09T20:01:25 <mrtyler> thx for your help, again
+2017-03-09T20:01:29 <gtirloni> yw! thank you
+2017-03-09T20:08:36 * clown joined the channel
+2017-03-09T21:05:08 * alanharn_ joined the channel
+2017-03-09T21:11:49 <mrtyler> i think i'm well outside anyone's normal operating window but i'm about to mess with ansible on i-0040. i just emailed ops@. lmk if this is disruptive to you
+2017-03-09T22:33:53 * noveens joined the channel
+2017-03-09T22:36:56 * kasparnet has quit
+2017-03-09T22:42:30 * kasparnet joined the channel
+2017-03-09T22:51:51 * kasparnet has quit
+2017-03-09T23:03:52 * amatas has quit
+2017-03-09T23:06:24 * alanharnum joined the channel
+2017-03-09T23:39:21 * Justin_o has quit
+2017-03-09T23:45:22 * stegru has quit
+"
+
+b'2017-03-09T00:17:18 * kasparnet joined the channel
+2017-03-09T00:21:58 * kasparnet has quit
+2017-03-09T00:56:12 * javjarfer has quit
+2017-03-09T01:48:13 * alanharnum joined the channel
+2017-03-09T03:49:46 * alanharnum joined the channel
+2017-03-09T05:51:41 * alanharnum joined the channel
+2017-03-09T07:22:10 * jhernandez has quit
+2017-03-09T07:27:08 * amatas joined the channel
+2017-03-09T07:33:56 * kasparnet joined the channel
+2017-03-09T07:53:30 * alanharnum joined the channel
+2017-03-09T07:58:37 * kasparnet has quit
+2017-03-09T08:14:35 * javjarfer joined the channel
+2017-03-09T08:44:54 * stegru joined the channel
+2017-03-09T08:51:36 * colinclark joined the channel
+2017-03-09T08:54:52 * alanharnum joined the channel
+2017-03-09T09:25:50 * the-t-in-rtf joined the channel
+2017-03-09T09:32:46 * stegru- has quit
+2017-03-09T10:25:26 * kasparnet joined the channel
+2017-03-09T10:39:50 * jhernandez joined the channel
+2017-03-09T10:56:08 * alanharnum joined the channel
+2017-03-09T11:30:39 * colinclark joined the channel
+2017-03-09T11:57:19 * alanharnum joined the channel
+2017-03-09T12:17:56 * kasparnet has quit
+2017-03-09T12:24:15 * Jess__ joined the channel
+2017-03-09T12:29:36 * simonjb joined the channel
+2017-03-09T12:36:21 * kasparnet joined the channel
+2017-03-09T12:53:27 * kasparnet has quit
+2017-03-09T12:58:13 * alanharnum joined the channel
+2017-03-09T13:03:52 * kasparnet joined the channel
+2017-03-09T13:08:37 * gtirloni joined the channel
+2017-03-09T13:10:04 * colinclark joined the channel
+2017-03-09T13:12:36 * cindyli joined the channel
+2017-03-09T13:14:30 * Justin_o joined the channel
+2017-03-09T13:20:58 * kasparnet has quit
+2017-03-09T13:22:18 * kasparnet joined the channel
+2017-03-09T13:24:17 * gtirloni_ joined the channel
+2017-03-09T13:29:36 * gtirloni__ joined the channel
+2017-03-09T13:35:54 * kasparnet has quit
+2017-03-09T13:51:52 * gtirloni joined the channel
+2017-03-09T14:07:11 * alanharnum joined the channel
+2017-03-09T14:39:30 * avtar joined the channel
+2017-03-09T15:00:05 * alanharn_ joined the channel
+2017-03-09T15:15:49 * the-t-in-rtf joined the channel
+2017-03-09T15:48:52 * javjarfer has quit
+2017-03-09T16:12:08 * mrtyler joined the channel
+2017-03-09T16:13:11 * clown joined the channel
+2017-03-09T16:16:26 <mrtyler> hi gtirloni. can we talk about ansible in a few minutes?
+2017-03-09T16:16:45 <mrtyler> in particular, i\'d like for you to drive and screenshare with me
+2017-03-09T16:16:54 <mrtyler> git@github.com:mrtyler/ansible-role-grafana
+2017-03-09T16:17:07 <mrtyler> clone that and run molecule --debug test
+2017-03-09T16:17:12 <mrtyler> which will fail
+2017-03-09T16:17:18 <mrtyler> then run molecule --debug converge
+2017-03-09T16:17:21 <mrtyler> and we\'ll go from there :)
+2017-03-09T16:17:28 <mrtyler> whenever you have time today
+2017-03-09T16:17:45 <gtirloni> ok, np! i should be available in 15min or so, just finishing something
+2017-03-09T16:18:06 <mrtyler> np. lmk when you\'ve got the repro case and are ready to debug :)
+2017-03-09T16:39:22 * javjarfer joined the channel
+2017-03-09T17:01:13 * alanharn_ joined the channel
+2017-03-09T17:09:52 <gtirloni> mrtyler: hey, i was able to reproduce it here.. so if i understood it right, there\'s a json structure, which has a list of dicts.. and you want to check if a dict with database==\'collectd\' exists in there, right? so if it exists, the databases does.. and if it doesn\'t you want to run that task... did i get it right?
+2017-03-09T17:10:09 <mrtyler> correct
+2017-03-09T17:11:41 <gtirloni> ok, there\'s a filter called "selectattr" that will iterate over that list and select the items that match what you want.. for instance, {{ datasources.json | selectattr(\'myattribute\',\'mycondition\',\'myvalue\') | list }}
+2017-03-09T17:12:12 <gtirloni> in this case, {{ selectattr(\'database\',\'equalto\',\'collectd\') | list }} should not be empty then, if the response has that
+2017-03-09T17:12:46 <gtirloni> this doesn\'t seem to be documented at ansible.com :(
+2017-03-09T17:13:01 <mrtyler> heh. how did you find this filter?
+2017-03-09T17:13:18 <gtirloni> i searched for "ansible filter search list of dicts"
+2017-03-09T17:13:38 <mrtyler> http://stackoverflow.com/questions/31895602/ansible-filter-a-list-by-its-attributes
+2017-03-09T17:13:51 <gtirloni> yep
+2017-03-09T17:14:32 <gtirloni> the conditional should work with just that, as in:   when: "{{  datasources.json |  selectattr(\'database\',\'equalto\',\'collectd\') | list }}
+2017-03-09T17:15:04 <mrtyler> i\'ll try it
+2017-03-09T17:15:12 <gtirloni> i think this is one of those cases where the ansible vs. jinja2 interaction isn\'t very clear... because supposedly, not all of jinja2 is allowed to work in ansible
+2017-03-09T17:15:27 <gtirloni> but some people go to the jinja2 docs, find what they want, and see if it\'ll work with ansible
+2017-03-09T17:15:42 <gtirloni> ideally, this should be documented here: http://docs.ansible.com/ansible/playbooks_filters.html
+2017-03-09T17:16:19 <mrtyler> a page i\'ve read a couple times :)
+2017-03-09T17:17:05 <gtirloni> yeah, docs are seriously lacking
+2017-03-09T17:18:09 <mrtyler> ok that didnt\' work
+2017-03-09T17:18:14 <mrtyler> let me get a debug msg
+2017-03-09T17:19:21 <gtirloni> if you want to, we can vidyo
+2017-03-09T17:19:39 <mrtyler> msg: "SELECTATTR: {{ datasources.json | selectattr(\'database\', \'equalto\', \'collectd (managed by ansible)\') | list }}"
+2017-03-09T17:19:47 <mrtyler> "msg": "SELECTATTR: []"
+2017-03-09T17:20:03 <mrtyler> vidyo might be easier
+2017-03-09T17:20:07 <mrtyler> let me set up my room
+2017-03-09T17:21:05 <mrtyler> k it\'s open
+2017-03-09T17:21:10 <gtirloni> ok joining
+2017-03-09T17:35:03 * kasparnet joined the channel
+2017-03-09T17:50:25 * clown joined the channel
+2017-03-09T18:01:12 * kathy joined the channel
+2017-03-09T18:13:23 * stegru has quit
+2017-03-09T18:13:34 * simonjb joined the channel
+2017-03-09T18:26:55 * javjarfer has quit
+2017-03-09T18:30:30 * avtar joined the channel
+2017-03-09T18:32:39 * cindyli joined the channel
+2017-03-09T18:36:58 * grass joined the channel
+2017-03-09T18:55:52 * jessm joined the channel
+2017-03-09T18:59:23 * stegru joined the channel
+2017-03-09T19:03:21 * alanharn_ joined the channel
+2017-03-09T19:07:35 * the-t-in-rtf joined the channel
+2017-03-09T19:15:41 <mrtyler> gtirloni: i\'ve got my fixes in for ansible-grafana so all PRs should be ready for review at your convenience
+2017-03-09T19:15:56 <gtirloni> mrtyler: thanks
+2017-03-09T19:16:00 <mrtyler> luckily, extracting the string "collected (managed by ansible)" into a variable was a non-event. i was nervous before i did it :p
+2017-03-09T19:16:15 <mrtyler> just waiting for the "oh you can\'t have a ( here" errors
+2017-03-09T19:19:14 <gtirloni> haha that wouldn\'t be totally unexpected with ansible/jinja
+2017-03-09T19:19:51 <gtirloni> i just checked, ansible defaults to check_invalid_arguments=True everywhere but the following modules turned that off: uri, zfs, bigpanda
+2017-03-09T19:20:03 <mrtyler> amazing
+2017-03-09T19:20:13 <mrtyler> i wonder what their major malfunctions are
+2017-03-09T19:20:30 <mrtyler> also glad to know i screwed this up in the 0.3% of modules affected by this problem
+2017-03-09T19:21:03 <gtirloni> very lucky, if there were any numbers involved.. i\'d play the lottery with them :)
+2017-03-09T19:21:48 <gtirloni> https://github.com/ansible/ansible/issues/2135
+2017-03-09T19:22:30 <gtirloni> so it looks like a bug, but i can\'t find why they would have that in the first place
+2017-03-09T19:33:25 * alanharnum joined the channel
+2017-03-09T19:40:28 <mrtyler> gtirloni: testing my updated ansible-grafana on i23 there\'s an error :(
+2017-03-09T19:40:37 <mrtyler> TemplateRuntimeError: no test named \'equalto\'
+2017-03-09T19:40:53 <mrtyler> i saw someone complaining about this before...
+2017-03-09T19:41:20 <mrtyler> here\'s a fun claim from a github issue:
+2017-03-09T19:41:20 <mrtyler> The equalto test is provided by Jinja 2.8, which is currently tagged as Dev and not yet released. The current stable jinja2 release is 2.7.
+2017-03-09T19:41:24 <mrtyler> This is not an Ansible bug.
+2017-03-09T19:41:26 <mrtyler> \xf0\x9f\x91\x8d 2
+2017-03-09T19:41:44 <mrtyler> indeed: [troscoe@i-0040 ansible]$ rpm -qa | grep jinja
+2017-03-09T19:41:45 <mrtyler> python-jinja2-2.7.2-2.el7.noarch
+2017-03-09T19:43:06 <gtirloni> hmm i have 2.8.1 here.. looks like the latest release is 2.9.5
+2017-03-09T19:43:35 <gtirloni> i think it\'s fair to remove that RPM package and install jinja2 through pip
+2017-03-09T19:43:55 <mrtyler> uh like as part of the grafana role?
+2017-03-09T19:44:06 <gtirloni> no, as part of i-0040\'s install procedure :)
+2017-03-09T19:44:10 <gtirloni> but..
+2017-03-09T19:44:15 <gtirloni> that won\'t help molecule/vagrant
+2017-03-09T19:44:23 <mrtyler> https://bugzilla.redhat.com/show_bug.cgi?id=1341266
+2017-03-09T19:44:31 <mrtyler> molecule/vagrant is not affected
+2017-03-09T19:44:39 <mrtyler> this is only happening in production, on i23
+2017-03-09T19:45:15 <gtirloni> actually, jinja/ansible doesn\'t need to be installed on the target host
+2017-03-09T19:45:23 <gtirloni> so updating i40 is enough
+2017-03-09T19:45:37 <gtirloni> that\'s where ansible is generating the python scripts on the fly and sending to the targets
+2017-03-09T19:45:50 <mrtyler> ah right
+2017-03-09T19:45:59 <mrtyler> i don\'t see the rules that configure ansible on these machines
+2017-03-09T19:46:15 <gtirloni> they shouldn\'t have ansible, there is no configuration
+2017-03-09T19:46:26 <gtirloni> if they have it, that\'s an oversight
+2017-03-09T19:46:47 <mrtyler> i23 does not
+2017-03-09T19:47:34 <mrtyler> ok so i40 is "tor1_shared_devops" but i don\'t see that key anywhere
+2017-03-09T19:47:55 <gtirloni> the CI hosts might have ansible, because Jenkins is going to run some playbooks from there.. that\'s expected
+2017-03-09T19:48:00 <mrtyler> and there is no group_vars/tor1_shared_devops
+2017-03-09T19:48:10 <gtirloni> there is no install procedure or role for tor1_shared_devops.. ansible was installed there manually
+2017-03-09T19:48:17 <mrtyler> ok
+2017-03-09T19:49:12 <mrtyler> and there\'s a bootstrapping problem so i can\'t write an ansible-ansible to use ansible to install ansible
+2017-03-09T19:49:37 <mrtyler> i guess i can write an ansible-jinja for use on i40 that installs pip then does pip install jinja
+2017-03-09T19:49:52 <mrtyler> and maybe also rpm -e python-jinja2? what else will that break?
+2017-03-09T19:51:01 * simonjb has quit
+2017-03-09T19:52:55 <gtirloni> jinja2 is first installed when ansible is installed, so i\'m guessing only ansible depends on it
+2017-03-09T19:53:04 <mrtyler> ya just verified this
+2017-03-09T19:53:08 <mrtyler> $ rpm -q --whatrequires python-jinja2
+2017-03-09T19:53:09 <mrtyler> ansible-2.2.1.0-1.el7.noarch
+2017-03-09T19:53:31 <mrtyler> but what hpapens when we upgrade ansible to 2.3 ?
+2017-03-09T19:53:39 <mrtyler> will rpm pull in the "missing" python-jinja2 again?
+'
+

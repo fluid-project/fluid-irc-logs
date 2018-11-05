@@ -1,0 +1,356 @@
+b'2017-10-30T20:26:20 <mrtyler> where is that alfredo quote from?
+2017-10-30T20:26:28 <mrtyler> i\'m trying to figure out the context/timing of that claim
+2017-10-30T20:26:33 <colinclark> from my memory of last week\'s infrastructure meeting
+2017-10-30T20:26:42 <colinclark> i\'m pretty sure it\'s close to verbatim
+2017-10-30T20:27:02 <mrtyler> not sure i remember it specifically
+2017-10-30T20:27:22 <mrtyler> i\'d say that 33% of requests failing means the cluster is not working
+2017-10-30T20:27:34 <mrtyler> so i guess that\'s why we\'re still working on it
+2017-10-30T20:27:48 <mrtyler> rephrasing, i would not accept such a system as "production-ready"
+2017-10-30T20:27:59 <mrtyler> our production-ready system must do better than that
+2017-10-30T20:28:02 <mrtyler> and i think it already does
+2017-10-30T20:36:45 <colinclark> yeah, that\'s what I was thinking
+2017-10-30T20:36:50 <colinclark> ok, i\'m glad we\'re getting some clarity
+2017-10-30T20:37:10 <mrtyler> for sure. these are big topics, worthy of discussion and shared understanding
+2017-10-30T20:37:45 <mrtyler> i don\'t remember if i told you but my impression is that the organization is underprepared for what it means to be "in production"
+2017-10-30T20:37:52 <colinclark> indeed, we are :)
+2017-10-30T20:37:53 <mrtyler> and that a lot of people are going to be getting wake-up calls in the coming weeks
+2017-10-30T20:37:58 <colinclark> Yes, I agree
+2017-10-30T20:38:01 <mrtyler> starting with tomorrow\'s meeting :)
+2017-10-30T20:38:04 <colinclark> ha!
+2017-10-30T20:38:06 <colinclark> I think that\'s not a terrible situation to be in
+2017-10-30T20:38:07 * cindyli has quit
+2017-10-30T20:38:15 <mrtyler> agreed
+2017-10-30T20:38:21 <mrtyler> it\'s not an emergency or anything
+2017-10-30T20:38:25 <colinclark> no, exactly
+2017-10-30T20:38:43 <colinclark> the terrible situation, in my mind, is going to into production before we\'ve got some basic processes and infrastructure in place
+2017-10-30T20:38:50 <colinclark> and expectations
+2017-10-30T20:38:53 <colinclark> those are the hard ones
+2017-10-30T20:39:05 <colinclark> especially in our situation of "vascillating requirements"
+2017-10-30T20:39:07 * Justin_o has quit
+2017-10-30T20:39:10 <mrtyler> yes
+2017-10-30T20:39:12 <mrtyler> ship early and often
+2017-10-30T20:39:15 <mrtyler> incorporate feedback
+2017-10-30T20:39:16 <mrtyler> iterate
+2017-10-30T20:39:19 <colinclark> indeed
+2017-10-30T20:54:05 * javjarfer has quit
+2017-10-30T21:05:03 * alanharnum has quit
+2017-10-30T21:22:00 * stegru joined the channel
+2017-10-30T22:05:50 * alanharnum joined the channel
+2017-10-30T22:10:37 * alanharnum has quit
+2017-10-30T22:24:52 * colinclark_ joined the channel
+2017-10-30T22:25:25 * colinclark_ has quit
+2017-10-30T22:27:35 * michelled has quit
+2017-10-30T22:27:43 * colinclark has quit
+2017-10-30T23:06:40 * alanharnum joined the channel
+2017-10-30T23:08:57 * stegru has quit
+2017-10-30T23:11:14 * alanharnum has quit
+2017-10-30T23:15:36 * grrrero has quit
+2017-10-30T23:19:52 * stegru joined the channel
+2017-10-30T23:27:27 * stegru has quit
+2017-10-30T23:57:01 * michelled joined the channel
+'
+
+b'2017-10-30T18:57:04 <colinclark> we\'re going to have to climb a new learning curve
+2017-10-30T18:57:13 <mrtyler> note, btw, that this is already added scope as the original plan was to roll with couchdb1 at first
+2017-10-30T18:57:13 <colinclark> we\'ll see how complex it gets and keep our minds open
+2017-10-30T18:57:18 <colinclark> I appreciate the heads up, it\'s very helpful
+2017-10-30T18:57:30 <colinclark> It\'s scope we very probably could defer or somehow simplify
+2017-10-30T18:57:32 <mrtyler> there are going to be a lot of new learning curves as we head to production! :)
+2017-10-30T18:57:34 <colinclark> :)
+2017-10-30T18:57:44 <colinclark> at the cost of less resilience and longer upgrade windows, etc.
+2017-10-30T18:57:58 <mrtyler> my understanding is that couchdb1 is simply a no-go
+2017-10-30T18:58:08 <colinclark> how come?
+2017-10-30T18:58:08 <mrtyler> maybe that\'s wrong if we\'re willing to relax reliability requirements
+2017-10-30T18:58:25 * the-t-in-rtf joined the channel
+2017-10-30T18:58:26 <mrtyler> it has no concewpt of clustering at all
+2017-10-30T18:58:42 <colinclark> well, it\'s always had replication
+2017-10-30T18:58:51 <colinclark> so to some extent it has clustering
+2017-10-30T18:58:59 <colinclark> just an approach that is limited to the slowest writer
+2017-10-30T18:59:12 <colinclark> and that may reduce the numnber of nodes you want to have running at once
+2017-10-30T18:59:19 <mrtyler> i asked about this a couple times and i was told it isn\'t workable, but i am fuzzy on the reasoning
+2017-10-30T18:59:22 <colinclark> but CouchDB has always had so-called leader to leader replication
+2017-10-30T18:59:40 <colinclark> and then it\'s not unsual to declare one node as a "write leader"
+2017-10-30T18:59:46 <colinclark> and leave the others for reading
+2017-10-30T18:59:52 <colinclark> which is one option we could probably scale to for a long time
+2017-10-30T19:00:12 <colinclark> it doesn\'t have clustering in a more formal sense, in terms of the ability to shard your database cross multiple nodes
+2017-10-30T19:00:32 <colinclark> but it seems to me it might well have been quite viable for a period of time
+2017-10-30T19:00:40 <mrtyler> https://issues.gpii.net/browse/GPII-2544?focusedCommentId=28817&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-28817
+2017-10-30T19:00:43 <colinclark> I wonder what Alfredo encountered that made this difficult?
+2017-10-30T19:00:52 <mrtyler> i think this is the most up-to-date thing alfredo wrote about that decision
+2017-10-30T19:01:01 <colinclark> see, this is fascinating
+2017-10-30T19:01:13 <colinclark> "In addition, the entire cluster behaves as a single CouchDB instance from outside"
+2017-10-30T19:01:21 <colinclark> and yet it doesn\'t appear to be doing so in our new implementation :)
+2017-10-30T19:01:46 <mrtyler> heh, right. obviously that is the goal, however
+2017-10-30T19:01:50 <colinclark> yup
+2017-10-30T19:01:54 <mrtyler> for a cluster to be indistinguishable from a single instance
+2017-10-30T19:01:57 <colinclark> and a noble goal it is indeed :)
+2017-10-30T19:01:59 <mrtyler> only with uptime!
+2017-10-30T19:02:08 <colinclark> I guess this is what I was getting at in terms of sharing the design constraints and thinking behind our approach
+2017-10-30T19:02:16 <colinclark> I\'m glad Alfredo left these notes on the JIRA, it helps
+2017-10-30T19:07:41 <colinclark> I mean, it certainly does seem like the right way to go in the long run
+2017-10-30T19:07:55 <colinclark> and in some ways it\'s worth paying the cost and pain of the learning curve as early and fast as possible
+2017-10-30T19:08:10 <colinclark> but it would be really nice if we could pay it in smaller increments :)
+2017-10-30T19:09:40 <mrtyler> for sure we want real clustering in the long run
+2017-10-30T19:09:48 <mrtyler> i agree with learning early
+2017-10-30T19:10:04 <mrtyler> but i think something like "clustering your persistence layer" is always going to be a bit tricky
+2017-10-30T19:10:16 <mrtyler> so not sure if there\'s a way to avoid eating the whole elephant
+2017-10-30T19:10:26 <colinclark> yes, it\'s a tough problem
+2017-10-30T19:10:43 <colinclark> I\'m really finding this Stack Overflow post puzzling
+2017-10-30T19:10:45 <mrtyler> the good news is we\'re discovering these issues relatively early in the process
+2017-10-30T19:10:53 <mrtyler> Before It\'s Too Late
+2017-10-30T19:10:59 <colinclark> in that it really does suggest that Couch\'s clustering should take care of all of this for us
+2017-10-30T19:10:59 <mrtyler> :)
+2017-10-30T19:11:16 <colinclark> I mean, I guess it\'s Stack Overflow, so lots of salt
+2017-10-30T19:11:21 <mrtyler> hehe
+2017-10-30T19:11:38 <colinclark> but it clearly seems to provide the kind of "atomicity" that Alfredo is reporting we don\'t have
+2017-10-30T19:12:20 <colinclark> in that it has explicit configuration for how many copies of a document need to be written or read before the cluster will return a succesful response
+2017-10-30T19:28:56 * clown joined the channel
+2017-10-30T19:33:14 * javjarfer joined the channel
+2017-10-30T19:46:50 <colinclark> mrtyler: Have you used haproxy in the past?
+2017-10-30T19:53:35 * michelled joined the channel
+2017-10-30T19:54:32 * javjarfer has quit
+2017-10-30T19:54:58 * javjarfer joined the channel
+2017-10-30T20:07:23 <mrtyler> colinclark: yes
+2017-10-30T20:07:47 <colinclark> I was poking around and found Couch\'s own recommended haproxy configuration
+2017-10-30T20:07:50 <colinclark> https://github.com/apache/couchdb/blob/master/rel/haproxy.cfg#L25-L26
+2017-10-30T20:08:16 <colinclark> If I\'m reading haproxy\'s documentation correctly, it\'s possible to configure the load balancer itself to redispatch a failed request to another node in the cluster
+2017-10-30T20:08:45 <colinclark> and it sounds like the inability for our Kubernetes\' setup to do this is directly related to the use of the iptables proxy-mode
+2017-10-30T20:08:47 <colinclark> but I may be confused
+2017-10-30T20:09:53 <colinclark> https://kubernetes.io/docs/concepts/services-networking/service/#proxy-mode-iptables
+2017-10-30T20:10:49 <mrtyler> well the analogue of haproxy in the existing setup is the amazon ELB
+2017-10-30T20:11:08 <mrtyler> i wouldn\'t think the iptables stuff would matter if the load balancer decides to retry
+2017-10-30T20:11:22 <colinclark> but we\'re not using ELB to load balance these services
+2017-10-30T20:11:29 <colinclark> if I understand Alfredo\'s email correctly
+2017-10-30T20:11:46 <colinclark> "Iptables virtual IP load balancer. It is the default internal way that Kubernetes uses for the Services objects."
+2017-10-30T20:11:50 <mrtyler> ah no you are right
+2017-10-30T20:11:59 <mrtyler> this is "internal" load balancing
+2017-10-30T20:12:02 <colinclark> yes
+2017-10-30T20:12:06 <colinclark> I\'m wondering two things
+2017-10-30T20:12:11 <mrtyler> couchdb isn\'t exposed externally so it is not using elb
+2017-10-30T20:12:24 <colinclark> 1) whether the "userspace" proxy mode is more viable here
+2017-10-30T20:12:24 <colinclark> or
+2017-10-30T20:12:34 <colinclark> 2) if we should design the infrastructure so we are using a "real" load balancer
+2017-10-30T20:12:40 <colinclark> even if it isn\'t exposed externally
+2017-10-30T20:13:01 <colinclark> these are just as yet unformed thoughts
+2017-10-30T20:13:31 <mrtyler> i don\'t *think* 1) helps but i\'m not super knowledgeable about how k8s does its internal routing
+2017-10-30T20:13:41 <mrtyler> 2) is definitely a possibility
+2017-10-30T20:14:06 <mrtyler> something like nginx or haproxy obviously has a lot more options for how to do the load balancing
+2017-10-30T20:14:53 <mrtyler> fwiw it appears we can use ELBs internally. search for "internal load balancer" on that k8s doc page
+2017-10-30T20:16:06 <colinclark> I have no idea what the best approach is here
+2017-10-30T20:16:26 <mrtyler> my vote is to use the simplest thing that can possibly work
+2017-10-30T20:16:34 <colinclark> but I can say that it seems like the CouchDB community recommends and has examples for using haproxy as the load balancer for a Couch 2 cluster
+2017-10-30T20:16:41 <colinclark> yeah, that\'s a good vote
+2017-10-30T20:16:42 * javjarfer has quit
+2017-10-30T20:16:43 <mrtyler> the simplest thing is the default, but i guess it\'s unclear whether that "can possibly work" :)
+2017-10-30T20:16:51 <colinclark> exactly what I was going to say
+2017-10-30T20:16:52 <colinclark> :) :)
+2017-10-30T20:17:02 * javjarfer joined the channel
+2017-10-30T20:17:26 <mrtyler> i agree that the upstream project having configs for a specific tool means it\'s a good idea to look at that specific tool
+2017-10-30T20:17:49 <mrtyler> my not-super-informed opinion is that nginx is simpler than haproxy
+2017-10-30T20:17:59 <colinclark> yeah
+2017-10-30T20:18:05 <colinclark> that still makes me laugh
+2017-10-30T20:18:15 <mrtyler> either one would be a step up in both feature set and complexity
+2017-10-30T20:18:21 <colinclark> the memory of a C-level executive at IBM...
+2017-10-30T20:18:28 <colinclark> in a room full of IBMers who had never heard of nginx
+2017-10-30T20:18:39 <mrtyler> it just means they\'re not russian :p
+2017-10-30T20:18:55 <colinclark> saying that we were being irresponsible for using nginx instead of the 1 year old Go load balancer that they acquired from Cloud Foundry and provided on BlueMix
+2017-10-30T20:19:05 <mrtyler> lol
+2017-10-30T20:19:08 <colinclark> it was so funny
+2017-10-30T20:19:23 <mrtyler> the 1 year old go load balancer whose name you either don\'t remember
+2017-10-30T20:19:26 <colinclark> yes
+2017-10-30T20:19:27 <mrtyler> or think i won\'t know and so didn\'t bother to write
+2017-10-30T20:19:30 <colinclark> because no one except IBM uses it
+2017-10-30T20:19:39 <colinclark> whereas like half the internet uses nginx now :P
+2017-10-30T20:19:46 <mrtyler> tbf, no one but ibm uses aix and... wait this was a bad example :p
+2017-10-30T20:19:50 <colinclark> hahaha
+2017-10-30T20:19:59 <colinclark> anyway
+2017-10-30T20:20:05 <colinclark> so to summarize
+2017-10-30T20:20:17 <colinclark> a) the GPII services probably do need to be more resilient to failed requests
+2017-10-30T20:20:29 <colinclark> b) it would be nice to start this process by having our load balancers do retries and/or redispatches
+2017-10-30T20:20:44 <colinclark> so we can externalize the concern to a single spot in the architecture
+2017-10-30T20:20:48 <colinclark> and then by extension
+2017-10-30T20:21:12 <colinclark> c) it appears that many load balancers, other than Kube\'s iptables default proxy-mode, can handle this sort of configuration
+2017-10-30T20:21:25 <colinclark> does that seem reasonable so far?
+2017-10-30T20:21:27 <mrtyler> what do you mean by "the gpii services"? flowmanager/preferences and friends? or gpii components on a user\'s device?
+2017-10-30T20:21:35 <colinclark> well, I guess both
+2017-10-30T20:21:48 <colinclark> I\'m particularly interested in making the components on the local device more resilient, sooner rather than later
+2017-10-30T20:22:04 <mrtyler> strongly agree re: local device components
+2017-10-30T20:22:20 <colinclark> whereas I would love it if there was a kind of "apparent atomicity" to the cloud-based request process
+2017-10-30T20:22:38 <colinclark> they either appear to work or fail catastrophically because of, say, a catastrophe :)
+2017-10-30T20:22:54 <mrtyler> i\'m a little uncertain about retries in the LB itself. that might lead to confusing behavior and/or the client making the request probably has the best undeerstanding of how it should handle certain classes of failures
+2017-10-30T20:23:03 <colinclark> yes
+2017-10-30T20:23:06 <colinclark> I think "certain class" is key
+2017-10-30T20:23:31 <colinclark> if a node or two in anotherwise healthy cluster fails, you\'d hope that requests would continue to succeed
+2017-10-30T20:23:49 <colinclark> and aim to make the load balancer responsible for redirects or retries
+2017-10-30T20:24:04 <mrtyler> there will always be a race condition there
+2017-10-30T20:24:04 <colinclark> in cases where there is a "semantic" failure, then we have to add application logic
+2017-10-30T20:24:14 <mrtyler> between when a node becomes unhealthy and when the LB notices that it is unhealthy
+2017-10-30T20:24:17 <colinclark> right
+2017-10-30T20:24:23 <colinclark> but the load balancer is the first one to notice
+2017-10-30T20:24:37 <colinclark> even when it doesn\'t notice :)
+2017-10-30T20:24:40 <colinclark> if that makes sense
+2017-10-30T20:24:43 <mrtyler> modulo that race condition, i think even default k8s LBs are doing that
+2017-10-30T20:24:44 <colinclark> by virtue of servicing a failed request within its cluster
+2017-10-30T20:25:01 <colinclark> you\'re right that there will always be issues that can\'t be handled by this approach
+2017-10-30T20:25:08 <colinclark> and those are the ones we should surface within the application
+2017-10-30T20:25:32 <colinclark> but, as Alfredo first reported it, "if a node goes down, 33% of subsequent requests will simply fail"
+2017-10-30T20:25:46 <colinclark> this seems like something the load balancer is very well equipped to buffer our application from in many cases
+2017-10-30T20:25:49 <mrtyler> i don\'t think that\'s true anymore
+2017-10-30T20:25:56 <colinclark> ah
+2017-10-30T20:25:57 <colinclark> fascinating
+2017-10-30T20:25:58 <mrtyler> that 33% of requests fail
+2017-10-30T20:26:05 <colinclark> well, that\'s an improvement :)
+'
+
+b'2017-10-30T07:28:36 * javjarfer joined the channel
+2017-10-30T08:03:27 * javjarfer has quit
+2017-10-30T08:41:41 * the-t-in-rtf joined the channel
+2017-10-30T08:55:08 * kasparnet joined the channel
+2017-10-30T09:09:08 * javjarfer joined the channel
+2017-10-30T09:53:50 * stegru joined the channel
+2017-10-30T10:05:49 * grrrero joined the channel
+2017-10-30T11:07:08 * Justin_o joined the channel
+2017-10-30T12:48:17 * cindyli joined the channel
+2017-10-30T12:51:35 * clown joined the channel
+2017-10-30T13:17:37 * michelled joined the channel
+2017-10-30T13:18:28 * simonjb joined the channel
+2017-10-30T13:22:42 * cindyli joined the channel
+2017-10-30T13:40:09 * alanharnum joined the channel
+2017-10-30T14:05:30 * colinclark joined the channel
+2017-10-30T14:10:31 * colinclark joined the channel
+2017-10-30T14:16:52 * mrtyler joined the channel
+2017-10-30T14:22:14 <michelled> alanharnum: when you get a chance, can you look at grrrero\'s pull request? https://github.com/fluid-project/sojustrepairit.org/pull/16
+2017-10-30T14:24:30 <grrrero> Second that!
+2017-10-30T14:26:17 * kasparnet has quit
+2017-10-30T14:27:44 * kasparnet joined the channel
+2017-10-30T14:32:48 * kasparnet has quit
+2017-10-30T14:32:58 <alanharnum> michelled grrrero: will do
+2017-10-30T14:39:18 * Jess_ joined the channel
+2017-10-30T14:42:43 <grrrero> Thanks alanharnum!!!
+2017-10-30T14:51:48 <alanharnum> grrrero: PR merged, site redeployed
+2017-10-30T14:52:36 <grrrero> Thank you!!! alanharnum
+2017-10-30T15:01:05 * the-t-in-rtf joined the channel
+2017-10-30T15:36:19 * colinclark joined the channel
+2017-10-30T15:49:36 * stegru is now known as world
+2017-10-30T15:49:45 * world is now known as stegru
+2017-10-30T15:55:40 * jessm joined the channel
+2017-10-30T16:04:00 * the-t-in-rtf joined the channel
+2017-10-30T18:17:14 <colinclark> mrtyler: So what aspect of clustering did you find missing from CouchDB when you were working on it last week?
+2017-10-30T18:29:21 * stegru has quit
+2017-10-30T18:31:30 <mrtyler> hi colinclark
+2017-10-30T18:31:33 <colinclark> hey
+2017-10-30T18:32:20 <mrtyler> amatas worked on this directly, so he has better details of course, but i can summarize a bit
+2017-10-30T18:32:25 <colinclark> sure
+2017-10-30T18:32:33 <colinclark> you mentioned it, so I figured I\'d ask you :)
+2017-10-30T18:32:53 <mrtyler> sorry just finishing upw ith javi
+2017-10-30T18:34:21 <colinclark> take your time
+2017-10-30T18:34:26 <colinclark> I\'m in no rush
+2017-10-30T18:35:56 <mrtyler> so the main thing that surprised me was alfredo identified a situation where data was only added to one node in the cluster
+2017-10-30T18:36:05 <mrtyler> (because the other nodes weren\'t ready when the dataloader ran)
+2017-10-30T18:36:26 <mrtyler> so ok, cool. my expectation is that as more nodes join the cluster, those nodes will have the data synced to them automatically
+2017-10-30T18:36:34 <colinclark> right
+2017-10-30T18:36:34 <mrtyler> but this is apparently not what happens
+2017-10-30T18:36:50 <mrtyler> and some manual step is required to tell couch "hey, please sync the data over there"
+2017-10-30T18:37:09 <colinclark> hmm, that sounds a bit odd, based on Couch\'s clustering documentatoin
+2017-10-30T18:37:36 <mrtyler> i\'m also a bit puzzled by couch\'s notions of shards vs replicas
+2017-10-30T18:37:38 * michelled joined the channel
+2017-10-30T18:37:40 <mrtyler> (i think that\'s the terminology)
+2017-10-30T18:37:46 <colinclark> yup, that\'s right
+2017-10-30T18:39:44 <mrtyler> there\'s also no internal healthchecking scheme afaik, hence the need for an external healthchecking scheme
+2017-10-30T18:39:51 <mrtyler> but this might be a more common situation
+2017-10-30T18:40:02 <colinclark> Internal to the clustering system, you mean?
+2017-10-30T18:40:15 <mrtyler> yes
+2017-10-30T18:40:20 <colinclark> as opposed to doing it externally via the load balancer?
+2017-10-30T18:40:32 <mrtyler> maybe in addition to healthchecks for the LB
+2017-10-30T18:40:39 <colinclark> right
+2017-10-30T18:40:47 <mrtyler> my last job used mysql in a fairly complex way, so that experience doesn\'t really translate to our couch cluster :)
+2017-10-30T18:41:23 * javjarfer has quit
+2017-10-30T18:41:28 <mrtyler> couchdb clustering is also a relatively new feature. that\'s fine, but so far it does not make me feel super warm and fuzzy
+2017-10-30T18:41:33 <colinclark> it\'s new territory for us all, for sure
+2017-10-30T18:41:56 <mrtyler> heh, including the couchdb developers, based on what alfredo has said about their responses to people asking questions about couchdb clustering
+2017-10-30T18:42:07 <colinclark> hmm
+2017-10-30T18:42:10 <colinclark> To be fair, Couch\'s clustering has been around for quite a long time
+2017-10-30T18:42:19 <colinclark> it\'s just that it was in a separate fork of the product, essentially :)
+2017-10-30T18:42:22 <mrtyler> my understanding is it\'s new in 2.0
+2017-10-30T18:42:26 <mrtyler> oic
+2017-10-30T18:42:28 <colinclark> it is
+2017-10-30T18:42:31 <mrtyler> did it come from their enterprise offering?
+2017-10-30T18:42:36 <mrtyler> "couchbase" i thinK?
+2017-10-30T18:42:44 <colinclark> no, that\'s a different product
+2017-10-30T18:42:47 <colinclark> there was a startup called CloudAnt
+2017-10-30T18:42:54 <colinclark> they made a clustering solution for Couch called BigCouch
+2017-10-30T18:43:02 <mrtyler> ah right bigcouch
+2017-10-30T18:43:07 <colinclark> IBM bought CloudAnt and sells a proprietary fork of CouchDB
+2017-10-30T18:43:11 <colinclark> which they just call CloudAnt now
+2017-10-30T18:43:18 <mrtyler> "cloudant" is... not the first name i would choose for my company
+2017-10-30T18:43:21 <colinclark> ha
+2017-10-30T18:43:33 <colinclark> the pricing, when our IBM friends tried to sell it to us, was exorbitant
+2017-10-30T18:43:41 <mrtyler> oh i\'m sure
+2017-10-30T18:43:42 <colinclark> anyway, eventually, IBM contributed BigCouch back to Apache
+2017-10-30T18:43:53 <mrtyler> but with it, you get that sweet, sweet ibm expertise about modern software architecture!
+2017-10-30T18:43:55 <colinclark> and it became the clustering functionality for CouchDB 2
+2017-10-30T18:43:58 <colinclark> hahaha
+2017-10-30T18:44:16 <colinclark> So it sounds like there are a few issues floating around
+2017-10-30T18:44:24 <colinclark> The first is to make our system more resilient to transient outages
+2017-10-30T18:44:43 <colinclark> such as one node in the cluster disappearing in the time between it happening and the load balancer noticing it and responding
+2017-10-30T18:45:14 <colinclark> Then we\'ve got the issue of sequencing the creation of new database nodes and synchronizing them with the rest of the cluster
+2017-10-30T18:45:23 <mrtyler> yes. i think our solution for #1 is pretty reasonable so far
+2017-10-30T18:45:33 <colinclark> What\'s the solution so far?
+2017-10-30T18:45:41 <mrtyler> #2 is trickier and is where i would expect couchdb itself to pick up some slack
+2017-10-30T18:45:49 <mrtyler> solution for #1 is a sidecar container responsible for healthchecks
+2017-10-30T18:45:56 <colinclark> using goss
+2017-10-30T18:45:58 <mrtyler> yes
+2017-10-30T18:45:58 <colinclark> is that right?
+2017-10-30T18:46:00 <colinclark> ok
+2017-10-30T18:46:09 <mrtyler> i am aware of no strategy for load balancing other than healthchecking
+2017-10-30T18:46:23 <mrtyler> let me try that again
+2017-10-30T18:46:46 <mrtyler> i am aware of no healthchecking strategy for load balancing other than some mechanism to hit an endpoint that says "i am healthy" or "i am unhealthy"
+2017-10-30T18:46:52 <colinclark> right
+2017-10-30T18:46:59 <colinclark> that is the way for nearly every system
+2017-10-30T18:47:03 <mrtyler> yeah
+2017-10-30T18:47:05 <colinclark> and certainly is built right into Kube
+2017-10-30T18:47:08 <mrtyler> yes
+2017-10-30T18:47:36 <mrtyler> one of the issues alfredo worked on was the difference between the k8s default of "hi i\'m here therefore i\'m healthy"
+2017-10-30T18:47:52 <mrtyler> and what we need, which is something that can say "i\'m here but wait, _up isn\'t 200ing yet, i\'m not ready for data"
+2017-10-30T18:48:12 <colinclark> right
+2017-10-30T18:48:14 <mrtyler> like i said, i think that system is in decent shape now
+2017-10-30T18:48:35 <colinclark> Why use a sidecar container instead of just configuring Kube to use Couch\'s /_stats or /_up as if it were a healthz endpoint?
+2017-10-30T18:48:52 <mrtyler> hmm
+2017-10-30T18:48:55 <colinclark> My memory of Kube\'s documentation was that it was possible to use another endpoint for a healthcheck
+2017-10-30T18:49:00 <colinclark> what does goss and the sidecar container give us?
+2017-10-30T18:49:08 <mrtyler> you can pick a different endpoint
+2017-10-30T18:49:12 <colinclark> (I\'m sure it\'s something, it just wasn\'t clear to me as I was reading the code and the documentation)
+2017-10-30T18:49:12 <mrtyler> i\'m not sure how configurable it is beyond that
+2017-10-30T18:49:29 <mrtyler> goss is a testing framework, basically
+2017-10-30T18:49:34 <mrtyler> so it is a lot more flexible
+2017-10-30T18:49:51 <mrtyler> another possible reason: couchdiscover (which alfredo found and started adapting for our needs) used the goss solution out of the box
+2017-10-30T18:50:17 <mrtyler> so maybe it\'s not actually necessary in an env like k8s which has other stuff available (e.g. a healthchecking framework)
+2017-10-30T18:50:28 <mrtyler> alfredo might be able to answer this one better :)
+2017-10-30T18:50:47 <colinclark> strangely, he doesn\'t seem to hang out in this channel anymore
+2017-10-30T18:51:17 <mrtyler> hmm, i mean right now he\'s just offline cuz it\'s nighttime
+2017-10-30T18:51:27 <colinclark> oh
+2017-10-30T18:51:31 <colinclark> but i see him in the other channels
+2017-10-30T18:51:39 <colinclark> but yes, it is late-ish for him
+2017-10-30T18:51:40 <mrtyler> maybe he misconfigured his irc client
+2017-10-30T18:51:44 <colinclark> less so than normal, I guess
+2017-10-30T18:51:48 <colinclark> my memory was that Kube had some configuration that gave us some ability to be more nuanced about when something was ready
+2017-10-30T18:51:54 <colinclark> but perhaps I\'m conflating it with goss
+2017-10-30T18:51:59 <colinclark> I\'ll have to take another look
+2017-10-30T18:52:15 <mrtyler> to take a small step back, one of the initial problems alfredo found was that the cluster was resilient to a single node dying *unless* it was the first node in the cluster
+2017-10-30T18:52:23 <colinclark> ha
+2017-10-30T18:52:29 <mrtyler> i think he tracked that down
+2017-10-30T18:52:29 <colinclark> why is that, do you know?
+2017-10-30T18:52:55 <mrtyler> i don\'t think that was the shared erlang cookie problem (which was preventing nodes from joining a pre-existing cluster, i.e. to scale up from 2 to 3 instances)
+2017-10-30T18:53:26 <mrtyler> i think he was investigating whether that problem was due to the "i\'m not going to sync this data to you unless you ask" problem
+2017-10-30T18:53:36 <mrtyler> but i don\'t remember for sure, or if he found a smoking gun on that one
+2017-10-30T18:55:25 <colinclark> that one still seems odd to me
+2017-10-30T18:55:35 <mrtyler> agreed
+2017-10-30T18:55:52 <mrtyler> it\'s definitely possible that i\'m misrepresenting the problem
+2017-10-30T18:56:02 <colinclark> well, it\'s still interesting
+2017-10-30T18:56:12 <colinclark> thanks for sharing the impressions
+2017-10-30T18:56:22 <mrtyler> ofc, np
+2017-10-30T18:56:39 <mrtyler> like i said, i\'m not ready to eject or anything
+2017-10-30T18:56:53 <colinclark> yeah
+2017-10-30T18:56:59 <mrtyler> just wanted to share a heads up about what we\'re encountering
+'
+

@@ -1,0 +1,301 @@
+b'2016-08-11T17:04:08 <Bosmon> But I think this function needs to be refactored anyway
+2016-08-11T17:06:34 <cindyli> Bosmon: ah, u mean the promise was returned earlier before the promiseTogo was reassigned
+2016-08-11T17:06:42 <cindyli> that makes sense
+2016-08-11T17:07:08 <michelled> jhernandez: what are you doing to work around https://issues.fluidproject.org/browse/FLUID-5940
+2016-08-11T17:07:10 <Bosmon> cindyli - well, not "before", but you have some problematic flow paths where some use can be made of the original promise which is then thrown away
+2016-08-11T17:08:33 <cindyli> ok, let me see how to refactor this function, Bosmon. let me know if you have suggestions
+2016-08-11T17:09:02 <Bosmon> cindyli - our standard best practices apply
+2016-08-11T17:09:14 <Bosmon> Try not to write extensive code inside callbacks, and certainly not doubly nested
+2016-08-11T17:09:43 <cindyli> nesting sometimes is a bit hard to get around
+2016-08-11T17:09:55 <Bosmon> nonsense :)
+2016-08-11T17:10:22 <cindyli> objection :)
+2016-08-11T17:11:06 <Bosmon> People always say stuff like that when they are starting to work with a new idiom or domain...
+2016-08-11T17:11:16 * jhung joined the channel
+2016-08-11T17:11:22 <Bosmon> All of a sudden everything they learned about structuring code seems to go out of the window : P
+2016-08-11T17:11:38 <cindyli> certainly true
+2016-08-11T17:11:55 <Bosmon> If only someone had been around to blame me when I was constructing the IoC testing framework
+2016-08-11T17:11:59 <cindyli> i\'m surely still in the learning zone of async promises
+2016-08-11T17:12:20 <Bosmon> Don\'t be afraid to make i) new utilities, ii) new invokers/functions or workflow points
+2016-08-11T17:12:50 <Bosmon> For example "// Create a new token if one doesn\'t exist" is clearly a separate function
+2016-08-11T17:13:27 <cindyli> right
+2016-08-11T17:14:03 <Bosmon> And on line 541 you should make sure the array-style access happens somewhere where it doesn\'t interfere with the control flow
+2016-08-11T17:14:24 <Bosmon> That is, once you\'ve got the responses, unpack them into straighforward arguments and then dispatch them to an ordinary function
+2016-08-11T17:15:14 <cindyli> ok, will try that
+2016-08-11T17:28:19 * kasparnet has quit
+2016-08-11T17:32:51 * colinclark joined the channel
+2016-08-11T17:37:27 * clown joined the channel
+2016-08-11T17:50:25 * clown has quit
+2016-08-11T18:03:18 <sepidehshahi> danayo: jhung, TPark, colinclark we are in the standup room
+2016-08-11T18:03:46 <jhung> sepidehshahi: ok
+2016-08-11T18:03:58 * clown joined the channel
+2016-08-11T18:05:20 <danayo> be there as soon as I can sepidehshahi - just on a call re: my internet situation
+2016-08-11T18:07:05 * cindyli1 joined the channel
+2016-08-11T18:07:17 * jhung1 joined the channel
+2016-08-11T18:09:09 * bens__ has quit
+2016-08-11T18:09:18 * cindyli has quit
+2016-08-11T18:09:34 * jhung has quit
+2016-08-11T18:09:42 <Justin_o> PaliwalSparsh: hello
+2016-08-11T18:09:53 <PaliwalSparsh> Hi Justin_o
+2016-08-11T18:10:03 * sepidehshahi has quit
+2016-08-11T18:10:06 * sepidehshahi_ joined the channel
+2016-08-11T18:10:19 <Justin_o> PaliwalSparsh:  did you still have a question about the languages?
+2016-08-11T18:10:22 <PaliwalSparsh> https://docs.google.com/document/d/1zfIGjmmOhrxVM0lmzl4y8Ht3iO8qHxPCgU6ABNl4AXc/edit
+2016-08-11T18:10:36 <PaliwalSparsh> This is the link i will be forwarding in the mailing list
+2016-08-11T18:11:01 <PaliwalSparsh> danayo made the corrections where ever it was required.
+2016-08-11T18:11:20 * colinclark has quit
+2016-08-11T18:11:54 <Justin_o> PaliwalSparsh: i wonder if this would be easier as a spread sheet with a column for each language that you wanted translations for.
+2016-08-11T18:13:27 <PaliwalSparsh> Justin_o: Sounds like a good idea I will try making a spreadsheet. So you are imagining with first row for en and then three rows for other language then second sentence and so on
+2016-08-11T18:14:14 * kavyak has quit
+2016-08-11T18:14:15 * colinclark joined the channel
+2016-08-11T18:14:30 <Justin_o> PaliwalSparsh: i\'m thinking a column for each language. So each row would correspond to a string you wanted translated
+2016-08-11T18:15:27 <PaliwalSparsh> Cool just would be very big horizontally, anyways hardly matters.
+2016-08-11T18:15:46 <PaliwalSparsh> Thanks for the suggestion.
+2016-08-11T18:16:10 * jhung1 has quit
+2016-08-11T18:16:30 <Justin_o> PaliwalSparsh: you can let the text in the cells wrap, so it doesn\'t have to be too wide
+2016-08-11T18:17:58 <PaliwalSparsh> Oh sweet
+2016-08-11T18:21:37 <PaliwalSparsh> https://docs.google.com/spreadsheets/d/1xXF7Klt3yqnlwY6hKCtPj688AcArHk5xnUfjUhK7oW4/edit?usp=sharing
+2016-08-11T18:21:52 <PaliwalSparsh> Justin_o: Thanks Looks really neat
+2016-08-11T18:29:20 <Justin_o> alanharnum: when you are looking at the Text to Speech stuff again, could you see if your changes address this issue as well https://issues.fluidproject.org/browse/FLUID-5735
+2016-08-11T18:30:08 <alanharnum> Justin_o: sure, assigned it to myself
+2016-08-11T18:30:16 <Justin_o> alanharnum: thanks
+2016-08-11T18:30:26 * colinclark joined the channel
+2016-08-11T18:38:20 * jhung joined the channel
+2016-08-11T18:51:25 * jhung has quit
+2016-08-11T18:54:54 * jhung joined the channel
+2016-08-11T18:57:17 * jhung has quit
+2016-08-11T18:59:30 * simonjb joined the channel
+2016-08-11T19:17:00 <gtirloni> PaliwalSparsh: will UP, DOWN, LEFT, RIGHT be translate in the buttons too?
+2016-08-11T19:18:39 <PaliwalSparsh> gtirloni: I am not sure will the people understand them as it is
+2016-08-11T19:19:01 <PaliwalSparsh> I will not be using any icon or symbol just the text.
+2016-08-11T19:19:26 <gtirloni> PaliwalSparsh: ok. maybe you could add those labels in the translation spreadsheet too so people can offer translation for them
+2016-08-11T19:19:55 * kavyak joined the channel
+2016-08-11T19:20:05 * colinclark has quit
+2016-08-11T19:20:24 <PaliwalSparsh> Thanks gtirloni :) Will add that now.
+2016-08-11T19:20:36 <gtirloni> thank YOU!
+2016-08-11T19:23:20 * sepidehshahi joined the channel
+2016-08-11T19:23:25 * colinclark joined the channel
+2016-08-11T19:28:42 * jhung joined the channel
+2016-08-11T19:31:25 * PaliwalSparsh1 joined the channel
+2016-08-11T19:34:24 * PaliwalSparsh has quit
+2016-08-11T19:35:23 <TPark> danayo, sepidehshahi : would Godfrey and I be able to participate in restructuring the guide?
+2016-08-11T19:36:19 <sepidehshahi> for sure TPark
+2016-08-11T19:37:00 * godfrey_ joined the channel
+2016-08-11T19:39:16 * Jess_ joined the channel
+2016-08-11T19:43:07 <michelled> Justin_o: it looks like this pull was merge, any reason the JIRA is still open? https://issues.fluidproject.org/browse/FLUID-5680
+2016-08-11T19:46:23 * bens__ joined the channel
+2016-08-11T19:47:17 * cindyli1 has quit
+2016-08-11T19:52:49 * cindyli joined the channel
+2016-08-11T19:55:06 * kavyak joined the channel
+2016-08-11T20:05:14 <simonjb> hi cindyli
+2016-08-11T20:06:13 <cindyli> hi simonjb
+2016-08-11T20:06:41 <simonjb> cindyli: do you have a little time to chat?
+2016-08-11T20:06:43 <cindyli> how are you doing
+2016-08-11T20:06:46 <cindyli> getting better?
+2016-08-11T20:07:33 <simonjb> yes, getting better, thanks
+2016-08-11T20:08:03 * PaliwalSparsh1 has quit
+2016-08-11T20:08:05 <simonjb> cindyli: can I call you on vidyo?
+2016-08-11T20:08:18 <cindyli> sure
+2016-08-11T20:21:58 * jhung has quit
+2016-08-11T20:25:45 * bens__ has quit
+2016-08-11T20:34:03 <danayo> TPark, godfrey_ : sorry for delayed response - of course you\xe2\x80\x99re welcome to participate. let us know if there\xe2\x80\x99s any particular way you want to be involved. we will be sure to include you in any discussion we may have
+2016-08-11T20:37:20 * yzen_ joined the channel
+2016-08-11T20:40:42 * yzen has quit
+2016-08-11T20:43:10 * Yan_Hu joined the channel
+2016-08-11T20:44:35 * TPark has quit
+2016-08-11T20:55:13 * cindyli joined the channel
+2016-08-11T20:55:44 <simonjb> cindyli: I chatted with michelled -- I think we don\'t need to meet now?
+2016-08-11T20:56:00 <cindyli> right, simonjb, take care
+2016-08-11T20:56:06 <cindyli> have a good vacation
+2016-08-11T20:56:09 <simonjb> thanks, you too
+2016-08-11T20:56:22 <cindyli> thanks
+2016-08-11T20:56:26 <simonjb> see you in a week and a bit
+2016-08-11T20:56:31 <cindyli> see you
+2016-08-11T20:57:01 * simonjb has quit
+2016-08-11T21:00:43 * Justin_o has quit
+2016-08-11T21:01:28 * clown has quit
+2016-08-11T21:10:00 * godfrey_ has quit
+2016-08-11T21:11:15 * yzen_ has quit
+2016-08-11T21:15:12 <jhernandez> michelled: hey! sorry, I was out getting our camper ready for our road trip :)
+2016-08-11T21:16:14 <jhernandez> you can workaround https://issues.fluidproject.org/browse/FLUID-5940 in many ways
+2016-08-11T21:16:28 <michelled> jhernandez: Bosmon asked me to fix it :)
+2016-08-11T21:16:34 <michelled> so I\'ll just do that ;)
+2016-08-11T21:16:40 <michelled> where are you going jhernandez?
+2016-08-11T21:16:43 <jhernandez> nice!
+2016-08-11T21:17:02 <jhernandez> I\'m going to Spain, but will spend a week or so in south of Franceee
+2016-08-11T21:17:52 <jhernandez> next to montpellier, then, we\'ll cross to Spain and will spend a few days in Pyrenees
+2016-08-11T21:18:05 <jhernandez> looking forward to it!
+2016-08-11T21:19:49 <michelled> sounds amazing!
+2016-08-11T21:20:00 <michelled> have a wonderful time!
+2016-08-11T21:20:20 <jhernandez> thanks, will do!! ;)
+2016-08-11T21:24:55 <jhernandez> btw, first thing I did to workaround the issue was moving my work folder outside of the filesystem root, but later on I decided to just add an extra check in https://github.com/fluid-project/infusion/blob/master/src/module/fluid.js#L39
+2016-08-11T21:26:56 <jhernandez> the check is about to find out whether we are the found upInfusionPath
+2016-08-11T21:27:50 <jhernandez> not sure if it\'s the best way to fix it, but it worked for me
+2016-08-11T21:28:34 <jhernandez> I can push it if you want to take a look at it
+2016-08-11T21:29:12 * danayo has quit
+2016-08-11T21:36:15 * alanharnum has quit
+2016-08-11T21:37:21 <jhernandez> michelled: ^
+2016-08-11T21:40:47 * gtirloni joined the channel
+2016-08-11T21:46:56 * cindyli has quit
+2016-08-11T21:49:06 <jhernandez> here you have the quick fix: https://github.com/javihernandez/infusion/commit/77c3abb599648635fad3870bce8702411b677ca7
+2016-08-11T21:50:41 <jhernandez> as I said, I\'m not sure whether is the best way to fix it - didn\'t run the tests nor perform more testing, it just works for me
+2016-08-11T22:11:39 * colinclark has quit
+2016-08-11T22:21:40 <michelled> thx jhernandez - I was trying a similar strategy but a different check
+2016-08-11T22:22:01 <michelled> I\'ll probably get to this tomorrow - gonna go watch a blues band tonight :)
+2016-08-11T22:26:57 * michelled has quit
+2016-08-11T23:01:34 * stegru has quit
+2016-08-11T23:52:51 * colinclark joined the channel
+2016-08-11T23:53:06 * colinclark has quit
+'
+
+b'2016-08-11T00:00:04 * yzen_ has quit
+2016-08-11T00:02:11 * yzen joined the channel
+2016-08-11T02:05:16 * yzen has quit
+2016-08-11T02:06:36 * yzen joined the channel
+2016-08-11T02:35:12 * yzen has quit
+2016-08-11T02:36:18 * yzen joined the channel
+2016-08-11T03:00:03 * yzen has quit
+2016-08-11T03:04:51 * yzen joined the channel
+2016-08-11T03:20:25 * yzen has quit
+2016-08-11T03:24:41 * yzen joined the channel
+2016-08-11T03:49:50 * yzen has quit
+2016-08-11T03:49:55 * yzen_ joined the channel
+2016-08-11T03:57:13 * michelled joined the channel
+2016-08-11T04:19:02 * yzen_ has quit
+2016-08-11T04:22:47 * yzen joined the channel
+2016-08-11T04:27:03 * yzen has quit
+2016-08-11T05:26:17 * michelled has quit
+2016-08-11T06:09:01 * kasparnet joined the channel
+2016-08-11T06:10:28 * kasparnet has quit
+2016-08-11T06:11:22 * kasparnet joined the channel
+2016-08-11T06:18:19 * amatas joined the channel
+2016-08-11T06:18:58 * kasparnet has quit
+2016-08-11T06:48:45 * kasparnet joined the channel
+2016-08-11T07:24:59 * kasparnet has quit
+2016-08-11T07:26:10 * kasparnet joined the channel
+2016-08-11T07:27:52 * kasparne_ joined the channel
+2016-08-11T07:31:33 * kasparnet has quit
+2016-08-11T07:44:49 * the-t-in-rtf joined the channel
+2016-08-11T08:01:57 * stegru joined the channel
+2016-08-11T09:47:57 * kasparne_ has quit
+2016-08-11T09:48:42 * kasparnet joined the channel
+2016-08-11T09:49:35 * kasparnet has quit
+2016-08-11T11:11:49 * Justin_o joined the channel
+2016-08-11T11:21:57 * gtirloni joined the channel
+2016-08-11T11:28:13 * kasparnet joined the channel
+2016-08-11T12:04:25 * Jess_ joined the channel
+2016-08-11T12:36:44 * PaliwalSparsh joined the channel
+2016-08-11T12:40:59 * yzen joined the channel
+2016-08-11T12:47:14 * cindyli joined the channel
+2016-08-11T12:51:36 * simonjb joined the channel
+2016-08-11T12:55:38 * colinclark joined the channel
+2016-08-11T12:59:58 * TPark joined the channel
+2016-08-11T13:00:44 * michelled joined the channel
+2016-08-11T13:01:02 <Justin_o> colinclark, simonjb, avtar: are you ready for our call?
+2016-08-11T13:01:13 <Justin_o> cindyli: would you like to join, it\'s UIO related
+2016-08-11T13:01:28 <cindyli> sure, Justin_o
+2016-08-11T13:01:37 <Justin_o> it\'ll be on skype
+2016-08-11T13:02:10 <simonjb> Justin_o: I\'ll be there shortly
+2016-08-11T13:02:20 <Justin_o> okay thanks
+2016-08-11T13:02:28 <avtar> Justin_o: i\'m online on skype
+2016-08-11T13:05:01 <colinclark> I\'ll just be one sec
+2016-08-11T13:05:08 <Justin_o> okay thanks
+2016-08-11T13:10:09 * PaliwalSparsh has quit
+2016-08-11T13:11:46 * yzen is now known as yzen_
+2016-08-11T13:13:59 * bens__ joined the channel
+2016-08-11T13:15:51 * yzen_ has quit
+2016-08-11T13:17:02 * sepidehshahi joined the channel
+2016-08-11T13:19:06 <TPark> sepidehshahi: here is the location of next weeks workshop, Room 322 at 230 Richmond St. W, Toronto, ON.
+2016-08-11T13:22:54 * alanharnum joined the channel
+2016-08-11T13:26:34 * TPark has quit
+2016-08-11T13:32:09 * yzen joined the channel
+2016-08-11T13:33:20 * TPark joined the channel
+2016-08-11T13:34:05 * huehuehue joined the channel
+2016-08-11T13:34:29 * huehuehue is now known as Guest56152
+2016-08-11T13:36:22 * Guest56152 has quit
+2016-08-11T13:41:46 * michelled has quit
+2016-08-11T13:49:12 * clown joined the channel
+2016-08-11T14:00:47 <avtar> Bosmon, cindyli, kasparnet: are we using vidyo?
+2016-08-11T14:00:54 <kasparnet> sure
+2016-08-11T14:01:00 <kasparnet> let me just fire mine up
+2016-08-11T14:01:12 <cindyli> let me know which room
+2016-08-11T14:02:17 * lliskovoi joined the channel
+2016-08-11T14:03:19 <avtar> cindyli: your room is unlocked so that one wins by default
+2016-08-11T14:03:28 <kasparnet> CONGRATULATIONS
+2016-08-11T14:03:38 <cindyli> ah, forgot to lock it
+2016-08-11T14:14:21 <Justin_o> Bosmon, colinclark: have time to chat about what to include in an Infusion 2.0 release
+2016-08-11T14:16:55 * gtirloni_ joined the channel
+2016-08-11T14:19:02 * gtirloni has quit
+2016-08-11T14:21:16 * gtirloni_ is now known as gtirloni
+2016-08-11T14:23:55 * danayo joined the channel
+2016-08-11T14:28:39 * jhung joined the channel
+2016-08-11T14:31:21 <colinclark> Justin_o: I can\'t tell... was that a question? :)
+2016-08-11T14:31:40 <Justin_o> colinclark: oops, yes it was a question
+2016-08-11T14:31:47 <Justin_o> forgot the punctuation again
+2016-08-11T14:36:10 * kavyak joined the channel
+2016-08-11T14:43:34 * lliskovoi_ joined the channel
+2016-08-11T14:45:37 * dinuka joined the channel
+2016-08-11T14:46:27 * colinclark joined the channel
+2016-08-11T14:47:16 * lliskovoi has quit
+2016-08-11T14:47:16 * lliskovoi_ is now known as lliskovoi
+2016-08-11T14:55:59 * michelled joined the channel
+2016-08-11T15:03:21 * kavyak has quit
+2016-08-11T15:15:23 * gtirloni has quit
+2016-08-11T15:24:38 * PaliwalSparsh joined the channel
+2016-08-11T15:32:31 <michelled> Bosmon: can this be closed after the last big clean up you did? https://issues.gpii.net/browse/GPII-1056
+2016-08-11T15:36:47 * gtirloni joined the channel
+2016-08-11T15:43:56 * sepidehshahi has quit
+2016-08-11T15:44:50 <Bosmon> It can be closed once https://github.com/GPII/universal/pull/463 goes in
+2016-08-11T15:47:43 <michelled> ah, great!
+2016-08-11T15:47:46 <michelled> who\'s reviewing that?
+2016-08-11T15:49:45 * kavyak joined the channel
+2016-08-11T15:50:12 <kavyak> Hi Antranig..
+2016-08-11T15:52:08 <Bosmon> Hi there kavyak
+2016-08-11T15:52:16 <Bosmon> michelled - simonjb and colinclark said they would do it between them
+2016-08-11T15:52:25 <michelled> ah, right, thx
+2016-08-11T15:53:44 <TPark> danayo: hi dana, this is the link to the comments for the ILDH: https://docs.google.com/document/d/1xsxgLkZchwKXZak9e8mKSMVQv2uFXbmnE8vp5TUOoEU/edit?usp=sharing
+2016-08-11T15:54:16 <kavyak> Can you please help me understand get and set process in settings handler
+2016-08-11T15:54:43 * clown has quit
+2016-08-11T15:55:09 <Bosmon> Hi kavyak - here\'s our existing docs on settings handlers
+2016-08-11T15:55:11 <Bosmon> https://wiki.gpii.net/w/Settings_Handler
+2016-08-11T15:55:29 <Bosmon> The "get" process is used to read from the settings handler, and "set" to write to it
+2016-08-11T15:56:02 <Bosmon> But the "set" process has an additional effect in reading the current settings back before they are overwritten, in theory in a transactionally safe way, although in practice we don\'t have such transactions yet
+2016-08-11T15:56:26 <Bosmon> But because the "set" process also performs a read, we have so far got by without using the "get" process in our main architecture, although it is widely used in test cases
+2016-08-11T16:00:01 * sepidehshahi joined the channel
+2016-08-11T16:00:06 <kavyak> ok..thx
+2016-08-11T16:00:12 <danayo> thanks TPark
+2016-08-11T16:00:14 * sepidehshahi joined the channel
+2016-08-11T16:06:56 * the-t-in-rtf has quit
+2016-08-11T16:07:03 * danayo joined the channel
+2016-08-11T16:30:26 * lliskovoi has quit
+2016-08-11T16:32:02 <alanharnum> who is able to make a new empty FLOE repo for me to fork so I can start bringing in some of the My3L-related grades?
+2016-08-11T16:32:21 <alanharnum> ^colinclark Justin_o cindyli?
+2016-08-11T16:32:53 <alanharnum> actually never mind
+2016-08-11T16:32:57 <alanharnum> it appears that i have that power
+2016-08-11T16:34:38 * clown joined the channel
+2016-08-11T16:34:46 <Justin_o> alanharnum: in the fluid-project space?
+2016-08-11T16:34:58 <alanharnum> yeah, but i actually have that power it appears
+2016-08-11T16:40:24 * michelled has quit
+2016-08-11T16:41:14 * michelled joined the channel
+2016-08-11T16:43:09 <cindyli> Bosmon: wonder if you can help me with the issue i\'m running into with this code - https://github.com/cindyli/universal/blob/GPII-1274/gpii/node_modules/gpii-oauth2/gpii-oauth2-authz-server/src/AuthorizationService.js#L559, what I wanna do is to replace line 565-570 with line 559-563 using fluid.promise.map()
+2016-08-11T16:43:23 * colinclark joined the channel
+2016-08-11T16:44:48 <cindyli> the issue is that,  the "promiseTogo" assigned at line 563 is returned to the caller function. but the success callback on that promise never gets called
+2016-08-11T16:45:08 <cindyli> just like the resolve() never happens in this promiseTogo
+2016-08-11T16:46:20 <cindyli> fluid.promise.map() is used in various places in this file and all working fine except this one. the special part with this is fluid.promise.map() is used in a callback at resolving a promise returned by fluid.promise.sequence()
+2016-08-11T16:47:14 <cindyli> so i wrote a unit test mimicing the same situation of having map() called in sequence() callback - https://gist.github.com/cindyli/0309896add30cb2610e9b1edba537d9a
+2016-08-11T16:47:24 * colinclark has quit
+2016-08-11T16:47:26 <cindyli> everything passes. seems this is not the cause
+2016-08-11T16:48:49 <cindyli> so i wonder if you can see mistakes I made in this usage?
+2016-08-11T16:49:05 * colinclark joined the channel
+2016-08-11T16:50:25 * danayo joined the channel
+2016-08-11T16:53:09 <Justin_o> alanharnum: i\'m a bit surprised that you were able to do that, i was looking at the team configuration in github and I didn\'t think it would be possible.
+2016-08-11T16:53:18 <Justin_o> alanharnum: are you able to push changes to it as well?
+2016-08-11T16:55:59 <alanharnum> Justin_o: not sure
+2016-08-11T16:56:20 <alanharnum> this is the repo here: https://github.com/fluid-project/myl3
+2016-08-11T16:56:54 <Justin_o> alanharnum: it seems that anyone with read permission or higher can create repos https://help.github.com/articles/repository-permission-levels-for-an-organization/
+2016-08-11T16:57:27 <alanharnum> weird
+2016-08-11T16:57:46 <alanharnum> maybe they changed that when they changed the payment structure
+2016-08-11T16:59:07 <Justin_o> alanharnum: they\'ve made a bunch of changes to teams, permissions, and etc since we originally set them up.. i should try to review some of the options at some point... and clean things up in general.
+2016-08-11T17:03:01 <Bosmon> Hi cindyli - this function is quite a mess
+2016-08-11T17:03:54 <Bosmon> You can\'t directly use .map here because you\'ve already constructed the return promise
+'
+

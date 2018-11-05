@@ -1,0 +1,395 @@
+b'2015-11-30T22:38:24 <Bosmon> colinclark - I have spent no time on it at all
+2015-11-30T22:38:37 <Bosmon> I have heard that it is possible...
+2015-11-30T22:38:40 <colinclark> It is
+2015-11-30T22:38:47 <colinclark> but something occurred to me about it today
+2015-11-30T22:38:51 <colinclark> based on a bug that a user reported
+2015-11-30T22:39:13 <colinclark> Based on the W3C spec and the MDN documentation, one can only send an ArrayBuffer
+2015-11-30T22:39:24 <colinclark> rather than an typed array view
+2015-11-30T22:39:31 <Bosmon> ok
+2015-11-30T22:39:40 <Bosmon> I forget what the relationship is between these things, in the node 4 era
+2015-11-30T22:39:45 <colinclark> that\'s the issue
+2015-11-30T22:39:45 <Bosmon> Are they easily interconvertable?
+2015-11-30T22:39:49 <colinclark> yes
+2015-11-30T22:40:05 <Bosmon> But not copy-free?
+2015-11-30T22:40:20 <colinclark> var b = new Buffer(4); b instanceof Buffer; // true b instanceof Unit8Array; // true
+2015-11-30T22:40:29 <Bosmon> Oh
+2015-11-30T22:40:31 <Bosmon> That\'s nice
+2015-11-30T22:40:41 <colinclark> So an ArrayBuffer is "storage"
+2015-11-30T22:40:51 <colinclark> one might, for example, allocate a big ArrayBuffer
+2015-11-30T22:40:58 <colinclark> and then pass around chunks of it using typed array views
+2015-11-30T22:41:03 <colinclark> as, in fact, Node 4 does
+2015-11-30T22:41:21 <colinclark> So, like, that previous example
+2015-11-30T22:41:34 <colinclark> you\'d actually discover this:
+2015-11-30T22:41:41 <colinclark> b.buffer.length; // 8192
+2015-11-30T22:41:46 <colinclark> nice round 8k blocks of memory
+2015-11-30T22:41:57 <Bosmon> Oh, interesting
+2015-11-30T22:42:01 <colinclark> though b.length will of course be 4
+2015-11-30T22:42:15 <colinclark> Anyway, this is the essential problem of the "old API"
+2015-11-30T22:42:22 <Bosmon> Whose old API?
+2015-11-30T22:42:26 <colinclark> Web Sockets
+2015-11-30T22:42:32 <colinclark> the WHATWG version of the Web Socket spec adds support for sending TypedArrayViews
+2015-11-30T22:42:45 <colinclark> but I haven\'t yet determined if all browsers support it
+2015-11-30T22:42:48 <Bosmon> Ah
+2015-11-30T22:42:59 <colinclark> otherwise it looks like I will have to copy every buffer before sending it
+2015-11-30T22:43:12 <Bosmon> That sucks
+2015-11-30T22:43:15 * alanharnum joined the channel
+2015-11-30T22:43:17 <Bosmon> Are there popular polyfills?
+2015-11-30T22:43:17 <colinclark> should be fine, but it is odd
+2015-11-30T22:43:19 <colinclark> I don\'t know
+2015-11-30T22:43:21 <colinclark> Do you want to know how I discovered all of this?
+2015-11-30T22:43:26 <colinclark> it is a much more odd story
+2015-11-30T22:43:26 <Bosmon> Sure :)
+2015-11-30T22:43:41 <colinclark> Well, so here is how things should work in a browser
+2015-11-30T22:43:45 <colinclark> at least in theory
+2015-11-30T22:44:00 <colinclark> var b = new Uint8Array(4);
+2015-11-30T22:44:09 <colinclark> b.length === b.buffer.length
+2015-11-30T22:44:17 <colinclark> and what I found
+2015-11-30T22:44:21 <colinclark> was that, in ATOM ELECTRON
+2015-11-30T22:44:44 <colinclark> There was, in a bizarrely familiar way, AN 8K ARRAY BUFFER
+2015-11-30T22:45:16 <colinclark> I guess Electron is automatically importing some polyfills
+2015-11-30T22:45:30 <colinclark> in that there is a Buffer implementation in the BROWSER SIDE
+2015-11-30T22:46:05 <colinclark> so osc.js\'s very poor feature detection was failing
+2015-11-30T22:46:07 <Bosmon> A browser that you believe isn\'t actually compliant with the "new API"?
+2015-11-30T22:46:15 <colinclark> well, no
+2015-11-30T22:46:34 <colinclark> just a Browser that, without me loading any code, supports Node.js\' Buffer API
+2015-11-30T22:46:42 <colinclark> and CMD :P
+2015-11-30T22:46:56 <colinclark> as Githens learned in DC when he tried to load jQuery
+2015-11-30T22:47:05 <colinclark> by simply including a script tag
+2015-11-30T22:47:23 <colinclark> it\'s a slightly crazier environment than I thought in that sense
+2015-11-30T22:47:55 <Bosmon> Oh yes
+2015-11-30T22:47:59 <Bosmon> Remind me how it does this
+2015-11-30T22:48:00 <colinclark> it\'s not just Chrome as one would expect
+2015-11-30T22:48:04 <colinclark> I don\'t have a clue
+2015-11-30T22:48:15 <Bosmon> Well, I mean, what is its overall architecture here
+2015-11-30T22:48:23 <colinclark> I don\'t know
+2015-11-30T22:48:26 <Bosmon> It actually bundles some kind of Chromium build, right?
+2015-11-30T22:48:29 <colinclark> yes
+2015-11-30T22:48:35 <colinclark> So there is a Node.js "main process"
+2015-11-30T22:48:44 * slim joined the channel
+2015-11-30T22:48:44 <colinclark> and then when you instantiate BrowserWindow objects
+2015-11-30T22:48:47 * slim has quit
+2015-11-30T22:48:50 <colinclark> you get Chromium processes
+2015-11-30T22:49:05 <colinclark> but I\'d guess that they\'re either sharing the same V8...
+2015-11-30T22:49:21 <colinclark> or Electron is silently (and invisibly) loading a CMD loader and Buffer polyfill, etc.
+2015-11-30T22:49:36 <colinclark> but it appears that the Chromium process is much more Node-like than a regular browser
+2015-11-30T22:49:45 <Bosmon> That\'s very interesting
+2015-11-30T22:49:46 <colinclark> I\'m sure there\'s some architecture documentation I haven\'t read about how this works
+2015-11-30T22:50:06 <colinclark> interestingly, it seems that node-webkit works roughly in the same way
+2015-11-30T22:50:10 <Bosmon> My first guess would be that the only practical way that could happen would be by sharing "a" V8, but I dunno
+2015-11-30T22:50:19 <colinclark> yes, that\'s my guess
+2015-11-30T23:19:58 * michelled joined the channel
+2015-11-30T23:29:15 * lliskovoi_ joined the channel
+2015-11-30T23:29:15 * lliskovoi_ has quit
+2015-11-30T23:54:19 <colinclark> Bosmon: Just from some quick tests, it looks like every modern browser, even IE11, can send TypedArrayViews via a Web Socket
+2015-11-30T23:54:21 <colinclark> so that\'s a relief
+2015-11-30T23:54:30 <Bosmon> colinclark - wow
+2015-11-30T23:54:37 <Bosmon> Well, that\'s nice
+2015-11-30T23:55:10 <colinclark> I have a user who is apparently streaming output from Flocking via a Web Socket
+2015-11-30T23:55:17 <colinclark> Audio output, not OSC messages
+2015-11-30T23:55:28 <colinclark> I would love to see the app
+'
+
+b'2015-11-30T20:12:54 <Justin_o> i wonder if the checkbox would make them think it would
+2015-11-30T20:13:47 <jhung> Justin_o: hmmm\xe2\x80\xa6
+2015-11-30T20:15:52 * alanharn_ joined the channel
+2015-11-30T20:16:57 * clown joined the channel
+2015-11-30T20:17:10 * alanharn_ joined the channel
+2015-11-30T20:17:57 <jhung> Justin_o: maybe it could be a global option instead and the label would make it clear it\'s for keyboard control only? Just thinking of alternatives.
+2015-11-30T20:18:21 <jhung> The global option would be to make both arms and legs more quickly.
+2015-11-30T20:18:37 * alanharnum joined the channel
+2015-11-30T20:26:25 <Bosmon> Hi cindyli, simonjb - I\'ve merged the GPII-1309 work for the add-preferences endpoint - good work!
+2015-11-30T20:26:44 * alanharn_ joined the channel
+2015-11-30T20:26:51 <simonjb> great, thanks Bosmon!
+2015-11-30T20:26:53 <cindyli> yay! thanks, Bosmon
+2015-11-30T20:27:37 * alanharn_ joined the channel
+2015-11-30T20:28:31 * colinclark joined the channel
+2015-11-30T20:32:49 * alanharnum joined the channel
+2015-11-30T20:33:28 <Justin_o> jhung: yes, i guess it would need to be specific
+2015-11-30T20:33:35 <Justin_o> hmm.. i guess we can play around with some stuff
+2015-11-30T20:33:42 <Justin_o> anastasiac: is the PGA standup everyday?
+2015-11-30T20:33:55 <anastasiac> Justin_o: yes, starting tomorrow
+2015-11-30T20:35:32 <Justin_o> anastasiac: thanks
+2015-11-30T20:35:48 * alanharnum joined the channel
+2015-11-30T20:36:19 <Justin_o> simonjb: would you be able to add the links to the article and anything else that might be interesting from your community meeting last week. You can put the links in the table row for the topic. It\'s now in the past table on the community meeting page https://wiki.fluidproject.org/display/fluid/Community+workshops
+2015-11-30T20:36:42 <simonjb> yep, will do Justin_o
+2015-11-30T20:37:05 <Justin_o> simonjb: thanks
+2015-11-30T20:39:02 <Justin_o> yzen: do you have a moment for an HTML/a11y question.
+2015-11-30T20:39:07 <anastasiac> jhung: there\xe2\x80\x99s a comment on the fd docs pull request https://github.com/GPII/docs-first-discovery/pull/1 about the 404 errors that happen when the docs system is run using \xe2\x80\x9cdocpad run\xe2\x80\x9d (4th from last comment). Do you have any insight on a) why these errors happen, and b) what can be done about them?
+2015-11-30T20:39:08 <yzen> yeah i have now
+2015-11-30T20:39:55 <jhung> taking a look anastasiac
+2015-11-30T20:39:56 * alanharnum joined the channel
+2015-11-30T20:40:40 <Justin_o> yzen: thanks.. so clown, jhung and I were puzzling over an interaction the other day. Basically we have an element in canvas/svg that spins around 360 degrees.. we want to represent this as DOM element. We were thinking of a slider or number input but none of those typically wraps. e.g. 0 -> 360 -> 0 ...
+2015-11-30T20:41:13 <Justin_o> for now we are thinking to just restrict the movement with the keyboard to be constrained and not wrap.
+2015-11-30T20:41:28 <Justin_o> have you encountered an accessible widget that would wrap?
+2015-11-30T20:41:49 <Justin_o> maybe a time picker or something
+2015-11-30T20:42:11 <yzen> Justin_o  we had time pickers that were sliders but they did not wrap
+2015-11-30T20:42:24 <clown> Justin_o, this sounds awfully familiar \xe2\x80\x94 isn\'t this the same discussion we had last Thu ?
+2015-11-30T20:42:29 <yzen> can you do the wrapping via js?
+2015-11-30T20:42:56 <Justin_o> clown: it is :) I want to see what we could do if they it turns out that the wrapping is important
+2015-11-30T20:43:19 <Justin_o> yzen: sure, but i wonder if it would be confusing for a screenreader user
+2015-11-30T20:43:34 <Justin_o> as the attributes tend to have max and min values
+2015-11-30T20:43:53 <clown> yzen, part of the problem is that range controls have a max and min value.
+2015-11-30T20:44:06 <clown> where the max > the min.
+2015-11-30T20:44:33 <clown> but, in a "circular" range, they well, wrap around the max and go back to the min.
+2015-11-30T20:44:59 <clown> A spinner is still likely the best.
+2015-11-30T20:45:05 <yzen> yeah i understand
+2015-11-30T20:45:14 <yzen> yeah spinner would be nice for that
+2015-11-30T20:45:50 <Justin_o> yzen, clown: unfortunately it\'s not a progress indicator :(
+2015-11-30T20:46:08 <clown> Justin_o, I am looking the the OS X date & time control panel.  There is a spinner for the time.  I\'m reluctant to fiddle with it, in case it screws up my time.
+2015-11-30T20:46:22 <clown> Do you want to try?
+2015-11-30T20:46:38 <Justin_o> clown: uh... after what you just mentioned, not really ;)
+2015-11-30T20:47:11 <clown> well, I think if you change the time on that spinner, it live updates.  There is not chance to 1. set the time, then 2. apply it.
+2015-11-30T20:48:18 <clown> Justin_o:  what was wrong the the idea of using a slider that whose minimum and maximum are -180 deg and +180 deg.
+2015-11-30T20:48:20 <clown> ?
+2015-11-30T20:48:50 <clown> Is that you wanted to actually "slide" past the minimum and continue around?
+2015-11-30T20:50:12 <jhung> Justin_o: I\'m sure we can make the argument for restricting the range to PhET. It particularly makes sense from an accessibility perspective.
+2015-11-30T20:51:23 <Justin_o> clown: so on Mac OS it seems that the time field has no max or min values
+2015-11-30T20:51:30 <Justin_o> jhung: just preparing for the worst :)
+2015-11-30T20:51:39 <Justin_o> and seeing if we can accommodate them
+2015-11-30T20:51:47 <clown> Justin_o:  I threw caution to the wind and tried the time spinner..  It turns out you can put focus on the hour and then start spinning.  It moves the hour forward/backward only, and wraps.
+2015-11-30T20:52:01 <clown> looks like we tried the same thing....
+2015-11-30T20:52:15 <Justin_o> clown: yes.. :)
+2015-11-30T20:52:40 <Justin_o> i opened up accessibility inspector on it too, no max and min values
+2015-11-30T20:53:10 <clown> Justin_o, how do you know that it doesn\'t have a min/max?  So far, all you can see is that it wraps around.  The min might be 12:00:00AM and the max 11:59:59PM
+2015-11-30T20:53:21 <clown> I\'ll see if I can find out.
+2015-11-30T20:56:34 <clown> Jusin_o:  interesting findings...
+2015-11-30T20:56:41 <Justin_o> clown:  i mean in accessibility inspector it says max is nil
+2015-11-30T20:56:44 <Justin_o> and same for min
+2015-11-30T20:58:06 <clown> The date spinner in that panel says the min val is: "1969-01-01-23:56:40 +0000".  max value is "2038-11-30 20:56:14 +0000"
+2015-11-30T20:58:29 <clown> but, your right, the time spinner has <nil> for min and max.
+2015-11-30T20:58:39 <clown> So, what does VO say?
+2015-11-30T20:59:48 <Justin_o> now i have to go back
+2015-11-30T21:00:43 <clown> Justin_o:  another odd thing is that the role is not "spinner" nor "spinbutton", but "AXDateTimeArea".
+2015-11-30T21:01:54 <Justin_o> clown: yes
+2015-11-30T21:02:05 <Justin_o> clown: and it just cycles through.. eg. 59, 0
+2015-11-30T21:02:37 <clown> and the value is not the visible time (4:01:PM for me right now), but a full ISO date/time stamp "2015-11-30 21:01:26 +0000".  UTC time as well.
+2015-11-30T21:02:42 * slim joined the channel
+2015-11-30T21:09:25 * anvk has quit
+2015-11-30T21:24:43 * yzen joined the channel
+2015-11-30T21:28:05 * Bosmon joined the channel
+2015-11-30T21:29:03 * alanharnum joined the channel
+2015-11-30T21:31:13 * alanharn_ joined the channel
+2015-11-30T21:34:16 <Justin_o> jhung: was talking to clown, here\'s suggested keyboard interaction for a slider http://www.w3.org/TR/wai-aria-practices-1.1/#slider
+2015-11-30T21:34:24 <Justin_o> the same is similar for a spin button
+2015-11-30T21:34:38 <Justin_o> jhung:  you can play around with this quick example http://jsfiddle.net/x759595j/
+2015-11-30T21:35:12 <Justin_o> the native spin button widget doesn\'t seem to make use of any of the keyboard interactions other than the arrow keys, but the slider does
+2015-11-30T21:35:42 <Justin_o> jhung: however, the spin button (number input) can be set to any number and doesn\'t need max and min values.. so we could use that if we have to do the wrapping
+2015-11-30T21:37:37 <jhung> Justin_o: does the spinner have to be editable? Would we want to disable that?
+2015-11-30T21:38:24 <jhung> So if we had to do wrapping, the arm would be a spinner while the leg is a slider Justin_o.
+2015-11-30T21:40:30 * kasparnet joined the channel
+2015-11-30T21:44:19 * slim has quit
+2015-11-30T21:48:56 * the-t-in-rtf has quit
+2015-11-30T21:52:05 * alanharnum joined the channel
+2015-11-30T21:53:59 * alanharnum joined the channel
+2015-11-30T21:57:39 * alanharnum joined the channel
+2015-11-30T21:59:28 <Bosmon> Wow anastasiac - thanks for the merge :)
+2015-11-30T21:59:38 <Bosmon> This makes my current review task a bit easier since I can just refer to the real docs....
+2015-11-30T21:59:57 <Bosmon> Did you publish them yet?
+2015-11-30T22:00:04 <anastasiac> Bosmon: the \xe2\x80\x98real docs\xe2\x80\x99 are not yet deployed to the production site. I\xe2\x80\x99m working on that. I got an error\xe2\x80\xa6 diagnosing now
+2015-11-30T22:02:13 <anastasiac> ok, I just needed a clean checkout
+2015-11-30T22:02:45 <anastasiac> Bosmon: done. New docs are live
+2015-11-30T22:02:55 <anastasiac> thanks for all that work! they\xe2\x80\x99re great
+2015-11-30T22:03:08 <Bosmon> anastasiac - thanks so much for the review and publishing!
+2015-11-30T22:03:14 <Bosmon> What error did you run into when deploying?
+2015-11-30T22:03:36 <anastasiac> some weird parsing error in cson.js, I think
+2015-11-30T22:03:41 <Bosmon> !
+2015-11-30T22:03:45 <Bosmon> What did you do to resolve it
+2015-11-30T22:04:01 <anastasiac> I probably shouldn\xe2\x80\x99t have tried it with the copy I had
+2015-11-30T22:04:13 <anastasiac> I\xe2\x80\x99m not sure I didn\xe2\x80\x99t mess with it :=)
+2015-11-30T22:04:37 <Bosmon> The copy of what?
+2015-11-30T22:05:03 <anastasiac> the git checkout I happened to have
+2015-11-30T22:06:07 <anastasiac> I did a clean clone, and it was fine
+2015-11-30T22:06:26 <Bosmon> anastasiac ok, cool
+2015-11-30T22:07:42 <anastasiac> Bosmon: did you see my comments on my FLOE/425/GPII-1481 FD Tool docs pull request?
+2015-11-30T22:08:06 <anastasiac> ah, so you did
+2015-11-30T22:08:23 <Bosmon> anastasiac - where are we planning to deploy this?
+2015-11-30T22:08:43 <Bosmon> I was unable to reproduce the "exponential explosion of 404s" on my desktop machine
+2015-11-30T22:08:46 <anastasiac> Bosmon: that\xe2\x80\x99s a good question. It\xe2\x80\x99s a GPII thing now, so I don\xe2\x80\x99t know the answer to that question
+2015-11-30T22:09:03 <Bosmon> So I guess I\'m happy to merge this on the basis that the repo itself should have people warned off it
+2015-11-30T22:09:15 <Bosmon> That is, on the basis that the outcome of merging it is that we get some docs to deploy
+2015-11-30T22:09:40 <anastasiac> Bosmon: I\xe2\x80\x99m not sure I understand the suggestion that \xe2\x80\x9cwe are not expecting others to work with the docs at the repository leve\xe2\x80\x9d
+2015-11-30T22:10:00 <Bosmon> anastasiac - I\'m referring to people outside our team here
+2015-11-30T22:10:05 <anastasiac> ah, you mean they should read them through github?
+2015-11-30T22:10:26 <anastasiac> if so, then yes, I agree
+2015-11-30T22:10:42 <Bosmon> That is, we won\'t advertise this as a scheme for people outside our team to reuse for working on docs
+2015-11-30T22:11:16 <anastasiac> ah, you mean the docs-template repository as a basis for docs?
+2015-11-30T22:11:30 <anastasiac> until we resolve the issues you identified?
+2015-11-30T22:12:10 <anastasiac> Bosmon: ^
+2015-11-30T22:12:19 <Bosmon> anastasiac - yes
+2015-11-30T22:12:30 <anastasiac> ok, yes, sounds good
+2015-11-30T22:12:51 <anastasiac> we wouldn\xe2\x80\x99t ever tell anyone to use the docs-first-discovery repo as a basis, even if there were no issues with it
+2015-11-30T22:13:02 <anastasiac> but I agree, we should fix up docs-template
+2015-11-30T22:14:55 <anastasiac> So for deploying the FD tool docs, Bosmon: if you ran the gh-pages plugin (with \xe2\x80\x98origin\xe2\x80\x99 being the gpii repo), that would deploy the docs to http://gpii.github.io/docs-first-discovery/  This, in my mind, would be adequate for now. What do you think?
+2015-11-30T22:15:03 <Bosmon> anastasiac - that seems fine to me, yes
+2015-11-30T22:15:19 <Bosmon> I\'m happy to do that if you think it\'s an appropriate time for it
+2015-11-30T22:15:36 <anastasiac> yes, the sooner the better, I think. RIght now, they\xe2\x80\x99re looking at my personal copy :-)
+2015-11-30T22:15:46 <Bosmon> Oh right
+2015-11-30T22:15:55 <Bosmon> I guess I should try to catch up tomorrow on exactly who "they" are : P
+2015-11-30T22:15:59 <anastasiac> there will be a couple of updates to the docs soon \xe2\x80\x93\xc2\xa0cindy and justin are adding docs related to the server integration
+2015-11-30T22:16:16 <anastasiac> \xe2\x80\x9cthey\xe2\x80\x9d are the IBM dev team working on the next phase of the PGA project
+2015-11-30T22:16:27 <Bosmon> Yes, I guess I was aware of that in outline
+2015-11-30T22:16:35 <anastasiac> which will be installing the FD tool in some pilot sites
+2015-11-30T22:16:44 <Bosmon> But I imagine we now know far more specifics, given that some concrete people are actually in this role : P
+2015-11-30T22:16:54 <anastasiac> yes, I have some names :-)
+2015-11-30T22:16:58 <Bosmon> CONCRETE PEOPLE, rather than MERE CLASSES OF PEOPLE!
+2015-11-30T22:18:00 <anastasiac> the dev lead is Ben Stokes
+2015-11-30T22:18:24 <anastasiac> he\xe2\x80\x99s got three more devs, plus a tester, a business analyst...
+2015-11-30T22:19:08 * kasparnet has quit
+2015-11-30T22:26:00 * kasparnet joined the channel
+2015-11-30T22:26:29 * kasparnet has quit
+2015-11-30T22:27:12 * yzen joined the channel
+2015-11-30T22:35:39 <colinclark> Bosmon: Have you spent any time sending binary data via a Web Socket?
+'
+
+b'2015-11-30T00:46:29 * Bosmon7 has quit
+2015-11-30T02:20:03 * jhung joined the channel
+2015-11-30T02:20:15 * jhung has left the channel
+2015-11-30T03:08:36 * jhung joined the channel
+2015-11-30T03:08:41 * jhung has left the channel
+2015-11-30T06:54:26 * amatas joined the channel
+2015-11-30T08:18:53 * amatas joined the channel
+2015-11-30T08:32:39 * the-t-in-rtf joined the channel
+2015-11-30T08:51:01 * the-t-in-rtf1 joined the channel
+2015-11-30T08:51:33 * the-t-in-rtf has quit
+2015-11-30T09:11:40 * the-t-in-rtf joined the channel
+2015-11-30T09:11:40 * the-t-in-rtf1 has quit
+2015-11-30T09:40:49 * slim joined the channel
+2015-11-30T09:41:47 * gtirloni joined the channel
+2015-11-30T10:55:38 * slim has quit
+2015-11-30T12:02:24 * slim joined the channel
+2015-11-30T13:28:39 * Justin_o joined the channel
+2015-11-30T14:03:25 * colinclark joined the channel
+2015-11-30T14:06:22 * cindyli joined the channel
+2015-11-30T14:09:04 * danayo joined the channel
+2015-11-30T14:10:42 * slim has quit
+2015-11-30T14:15:48 <Justin_o> [o__o]: hello
+2015-11-30T14:16:19 <Justin_o> [o__o]: ping
+2015-11-30T14:16:19 <[o__o]> Are you in need of my services, Justin_o?
+2015-11-30T14:22:21 * michelled joined the channel
+2015-11-30T14:23:38 * sepidehshahi joined the channel
+2015-11-30T14:32:35 * simonjb joined the channel
+2015-11-30T14:34:04 <Justin_o> Bosmon: hello, if you could review my pull requests for the first discovery server, we\'re hoping to have that wrapped up today.
+2015-11-30T14:34:52 * gtirloni joined the channel
+2015-11-30T14:34:54 * cindyli joined the channel
+2015-11-30T14:35:57 * Bosmon7 joined the channel
+2015-11-30T14:36:21 * sepidehshahi joined the channel
+2015-11-30T14:36:25 * yzen joined the channel
+2015-11-30T14:41:15 * alanharnum joined the channel
+2015-11-30T14:41:30 * Bosmon7 has quit
+2015-11-30T15:13:37 * clown_ joined the channel
+2015-11-30T15:18:54 * lliskovoi joined the channel
+2015-11-30T15:21:43 <cindyli> simonjb: i tried ur pull request for updating the oauth server configuration - https://github.com/cindyli/universal/pull/2. it works perfectly
+2015-11-30T15:23:15 <simonjb> cindyli: you were able to check your manual tests with the cloudBased.development.all.local configuration of gpii.js? Not using driver.js?
+2015-11-30T15:24:30 <cindyli> yes, simonjb
+2015-11-30T15:24:37 <simonjb> great
+2015-11-30T15:24:42 <simonjb> thanks for checking
+2015-11-30T15:33:18 * jhung joined the channel
+2015-11-30T15:35:51 <jhung> Justin_o: I\'m working on updating the mock-up for Forces & Motion Basics. Then afterward I\'ll get started on the DOM.
+2015-11-30T15:36:38 <Justin_o> jhung: okay thanks.. is that all done for the John Travoltage?
+2015-11-30T15:38:39 <jhung> Oh
+2015-11-30T15:38:42 * anvk joined the channel
+2015-11-30T15:38:43 <jhung> I meant John Travoltage.
+2015-11-30T15:38:49 <jhung> Justin_o
+2015-11-30T15:38:53 <jhung> Too many sims. :D
+2015-11-30T15:39:42 <Justin_o> :)
+2015-11-30T15:43:15 <cindyli> done, simonjb, merged ur GPII-1309 pull request into mine
+2015-11-30T15:43:31 <simonjb> cindyli: any conflict?
+2015-11-30T15:43:36 <cindyli> not at all :)
+2015-11-30T15:43:47 <simonjb> nice
+2015-11-30T15:44:25 <Justin_o> jhung: what did you mean exactly by get started on the DOM?
+2015-11-30T15:48:00 * Yan_Hu joined the channel
+2015-11-30T15:54:49 <jhung> Justin_o: I was going to write out what the accessible version of the John Travoltage sim would look like.
+2015-11-30T15:55:32 <Justin_o> jhung: you mean in markup?
+2015-11-30T15:55:33 <jhung> So we can test that first to make sure it works the way we want.
+2015-11-30T15:55:35 <jhung> yes
+2015-11-30T15:55:36 <Justin_o> or in text
+2015-11-30T15:55:38 <Justin_o> ah okay
+2015-11-30T15:55:43 <Justin_o> i was going to help with that too
+2015-11-30T15:55:49 <Justin_o> we could pair on it i guess
+2015-11-30T15:55:53 <jhung> Justin_o: sounds good.
+2015-11-30T15:56:01 <Justin_o> jhung: let me know when you\'re ready
+2015-11-30T15:56:57 <jhung> Justin_o: feel free to start that first. I want to get the design updated first. I\'ll also make sure I get the keyboard interaction documented well.
+2015-11-30T15:59:38 <Justin_o> jhung: is this what i should be looking at? https://wiki.fluidproject.org/display/fluid/PhET+John+Travoltage+Simulation+Design
+2015-11-30T16:01:51 <jhung> Justin_o: Yes. Use that to provide direction for now. I still need to go through it to make sure it has all the right info.
+2015-11-30T16:02:02 <Justin_o> okay
+2015-11-30T16:02:11 <Justin_o> michelled: Floe meeting now?
+2015-11-30T16:02:55 <michelled> Justin_o: yep - in the fluid standup room
+2015-11-30T16:03:13 <Justin_o> michelled: thanks
+2015-11-30T16:03:23 <Justin_o> fluid-everyone: Floe meeting
+2015-11-30T16:03:36 <michelled> alanharnum, cindyli, danayo, sepidehshahi ^
+2015-11-30T16:03:37 <jhung> I can\'t seem to invite the Collaboration room. It appears as "Busy"
+2015-11-30T16:03:53 <Justin_o> i\'m going over now, i\'ll take a look
+2015-11-30T16:04:34 * alanharnum joined the channel
+2015-11-30T16:06:11 <Justin_o> michelled, hung: we\'re going to use the cart, they are doing some work in the collaboration room.
+2015-11-30T16:34:56 * colinclark joined the channel
+2015-11-30T16:37:04 * anastasiac joined the channel
+2015-11-30T16:52:12 * anastasiac joined the channel
+2015-11-30T16:52:40 * cindyli joined the channel
+2015-11-30T16:54:20 * alanharnum joined the channel
+2015-11-30T16:57:13 * the-t-in-rtf has quit
+2015-11-30T16:58:26 * sepidehshahi joined the channel
+2015-11-30T17:07:15 * slim joined the channel
+2015-11-30T17:16:26 * clown joined the channel
+2015-11-30T17:16:28 <Justin_o> jhung: i\'m reading over your notes for the John Travoltage sim. For the Non-Visual Interaction table, the Scene element notes says: "This description could be updated dynamically to match what has happened in the sim. This way a user of a screen reader will always get an updated description each time they read the page from "top-down"."
+2015-11-30T17:16:41 <Justin_o> jhung: are you thinking about keeping a log of all the actions?
+2015-11-30T17:16:46 <Justin_o> and states
+2015-11-30T17:17:14 <jhung> You mean so the user can go back on hear / see what they have done Justin_o?
+2015-11-30T17:17:37 <Justin_o> jhung: yes
+2015-11-30T17:18:45 <jhung> I was thinking that the description be thorough enough that a log isn\'t needed. Not sure how useful it would be to log all the arm positions the user has taken etc.
+2015-11-30T17:18:57 <jhung> ^ justin_o
+2015-11-30T17:19:35 <Justin_o> jhung: part of the question is to understand what it means to update the description dynamically
+2015-11-30T17:27:26 <jhung> Justin_o: ah. For now I just imaged it to be a summary element. Probably something that isn\'t constantly read back to the screen reader so perhaps Aria-live: off. But we would need to indicate somehow that the contents of the summary were updated at some point.
+2015-11-30T17:27:52 <Justin_o> hmm.. i\'ll think about that
+2015-11-30T17:31:03 <jhung> Justin_o: I figure we\'ll be giving aria-live updates for the interactive components (arm and leg) so there\'s no immediate need to put the summary as an aria-live region.
+2015-11-30T17:31:30 <Justin_o> jhung: i\'m not sure we need to do that actually, if they are going to be slider elements, it should be enough..
+2015-11-30T17:32:46 <jhung> Justin_o: ok.
+2015-11-30T17:33:20 <Justin_o> jhung: i\'ll start sketching it out, we can see how it is after to see if it\'s okay
+2015-11-30T17:35:07 <jhung> ok Justin_o
+2015-11-30T17:39:40 * kasparnet joined the channel
+2015-11-30T17:44:55 <Justin_o> jhung: for the leg is it supposed to matter how fast you move it?
+2015-11-30T17:44:56 * colinclark joined the channel
+2015-11-30T17:46:14 <jhung> no Justin_o. The speed doesn\'t matter.
+2015-11-30T17:46:46 <Justin_o> jhung: okay, seems like get 5 on slow and 6 on fast
+2015-11-30T17:46:51 <Justin_o> but maybe that\'s a bug or i\'m miscounting
+2015-11-30T17:47:20 <Justin_o> jhung: wondering how many positions of movement we need
+2015-11-30T17:48:11 <Justin_o> jhung: same for the arm, can we just keep it to the major sets.. so we don\'t have to use the shift to modify it
+2015-11-30T17:53:13 <jhung> The granularity of movement is something we\'ve talked about in past meetings and it\'s something we\'d like to preserve Justin_o.
+2015-11-30T17:55:00 <Justin_o> jhung: okay
+2015-11-30T18:00:28 <Justin_o> fluid-everyone: the design and development crit will be starting, we should have access to the collaboration room now too
+2015-11-30T18:00:40 * yzen joined the channel
+2015-11-30T18:01:46 * danayo joined the channel
+2015-11-30T18:04:08 * alanharnum joined the channel
+2015-11-30T18:08:56 * anastasiac joined the channel
+2015-11-30T18:09:49 * anastasiac joined the channel
+2015-11-30T18:11:24 * slim has quit
+2015-11-30T18:16:09 * slim joined the channel
+2015-11-30T18:21:23 * cindyli joined the channel
+2015-11-30T18:21:28 * anvk has quit
+2015-11-30T18:21:54 * yzen has quit
+2015-11-30T18:24:29 * yzen joined the channel
+2015-11-30T18:28:59 * gtirloni has quit
+2015-11-30T18:29:18 * gtirloni joined the channel
+2015-11-30T18:39:30 * anvk joined the channel
+2015-11-30T18:53:27 * kasparnet has quit
+2015-11-30T18:54:45 * kasparnet joined the channel
+2015-11-30T18:55:28 * the-t-in-rtf joined the channel
+2015-11-30T18:59:11 * Bosmon joined the channel
+2015-11-30T19:07:40 * the-t-in-rtf has quit
+2015-11-30T19:08:37 * lliskovoi joined the channel
+2015-11-30T19:11:24 * slim has quit
+2015-11-30T19:13:45 * kasparnet has quit
+2015-11-30T19:17:14 * yzen joined the channel
+2015-11-30T19:22:10 * slim joined the channel
+2015-11-30T19:26:31 * anastasiac joined the channel
+2015-11-30T19:27:50 * cindyli joined the channel
+2015-11-30T19:28:26 * gtirloni joined the channel
+2015-11-30T19:31:40 * sepidehshahi joined the channel
+2015-11-30T19:40:49 * Yan_Hu has quit
+2015-11-30T19:45:29 * the-t-in-rtf joined the channel
+2015-11-30T19:58:27 * alanharnum joined the channel
+2015-11-30T20:06:18 * slim has quit
+2015-11-30T20:09:37 <jhung> Justin_o: I was thinking of changing the John Travoltage design a little. Instead of using a modifier key to accelerate movement, I was thinking that there would be a check box that when enabled changes the scale of the slider to larger intervals.
+2015-11-30T20:11:47 <Justin_o> jhung: that\'s probably clearer, but what effect would that have on a mouse user
+2015-11-30T20:12:35 <jhung> Justin_o: I would think it won\'t affect the mouse user. Is that possible?
+'
+

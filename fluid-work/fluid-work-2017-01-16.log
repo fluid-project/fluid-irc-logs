@@ -1,0 +1,236 @@
+b'2017-01-16T19:20:44 <clown> You said:  "the centos/fedora boxes are already using 5.1.x additions".  So far, it\'s the "universal_default_xxx" box that\'s complaining, which is F24.
+2017-01-16T19:20:53 <clown> The mismatch is bewteen GA 5.1.10  and 5.1.12.
+2017-01-16T19:21:07 <clown> But, you\'re right, nothing bad has happened because of the mismatch.
+2017-01-16T19:23:40 <clown> Just tried the "linux_default_xxx" box.  Same complaint.
+2017-01-16T19:24:32 <colinclark> thanks, Justin_o
+2017-01-16T19:32:38 <cindyli> Bosmon: i have a model listener that listens to a model path, if the value of this path is changed to "undefined", it seems the listener is not triggered
+2017-01-16T19:32:52 <cindyli> is that what i should expect?
+2017-01-16T19:33:55 <Bosmon> cindyli - changing the value of a model path to "undefined" is not supported in the model system
+2017-01-16T19:33:57 <cindyli> also, i was actually change the path value to null, but seems what\'s received in that path is undefined
+2017-01-16T19:34:11 <Bosmon> Since in general there is only support for JSON-equivalent values
+2017-01-16T19:34:22 <Bosmon> cindyli - the path should receive null
+2017-01-16T19:34:44 <cindyli> null should trigger the model listener, right, Bosmon
+2017-01-16T19:34:46 <cindyli> ?
+2017-01-16T19:34:51 <Bosmon> cindyli - right
+2017-01-16T19:34:53 <cindyli> thank
+2017-01-16T19:34:54 <cindyli> s
+2017-01-16T19:35:08 <Bosmon> Assuming the value was not null before :)
+2017-01-16T19:39:46 <Justin_o> Bosmon: Do you know when you might have time to finish this PR https://github.com/fluid-project/infusion-docs/pull/103
+2017-01-16T19:40:11 <Justin_o> it\'s slated to be part of the Infusion 2.0 docs, and it is one of the Docs PRs we are waiting on before we announce Infusion 2.0
+2017-01-16T19:40:58 <Bosmon> Justin_o - I can look at it now
+2017-01-16T19:41:03 <Justin_o> Bosmon: thanks
+2017-01-16T19:41:10 <Bosmon> My feeling is that the only outstanding comment on it is the one from colinclark
+2017-01-16T19:41:17 <Bosmon> SInce I resolved the-t-in-rtf \'s issues privately
+2017-01-16T19:41:37 <Bosmon> These were the ones that led to my mailing list posting last week about the dangers of resolving the dependency on "infusion" via git URLs
+2017-01-16T19:42:15 <Justin_o> Bosmon: ah good, so not a bug with Infusion  :) but a  bad bug with npm :(
+2017-01-16T19:44:44 <Bosmon> the-t-in-rtf believes it affects yarn too
+2017-01-16T19:45:31 <Justin_o> Bosmon: that\'s unfortunate
+2017-01-16T19:45:48 * stegru has quit
+2017-01-16T19:50:30 * yzen joined the channel
+2017-01-16T19:54:11 <Bosmon> Justin_o - I believe the root cause is that we store our project\'s trunk with a "real" version number at all times
+2017-01-16T19:54:26 <Bosmon> I don\'t know whether there is some semver-like or npm-like "SNAPSHOT" convention we could adopt
+2017-01-16T19:54:40 <Bosmon> Of course we\'d need to
+2017-01-16T19:54:58 <Bosmon> update all of our publishing tools to match it, if we found such a thing
+2017-01-16T19:55:08 <Bosmon> Perhaps it is safer just to advise never to use git-based dependencies
+2017-01-16T19:55:39 <Bosmon> Although I remember in conversation with colinclark we had determined that it might be untenable to always advise against git-based dependencies
+2017-01-16T19:55:55 <Justin_o> Bosmon: yes, and potentially we can get to a point where we have dev versions published automatically with the CI
+2017-01-16T19:57:08 <Justin_o> Bosmon: you mean for cases where you are trying to test something you are developing, by pulling it into another project?
+2017-01-16T20:06:47 * lliskovoi_ joined the channel
+2017-01-16T20:11:24 * kavya joined the channel
+2017-01-16T20:17:43 <Justin_o> alanharnum: sorry, getting back to your CDN comment
+2017-01-16T20:18:08 <Justin_o> alanharnum: so the autoupdate feature would pull the NPM version and post it to their CDN?
+2017-01-16T20:20:11 <alanharnum> Justin_o: yeah, we\'d configure it to pull the /dist directory; I think they made also expect semver-esque versioning, though.
+2017-01-16T20:20:28 <alanharnum> once they\'ve accepted a library the manual updating is fairly straightforward
+2017-01-16T20:21:24 <Justin_o> alanharnum: infusion uses semver so that should be okay
+2017-01-16T20:21:29 <Justin_o> unless you mean something additional
+2017-01-16T20:21:53 <Justin_o> alanharnum: and this is purely for the JS, or are we expecting our other assets to be part of the CDN?
+2017-01-16T20:22:06 <alanharnum> you can put other assets (CSS and images, I believe) into the CDN
+2017-01-16T20:22:19 <alanharnum> for the moment I\'ve just submitted the JS files
+2017-01-16T20:22:27 <Justin_o> if we want all of infusion we may want to include more than the dist directory
+2017-01-16T20:22:55 <Justin_o> alanharnum: which version did you submit?
+2017-01-16T20:22:56 <alanharnum> does /dist/assets not include all of the official CSS/images?
+2017-01-16T20:22:57 <Justin_o> infusion-all.js
+2017-01-16T20:23:09 <Justin_o> alanharnum: it only includes things that were generated
+2017-01-16T20:23:19 <Justin_o> and things that the generated css depends
+2017-01-16T20:23:40 <Justin_o> so the prefs framework stuff is good, but say inline edits styles wouldn\'t be in there
+2017-01-16T20:23:49 <alanharnum> I used the 2.0 /dist directory\'s JS files and submitted a minified version of each
+2017-01-16T20:24:51 <Justin_o> alanharnum: okay
+2017-01-16T20:27:44 * kavya has quit
+2017-01-16T20:31:30 <jhung> Justin_o: I have time now to chat.
+2017-01-16T20:31:47 <Justin_o> jhung: sure ready
+2017-01-16T20:48:32 * lliskovoi joined the channel
+2017-01-16T21:11:50 <jhung> so Justin_o. I\'m going to hold off my latest commit to the FLUID-5977 PR until I hear about what to do about the document.ready() best practice.
+2017-01-16T21:12:09 * colinclark joined the channel
+2017-01-16T21:12:22 <Justin_o> jhung: sure no problem
+2017-01-16T21:20:04 * stegru joined the channel
+2017-01-16T21:29:51 * kasparnet has quit
+2017-01-16T21:33:32 <alanharnum> Bosmon, the saga of my browser detection investigation (https://issues.fluidproject.org/browse/FLUID-6103?focusedCommentId=35028&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-35028) reveals it is still a hive of scum and villainy.
+2017-01-16T21:34:43 <alanharnum> i think it is appropriate in this specific case (previously passing tests failing due to a regression introduced by a browser vendor), but I\'m not sure if there\'s a better alternative
+2017-01-16T22:14:15 * yzen is now known as yzen_
+2017-01-16T22:18:47 * kasparnet joined the channel
+2017-01-16T22:19:56 * yzen_ has quit
+2017-01-16T22:27:14 * kasparnet has quit
+2017-01-16T23:05:13 <Bosmon> alanharnum - yes, certainly it is scum and villainy all the way down
+2017-01-16T23:07:49 <Bosmon> What you\'ve done looks eminently reasonable to me
+2017-01-16T23:08:15 <Bosmon> You should cite our JIRA in question in your comment, as well as the upstream Chrome bug
+2017-01-16T23:10:35 <alanharnum> Bosmon: will do
+2017-01-16T23:12:35 <alanharnum> I think this is an OK solution for this situation; the "state of the art" in browser detection basically seems to be "check for the browser string you\'re looking for, then filter out by the name of browsers whose UA string is known to include that browser".
+2017-01-16T23:13:50 <alanharnum> So Chrome = "includes string Chrome, does not include string Edge"; Safari = "includes string Safari, does not include string Chrome"; Edge and Firefox can be tested for simply by string, for now.
+2017-01-16T23:14:40 <alanharnum> All of this a consequence of 20+ years of bad behaviour by everyone involved (web server and web application implementors, browser vendors) around the topic of "which browser is this?"
+2017-01-16T23:19:59 * alanharnum goes home, thinking someone really must someday do something about all the problems caused by these "web" applications.
+2017-01-16T23:33:39 * sgithens joined the channel
+2017-01-16T23:38:08 * stegru has quit
+'
+
+b'2017-01-16T00:37:35 * stegru has quit
+2017-01-16T03:41:44 * yzen joined the channel
+2017-01-16T06:19:50 * yzen is now known as yzen_
+2017-01-16T06:24:31 * yzen_ has quit
+2017-01-16T07:41:49 * amatas joined the channel
+2017-01-16T08:13:51 * kasparnet joined the channel
+2017-01-16T08:36:20 * stegru joined the channel
+2017-01-16T08:48:03 * the-t-in-rtf joined the channel
+2017-01-16T09:05:12 * kasparnet has quit
+2017-01-16T09:24:37 * kasparnet joined the channel
+2017-01-16T09:32:22 * kasparne_ joined the channel
+2017-01-16T09:36:03 * kasparnet has quit
+2017-01-16T11:30:26 * LMNTRIX joined the channel
+2017-01-16T12:25:15 * gtirloni_ joined the channel
+2017-01-16T12:58:27 * jhung joined the channel
+2017-01-16T13:15:41 * Jess__ joined the channel
+2017-01-16T13:23:52 * Justin_o joined the channel
+2017-01-16T14:02:19 * cindyli joined the channel
+2017-01-16T14:03:45 * colinclark joined the channel
+2017-01-16T14:27:57 * michelled joined the channel
+2017-01-16T14:42:13 * yzen joined the channel
+2017-01-16T14:47:01 * yzen has quit
+2017-01-16T14:49:43 * yzen joined the channel
+2017-01-16T14:50:30 * yzen is now known as yzen_
+2017-01-16T14:50:33 * yzen_ is now known as yzen
+2017-01-16T14:52:41 * clown joined the channel
+2017-01-16T14:53:05 * jhung joined the channel
+2017-01-16T14:53:48 <clown> amatas, quick question:  what version of VirtualBox should I be using for GPII?
+2017-01-16T14:56:30 * the-t-in-rtf joined the channel
+2017-01-16T14:57:32 <amatas> hi clown
+2017-01-16T14:58:04 * Yan_Hu joined the channel
+2017-01-16T14:58:07 <amatas> 5.0.30 should work as well as 5.1.12
+2017-01-16T15:04:15 * michelled1 joined the channel
+2017-01-16T15:10:21 <clown> thanks amatas.  I was considering going all out and upgrading to 5.1.12.  That\'s okay?
+2017-01-16T15:10:53 <gtirloni_> that\'s the version I\'m using
+2017-01-16T15:11:04 <clown> thank gtirloni_
+2017-01-16T15:11:16 * clown goes to download page.
+2017-01-16T15:14:00 * lliskovoi joined the channel
+2017-01-16T15:21:18 <Justin_o> jhung: i left you some more comments on your FLUID-5977 PR
+2017-01-16T15:21:51 <jhung> ok Justin_o. I\'ll take a look.
+2017-01-16T15:22:44 <Justin_o> jhung: thanks
+2017-01-16T15:25:26 * the-t-in-rtf joined the channel
+2017-01-16T15:28:31 * jhernandez joined the channel
+2017-01-16T15:30:48 * simonjb joined the channel
+2017-01-16T15:40:17 <jhung> Justin_o: I created a pull request for the Infusion site. https://github.com/fluid-project/fluidproject.org/pull/10
+2017-01-16T15:40:40 <jhung> * I mean Fluid Project site.
+2017-01-16T15:41:09 <Justin_o> jhung:  thanks, i\'ll take a look
+2017-01-16T15:41:46 * the-t-in-rtf joined the channel
+2017-01-16T15:57:03 <jhung> Justin_o: Left a comment in the FLUID-5977 PR re: document.ready(). You should probably ask someone else who knows this stuff better than me.
+2017-01-16T15:57:27 * Caren joined the channel
+2017-01-16T16:03:52 <Justin_o> jhung: okay :)
+2017-01-16T16:12:34 <amatas> clown, these are the envs that I have: https://github.com/GPII/nexus/pull/9#issuecomment-271369033
+2017-01-16T16:14:15 * clown looks
+2017-01-16T16:16:43 <clown> amatas:  I see "Vagrant 1.9.1, VirtualBox 5.1.10 on Mac OSX 10.12.2" .  I\'m using maOS 10.12.2.  So\xe2\x80\xa6 VirtualBox 5.1.12 is okay or not?
+2017-01-16T16:18:01 <stegru> clown: i\'m using 5.1.12 (linux host), and it\'s been running ok for almost a day - I had problems with 5.1.x a few months back
+2017-01-16T16:18:30 <clown> thanks stegru, but I\'m on a Mac host.
+2017-01-16T16:19:12 <clown> Since I\'ve already installed VB 5.1.12, I\'ll go ahead and see if it\'s okay.
+2017-01-16T16:19:40 <michelled1> Caren: is this the page you are looking for? https://wiki.fluidproject.org/display/fluid/Inclusive+Design+Toolkit
+2017-01-16T16:19:51 * mrtyler joined the channel
+2017-01-16T16:24:43 <stegru> clown: i\'m using 5.1.12 (linux host), and it\'s been running ok for almost a day - I had problems with 5.1.x a few months back
+2017-01-16T16:24:50 <stegru> oops, wrong window
+2017-01-16T16:29:26 <clown> stegru, you\'ve found an echo.  ;-)
+2017-01-16T16:30:58 <stegru> i hate the way the cursor in the VM still blinks, even though the VM window isn\'t focused.
+2017-01-16T16:32:20 <jhernandez> stegru: QU\xc3\x89???
+2017-01-16T16:32:28 <jhernandez> xDDDD
+2017-01-16T16:32:53 <stegru> hablas ingles?
+2017-01-16T16:42:51 <amatas> haha
+2017-01-16T16:43:31 <amatas> clown, vbox 5.1.12 should work fine. At least it works well on my mac.
+2017-01-16T16:57:53 * the-t-in-rtf joined the channel
+2017-01-16T16:58:26 * alanharnum joined the channel
+2017-01-16T17:01:02 <jhernandez> stegru: lo siento, no hablo espa\xc3\xb1olo
+2017-01-16T17:01:06 <jhernandez> :P
+2017-01-16T17:02:29 <stegru> yo tampoco
+2017-01-16T17:07:41 <jhernandez> xDDD
+2017-01-16T17:15:28 <gtirloni_> lol @ espa\xc3\xb1olo
+2017-01-16T17:15:57 <gtirloni_> brazilians are guilty of thinking they speak spanish too
+2017-01-16T17:16:10 <gtirloni_> we call it "portunhol"
+2017-01-16T17:16:18 <gtirloni_> it\'s terrible :)
+2017-01-16T17:38:17 * lliskovoi_ joined the channel
+2017-01-16T17:42:49 * alanharnum joined the channel
+2017-01-16T17:55:21 * sgithens has quit
+2017-01-16T17:57:05 <jhernandez> gtirloni: yeah, we have the same in Spain, we call it portu\xc3\xb1ol too
+2017-01-16T17:59:02 * michelled joined the channel
+2017-01-16T18:01:12 <michelled> alanharnum, Caren, cindyli, colinclark, Justin_o: planning
+2017-01-16T18:01:19 <Justin_o> michelled: thanks
+2017-01-16T18:04:39 * Kobi joined the channel
+2017-01-16T18:05:22 * simonjb joined the channel
+2017-01-16T18:05:30 * David123_ joined the channel
+2017-01-16T18:06:16 * yzen has quit
+2017-01-16T18:22:36 * kasparne_ has quit
+2017-01-16T18:44:56 <colinclark> ewbjr: Hey Edgar!
+2017-01-16T18:45:20 <colinclark> ewbjr: We miss you terribly! :)
+2017-01-16T18:45:52 * lliskovoi joined the channel
+2017-01-16T18:46:37 * lliskovoi joined the channel
+2017-01-16T18:49:38 * cindyli joined the channel
+2017-01-16T18:49:54 * michelled joined the channel
+2017-01-16T18:54:07 * alanharnum joined the channel
+2017-01-16T18:58:35 <colinclark> Justin_o: Which page am I to edit with GSoC project plans?
+2017-01-16T18:58:43 <colinclark> The Brainstorming page, or is there another one?
+2017-01-16T18:59:58 * Caren joined the channel
+2017-01-16T19:00:17 <clown> amatas, thanks for you help so far, but I have another question.
+2017-01-16T19:00:38 <clown> I\'m not sure it matters, but I\'m getting a message about the VM having the wrong guest additions.
+2017-01-16T19:00:49 <Justin_o> colinclark:  https://wiki.fluidproject.org/display/fluid/Google+Summer+of+Code+2017+with+the+Fluid+Project
+2017-01-16T19:00:54 <clown> How do I update them \xe2\x80\x94 is there a vagrant command for that?
+2017-01-16T19:00:57 <colinclark> ok great, Justin_o
+2017-01-16T19:01:26 <colinclark> Justin_o: I wonder if our "good first bugs" list should be updated in some way...
+2017-01-16T19:01:29 <clown> so far, all I\'ve found is this:  http://kvz.io/blog/2013/01/16/vagrant-tip-keep-virtualbox-guest-additions-in-sync/
+2017-01-16T19:02:44 <colinclark> Somehow avoiding a massive influx of "tidying" pull requests\xe2\x80\x94which are great, but maybe do a dual disservice of not being great ways to learn the code base and involving a lot of administrative overhead on our part
+2017-01-16T19:03:28 <colinclark> I wonder if instead of this list, we could think of some "starting points" that prospective applicants could do to demonstrate their interest in the project itself
+2017-01-16T19:04:00 <colinclark> I mean, our GSoC projects, rather than "the fluid project" more generally
+2017-01-16T19:04:03 <colinclark> do you know what I mean?
+2017-01-16T19:04:41 <Justin_o> colinclark: that\'s typically expected as well, as they start to narrow in on a project
+2017-01-16T19:04:48 * kasparne_ joined the channel
+2017-01-16T19:05:29 <Justin_o> colinclark: regarding bugs, i wanted to avoid things that were trivial, but at the same time provided an straightforward way into working on something in the community
+2017-01-16T19:05:30 * kasparnet joined the channel
+2017-01-16T19:05:30 * kasparnet has quit
+2017-01-16T19:05:36 <Justin_o> to get an idea of the codebase and the practices
+2017-01-16T19:05:37 <colinclark> My sense is that an issue like "Spelling error of the word "itself" in the description" just doesn\'t really fit what we need
+2017-01-16T19:05:43 <Justin_o> perhaps something else could satisfy that
+2017-01-16T19:06:04 * kasparnet joined the channel
+2017-01-16T19:06:15 <Justin_o> colinclark: yah that\'s fairly trivial
+2017-01-16T19:08:11 <colinclark> I feel like maybe they could learn the codebase and find a way of working with the community with a bit more of a substantial engagement
+2017-01-16T19:08:16 <colinclark> I think that\'s better for them and for us
+2017-01-16T19:08:25 <colinclark> I\'m not entirely sure what form that should take
+2017-01-16T19:09:26 * simonjb joined the channel
+2017-01-16T19:09:28 <Justin_o> colinclark: i\'ve made some changes to the list of good first bugs for now
+2017-01-16T19:09:47 * kasparne_ has quit
+2017-01-16T19:12:02 <Justin_o> colinclark: i\'m not really sure of what form that could take at the moment either, but i\'ll try to think about it
+2017-01-16T19:13:06 <Justin_o> alanharnum: if you are able to get Infusion added to the CDN, could you please update the Release Docs with the information about updating it. https://wiki.fluidproject.org/display/fluid/Release+Process
+2017-01-16T19:13:14 <alanharnum> Justin_o: will do
+2017-01-16T19:13:30 <Justin_o> alanharnum: thanks
+2017-01-16T19:13:40 <alanharnum> For the moment I just added it manually, but longer term we will probably want to look at using their autoupdate approach
+2017-01-16T19:13:56 <alanharnum> one thing I did notice with the /dist directory in NPM is that we don\'t include minified versions
+2017-01-16T19:14:10 <alanharnum> which is something we may want to address, especially for getting added to CDNs
+2017-01-16T19:14:25 <alanharnum> CDNJS requires all hosted files to be minified
+2017-01-16T19:14:34 <colinclark> Justin_o: Perhaps for each project we could have some kind of "prototype task" associated with it
+2017-01-16T19:14:59 <colinclark> or we could have a small set of Fluid-related issues that would directly impact the project the prospective student may end up working on
+2017-01-16T19:15:05 <colinclark> things that aren\'t quite so generic
+2017-01-16T19:15:12 <Justin_o> colinclark: those are good ideas
+2017-01-16T19:15:26 <Justin_o> colinclark: i think either or both of those, depending on the project
+2017-01-16T19:15:32 <Justin_o> would be good
+2017-01-16T19:15:42 <colinclark> so, I don\'t know, if you thought your project would involve at lot of use of the Renderer, you could have a series of hand-picked issues that would relate to improving teh documentation of the Renderer, or fixing known issues that would affect the project
+2017-01-16T19:15:42 <colinclark> etc.
+2017-01-16T19:16:10 <colinclark> just a random example, if you see what I mean
+2017-01-16T19:16:40 <Justin_o> totally get it
+2017-01-16T19:16:43 <gtirloni> clown: the vb additions message should be harmless. the centos/fedora boxes are already using 5.1.x additions, the win10 boxes will be updated soon with it too
+2017-01-16T19:17:04 <gtirloni> clown: if you\'re not experiencing an issue, it\'s okay to have different versions between guest and host
+2017-01-16T19:17:13 <Justin_o> colinclark: i roughed in sections for those on the projects page.
+2017-01-16T19:18:25 <colinclark> great
+2017-01-16T19:20:38 <clown> gtirloni:  thanks.
+'
+

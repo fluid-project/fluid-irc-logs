@@ -1,0 +1,443 @@
+b'2014-04-24T19:03:32 <Bosmon> But I imagine the sequence is something like i) some bound markup triggers a model change, ii) model change triggers a refresh, iii) refresh destroys block of markup and component associated with i) through re-rendering, iv) a further listener then executes as part of the same loop still executing for i)
+2014-04-24T19:04:01 <Bosmon> And this would explain why having a redundant refreshView call might provoke the issue since it means that a further listener is hanging around in the loop waiting to be notified for iv)
+2014-04-24T19:04:05 * SonicX has quit
+2014-04-24T19:04:17 * vjoanna joined the channel
+2014-04-24T19:06:16 <Bosmon> It\'s particularly awkward since we can\'t deal with the issue in some more principled way by just ensuring that we deregister the DOM listener when the component is destroyed - which we probably do indeed even do
+2014-04-24T19:06:43 <Bosmon> Since we have ALREADY started handling its event during the sequence where it is destroyed
+2014-04-24T19:07:04 <Bosmon> That is, at the time the event listener loop starts, the DOM element exists, but by the time it finishes, it has gone
+2014-04-24T19:07:11 * yzen has quit
+2014-04-24T19:07:35 * yzen joined the channel
+2014-04-24T19:07:41 <jhung> vjoanna: is the floe story AI file somewhere I can access? I want to create themed versions of it to work with UIO.
+2014-04-24T19:08:27 <Bosmon> YOu can see this in firebug during your failure, Justin_o - if you look down at "applyBoundChange" at the bottom of the event stack, the DOM element from which the change is fired is one of the sickly greyed-out kind that is no longer in the document
+2014-04-24T19:08:54 <Justin_o> Bosmon: grey zombie DOM element
+2014-04-24T19:09:02 <Bosmon> Yes
+2014-04-24T19:09:05 <Bosmon> One of those
+2014-04-24T19:09:15 <vjoanna> jhung: yes, it\'s here: http://wiki.fluidproject.org/download/attachments/24945059/floe-tools.pdf?api=v2
+2014-04-24T19:09:30 <jhung> great thanks vjoanna
+2014-04-24T19:09:59 <Justin_o> Bosmon: so it\'s not exactly the DOM element that is the problem though, but the lingering component that had been at some point bound to it?
+2014-04-24T19:10:43 <Bosmon> Justin_o - well the problem is more at the DOM element end rather than at the component end - but I guess the issue could actually arise in any context, where you have a listener bound to some THING of any kind, which as part of its action destroys that THING
+2014-04-24T19:11:01 <Bosmon> The markup and the component actually arrange to destroy both of themselves in the proper way
+2014-04-24T19:11:14 <Bosmon> So really, at the time of the failure, both of them are properly non-existing
+2014-04-24T19:11:34 <Bosmon> The problem is, we still haven\'t finished notifying the list of listeners which were in progress for the original event
+2014-04-24T19:12:02 <Bosmon> And the remaining ones are then presented with the combination of a "zombie DOM element" plus a "zombie component"
+2014-04-24T19:12:29 <Justin_o> Bosmon: ah
+2014-04-24T19:12:46 <Bosmon> So both of these things have been properly destroyed "in sync"
+2014-04-24T19:12:55 <Bosmon> But, nonetheless, they have been destroyed : P
+2014-04-24T19:13:57 <Justin_o> Bosmon: so the fix will be around deregistering events before destroying? or having the listeners not try to act on something that doesn\'t exist anymore?
+2014-04-24T19:14:24 <Bosmon> Justin_o - the former wouldn\'t help, by the explanation above
+2014-04-24T19:14:35 <Bosmon> Any attempt to deregister things would be "too late"
+2014-04-24T19:14:44 <Bosmon> And in fact we do indeed register them
+2014-04-24T19:14:49 <Bosmon> er deregister them
+2014-04-24T19:14:49 <Justin_o> Bosmon: you couldn\'t just drop the queue?
+2014-04-24T19:15:10 <Justin_o> Bosmon: i guess the events are all mixed up with ones that are legitimate
+2014-04-24T19:15:16 <Bosmon> Well, you can\'t "drop" it because at the bottom of your stack is a piece of JavaScript code which is in the middle of a loop iterating over it
+2014-04-24T19:15:26 <Bosmon> This is GOING to complete, come what may : P
+2014-04-24T19:15:46 <Bosmon> In this case, the loop is actually in jQuery\'s own code
+2014-04-24T19:15:59 <Bosmon> Inside jQuery\'s "dispatch" method
+2014-04-24T19:16:09 <Justin_o> because it\'s a DOM event
+2014-04-24T19:16:12 <Bosmon> It is GOING to notify all the listeners you gave it, regardless of what else happens : P
+2014-04-24T19:17:15 <Bosmon> Perhaps the simplest fix might be in the renderer\'s code, yes
+2014-04-24T19:17:28 <Bosmon> Although I should think a bit what the implications might be
+2014-04-24T19:18:21 <Justin_o> Bosmon: hmm.. could be. I think i used it as a work around when i ran into similar issues
+2014-04-24T19:18:49 <Bosmon> It seems that it is the proper place for it in general, since this issue is caused mostly through the lack of a proper renderer in any case
+2014-04-24T19:20:11 <Justin_o> :)
+2014-04-24T19:20:20 <Justin_o> but those changes weren\'t expected till post 1.5
+2014-04-24T19:20:26 <Justin_o> Bosmon: ^
+2014-04-24T19:21:01 <Bosmon> Well, it\'s not really a proper fix
+2014-04-24T19:21:24 <Bosmon> It\'s just the proper place for it since all of this code will be swept away, along with the fix, when we rewrite the renderer in the future
+2014-04-24T19:21:48 <Justin_o> Bosmon: okay.. so for now it will only address cases where the renderer was used
+2014-04-24T19:21:59 <Bosmon> Yes
+2014-04-24T19:22:11 <Justin_o> Bosmon: okay
+2014-04-24T19:22:15 <Bosmon> Other cases of "listener causing destruction of the thing it is listening to" should be more obvious
+2014-04-24T19:22:40 <Bosmon> Especially once we have the FLUID-4890 fix which gives the name of the thing which was destroyed
+2014-04-24T19:22:59 <Justin_o> yes.. that would be helpful
+2014-04-24T19:24:15 * kasparnet joined the channel
+2014-04-24T19:24:45 <kasparnet> Bosmon: ANTRANIIIIIIQUE!!!
+2014-04-24T19:25:49 <Bosmon> kasparnet - DAMMMNNN YYOOOOUUUU....... KASSPPPAAAARNEEEEEEETT!
+2014-04-24T19:26:10 <kasparnet> hehe hello dr. dr. bosmon
+2014-04-24T19:26:15 <kasparnet> I\'m here to bug you about a bug
+2014-04-24T19:26:49 <kasparnet> http://issues.gpii.net/browse/GPII-702
+2014-04-24T19:27:00 <kasparnet> the one I was also talking about at last arch meeting
+2014-04-24T19:27:25 <kasparnet> I read through the documentation, and tried a bunch of different references out, but nothing seems to be working
+2014-04-24T19:27:46 <kasparnet> (or well, something seems to be working, but I cant get hold of the MM as I need to)
+2014-04-24T19:28:14 <kasparnet> I can get the MatchMakerProxy component (https://github.com/GPII/universal/blob/pilots2/gpii/node_modules/matchMaker/configs/pilot2.json) line 2
+2014-04-24T19:28:22 <kasparnet> but it doesn\'t contain the components I need
+2014-04-24T19:29:04 <Bosmon> You\'re right
+2014-04-24T19:29:15 <Bosmon> It doesn\'t!
+2014-04-24T19:29:24 <Bosmon> You will need to put the components you need in a place where you can actually find them
+2014-04-24T19:36:52 <kasparnet> hmmm.. so why isn\'t the current location a suitable place to put the component... it seems to work in the normal config
+2014-04-24T19:37:10 <kasparnet> https://github.com/GPII/universal/blob/pilots2/gpii/node_modules/matchMaker/configs/development.json
+2014-04-24T19:37:14 <kasparnet> Bosmon: ^
+2014-04-24T19:39:04 * jhung has quit
+2014-04-24T19:39:28 <Bosmon> Well obviously IT WORKS
+2014-04-24T19:39:36 <Bosmon> Because you are not trying to refer to it from somewhere else : P
+2014-04-24T19:39:53 <Bosmon> What kind of conception of "IT SEEMS TO WORK" is this : P
+2014-04-24T19:40:10 <Bosmon> "If I don\'t try to use it in a way for which the definition is unsuitable, it seems to work" : P
+2014-04-24T19:42:10 <kasparnet> Bosmon: hehe, well - they\'re so damn similar those two configs, so I dont understand why one is suitable and the other is not
+2014-04-24T19:43:00 <Justin_o> cindyli, michelled: I\'ve filed a pull request https://github.com/fluid-project/infusion/pull/498 could one of you please review it?
+2014-04-24T19:43:27 <Bosmon> kasparnet - did you read the documentation page on how context resolution works?
+2014-04-24T19:43:39 <Bosmon> It explains which components you should expect to be able to refer to from what locations
+2014-04-24T19:48:24 * vjoanna has quit
+2014-04-24T19:52:25 * vjoanna joined the channel
+2014-04-24T19:53:20 * the-t-in-rtf has quit
+2014-04-24T19:53:24 <kasparnet> Bosmon: I did read the documentation, yeah, but I still haven\'t been able to figure out where i\'m going wrong
+2014-04-24T19:53:59 <Bosmon> kasparnet - did you follow the diagram with the white, green and yellow squares?
+2014-04-24T19:54:07 <Bosmon> Try to map this onto your situation
+2014-04-24T19:55:14 <kasparnet> Bosmon: hmmm... so does this have to do with the component name "server"?
+2014-04-24T19:55:42 <kasparnet> I guess the flowmanager and MM would be at the same level
+2014-04-24T19:55:43 <Bosmon> kasparnet - it has to do with where the reference is from, and what it is trying to refer to
+2014-04-24T19:55:56 <Bosmon> it\'s quite a familiar model since it is the one that every standard programming language uses : P
+2014-04-24T19:56:10 <Bosmon> Imagine you had tried to refer to a variable written in one function from a place inside another one
+2014-04-24T19:57:26 <kasparnet> Bosmon: ugh, ok, I think I see the problem now ... I guess it didn\'t fully dawn on me that all these configs are accumulutative (or rather that all this stuff is created within the same server component)
+2014-04-24T20:01:05 <Bosmon> I guess this is one the KETTLE oddities that perhaps didn\'t get completely documented
+2014-04-24T20:01:32 <kasparnet> Bosmon: but then I\'m pretty fucked if I wanna actually refer to some of the regular (non-proxy) matchmaker functions
+2014-04-24T20:01:50 <Bosmon> kasparnet - this is why you will need to move them out
+2014-04-24T20:03:25 <kasparnet> well - but if the MM need its own ports their outermost level would have to be at a sister level of the "server" component
+2014-04-24T20:03:38 <kasparnet> s/their/its/
+2014-04-24T20:03:54 <kasparnet> which makes it impossible to refer to its subcomponents
+2014-04-24T20:04:14 <kasparnet> hmmm... do you have time for a quick call Bosmon
+2014-04-24T20:04:32 <avtar> Bosmon: http://wiki.gpii.net/w/Architecture
+2014-04-24T20:04:46 <avtar> is that better than \'view\'?
+2014-04-24T20:05:05 <kasparnet> YAY Avtar!!
+2014-04-24T20:05:12 <avtar> hi kasparnet
+2014-04-24T20:05:26 <kasparnet> so pretty with the new URL
+2014-04-24T20:05:34 <avtar> shiny
+2014-04-24T20:05:43 <avtar> old urls should still work
+2014-04-24T20:05:47 <avtar> http://wiki.gpii.net/index.php/Architecture
+2014-04-24T20:06:07 <kasparnet> cool!
+2014-04-24T20:06:59 <Bosmon> avtar - that\'s nice - shouldn\'t we just use the standard "wiki" that the docs and everyone else recommend?
+2014-04-24T20:07:43 <avtar> i can change it to that
+2014-04-24T20:07:51 <avtar> just didn\'t since wiki is already part of the url
+2014-04-24T20:15:11 <kasparnet> Bosmon: seeing how this is really pressing and it\'s only for the flowmanager, which we will have to (partly at least) rewrite anyway, I might just throw in a hack for this for the pilot2 branch
+2014-04-24T20:16:36 <Bosmon> kasparnet - on a docs call right now, can chat in a bit
+2014-04-24T20:21:45 <kasparnet> ok
+2014-04-24T20:34:20 * vjoanna has quit
+2014-04-24T20:35:55 * vjoanna joined the channel
+2014-04-24T20:38:47 * cindyli has quit
+2014-04-24T20:41:41 * colinclark has quit
+2014-04-24T20:49:21 * clown has quit
+2014-04-24T20:53:07 * anvk has quit
+2014-04-24T20:57:35 <kasparnet> hey Bosmon - think I\'ll be heading offline now .. been a looong day with too many meetings :)
+2014-04-24T20:57:48 <kasparnet> will talk to you tomorrow
+2014-04-24T20:58:48 <kasparnet> if you have suggestions easily communicable over text, I\'ll check the IRC logs tomorrow when I get up
+2014-04-24T20:58:58 <kasparnet> cheers
+2014-04-24T20:59:03 * kasparnet has quit
+2014-04-24T21:05:36 * yzen has quit
+2014-04-24T21:32:58 * sgithens has quit
+2014-04-24T21:36:18 * anastasiac has quit
+2014-04-24T21:46:56 * simonjb has quit
+2014-04-24T21:55:35 * Justin_o has quit
+2014-04-24T21:58:12 * SonicX joined the channel
+2014-04-24T22:03:08 <avtar> Bosmon: ping
+2014-04-24T22:11:19 * avtar has quit
+2014-04-24T22:48:17 * SonicX has quit
+2014-04-24T23:01:43 * BogdanR has quit
+2014-04-24T23:02:25 * BogdanR joined the channel
+2014-04-24T23:06:34 * jessm has quit
+2014-04-24T23:10:05 * vjoanna has quit
+'
+
+b'2014-04-24T17:28:52 <Justin_o> you can see the issue by running the demo.. after a video is added change the selection of the radio buttons in the Audio panel to get the error
+2014-04-24T17:28:56 <Justin_o> Bosmon: ^
+2014-04-24T17:29:50 <Bosmon> Thanks, Justin_o
+2014-04-24T17:31:04 <Justin_o> Bosmon: np, sorry i didn\'t get the unit test in.. i guess my assumptions about what is exactly causing the issue aren\'t quite correct
+2014-04-24T17:31:33 <Bosmon> The suggestion is that it is something nasty
+2014-04-24T17:32:09 * kasparnet has quit
+2014-04-24T17:32:34 <Justin_o> Bosmon: it might just be an over site on my part
+2014-04-24T17:32:46 <Bosmon> Justin_o - even if it is, it ought to be impossible :)
+2014-04-24T17:32:53 <Justin_o> and the code around that is a bit complex
+2014-04-24T17:33:03 <Justin_o> ah right, i forgot you had mentioned that
+2014-04-24T17:33:16 <Bosmon> Just as when DOCKTOUR JOHNSON was once told that "playing the violin was difficult"
+2014-04-24T17:33:27 <Bosmon> He replied "DIFFICULT, SIR? I wish it were IMPOSSIBLE!"
+2014-04-24T17:33:41 <avtar> Bosmon: why was his keyboard broken?
+2014-04-24T17:34:02 <Bosmon> Ah great avtar, you are here :)
+2014-04-24T17:34:14 <avtar> i\'m always here.....
+2014-04-24T17:34:25 <Bosmon> I was wondering whether I could tackle you about the "index.php" issue in the URLs for our GPII wiki
+2014-04-24T17:34:34 <Bosmon> Do you think it would be possible to remove this URL segment?
+2014-04-24T17:34:39 <avtar> sure
+2014-04-24T17:34:44 <Bosmon> That would be really marvellous
+2014-04-24T17:34:53 <Bosmon> Since it creates a sort of unsightly impression to our partners
+2014-04-24T17:35:48 * vjoanna joined the channel
+2014-04-24T17:38:14 <avtar> Bosmon: so something like http://wiki.gpii.net/view/Architecture ?
+2014-04-24T17:39:13 <Bosmon> avtar - can we do even without the "view"?
+2014-04-24T17:39:40 <avtar> mediawiki docs seem to suggest adhering to that path
+2014-04-24T17:40:05 <avtar> http://www.mediawiki.org/wiki/Manual:Short_URL#URL_like_-_example.com.2FPage_title
+2014-04-24T17:41:36 <Bosmon> Well isn\'t it odd that they don\'t adhere to it themselves? :)
+2014-04-24T17:42:01 <avtar> they kinda do
+2014-04-24T17:42:13 <avtar> except they use \'wiki\'
+2014-04-24T17:42:33 <avtar> as does wikipedia
+2014-04-24T17:42:36 <Bosmon> Ok
+2014-04-24T17:42:38 <Bosmon> let\'s use that then
+2014-04-24T17:44:34 <Bosmon> Justin_o - there seems to be an error in the include structure for the page resource.html
+2014-04-24T17:44:49 <Bosmon> You have included "resourceInputPanel" rather than "resourceInputPanel.js" which causes an error on startup
+2014-04-24T17:45:49 <Justin_o> :(
+2014-04-24T17:46:02 <Bosmon> Justin_o - other than this I seem to be able to use the audio buttons fine
+2014-04-24T17:46:10 <Bosmon> Can you give me a more detailed set of instructions?
+2014-04-24T17:47:17 <Bosmon> I press "OK" after adding a video and nothing happens
+2014-04-24T17:47:30 <Bosmon> But I don\'t get any failures after fixing the script path
+2014-04-24T17:49:44 <Justin_o> thanks for catching that.. i\'ll fix it.. it seems that my web server doesn\'t mind missing extensions
+2014-04-24T17:49:55 <Justin_o> Bosmon: so i\'ve pushed up the fix for the include
+2014-04-24T17:50:46 <Justin_o> Bosmon: i still have the same error though... are you using the "Climate Change Impacts" or "Create new resource" both should fail but it will help me to know where you are at
+2014-04-24T17:51:00 <Bosmon> I am using "Create new resource"
+2014-04-24T17:51:40 <Justin_o> Bosmon: okay.. so first step is to add a video.. it doesn\'t have to be a real video just something in the textfield at the top
+2014-04-24T17:51:42 <Justin_o> and press okay
+2014-04-24T17:51:51 <Justin_o> which should bring up the panels under video details
+2014-04-24T17:52:28 <Bosmon> Justin_o - yup
+2014-04-24T17:52:38 <Justin_o> in the audio panel the first radio button should be selected. Change this to either of the other ones and you should get an error
+2014-04-24T17:52:44 <Justin_o> i\'m using firefox by the way
+2014-04-24T17:53:03 <Bosmon> aha, got it
+2014-04-24T17:53:10 <Bosmon> I had been using the checkboxes rather than the radio buttons
+2014-04-24T17:53:34 <Justin_o> ah yah.. that\'s a bit confusing
+2014-04-24T17:59:04 <Bosmon> Justin_o - ok, horrifyingly I think this issue might well be related to FLUID-4890
+2014-04-24T17:59:10 <Bosmon> So it is timely that this has just come up :)
+2014-04-24T17:59:51 <Bosmon> Justin_o - btw, I just found myself using some techniques from this page I just wrote ...... http://wiki.fluidproject.org/display/docs/Tips+for+Debugging
+2014-04-24T18:01:17 <Justin_o> Bosmon: right.. i have that on my list of pages to read.. haven\'t gotten a chance to read that yet, but maybe i should do so sooner than later
+2014-04-24T18:01:32 <Justin_o> thanks for writing that up by the way
+2014-04-24T18:12:24 * jhernandez has quit
+2014-04-24T18:12:57 <anastasiac> hi Bosmon, I have a question about the new model handling and modelListeners. I understand that anything registered with modelListeners: will be notified of the outcome of the initial transaction. Is there any assurance that this will happen after the component is pretty much set up? after it is rendered, etc?
+2014-04-24T18:14:18 <anastasiac> after subcomponents have been attached...
+2014-04-24T18:14:59 <anastasiac> after invokers have been set up
+2014-04-24T18:15:42 <Bosmon> anastasiac - there will decreasingly be an idea of "after being set up"
+2014-04-24T18:16:02 <Bosmon> You will be informed of the initial transaction as part of the general ginger process which constructs the component
+2014-04-24T18:16:20 <anastasiac> here\'s my scenario:
+2014-04-24T18:16:35 <Bosmon> Justin_o - out of interest, did this problem go away if you removed the surplus call to "refreshView"?
+2014-04-24T18:17:03 <anastasiac> I\'m looking at the VP\'s simple toggle button. when the state changes, I want to update the styles, change the aria-pressed value, update the tooltip text
+2014-04-24T18:17:21 <Justin_o> Bosmon:  it did
+2014-04-24T18:17:23 <anastasiac> this process includes the use of an invoker
+2014-04-24T18:17:47 <anastasiac> but when the initial modelChanged happens, for the initial transaction, my invoker isn\'t ready
+2014-04-24T18:18:15 <anastasiac> to clarify: the invoker is being called by the model listener
+2014-04-24T18:18:22 <Bosmon> anastasiac - yes
+2014-04-24T18:19:10 <Bosmon> Currently this is something you will need to guard against yourself - in the future we will have i) The fix for FLUID-4890 which includes a standard test for whether a component is full initialised, and in the further ii) the new renderer which will make all of this irrelevant
+2014-04-24T18:19:19 <Bosmon> full -> fully
+2014-04-24T18:19:35 <Bosmon> and in the further -> and in the further future
+2014-04-24T18:19:52 <anastasiac> ok, so it\'s a known issue, in effect. Do you have any recommendations for a good way to guard against this, in the meantime?
+2014-04-24T18:20:41 <Justin_o> cindyli: FLUID-4698 is ready for your review again
+2014-04-24T18:20:45 <anastasiac> other than adding the model listener manually on the afterCreate event, for example?
+2014-04-24T18:20:45 <Bosmon> anastasiac - I recommend you put a check in your invoker for whether the DOM binder you are trying to operate exists yet
+2014-04-24T18:21:00 <cindyli> thanks, Justin_o
+2014-04-24T18:21:09 <Bosmon> anastasiac - I assume it is the absence of that which means that "your invoker is not ready"
+2014-04-24T18:21:46 <anastasiac> well, I\'m getting "that.invokerName is not a function" when I try to invoke it
+2014-04-24T18:22:03 <Bosmon> anastasiac - this issue is actually treated on the page I just referred Justin_o to :)
+2014-04-24T18:22:20 <Bosmon> Although perhaps it should really go into a "best practices" document rather than "tips for debugging"
+2014-04-24T18:22:20 <anastasiac> the tips for debugging page?
+2014-04-24T18:22:23 <Bosmon> Yes
+2014-04-24T18:22:43 <anastasiac> ah, I\'ll have a look, thanks. That page was on my list of things to read :-)
+2014-04-24T18:22:44 <Bosmon> The best practice for this is to pass in a reference to the invoker you want to call as an IoC reference - rather than finding it manually on the component
+2014-04-24T18:22:56 <Bosmon> Using this scheme, the invoker is "always ready"
+2014-04-24T18:23:12 <anastasiac> ah, I see, since the reference triggers the ginger creation process, right?
+2014-04-24T18:23:15 <Bosmon> right
+2014-04-24T18:23:57 <Bosmon> Now the invoker itself might then in turn also reference something which might not be ready, which should then in turn also be passed as a reference
+2014-04-24T18:24:10 * simonjb joined the channel
+2014-04-24T18:24:14 <anastasiac> right; turtles all the way down
+2014-04-24T18:24:16 <Bosmon> But eventually this process "tops out" given that in the new framework, essentially everything is created by the ginger process
+2014-04-24T18:24:36 <Bosmon> Except, of course, for things created by the renderer which needs to be wholesale replaced
+2014-04-24T18:24:57 <Bosmon> But certainly all the standard things in the viewComponent, modelComponent and eventedComponent hierarchy participate in this scheme
+2014-04-24T18:25:15 <Bosmon> So you are never generally faced with a case of something which "can\'t be ready in time" as you would often meet in the old framework
+2014-04-24T18:43:26 <Justin_o> anastasiac, Bosmon: any thoughts on naming for http://issues.fluidproject.org/browse/FLUID-5207
+2014-04-24T18:44:24 <anastasiac> Justin_o, renaming msgBundle to msgResolver seems like an easy decision
+2014-04-24T18:45:29 <Justin_o> anastasiac: okay, any thoughts on stringBundle?
+2014-04-24T18:46:00 <anastasiac> Justin_o, the \'stringBundle\' might be called "stringLookup\'? would that be in keeping with its function?
+2014-04-24T18:47:45 <Justin_o> anastasiac: the underlying function name is called stringLookup... we\'d probably have to name the grade something else
+2014-04-24T18:47:50 <Justin_o> or rename the function
+2014-04-24T18:48:02 <anastasiac> stringTool
+2014-04-24T18:48:05 <anastasiac> stringLookerUpper
+2014-04-24T18:48:10 <anastasiac> msgLookup
+2014-04-24T18:48:30 <Justin_o> https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Panels.js#L18-L53
+2014-04-24T18:48:41 <Justin_o> anastasiac: hmm.. msgLookup
+2014-04-24T18:48:49 <anastasiac> yeah, i saw the code
+2014-04-24T18:49:07 <anastasiac> msgLookup does indicate a relationship to msgResolver, which might be good
+2014-04-24T18:49:38 <Justin_o> anastasiac: what do you think about just msg
+2014-04-24T18:50:07 <anastasiac> that\'s actually not bad
+2014-04-24T18:50:11 <anastasiac> or maybe message?
+2014-04-24T18:50:13 <Justin_o> we could call the grade msgLookup still
+2014-04-24T18:50:17 <Justin_o> anastasiac:
+2014-04-24T18:50:21 <Justin_o> any preference for that
+2014-04-24T18:50:27 <Justin_o> msg vs message
+2014-04-24T18:50:32 <Justin_o> i\'m fine either way i guess
+2014-04-24T18:50:48 <anastasiac> I like msgLookup for the grade. What were you suggesting msg for?
+2014-04-24T18:52:11 <Justin_o> anastasiac:  for it\'s use in IoC https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Panels.js#L694
+2014-04-24T18:52:55 <anastasiac> Justin_o, can they not be the same, as they were before?
+2014-04-24T18:53:26 <Justin_o> anastasiac: you mean leave it as stringBundle?
+2014-04-24T18:54:05 <anastasiac> no, change it to msgLookup
+2014-04-24T18:54:21 <Justin_o> anastasiac: we could, just thought of making it shorter
+2014-04-24T18:54:46 <Bosmon> Justin_o - your issue is indeed a rather terrifying race condition
+2014-04-24T18:54:56 <anastasiac> I\'m fine with slightly longer, for clariy
+2014-04-24T18:54:59 <anastasiac> clarity
+2014-04-24T18:55:03 <Justin_o> anastasiac: :) okay
+2014-04-24T18:55:15 <Bosmon> What has happened is that the framework is partway through notifying a collection of listeners from a block of markup which has been destroyed
+2014-04-24T18:55:35 <Bosmon> Both the markup and the component associated with it have been destroyed - but the framework is not yet done calling listeners
+2014-04-24T18:56:12 <Justin_o> Bosmon: hmm.. so it is related to FLUID-4890, or this is a similar but different bug?
+2014-04-24T18:56:33 <Bosmon> Well, sort of peripherally related
+2014-04-24T18:56:44 <Bosmon> In that FLUID-4890 would diagnose this problem but not prevent it
+2014-04-24T18:57:09 <anastasiac> Bosmon, is there any way of specifying a priority for modelListeners?
+2014-04-24T18:57:40 <Bosmon> anastasiac - not currently
+2014-04-24T18:57:51 <anastasiac> oh
+2014-04-24T18:59:15 <Justin_o> Bosmon: oh i see.. FLUID-4890 will just cause errors to happen immediately
+2014-04-24T18:59:20 <Bosmon> Justin_o - yes
+2014-04-24T18:59:29 <Bosmon> You will get a slightly more comprehensible error message slightly earlier
+2014-04-24T18:59:35 <Justin_o> Bosmon: doesn\'t that mean we will need to fix a bunch of things along with it?
+2014-04-24T18:59:39 <Bosmon> But the listener will still error out
+2014-04-24T18:59:46 * vjoanna has quit
+2014-04-24T19:00:25 <Bosmon> I guess we can still put this in the broad category of "design errors caused by the lack of a proper renderer"
+2014-04-24T19:00:31 <Bosmon> But we still need to do something about it
+2014-04-24T19:00:36 <Bosmon> That is, something immediately
+2014-04-24T19:00:59 <Justin_o> Bosmon: for 1.5?
+2014-04-24T19:01:08 <Bosmon> Justin_o - yes
+2014-04-24T19:01:22 <Bosmon> If we\'re lucky, the failures that FLUID-4890 exposes in UIO will have exactly the same cause as this
+2014-04-24T19:01:37 <Bosmon> And we can deal with them all with the same fix
+2014-04-24T19:02:17 <Bosmon> I\'ll need to spend a little more time looking at the exact sequence by which the component destroys itself
+2014-04-24T19:03:16 <Justin_o> Bosmon: okay.. thanks though.. glad you\'re looking into this
+'
+
+b'2014-04-24T00:59:33 * yzen joined the channel
+2014-04-24T01:03:53 * yzen has quit
+2014-04-24T05:39:38 * yzen joined the channel
+2014-04-24T05:44:07 * yzen has quit
+2014-04-24T06:30:21 * kasparnet joined the channel
+2014-04-24T06:56:04 <kasparnet> Bon-tres-tres-tot-le-matin Antraniiiiique
+2014-04-24T06:57:39 <kasparnet> ooops, should\'ve probably put a bosmon somewhere in there as well
+2014-04-24T06:57:50 <kasparnet> should probably have*
+2014-04-24T07:03:10 * the-t-in-rtf joined the channel
+2014-04-24T07:03:18 * the-t-in-rtf has quit
+2014-04-24T07:16:26 * the-t-in-rtf joined the channel
+2014-04-24T07:44:40 <the-t-in-rtf> FYI, I just noticed that logging of this channel has been broken for about three months.  Who should I ping on that?
+2014-04-24T07:45:46 <the-t-in-rtf> I mean saving it to Confluence:  http://wiki.fluidproject.org/display/fluid/fluid-work+IRC+Logs-2014-01
+2014-04-24T07:45:53 <the-t-in-rtf> The bot.me version seems fine.
+2014-04-24T07:49:16 <the-t-in-rtf> Anyway, I updated the wiki with a link to the online transcripts, and will send a note.
+2014-04-24T09:30:18 * SonicX has quit
+2014-04-24T09:41:08 * yzen joined the channel
+2014-04-24T09:45:53 * yzen has quit
+2014-04-24T10:22:01 * kasparne_ joined the channel
+2014-04-24T10:22:02 * kasparnet has quit
+2014-04-24T10:26:50 * kasparnet joined the channel
+2014-04-24T10:26:51 * kasparne_ has quit
+2014-04-24T10:36:30 * kasparne_ joined the channel
+2014-04-24T10:39:55 * kasparnet has quit
+2014-04-24T10:51:09 * kasparne_ has quit
+2014-04-24T11:42:15 * yzen joined the channel
+2014-04-24T11:45:13 * kasparnet joined the channel
+2014-04-24T11:46:47 * yzen has quit
+2014-04-24T11:57:13 * michelled joined the channel
+2014-04-24T12:02:53 * jhung joined the channel
+2014-04-24T12:03:20 * kasparne_ joined the channel
+2014-04-24T12:05:13 * kasparnet has quit
+2014-04-24T12:19:22 * sgithens joined the channel
+2014-04-24T12:23:25 * Justin_o joined the channel
+2014-04-24T12:24:24 <Justin_o> Bosmon: yes.. i dropped my node_modules repo and also changed the globally installed jshint I had on my system at the begging of the week
+2014-04-24T12:35:58 * cindyli joined the channel
+2014-04-24T12:38:38 * amilchev joined the channel
+2014-04-24T12:45:41 * sgithens has quit
+2014-04-24T12:46:20 * kasparne_ has quit
+2014-04-24T12:46:23 * kasparnet joined the channel
+2014-04-24T12:50:26 * anastasiac joined the channel
+2014-04-24T12:56:37 * colinclark joined the channel
+2014-04-24T12:56:37 * kasparnet has quit
+2014-04-24T12:56:45 * kasparnet joined the channel
+2014-04-24T13:01:09 * jessm joined the channel
+2014-04-24T13:02:29 * anvk joined the channel
+2014-04-24T13:14:29 * kasparnet has quit
+2014-04-24T13:20:27 * yzen joined the channel
+2014-04-24T13:29:53 * kasparnet joined the channel
+2014-04-24T13:31:10 * michelled has quit
+2014-04-24T13:48:18 * clown joined the channel
+2014-04-24T13:50:29 * jhung is now known as jhung_away
+2014-04-24T13:53:32 * kasparnet has quit
+2014-04-24T14:00:30 * SonicX joined the channel
+2014-04-24T14:00:49 * michelled joined the channel
+2014-04-24T14:01:56 * kasparnet joined the channel
+2014-04-24T14:04:35 * clown is now known as clown_mtgh
+2014-04-24T14:04:43 * clown_mtgh is now known as clown_mtg
+2014-04-24T14:05:18 * sgithens joined the channel
+2014-04-24T14:36:00 * kasparne_ joined the channel
+2014-04-24T14:38:28 * kasparnet has quit
+2014-04-24T14:41:53 <Bosmon> Justin_o - so can you explain how you are getting different results with linting from cindyli ?
+2014-04-24T14:42:10 * clown_mtg is now known as clown
+2014-04-24T14:43:20 <cindyli> Bosmon: i reinstalled node modules but still not getting linting error for missing spaces
+2014-04-24T14:45:18 <cindyli> Bosmon: if you removed a space somewhere such as in "= function (\xe2\x80\xa6", would your jshint report an error or warning?
+2014-04-24T14:47:11 <Bosmon> cindyli - it doesn\'t check that one for me, no
+2014-04-24T14:47:16 <Bosmon> It does check, for example, trailing space
+2014-04-24T14:48:04 <Bosmon> It also checks indentation
+2014-04-24T14:48:11 <Bosmon> Which I think is sort of all I care about : P
+2014-04-24T14:49:09 <cindyli> Bosmon: would be nice to catch the missing spaces
+2014-04-24T14:49:20 <Justin_o> Bosmon: indentation checks are working for me, not sure about trailing whitespace as my editor removes those anyways
+2014-04-24T14:49:32 <Bosmon> cindyli - isn\'t going to happen, unfortunately - we are pretty much stuck with the version of jshint we have now
+2014-04-24T14:50:35 <cindyli> ok
+2014-04-24T14:50:49 * jhung_away has quit
+2014-04-24T14:50:55 <Bosmon> Please see my mailing list post on this topic from earlier in the month .....
+2014-04-24T14:51:27 <Justin_o> Bosmon: i was talking with michelled about the infusion 1.5 release yesterday, can you look at http://issues.fluidproject.org/browse/FLUID-4890
+2014-04-24T14:51:35 <Justin_o> we are aiming to release by May 8
+2014-04-24T14:51:41 <Bosmon> Thanks, Justin_o - I will
+2014-04-24T14:51:47 <Justin_o> Bosmon: thanks
+2014-04-24T14:52:58 <michelled> oh Bosmon, is there a good time to meet tomorrow? I\'d love the documentation group to have a meeting before Simon leaves for vacation
+2014-04-24T14:53:34 <Bosmon> I\'ll be around all day
+2014-04-24T14:54:20 <michelled> ok
+2014-04-24T14:55:18 <cindyli> michelled: in your code review for the new metadata demo last Friday, you expressed concern on this script: https://github.com/cindyli/metadata/blob/FLOE-launcher/demos/js/launcher.js, can you remind me what your concern was about?
+2014-04-24T14:55:50 <michelled> cindyli: it seemed like it might be something that was more generally useful rather than just a demo support
+2014-04-24T14:55:59 <michelled> but I didn\'t have enough time to look at it closely
+2014-04-24T14:57:03 * sgithens has quit
+2014-04-24T14:58:09 <cindyli> ok, michelled. shall we wait till the time comes for it to be more generally used?
+2014-04-24T14:59:37 <michelled> sure, I guess the problem is that I\'m certain to forget that it exists. can you describe what it does again?
+2014-04-24T15:03:53 * jhung joined the channel
+2014-04-24T15:18:30 <cindyli> sorry, michelled, was talking with justin. what the launcher does is, 1. set proper data into the database based on the requests. the request could be creating a new or editing an existing. 2. redirect the page to the proper editor page
+2014-04-24T15:23:15 <michelled> thanks cindyli
+2014-04-24T15:23:24 <cindyli> np
+2014-04-24T15:24:26 * michelled has quit
+2014-04-24T15:27:13 <Justin_o> Bosmon: if i have a base grade called panel... this grade has a subcomponent that needs it\'s model value in an invoker and listener.. so it is referenced like {panel}.model. Now the panel grade doesn\'t define a model property in it\'s configuration. This is specified in whatever actually uses the panel grade as a sub grade.. should this work?
+2014-04-24T15:28:46 <Bosmon> Justin_o - I guess by "subcomponent" you mean "derived grade"?
+2014-04-24T15:28:50 <Bosmon> Yes, this will be fine
+2014-04-24T15:29:11 <Justin_o> Bosmon: no i mean actual subcomponent
+2014-04-24T15:29:23 <Justin_o> so the grade has a subcomponent called indicator
+2014-04-24T15:29:27 <Bosmon> Justin_o - that\'s also fine
+2014-04-24T15:29:47 <Justin_o> Bosmon: i\'m getting an error
+2014-04-24T15:29:48 <Justin_o> ASSERTION FAILED: Failed to resolve reference {panel}.model - could not match context with name panel from component { typeName: "fluid.metadata.indicator" gradeNames: ["fluid.metadata.indicator","fluid.commonViewComponent","fluid.standardComponent","fluid.commonModelComponent"] id: 726fymy9-528} Object { typeName="fluid.metadata.indicator",
+2014-04-24T15:29:48 <Justin_o> id="726fymy9-528", options={...}, more...}
+2014-04-24T15:30:10 <Bosmon> ok
+2014-04-24T15:30:18 <Bosmon> Then the base grade must be missing somehow
+2014-04-24T15:30:21 <Justin_o> Bosmon: any thoughts on why might be wrong
+2014-04-24T15:30:23 <Bosmon> Can you put more configuration in a pastie?
+2014-04-24T15:30:59 <Justin_o> Bosmon: okay.. running to stand up.. i\'ll try to get you some more details after
+2014-04-24T15:42:28 <Justin_o> Bosmon: this is the file containing the panel grade
+2014-04-24T15:42:34 <Justin_o> https://www.irccloud.com/pastebin/ZlsYHUA7
+2014-04-24T15:42:50 <Justin_o> Bosmon: this is the one that uses it
+2014-04-24T15:42:53 <Justin_o> https://www.irccloud.com/pastebin/XI6m2VyU
+2014-04-24T15:43:29 <Justin_o> Bosmon: so things work fine to start, but when re-rendering occurs that\'s when the error is triggered
+2014-04-24T15:44:18 <Bosmon> Justin_o - this seems like a bug to me - do you think you could extract a skeleton from this setup into a test case?
+2014-04-24T15:44:50 <Justin_o> Bosmon: sure i\'ll what i can do
+2014-04-24T15:44:54 <Justin_o> see
+2014-04-24T15:44:58 <Bosmon> Justin_o - cheers!
+2014-04-24T15:49:48 * sgithens joined the channel
+2014-04-24T15:51:00 <Justin_o> Bosmon: i think i found the problem.. there was merge issue.. so we were calling refreshView twice for the same event..
+2014-04-24T15:51:24 <Bosmon> Justin_o - can you explain in more detail?
+2014-04-24T15:51:38 <Justin_o> Bosmon: you can see that on line 64 and 133 or the second file i sent you
+2014-04-24T15:52:14 <Justin_o> we had two model change listeners. one in the parent component and one in the subcomponent that would fire on the same model value change. I guess they are sharing a model.
+2014-04-24T15:52:20 <Justin_o> both triggered the refreshView
+2014-04-24T15:52:39 <Bosmon> Justin_o - it\'s still peculiar this caused a failure
+2014-04-24T15:53:09 <Justin_o> Bosmon: I\'m working on solving a bunch of merge conflicts with master and my FLOE-116 branch... so the issue came because those two model listeners were set in different places and were both kept during the merge
+2014-04-24T15:53:19 <Justin_o> Bosmon: ah you expected it to work still?
+2014-04-24T15:54:46 <Bosmon> Yes, I\'m not sure why it would cause a reference resolution failure, so it would be
+2014-04-24T15:54:54 <Bosmon> nice to get to the bottom of the issue
+2014-04-24T15:55:50 <Justin_o> Bosmon: okay.. i\'ll see if i can make a suitable test case
+2014-04-24T15:59:10 * amilchev has left the channel
+2014-04-24T15:59:33 <Bosmon> Clearly it should be possible to call refreshView any number of times from anywhere and not get a failure
+2014-04-24T16:02:18 <Justin_o> Bosmon: my guess is because it was calling it on the same component at the same time, that something hadn\'t fully resolved when it was trying to trigger it the second time
+2014-04-24T16:02:36 <Justin_o> cindyli: i pushed up the merge changes to FLOE-116
+2014-04-24T16:02:40 <Bosmon> Justin_o - even so, that shouldn\'t be possible
+2014-04-24T16:03:03 <cindyli> congrats, Justin_o, you did it!
+2014-04-24T16:03:18 <Justin_o> cindyli: :)
+2014-04-24T16:03:24 <Justin_o> Bosmon: okay.. i\'ll try to write something up for that
+2014-04-24T16:04:19 <Bosmon> We need to make sure that the framework is completely free of incomprehensible and inexplicable behaviours, so it\'s important to try to track this down :)
+2014-04-24T16:08:13 * kasparnet joined the channel
+2014-04-24T16:10:01 * kasparne_ has quit
+2014-04-24T16:17:08 <Justin_o> Bosmon: :) i can\'t argue with that
+2014-04-24T16:58:54 * avtar joined the channel
+2014-04-24T17:05:27 <Justin_o> Bosmon: i can\'t seem to create a failing test case
+2014-04-24T17:11:26 <sgithens> We must be completely full of comprehensible and explicable behavior.
+2014-04-24T17:12:49 <Justin_o> haha.. but i find it somewhat inexplicable that i can\'t create the failing case i was hoping to
+2014-04-24T17:21:24 <Bosmon> well ok
+2014-04-24T17:21:34 <Bosmon> Can you just check in the failing version then and I will investigate it
+2014-04-24T17:21:49 <Bosmon> Justin_o ^
+2014-04-24T17:21:55 <Bosmon> We must be free of inexplicable behaviour at all costs :)
+2014-04-24T17:23:40 <Justin_o> Bosmon: sure.. i\'ll make a new branch with that issue back in
+2014-04-24T17:27:56 <Justin_o> Bosmon: https://github.com/jobara/metadata/tree/FLOE-116-broken-resolution
+'
+

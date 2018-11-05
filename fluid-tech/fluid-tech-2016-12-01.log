@@ -1,0 +1,167 @@
+b'2016-12-01T22:35:17 * stegru has quit
+2016-12-01T22:35:21 * colinclark joined the channel
+2016-12-01T22:38:18 * kasparnet joined the channel
+2016-12-01T22:39:30 * colinclark joined the channel
+2016-12-01T22:46:42 * kasparnet has quit
+2016-12-01T22:51:53 * colinclark joined the channel
+2016-12-01T23:03:30 * alanharn_ has quit
+2016-12-01T23:03:40 * alanharnum joined the channel
+2016-12-01T23:06:05 * David123_ has quit
+2016-12-01T23:12:15 * colinclark has quit
+2016-12-01T23:40:18 * Justin_o has quit
+2016-12-01T23:57:32 * Jess_ joined the channel
+2016-12-01T23:57:58 * Jess_ has quit
+'
+
+b'2016-12-01T00:03:17 * colinclark joined the channel
+2016-12-01T02:08:33 * colinclark has quit
+2016-12-01T02:49:13 * avtar has quit
+2016-12-01T03:15:32 * colinclark joined the channel
+2016-12-01T03:20:32 * colinclark has quit
+2016-12-01T03:45:39 * colinclark joined the channel
+2016-12-01T03:51:19 * colinclark has quit
+2016-12-01T03:52:06 * colinclark joined the channel
+2016-12-01T03:52:10 * colinclark has quit
+2016-12-01T06:48:48 * amatas joined the channel
+2016-12-01T08:19:58 * stegru joined the channel
+2016-12-01T08:20:15 * the-t-in-rtf joined the channel
+2016-12-01T09:32:02 * stegru has quit
+2016-12-01T09:53:26 * the-t-in-rtf joined the channel
+2016-12-01T11:01:07 * stegru joined the channel
+2016-12-01T11:26:51 * amatas has quit
+2016-12-01T11:48:30 * the-t-in-rtf1 joined the channel
+2016-12-01T11:48:30 * the-t-in-rtf has quit
+2016-12-01T12:02:33 * gtirloni joined the channel
+2016-12-01T12:09:49 * alanharn_ joined the channel
+2016-12-01T12:14:14 * kasparnet joined the channel
+2016-12-01T12:52:52 * stegru has quit
+2016-12-01T12:53:33 * stegru joined the channel
+2016-12-01T13:02:43 * amatas joined the channel
+2016-12-01T13:18:50 * kasparnet has quit
+2016-12-01T13:26:46 * cindyli joined the channel
+2016-12-01T13:29:15 * kasparnet joined the channel
+2016-12-01T13:35:06 * Justin_o joined the channel
+2016-12-01T13:59:11 * jessm joined the channel
+2016-12-01T14:00:58 * kasparnet has quit
+2016-12-01T14:07:36 * michelled joined the channel
+2016-12-01T14:23:23 * kasparnet joined the channel
+2016-12-01T14:34:16 * michelled has quit
+2016-12-01T14:37:23 * simonjb joined the channel
+2016-12-01T14:49:55 * colinclark joined the channel
+2016-12-01T14:59:37 * the-t-in-rtf1 has quit
+2016-12-01T14:59:46 * the-t-in-rtf joined the channel
+2016-12-01T15:25:51 <simonjb> hi colinclark are you available for some flocking-midi questions?
+2016-12-01T15:26:02 <colinclark> of course!
+2016-12-01T15:26:09 * kasparnet has quit
+2016-12-01T15:26:21 <simonjb> awesome, I\'m just looking over the code and wanted to check my understanding
+2016-12-01T15:28:00 <colinclark> ok
+2016-12-01T15:29:09 <simonjb> it looks to me like we are no longer automatically creating node-midi objects for ports -- we have one for input and one for output in flock.midi.nodejs.access
+2016-12-01T15:29:28 <simonjb> is this correct?
+2016-12-01T15:31:23 <colinclark> Yes, that\'s correct
+2016-12-01T15:31:27 * alanharnum has quit
+2016-12-01T15:31:51 <simonjb> and we don\'t yet have a way to create new node-midi objects for ports or open them
+2016-12-01T15:31:54 * michelled joined the channel
+2016-12-01T15:31:55 <colinclark> And those are used simply to access RtMidi\'s broken requirement to have an instance of a MIDIIn and a MIDIOut to list the connected ports of that type
+2016-12-01T15:32:02 <colinclark> we do not yet, correct
+2016-12-01T15:32:03 <simonjb> right
+2016-12-01T15:32:13 <colinclark> hence my comment yesterday about how slow this has been :)
+2016-12-01T15:32:22 <simonjb> awesome, wanted to make sure I wasn\'t missing something
+2016-12-01T15:32:37 <colinclark> Nope
+2016-12-01T15:32:50 <colinclark> There are some base grades in the -core module
+2016-12-01T15:33:10 <colinclark> which are as yet unused and were just my attemp to start moving logic around from the old library
+2016-12-01T15:33:32 <simonjb> does it make sense for me to have a go at porting flock.midi.connection?
+2016-12-01T15:33:35 <colinclark> yes
+2016-12-01T15:33:40 <colinclark> Most definitely
+2016-12-01T15:33:42 <colinclark> :)
+2016-12-01T15:33:54 <colinclark> So...
+2016-12-01T15:34:02 <colinclark> "Here\'s the thing, right?"
+2016-12-01T15:34:06 <simonjb> :)
+2016-12-01T15:34:51 <colinclark> The most awkward part about the original midi.connection component was this:
+2016-12-01T15:34:53 <colinclark> https://github.com/colinbdclark/Flocking/blob/midi-improvements/src/web/midi.js#L435-L440
+2016-12-01T15:35:12 * alanharnum joined the channel
+2016-12-01T15:35:24 <simonjb> I was thinking for now, initially, I\'d use the port name
+2016-12-01T15:35:31 <colinclark> +1 :)
+2016-12-01T15:35:40 * stegru has quit
+2016-12-01T15:35:57 <simonjb> from the flock.midi.system.model.ports
+2016-12-01T15:36:02 <colinclark> There\'s this pretty dreadful pile of functions used to match "port specifications" to actual ports:https://github.com/colinbdclark/Flocking/blob/midi-improvements/src/web/midi.js#L523-L609
+2016-12-01T15:36:08 <colinclark> All of that should really go
+2016-12-01T15:36:15 <colinclark> so starting just by matching by name seems perfectly reasonable
+2016-12-01T15:36:33 <simonjb> cool, yeah, I was thinking of starting minimally and building up
+2016-12-01T15:37:02 <colinclark> makes sense to me
+2016-12-01T15:37:06 <colinclark> I think it will be great
+2016-12-01T15:37:19 <simonjb> awesome, I will start on that now, thanks
+2016-12-01T15:37:28 <colinclark> and I guess you\'ll start with Node implementations for Ports, rather than the browser?
+2016-12-01T15:37:55 <simonjb> yes, initially I was start with Node
+2016-12-01T15:37:58 <colinclark> ok
+2016-12-01T15:38:09 <colinclark> I thought, if I get time today and tomorrow, I would try to fill out those missing unit tests for the infrastructure we have
+2016-12-01T15:38:27 <colinclark> and then if it\'s helpful I can try to write a port component for the Web MIDI API to go with your node implementation
+2016-12-01T15:38:47 <simonjb> that sounds great
+2016-12-01T15:39:09 <colinclark> awesome
+2016-12-01T15:39:41 <colinclark> I don\'t even know if the "connection" abstraction is the right one
+2016-12-01T15:40:09 <colinclark> i.e. a component representing an aggregation of one or ports that can be connected to
+2016-12-01T15:40:31 <colinclark> but it did seem about right when I build that midi router
+2016-12-01T15:40:39 * stegru joined the channel
+2016-12-01T15:40:46 <simonjb> seems reasonable to me to stick with that
+2016-12-01T15:40:49 <colinclark> ok
+2016-12-01T15:41:45 <simonjb> there will be some things maybe to manage if a connection covers multiple ports and one of them disappears and not all of them
+2016-12-01T15:41:54 <colinclark> yes, that\'s right
+2016-12-01T15:42:16 <colinclark> While you\'re hacking, simonjb, you can listen to the weather sonified with Flocking: http://www.riadosa.com/
+2016-12-01T15:42:54 <simonjb> very nice :)
+2016-12-01T15:44:53 <simonjb> colinclark: oh, yesterday morning I spent a little time trying to reproduce my seg fault -- but wasn\'t able to, which is encouraging https://github.com/simonbates/nexus-experiments/blob/master/nodeMidiSegFault.js
+2016-12-01T15:45:06 <colinclark> that\'s good news!
+2016-12-01T15:45:26 <simonjb> hopefully it was just something dumb that I was doing and we won\'t hit it again :)
+2016-12-01T15:45:45 <colinclark> yes, I hope so
+2016-12-01T16:31:27 * alanharnum has quit
+2016-12-01T16:33:44 * kasparnet joined the channel
+2016-12-01T16:49:40 * alanharnum joined the channel
+2016-12-01T16:56:25 * the-t-in-rtf1 joined the channel
+2016-12-01T17:23:22 * alanharnum joined the channel
+2016-12-01T17:32:21 * clown joined the channel
+2016-12-01T17:34:02 * michelled has quit
+2016-12-01T17:49:55 * clown has quit
+2016-12-01T17:51:12 * michelled joined the channel
+2016-12-01T17:51:15 * michelled has quit
+2016-12-01T17:52:10 * colinclark has quit
+2016-12-01T17:53:45 * alanharnum has quit
+2016-12-01T17:54:10 * michelled joined the channel
+2016-12-01T17:55:26 * kasparnet has quit
+2016-12-01T17:59:59 * clown joined the channel
+2016-12-01T18:00:09 * clown is now known as clown_mtg
+2016-12-01T18:02:09 * David123_ joined the channel
+2016-12-01T18:09:35 * alanharnum joined the channel
+2016-12-01T19:05:55 * alanharn_ joined the channel
+2016-12-01T19:06:24 * clown_mtg has quit
+2016-12-01T19:08:52 * kasparnet joined the channel
+2016-12-01T19:09:17 * cindyli has quit
+2016-12-01T19:09:55 * cindyli joined the channel
+2016-12-01T19:10:57 * alanharn_ has quit
+2016-12-01T19:13:23 * kasparnet has quit
+2016-12-01T19:24:05 * colinclark joined the channel
+2016-12-01T19:27:28 * alanharnum has quit
+2016-12-01T19:28:16 * colinclark has quit
+2016-12-01T19:29:04 * stegru has quit
+2016-12-01T19:38:43 * michelled has quit
+2016-12-01T19:39:42 * clown joined the channel
+2016-12-01T19:55:07 * alanharnum joined the channel
+2016-12-01T19:55:55 * kasparnet joined the channel
+2016-12-01T20:01:18 * kasparnet has quit
+2016-12-01T20:07:38 * alanharn_ joined the channel
+2016-12-01T20:08:34 * colinclark joined the channel
+2016-12-01T20:09:07 * michelled joined the channel
+2016-12-01T20:11:50 * amatas has quit
+2016-12-01T20:13:51 * colinclark has quit
+2016-12-01T20:14:23 * alanharnum has quit
+2016-12-01T20:25:24 * gtirloni has quit
+2016-12-01T20:39:30 * jessm has quit
+2016-12-01T21:05:12 * alanharn_ joined the channel
+2016-12-01T21:47:14 * michelled joined the channel
+2016-12-01T21:48:55 * colinclark joined the channel
+2016-12-01T21:53:29 * cindyli has quit
+2016-12-01T21:55:08 * colinclark has quit
+2016-12-01T22:01:21 * clown has quit
+2016-12-01T22:14:38 * stegru joined the channel
+2016-12-01T22:17:55 * Jess_ joined the channel
+2016-12-01T22:22:31 * Jess_ has quit
+2016-12-01T22:32:16 * simonjb has quit
+'
+

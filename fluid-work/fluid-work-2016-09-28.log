@@ -1,0 +1,327 @@
+b'2016-09-28T21:02:14 * yzen joined the channel
+2016-09-28T21:17:35 * jhung has quit
+2016-09-28T21:23:41 * danayo has quit
+2016-09-28T21:28:24 * danayo joined the channel
+2016-09-28T21:29:16 <simonjb> gtirloni: https://issues.gpii.net/browse/GPII-2060
+2016-09-28T21:30:12 <gtirloni> thanks!! very well explained
+2016-09-28T21:45:30 * simonjb has quit
+2016-09-28T21:47:57 * yzen is now known as yzen_
+2016-09-28T21:53:09 * yzen_ has quit
+2016-09-28T21:54:19 * colinclark has quit
+2016-09-28T22:05:52 * danayo has quit
+2016-09-28T22:16:06 * danayo joined the channel
+2016-09-28T22:28:11 * danayo has quit
+2016-09-28T22:40:25 * danayo joined the channel
+2016-09-28T22:44:01 * Jess_ has quit
+2016-09-28T22:51:50 * Justin_o has quit
+2016-09-28T23:11:24 * danayo has quit
+2016-09-28T23:12:16 * amatas has quit
+2016-09-28T23:23:12 * kavya has quit
+2016-09-28T23:40:01 * stegru has quit
+2016-09-28T23:56:45 * kasparnet joined the channel
+'
+
+b'2016-09-28T17:17:38 <Bosmon> cindyli - my guess is that the problem is with browserify, based on no evidence
+2016-09-28T17:17:44 <Bosmon> Try removing it and see if the install works
+2016-09-28T17:17:49 <cindyli> ok
+2016-09-28T17:19:30 <Bosmon> cindyli - so the failure occurs only in the VM and not on your desktop?
+2016-09-28T17:19:35 <cindyli> yes, Bosmon
+2016-09-28T17:19:38 <Bosmon> ok
+2016-09-28T17:19:53 <Bosmon> Well, at least we are well positioned to feed back repro steps to the npm team :)
+2016-09-28T17:20:06 <Bosmon> Given we have worked so hard on our public CI infrastructure
+2016-09-28T17:20:06 <gtirloni> cindyli: add the npm version you want to the provisioning/common-vars.yml file (https://github.com/idi-ops/ansible-nodejs/blob/master/defaults/main.yml#L15). it\'s using npm 3 because that\'s what comes with node 6
+2016-09-28T17:20:39 <Bosmon> Of course Cindy\'s stuff will in the end need to build with npm 3 since we will have to use it on Windows
+2016-09-28T17:20:44 <Bosmon> So my earlier suggestion was a bit silly
+2016-09-28T17:21:01 <cindyli> Bosmon: ur new suggestion is to use npm 3
+2016-09-28T17:21:03 <cindyli> i guess
+2016-09-28T17:21:59 <cindyli> gtirloni: so seems we need to continue to figure out a work-around with npm 3. but before that, I\'m trying without browserify dependencies
+2016-09-28T17:22:18 <gtirloni> cindyli: just to help my brain remember the issue... i should clone your GPII-1821 branch, go to production-components-vm and `vagrant up`.. then i\'ll see the error? or is that on the root dir?
+2016-09-28T17:22:36 <gtirloni> ah, so it\'s browserify the root cause?
+2016-09-28T17:22:42 <cindyli> no, gtirloni
+2016-09-28T17:22:44 <Bosmon> gtirloni - no this is jsut an exploratory guess
+2016-09-28T17:23:18 <cindyli> gtirloni: pull my GPII-1274 branch, go to universal root directory and run "vagrant up"
+2016-09-28T17:23:30 <gtirloni> ok thanks
+2016-09-28T17:23:39 <cindyli> GPII-1821 is an old story
+2016-09-28T17:23:46 <cindyli> no problem. thanks, gtirloni
+2016-09-28T17:28:23 <gtirloni> cindyli: it worked here on a clean repo clone
+2016-09-28T17:28:43 <cindyli> ah ha
+2016-09-28T17:28:45 <gtirloni> node 6.7.0 and npm 3.10.3
+2016-09-28T17:31:12 <gtirloni> yeah, all tests passed too
+2016-09-28T17:31:44 <gtirloni> maybe it was the node_modules mix up after all
+2016-09-28T17:32:44 <cindyli> gtirloni: did you do "rm -rf node_modules" and "vagrant destroy" before running "vagrant up"?
+2016-09-28T17:33:18 <gtirloni> cindyli: i didn\'t need to because it was a clean clone of your repo so i didn\'t have anything in it
+2016-09-28T17:33:30 <cindyli> ok
+2016-09-28T17:33:50 <gtirloni> but my host is also fedora 24 here so i think it wouldn\'t be able to reproduce your problem (osx host creating binaries in node_modules)
+2016-09-28T17:36:17 <simonjb> gtirloni, cindyli: I\'m wondering if there is some mechanism that we might be able to use to isolate a vm node_modules from the host\'s
+2016-09-28T17:36:43 <simonjb> we have had a number of issues where shared node_modules has caused problems
+2016-09-28T17:37:28 <simonjb> I definitely get that we want to share the actual source code, so that we can make changes and test
+2016-09-28T17:37:56 <simonjb> but I\'m wondering (and I don\'t know of a way right now) if we might be able to use separate node_modules
+2016-09-28T17:38:11 <gtirloni> maybe we can play with NODE_PATH
+2016-09-28T17:39:11 <ewbjr> gtirloni: could you enable Github Pages on the repo when you get a moment :)
+2016-09-28T17:40:29 <gtirloni> ewbjr: done, it\'s tracking the master branch
+2016-09-28T17:41:15 <simonjb> gtirloni: https://nodejs.org/api/modules.html#modules_loading_from_node_modules_folders suggests that NODE_PATH is only used if a module isn\'t found in node_modules
+2016-09-28T17:44:37 <simonjb> I doubt it, but is there anything we could do in the virtualbox shared folder mounting? Like mount this directory here except for this subdirectory
+2016-09-28T17:49:55 <cindyli> gtirloni, Bosmon, it\'s the new dependency on gpii-pouchdb causing the stack size issue
+2016-09-28T17:50:08 <cindyli> not browserify
+2016-09-28T17:50:40 <cindyli> i think that makes sense with the cross dependency description in the npm issue
+2016-09-28T17:50:53 <cindyli> gpii-pouchdb is dependent on kettle, infusion
+2016-09-28T17:51:20 <cindyli> kettle is dependent on gpii-pouchdb and infusion too.
+2016-09-28T17:51:53 <simonjb> we have circular dependency?
+2016-09-28T17:52:16 <simonjb> kettle -> gpii-pouchdb -> kettle ?
+2016-09-28T17:52:24 <simonjb> cindyli: ^
+2016-09-28T17:53:07 <cindyli> simonjb: but they are in "devDependencies" section tho
+2016-09-28T17:53:17 <cindyli> https://github.com/the-t-in-rtf/gpii-pouchdb/blob/GPII-1897/package.json#L29
+2016-09-28T17:53:22 <simonjb> ah, interesting
+2016-09-28T17:53:24 <cindyli> https://github.com/fluid-project/kettle/blob/master/package.json#L31
+2016-09-28T17:54:35 <simonjb> devDependencies shouldn\'t cause a circular dependency issue, right?
+2016-09-28T17:55:47 <simonjb> they shouldn\'t be installed transitively
+2016-09-28T18:00:44 <cindyli> that\'s true
+2016-09-28T18:00:48 <amatas> simonjb, regarding the vbox share folder mounting, it uses a network share to mount the directory. It isn\'t possible to exclude files or directories.
+2016-09-28T18:01:44 <amatas> Perhaps installing all the modules "as global" and using the NODE_PATH that gtirloni mentioned we could have a separate node_modules in the vm
+2016-09-28T18:01:59 <Bosmon> cindyli - oh yes
+2016-09-28T18:02:10 <Bosmon> There\'s that issue that kettle itself fails to install on npm 3
+2016-09-28T18:02:22 <cindyli> right
+2016-09-28T18:02:29 <cindyli> gtirloni: seems i can consistently reproduce the issue when gpii-pouchdb is presented. do you have time to vidyo call so we can share screens
+2016-09-28T18:02:30 <Bosmon> Ok, well this is at least soluble
+2016-09-28T18:02:40 <Bosmon> Although I think it involves factoring kettle into 2 modules
+2016-09-28T18:02:48 <gtirloni> we could bind mount the node_modules inside the VM to be somewhere else
+2016-09-28T18:04:08 <cindyli> gtirloni: call? or later?
+2016-09-28T18:06:19 <gtirloni> cindyli: sure, feel free to call me when you\'re ready
+2016-09-28T18:06:36 <cindyli> cool. thanks
+2016-09-28T18:08:05 <Justin_o> jhung: sorry about the late reply, but essentially yes. I think they can either wait for the Infusion 2.0 release, which we will have to create a new plugin release for as well.. but they could upgrade now to what\'s there and upgrade again after. I think the second upgrade shouldn\'t be much work
+2016-09-28T18:08:33 <simonjb> gtirloni: could we bind mount node_modules if a directory of that name already exists?
+2016-09-28T18:08:52 * yzen is now known as yzen_
+2016-09-28T18:09:40 * yzen_ is now known as yzen
+2016-09-28T18:10:38 * michelled joined the channel
+2016-09-28T18:10:54 * clown has quit
+2016-09-28T18:14:18 * clown joined the channel
+2016-09-28T18:18:13 <jhung> Justin_o: ok. I can respond to Carla.
+2016-09-28T18:18:19 <Justin_o> jhung: cool, thanks
+2016-09-28T18:22:40 * kasparnet joined the channel
+2016-09-28T18:23:31 * yzen has quit
+2016-09-28T18:25:56 * michelled has quit
+2016-09-28T18:26:59 * colinclark joined the channel
+2016-09-28T18:27:26 <gtirloni> Bosmon cindyli simonjb: i must retract my assertion that it worked here because it just failed twice while cindy was watching. now i\'m not sure what i was testing exactly (i remember cloning the repo, switching to the branch and doing a vagrant up... I probably messed up which branch I used)
+2016-09-28T18:27:30 * michelled joined the channel
+2016-09-28T18:27:43 <gtirloni> good news is that i now i can reproduce the issue reliably I guess
+2016-09-28T18:29:19 <gtirloni> simonjb: yes https://www.pastery.net/cjqwyd/
+2016-09-28T18:29:38 <gtirloni> it shadows the contents in it
+2016-09-28T18:30:51 <gtirloni> it just occurred to me that between my successful attempt and now the failures, the only difference might actually have been that Cindy was watching this time. uh oh..
+2016-09-28T18:31:10 <gtirloni> ;)
+2016-09-28T18:31:15 <Justin_o> avtar, gtirloni: i\'m noticing that the infusion build has been failing. Although I didn\'t get any e-mails reporting it
+2016-09-28T18:31:19 <Justin_o> at least i didn\'t notice any
+2016-09-28T18:31:28 <Justin_o> it seems that it failed because of a TAP error
+2016-09-28T18:32:33 <michelled> fluid-everyone: we were going to spend a half hour now talking about pair and mob programming
+2016-09-28T18:33:48 <gtirloni> Justin_o: i\'ll check that
+2016-09-28T18:35:55 * simonjb_ joined the channel
+2016-09-28T18:37:35 * simonjb_ is now known as simonjb
+2016-09-28T18:38:45 * wannabeCitizen has left the channel
+2016-09-28T18:39:29 <gtirloni> Justin_o: reason for no emails is the builds were aborted. reason for them being aborted, unknown. i\'m trying to find out
+2016-09-28T18:41:10 <Justin_o> gtirloni: so abortions aren\'t considered failures?
+2016-09-28T18:41:31 * kasparnet has quit
+2016-09-28T18:41:47 * kasparnet joined the channel
+2016-09-28T18:43:01 <gtirloni> Justin_o: yeah, the email "publisher" only considers jobs marked as "FAILURE". it seems to ignore all other statuses (aborted usually means someone took action or there were a low-level failure)
+2016-09-28T18:43:18 <gtirloni> i agree it should report aborted jobs all the same
+2016-09-28T18:43:48 <gtirloni> but there\'s no option for that. maybe the admins should have received an email about the breakage
+2016-09-28T18:54:30 * stegru has quit
+2016-09-28T18:56:39 <simonjb> thanks very much gtirloni for the mount example -- this could be a solution for a Linux guest vm, do you know of any way to do something similar in a Windows vm?
+2016-09-28T18:56:47 <cindyli> gtirloni, Bosmon, simonjb: the jira for npm3 issue with VM: https://issues.gpii.net/browse/GPII-2059
+2016-09-28T18:56:59 <cindyli> feel free to add or update
+2016-09-28T18:58:05 <gtirloni> simonjb: i think it\'s called a "directory junction" on windows
+2016-09-28T18:59:31 <gtirloni> Justin_o: looks like the tests are getting stuck and jenkins is aborting the build -- https://ci.fluidproject.org/job/infusion-tests/9/console (whatver comes after test 50)
+2016-09-28T18:59:38 <gtirloni> cindyli: thanks!
+2016-09-28T18:59:49 <cindyli> thanks, gtirloni
+2016-09-28T19:00:56 <simonjb> gtirloni: I don\'t know if it\'s something that we have resources to look at right now, but I\'ll file a JIRA issue that captures what we\'ve talked about so far regarding mechanisms to make node_modules in vms separate from the host
+2016-09-28T19:02:25 <Justin_o> gtirloni: thanks.. i wonder what test that would be
+2016-09-28T19:02:28 <gtirloni> simonjb: it\'s probably something we could consider as a change in the ansible-nodejs role. thanks for filing the JIRA.
+2016-09-28T19:03:17 <danayo> privacy needs and preferences list : https://docs.google.com/document/d/1zskKCkLVRHqLYgcWigMyu1i797tOr7x_JgACOGp6ZN0/edit?usp=sharing
+2016-09-28T19:03:20 * yzen joined the channel
+2016-09-28T19:03:43 <danayo> examples of misuse: https://docs.google.com/document/d/1VG_e7JjSSfqgemU9CsP6ffucfNY5oEoKYtvzOmf6o7E/edit?usp=sharing
+2016-09-28T19:05:56 <danayo> and fluid-everyone we are meeting now in fluid_standup re: privacy prefs brainstorming
+2016-09-28T19:09:14 <colinclark> danayo: My current meeting has run over
+2016-09-28T19:09:18 <colinclark> and I haven\'t had lunch yet!
+2016-09-28T19:09:25 <colinclark> are you ok if I join in about 10 minutes?
+2016-09-28T19:09:44 <colinclark> i\'ll be there asap
+2016-09-28T19:10:15 <gtirloni> Justin_o: it also gets stuck here on my computer (./component-tests/textToSpeech/html/TextToSpeech-test.html)
+2016-09-28T19:10:32 <gtirloni> Justin_o: does it work for you?
+2016-09-28T19:22:08 <Justin_o> gtirloni: :( the last time i ran them it worked.. i\'ll have to try again.
+2016-09-28T19:40:11 * kasparnet has quit
+2016-09-28T19:54:47 * cindyli has quit
+2016-09-28T19:57:49 * cindyli joined the channel
+2016-09-28T19:58:28 * stegru joined the channel
+2016-09-28T20:09:42 * simonjb has quit
+2016-09-28T20:09:50 * michelled has quit
+2016-09-28T20:12:51 <Bosmon> cindyli - I\'m thinking you might be a good candidate for the "modularising Kettle" work item :)
+2016-09-28T20:12:58 <Bosmon> Since you already had one very successful pull in this area
+2016-09-28T20:15:04 * simonjb joined the channel
+2016-09-28T20:15:59 * michelled joined the channel
+2016-09-28T20:17:00 <cindyli> Bosmon: thanks for the trust :) do we have a jira for it so i understand what is means?
+2016-09-28T20:17:16 <Bosmon> cindyli - no, not yet
+2016-09-28T20:17:30 <Bosmon> But the idea will be to convert the 1 kettle github repo to represent 5 separate npm modules
+2016-09-28T20:17:38 <Bosmon> And hence break the cyclic dependency between modules
+2016-09-28T20:17:51 <Bosmon> Between kettle and gpiipouchdb
+2016-09-28T20:18:18 <Bosmon> Well
+2016-09-28T20:18:25 <Bosmon> Now I come to think about it, this might not be enough to break the cycle
+2016-09-28T20:18:36 <Bosmon> Since we would create kettle-dataSource whose tests depend on gpii-pouchdb
+2016-09-28T20:18:44 <Bosmon> But I imagine that gpii-pouchdb will depend on kettle-dataSource too
+2016-09-28T20:19:44 <Justin_o> gtirloni: ran the tests through testem on the fedora vm and they all passed for me
+2016-09-28T20:21:04 <Justin_o> i might have to kill the vm and try again though
+2016-09-28T20:35:23 * yzen is now known as yzen_
+2016-09-28T20:36:11 * cindyli has quit
+2016-09-28T20:41:03 * yzen_ has quit
+2016-09-28T20:59:31 * michelled has quit
+2016-09-28T21:00:57 * clown has quit
+'
+
+b"2016-09-28T00:11:50 * Justin_o has quit
+2016-09-28T00:41:32 * danayo has quit
+2016-09-28T00:52:45 * danayo joined the channel
+2016-09-28T01:08:49 * danayo has quit
+2016-09-28T02:25:55 * danayo joined the channel
+2016-09-28T02:25:55 * danayo has quit
+2016-09-28T06:04:10 * kasparnet joined the channel
+2016-09-28T07:13:52 * the-t-in-rtf joined the channel
+2016-09-28T07:24:20 * kasparnet has quit
+2016-09-28T07:27:42 * kasparnet joined the channel
+2016-09-28T07:28:41 * kasparnet has quit
+2016-09-28T07:29:01 * kasparnet joined the channel
+2016-09-28T07:33:29 * stegru joined the channel
+2016-09-28T07:48:24 * amatas joined the channel
+2016-09-28T08:37:56 * the-t-in-rtf has quit
+2016-09-28T08:38:27 * the-t-in-rtf joined the channel
+2016-09-28T08:39:27 * jhernandez has quit
+2016-09-28T09:21:10 * the-t-in-rtf has quit
+2016-09-28T10:57:24 * jhernandez joined the channel
+2016-09-28T11:43:17 * jhung joined the channel
+2016-09-28T11:50:04 * jhung has quit
+2016-09-28T11:51:54 * kasparnet has quit
+2016-09-28T11:51:59 * gtirloni joined the channel
+2016-09-28T11:52:33 * kasparnet joined the channel
+2016-09-28T11:57:10 * kasparnet has quit
+2016-09-28T12:00:16 * kasparnet joined the channel
+2016-09-28T12:05:42 * jhung joined the channel
+2016-09-28T12:28:02 * Justin_o joined the channel
+2016-09-28T12:40:01 * jhung has quit
+2016-09-28T12:51:31 * cindyli joined the channel
+2016-09-28T12:52:19 * jhung joined the channel
+2016-09-28T12:58:39 <Justin_o> gtirloni: did you have a chance to verify if this is still an issue after the jQuery upgrade https://issues.fluidproject.org/browse/FLUID-5952
+2016-09-28T12:58:53 <Justin_o> the jQuery upgrade is in master now, so you don't have to test from my branch anymore
+2016-09-28T12:58:57 * kavya joined the channel
+2016-09-28T13:04:15 <gtirloni> Justin_o: sorry for the delay. I cannot reproduce that any longer using infusion's master and Firefox 49
+2016-09-28T13:04:31 <Justin_o> gtirloni: excellent thanks.. i'm going to close that one off now
+2016-09-28T13:04:56 <cindyli> Bosmon: with this merge in the universal repo: https://github.com/GPII/universal/commit/6495c46c3d3c800caffaea2424ee9abfdc4bcad1, does it mean our universal branch has been upgraded to work with node 6 and npm 3, as what's described in the associated jira - https://issues.gpii.net/browse/GPII-1898
+2016-09-28T13:04:58 <gtirloni> Justin_o: thank you
+2016-09-28T13:10:27 * michelled joined the channel
+2016-09-28T13:19:29 * clown joined the channel
+2016-09-28T13:19:40 <jhung> Justin_o: did you see the email from Carla re UIO integration on RTF?
+2016-09-28T13:20:07 <Justin_o> jhung: i did yes.. wanted to chat with michelled about it a bit
+2016-09-28T13:20:39 <Justin_o> if they have time, it's probably better to upgrade them to the wp plugin, but we'll probably want to upgrade the plugin to use Infusion 2.0 after it's release
+2016-09-28T13:21:03 <michelled> yes, both those things make sense
+2016-09-28T13:21:11 <Justin_o> i didn't look closely at the disconfiguration issue mentioned, did you see it?
+2016-09-28T13:21:17 <Justin_o> jhung, michelled ^
+2016-09-28T13:21:22 <Justin_o> michelled: okay cool
+2016-09-28T13:21:24 <michelled> I think it was the vertical layout
+2016-09-28T13:21:32 <michelled> and also, some of the options don't work
+2016-09-28T13:21:35 <michelled> like toc
+2016-09-28T13:21:38 <Justin_o> ah
+2016-09-28T13:21:40 <Justin_o> okay
+2016-09-28T13:21:46 <michelled> Justin_o, jhung: it doesn't sound like they have developers working on this :(
+2016-09-28T13:21:56 <Justin_o> there might need to be some changes on their site too, but perhaps they are just running into some bugs from the old version
+2016-09-28T13:22:05 <michelled> I want to check in with colin to see if we can put effort into this, or just give guidance
+2016-09-28T13:22:28 <Justin_o> michelled: good idea to check on that
+2016-09-28T13:22:37 <Justin_o> please let us know which route to take
+2016-09-28T13:22:44 <michelled> Justin_o: do you know if we have anything more up to date than this in terms of telling people how to make their site UIO compatible? https://wiki.fluidproject.org/display/docs/Working+With+A+Preferences+Editor+On+Your+Site
+2016-09-28T13:23:32 <michelled> Justin_o: I'm thinking for right now we should send some links - one to the existing updated UIO, one to the wp plugin and any useful docs
+2016-09-28T13:24:03 <michelled> Justin_o: are there UIO improvements in 2.0?
+2016-09-28T13:24:46 <Justin_o> michelled: bug fixes, but i'm not sure when the wp plugin was last updated
+2016-09-28T13:24:53 <Justin_o> so not sure how many changes since thne
+2016-09-28T13:24:54 <Justin_o> then
+2016-09-28T13:26:08 <michelled> TJ is using the latest WP plugin on his site: http://tjbliss.org/
+2016-09-28T13:26:37 <Justin_o> michelled: also don't see any more recent documentation
+2016-09-28T13:27:47 <michelled> oh dear. those dots are an h1.
+2016-09-28T13:32:08 * michelled joined the channel
+2016-09-28T13:32:28 <Justin_o> :(
+2016-09-28T13:33:14 <Justin_o> michelled: it looks like the plugin hasn't been updated in a while. https://github.com/fluid-project/uio-wordpress-plugin
+2016-09-28T13:33:35 <Justin_o> here are resolved issues for UIO and the Prefs Framework since then
+2016-09-28T13:33:36 <Justin_o> https://issues.fluidproject.org/issues/?jql=project%20%3D%20FLUID%20AND%20status%20in%20(Resolved%2C%20Closed)%20AND%20component%20in%20(%22Prefs%20Framework%22%2C%20%22UI%20Options%22)%20AND%20resolved%20%3E%3D%202015-03-26%20AND%20resolved%20%3C%3D%202016-09-28%20ORDER%20BY%20priority%20DESC%2C%20updated%20DESC
+2016-09-28T13:38:54 * danayo joined the channel
+2016-09-28T13:39:22 * yzen joined the channel
+2016-09-28T13:43:08 <michelled> Justin_o: do you think I'm correct in saying that moving from that version to the new version after 2.0 will not be a lot of work? I'm thinking that the majority of work is in doing the initial upgrade to modern UIO and getting the site fixed up to play nicely
+2016-09-28T13:44:50 <Justin_o> michelled: i think that's the work needed to be done... whether it is a lot of work or not, i'm not sure. It sounds like they'll need to integrate our plugin, i don't know how difficult that is, jhung might know. The site fix up really depends on how their site is created...
+2016-09-28T13:48:38 * PaliwalSparsh joined the channel
+2016-09-28T13:51:10 <jhung> Justin_o: the hard part is getting their containers and styling to work well with UIO. Once they have the plugin installed, they'll need to go through each adjuster and fix styles that prevent it from functioning.
+2016-09-28T13:53:39 * Jess_ joined the channel
+2016-09-28T13:54:12 <Justin_o> jhung: i'm hoping that because they have a version of UIO already, it won't be as much work, but i'm not sure the nature of all their issues
+2016-09-28T13:56:02 * simonjb joined the channel
+2016-09-28T13:56:23 <Justin_o> simonjb: https://github.com/fluid-project/infusion/pulls?q=is%3Apr+milestone%3A%22Infusion+2.0+Release%22+is%3Aopen
+2016-09-28T13:56:46 * the-t-in-rtf joined the channel
+2016-09-28T14:00:25 * simonjb has quit
+2016-09-28T14:01:03 <Justin_o> fluid-everyone: community meeting is starting now ( special time this week ). The GSoC Students will be presenting the projects that they worked on over the summer
+2016-09-28T14:04:09 * cindyli1 joined the channel
+2016-09-28T14:05:38 * cindyli has quit
+2016-09-28T14:06:38 * simonjb joined the channel
+2016-09-28T14:12:35 * stegru has quit
+2016-09-28T14:18:35 * the-t-in-rtf has quit
+2016-09-28T14:20:22 * the-t-in-rtf joined the channel
+2016-09-28T14:20:54 * dinuka joined the channel
+2016-09-28T14:26:06 <avtar> Justin_o, fluid-everyone: https://vega.github.io/vega/
+2016-09-28T14:26:27 * styki joined the channel
+2016-09-28T14:29:52 * wannabeCitizen joined the channel
+2016-09-28T14:32:04 <wannabeCitizen> Hi everyone, I just presented at the community meeting and here are the links I promised. Here is my repo: https://github.com/wannabeCitizen/data-dashboard AND here is the link to the vega project: https://vega.github.io/
+2016-09-28T14:42:52 * stegru joined the channel
+2016-09-28T14:44:29 * PaliwalSparsh1 joined the channel
+2016-09-28T14:45:36 * kasparnet has quit
+2016-09-28T14:48:01 * PaliwalSparsh has quit
+2016-09-28T14:48:31 * kasparnet joined the channel
+2016-09-28T14:56:21 <PaliwalSparsh1> https://www.youtube.com/watch?v=BEdFcnI-ppk
+2016-09-28T15:07:04 <wannabeCitizen> Thanks Sparsh! Sorry I had to run during your presentation. The cat game looks interesting, if you post a Github link, I\xe2\x80\x99d love to check it out later.
+2016-09-28T15:07:26 <wannabeCitizen> PaliwalSparsh1 ^
+2016-09-28T15:25:57 <styki> https://wiki.fluidproject.org/display/fluid/Mobile+UI+Options+GSoC+2016+Updates
+2016-09-28T15:26:15 <styki> https://github.com/styki/infusion/tree/Responsive-Design
+2016-09-28T15:26:36 <styki> https://github.com/fluid-project/infusion/pull/726
+2016-09-28T15:32:41 * clown has quit
+2016-09-28T15:33:20 * clown joined the channel
+2016-09-28T15:33:48 * colinclark joined the channel
+2016-09-28T15:37:59 <PaliwalSparsh1> DISCOVERY CAT LINK - https://cdn.rawgit.com/PaliwalSparsh/Discovery-Cat/b9de77c4e0bc3bc5e70cefacb80a86ec95f4b549/demo/index.html
+2016-09-28T15:42:44 <danayo> PaliwalSparsh1: thanks for the link to the game, could you post your Github link as well?
+2016-09-28T15:43:18 <PaliwalSparsh1> oh sure
+2016-09-28T15:43:36 <PaliwalSparsh1> DISCOVERY CAT REPO LINK - https://github.com/PaliwalSparsh/Discovery-Cat
+2016-09-28T15:45:04 * PaliwalSparsh2 joined the channel
+2016-09-28T15:46:36 * simonjb has quit
+2016-09-28T15:49:12 * PaliwalSparsh1 has quit
+2016-09-28T15:49:21 * PaliwalSparsh2 has quit
+2016-09-28T16:00:08 * simonjb joined the channel
+2016-09-28T16:08:27 <michelled> simonjb: did you see this? http://www.prosperity4all.eu/technology-integration-in-p4all/
+2016-09-28T16:08:59 <simonjb> no I hadn't, thanks michelled
+2016-09-28T16:09:20 <michelled> np
+2016-09-28T17:03:03 <gtirloni> cindyli1: just to double check, which version of VirtualBox do you have installed? `VBoxManage --version`
+2016-09-28T17:03:27 <cindyli1> gtirloni: 5.0.16r105871
+2016-09-28T17:04:07 * colinclark has quit
+2016-09-28T17:04:12 <gtirloni> please try updating to 5.0.26 -- http://download.virtualbox.org/virtualbox/5.0.26/VirtualBox-5.0.26-108824-OSX.dmg
+2016-09-28T17:05:03 <gtirloni> the shared folder where the node_modules dir is could be causing some issues (after a quick glance at some of the github issues linked in the meeting notes)
+2016-09-28T17:05:48 <Bosmon> Hi there cindyli1 - so I again have a pass on all-tests on universal
+2016-09-28T17:06:00 <Bosmon> This is with node 6.6.0 32-bit on Windows
+2016-09-28T17:10:15 * styki has quit
+2016-09-28T17:11:04 <cindyli1> Bosmon: i got all tests passing too with the node 6.7.0 and npm 3.10.3. sorry about the false alarm. it might because I was playing with both the vm and local in the morning and they have shared node_modules/ or listening on the same port
+2016-09-28T17:11:11 * cindyli1 is now known as cindyli
+2016-09-28T17:11:23 <Bosmon> ok cool
+2016-09-28T17:11:49 <cindyli> so now the issue left is to fix the stack size error with the VM.
+2016-09-28T17:11:55 <Bosmon> stack size!
+2016-09-28T17:12:13 <cindyli> https://github.com/npm/npm/issues/10776
+2016-09-28T17:12:43 <Bosmon> Absurd
+2016-09-28T17:13:17 <Bosmon> npm 3 really is a pile of junk
+2016-09-28T17:13:21 <jhung> Justin_o: so in response to Carla's email, are we suggesting that they wait for the Infusion 2.0 release? Of if they can't, at least upgrade to current. Then we can give them some pointers if they need help after upgrading?
+2016-09-28T17:13:35 <Bosmon> Feel free to continue with npm 2 yourself, I have a feeling we will be trying to support it for a while
+2016-09-28T17:13:49 <Bosmon> npm 3 just meets the specific use case of being able to make an installer bundle on Windows
+2016-09-28T17:14:07 <Bosmon> So we only need it to work to that extent
+2016-09-28T17:14:29 * michelled has quit
+2016-09-28T17:14:51 * kasparnet has quit
+2016-09-28T17:15:13 <cindyli> Bosmon: the problem is my pull request won't pass the CI 'cuz npm 3 is used there
+2016-09-28T17:15:24 <Bosmon> cindyli - that's awkward
+2016-09-28T17:15:31 <Bosmon> Does your pull request change the project dependencies?
+2016-09-28T17:15:43 <cindyli> yes. added more dependencies
+2016-09-28T17:15:47 <Bosmon> Which ones
+2016-09-28T17:16:27 <cindyli> Bosmon: https://github.com/GPII/universal/pull/464/files#diff-155
+2016-09-28T17:17:30 <cindyli> mainly gpii-pouchdb and a few others for browserifying node dependencies for kettle url data source
+"
+

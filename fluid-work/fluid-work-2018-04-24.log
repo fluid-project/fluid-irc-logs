@@ -1,0 +1,231 @@
+b'2018-04-24T17:38:43 <cindyli> sure, mrtyler
+2018-04-24T17:38:49 <mrtyler> are there strategies other than username/password added to a couchdb url?
+2018-04-24T17:38:58 <mrtyler> client certificates perhaps?
+2018-04-24T17:39:05 <mrtyler> have you looked at this area at all?
+2018-04-24T17:39:28 * kasparnet_ joined the channel
+2018-04-24T17:40:10 <mrtyler> the broader context is, i think, mostly pretty boring but one problem is like this: preferences server is configured to use a COUCHDB_URL like http://USERNAME:PASSWORD@couchdb.gpii.svc.cluster.local:5948/preferences/%userToken
+2018-04-24T17:40:11 <cindyli> not really, i\'m only awared of username/pwd way
+2018-04-24T17:40:36 <mrtyler> however when preferences server fails to connect (say because couchdb isn\'t ready yet), it emits a log message "couldn\'t connect to couchdb url <url>"
+2018-04-24T17:40:46 <mrtyler> that url contains the credentials, which are then leaked into the logs
+2018-04-24T17:40:54 <cindyli> i see
+2018-04-24T17:41:35 <mrtyler> i think username/password is probably fine, and that the logging code needs to not write the full url to the log, but colin thought it might be worth pinging you on this topic
+2018-04-24T17:41:59 <mrtyler> (note that if the credentials aren\'t in the url because they are client certificates or whatever, we avoid the log-leaking-credentials problem)
+2018-04-24T17:42:04 <cindyli> mrtyler: here\'s a discussion about cookie authentication - https://github.com/benweet/stackedit/pull/852
+2018-04-24T17:43:39 <mrtyler> idk what stackedit is but the author appears to have closed that PR without comment or merge, so that seems pretty lame
+2018-04-24T17:44:56 <mrtyler> anyway cindyli if you don\'t have any specific expertise in this area that\'s fine, i\'ll muddle along :)
+2018-04-24T17:45:09 <mrtyler> lmk if you think of anything interesting to discuss :)
+2018-04-24T17:45:12 <cindyli> another way mentioned in this discussion is to have requests embed username/pwd in the "authorization" header
+2018-04-24T17:45:14 <cindyli> https://github.com/benweet/stackedit/pull/852#issuecomment-227441973
+2018-04-24T17:45:40 <cindyli> so these credentials are not exposed in urls
+2018-04-24T17:46:00 <cindyli> but i never tried this way tho, but it might work
+2018-04-24T17:46:37 <mrtyler> seems like we\'d have to add that support to all couchdb clients
+2018-04-24T17:46:44 <mrtyler> universal, dataloader
+2018-04-24T17:46:55 <mrtyler> i guess that\'s it today
+2018-04-24T17:47:08 <mrtyler> is PTT going to come from the gpii/universal docker image?
+2018-04-24T17:47:32 <mrtyler> i assume there\'s one "talk to couchdb" workflow for everything in universal
+2018-04-24T17:47:48 <cindyli> PPT won\'t talk to couchdb directly
+2018-04-24T17:48:05 <cindyli> it will call preferences server APIs and prefs server then talk to couchdb
+2018-04-24T17:48:21 <mrtyler> ah
+2018-04-24T17:48:28 <cindyli> btw, you might like to know that the prefs server will be brought back in 2630 pull request
+2018-04-24T17:48:38 <mrtyler> heh, why?
+2018-04-24T17:48:52 <cindyli> so it can provide some private APIs for privileged apps such as PPT
+2018-04-24T17:49:16 <cindyli> that\'s what we will talk about in the meeting that I sent out a doodle for
+2018-04-24T17:49:17 <mrtyler> also, heh, you might like to know that gpii-infra is about to get a large restructure, so gl with your eventual merge :p
+2018-04-24T17:49:32 <mrtyler> ah cool
+2018-04-24T17:50:06 <cindyli> what "gl" stands for?
+2018-04-24T17:50:48 <cindyli> Bosmon, colinclark, can you fill up the doodle for our next meeting when you have a chance - https://doodle.com/poll/2yqckv8hbne7yfai. thanks
+2018-04-24T17:51:11 <mrtyler> gl = good luck
+2018-04-24T17:51:30 <cindyli> doesn\'t sound like a good wish ;)
+2018-04-24T17:51:37 <mrtyler> haha
+2018-04-24T17:51:54 <mrtyler> was just gonna say, "good luck" is an american expression that means "...eh, better you than me" ;)
+2018-04-24T17:52:03 <cindyli> lol
+2018-04-24T18:18:35 * jeevan_ has quit
+2018-04-24T18:33:16 * jeevan_ joined the channel
+2018-04-24T18:39:14 * Sunny0794 joined the channel
+2018-04-24T18:43:07 * michelled joined the channel
+2018-04-24T18:43:15 * michelled has quit
+2018-04-24T18:45:22 * kasparnet_ has quit
+2018-04-24T18:48:49 * Sunny0794 has quit
+2018-04-24T19:06:42 * alanharnum has quit
+2018-04-24T19:06:53 * alanharnum joined the channel
+2018-04-24T19:06:54 * alanharnum has quit
+2018-04-24T19:24:17 * jhernandez_ has quit
+2018-04-24T19:26:17 * stegru joined the channel
+2018-04-24T19:33:04 * michelled joined the channel
+2018-04-24T19:33:20 * michelled has left the channel
+2018-04-24T19:44:10 * jeevan_ has quit
+2018-04-24T19:48:18 * kasparnet_ joined the channel
+2018-04-24T20:02:56 * VictorA_NG has quit
+2018-04-24T20:18:28 * sepidehshahi joined the channel
+2018-04-24T20:23:32 * cindyli has quit
+2018-04-24T20:30:21 * stegru has quit
+2018-04-24T20:30:39 * danayo has quit
+2018-04-24T20:33:20 * sepidehshahi has quit
+2018-04-24T20:55:19 * stegru joined the channel
+2018-04-24T20:55:56 * clown has quit
+2018-04-24T21:01:31 <gmoss> Anyone who would care to chime in: in an IoC testing sequence, given a call to a model\'s change applier, would it be safe simply to call jqUnit as a "funcName" entry in the sequence, or have I created a race condition and it just happens to work for me? should I be waiting for applier.modelChanged?
+2018-04-24T21:01:34 * kasparnet_ has quit
+2018-04-24T21:01:35 <gmoss> e.g. https://gist.github.com/BlueSlug/8fd9a5bc3d33f63a3f4247ade861f058
+2018-04-24T21:02:08 * michelled joined the channel
+2018-04-24T21:21:23 * avtar has quit
+2018-04-24T21:29:21 * gtirloni has quit
+2018-04-24T21:36:37 * colinclark has quit
+2018-04-24T21:36:45 * michelled has quit
+2018-04-24T22:02:13 * simonjb has quit
+2018-04-24T23:11:11 * stegru has quit
+2018-04-24T23:58:34 * dandimitrov has quit
+2018-04-24T23:58:46 * dandimitrov joined the channel
+'
+
+b'2018-04-24T00:08:01 * mrtyler has quit
+2018-04-24T00:08:04 * kasparnet_ has quit
+2018-04-24T00:28:52 * mrtyler joined the channel
+2018-04-24T00:54:42 * jhernandez_ has quit
+2018-04-24T03:10:28 * colinclark joined the channel
+2018-04-24T03:14:09 * colinclark has quit
+2018-04-24T05:41:46 * georgitodorov joined the channel
+2018-04-24T06:06:26 * kunal joined the channel
+2018-04-24T06:07:05 * kunal has quit
+2018-04-24T07:33:33 * the-t-in-rtf joined the channel
+2018-04-24T08:14:03 * jhernandez_ joined the channel
+2018-04-24T08:30:09 * kasparnet_ joined the channel
+2018-04-24T08:32:32 * stegru joined the channel
+2018-04-24T09:16:46 * jhernandez_ has quit
+2018-04-24T09:17:03 * jhernandez joined the channel
+2018-04-24T09:17:08 * jhernandez is now known as jhernandez_
+2018-04-24T09:21:46 * jhernandez_ has quit
+2018-04-24T09:22:03 * jhernandez joined the channel
+2018-04-24T09:22:08 * jhernandez is now known as jhernandez_
+2018-04-24T09:22:25 * kasparnet_ has quit
+2018-04-24T09:24:25 * kasparnet_ joined the channel
+2018-04-24T09:27:49 * georgitodorov has quit
+2018-04-24T09:51:46 * jhernandez_ has quit
+2018-04-24T09:52:03 * jhernandez joined the channel
+2018-04-24T09:52:08 * jhernandez is now known as jhernandez_
+2018-04-24T09:56:46 * jhernandez_ has quit
+2018-04-24T09:57:03 * jhernandez joined the channel
+2018-04-24T09:57:08 * jhernandez is now known as jhernandez_
+2018-04-24T10:11:46 * jhernandez_ has quit
+2018-04-24T10:12:02 * jhernandez joined the channel
+2018-04-24T10:12:07 * jhernandez is now known as jhernandez_
+2018-04-24T10:16:46 * jhernandez_ has quit
+2018-04-24T10:17:02 * jhernandez joined the channel
+2018-04-24T10:17:08 * jhernandez is now known as jhernandez_
+2018-04-24T10:41:04 * georgitodorov joined the channel
+2018-04-24T11:04:24 * gtirloni joined the channel
+2018-04-24T11:05:57 * Justin_o joined the channel
+2018-04-24T11:17:48 * sgithens has quit
+2018-04-24T11:18:01 * sgithens joined the channel
+2018-04-24T11:37:19 * mrtyler has quit
+2018-04-24T11:42:38 * Justin_o joined the channel
+2018-04-24T11:59:07 * alanharnum joined the channel
+2018-04-24T12:21:08 * the-t-in-rtf has quit
+2018-04-24T12:21:33 * the-t-in-rtf joined the channel
+2018-04-24T12:33:03 <yuriy> @Bosmon: Hi, Antranig! There is one technical question that we didn\xc2\xb4t have time to discuss yesterday for the PSP 3 and I was wondering if you had any ideas. One of the tasks is to add a tooltip to the tray icon that indicates that the server cannot be reached (the actual label would be GPII: Cannot reach Internet). What would you say would be an adequate check with the current GPII setup, i.e. before using Cloud login: to test whether we can reach a
+2018-04-24T12:33:03 <yuriy> specific site or something more specific?
+2018-04-24T12:35:01 <Bosmon> yuriy - let\'s push that out as a question for next week\'s meeting
+2018-04-24T12:35:39 * the-t-in-rtf has quit
+2018-04-24T12:39:44 <yuriy> OK, I will
+2018-04-24T12:46:09 * the-t-in-rtf joined the channel
+2018-04-24T12:51:05 * cindyli joined the channel
+2018-04-24T12:57:27 * simonjb joined the channel
+2018-04-24T13:03:40 * avtar joined the channel
+2018-04-24T13:12:46 * georgi_todorov joined the channel
+2018-04-24T13:15:57 * georgitodorov has quit
+2018-04-24T13:18:04 * georgi_todorov has quit
+2018-04-24T13:20:34 * jessm joined the channel
+2018-04-24T13:25:42 * sepidehshahi joined the channel
+2018-04-24T13:34:14 <dandimitrov> Bosmon, Thanks for the details for the contexts, it greatly helped for logging the issue to Electron
+2018-04-24T13:40:03 * colinclark joined the channel
+2018-04-24T13:47:58 <Bosmon> yuriy - actually, I have a better idea :)
+2018-04-24T13:48:00 <Bosmon> https://github.com/electron/electron/blob/master/docs/tutorial/online-offline-events.md
+2018-04-24T13:49:20 <Bosmon> This will do for a 1st order approximation
+2018-04-24T13:49:37 <Bosmon> If we get some UX feedback, we can try to improve the detection someday
+2018-04-24T13:49:48 * clown joined the channel
+2018-04-24T13:57:16 <yuriy> Thank you, Bosmon! We will look into it.
+2018-04-24T14:00:31 <sepidehshahi> fluid-everyone,  Aaron Engelberg will be sharing about a citizen science project for neurodevelopmental research at today\xe2\x80\x99s design crit
+2018-04-24T14:02:41 * mrtyler joined the channel
+2018-04-24T14:03:10 * clown joined the channel
+2018-04-24T14:03:44 * clown has quit
+2018-04-24T14:04:03 * clown joined the channel
+2018-04-24T14:07:12 * colinclark has quit
+2018-04-24T14:07:39 * grrrero joined the channel
+2018-04-24T14:09:49 * danayo joined the channel
+2018-04-24T14:19:57 * sepidehshahi has quit
+2018-04-24T14:32:10 * michelled joined the channel
+2018-04-24T14:34:36 * jeevan_ joined the channel
+2018-04-24T14:36:14 * grrrero has quit
+2018-04-24T14:36:27 * grrrero joined the channel
+2018-04-24T14:46:45 <sgithens> cindyli: I got all the vagrant/docker images working off your 2630 branch thanks!  Question, when you\'re actually working on stuff, how do you typically start and stop the images, since ./scripts/vagrantCloudBasedContainers.sh rebuilds the docker images each time?
+2018-04-24T14:48:32 <sgithens> I\'m still digging through the files, but I can\'t tell yet if the docker build copy the files or just links the directories in place so you can still edit the original universal checkout outside of the docker/vagrant vm
+2018-04-24T14:48:38 <cindyli> congrats, sgithens. to skip the rebuild, you can only run this line from a terminal - https://github.com/cindyli/universal/blob/GPII-2630/scripts/vagrantCloudBasedContainers.sh#L65
+2018-04-24T14:48:50 <cindyli> of course, replace variables with actual values
+2018-04-24T14:49:14 <sgithens> right, ok, so you do just pull out that one line
+2018-04-24T14:49:30 <cindyli> yes, you do can edit the universal source code outside of the VM
+2018-04-24T14:49:57 <cindyli> your local "universal" dir is mapped to the "sync" folder inside VM
+2018-04-24T14:50:06 <cindyli> well, sync/universal inside VM
+2018-04-24T14:50:07 * the-t-in-rtf has quit
+2018-04-24T14:51:03 <sgithens> cindyli: Cool.  Also, do you expose the ports from the VM to host operating system?
+2018-04-24T14:51:12 <cindyli> no, i don\'t think so
+2018-04-24T14:52:43 <sgithens> cool, If anyone else does that successfully let us know :)  I\'m sure there must be a config to do it
+2018-04-24T14:53:55 <cindyli> i think so too, mrtyler: do you have suggestions on mapping ports inside the universal VM to the hosting OS?
+2018-04-24T14:54:49 <sgithens> cindyli: I think I got it to work
+2018-04-24T14:55:15 <cindyli> the mapping? steps?
+2018-04-24T14:55:26 * clown has quit
+2018-04-24T14:56:00 <sgithens> it\'s under VirtualBox -> Machine -> Settings -> Network -> Advanced -> Port Forwarding
+2018-04-24T14:56:19 <cindyli> cool!!
+2018-04-24T14:56:53 <sgithens> Port forwarding for GPII Cloud Based https://usercontent.irccloud-cdn.com/file/8updmOIl/screenshot.png
+2018-04-24T14:57:28 * clown joined the channel
+2018-04-24T14:57:52 <cindyli> nice. 5984 is the common port for couchdb tho. if you have the couchdb starting on ur host machine, there might be a conflict
+2018-04-24T14:58:40 <sgithens> cindyli: cool, will change it up then
+2018-04-24T14:58:56 <sgithens> but i do see all your GPII keys and safes which is great
+2018-04-24T14:59:05 <cindyli> YAY!
+2018-04-24T14:59:22 <sgithens> which I will now fetch to finish my prototype spiking of Berns stuff this week :)
+2018-04-24T15:00:54 <sgithens> cindyli: It seems like at some point we might want to factor out that vagrant cloud script to make it more dev friendly.  So you can optionally start and restart stuff
+2018-04-24T15:01:20 <cindyli> good point
+2018-04-24T15:01:51 <cindyli> i probably can address it in 2630 branch
+2018-04-24T15:02:06 <sgithens> is the script new to that branch?
+2018-04-24T15:02:29 <cindyli> no, it\'s been there for quite a while, i just modified it to work with the new arch
+2018-04-24T15:03:42 * VictorA_NG joined the channel
+2018-04-24T15:05:33 <mrtyler> cindyli: looks like y\'all figured it out, but i would set up the port mappings in the vagrantfile (or .vagrant-ci.yml) to make them permanent
+2018-04-24T15:05:37 <mrtyler> cc sgithens
+2018-04-24T15:05:55 <mrtyler> if it\'s for one-off experimentation, then i\'d do it by hand as steve did
+2018-04-24T15:06:41 <cindyli> an auto mapping sounds like a good idea
+2018-04-24T15:07:20 <sgithens> it\'s pretty handy.  Also, it is nice to have the fedora gui if we need it, but then maybe you could also start it in headless as an option
+2018-04-24T15:24:39 * VictorA_NG has quit
+2018-04-24T15:24:49 * colinclark joined the channel
+2018-04-24T15:24:54 * yuriy__ joined the channel
+2018-04-24T15:28:19 * yuriy has quit
+2018-04-24T15:29:52 * colinclark has quit
+2018-04-24T15:38:52 <Justin_o> grrrero: i tried the link on the planning page to the wireframes and it looks like it wokr
+2018-04-24T15:38:54 <Justin_o> worked
+2018-04-24T15:39:14 <grrrero> Justin_o: awesome thanks!!
+2018-04-24T15:40:51 * clown has quit
+2018-04-24T15:41:34 * clown joined the channel
+2018-04-24T15:43:32 * kunal joined the channel
+2018-04-24T15:43:32 * simonjb has quit
+2018-04-24T15:59:45 * yuriy joined the channel
+2018-04-24T16:03:13 * yuriy__ has quit
+2018-04-24T16:08:56 * kunal has quit
+2018-04-24T16:10:26 * michelled has quit
+2018-04-24T16:11:07 * colinclark joined the channel
+2018-04-24T16:15:21 * colinclark has quit
+2018-04-24T16:18:58 * simonjb joined the channel
+2018-04-24T16:21:28 <sgithens> cindyli: You\'re not doing anything with GPII-2966 this week right?  I\'m adding some CouchDB views to your stuff to list all keys for a safe and stuff, and will share them as soon as I\'m done stubbing in these screens
+2018-04-24T16:21:37 * sepidehshahi joined the channel
+2018-04-24T16:22:14 <cindyli> sure, sgithens. i\'m not doing work with GPII-2966
+2018-04-24T16:37:15 * sepidehshahi has quit
+2018-04-24T16:40:00 * michelled joined the channel
+2018-04-24T16:40:08 * colinclark joined the channel
+2018-04-24T16:49:27 * sepidehshahi joined the channel
+2018-04-24T16:57:54 <sepidehshahi> Hi avtar, sorry I missed your message
+2018-04-24T16:57:57 * kasparnet_ has quit
+2018-04-24T16:59:36 * VictorA_NG joined the channel
+2018-04-24T17:19:22 <cindyli> gtirloni: i noticed you created the AChecker project at issues.fluidproject.org. do you think VictorA_NG, the GSoC student working on upgrading AChecker, should create new JIRAs here?
+2018-04-24T17:20:19 * stegru has quit
+2018-04-24T17:20:39 <gtirloni> cindyli: I haven\'t been able to work on the Mantis migration this past week so I\'m not totally sure if new JIRAs will conflict with old Mantis tickets but I\'m guessing they won\'t (based on what I read). I think it\'s okay to create JIRAs there
+2018-04-24T17:20:57 <cindyli> cool. thanks, gtirloni
+2018-04-24T17:34:07 * michelled has quit
+2018-04-24T17:38:21 <mrtyler> cindyli: hi, i\'m supposed to talk to you a little about couchdb authentication strategies
+'
+

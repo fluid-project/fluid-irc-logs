@@ -1,0 +1,110 @@
+b'2014-01-27T07:38:58 * yzen_ has quit
+2014-01-27T10:11:43 * yzen has quit
+2014-01-27T11:57:39 * amilchev joined the channel
+2014-01-27T13:53:50 * cindyli joined the channel
+2014-01-27T13:57:25 * Bosmon has quit
+2014-01-27T14:39:10 * anvk joined the channel
+2014-01-27T14:47:26 <jhernandez> I\'ve tested your pull request (the packagekit filters thing)
+2014-01-27T14:47:40 <jhernandez> and I\'m getting segfaults ... :S
+2014-01-27T14:59:59 * clown starting VM
+2014-01-27T15:08:26 * michelled joined the channel
+2014-01-27T15:21:58 <clown> I\'m about to run the units tests \xe2\x80\x94 is that where you are seeing the segfaults?
+2014-01-27T15:26:00 <jhernandez> (re  "units tests \xe2\x80\x94 is that where you are seeing the segfaults?")
+2014-01-27T15:26:04 <jhernandez> clown: no
+2014-01-27T15:26:09 <jhernandez> (re: openSUSE) :P
+2014-01-27T15:29:54 * yzen joined the channel
+2014-01-27T15:30:07 <clown> "Testing searchPackage() for \'tuxguitar\' with explicit \'none\' filter" ?
+2014-01-27T15:34:15 <clown> I\'m using PackageKit;0.8.9-6.fc19, here.
+2014-01-27T15:35:56 <jhernandez> clown: node version?
+2014-01-27T15:36:04 <clown> let me check
+2014-01-27T15:37:34 <jhernandez> hmm
+2014-01-27T15:37:38 <jhernandez> don\'t think so
+2014-01-27T15:37:46 <jhernandez> but
+2014-01-27T15:37:47 * jhernandez looks
+2014-01-27T15:45:17 <clown> yum reports the same thing \xe2\x80\x94 version 0.8.9-6 (packagekit), jhernandez
+2014-01-27T16:26:55 * colinclark joined the channel
+2014-01-27T17:19:28 <anastasiac> Justin_o_, I filed that build scripts minification bug: http://issues.fluidproject.org/browse/FLUID-5260
+2014-01-27T18:53:30 * michelled has quit
+2014-01-27T19:01:13 <Justin_o_> anastasiac: thanks
+2014-01-27T19:21:13 <anastasiac> Bosmon, do you have a moment for a question?
+2014-01-27T19:21:24 <Bosmon> hi anastasiac
+2014-01-27T19:21:39 <anastasiac> I\'m replacing some demands blocks with use of fluid.progressiveCheckerForComponent
+2014-01-27T19:21:53 <anastasiac> so I\'m creating grades that will add the desired options if the checks pass
+2014-01-27T19:21:56 <Bosmon> anastasiac - cool
+2014-01-27T19:22:40 <anastasiac> I\'ve discovered that the grades I\'m creating don\'t actually need to have the "gradeNames" option in the fluid.defaults() block for it to work
+2014-01-27T19:23:02 <anastasiac> is there a reason why I should include at least a "littleComponent" grade?
+2014-01-27T19:23:14 <anastasiac> the sole purpose of the grade is to add particular options to the component
+2014-01-27T19:23:34 <Bosmon> anastasiac - no real reason, no, if it is absolutely certain that these grades could never be instantiated in a self-contained way
+2014-01-27T19:24:03 <anastasiac> ok, cool. I wondered if I was doing something morally wrong, since it looked very strange to my eyes
+2014-01-27T19:25:04 <Bosmon> In some ways it is actually a good idea, although it isn\'t something I\'ve so far done myself
+2014-01-27T19:25:48 <Bosmon> Since we fixed http://issues.fluidproject.org/browse/FLUID-5085 , the grade merging process doesn\'t quite work the way you\'d expect coming from, say, an OO background
+2014-01-27T19:26:13 <Bosmon> Which means that the consequences of accidentally mentioning "too many grades" can be problematic
+2014-01-27T19:26:44 <Bosmon> For example, say you write an "add-on grade" that you originally intend for use added to a viewComponent, and so you write the "viewComponent" base grade in its gradeNames
+2014-01-27T19:27:02 <Bosmon> But then one day later you decide that you would actually like to use this "add-on grade" with a littleComponent instead
+2014-01-27T19:27:16 <anastasiac> ah, good point
+2014-01-27T19:27:21 <Bosmon> You then awkwardly get the result that the add-on grade converts the littleComponent you were wanting to advise into a viewComponent
+2014-01-27T19:27:30 <Justin_o_> Bosmon: where, in terms of priority, do the grades added with progressiveCheckerForComponent fall
+2014-01-27T19:27:43 <Bosmon> So this is an example of why writing "too many base grades" in an add-on grade can create a problem
+2014-01-27T19:28:05 <Bosmon> SO in theory, this story could be used to deduce that you should really write "no base grades at all" if you can get away with it
+2014-01-27T19:28:37 <Bosmon> However, one consequence writing "no base grades" is that your grade becomes uninstantiable and can never be autoInit
+2014-01-27T19:28:57 <Bosmon> Which again may be perfectly consistent with what you want, but needs to be something you are clear about
+2014-01-27T19:29:19 <Bosmon> Justin_o_ - all additional grades are added on to the end of the grade chain so that they override the configuration of earlier grades
+2014-01-27T19:29:20 <anastasiac> yes, I\'m adding comments to the grade definitions to make sure this is clear
+2014-01-27T19:29:43 <Justin_o_> Bosmon: cool thanks..
+2014-01-27T19:30:00 <Justin_o_> Bosmon: by the way.. did you see the jira anastasiac just filed today.. i think it will be a blocker for 1.5
+2014-01-27T19:30:24 <Justin_o_> http://issues.fluidproject.org/browse/FLUID-5260
+2014-01-27T19:30:24 <anastasiac> Bosmon: http://issues.fluidproject.org/browse/FLUID-5260
+2014-01-27T19:30:55 <Bosmon> I guess it\'s time to ditch our stupid minifier
+2014-01-27T19:30:58 <Bosmon> Which one is it, anyway?
+2014-01-27T19:31:08 <Justin_o_> i think it\'s from YUI
+2014-01-27T19:31:19 <Bosmon> We may as well move to uglify
+2014-01-27T19:31:21 * jessm joined the channel
+2014-01-27T19:31:22 <Justin_o_> pretty ancient though..
+2014-01-27T19:31:38 <Justin_o_> Bosmon: yes.. i wonder if we should try to get the new grunt based install scripts done for 1.5
+2014-01-27T19:32:02 <Bosmon> Justin_o_ - if you think we could do it quickly :)
+2014-01-27T19:32:40 <Justin_o_> i hope so.. we had gotten a head start at the dependency management portion already.. i can\'t quite remember where we left off with that, but it might have basically been done..
+2014-01-27T19:33:06 <Justin_o_> Bosmon: the other big issues for feature parity are css generation and url rewriting for testing the release
+2014-01-27T19:33:44 <Justin_o_> Bosmon: both of these were done with js, so i hope we can port them to grunt easily.. the url rewriting could be skipped for now, as we can do this testing manually anyways.
+2014-01-27T19:34:47 <Bosmon> Justin_o_ - sounds good
+2014-01-27T19:35:05 <Bosmon> Justin_o_ - do you think we\'ve got someone with some capacity who could take care of that work?
+2014-01-27T19:35:17 <Justin_o_> Bosmon: this is the grunt plugin we have to module dependencies.. https://github.com/fluid-project/grunt-modulefiles
+2014-01-27T19:35:41 <Justin_o_> there is an open pull request to get things closer to what we have in infusion
+2014-01-27T19:44:34 <Justin_o_> Bosmon: i\'m pretty sure i wrote most if not all of that plugin, so feel free to have at it..
+2014-01-27T19:56:45 * michelled joined the channel
+2014-01-27T19:57:47 * colinclark joined the channel
+2014-01-27T20:10:52 * simonjb joined the channel
+2014-01-27T20:21:06 * jessm has quit
+2014-01-27T20:25:43 <Bosmon> Thanks, simonjb
+2014-01-27T20:26:59 * jessm joined the channel
+2014-01-27T20:28:59 * jessm has quit
+2014-01-27T20:45:35 * Bosmon has quit
+2014-01-27T20:46:27 * jessm joined the channel
+2014-01-27T21:06:38 * Bosmon joined the channel
+2014-01-27T21:31:53 * cindyli has quit
+2014-01-27T21:37:20 <clown> jhernandez, are you still around?
+2014-01-27T21:41:48 <clown> jhernandez, if you see this, I\'ve (1) updated to F20, (2) installed GPII, (3) and ran the package kit unit tests for my pull requests.  I don\'t see any seg faults here.
+2014-01-27T21:43:43 <clown> node.js v0.10.24, packagekit v 0.8.16, jhernandez
+2014-01-27T21:44:02 <clown> I\'ll also send an email with the same info as above (in case you miss it here).
+2014-01-27T21:44:06 <clown> have a good evening!
+2014-01-27T21:45:17 * kasparnet has quit
+2014-01-27T21:45:44 * kasparnet joined the channel
+2014-01-27T21:48:16 * colinclark has quit
+2014-01-27T21:48:33 * colinclark joined the channel
+2014-01-27T21:50:38 * kasparnet has quit
+2014-01-27T22:04:48 * anvk has left the channel
+2014-01-27T22:06:55 * clown has left the channel
+2014-01-27T22:09:48 <michelled> simonjb: I thought you might find this interesting: http://phet.colorado.edu/
+2014-01-27T22:10:35 <simonjb> michelled: thanks!
+2014-01-27T22:10:57 <michelled> np
+2014-01-27T22:26:03 * kasparnet joined the channel
+2014-01-27T22:37:33 * anastasiac has quit
+2014-01-27T22:40:14 * simonjb has quit
+2014-01-27T22:46:08 * colinclark has quit
+2014-01-27T23:14:40 * danaayotte has quit
+2014-01-27T23:17:12 * colinclark joined the channel
+2014-01-27T23:20:52 * danaayotte joined the channel
+2014-01-27T23:32:36 * colinclark has quit
+2014-01-27T23:35:23 * danaayotte has quit
+2014-01-27T23:49:30 * jessm has quit
+'
+

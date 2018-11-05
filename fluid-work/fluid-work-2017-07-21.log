@@ -1,0 +1,316 @@
+b'2017-07-21T21:46:53 * kasparnet joined the channel
+2017-07-21T21:49:17 * kasparnet has quit
+2017-07-21T21:52:45 * javjarfer joined the channel
+2017-07-21T22:11:33 * amatas joined the channel
+2017-07-21T22:16:59 * amatas has quit
+2017-07-21T22:28:27 * javjarfer has quit
+2017-07-21T22:29:20 * javjarfer joined the channel
+2017-07-21T22:54:01 * Jess_ has quit
+2017-07-21T23:06:31 * stegru has quit
+2017-07-21T23:17:35 * javjarfer has quit
+'
+
+b'2017-07-21T17:11:30 <alanharnum> colinclark: it doesn\'t seem to have an obvious one, but there\'s no reason that (AFAIK) you couldn\'t run getUserMedia and SpeechRecognition.start() at the same time
+2017-07-21T17:11:48 <alanharnum> so you can do both the stream recording and the speech recognition as they speak into the mic
+2017-07-21T17:11:54 <colinclark> ah
+2017-07-21T17:11:58 <colinclark> without contention over the mic?
+2017-07-21T17:12:07 <alanharnum> that said, as i\'ve learned to my cost, all this "experimental" technology can have weird interactions with each other.
+2017-07-21T17:12:38 <colinclark> yeah
+2017-07-21T17:33:29 * simonjb joined the channel
+2017-07-21T17:34:41 <alanharnum> colinclark: quick experiment shows they seem to be perfectly fine working side by side, at least in Chrome
+2017-07-21T17:35:14 <colinclark> interesting
+2017-07-21T17:36:00 <colinclark> I wonder what it would look like to mark synchronization points between them
+2017-07-21T17:36:34 <colinclark> do you get some kind of "chunking" from the SpeechRecognition object?
+2017-07-21T17:37:25 <colinclark> I guess "onresult" would be the event
+2017-07-21T17:47:04 <alanharnum> colinclark: I\'d have to experiment more - probably you\'d need to run some kind of synchronization tracking function separately, based on their events
+2017-07-21T17:47:44 <colinclark> Perhaps I\'m oversimplifying, but I think you\'d just need times relative to the audio\'s start
+2017-07-21T17:48:00 <colinclark> A lot of it perhaps, depends on how large a "result" is in terms of the text output
+2017-07-21T17:48:54 <colinclark> but I think for basic synchronization for, say, "highlight while listening," you\'d just need to know the "in" time of a block of text relative to the duration of the audio buffer
+2017-07-21T17:49:14 <colinclark> anyway, i\'m just thinking aloud, not suggesting we need to implement these things
+2017-07-21T17:49:39 <alanharnum> it\'s an interesting question
+2017-07-21T17:49:57 <alanharnum> i am definitely in favour of pushing on the boundaries of what is possible with recorded speech + the browser
+2017-07-21T17:52:02 <colinclark> it\'s just such a drag that both of these technologies are so poorly implemented
+2017-07-21T17:52:16 <colinclark> It looks like SpeechRecognition is Chrome-only
+2017-07-21T17:52:29 <colinclark> I suppose we should see what\'s in PhoneGap
+2017-07-21T17:53:45 <colinclark> Looks like there are several plugins available for speech recognition
+2017-07-21T17:54:13 <alanharnum> also things like https://www.npmjs.com/package/watson-speech
+2017-07-21T17:54:25 <colinclark> yes, that\'s true
+2017-07-21T17:54:36 <alanharnum> or https://cloud.google.com/speech/
+2017-07-21T17:54:36 <colinclark> I think Google, IBM, Microsoft and Amazon probably all have APIs
+2017-07-21T17:54:40 <alanharnum> yup
+2017-07-21T17:54:44 * amatas has quit
+2017-07-21T17:54:47 <colinclark> and they\'re probably very good
+2017-07-21T17:54:49 <colinclark> the question here is cost
+2017-07-21T17:55:14 <alanharnum> Google has some costing at the bottom
+2017-07-21T17:55:31 <alanharnum> 0-60 monthly minutes is free. After that, $0.006 cents per fifteen seconds
+2017-07-21T17:56:34 <colinclark> so like 2.5 cents per minute
+2017-07-21T17:57:07 <colinclark> Cordova has what looks like a very well-supported media capture library
+2017-07-21T17:57:38 <colinclark> so we could legitimately build something mostly client-side that supported Chrome browser plus iOS and Android apps
+2017-07-21T17:57:51 <alanharnum> yup
+2017-07-21T17:57:58 <colinclark> although the app model is maybe the least well-suited in some ways
+2017-07-21T17:58:03 <alanharnum> "horses apples zebras, the color blue the number 11, rhinoceros, dispensationalism, Cartesian geometry"
+2017-07-21T17:58:16 <colinclark> hahaha
+2017-07-21T17:58:16 <alanharnum> for those in the office today, I am not just speaking random phrases
+2017-07-21T17:58:27 <alanharnum> i am speaking random phrases to test speech recognition
+2017-07-21T17:58:32 <colinclark> hahaha
+2017-07-21T17:58:49 <alanharnum> i was impressed it got dispensationalism
+2017-07-21T17:59:22 <colinclark> it\'s a certain kind of storytelling, I guess
+2017-07-21T18:07:33 * the-t-in-rtf1 joined the channel
+2017-07-21T18:10:43 * the-t-in-rtf2 joined the channel
+2017-07-21T18:11:08 * the-t-in-rtf has quit
+2017-07-21T18:15:47 * the-t-in-rtf joined the channel
+2017-07-21T18:17:39 * the-t-in-rtf1 joined the channel
+2017-07-21T18:18:12 <alanharnum> colinclark: https://github.com/waharnum/transcribingRecorder
+2017-07-21T18:20:35 <colinclark> You test in Chrome, alanharnum?
+2017-07-21T18:21:03 * the-t-in-rtf joined the channel
+2017-07-21T18:21:30 <alanharnum> colinclark: that\'s usually what I work in yeah,
+2017-07-21T18:21:37 <colinclark> it\'s funny...
+2017-07-21T18:21:47 <colinclark> the MIME type you\'re specifying isn\'t apparently supported by Chrome
+2017-07-21T18:22:01 <colinclark> presumably it\'s just cut and pasted from the MDN example
+2017-07-21T18:22:01 <alanharnum> if i had to guess i\'d say Chrome is just ignoring it in favour of its own
+2017-07-21T18:22:04 <colinclark> yeah
+2017-07-21T18:22:06 <alanharnum> correct
+2017-07-21T18:22:28 <colinclark> presumably it\'s an opus-encoded stream in a webm container
+2017-07-21T18:28:29 * alanharnum joined the channel
+2017-07-21T18:32:38 * alanharnum joined the channel
+2017-07-21T18:33:44 * danayo joined the channel
+2017-07-21T18:50:14 * alanharnum joined the channel
+2017-07-21T19:03:39 * javjarfer joined the channel
+2017-07-21T19:08:08 * alanharnum has quit
+2017-07-21T19:08:14 * alanharnum joined the channel
+2017-07-21T19:09:04 * javjarfer has quit
+2017-07-21T19:30:19 <alanharnum> oh colinclark, in another exciting news, I got a PR accepted to ProseMirror! https://github.com/ProseMirror/website/pull/60
+2017-07-21T19:31:32 <colinclark> alanharnum, that\'s awesome!!
+2017-07-21T19:31:43 <colinclark> I have to admit I\'ve fallen off a massive Friday Cliff
+2017-07-21T19:31:56 <colinclark> playing with your prototype
+2017-07-21T19:32:03 <alanharnum> uh-oh
+2017-07-21T19:32:14 <colinclark> the SpeechRecognition API is a funny one
+2017-07-21T19:32:20 <colinclark> took me a little while to fully understand it
+2017-07-21T19:32:43 <colinclark> But I made you a SpeechTranscriber component and the world\'s dumbest TranscriptionView
+2017-07-21T19:33:15 <colinclark> since at least on my machine I wasn\'t seeing the transcription in the DOM, only in the console
+2017-07-21T19:33:26 <alanharnum> odd.
+2017-07-21T19:33:44 <colinclark> unless, of course, I placed a breakpoint into the code
+2017-07-21T19:34:03 <colinclark> anyway, Chrome\'s speech recognizer is really quite good
+2017-07-21T19:34:16 <colinclark> I assume it uses the macOS recognizer, but I don\'t know
+2017-07-21T19:34:34 * clown has quit
+2017-07-21T19:35:02 <colinclark> What isn\'t clear to me is if the API "consolidates" results as they become final
+2017-07-21T19:35:34 <colinclark> it seems that at least on the Mac, it waits for a pause, and then finalizes the results of speech recognition
+2017-07-21T19:36:13 <alanharnum> yes - the default functioning is actually that it stops recognizing after one "onresult" event
+2017-07-21T19:36:30 <colinclark> unless continous: true
+2017-07-21T19:36:32 <colinclark> which we have set
+2017-07-21T19:36:35 <alanharnum> yeah
+2017-07-21T19:36:45 <alanharnum> you have to some things to accumulate the results yourself in that case
+2017-07-21T19:36:58 <alanharnum> as the code currently does, etc
+2017-07-21T19:37:09 <colinclark> yeah, I modelized that
+2017-07-21T19:37:14 <colinclark> but rather naively
+2017-07-21T19:37:43 <colinclark> there\'s a "transcript" property that is a string that concatenated to as new finalized results come in
+2017-07-21T19:38:21 <colinclark> I\'m just starting to imagine, as I dangle off this mental cliff, what we\'d need in order to highlight the transcript while playing back the audio
+2017-07-21T19:38:44 <colinclark> but I should probably climb back up and get some other things done
+2017-07-21T19:39:09 <colinclark> it\'s just VERY interesting :)
+2017-07-21T19:39:14 <alanharnum> we\'d need to find some approach to tokenizing and timing the transcript for speech recognition word by word, ideally
+2017-07-21T19:39:46 <colinclark> well, i\'m actually wondering if the kind of tokenizing that the speech recognition engine already does is about right
+2017-07-21T19:40:01 <colinclark> in that it corresponds with the speaker\'s natural cadence
+2017-07-21T19:40:07 <alanharnum> hm. it\'s a good question.
+2017-07-21T19:40:31 <colinclark> how is your work with ProseMirror?
+2017-07-21T19:40:44 <alanharnum> you could probably use onspeechstart and onspeechend to place markers that you could sync with the audio
+2017-07-21T19:41:20 <colinclark> ah, perhaps I\'ve misinterpreted those events
+2017-07-21T19:42:10 <alanharnum> it would require some experimentation, since the documentation is pretty minimal
+2017-07-21T19:42:15 <colinclark> it\'s dreadful
+2017-07-21T19:42:21 <colinclark> but we know how it goes
+2017-07-21T19:42:31 <colinclark> the former fires as soon as something recognizable as speech occurs?
+2017-07-21T19:42:34 <colinclark> but prior to actual recognition?
+2017-07-21T19:42:35 <alanharnum> the fate of most APIs that aren\'t browser-wide
+2017-07-21T19:42:51 <alanharnum> colinclark: not sure without experimentation
+2017-07-21T19:42:55 <colinclark> in this case, I think the spec is actually not well-written
+2017-07-21T19:43:02 <colinclark> hence the poor quality of MDN\'s documentation
+2017-07-21T19:43:19 <colinclark> At least in comparison to the web audio api, which is quite good
+2017-07-21T19:44:33 <colinclark> yeah, it looks like there are events that represent degrees of certainty
+2017-07-21T19:44:44 <colinclark> soundstart when the engine hears any sound
+2017-07-21T19:44:53 <alanharnum> yup
+2017-07-21T19:44:55 <colinclark> speechstart when it is certain that the sound is someone talking
+2017-07-21T19:45:02 <colinclark> and results when it has interpreted them
+2017-07-21T19:45:39 <colinclark> so it won\'t be a trivial algorithm
+2017-07-21T19:46:11 <alanharnum> i suspect you might be able to use "interimResults = true" to get at the timings more easily
+2017-07-21T19:46:32 <colinclark> ahhh
+2017-07-21T19:46:39 <colinclark> it won\'t even feed you interim results unless you ask for them
+2017-07-21T19:46:45 <alanharnum> yeah
+2017-07-21T19:46:48 <colinclark> but there\'s presumably still some latency between speaking and recognizing
+2017-07-21T19:47:28 <colinclark> well, this is all very interesting
+2017-07-21T19:52:20 <alanharnum> colinclark: https://github.com/waharnum/transcribingRecorder/commit/7e70c5ae170079352fc7dc4d4940a6f28d3c7536
+2017-07-21T19:53:05 <alanharnum> one thing I can see from that is that the various "*start" events only fire once when you are in continuous mode; they don\'t fire when the onresult event fires from a speaker pausing, etc.
+2017-07-21T19:53:32 <alanharnum> so I think if you wanted to do timing properly during a recording, you\'d probably hae to start and stop speech recognition after each onresult event
+2017-07-21T19:53:48 <alanharnum> in order to log the start and stop time of each "chunk"
+2017-07-21T19:54:23 <colinclark> which probably would lose a portion of the speech
+2017-07-21T19:56:30 <alanharnum> quite likely; I wonder if you could do a reasonable heuristic based on just timing the onresult event
+2017-07-21T19:57:05 <alanharnum> like, assuming natural pauses in speech, marker each one of those, highlight corresponding sections, etc.
+2017-07-21T20:02:51 * simonjb has quit
+2017-07-21T20:07:30 * gtirloni has quit
+2017-07-21T20:11:18 * javjarfer joined the channel
+2017-07-21T20:15:54 * simonjb joined the channel
+2017-07-21T20:19:33 * clown_mtg joined the channel
+2017-07-21T20:28:28 * kasparnet joined the channel
+2017-07-21T20:30:13 * kasparne_ joined the channel
+2017-07-21T20:32:19 * cindyli has quit
+2017-07-21T20:33:40 * kasparnet has quit
+2017-07-21T20:37:43 * simonjb has quit
+2017-07-21T20:46:47 * kasparne_ has quit
+2017-07-21T20:49:53 * kasparne_ joined the channel
+2017-07-21T20:56:24 * kasparne_ has quit
+2017-07-21T20:58:17 * colinclark has quit
+2017-07-21T21:06:53 * javjarfer has quit
+2017-07-21T21:18:15 * pratik_r has left the channel
+2017-07-21T21:27:32 * alanharnum has quit
+'
+
+b'2017-07-21T06:38:08 * the-t-in-rtf joined the channel
+2017-07-21T06:48:32 * kasparnet joined the channel
+2017-07-21T06:53:17 * kasparnet has quit
+2017-07-21T07:09:13 * alanharn_ joined the channel
+2017-07-21T07:22:02 * amatas joined the channel
+2017-07-21T07:22:43 * amatas has quit
+2017-07-21T07:36:25 * the-t-in-rtf joined the channel
+2017-07-21T07:48:26 * kasparnet joined the channel
+2017-07-21T07:53:13 * kasparnet has quit
+2017-07-21T07:56:12 * kasparnet joined the channel
+2017-07-21T08:00:22 * kasparnet has quit
+2017-07-21T08:17:49 * amatas joined the channel
+2017-07-21T09:40:55 * stegru joined the channel
+2017-07-21T11:09:09 * amatas has quit
+2017-07-21T11:09:27 * Justin_o joined the channel
+2017-07-21T11:37:54 * gtirloni joined the channel
+2017-07-21T12:10:49 * javjarfer joined the channel
+2017-07-21T12:12:08 * simonjb joined the channel
+2017-07-21T12:27:09 * cindyli joined the channel
+2017-07-21T12:29:03 <Justin_o> Bosmon: if you didn\'t see, i replied to your comment on my PR https://github.com/fluid-project/infusion/pull/836
+2017-07-21T12:29:25 <Bosmon> Justin_o - cheers, I\'ll take a look
+2017-07-21T12:29:30 <Justin_o> Bosmon: thanks
+2017-07-21T12:45:33 * alanharnum joined the channel
+2017-07-21T13:00:53 * simonjb has quit
+2017-07-21T13:06:05 * simonjb joined the channel
+2017-07-21T13:06:34 * Jess_ joined the channel
+2017-07-21T13:07:07 * Yan_Hu joined the channel
+2017-07-21T13:10:19 <simonjb> hi Bosmon, I\'m doing some tidying up of https://github.com/simonbates/co-occurrence-engine -- does GPII/co-occurrence-engine seem like the right destination for it?
+2017-07-21T13:12:38 <simonjb> I\'m thinking it terms of the licensing link in the source file headers
+2017-07-21T13:15:25 <Bosmon> simonjb - sounds reasonable to me
+2017-07-21T13:15:38 <Bosmon> I\'m idly wondering whether npm permits umlauts in package names :)
+2017-07-21T13:16:31 <Bosmon> GPII/co\xc3\xb6ccurrence-engine :)
+2017-07-21T13:16:31 <simonjb> Bosmon: should I go ahead and make an empty GPII/co-occurrence-engine as the eventual target?
+2017-07-21T13:16:39 <simonjb> :)
+2017-07-21T13:17:03 <Bosmon> http://www.newyorker.com/culture/culture-desk/the-curse-of-the-diaeresis
+2017-07-21T13:18:15 <gtirloni> https://github.com/npm/npm/issues/11769
+2017-07-21T13:19:13 <simonjb> "the second was ridiculous" -- I love the New Yorker
+2017-07-21T13:19:13 <Justin_o> Bosmon: I\'ve updated my PR based on your comments.
+2017-07-21T13:23:43 * Yan_Hu has quit
+2017-07-21T13:25:17 * clown_mtg joined the channel
+2017-07-21T13:27:17 * clown_mtg is now known as clown
+2017-07-21T13:42:06 * alanharnum has quit
+2017-07-21T13:50:23 <stegru> VirtualBox 5.1.24 is ok (2nd day)
+2017-07-21T13:53:30 * colinclark joined the channel
+2017-07-21T14:17:38 * michelled joined the channel
+2017-07-21T14:20:43 * alanharnum joined the channel
+2017-07-21T14:35:52 * simonjb has quit
+2017-07-21T14:44:00 * mrtyler joined the channel
+2017-07-21T14:45:57 * amatas joined the channel
+2017-07-21T15:03:57 * kavya joined the channel
+2017-07-21T15:08:37 * pratik_r joined the channel
+2017-07-21T15:36:05 * alanharnum has quit
+2017-07-21T15:36:31 * alanharnum joined the channel
+2017-07-21T15:44:28 * simonjb joined the channel
+2017-07-21T15:44:36 * alanharnum has quit
+2017-07-21T15:44:42 * alanharnum joined the channel
+2017-07-21T16:07:57 <colinclark> alanharnum: Just in case, there\'s this: https://gist.github.com/colinbdclark/7c9115b90916e3219763fea8669bd0a7
+2017-07-21T16:08:23 <alanharnum> colinclark: thanks!
+2017-07-21T16:08:28 <colinclark> probably a few less lines of code than writing it from scratch
+2017-07-21T16:08:54 <colinclark> you\'ll need some extra code to note the actual duration of the recording and trim the buffer
+2017-07-21T16:09:09 <colinclark> which you\'d wire up to your record/stop buttons
+2017-07-21T16:12:05 <colinclark> And there\'s a one-liner to encode your buffer as a .wav file, which is probably a friendly thing to do
+2017-07-21T16:13:44 <alanharnum> colinclark: I\'ve been looking at https://developer.mozilla.org/en-US/docs/Web/API/MediaStream_Recording_API/Using_the_MediaStream_Recording_API for guidance so far, which is pretty straightforward
+2017-07-21T16:15:36 <colinclark> wow, browser support is surprisingly bad!
+2017-07-21T16:15:38 <colinclark> i\'m surprised
+2017-07-21T16:15:39 <colinclark> http://caniuse.com/#search=MediaRecorder
+2017-07-21T16:16:11 <colinclark> what a drag
+2017-07-21T16:17:15 <colinclark> huge advantage that MediaRecorder will handle encoding automatically
+2017-07-21T16:17:23 <colinclark> but I\'m struggling to find a list of supported codecs
+2017-07-21T16:23:30 * alanharnum joined the channel
+2017-07-21T16:24:03 <colinclark> alanharnum: As far as I can tell, current MediaRecorder implementations don\'t seem to support a common codec across browsers :(
+2017-07-21T16:24:42 <colinclark> Just poking at isTypeSupported() with different MIME types, it seems that Chrome pretty much only supports Opus in a WebM container (trying playing that in your iTunes library!) and Firefox only supports ogg encoding
+2017-07-21T16:25:25 <colinclark> None of the MPEG codecs (MP3 or AAC) are supported, nor uncompressed wave files
+2017-07-21T16:30:26 * alanharnum joined the channel
+2017-07-21T16:31:06 <alanharnum> colinclark: yeah, it may not be viable for anything "real" to record via this method.
+2017-07-21T16:31:13 <alanharnum> it seems easiest, but not well-supported
+2017-07-21T16:44:14 <colinclark> it really does amaze me, alanharnum
+2017-07-21T16:44:24 <colinclark> that it\'s still hard to do things like this across browsers
+2017-07-21T16:44:40 <colinclark> Flocking\'s approach, at least, should work on all non-Safari platforms
+2017-07-21T16:45:07 <colinclark> and if I remember correctly, MediaStreams have finally been added to the next version of Safari
+2017-07-21T16:45:34 <alanharnum> MediaStreams are in Edge as well
+2017-07-21T16:45:48 <alanharnum> MediaRecorder is the issue, I believe
+2017-07-21T16:45:53 <colinclark> yup
+2017-07-21T16:45:56 <colinclark> but that\'s my point
+2017-07-21T16:46:03 <colinclark> Flocking uses raw MediaStreams
+2017-07-21T16:46:07 <colinclark> and does its own encoding
+2017-07-21T16:46:09 <alanharnum> there are shim projects like https://github.com/streamproc/MediaStreamRecorder but I don\'t know how much overhead they add
+2017-07-21T16:46:34 <colinclark> ah, that\'s interesting
+2017-07-21T16:47:33 <colinclark> looks like it polyfills using Flash
+2017-07-21T16:48:01 <alanharnum> ugghhh
+2017-07-21T16:48:03 <alanharnum> do not want
+2017-07-21T16:48:55 <colinclark> its WAVE encoder is also sub-optimal
+2017-07-21T16:49:07 <colinclark> I wonder if we really want MediaRecorder...
+2017-07-21T16:49:17 <colinclark> I mean, we do for the moment because it\'s easy as you say
+2017-07-21T16:49:42 <colinclark> but presumably the whole infrastructure has to get chucked once you support users being able to do basic edits
+2017-07-21T16:50:00 <colinclark> how well does it support cases where a user might want to pause for a second, and then continue recording?
+2017-07-21T16:50:03 <colinclark> it should be ok for that, right?
+2017-07-21T16:50:17 <colinclark> you just pause the recorder at the same time as pausing the stream?
+2017-07-21T16:50:26 <alanharnum> yup
+2017-07-21T16:50:49 <alanharnum> don\'t even need to pause the stream, I believe - you can keep the mic open and just pause the recording
+2017-07-21T16:50:54 <colinclark> ah right
+2017-07-21T16:51:00 <colinclark> that\'s nice, for sure
+2017-07-21T16:51:27 <colinclark> is there a way to extract a raw Float32Array of samples from MediaRecorder?
+2017-07-21T16:52:22 <alanharnum> i think even if I knew what "a raw Float32Array of samples" meant, I wouldn\'t be able to answer that question :)
+2017-07-21T16:52:35 * javjarfer has quit
+2017-07-21T16:53:04 <colinclark> hahaha
+2017-07-21T16:53:26 <alanharnum> what you get from mediaRecorder is a data stream, which in the MozDev demo you accumulate in a "chunks" array.
+2017-07-21T16:53:40 <alanharnum> you then use the Blob creation function to turn that into an ogg file.
+2017-07-21T16:54:01 <alanharnum> "chunks" might be a "raw Float32Array"
+2017-07-21T16:54:29 <colinclark> well, you know, sound on a computer is just a digital representation of air pressure
+2017-07-21T16:54:52 <colinclark> usually representing as a float ranging from -1.0 to 1.0
+2017-07-21T16:55:28 <colinclark> and samples are captured, say, 44100 times per second
+2017-07-21T16:55:32 <colinclark> i\'m simplifying it a bit, but you can imagine that when the air is really dense, the sample is 1.0
+2017-07-21T16:55:45 <colinclark> and when it\'s really rarified, it\'s -1.0
+2017-07-21T16:56:05 <colinclark> and so all a sound recording is, really, is a stream of floats
+2017-07-21T16:56:36 <colinclark> in MediaRecorder\'s API, chunks are something different...
+2017-07-21T16:57:09 <colinclark> MediaRecorder.start(): Begins recording media; this method can optionally be passed a timeslice argument with a value in milliseconds. If this is specified, the media will be captured in separate chunks of that duration, rather than the default behavior of recording the media in a single large chunk.
+2017-07-21T16:57:16 <colinclark> So I\'m assuming chunks are Blobs in this case
+2017-07-21T16:57:41 <colinclark> but I don\'t know for sure
+2017-07-21T17:00:57 <alanharnum> they appear to be blobs from looking at the console
+2017-07-21T17:01:41 <colinclark> terribly unhelpful things
+2017-07-21T17:03:31 <colinclark> alanharnum: Are you using some kind of Node.js library for accessing S3?
+2017-07-21T17:03:44 <alanharnum> colinclark: I\'m using the official AWS node SDK
+2017-07-21T17:03:48 <alanharnum> which includes bindings for S3
+2017-07-21T17:04:05 <colinclark> I\'m just sitting here, staggered by the fact that there\'s no block storage abstraction library for Node.js
+2017-07-21T17:04:15 <colinclark> every major cloud vendor provides very well-supported APIs for their clouds
+2017-07-21T17:04:26 <colinclark> S3, Azure, Digital Ocean, etc.
+2017-07-21T17:04:44 <alanharnum> it\'s possible it\'s under something like https://github.com/pkgcloud/pkgcloud
+2017-07-21T17:04:59 <colinclark> yeah, I looked
+2017-07-21T17:05:08 <colinclark> they only support Open Stack and Rackspace, currently
+2017-07-21T17:05:11 <alanharnum> lol
+2017-07-21T17:05:14 <colinclark> :)
+2017-07-21T17:05:20 <colinclark> that\'s kind of what I thought
+2017-07-21T17:07:07 <alanharnum> I\'ve liked Google\'s the best for the simple reason that they\'ll do domain verification on DNS-like bucket names
+2017-07-21T17:07:12 <colinclark> The only thing I can find that claims to do it is something called "cloud rail", which is obviously proprietary
+2017-07-21T17:07:15 <colinclark> ah, interesting
+2017-07-21T17:07:28 <alanharnum> so you can effectively "reserve" a subdomain block for a domain you control
+2017-07-21T17:07:43 <colinclark> right
+2017-07-21T17:07:50 * the-t-in-rtf joined the channel
+2017-07-21T17:08:02 <alanharnum> ah, Azure will do that as well
+2017-07-21T17:08:08 <alanharnum> as far as I can tell Amazon does not
+2017-07-21T17:08:17 <colinclark> On another note, have you ever looked at the other side of the Web Speech API?
+2017-07-21T17:08:22 <colinclark> the speech-to-text APi
+2017-07-21T17:08:35 <alanharnum> colinclark: yeah, I wrote a quick demo using it once
+2017-07-21T17:08:43 <colinclark> some day, that would be a nice feature for storytelling
+2017-07-21T17:08:47 <alanharnum> where you could control the chart authoring play/pause via voice
+2017-07-21T17:08:58 <colinclark> oh yes, i remember
+2017-07-21T17:09:09 <colinclark> do you know if it has a MediaStream-based API?
+2017-07-21T17:09:30 <colinclark> for example, could you take the output of getUserMedia\'s audio stream and feed it into the web speech API?
+2017-07-21T17:09:45 <colinclark> I\'m thinking of automatic transcription of the audio files you\'re recording, for example
+'
+

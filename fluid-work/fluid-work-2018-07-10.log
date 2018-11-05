@@ -1,0 +1,193 @@
+b'2018-07-10T18:42:43 <Bosmon> But I imagine current master passes its tests on IE, right?
+2018-07-10T18:42:49 <Bosmon> Or does it not?
+2018-07-10T18:43:33 <Justin_o> they work properly there
+2018-07-10T18:43:36 <Bosmon> ok
+2018-07-10T18:43:38 <Justin_o> i think i might have spotted the problem
+2018-07-10T18:43:41 <Bosmon> So something funny has happened
+2018-07-10T18:43:42 <Bosmon> https://github.com/jobara/infusion/blob/FLUID-6177/tests/component-tests/textToSpeech/js/TextToSpeechTests.js#L206
+2018-07-10T18:43:50 <Bosmon> I assume this is the line which would have prevented running on IE?
+2018-07-10T18:43:54 <Bosmon> ok cool
+2018-07-10T18:44:30 <Bosmon> Since I assume the issue is that the entire TTS API isn\'t supported on IE?
+2018-07-10T18:44:30 <Justin_o> https://github.com/jobara/infusion/blob/FLUID-6177/tests/component-tests/textToSpeech/js/TextToSpeechTests.js#L407
+2018-07-10T18:44:59 <Justin_o> perhaps i need to add what you pasted from line 206 somewhere for the utterance tests
+2018-07-10T18:45:09 <Justin_o> and yes, the entire api isn\'t supported in IE
+2018-07-10T18:51:50 <Justin_o> Bosmon: yes, that was the problem. Thanks for talking it through
+2018-07-10T19:06:43 * sepidehshahi has left the channel
+2018-07-10T19:07:47 <cindyli> Bosmon: after you break 3088 into two separate JIRAs, can you let me know the part i should work on so i can include it in the list to be sent by tomorrow?
+2018-07-10T19:08:26 * sepidehshahi joined the channel
+2018-07-10T19:29:24 <mrtyler> cindyli: not sure if you saw my gotomeeting chat comment but i\'d like to hear more about the endpoint removal question. maybe in one of tomorrow\'s team meetings?
+2018-07-10T19:29:38 <cindyli> sure
+2018-07-10T19:58:55 * Hassany2 joined the channel
+2018-07-10T20:10:41 * cindyli has quit
+2018-07-10T20:21:01 * Hassany2 has quit
+2018-07-10T20:21:24 * Hassany2 joined the channel
+2018-07-10T20:24:07 * Hassany2 has quit
+2018-07-10T20:25:19 <sgithens> cindyli: Currently, where does the binary file for the gpii pouchdb get created?
+2018-07-10T20:25:30 <sgithens> It looks like it\'s a file named \'gpii\' with no file extension
+2018-07-10T20:26:46 <sgithens> ok, in the settingsDir...
+2018-07-10T20:36:27 <sgithens> got it
+2018-07-10T20:36:46 <sgithens> var pm = fluid.queryIoCSelector(fluid.rootComponent, "gpii.pouchManager")[0];  console.log(pm.settingsDir.gpiiSettingsDir);
+2018-07-10T20:49:14 * the-t-in-rtf1 joined the channel
+2018-07-10T21:00:40 * sepidehshahi joined the channel
+2018-07-10T21:01:12 * simonjb has quit
+2018-07-10T21:04:07 * clown has quit
+2018-07-10T21:04:15 * g2szeto has quit
+2018-07-10T21:23:13 * colinclark joined the channel
+2018-07-10T21:24:01 * colinclark has quit
+2018-07-10T21:44:55 * avtar has quit
+2018-07-10T21:55:13 * kasparnet joined the channel
+2018-07-10T23:56:59 * mrtyler joined the channel
+'
+
+b'2018-07-10T00:32:45 * danayo joined the channel
+2018-07-10T02:19:19 * mrtyler_ joined the channel
+2018-07-10T02:19:23 * stegru has quit
+2018-07-10T02:20:21 * stegru joined the channel
+2018-07-10T03:10:22 * danayo joined the channel
+2018-07-10T03:37:25 * danayo has quit
+2018-07-10T03:49:45 * mrtyler joined the channel
+2018-07-10T06:53:13 * mrtyler has quit
+2018-07-10T07:05:59 * mrtyler joined the channel
+2018-07-10T07:27:50 * georgitodorov joined the channel
+2018-07-10T07:32:54 * mrtyler has quit
+2018-07-10T09:13:49 <the-t-in-rtf> @stegru, or anyone really, is there someone working on detecting installed solutions?  I ask because the AJCs use two different versions of JAWS, we can\'t just hard-code our way out of that per se.
+2018-07-10T09:14:17 <the-t-in-rtf> I guess we can write settings files for all versions.
+2018-07-10T09:14:40 <stegru> I don\'t know, the-t-in-rtf
+2018-07-10T09:15:19 <the-t-in-rtf> OK, I asked Sandra to add it to the agenda for tomorrow\'s APCP meeting, just asking around to prep for that discussion.
+2018-07-10T09:19:04 <stegru> there\'s a similar problem with narrator.. windows 7 and 8+10 have different settings
+2018-07-10T09:19:22 <stegru> GPII-2049
+2018-07-10T11:09:13 * Justin_o joined the channel
+2018-07-10T11:18:24 * kasparnet has quit
+2018-07-10T11:19:41 * jhernandez has left the channel
+2018-07-10T11:44:44 * gtirloni joined the channel
+2018-07-10T12:07:58 <georgitodorov> Bosmon: Hey, Antranig! A quick Infusion-related question. Is there something similar to `mergePolicy` for instructing how model objects are merged?
+2018-07-10T12:08:49 <Bosmon> georgitodorov - there isn\'t - they are always merged using repeated application via their ChangeApplier
+2018-07-10T12:09:00 <Bosmon> georgitodorov - it\'s good you appeared, I wanted to start talking about QSS/PSP integration
+2018-07-10T12:09:24 <Bosmon> I think we should start making integration builds together with the current core projects as soon as we can, so we can get early warning of any issues
+2018-07-10T12:09:42 <georgitodorov> Bosmon: This sounds reasonable
+2018-07-10T12:10:05 <Bosmon> I\'ll be merging cindyli\'s https://github.com/GPII/universal/pull/617 later today I expect which has only minor comments
+2018-07-10T12:10:06 <georgitodorov> Should we update the references to `gpii-windows` and something else perhaps?
+2018-07-10T12:10:21 <Bosmon> Yes, do try updating to the current release of gpii-windows and see what you find
+2018-07-10T12:10:30 <georgitodorov> Okay, I will
+2018-07-10T12:10:36 <Bosmon> It would also help if you could put up a pull request, even though we are expecting only "emergency review" for the time being : P
+2018-07-10T12:10:54 <georgitodorov> A PR for the QSS work, you mean?
+2018-07-10T12:11:11 <Bosmon> Yes, together with its integration work
+2018-07-10T12:11:15 <georgitodorov> We have such but it is only internal in our fork of the project
+2018-07-10T12:11:26 <georgitodorov> As we have some things to tidy up
+2018-07-10T12:11:29 <Bosmon> ok
+2018-07-10T12:11:40 <georgitodorov> But we can do this, too. With a big [WIP] in its title :D
+2018-07-10T12:11:55 <Bosmon> Even if they are not tidy, I think it would help everyone for visibility - for example if jhernandez needs to make an emergency build or something
+2018-07-10T12:11:57 <Bosmon> Yes, that will be rgeat, thanks
+2018-07-10T12:12:10 <Bosmon> Do you have a use case for non-default merging in a model?
+2018-07-10T12:12:16 <georgitodorov> Yes
+2018-07-10T12:12:33 <georgitodorov> I am having an object in my model (let\'s call it `setting`)
+2018-07-10T12:13:18 <georgitodorov> And it has various properties. Later on, I try to replace the whole `setting` object with a different one which may not have values for some of the properties for which the former `setting` had
+2018-07-10T12:13:38 <georgitodorov> And I end up having some remains from the initial `setting` object in the new one
+2018-07-10T12:15:06 <georgitodorov> I think we tried nullify-ing the object before replacing it (both using a `changeApplier` and directly via JavaScript)
+2018-07-10T12:15:37 <Bosmon> georgitodorov - ok, the way to do that is to i) open a transaction on the applier: https://docs.fluidproject.org/infusion/development/ChangeApplierAPI.html#operating-transactions-manually
+2018-07-10T12:16:31 <Bosmon> ii) send transaction.change("path.to.parent", null, DELETE)
+2018-07-10T12:16:42 <Bosmon> iii) send transaction.change( ... your new setting object)
+2018-07-10T12:16:49 <Bosmon> iv) transaction.commit
+2018-07-10T12:17:27 <georgitodorov> Bosmon: Aha, I see. We were doing ii and iii wrapped in `fluid.fireChanges`
+2018-07-10T12:17:41 <georgitodorov> But this was firing some modelListeners twice, I think
+2018-07-10T12:18:07 <Bosmon> Yes, this way avoids notifying listeners unnecessarily
+2018-07-10T12:18:32 <Bosmon> Thanks so much for the fix, stegru
+2018-07-10T12:18:59 <stegru> that\'s ok
+2018-07-10T12:19:05 <georgitodorov> Bosmon: Thanks for the suggestion, Antranig. And regarding the PR for the QSS - the PSP3 work is not merged yet
+2018-07-10T12:19:31 <georgitodorov> If we create a PR for the QSS work against GPII master, it will include the PSP3 work which has already been reviewed
+2018-07-10T12:19:38 <Bosmon> georgitodorov - that\'s fine
+2018-07-10T12:19:45 <Bosmon> It is one of our "costs of doing business" : P
+2018-07-10T12:19:59 <Bosmon> Just put a comment in the PR saying that it includes work which has already received some review in the other PR
+2018-07-10T12:20:26 <Bosmon> We will keep both open for now
+2018-07-10T12:30:14 * simonjb joined the channel
+2018-07-10T12:54:48 * jhung joined the channel
+2018-07-10T12:58:32 * cindyli joined the channel
+2018-07-10T12:59:55 * g2szeto joined the channel
+2018-07-10T13:06:23 <simonjb> hey cindyli, not quite what we were discussing yesterday, but might be useful: http://docs.couchdb.org/en/stable/api/database/changes.html
+2018-07-10T13:06:36 <simonjb> have you used this API by any chance?
+2018-07-10T13:08:08 * michelled joined the channel
+2018-07-10T13:08:50 <cindyli> thanks, simonjb, seems like a useful API. i haven\'t had a chance to use it yet
+2018-07-10T13:10:07 <simonjb> I think I\'ll try it out a little
+2018-07-10T13:19:20 * sepidehshahi joined the channel
+2018-07-10T13:30:59 * clown joined the channel
+2018-07-10T13:31:20 * clown is now known as Guest92397
+2018-07-10T13:31:32 * Guest92397 has quit
+2018-07-10T13:31:47 * clown_ joined the channel
+2018-07-10T13:31:54 * avtar joined the channel
+2018-07-10T13:35:59 * neuralmilkhotel joined the channel
+2018-07-10T13:37:21 * clown_1 joined the channel
+2018-07-10T13:47:12 * michelled has quit
+2018-07-10T13:50:44 * clown_1 is now known as clown_
+2018-07-10T13:51:44 * colinclark joined the channel
+2018-07-10T13:52:51 <jhung> fluid-everyone: design crit starts in 8 minutes. We\'ll be discussing adding new contrast choices to UI Options.
+2018-07-10T13:55:38 * danayo joined the channel
+2018-07-10T13:58:14 <georgitodorov> Bosmon: I created the WIP PR for the QSS functionality: https://github.com/GPII/gpii-app/pull/48
+2018-07-10T13:58:16 * clown_1 joined the channel
+2018-07-10T13:58:31 <georgitodorov> Regarding the gpii-windows module - I am having trouble installing it
+2018-07-10T13:58:33 * clown_ has quit
+2018-07-10T14:00:49 <georgitodorov> Probably I need a different version of MSBuild tools?
+2018-07-10T14:01:18 <georgitodorov> I get the followin in the console: Project file contains ToolsVersion="15.0". This toolset may be unknown or missing, in which case you may be able to resolve this by installing the appropriate version of MSBuild, or the build may have been forced to a particular ToolsVersion for policy reasons. Treating the project as if it had ToolsVersion="4.0". For more information, please see http://go.microsoft.com/fwlink/?LinkId=291333.
+2018-07-10T14:05:14 * georgitodorov has quit
+2018-07-10T14:16:04 * clown_1 is now known as clown_
+2018-07-10T14:57:33 * colinclark has quit
+2018-07-10T15:00:40 * mrtyler joined the channel
+2018-07-10T15:05:06 <jhung> fluid-everyone: IDRC planning meeting in 15 minutes at 11:20a.
+2018-07-10T15:05:52 * clown_ is now known as clown
+2018-07-10T15:19:33 <jhung> fluid-everyone: planning meeting is starting in a minute.
+2018-07-10T15:26:39 * avtar has quit
+2018-07-10T15:41:01 * colinclark joined the channel
+2018-07-10T15:44:48 * clown has quit
+2018-07-10T16:01:57 * danayo has quit
+2018-07-10T16:04:19 * clown joined the channel
+2018-07-10T16:07:53 * neuralmilkhotel has quit
+2018-07-10T16:13:18 * kavya joined the channel
+2018-07-10T16:17:33 <simonjb> Justin_o: do we have a community meeting tomorrow? on the wiki it\'s TBD
+2018-07-10T16:19:31 <Justin_o> simonjb: we should, just not sure exactly what it will be. The original person had to cancel. I\'m waiting to hear back from someone else, and if that falls through, jhung has something to talk about.
+2018-07-10T16:19:38 <Justin_o> simonjb: was there something you wanted to talk about for a community meeting?
+2018-07-10T16:20:07 <simonjb> Justin_o: no, more that I was wondering if we were going to have a meeting or not
+2018-07-10T16:20:15 <simonjb> colinclark, sepidehshahi ^
+2018-07-10T16:21:04 <simonjb> Justin_o: we\'re scheduling meetings and I was wondering if there would be a community meeting tomorrow
+2018-07-10T16:21:17 <simonjb> thanks Justin_o
+2018-07-10T16:31:11 <Justin_o> simonjb: ah i see, okay
+2018-07-10T16:48:08 * jhung joined the channel
+2018-07-10T16:50:24 * danayo joined the channel
+2018-07-10T16:53:00 * kavya has quit
+2018-07-10T16:54:41 * sepidehshahi joined the channel
+2018-07-10T17:06:43 <sgithens> cindyli: Do any of your gpii configs fixup work including a config for a dev version of the preferences server that runs against a local pouchdb?
+2018-07-10T17:07:22 <cindyli> checking..
+2018-07-10T17:07:26 <sgithens> Like a version of gpii.config.preferencesServer.standalone.production but uses pouch
+2018-07-10T17:07:50 <sgithens> thanks!
+2018-07-10T17:08:23 <cindyli> sgithens: we don\'t have that config now, but should be fairly easy to create one
+2018-07-10T17:08:44 <cindyli> i can create one
+2018-07-10T17:09:43 <sgithens> cindyli #1
+2018-07-10T17:09:55 * simonjb joined the channel
+2018-07-10T17:20:59 * neuralmilkhotel joined the channel
+2018-07-10T17:56:04 * sepidehshahi_ joined the channel
+2018-07-10T17:58:51 * sepidehshahi has quit
+2018-07-10T17:58:51 * sepidehshahi_ is now known as sepidehshahi
+2018-07-10T18:05:06 <Justin_o> simonjb:  it seems we will be cancelling the community meeting tomorrow after all.. sorry about that
+2018-07-10T18:05:30 <simonjb> np, thanks for letting me know Justin_o
+2018-07-10T18:21:08 * michelled joined the channel
+2018-07-10T18:21:15 * michelled has quit
+2018-07-10T18:24:35 * jhung is now known as jhung_away
+2018-07-10T18:25:20 * avtar joined the channel
+2018-07-10T18:33:43 <Justin_o> Bosmon: hello, I have a question about expanders and options merging
+2018-07-10T18:34:31 <Justin_o> i\'m running into an issue with a text to speech test. None of the tests should actually run in IE, but I\'m getting a global failure because an expander is running and trying to use a feature that isn\'t available in IE
+2018-07-10T18:36:14 <Bosmon> Justin_o - could you check in your code and paste a link to the expander?
+2018-07-10T18:36:27 <Justin_o> Bosmon: it\'s in my FLUID-6177 branch
+2018-07-10T18:36:30 <Bosmon> And - what mechanism is being used to prevent the tests running in IE?
+2018-07-10T18:37:32 <Justin_o> Bosmon: https://github.com/jobara/infusion/blob/master/tests/component-tests/textToSpeech/js/TextToSpeechTests.js#L280-L304
+2018-07-10T18:37:50 <Justin_o> it\'s the contextAwareTestRunner, i think alan may have crafted that a while back.
+2018-07-10T18:38:39 <Justin_o> Bosmon: sorry, this is the correct reference from my branch https://github.com/jobara/infusion/blob/FLUID-6177/tests/component-tests/textToSpeech/js/TextToSpeechTests.js#L383-L417
+2018-07-10T18:38:59 <Bosmon> Justin_o - cool - where is the expander?
+2018-07-10T18:39:14 <Justin_o> Bosmon: here\'s the code that is run in the expander https://github.com/jobara/infusion/blob/FLUID-6177/src/components/textToSpeech/js/TextToSpeech.js#L417-L433
+2018-07-10T18:39:28 <Justin_o> Bosmon: https://github.com/jobara/infusion/blob/FLUID-6177/src/components/textToSpeech/js/TextToSpeech.js#L355-L358
+2018-07-10T18:40:21 <Justin_o> Bosmon: additionally that component is only added as a dynamic component of fluid.textToSpeech https://github.com/jobara/infusion/blob/FLUID-6177/src/components/textToSpeech/js/TextToSpeech.js#L131-L157
+2018-07-10T18:40:27 <Justin_o> so not really sure why it\'s being called at all
+2018-07-10T18:40:31 <Bosmon> Justin_o - so it seems that the context check is only for the "pauseResumeTests"
+2018-07-10T18:40:44 <Bosmon> It doesn\'t seem to try to defeat the construction of the whole test tree
+2018-07-10T18:41:10 <Bosmon> So I don\'t see that this check is anything to do with preventing test execution on IE
+2018-07-10T18:41:37 <Justin_o> :(
+2018-07-10T18:41:42 <Justin_o> okay.. so maybe we lost a check then
+'
+

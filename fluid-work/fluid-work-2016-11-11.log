@@ -1,0 +1,804 @@
+b'2016-11-11T22:22:10 <Bosmon> Since you\'d always be otherwise tripping over something or other stupid relating to the way model relay works
+2016-11-11T22:22:12 <Bosmon> colinclark - yes
+2016-11-11T22:22:24 <Bosmon> And it would be "relaying components into existence" that would be our idiom for this
+2016-11-11T22:22:32 <Bosmon> You can see the beginnings of this in my branch
+2016-11-11T22:22:37 <colinclark> I\'d be curious to see your explorations, Bosmon
+2016-11-11T22:22:50 <Bosmon> A set of "declarative rules for converting presence of model material at particular paths into component options"
+2016-11-11T22:22:59 <colinclark> yes that would be great
+2016-11-11T22:23:53 <Bosmon> Right now we just have these clunky makeXxxxxOptions functions like this: https://github.com/amb26/fluid-authoring/blob/FLUID-4884/src/js/ComponentGraph.js#L523
+2016-11-11T22:24:05 <Bosmon> Which really aren\'t very much further along than their equivalents in kettle or gpii-express
+2016-11-11T22:24:17 <Bosmon> But there are at least a couple more scaffolding planks surrounding them
+2016-11-11T22:32:30 * lliskovoi_ joined the channel
+2016-11-11T22:32:58 * lliskovoi_ has quit
+2016-11-11T22:36:16 * lliskovoi has quit
+2016-11-11T22:40:05 * simonjb has quit
+2016-11-11T22:45:22 * yzen is now known as yzen_
+2016-11-11T22:45:25 * yzen_ is now known as yzen
+2016-11-11T22:46:11 * yzen is now known as yzen_
+2016-11-11T22:46:13 * yzen_ is now known as yzen
+2016-11-11T22:46:59 * yzen is now known as yzen_
+2016-11-11T22:47:01 * yzen_ is now known as yzen
+2016-11-11T22:47:47 * yzen is now known as yzen_
+2016-11-11T22:47:49 * yzen_ is now known as yzen
+2016-11-11T22:48:35 * yzen is now known as yzen_
+2016-11-11T22:48:37 * yzen_ is now known as yzen
+2016-11-11T22:49:23 * yzen is now known as yzen_
+2016-11-11T22:49:25 * yzen_ is now known as yzen
+2016-11-11T22:50:11 * yzen is now known as yzen_
+2016-11-11T22:50:13 * yzen_ is now known as yzen
+2016-11-11T22:50:59 * yzen is now known as yzen_
+2016-11-11T22:51:01 * yzen_ is now known as yzen
+2016-11-11T22:51:38 * yzen is now known as yzen_
+2016-11-11T22:56:24 * yzen_ has quit
+2016-11-11T22:58:55 * colinclark has quit
+2016-11-11T23:00:26 * Kobi has quit
+2016-11-11T23:06:01 * David123_ has quit
+2016-11-11T23:19:42 * amatas has quit
+2016-11-11T23:21:08 * colinclark joined the channel
+2016-11-11T23:32:30 * colinclark has quit
+2016-11-11T23:34:47 * colinclark joined the channel
+2016-11-11T23:40:36 * colinclark has quit
+2016-11-11T23:52:58 * colinclark joined the channel
+'
+
+b'2016-11-11T20:45:16 <Bosmon> But isn\'t it the case that the underlying idiom behind the problem is "freeform object allocation"?
+2016-11-11T20:45:29 <Bosmon> Which is something that, in Infusionistic idioms, we generally frown on?
+2016-11-11T20:45:44 <simonjb> well, it\'s infusion in as far as I want to use node-midi from infusion but I think it makes sense to fix in node-midi
+2016-11-11T20:46:04 <Bosmon> If the objects are finite, I imagine that there should be some explicit idiom whereby one is given access to a PARTICULAR one of them rather than just "an instance in general"
+2016-11-11T20:46:36 <Bosmon> This perhaps still isn\'t saying anything much
+2016-11-11T20:47:06 <Bosmon> But when you say "makes sense to fix in node-midi", I\'m imagining that the other things you\'ve said suggest that this might be impossible, given JavaScript\'s standard object allocation idioms?
+2016-11-11T20:47:44 * colinclark joined the channel
+2016-11-11T20:48:17 <simonjb> initially I\'ve added an explicit "release()" method to free the underlying resource, similar maybe to closing a file
+2016-11-11T20:49:28 <simonjb> but I\'m not sure that it\'s satisfactory
+2016-11-11T20:50:00 <simonjb> another approach might be an object pool with objects that get re-used
+2016-11-11T20:53:21 <colinclark> I agree with you simonjb that this might be better fixed at a lower level than node-midi\'s use with Infusion
+2016-11-11T20:53:41 <colinclark> by the end of my next plane ride, MIDI Ports will be Infusion components
+2016-11-11T20:54:02 <simonjb> there is a mismatch between the C++ object lifetime as resource management and the JavaScript gc object lifetime
+2016-11-11T20:54:07 <colinclark> but I guess the problem is that, right now, there\'s nothing you could do in a component destroy listener to free up the underling RTMIDI object
+2016-11-11T20:54:11 <colinclark> yes
+2016-11-11T20:54:39 <simonjb> with the node-midi object construction equating the the RtMidiIn object creation
+2016-11-11T20:55:06 <simonjb> but nothing equating to the RtMidiIn object destruction to free the resource
+2016-11-11T20:55:28 <Bosmon> Yes
+2016-11-11T20:55:44 <simonjb> with other resources, I think in JavaScript it\'s probably to use an open() close() pair
+2016-11-11T20:55:44 <Bosmon> If we\'re dealing with a paradigm that is faulty because it has no destruction semantics, the resolution has to be to add them back in : P
+2016-11-11T20:56:49 <simonjb> maybe it makes sense to add in a pair of methods to node-midi
+2016-11-11T20:57:14 <simonjb> to allocate and free the underlying RtMidiIn object
+2016-11-11T20:57:41 <simonjb> and break the mapping from JavaScript object to RtMidiIn object
+2016-11-11T20:58:07 <simonjb> and least from the point of view of construction and object lifetime == resource
+2016-11-11T20:58:42 <simonjb> but this would be a largish change to node-midi and I\'m just some new user of it :)
+2016-11-11T20:59:57 * alanharn_ has quit
+2016-11-11T21:00:27 <simonjb> it\'s either that or we try to use a minimum number of node-midi objects in a pool
+2016-11-11T21:00:50 <simonjb> but there are separate issues with re-using node-midi objects
+2016-11-11T21:00:56 <simonjb> which would need to be addressed
+2016-11-11T21:01:12 <simonjb> https://github.com/justinlatimer/node-midi/issues/112
+2016-11-11T21:03:12 <simonjb> I maybe makes sense to put in place some temporary fix for myself and try to start a conversation in a node-midi issue
+2016-11-11T21:04:26 * clown has quit
+2016-11-11T21:07:24 <simonjb> Bosmon: when you say to add destruction semantics back in, do you have a suggestion on how to best do that?
+2016-11-11T21:08:06 * clown joined the channel
+2016-11-11T21:21:34 <simonjb> colinclark: another option would be to change my usage pattern to minimize the use of node-midi objects
+2016-11-11T21:22:01 <simonjb> either by changing flocking port object model or by not using flocking for the polling
+2016-11-11T21:22:22 <simonjb> maybe we can chat next week when you\'re back
+2016-11-11T21:22:45 <colinclark> I\'m certainly happy to
+2016-11-11T21:23:04 <simonjb> awesome
+2016-11-11T21:23:25 <colinclark> so remind me how node-midi\'s getPortCount() works
+2016-11-11T21:23:34 <colinclark> So let\'s say I call it and get a count of ports
+2016-11-11T21:23:41 <colinclark> and then I plug in a new device
+2016-11-11T21:23:43 <colinclark> and call it again
+2016-11-11T21:23:46 <colinclark> will it be correctly updated?
+2016-11-11T21:23:50 <simonjb> yes
+2016-11-11T21:24:46 <colinclark> And, again, we believe that an instance of a midi.input or midi.output corresponds directly to one "port," right?
+2016-11-11T21:25:14 <simonjb> yes
+2016-11-11T21:25:22 <colinclark> you instantiate, say, a midi.input, and you open a specified port, and at that point, the instance is bound forever and once to an underying midi port
+2016-11-11T21:25:48 <simonjb> you can close() it but it cannot be re-used (in the current implementation)
+2016-11-11T21:25:58 <colinclark> right
+2016-11-11T21:26:02 <simonjb> and it doesn\'t free the underlying RtMidi object
+2016-11-11T21:26:06 <colinclark> right
+2016-11-11T21:26:15 <colinclark> so when I have the flock.midi.port component completed, its use of node-midi objects is "correct"
+2016-11-11T21:27:02 * alanharnum joined the channel
+2016-11-11T21:27:04 <simonjb> at the moment, our problem is that when we refresh the port list, we create new objects for each port
+2016-11-11T21:27:08 <simonjb> https://github.com/colinbdclark/Flocking/blob/midi-improvements/src/nodejs/midi.js#L62
+2016-11-11T21:27:33 <colinclark> yeah
+2016-11-11T21:27:49 <simonjb> and if we do that relatively frequently, we soon run out of underlying ALSA resources
+2016-11-11T21:27:53 <colinclark> so we should only be creating this things when we actually open a port, it sounds like
+2016-11-11T21:28:12 <simonjb> yes, that is definitely a possible solution
+2016-11-11T21:28:25 <simonjb> to change when we create the node-midi objects
+2016-11-11T21:28:41 <colinclark> it sounds like the midi "system" component should represent ports in some simple modelized form
+2016-11-11T21:28:44 <simonjb> do it more just-in-time, when we want to open a port
+2016-11-11T21:28:54 <colinclark> oh wait
+2016-11-11T21:29:15 <colinclark> I guess we can get names of ports, too, without creating new instances, right?
+2016-11-11T21:29:20 <simonjb> yes
+2016-11-11T21:29:32 <colinclark> so we can safely have the system have a modelized representation of all the ports we see
+2016-11-11T21:29:42 <colinclark> and only create Port objects for those we actually want to open
+2016-11-11T21:29:53 <colinclark> which will at least partially minimize our use of resources
+2016-11-11T21:30:26 <colinclark> but I guess it\'s still a problematic situation to  not be able to release ports we close
+2016-11-11T21:31:07 <simonjb> we could still potentially run into issues if there were enough ports opened
+2016-11-11T21:31:22 <colinclark> Yeah... I mean, if I remember, the Flocking midi selector UI component immediately opens a port when it is selected in the dropdown
+2016-11-11T21:31:26 <simonjb> but it would minimize our exposure to the issue
+2016-11-11T21:31:29 <colinclark> and closed again if another is selected
+2016-11-11T21:31:38 <colinclark> In practice, this isn\'t really an issue on Node.js
+2016-11-11T21:31:51 <colinclark> and we can assume that the WebMIDI API is better behaved
+2016-11-11T21:32:01 <simonjb> likely, yes
+2016-11-11T21:32:11 <colinclark> but I do mention it as a possible case where we\'re frequently opening and closing ports
+2016-11-11T21:32:40 <colinclark> maybe it\'s a bad UI, but I have appreciated being able to just select an item from a dropdown, start playing on my controller, and hearing sound
+2016-11-11T21:33:01 <simonjb> it\'s a reasonable thing to do, I think
+2016-11-11T21:35:02 <colinclark> I think it is reasonable to reduce our number of instantiations of midi instances by only creating them when we want to open a port
+2016-11-11T21:35:42 <colinclark> and at very least it seems reasonable to suggest a fix to node-midi for giving us some way of controlling when an underlying rtmidi object is deallocated
+2016-11-11T21:36:05 <colinclark> but none of this is ideal
+2016-11-11T21:36:45 <colinclark> have  you used Infusion dynamic components before, simonjb?
+2016-11-11T21:37:14 <simonjb> I will at least file an issue against node-midi and prepare some simple solution for illustration
+2016-11-11T21:37:17 <colinclark> ok
+2016-11-11T21:37:57 <simonjb> I don\'t believe that I\'ve used dynamic components
+2016-11-11T21:38:23 <colinclark> I think we should be able to use them to only create Port instances when they are open
+2016-11-11T21:38:35 <simonjb> oh, that\'s great
+2016-11-11T21:38:39 <colinclark> presumably our ports model will contain a few things
+2016-11-11T21:39:15 <colinclark> the "id" (in this case, just the port number\xe2\x80\x94web midi provides real IDs for each port), the "name", and perhaps an isOpen flag
+2016-11-11T21:39:59 <colinclark> I\'d assume we can have a model listener on the latter field, and then fire an appropriate event that will cause a dynamic Port component to be created for this
+2016-11-11T21:40:18 <simonjb> I\'m also wondering if this particular node-midi/RtMidi behaviour might be limited to ALSA or at least it seems likely that it would present in different ways on different platforms
+2016-11-11T21:40:36 <colinclark> it\'s quite possible it could be an issue anywhere
+2016-11-11T21:41:36 <simonjb> it could for sure, I would be interested sometime if you tried my crash test on Mac
+2016-11-11T21:43:33 <colinclark> do i need multiple devices to plug in?
+2016-11-11T21:43:39 <colinclark> I have my Quneo back at the hotel
+2016-11-11T21:43:45 <simonjb> no, you don\'t need any midi devices at all
+2016-11-11T21:43:54 <colinclark> oh great
+2016-11-11T21:43:55 <simonjb> https://github.com/simonbates/nexus-experiments/blob/master/crashNodeMidi.js
+2016-11-11T21:44:00 <colinclark> I\'ll try it now
+2016-11-11T21:44:04 <simonjb> oh, awesome
+2016-11-11T21:44:11 <colinclark> nice test :)
+2016-11-11T21:46:49 <colinclark> the script should terminate when it has successfully allocated 100 midi input instances, right?
+2016-11-11T21:47:33 <simonjb> it will probably not terminate
+2016-11-11T21:47:45 <colinclark> ah, I guess node-midi is keeping it alive?
+2016-11-11T21:48:08 <simonjb> https://github.com/justinlatimer/node-midi/issues/117
+2016-11-11T21:48:10 <simonjb> :)
+2016-11-11T21:48:24 <colinclark> oh yes
+2016-11-11T21:49:09 <simonjb> you can add a process.exit();
+2016-11-11T21:49:23 <colinclark> yeah
+2016-11-11T21:49:31 <colinclark> I also tried with a loop that closes each port
+2016-11-11T21:49:38 <colinclark> in all cases, it seems to work fine with CoreMIDI
+2016-11-11T21:49:53 <simonjb> what if you up the number?
+2016-11-11T21:49:55 <simonjb> 1000
+2016-11-11T21:49:57 <simonjb> or 10000
+2016-11-11T21:49:59 <colinclark> ooh, fun :)
+2016-11-11T21:51:41 <colinclark> Takes a while, but CoreMIDI has no problem with a million midi input instances
+2016-11-11T21:51:54 <simonjb> ok, that\'s good to know
+2016-11-11T21:52:09 <colinclark> would you like me to try on Windows?
+2016-11-11T21:52:21 <simonjb> oh sure, that would be great
+2016-11-11T21:52:21 <colinclark> I have this hot Surface tablet here
+2016-11-11T21:52:44 <simonjb> I wonder if that\'s maybe why it hasn\'t been a bigger issue
+2016-11-11T21:53:05 <simonjb> that it doesn\'t cause problems on other platforms
+2016-11-11T21:54:45 <colinclark> this beast is running Node 0.10.4!
+2016-11-11T21:54:52 <simonjb> ah
+2016-11-11T21:55:19 <simonjb> yes, I guess it was set up a while ago :)
+2016-11-11T21:56:04 <colinclark> i\'ll just be a couple minutes to upgrade
+2016-11-11T21:56:18 <simonjb> it\'s also fine to do this another time :)
+2016-11-11T22:00:57 * cindyli has quit
+2016-11-11T22:02:05 * michelled1 has quit
+2016-11-11T22:02:58 * clown has quit
+2016-11-11T22:15:41 <colinclark> You know, props to our ops team, simonjb
+2016-11-11T22:16:01 <colinclark> I just spent the past 10 minutes trying to get the Surface up to date
+2016-11-11T22:16:07 <colinclark> and then it seemed to just shutdown for some reason
+2016-11-11T22:16:21 <colinclark> so I just fired up a GPII VM
+2016-11-11T22:16:27 <colinclark> and I\'m way further along in a matter of seconds
+2016-11-11T22:18:25 <colinclark> simonjb: Looks like Windows is also fine
+2016-11-11T22:18:54 <colinclark> interestingly, rtmidi logs a warning about no devices being available
+2016-11-11T22:20:29 <Bosmon> simonjb, colinclark - sorry to potter off
+2016-11-11T22:20:31 <Bosmon> Family evening
+2016-11-11T22:20:36 <Bosmon> But I guess you have it all sorted out
+2016-11-11T22:20:42 * the-t-in-rtf has quit
+2016-11-11T22:20:55 <Bosmon> The Infusion component lifetime model is a little clunky, but effective
+2016-11-11T22:20:55 <simonjb> thanks colinclark
+2016-11-11T22:21:13 <Bosmon> Clunky, given the scheme for allocating things isn\'t quite symmetric with the means for deallocating them
+2016-11-11T22:21:20 <Bosmon> But, at least these time points exist : P
+2016-11-11T22:21:37 <Bosmon> I\'ve been exploring ways of improving this in the crude authoring work I gave you a demo of
+2016-11-11T22:21:51 <Bosmon> But I came to the conclusion that there\'s not a lot that can be done before the big framework rewrite
+2016-11-11T22:22:08 <colinclark> Did what I described seem reasonable, Bosmon?
+'
+
+b'2016-11-11T17:03:52 <amatas> can you download this files from your machine: http://idrc.cachefly.net/virtual-machines/vagrant/virtualbox/inclusivedesign-windows10-eval-virtualbox_5.0.26-0.4.6.box
+2016-11-11T17:04:18 <cindyli> yes, downloading, amatas, 8.6G
+2016-11-11T17:04:34 <amatas> what the...
+2016-11-11T17:04:36 <amatas> ok
+2016-11-11T17:04:52 <cindyli> it will take a while
+2016-11-11T17:05:03 <amatas> download it and then: vagrant box add --name inclusivedesign/windows10-eval inclusivedesign-windows10-eval-virtualbox_5.0.26-0.4.6.box
+2016-11-11T17:05:07 <gloob> well, it is expected when you are using man in the middle tactics :D
+2016-11-11T17:05:08 <amatas> yes :)
+2016-11-11T17:05:46 <cindyli> amatas: ok, will try that once the download finishes
+2016-11-11T17:05:47 <gloob> cindyli: at least it should be blazing fast
+2016-11-11T17:05:50 <teresa_> michelled1 I\'d like to figure out how to integrate UI options for simple web apps
+2016-11-11T17:06:50 <cindyli> gloob: not so blazing with my home internet. ok speed but surely slower than in the office
+2016-11-11T17:07:26 <michelled1> teresa_:  ah, jhung or Justin_o are the best people to ask for help.  but you probably want to start with this tutorial
+2016-11-11T17:07:31 <michelled1> http://docs.fluidproject.org/infusion/development/tutorial-userInterfaceOptions/UserInterfaceOptions.html
+2016-11-11T17:08:53 <gloob> cindyli: ahhh, so are you using vpn?
+2016-11-11T17:09:05 <gloob> cindyli: do you have capped internet connection?
+2016-11-11T17:09:45 <cindyli> gloob: i do have a cap
+2016-11-11T17:10:04 <gloob> :((((
+2016-11-11T17:10:59 <teresa_> michelled1: I was talking to Jess last night about it - I need little more hand leading than the tutorial it seems.
+2016-11-11T17:11:34 <michelled1> teresa_: what issue are you having?
+2016-11-11T17:12:44 <teresa_> setting it up in my ide
+2016-11-11T17:14:00 <gloob> well, confirmed that is a MILLENIUM typo
+2016-11-11T17:14:11 <gloob> finishin provisioning and firing PR
+2016-11-11T17:14:41 <michelled1> teresa_: what ide are you using and what are you trying to do with it?
+2016-11-11T17:15:51 * colinclark joined the channel
+2016-11-11T17:17:11 <jhernandez> gloob: MILLENIUM? from windows MILLENIUM? :P :P
+2016-11-11T17:21:58 <gloob> no, from MILLENIUM FALCON :D
+2016-11-11T17:25:26 * alanharnum has quit
+2016-11-11T17:27:01 <jhernandez> oh, the -version thing - I bet that chocolatey was accepting both ways (- and --) and now it doesn\'t accept the - anymore? dunno - in any case, let\'s fix it!
+2016-11-11T17:29:22 * colinclark has quit
+2016-11-11T17:30:25 * colinclark joined the channel
+2016-11-11T17:35:29 <gloob> yes, something like that probably jhernandez
+2016-11-11T17:42:48 * cindyli has quit
+2016-11-11T17:42:54 * cindyli1 joined the channel
+2016-11-11T17:45:26 <gloob> https://github.com/GPII/windows/pull/100
+2016-11-11T17:45:27 <gloob> 100
+2016-11-11T17:45:29 <gloob> fire in the hole
+2016-11-11T17:45:47 <gloob> Bosmon: jhernandez could you check and merge?
+2016-11-11T17:45:50 <gloob> oneliner PR
+2016-11-11T18:00:01 * Justin_o has quit
+2016-11-11T18:00:05 <jhernandez> gloob: chur
+2016-11-11T18:00:07 <jhernandez> oops
+2016-11-11T18:00:12 <jhernandez> s/chur/sure
+2016-11-11T18:00:37 <colinclark> michelled1: Do you know about this hack? https://github.com/sgithens/windows/commit/ad7f0a1cd44379b2743be3d8ace4920a3c156e57
+2016-11-11T18:02:23 * alanharnum joined the channel
+2016-11-11T18:06:22 <Bosmon> That\'s certainly some pretty crufty ancient stuff there
+2016-11-11T18:06:28 <Bosmon> I\'d imagine it could just be deleted
+2016-11-11T18:06:35 <colinclark> that\'s what I was thinking, too
+2016-11-11T18:06:47 <colinclark> but it seems it definitely needs to be done in the gpii-app branch
+2016-11-11T18:06:54 <colinclark> Bosmon: Do you know if sgithens has plans to make pull requests for several of his interesting-looking hacks in this new release?
+2016-11-11T18:07:08 <colinclark> The one that changes localhost to 127.0.0.1 seems like a no-brainer, too
+2016-11-11T18:07:12 <Bosmon> colinclark - I don\'t know if he does
+2016-11-11T18:07:27 <Bosmon> colinclark - well, I talked over the localhsot one with him and suggested that this was best patched in Kettle
+2016-11-11T18:07:40 <colinclark> ok
+2016-11-11T18:07:48 <colinclark> so my sense is that we\'ve got an opportunity here
+2016-11-11T18:07:58 <colinclark> to quickly fold in a number of fixes reflected in Steve\'s branch
+2016-11-11T18:08:04 <colinclark> so we don\'t lose track of them
+2016-11-11T18:08:23 <colinclark> I wonder if anyone in the channel has time to look through them and file some JIRAs as needed?
+2016-11-11T18:08:31 <Bosmon> I\'ll file the localhost one
+2016-11-11T18:09:08 <colinclark> cool
+2016-11-11T18:19:41 <jhernandez> gloob: I merged your pull/100 locally, I\'ll push it after the provisioning process is finished ;)
+2016-11-11T18:22:44 <jhernandez> colinclark: that\'s a good idea, but shouldn\'t be Steve the one describing such hacks somewhere? I guess that he\'s the one that understands every hack on LGS - at least this is what kasper and I did for the cloud4all review branches
+2016-11-11T18:23:01 <colinclark> yes, he probably should
+2016-11-11T18:23:13 <colinclark> I\'m just sensitive the the fact that he only works very part time with us right now
+2016-11-11T18:23:24 <colinclark> and thinking these are the kinds of things that sometimes get lost in the shuffle
+2016-11-11T18:23:39 <michelled1> colinclark: sorry, was getting lunch - no I don\'t know anything about that hack.
+2016-11-11T18:24:24 <colinclark> I suspect part of the reason he made such a comprehensive README was so that we can do some forensics of his branch :)
+2016-11-11T18:24:37 <jhernandez> colinclark: yeah, that\'s what I was about to say
+2016-11-11T18:24:41 <colinclark> michelled1: Sounds like you should roll it into gpii-app, if only by simply removing that code
+2016-11-11T18:25:05 <jhernandez> before that README I didn\'t know at all which branches he was using for LGS
+2016-11-11T18:25:28 <colinclark> exactly
+2016-11-11T18:25:35 <colinclark> I\'m relieved that it\'s so detailed
+2016-11-11T18:28:27 * David123_ joined the channel
+2016-11-11T18:31:09 * Kobi joined the channel
+2016-11-11T18:32:15 * colinclark has quit
+2016-11-11T18:32:48 * colinclark joined the channel
+2016-11-11T18:37:18 <gloob> information always help
+2016-11-11T18:37:46 <gloob> we need to improve that as a whole
+2016-11-11T18:38:04 <gloob> imho :)
+2016-11-11T18:51:28 * clown joined the channel
+2016-11-11T19:00:59 <cindyli1> gloob, amatas, jhernandez, win10 box downloaded. having an issue with adding it - http://pastebin.com/CVU9ZmP0
+2016-11-11T19:14:09 * simonjb joined the channel
+2016-11-11T19:18:23 <colinclark> gloob: what is your proposal? :P
+2016-11-11T19:38:00 * alanharnum has quit
+2016-11-11T19:42:11 * alanharn_ joined the channel
+2016-11-11T20:04:22 <simonjb> hey Bosmon and Bosmon5, are you available?
+2016-11-11T20:08:59 * yzen is now known as yzen_
+2016-11-11T20:17:10 * colinclark has quit
+2016-11-11T20:23:12 <gloob> cindyli1: add --provider virtualbox to the vagrant box add command
+2016-11-11T20:24:49 <cindyli1> gloob: same error
+2016-11-11T20:24:49 <cindyli1> cindyli@atutor:~/Development/gpii/windows$ vagrant box add --name inclusivedesign/windows10-eval inclusivedesign-windows10-eval-virtualbox_5.0.26-0.4.6.box --provider virtualbox
+2016-11-11T20:24:49 <cindyli1> ==> box: Box file was not detected as metadata. Adding it directly...
+2016-11-11T20:24:49 <cindyli1> ==> box: Adding box \'inclusivedesign/windows10-eval\' (v0) for provider: virtualbox
+2016-11-11T20:24:49 <cindyli1> box: Unpacking necessary files from: file:///Users/cindyli/Development/gpii/windows/inclusivedesign-windows10-eval-virtualbox_5.0.26-0.4.6.box
+2016-11-11T20:24:49 <cindyli1> An error occurred while downloading the remote file. The error
+2016-11-11T20:24:49 <cindyli1> message, if any, is reproduced below. Please fix this error and try
+2016-11-11T20:24:50 <cindyli1> again.
+2016-11-11T20:25:21 * cindyli1 is now known as cindyli
+2016-11-11T20:25:32 <gloob> cindyli: this is weird, vagrant box list
+2016-11-11T20:25:45 <gloob> cindyli: I will be away for 15 minutes
+2016-11-11T20:25:48 <cindyli> cindyli@atutor:~/Development/gpii/windows$ vagrant box list
+2016-11-11T20:25:48 <cindyli> centos64-64bit           (virtualbox, 0)
+2016-11-11T20:25:48 <cindyli> inclusivedesign/centos7  (virtualbox, 0.9.5)
+2016-11-11T20:25:48 <cindyli> inclusivedesign/fedora22 (virtualbox, 0.3.0)
+2016-11-11T20:25:48 <cindyli> inclusivedesign/fedora23 (virtualbox, 0.1.0)
+2016-11-11T20:25:48 <cindyli> inclusivedesign/fedora24 (virtualbox, 0.1.0)
+2016-11-11T20:25:48 <cindyli> inclusivedesign/fedora24 (virtualbox, 0.1.1)
+2016-11-11T20:25:54 <cindyli> gloob: sure. no worries
+2016-11-11T20:28:43 * colinclark joined the channel
+2016-11-11T20:32:00 <Bosmon> Hi simonjb
+2016-11-11T20:32:16 * yzen_ is now known as yzen
+2016-11-11T20:32:27 <simonjb> hi Bosmon
+2016-11-11T20:32:53 * colinclark has quit
+2016-11-11T20:33:31 <simonjb> I have a design problem that I wondered if you might have some advice on or some ideas of other projects with similar situations
+2016-11-11T20:33:42 <Bosmon> aha
+2016-11-11T20:34:27 <simonjb> In my MIDI monitoring work I have run into an interesting resource management problem in node-midi -- the node.js library for the C++ RtMidi
+2016-11-11T20:35:07 <simonjb> I\'m thinking that it probably makes sense to address in node-midi but I\'m not quite sure of the best approach
+2016-11-11T20:35:34 <simonjb> https://github.com/simonbates/nexus-experiments/blob/master/crashNodeMidi.js
+2016-11-11T20:35:59 <simonjb> will crash on Linux ALSA with "ALSA lib seq_hw.c:457:(snd_seq_hw_open) open /dev/snd/seq failed: Cannot allocate memory"
+2016-11-11T20:37:16 <simonjb> I\'m still tracing through the code but I believe that the root cause is that constructing an instance of midi.input() creates a corresponding RtMidiIn C++ object
+2016-11-11T20:37:49 <simonjb> which allocates ALSA structures that are finite
+2016-11-11T20:38:07 <simonjb> and when we have constructed enough, we run out
+2016-11-11T20:38:50 <simonjb> the node-midi object destructor does free the underlying object but it is my understanding that there is no guarantee that V8 will ever call it
+2016-11-11T20:39:13 <Bosmon> Such problems are very, very tough...
+2016-11-11T20:39:24 <Bosmon> The modern "finite resource par excellence" is GPU memory...
+2016-11-11T20:39:27 <simonjb> my initial fix has been to add an explicit "release()" method to free the underlying resources
+2016-11-11T20:39:35 <Bosmon> And daily I can observe my machine conking out as various apps contend over it
+2016-11-11T20:40:32 <simonjb> are there good patterns that you\'ve seen or use to manage resources in javascript, where we cannot rely on gc?
+2016-11-11T20:40:35 <Bosmon> At least infusion has "eager" rather than lazy destruction semantics
+2016-11-11T20:40:45 <Bosmon> But this doesn\'t necessarily help if you don\'t have a resource usage model
+2016-11-11T20:40:48 <gloob> cindyli: it gives ANY error?
+2016-11-11T20:41:01 <Bosmon> I can imagine a world where there is a kind of "hibernation queue"
+2016-11-11T20:41:14 <cindyli> yes, gloob, i pasted the error above
+2016-11-11T20:41:22 <Bosmon> Some of the techniques I allude to in the PPIG paper suggest such a world could arise
+2016-11-11T20:41:26 <gloob> 21:24 < cindyli1> An error occurred while downloading the remote file. The error                                                                                                     \xe2\x94\x82\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7
+2016-11-11T20:41:30 <gloob> 21:24 < cindyli1> message, if any, is reproduced below. Please fix this error and try                                                                                                \xe2\x94\x82\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7\xc2\xb7
+2016-11-11T20:41:34 <gloob> 21:24 < cindyli1> again.
+2016-11-11T20:41:36 <gloob> below is nothing
+2016-11-11T20:41:42 <Bosmon> If any "in-memory state" is equivalent to "serialised state" then in theory you could serialise any application segment without warning
+2016-11-11T20:41:52 <Bosmon> If you\'ve determined that you need it to loose its hold on some vital system resource
+2016-11-11T20:42:01 <Bosmon> I guess Android apps work a little like this
+2016-11-11T20:42:38 <Bosmon> I may be misunderstanding your angle on the problem
+2016-11-11T20:42:57 <Bosmon> In that you may just be interested in how we can deallocate anything at all
+2016-11-11T20:43:12 <Bosmon> BUt I guess there is some particular reason that the previous RtMidiIn objects might be considered "In use"
+2016-11-11T20:43:31 <Bosmon> At least if they mapped one-to-one to Infusion components, you could be sure about where each one is
+2016-11-11T20:43:48 <Bosmon> And then explicitly call "destroy" on ones that one intended to be defunct
+2016-11-11T20:43:55 <Bosmon> But perhaps I\'m still just "talking around the issue"
+2016-11-11T20:44:18 <simonjb> I think the fix needs to be in node-midi, and this isn\'t an infusion situation
+2016-11-11T20:44:21 <Bosmon> So i) why might there be previous instances of this object in memory, and ii) to what extent could you be sure that you don\'t want them?
+2016-11-11T20:44:58 <Bosmon> Well, it isn\'t an infusion situation NOW : P
+'
+
+b'2016-11-11T16:33:37 <amatas> In fact I personally tested the gloob\'s PR
+2016-11-11T16:33:43 <gloob> or just a fresh vagrant up in windows repo?
+2016-11-11T16:33:59 <gloob> anyway, adding fix now
+2016-11-11T16:34:13 <jhernandez> if there\'s a typo neither me nor CI didn\'t notice it
+2016-11-11T16:34:52 <amatas> I\'m cheking the CI
+2016-11-11T16:35:39 <amatas> oh, nice
+2016-11-11T16:35:40 <cindyli> gloob: it\'s a fresh downloaded vagrant in windows repo
+2016-11-11T16:35:50 <amatas> the same error found in the CI
+2016-11-11T16:36:13 <jhernandez> amatas: where?
+2016-11-11T16:36:27 <amatas> https://ci.gpii.net/job/create-windows-vm/92/consoleFull <- do a search of "resulted in error"
+2016-11-11T16:36:41 <Bosmon> ha!
+2016-11-11T16:37:37 <amatas> anyway chocolatey doesn\'t understand it as an error because it installs nodejs
+2016-11-11T16:37:43 <jhernandez> amatas: but it DOES works
+2016-11-11T16:37:50 <jhernandez> ==> default: Download of node-v6.9.1-x86.msi (10.95 MB) completed.
+2016-11-11T16:38:03 <amatas> but why it fails on Cindy\'s machine....
+2016-11-11T16:38:26 <gloob> well, it is a typo that need to be fixed
+2016-11-11T16:38:41 <gloob> rebasing and fixing conflicts here
+2016-11-11T16:38:48 <gloob> emiting PR in a few minutes
+2016-11-11T16:39:12 <amatas> yup, thanks
+2016-11-11T16:39:42 <amatas> https://chocolatey.org/packages/nodejs/6.9.1
+2016-11-11T16:40:09 <amatas> you can find in the install instructions the line: "choco install nodejs -version 6.9.1"
+2016-11-11T16:40:55 <gloob> cindyli: could you make a choco --version in your vagrant box?
+2016-11-11T16:41:08 <cindyli> sure
+2016-11-11T16:41:39 <cindyli> 0.10.0, gloob
+2016-11-11T16:42:09 * teresa_ joined the channel
+2016-11-11T16:42:41 <jhernandez> https://github.com/GPII/windows/blob/2e588584b7e2966c83fbbc466d55bcf1ace68bda/provisioning/chocolatey-packages.bat#L1
+2016-11-11T16:42:55 <amatas> cindyli, I guess you should have Chocolatey v0.10.3
+2016-11-11T16:43:10 <cindyli> ah
+2016-11-11T16:43:16 <jhernandez> are we sure it\'s a real typo? looks like it has been like that forever
+2016-11-11T16:44:20 <gloob> what is weird is that cindyli have another choco version
+2016-11-11T16:44:22 <amatas> cindyli, could you make "vagrant box list" in a command prompt of your machine?
+2016-11-11T16:44:32 <teresa_> Hi. I\'m a first year student in INCD. I\'m trying to figure out how to utilize infusion but not sure where to start
+2016-11-11T16:44:39 <gloob> cindyli: did you change anything in the vagrat box?
+2016-11-11T16:44:42 <gloob> teresa_: Hi!
+2016-11-11T16:44:59 <cindyli> gloob: not at all
+2016-11-11T16:45:03 <cindyli> amatas: here it is
+2016-11-11T16:45:04 <cindyli> cindyli@atutor:~/Development/gpii/windows$ vagrant box list
+2016-11-11T16:45:04 <cindyli> centos64-64bit                 (virtualbox, 0)
+2016-11-11T16:45:04 <cindyli> inclusivedesign/centos7        (virtualbox, 0.9.5)
+2016-11-11T16:45:04 <cindyli> inclusivedesign/fedora22       (virtualbox, 0.3.0)
+2016-11-11T16:45:04 <cindyli> inclusivedesign/fedora23       (virtualbox, 0.1.0)
+2016-11-11T16:45:04 <cindyli> inclusivedesign/fedora24       (virtualbox, 0.1.0)
+2016-11-11T16:45:04 <cindyli> inclusivedesign/fedora24       (virtualbox, 0.1.1)
+2016-11-11T16:45:05 <cindyli> inclusivedesign/windows10-eval (virtualbox, 0.4.5)
+2016-11-11T16:45:05 <cindyli> oercommons                     (virtualbox, 0)
+2016-11-11T16:45:27 <gloob> envy of your disk space cindyli
+2016-11-11T16:45:42 <gloob> :D
+2016-11-11T16:45:49 <cindyli> i know i have a lot of other things. some should be cleaned up :)
+2016-11-11T16:46:24 <amatas> cindyli, the latest version of windows VM is 0.4.6, when you have some time run "vagrant box update" inside windows GPII repository folder.
+2016-11-11T16:46:36 <cindyli> sure
+2016-11-11T16:46:52 <amatas> It needs to download almost 8Gigs
+2016-11-11T16:47:12 <cindyli> amatas: seems 0.4.5 might be the latest
+2016-11-11T16:47:13 <cindyli> cindyli@atutor:~/Development/gpii/windows$ vagrant box update
+2016-11-11T16:47:13 <cindyli> ==> default: Checking for updates to \'inclusivedesign/windows10-eval\'
+2016-11-11T16:47:13 <cindyli> default: Latest installed version: 0.4.5
+2016-11-11T16:47:13 <cindyli> default: Version constraints:
+2016-11-11T16:47:13 <cindyli> default: Provider: virtualbox
+2016-11-11T16:47:13 <cindyli> There was an error while downloading the metadata for this box.
+2016-11-11T16:47:14 <amatas> I\'m triying to shrink the box anyway
+2016-11-11T16:47:14 <cindyli> The error message is shown below:
+2016-11-11T16:47:26 <michelled1> teresa_: what would you like to use Infusion for?
+2016-11-11T16:47:32 * alanharnum joined the channel
+2016-11-11T16:48:00 <cindyli> the error message shows 2 empty lines - nothing
+2016-11-11T16:48:01 <amatas> cindyli, It seems that you need to upgrade Virtualbox first
+2016-11-11T16:48:22 <cindyli> i\'ve upgraded it to 5.0.28
+2016-11-11T16:49:22 <cindyli> amatas: might because i was at a lower vbox version when I fetched the win box. and after the upgrade, a refetch throws an error?
+2016-11-11T16:49:25 * teresa_ has quit
+2016-11-11T16:49:42 <cindyli> an unknown error tho
+2016-11-11T16:50:07 <amatas> "There was an error while downloading the metadata for this box." maybe a network error
+2016-11-11T16:50:31 <cindyli> just ran again and same
+2016-11-11T16:50:35 <amatas> do you get the same error if you run the same command again ?
+2016-11-11T16:50:43 <amatas> agh
+2016-11-11T16:51:10 <gloob> vagrant box remove current
+2016-11-11T16:51:11 <cindyli> amatas: shall i completely remove this vm from my disk and re-run "vagrant up" to refetch from the scratch?
+2016-11-11T16:51:12 <gloob> vagrant up
+2016-11-11T16:51:15 <gloob> yes
+2016-11-11T16:51:17 <cindyli> cool
+2016-11-11T16:51:38 <gloob> meanwhile Im checking this error
+2016-11-11T16:51:48 <cindyli> amatas: The box you requested to be removed could not be found. No
+2016-11-11T16:51:48 <cindyli> boxes named \'current\' could be found.
+2016-11-11T16:52:04 <amatas> vagrant box destroy
+2016-11-11T16:52:20 <amatas> vagrant box remove inclusivedesign/windows10-eval
+2016-11-11T16:53:49 <gloob> vagrant destroy, you mean?
+2016-11-11T16:54:04 <gloob> yes, by current I mean the windows10-eval
+2016-11-11T16:54:07 <amatas> gloob, sorry, yes I meant vagrant destroy
+2016-11-11T16:54:23 <gloob> $ vagrant destroy && vagrant box remove inclusivedesign/windows10-eval
+2016-11-11T16:54:46 <gloob> so launching new vagrant up, let\'s see that original typo
+2016-11-11T16:54:52 <gloob> NOT MY FAULT! :D
+2016-11-11T16:54:59 <amatas> I\'ve cloned the GPII windows repo and run vagrant up, I see the "-e" option error, but the provision concludes fine
+2016-11-11T16:55:17 <gloob> I will check it in the windows shell
+2016-11-11T16:55:22 <cindyli> amatas: did that, box removed, "vagrant up" throws this - http://pastebin.com/VTK069Zp
+2016-11-11T16:55:47 <gloob> probably is a MILLENIUM typo
+2016-11-11T16:56:45 <cindyli> have run "vagrant up" multiple time, same error.
+2016-11-11T16:56:48 <gloob> vagrant init inclusivedesign/windows10-eval; vagrant up --provider virtualbox
+2016-11-11T16:56:56 <gloob> let is see that way
+2016-11-11T16:58:00 <cindyli> running "vagrant init inclusivedesign/windows10-eval" says: `Vagrantfile` already exists in this directory. Remove it before
+2016-11-11T16:58:00 <cindyli> running `vagrant init`.
+2016-11-11T16:58:07 <amatas> cindyli, I don\'t know why you can\'t download or fetch information of the vagrant windows vm from hashicorp
+2016-11-11T16:58:20 <cindyli> but if i run "vagrant box remove inclusivedesign/windows10-eval", it says: The box you requested to be removed could not be found. No
+2016-11-11T16:58:20 <cindyli> boxes named \'inclusivedesign/windows10-eval\' could be found.
+2016-11-11T16:58:20 <cindyli> c
+2016-11-11T16:58:33 <cindyli> amatas: last time was ok tho
+2016-11-11T16:58:52 <gloob> oh yes, right, my fault, dont do that :D
+2016-11-11T16:59:02 <amatas> yes, in fact I\'m downloading the box right now
+2016-11-11T16:59:06 <gloob> amatas: how is to download it?
+2016-11-11T16:59:12 <gloob> vagrant box waht
+2016-11-11T16:59:14 <gloob> what?
+2016-11-11T16:59:17 <jhernandez> vagrant box add
+2016-11-11T16:59:19 <amatas> the command vagrant up should download it
+2016-11-11T16:59:23 <jhernandez> yup
+2016-11-11T16:59:26 <gloob> vagrant box add
+2016-11-11T16:59:37 <gloob> vagrant box add inclusivedesign/windows10-eval
+2016-11-11T16:59:38 <amatas> if it\'s not found in your system
+2016-11-11T16:59:52 <cindyli> so, i should run "vagrant box add inclusivedesign/windows10-eval"?
+2016-11-11T16:59:56 <gloob> yes
+2016-11-11T16:59:58 <gloob> let is see
+2016-11-11T17:00:10 <cindyli> cindyli@atutor:~/Development/gpii/windows$ vagrant box add inclusivedesign/windows10-eval
+2016-11-11T17:00:11 <cindyli> The box \'inclusivedesign/windows10-eval\' could not be found or
+2016-11-11T17:00:11 <cindyli> could not be accessed in the remote catalog. If this is a private
+2016-11-11T17:00:11 <cindyli> box on HashiCorp\'s Atlas, please verify you\'re logged in via
+2016-11-11T17:00:11 <cindyli> `vagrant login`. Also, please double-check the name. The expanded
+2016-11-11T17:00:11 <gloob> if it doesnt works, it is a connectivy problem in your office
+2016-11-11T17:00:11 <cindyli> URL and error message are shown below:
+2016-11-11T17:00:12 <cindyli> URL: ["https://atlas.hashicorp.com/inclusivedesign/windows10-eval"]
+2016-11-11T17:00:12 <cindyli> Error:
+2016-11-11T17:00:44 <jhernandez> cindyli: can browse to https://atlas.hashicorp.com/inclusivedesign/boxes/windows10-eval
+2016-11-11T17:00:46 <jhernandez> ?
+2016-11-11T17:00:49 <jhernandez> I\'m just curious
+2016-11-11T17:00:51 <cindyli> no problem browsing that
+2016-11-11T17:00:53 <jhernandez> okok
+2016-11-11T17:01:12 * teresa_ joined the channel
+2016-11-11T17:01:32 <amatas> cindyli, try this command: "vagrant box add --name inclusivedesign/windows10-eval --box-version 0.4.6 http://idrc.cachefly.net/virtual-machines/vagrant/virtualbox/inclusivedesign-windows10-eval-virtualbox_5.0.26-0.4.6.box"
+2016-11-11T17:02:01 <cindyli> cindyli@atutor:~/Development/gpii/windows$ vagrant box add --name inclusivedesign/windows10-eval --box-version 0.4.6 http://idrc.cachefly.net/virtual-machines/vagrant/virtualbox/inclusivedesign-windows10-eval-virtualbox_5.0.26-0.4.6.box
+2016-11-11T17:02:01 <cindyli> ==> box: Box file was not detected as metadata. Adding it directly...
+2016-11-11T17:02:01 <cindyli> You specified a box version constraint with a direct box file
+2016-11-11T17:02:01 <cindyli> path. Box version constraints only work with boxes from Vagrant
+2016-11-11T17:02:01 <cindyli> Cloud or a custom box host. Please remove the version constraint
+2016-11-11T17:02:02 <cindyli> and try again.
+2016-11-11T17:02:34 <jhernandez> just re-provisioned here and it\'s true that the provisioning process mention the "-version" thing but node got installed
+2016-11-11T17:02:40 <gloob> aha
+2016-11-11T17:02:45 <gloob> cached
+2016-11-11T17:02:49 <amatas> cindyli: vagrant box add --name inclusivedesign/windows10-eval http://idrc.cachefly.net/virtual-machines/vagrant/virtualbox/inclusivedesign-windows10-eval-virtualbox_5.0.26-0.4.6.box
+2016-11-11T17:03:07 <cindyli> yes, tried that, same error
+2016-11-11T17:03:20 <cindyli> cindyli@atutor:~/Development/gpii/windows$ vagrant box add --name inclusivedesign/windows10-eval http://idrc.cachefly.net/virtual-machines/vagrant/virtualbox/inclusivedesign-windows10-eval-virtualbox_5.0.26-0.4.6.box
+2016-11-11T17:03:21 <cindyli> ==> box: Box file was not detected as metadata. Adding it directly...
+2016-11-11T17:03:21 <cindyli> ==> box: Adding box \'inclusivedesign/windows10-eval\' (v0) for provider:
+2016-11-11T17:03:21 <cindyli> box: Downloading: http://idrc.cachefly.net/virtual-machines/vagrant/virtualbox/inclusivedesign-windows10-eval-virtualbox_5.0.26-0.4.6.box
+2016-11-11T17:03:21 <cindyli> An error occurred while downloading the remote file. The error
+2016-11-11T17:03:21 <cindyli> message, if any, is reproduced below. Please fix this error and try
+2016-11-11T17:03:21 <cindyli> again.
+'
+
+b'2016-11-11T15:20:16 * kavya joined the channel
+2016-11-11T15:22:52 <amatas> nothing official, I think that some members of the ops team are using the latest version (as me) while try to run the tests without issues
+2016-11-11T15:24:11 <gloob> is it working?
+2016-11-11T15:26:31 <amatas> it is, at least it works well with my daily vm tasks
+2016-11-11T15:26:51 <Bosmon2> gloob - "80% of the time should be pretty similar" is nice, but not entirely helpful for new developers who want to get their own VM right :)
+2016-11-11T15:27:47 <Bosmon2> cindyli, alanharnum - I\'ve filed https://issues.fluidproject.org/browse/KETTLE-49 about the DataSource pileup
+2016-11-11T15:28:16 <alanharnum> thanks Bosmon2
+2016-11-11T15:29:37 <cindyli> good explanation. thanks, Bosmon2
+2016-11-11T15:30:00 <alanharnum> would this proposal basically entail that an end user of a concrete datasource grade would simply use "foo.dataSource" for a read-only grade, and "foo.dataSource.writable" for a read+write grade?
+2016-11-11T15:30:20 <gloob> Bosmon2: we cannot change context conditions
+2016-11-11T15:30:36 <alanharnum> rather than setting the "writable" boolean + each concrete grade needing to specify readOnlyGrade?
+2016-11-11T15:30:59 <Bosmon2> alanharnum - well, this proposal essentially allows people to make their own choices - what you describe is currently the status quo, with hard-coded names derived from the rule in that code snippet
+2016-11-11T15:31:10 <Bosmon2> Although I imagine we\'d prefer that people carried on with the current naming
+2016-11-11T15:31:13 <gloob> but I\'m sure that if somebody have an idea to overcome that 20% gap the ops team would be please to hear :D
+2016-11-11T15:31:16 <gloob> pleased*
+2016-11-11T15:31:47 <Bosmon2> gloob - well, I hope we don\'t need a miraculous idea to come from the outside to encourage the ops team to modularise their scripts :)
+2016-11-11T15:32:09 <Bosmon2> I think this discussion makes it clear that it\'s still impossible for even an experienced user coming to the project to make our stuff work
+2016-11-11T15:32:18 <gloob> umhhhh
+2016-11-11T15:32:22 <gloob> it is just vagrant up
+2016-11-11T15:32:32 <gloob> the main problem is current exposed information I guess
+2016-11-11T15:32:42 <Bosmon2> Yes - and what if someone wants a VM choice for which we have not written a vagrant configuration?
+2016-11-11T15:32:53 <Bosmon2> For example, we need to test under Windows 8.1 now
+2016-11-11T15:32:56 <gloob> that\'s another question and we have an issue for that
+2016-11-11T15:33:08 <amatas> https://github.com/GPII/windows#test-vm
+2016-11-11T15:33:09 <Bosmon2> Well sure, we have an issue - but how can we help cindyli and me today?
+2016-11-11T15:33:23 <gloob> do you need to test against windows 8.1?
+2016-11-11T15:33:25 <gloob> why?
+2016-11-11T15:33:32 <gloob> current scope for APCP is windows 10
+2016-11-11T15:33:45 <gloob> I mean, we need it, for sure
+2016-11-11T15:34:05 <amatas> it\'s a good starting point. But of course, I\'m happy to receive any developer experience in order to enhance the testing experience.
+2016-11-11T15:34:15 <gloob> I, personally was using a windows 8.1 vagrant box and launching the provisiongin scripts, but I admit is hard to maintain
+2016-11-11T15:34:58 <gloob> this needs love https://issues.gpii.net/browse/GPII-1762, yes
+2016-11-11T15:35:49 <gloob> Bosmon2: do you need a windows 8.1 image for gpii? I think we can create an image
+2016-11-11T15:36:06 <gloob> as far as I know javi was using one for testing
+2016-11-11T15:36:34 <gloob> probably he can export it and share so you can save the hurdle of setting up everything
+2016-11-11T15:38:30 <gloob> it will help? Bosmon2 cindyli?
+2016-11-11T15:39:35 <gloob> "we have an issue for that" is a great motto for us
+2016-11-11T15:39:36 <gloob> :D
+2016-11-11T15:40:03 <cindyli> gloob: i just happen to have a pre-installed window 8 and think it\'s a fresh vm to set up GPII. considering the time i spent yesterday doing that, i\'m very happy to have an existing provisionable windows vm to test with. but it certainly would be great if we have clear instructions on how to get things set up yourself.
+2016-11-11T15:40:44 <cindyli> i saw steven\'s email to the list about the double-clickable installer
+2016-11-11T15:41:25 <cindyli> hopefully it will become easier and easier to do it in the future
+2016-11-11T15:42:11 <cindyli> but i guess setting up a dev environment in different platforms would be a bit tricky
+2016-11-11T15:42:37 <amatas> cindyli, here you have the instructions to set up a fresh windows 10 vm for testing: https://github.com/GPII/windows#test-vm
+2016-11-11T15:43:05 <gloob> cindyli: well, execution != building
+2016-11-11T15:43:07 <amatas> and here they are the requirements: https://github.com/GPII/qi-development-environments/#requirements , may be a bit outdated
+2016-11-11T15:43:38 <cindyli> right, dev !== production
+2016-11-11T15:43:40 <gloob> cindyli: do you know where I can find that automatic tool?
+2016-11-11T15:44:08 <gloob> cindyli: I reviewed Steve\'s mail and I don\'t understand exactly how you can build with a double click a demo package yet
+2016-11-11T15:44:17 <gloob> cindyli: although for APCP is ACE
+2016-11-11T15:44:19 <cindyli> gloob: steve gives a link to his repo - https://github.com/GPII/gpii-packages/releases/tag/GPII_Demo_2016-11-05 but not sure where to find the executable
+2016-11-11T15:44:37 <gloob> for creating the environment in a fresh windows installation I recommend
+2016-11-11T15:44:57 <gloob> 1) follow the recipe in irdc devops group, I need to look for it
+2016-11-11T15:45:12 <gloob> 2) execute the scripts defined in the vagrantfile in the same order
+2016-11-11T15:45:13 <Bosmon2> gloob - all of us need 8.1 boxes, since 8.1 is definitely within scope for APCP
+2016-11-11T15:45:19 <Bosmon2> I think there seems to be a bit of a misunderstanding here
+2016-11-11T15:45:31 <Bosmon2> Since stegru is currently servicing JIRAs raised by kavya against Windows 8.1
+2016-11-11T15:45:51 <Bosmon2> Therefore this is part of our top-level support
+2016-11-11T15:46:21 * Bosmon2 is now known as Bosmon
+2016-11-11T15:47:38 <gloob> Bosmon: yes, that was my understanding one month ago and we tried to create a "squad group" to create as much vm we can but the focus drive to update existing ones
+2016-11-11T15:48:11 <Bosmon> Ok - if we don\'t have resources for the squad group, we should at least try to maintain an up-to-date list of human readable instructions
+2016-11-11T15:48:37 <Bosmon> Or help people to understand what scripts are run within vagrant that they can then reverse-engineer
+2016-11-11T15:49:40 <kavya> APCP core 1 testing is mainly focused on windows 10,but windows 8 and windows 8.1 are in the scope as well
+2016-11-11T15:49:46 <gloob> Bosmon: I agree, with second part, I think we need more information about how the vm internals creation work, in fact is somehow easy to explain (although not to maintain)
+2016-11-11T15:49:51 <kavya> it is good to have windows 7
+2016-11-11T15:50:00 <amatas> I\'m somewhat confuse, in the very latest meeting I\'ve attended it said that the firest APCP pilots will only run windows 10
+2016-11-11T15:50:03 <gloob> it is all here https://issues.gpii.net/browse/GPII-1762
+2016-11-11T15:50:09 <gloob> the order is the priority
+2016-11-11T15:50:22 <Bosmon> ok
+2016-11-11T15:50:26 <gloob> well, maybe we can drop to the bottom the 32 bits version
+2016-11-11T15:50:37 <gloob> I\'m going to do that
+2016-11-11T15:50:45 <gloob> are you all ok with that?
+2016-11-11T15:50:54 <Bosmon> Sure
+2016-11-11T15:51:07 <Bosmon> Well, the priority is for us to economise our development effort - and right now, there are at least 3 of us who have had to make Windows 8.1 boxes by ourselves
+2016-11-11T15:51:20 <Bosmon> stegru, cindyli, kavya and me
+2016-11-11T15:51:57 <gloob> well, we all create one! :D
+2016-11-11T15:52:45 <Bosmon> gloob - so - your new provisioning scripts like https://github.com/GPII/windows/blob/master/provisioning/Provisioning.psm1
+2016-11-11T15:52:54 <Bosmon> Do these make sense to execute outside the context of vagrant?
+2016-11-11T15:53:14 * michelled joined the channel
+2016-11-11T15:54:04 <gloob> yes
+2016-11-11T15:54:07 <jhernandez> Bosmon: put me on that win81 list, I have a Vagrantfile for it and used a pretty simple image of win81 that alfredo shared with me
+2016-11-11T15:54:14 <gloob> but you need to follow the vagrantfile order
+2016-11-11T15:54:29 <gloob> https://github.com/GPII/windows/blob/master/Vagrantfile#L43
+2016-11-11T15:54:36 <gloob> In fact
+2016-11-11T15:54:39 <gloob> when creating that
+2016-11-11T15:54:58 <gloob> I was thinking that it doesn\'t make sense to have in separate scripts and create a big new one that you just launch
+2016-11-11T15:55:01 <gloob> BUT
+2016-11-11T15:55:07 <gloob> before launching this scripts you need to:
+2016-11-11T15:55:19 <gloob> 1) launch the provisioning of the vm scripts that are located
+2016-11-11T15:55:23 <Bosmon> ok
+2016-11-11T15:55:43 <gloob> https://github.com/idi-ops/packer-windows/blob/master/windows_10.json#L21
+2016-11-11T15:55:43 <gloob> here
+2016-11-11T15:55:50 <Bosmon> Is this line here everything that is responsible for installing the ms build tools? https://github.com/GPII/windows/blob/master/provisioning/Chocolatey.ps1#L35
+2016-11-11T15:55:51 <gloob> it\'s a two steps process
+2016-11-11T15:56:24 <gloob> and this one https://github.com/idi-ops/packer-windows/blob/master/scripts/chocolatey-packages.bat#L12
+2016-11-11T15:56:26 <Bosmon> floppy_files!
+2016-11-11T15:56:27 <gloob> and next one
+2016-11-11T15:56:43 <kavya> amatas:My understanding is..Yes,APCP pilots will run on windows 10 so it is top priority and testing is done in windows 8 and 8.1 as well to support Hardware sensitivity testing
+2016-11-11T15:57:00 <gloob> yes, I think we all agree that we need them
+2016-11-11T15:59:31 <jhernandez> then I guess that from this conversation (I haven\'t read all of it) there are 2 things: 1) we must update our build instructions (nuke the instructions on the wiki page and make sure that instructions live in each repo\'s README) and 2) create vagrant boxes for win81 and win8 for developers that want to have a dev environment easily
+2016-11-11T15:59:35 <jhernandez> is that correct?
+2016-11-11T15:59:49 <Bosmon> jhernandez - yes
+2016-11-11T16:00:10 <gloob> and 3) create a document explaining the vm build and provisioning process
+2016-11-11T16:00:22 <Bosmon> I hacked at the build instructions a little, just to remove obviously incorrect stuff and add a warning note that they are out of date
+2016-11-11T16:00:23 <gloob> jhernandez: I think it is worth to create an issue with that
+2016-11-11T16:01:02 <Bosmon> But unfortunately I\'m unable to explain how to create a new machine either
+2016-11-11T16:01:14 <gloob> 2) is linked with https://issues.gpii.net/browse/GPII-1762
+2016-11-11T16:01:23 <gloob> I can get 3
+2016-11-11T16:01:34 <Bosmon> I posted to the arch list a few months ago with some of my discoveries about how to install less stuff, and gtirloni responded saying "Yes, we know all that, that\'s what we do in vagrant now"
+2016-11-11T16:01:44 <gloob> hehe
+2016-11-11T16:01:51 <gloob> do you have a link?
+2016-11-11T16:01:54 <Bosmon> But unfortunately this information has still not disseminated in a way that "an average dev" can use
+2016-11-11T16:01:55 <gloob> I remember the initial mail
+2016-11-11T16:02:35 <jhernandez> Bosmon, gloob: okay, I\'ll JIRA the "update build instructions" thing
+2016-11-11T16:02:53 <gloob> jhernandez: I will create 3rd item then
+2016-11-11T16:02:58 <gloob> GOOD
+2016-11-11T16:03:01 <gloob> time for lunch
+2016-11-11T16:03:24 * stegru has quit
+2016-11-11T16:03:32 <Bosmon> gloob - here it is: http://lists.gpii.net/pipermail/architecture/2016-July/004224.html
+2016-11-11T16:04:56 <gloob> Bosmon: ah I see, yes, I don\'t know if that could collide with the needed tools for the installer creation, a worth to check probably
+2016-11-11T16:07:58 * alanharnum has quit
+2016-11-11T16:11:46 <Bosmon> Well, all I can say is, it\'s magnificent that we have this channel here where we can all get together
+2016-11-11T16:12:13 * alanharnum joined the channel
+2016-11-11T16:18:19 <amatas> Bosmon, gloob : here you have the scripts that the builder run inside the windows 10 vagrant box https://github.com/idi-ops/packer-windows/tree/master/scripts , the order of execution is here: https://github.com/idi-ops/packer-windows/blob/master/windows_10.json#L65-L68
+2016-11-11T16:19:11 * alanharn_ joined the channel
+2016-11-11T16:20:04 * clown1 joined the channel
+2016-11-11T16:20:13 * lliskovoi_ joined the channel
+2016-11-11T16:20:45 * michelled1 joined the channel
+2016-11-11T16:21:54 * lliskovoi has quit
+2016-11-11T16:21:55 * lliskovoi_ is now known as lliskovoi
+2016-11-11T16:22:29 * michelled has quit
+2016-11-11T16:22:29 * clown has quit
+2016-11-11T16:25:30 <gloob> Bosmon: glorious!
+2016-11-11T16:29:02 <cindyli> gloob, amatas, jhernandez, running "vagrant up" within gpii/windows repo on my mac os 10.11.6 ended up with this error: http://pastebin.com/TW0w5wnp
+2016-11-11T16:30:04 <cindyli> before and after i upgraded to vagrant 1.8.7 and vbox 5.0.28
+2016-11-11T16:30:53 <cindyli> after the upgrade, i ran "vagrant destroy -f" then "vagrant up" to make sure the re-provisioning will happen
+2016-11-11T16:30:56 <jhernandez> cindyli: weird, looks like chocolatey couldn\'t find node\'s 6.9.1 version
+2016-11-11T16:31:02 * alanharn_ has quit
+2016-11-11T16:31:12 <cindyli> jhernandez: anything i could do at my end?
+2016-11-11T16:31:55 <gloob> cindyli: let me check
+2016-11-11T16:32:31 <amatas> gloob, it seems that there is a typo, --version instead "-version"
+2016-11-11T16:32:48 <amatas> https://github.com/GPII/windows/blob/master/provisioning/Chocolatey.ps1#L10
+2016-11-11T16:33:01 <gloob> seems so, yes
+2016-11-11T16:33:01 <Bosmon> Well, that\'s funny
+2016-11-11T16:33:08 <Bosmon> How come this typo has not resulted in a failure before?
+2016-11-11T16:33:10 <jhernandez> mm, not sure, I would start over again - actually it\'s working here VirtualBox 5.0.18_SUSE r106667 and vagrant 1.8.1
+2016-11-11T16:33:12 <gloob> and why is happening to her?
+2016-11-11T16:33:14 <jhernandez> Bosmon: exactly
+2016-11-11T16:33:20 <gloob> and why it was not happening
+2016-11-11T16:33:20 <amatas> Bosmon very good question
+2016-11-11T16:33:35 <gloob> cindyli: is it a custom virtualbox?
+'
+
+b'2016-11-11T00:15:05 * colinclark has quit
+2016-11-11T00:21:05 * alanharnum joined the channel
+2016-11-11T00:25:35 * alanharnum has quit
+2016-11-11T00:34:40 * kavya has quit
+2016-11-11T00:35:48 * colinclark joined the channel
+2016-11-11T00:58:55 * cindyli joined the channel
+2016-11-11T00:59:11 * cindyli has quit
+2016-11-11T01:18:45 * lliskovoi has quit
+2016-11-11T01:23:07 * alanharnum joined the channel
+2016-11-11T01:27:44 * alanharnum has quit
+2016-11-11T01:42:07 * lliskovoi joined the channel
+2016-11-11T02:07:55 * yzen joined the channel
+2016-11-11T02:12:30 * yzen has quit
+2016-11-11T02:16:24 * lliskovoi has quit
+2016-11-11T02:25:09 * alanharnum joined the channel
+2016-11-11T02:29:32 * alanharnum has quit
+2016-11-11T04:03:53 * michelled joined the channel
+2016-11-11T04:18:31 * michelled has quit
+2016-11-11T04:19:34 * michelled joined the channel
+2016-11-11T04:27:18 * alanharnum joined the channel
+2016-11-11T04:32:01 * alanharnum has quit
+2016-11-11T04:36:01 * michelled joined the channel
+2016-11-11T04:45:56 * yzen joined the channel
+2016-11-11T05:29:23 * alanharnum joined the channel
+2016-11-11T05:34:30 * alanharnum has quit
+2016-11-11T05:44:29 * yzen is now known as yzen_
+2016-11-11T05:49:44 * yzen_ has quit
+2016-11-11T06:32:30 * alanharnum joined the channel
+2016-11-11T06:37:26 * alanharnum has quit
+2016-11-11T07:29:05 * amatas joined the channel
+2016-11-11T07:34:10 * alanharnum joined the channel
+2016-11-11T07:37:17 * the-t-in-rtf joined the channel
+2016-11-11T07:38:34 * alanharnum has quit
+2016-11-11T08:36:19 * alanharnum joined the channel
+2016-11-11T08:37:12 * stegru joined the channel
+2016-11-11T08:41:00 * alanharnum has quit
+2016-11-11T08:54:52 * the-t-in-rtf has quit
+2016-11-11T09:38:19 * alanharnum joined the channel
+2016-11-11T09:43:05 * alanharnum has quit
+2016-11-11T10:40:23 * alanharnum joined the channel
+2016-11-11T11:37:07 * amatas has quit
+2016-11-11T11:42:24 * alanharnum joined the channel
+2016-11-11T11:47:13 * alanharnum has quit
+2016-11-11T11:48:18 * the-t-in-rtf joined the channel
+2016-11-11T12:14:38 * Justin_o joined the channel
+2016-11-11T12:55:10 * yzen joined the channel
+2016-11-11T13:09:39 * the-t-in-rtf has quit
+2016-11-11T13:17:13 * the-t-in-rtf joined the channel
+2016-11-11T13:20:13 * jhung joined the channel
+2016-11-11T13:25:48 * michelled joined the channel
+2016-11-11T13:44:01 * alanharnum joined the channel
+2016-11-11T13:49:13 * alanharnum has quit
+2016-11-11T13:51:26 * cindyli joined the channel
+2016-11-11T14:04:46 <Bosmon2> cindyli - so your latest commit to https://github.com/GPII/universal/pull/464 is very peculiar
+2016-11-11T14:05:14 <Bosmon2> Since if the grade linkage record is not required, this suggests that the entirety of the grade gpii.dataSource.pouchDB.writable is also not required
+2016-11-11T14:09:27 <Bosmon2> Urgh
+2016-11-11T14:09:29 <Bosmon2> I see it all now :(
+2016-11-11T14:09:55 <Bosmon2> dataSource has two completely parallel systems for mixin grades and "core grades"
+2016-11-11T14:24:27 <cindyli> Bosmon2: i now have a better understanding on the route using writable and readOnlyGrade options which trigger getWritableGrade(), but still not quite sure when/how the grade linkage kicks in
+2016-11-11T14:26:34 * alanharnum joined the channel
+2016-11-11T14:31:42 <cindyli> Bosmon2, Bosmon5, is our windows installation instruction for GPII is up to date - https://wiki.gpii.net/w/Setting_Up_Your_Development_Environment#Windows_Installation_Instructions? one thing that\'s no longer valid is the build step: grunt build, the Gruntfile.js in the windows repo no longer has "build" step defined
+2016-11-11T14:34:03 <cindyli> anyway, i followed all other instructions to set up my windows 8 VM. running AcceptanceTests.js with the master branch throws this error:
+2016-11-11T14:35:19 <cindyli> fatal error: uncaught exception: could not locate bindings files, tried:
+2016-11-11T14:35:40 <cindyli> C:\\gpii\\windows\
+ode_modules\\ref\\build\\bindings.node
+2016-11-11T14:35:41 <cindyli> ..
+2016-11-11T14:35:49 <cindyli> does this error look familiar to you?
+2016-11-11T14:39:56 <Bosmon2> cindyli - yes
+2016-11-11T14:40:18 <Bosmon2> That is what happens when you run npm install on the outside of the VM rather than the inside
+2016-11-11T14:40:35 <Bosmon2> Oh sorry, I see vagrant isn\'t involved here
+2016-11-11T14:41:10 <Bosmon2> These instructions are horrifically out of date
+2016-11-11T14:41:25 <cindyli> ya, no vagrant. i didn\'t run npm install, i ran "npm install --ignore-scripts=true" on the instruction
+2016-11-11T14:41:34 <cindyli> ah ok
+2016-11-11T14:41:34 <Bosmon2> No, one never does that any more
+2016-11-11T14:41:46 <cindyli> :\'(
+2016-11-11T14:45:31 <cindyli> Bosmon2: what\'s the correct steps? only to run "npm install"? do python and VisualStudio need to be installed? i\'ve got them installed. hope i don\'t need to uninstall them
+2016-11-11T14:48:40 * michelled has quit
+2016-11-11T14:48:45 <Bosmon2> cindyli - I\'ve tried to update the instructions a little
+2016-11-11T14:48:50 <Bosmon2> WIth my best understanding of what is involved
+2016-11-11T14:49:03 <Bosmon2> And also added a warning that these instructions are unmaintained and not to be depended on
+2016-11-11T14:49:03 <cindyli> thanks, Bosmon2. looking at it now
+2016-11-11T14:49:36 <Bosmon2> To be honest, I suspect that only someone like gtirloni or amatas really understands what the correct instructions are, since they rely on being able to understand the contents of the vagrant provisioning files
+2016-11-11T14:49:45 <Bosmon2> Yes, Python 2.x and Visual Studio must absolutely be installed
+2016-11-11T14:49:59 <Bosmon2> And yes, simply "npm install" should be sufficient to build the GPII itself
+2016-11-11T14:49:59 <cindyli> ok. good to know
+2016-11-11T14:50:18 <Bosmon2> There are various other things that the Vagrant provisioning scripts do in order to build other things, like the user listeners
+2016-11-11T14:50:25 <Bosmon2> I don\'t understand how they work
+2016-11-11T14:50:41 <Bosmon2> I guess we should have a topic session at the next arch meeting about this
+2016-11-11T14:50:43 <cindyli> running "npm install" on my VM fails at the step of "node-gyp rebuild"
+2016-11-11T14:51:19 <cindyli> it complains: the windows SDK version 8.1 was not found
+2016-11-11T14:51:35 <cindyli> but the directory for SDK 8.1 IS there
+2016-11-11T14:52:49 <cindyli> ya, would be great to have this discussed. it\'s quite time consuming to figure out what cause these different errors
+2016-11-11T14:53:10 <cindyli> will keep digging
+2016-11-11T14:56:31 * simonjb joined the channel
+2016-11-11T14:59:29 <jhernandez> cindyli: as Bosmon2 said, the instructions on the wiki are not correct so I would definitely follow the provisioning steps
+2016-11-11T15:00:26 <jhernandez> re "it complains: the windows SDK version 8.1 was not found but the directory for SDK 8.1 IS there" I guess that probably you need to update the paths in the system as the provisioning scripts do, have you tried it?
+2016-11-11T15:01:30 <cindyli> not yet, but will try, need to re-find where that path is
+2016-11-11T15:02:41 <cindyli> jhernandez: where are the provisioning steps? can i find it in some vagrant related repo? i\'m setting up a pre-installed VM without using vagrant
+2016-11-11T15:03:07 <cindyli> oh, probably there is a windows vagrant file i can download?
+2016-11-11T15:03:14 <jhernandez> https://github.com/GPII/windows/blob/master/Vagrantfile
+2016-11-11T15:03:24 <jhernandez> there you\'ll find the provisioning process
+2016-11-11T15:03:50 <jhernandez> all the provisoning scripts live at https://github.com/GPII/windows/tree/master/provisioning
+2016-11-11T15:04:23 <cindyli> thanks, jhernandez, so if i use "vagrant up" in the windows repo, the VM will be downloaded and provisioned
+2016-11-11T15:04:37 <cindyli> trying..
+2016-11-11T15:05:23 <jhernandez> cindyli: exactly
+2016-11-11T15:05:47 <cindyli> thanks, jhernandez
+2016-11-11T15:07:54 <gloob> cindyli: with vagrant up you mimick the same process that is happening in jenkins for every new commit into a new PR
+2016-11-11T15:08:01 <Justin_o> cindyli: i\'ve updated my PR https://github.com/fluid-project/infusion/pull/783, it\'s ready for more review when you have a chance
+2016-11-11T15:08:13 <gloob> so, if it works in the Jenkins it should work in your vagrant installation
+2016-11-11T15:08:14 <gloob> BUT
+2016-11-11T15:08:39 <gloob> there\'s some side things to take into account, because vagrant configuration is not the same in jenkins than in the developer machine
+2016-11-11T15:08:53 * amatas joined the channel
+2016-11-11T15:09:04 <gloob> BUT 80% of the time should be pretty similar
+2016-11-11T15:09:24 <cindyli> what are those? does the OS used by the host machine matter? I have mac os
+2016-11-11T15:09:58 <gloob> well, it is matter but not so much
+2016-11-11T15:10:05 <gloob> currently vagrant and virtualbox versions are key
+2016-11-11T15:10:11 <gloob> you should have installed the recommended ones
+2016-11-11T15:10:51 <cindyli> where can i find the recommended ones, gloob?
+2016-11-11T15:10:54 <gloob> the differences between jenkins and the developer setup is based on jenkins "things" like headless and that kind of things
+2016-11-11T15:10:59 <cindyli> sure, Justin_o, will have a look soon
+2016-11-11T15:11:03 <gloob> cindyli: that\'s a good question, should be in the readme
+2016-11-11T15:11:07 <cindyli> ok
+2016-11-11T15:11:17 <gloob> if not, it should be a good PR
+2016-11-11T15:11:19 <gloob> let me check
+2016-11-11T15:12:26 <cindyli> umm.. seems not in readme
+2016-11-11T15:13:34 <gloob> https://issues.gpii.net/browse/GPII-2079
+2016-11-11T15:13:35 <gloob> no
+2016-11-11T15:13:47 <gloob> it is not in the README
+2016-11-11T15:14:21 <gloob> vbox 5.0.28
+2016-11-11T15:15:18 <amatas> vbox 5.0.28 and vagrant 1.8.7 should be fine
+2016-11-11T15:15:30 <cindyli> cool. thanks, gloob. my vbox is 5.0.14. needs an upgrade. i\'ve already spinned up the windows vagrant. will try it first before the upgrade
+2016-11-11T15:15:50 <gloob> \xe2\x9e\x9c  ~ vagrant --version
+2016-11-11T15:15:51 <gloob> Vagrant 1.8.6
+2016-11-11T15:15:59 <gloob> vagrant could be last version, yes
+2016-11-11T15:16:05 <cindyli> thanks
+2016-11-11T15:16:13 <gloob> we have problems with vbox 5.1 branch
+2016-11-11T15:16:25 <gloob> np
+2016-11-11T15:16:42 <amatas> anyway it seems that vbox 5.1 has fixed some bug that affected us, so we are checking if 5.1 is enough stable to be used by everybody
+2016-11-11T15:17:05 <gloob> is that reported somewhere?
+2016-11-11T15:17:10 <gloob> the progress I mean
+2016-11-11T15:17:33 <amatas> the progress of what?, virtualbox 5.1 branch?
+2016-11-11T15:17:42 <gloob> yes
+2016-11-11T15:17:47 * lliskovoi joined the channel
+2016-11-11T15:18:21 <amatas> sadly the Virtualbox\'s changelog is not so descriptive of all the changes that they make.
+2016-11-11T15:18:23 <amatas> let me check
+2016-11-11T15:18:50 <amatas> https://www.virtualbox.org/wiki/Changelog here you can find the most important changes
+2016-11-11T15:18:54 * clown joined the channel
+2016-11-11T15:19:08 <amatas> "Windows Additions: fixed a generic bug which could lead to freezing shared folders (bug #15662)"
+2016-11-11T15:20:03 <gloob> ah, ok, I meant with reference to gpii integration
+2016-11-11T15:20:06 <gloob> any issue?
+2016-11-11T15:20:10 <gloob> to watch it
+'
+

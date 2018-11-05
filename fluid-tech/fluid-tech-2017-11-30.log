@@ -1,0 +1,147 @@
+b'2017-11-30T00:42:56 * mrtyler joined the channel
+2017-11-30T01:48:24 * michelled joined the channel
+2017-11-30T08:41:13 * kasparnet joined the channel
+2017-11-30T09:27:54 * amatas joined the channel
+2017-11-30T09:39:12 * -- BotBot disconnected, possible missing messages --
+2017-11-30T09:39:12 * -- BotBot disconnected, possible missing messages --
+2017-11-30T09:41:50 * [o__o] joined the channel
+2017-11-30T09:59:19 * the-t-in-rtf1 joined the channel
+2017-11-30T10:06:44 * gtirloni joined the channel
+2017-11-30T10:09:57 * the-t-in-rtf has quit
+2017-11-30T10:55:26 * kasparnet joined the channel
+2017-11-30T11:12:42 * amatas_ joined the channel
+2017-11-30T11:12:49 * amatas_ has quit
+2017-11-30T11:14:22 * javjarfer[m] has quit
+2017-11-30T11:14:26 * gloob has quit
+2017-11-30T11:25:28 * amatas_ joined the channel
+2017-11-30T11:32:14 * stegru joined the channel
+2017-11-30T12:04:51 * Justin_o joined the channel
+2017-11-30T12:26:58 * gloob joined the channel
+2017-11-30T12:41:03 * javjarfer[m] joined the channel
+2017-11-30T13:20:40 * stegru has quit
+2017-11-30T13:22:23 * stegru joined the channel
+2017-11-30T13:23:37 * grrrero joined the channel
+2017-11-30T13:27:37 * stegru has quit
+2017-11-30T13:31:14 * stegru joined the channel
+2017-11-30T13:32:06 * alanharnum joined the channel
+2017-11-30T13:36:41 * cindyli joined the channel
+2017-11-30T13:43:37 * Jess_ joined the channel
+2017-11-30T14:19:51 * simonjb joined the channel
+2017-11-30T14:36:22 * mrtyler joined the channel
+2017-11-30T14:39:28 * kasparnet has quit
+2017-11-30T14:58:13 * kasparnet joined the channel
+2017-11-30T15:05:15 * colinclark joined the channel
+2017-11-30T15:28:03 * Jess__ joined the channel
+2017-11-30T15:28:45 * Jess_ has quit
+2017-11-30T15:28:46 * Jess__ is now known as Jess_
+2017-11-30T15:42:03 * michelled joined the channel
+2017-11-30T16:20:36 <mrtyler> amatas: separate question for you
+2017-11-30T16:21:03 <mrtyler> yesterday we talked about COUCHDB_PASSWORD being unstable / non idempotent
+2017-11-30T16:21:15 <mrtyler> i hacked the rakefile to just use a static password instead for now
+2017-11-30T16:21:30 <mrtyler> but if i\'m reading this correctly, the couchdb password is only set during initial cluster creation
+2017-11-30T16:21:35 <mrtyler> which is probably how it has to be
+2017-11-30T16:21:55 <mrtyler> how do we recover from this situation, where existing couchdb clusters have an old password set that we no longer have?
+2017-11-30T16:22:14 <mrtyler> i think we need to destroy the couchdb volumes and start over
+2017-11-30T16:22:29 <mrtyler> am i missing a simpler / less disruptive solution?
+2017-11-30T16:22:55 <amatas_> the problem raises when we use an already created database with an old password
+2017-11-30T16:23:31 <amatas_> and we spin up a new cluster on top of that data
+2017-11-30T16:24:51 <amatas_> perhaps the couchdb credentials should be a string based on the environment. Perhaps for a dev environment the password could be random generated, but in the case of stg,prd we should set a fixed secret
+2017-11-30T16:27:33 <amatas_> mrtyler: perhaps this could be a task for our Vault cluster?
+2017-11-30T16:28:15 <mrtyler> vault likely helps with this in the future
+2017-11-30T16:29:39 <mrtyler> the problem isn\'t how the password is generated
+2017-11-30T16:29:54 <mrtyler> the immediate problem is that the generated passwords *changes* from run to run
+2017-11-30T16:30:07 <mrtyler> actually that\'s the underlying problem
+2017-11-30T16:30:21 <mrtyler> the immediate problem is we have couchdbs running in various enviornments for which we no longer have the passwords
+2017-11-30T16:30:33 <mrtyler> i want to recover from the immediate problem first
+2017-11-30T16:30:46 <mrtyler> then we can talk about the underlying problem
+2017-11-30T16:43:38 <mrtyler> amatas_: any ideas? otherwise i\'ll destroy a bunch of stuff today i guess :)
+2017-11-30T16:44:18 <amatas_> well, the passwords are stored at env variables
+2017-11-30T16:44:45 <amatas_> you can recover them from the env variables of the dataloader job, for example
+2017-11-30T16:45:58 <amatas_> I\'m still thinking on how to solve this problem
+2017-11-30T16:46:09 <mrtyler> i was going to say that the original env vars are gone, having been replaced upon the next deploy
+2017-11-30T16:46:21 <mrtyler> but since dataloader job can\'t be reconfigured, it may still have the old tokens
+2017-11-30T16:46:28 <amatas_> :\'(
+2017-11-30T16:46:30 <mrtyler> however, let\'s say i get the old password for the stg couchdb
+2017-11-30T16:46:44 <mrtyler> then what do i do? hardcode the password for each environment in the manifests?
+2017-11-30T16:46:58 <mrtyler> manually update the old password to some new password for each existing couchdb cluster?
+2017-11-30T16:48:17 <mrtyler> did you get a chance to look at any of this today?
+2017-11-30T16:48:23 <amatas_> only to have it clear, all those variables are public, aren\'t they?
+2017-11-30T16:48:36 <amatas_> I\'m on this right now
+2017-11-30T16:48:41 <mrtyler> what do you mean by "public"?
+2017-11-30T16:48:45 <amatas_> git repository
+2017-11-30T16:48:49 <amatas_> github
+2017-11-30T16:48:56 <mrtyler> the generated passwords are not in git since they are generated, ofc
+2017-11-30T16:49:04 <mrtyler> my current hack is to hardcode them into git, yes
+2017-11-30T16:49:37 <mrtyler> i believe the only alternative we discussed was disabling the password entirely, which is fine but not better than a hardcoded password in a git repo :)
+2017-11-30T16:50:42 <amatas_> disable passwords will put couchdb in "admin party mode" with is not good
+2017-11-30T16:52:21 * avtar joined the channel
+2017-11-30T16:52:28 <amatas_> mrtyler: I\'m thinking on storing those kind of strings in a vault file, which uses a string to decript the data. That string can be configured in the CI to avoid to be exposed to the public
+2017-11-30T16:54:57 <mrtyler> amatas_: let\'s focus on the immediate problem
+2017-11-30T16:55:26 <mrtyler> also integrating with vault seems very out of scope to me right now
+2017-11-30T16:58:50 <amatas_> mrtyler: I think I have a possible simple solution for prd and stg and all the deployments made by the CI
+2017-11-30T16:59:03 <mrtyler> great
+2017-11-30T16:59:51 <amatas_> the main idea is to avoid the use of a random password if a environment variable with the password exists
+2017-11-30T17:00:29 <mrtyler> additional note: this conversation may be somewhat academic, as i think i need to destroy and re-create all the couchdb volumes *anyway* to do GPII-2718
+2017-11-30T17:00:29 <amatas_> the env variable can be set by us at our terminal for our own deployments, and in the case of the CI it can be set at the CI config
+2017-11-30T17:01:10 <mrtyler> so i have to remember to set COUCHDB_PASSWORD before i run rake? or what?
+2017-11-30T17:01:12 <amatas_> yes, sorry, if the password was changed, the only way to proceed is to destroy the volume
+2017-11-30T17:01:23 <mrtyler> ok, i will plan to do that today
+2017-11-30T17:01:34 <mrtyler> unless you would like to
+2017-11-30T17:01:48 <mrtyler> actually never mind, i\'ll do it with the other work. makes more sense that way
+2017-11-30T17:02:55 * clown joined the channel
+2017-11-30T17:03:37 <amatas_> mrtyler: yes, if you want to use a particular couchdb password you must set the env variable first
+2017-11-30T17:03:50 <mrtyler> i don\'t like it
+2017-11-30T17:04:44 <amatas_> do you feel more confortable if we read the password from a file that is not part of the git repository?
+2017-11-30T17:05:07 <mrtyler> hmm
+2017-11-30T17:05:17 <mrtyler> i want the system to be automatic for all users
+2017-11-30T17:05:28 <mrtyler> i.e. i like the idea of generated passwords
+2017-11-30T17:05:38 <mrtyler> we just need to... not overwrite them somehow
+2017-11-30T17:05:47 <mrtyler> which may not really be possible with the current setup
+2017-11-30T17:05:48 <amatas_> the system will still generating random passwords if the previous conditions don\'t met
+2017-11-30T17:06:02 <mrtyler> then how does this solve the current problem?
+2017-11-30T17:06:28 <amatas_> I mean the password could be set in that order: file in filesystem, env variable, random string
+2017-11-30T17:06:48 <amatas_> the file in filesystem can be useful for the development machine, where you have your particular password
+2017-11-30T17:07:12 <amatas_> the env variable is useful for the CI where the password is in the configuration of the repository (CI section)
+2017-11-30T17:07:50 <ussjoin> Vault could indeed handle this--and it\'s ready for use.
+2017-11-30T17:07:50 <amatas_> and the random password in the rest of scenarios where the data in the cluster doesn\'t matters
+2017-11-30T17:08:13 <ussjoin> ANd you don\'t have to decrypt stuff in Vault, if that\'s what you meant (I was confused from your comments above, amatas_).
+2017-11-30T17:08:23 * alanharnum has quit
+2017-11-30T17:09:00 <amatas_> ussjoin: I meant a vault file, is an encripted file with plain strings in it.
+2017-11-30T17:09:28 <ussjoin> Gotcha. But then you have the key distribution problem again. :-)
+2017-11-30T17:09:45 <amatas_> ussjoin: like the ansible-vault
+2017-11-30T17:10:04 <amatas_> but the key is a secret that we have in our private machines
+2017-11-30T17:10:14 <amatas_> and only in the CI
+2017-11-30T17:10:24 <ussjoin> I see. So again, though, we have a solution for this ready to go for anything in AWS.
+2017-11-30T17:12:09 * alanharnum joined the channel
+2017-11-30T17:12:22 <ussjoin> And then you wouldn\'t have to deal with key distribution; once you have the Vault token, a curl (or any of umpteen client libraries, or the vault cli tool) will get you what you need.
+2017-11-30T17:14:23 <ussjoin> One can also do an encrypted blob stored on the machine and then use KMS to decrypt (and lock the KMS key to an IAM instance profile). That\'s what I did to bootstrap Vault (since you can\'t store Vault\'s launch secrets in Vault without a YoDawg-compliant deployment strategy). It\'s just harder, and easier to have obnoxious errors to debug.
+2017-11-30T17:18:39 * kasparnet has quit
+2017-11-30T17:18:53 <amatas_> thanks ussjoin
+2017-11-30T17:43:41 * avtar joined the channel
+2017-11-30T17:45:21 * clown has quit
+2017-11-30T17:45:48 * clown joined the channel
+2017-11-30T17:59:43 * Jess__ joined the channel
+2017-11-30T18:50:54 * cindyli joined the channel
+2017-11-30T18:52:04 * alanharnum2 joined the channel
+2017-11-30T19:30:49 * colinclark has quit
+2017-11-30T19:31:25 * colinclark joined the channel
+2017-11-30T19:38:32 * gtirloni has quit
+2017-11-30T19:40:51 * amatas_ has quit
+2017-11-30T20:20:48 * mrtyler joined the channel
+2017-11-30T20:29:51 * stegru has quit
+2017-11-30T21:11:03 * amatas has quit
+2017-11-30T21:20:51 * cindyli has quit
+2017-11-30T21:49:16 * stegru joined the channel
+2017-11-30T22:05:46 * clown has quit
+2017-11-30T22:17:06 * mrtyler has quit
+2017-11-30T22:19:07 * mrtyler joined the channel
+2017-11-30T22:21:22 <alanharnum> so (mostly because colinclark and I have been talking about this) my Google Home Mini arrived (they slashed the price 60% due to entry of Amazon Echo to Canada and I grabbed one for research purposes)
+2017-11-30T22:21:30 <alanharnum> it is a bit uncanny
+2017-11-30T22:22:10 <alanharnum> very good at recognizing "play this song by this band"
+2017-11-30T22:24:23 <alanharnum> and answering the kinds of questions you get directly in search results in via Google now
+2017-11-30T22:29:02 <alanharnum> I can definitely see a lot of potential AT applications for this. and scary surveillance things.
+2017-11-30T22:29:43 * michelled has quit
+2017-11-30T23:03:28 * grrrero has quit
+2017-11-30T23:10:53 * alanharnum has quit
+'
+

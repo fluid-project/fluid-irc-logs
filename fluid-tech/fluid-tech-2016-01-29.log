@@ -1,0 +1,213 @@
+b'2016-01-29T19:33:06 * colinclark joined the channel
+2016-01-29T19:48:16 * simonjb joined the channel
+2016-01-29T20:41:59 <cindyli> hi Bosmon
+2016-01-29T20:43:37 <cindyli> there\'s an interesting thing with "distributeOptions" target: https://github.com/cindyli/universal/blob/GPII-1521/gpii/node_modules/preferencesServer/src/preferencesServer.js#L105
+2016-01-29T20:44:35 <cindyli> this commented line is the initial target form I used for running cloudBased.development config - https://github.com/cindyli/universal/blob/GPII-1521/gpii/configs/cloudBased.development.all.local.json#L5-L18
+2016-01-29T20:45:07 <cindyli> where an in memory data store is constructed and distributed down to the preferences server
+2016-01-29T20:45:57 <Bosmon> Hi cindyli
+2016-01-29T20:46:09 <cindyli> this data store will continue to be passed down by the distributeOptions block at line 105
+2016-01-29T20:46:17 <cindyli> things work fine.
+2016-01-29T20:46:33 <cindyli> however, if i ran preference server by itself, without the flow manager
+2016-01-29T20:47:04 <cindyli> in that case, the distributeOptions block at line 105 should pass down the data store that\'s created at line 96
+2016-01-29T20:47:34 <cindyli> this distribution doesn\'t work, meaning the target didn\'t receive the in memory data store
+2016-01-29T20:47:38 * Justin_o has quit
+2016-01-29T20:47:42 <Bosmon> cindyli - yes, that\'s right
+2016-01-29T20:47:44 <cindyli> so, i changed the line 105 to 106
+2016-01-29T20:47:46 <cindyli> why?
+2016-01-29T20:47:49 <Bosmon> You can\'t advise components "that are not there"
+2016-01-29T20:47:56 <cindyli> ah
+2016-01-29T20:47:59 <Bosmon> A component which is injected wholesale has already been constructed elsewhere
+2016-01-29T20:48:10 <Bosmon> So it will ignore any distributions that are targetted at its injected location
+2016-01-29T20:48:18 <cindyli> you mean "authorizationService" hasn\'t been constructed at the time?
+2016-01-29T20:48:33 <Bosmon> cindyli - I\'m referring to the top-level configs
+2016-01-29T20:48:47 <Bosmon> https://github.com/cindyli/universal/blob/GPII-1521/gpii/configs/cloudBased.development.all.local.json#L15
+2016-01-29T20:48:51 <Bosmon> So for this distribution
+2016-01-29T20:48:57 <Bosmon> You are distributing a fully-constructed component
+2016-01-29T20:49:06 <Bosmon> So you can\'t expect to reconfigure it after it has been injected
+2016-01-29T20:49:25 <Bosmon> I *think* this is your question?
+2016-01-29T20:49:50 <Bosmon> Ah wait, I see.... you\'re still injecting the whole component
+2016-01-29T20:50:01 <cindyli> when i ran preference server standalone, i expected the data store would be fully constructed here: https://github.com/cindyli/universal/blob/GPII-1521/gpii/node_modules/preferencesServer/src/preferencesServer.js#L96-L98
+2016-01-29T20:50:09 <cindyli> yes
+2016-01-29T20:50:58 <Bosmon> Your distribution on line 105 is a bit crackers anyway
+2016-01-29T20:51:01 <cindyli> once i change the target from line 105 to 106, everything works
+2016-01-29T20:51:15 <Bosmon> The whole point of distributions is to get to the component in one step
+2016-01-29T20:51:16 <cindyli> why cracky
+2016-01-29T20:51:54 <Bosmon> Even the line 106 one is a little bit crackers
+2016-01-29T20:52:03 <cindyli> line 105 is to make it clear about the path to the target
+2016-01-29T20:52:18 <cindyli> so ppl don\'t need to figure out this is all for authGrantFinder
+2016-01-29T20:52:22 <Bosmon> http://lamecca786.com/wp-content/gallery/dry-goods-crackerscookies/Crackers-Cookies.jpg
+2016-01-29T20:52:39 <cindyli> the cookie looks awesome :)
+2016-01-29T20:53:24 <cindyli> what\'s wrong with 106?
+2016-01-29T20:53:34 <cindyli> and my question is, why 106 works but not 105?
+2016-01-29T20:53:52 <cindyli> also, why 105 works with cloudBased but not preferences server standalone?
+2016-01-29T20:54:45 <Bosmon> cindyli - also, we currently have https://issues.fluidproject.org/browse/FLUID-5614
+2016-01-29T20:55:02 <Bosmon> In general it is inadvisable to broadcast "deep trees" of options since they are quite likely to be lost during merging
+2016-01-29T20:55:20 <Bosmon> You should always right the "context part" of distributions so that they get directly to the component you want
+2016-01-29T20:56:26 <cindyli> ok. good to know
+2016-01-29T20:57:28 <cindyli> simonjb: in case you are interested, Bosmon\'s three lines above answer our question about the distributeOptions target
+2016-01-29T20:58:17 <simonjb> thanks cindyli
+2016-01-29T20:58:30 <cindyli> np. thanks to Bosmon ;)
+2016-01-29T20:59:45 <Bosmon> The 106 distribution more clearly expresses what you mean, anyway
+2016-01-29T20:59:58 <Bosmon> "Make sure that the authorizationService\'s dataStore, wherever it is, is the same as mine"
+2016-01-29T21:03:11 <Bosmon> I\'ll be resolving FLUID-5614 in the next big framework rewrite, but it\'s best in general not to produce options definitions deeper than you need
+2016-01-29T21:03:36 <cindyli> got it. thanks
+2016-01-29T21:04:22 <Bosmon> cindyli - could I get you to make a branch holding the line 105 version of the preferences server and add a reference to it to the FLUID-5614 JIRA?
+2016-01-29T21:04:31 <Bosmon> Also with instructions on how to see the failure
+2016-01-29T21:04:44 <cindyli> sure, Bosmon
+2016-01-29T21:04:48 <Bosmon> It will be useful to make sure this gets resolved at that time
+2016-01-29T21:53:51 * colinclark has quit
+2016-01-29T22:12:43 * Jess_ joined the channel
+'
+
+b'2016-01-29T03:37:18 * michelled joined the channel
+2016-01-29T07:00:31 * alanharnum joined the channel
+2016-01-29T07:02:37 * alanharn_ joined the channel
+2016-01-29T07:04:14 * alanharnum joined the channel
+2016-01-29T07:06:14 * alanharn_ joined the channel
+2016-01-29T07:07:53 * alanharnum joined the channel
+2016-01-29T07:09:44 * alanharn_ joined the channel
+2016-01-29T07:11:43 * alanharnum joined the channel
+2016-01-29T07:13:27 * alanharn_ joined the channel
+2016-01-29T07:15:26 * alanharnum joined the channel
+2016-01-29T07:17:09 * alanharn_ joined the channel
+2016-01-29T07:19:10 * alanharnum joined the channel
+2016-01-29T07:20:50 * alanharn_ joined the channel
+2016-01-29T07:22:50 * alanharnum joined the channel
+2016-01-29T07:24:29 * alanharn_ joined the channel
+2016-01-29T07:26:35 * alanharnum joined the channel
+2016-01-29T07:28:13 * alanharn_ joined the channel
+2016-01-29T07:30:03 * alanharn_ has quit
+2016-01-29T07:30:15 * alanharnum joined the channel
+2016-01-29T07:31:57 * alanharn_ joined the channel
+2016-01-29T07:31:57 * alanharnum has quit
+2016-01-29T07:34:03 * alanharnum joined the channel
+2016-01-29T07:34:03 * alanharn_ has quit
+2016-01-29T07:35:45 * alanharn_ joined the channel
+2016-01-29T07:37:35 * alanharnum joined the channel
+2016-01-29T07:39:30 * alanharn_ joined the channel
+2016-01-29T07:39:30 * alanharnum has quit
+2016-01-29T07:41:30 * alanharnum joined the channel
+2016-01-29T07:43:13 * alanharn_ joined the channel
+2016-01-29T07:43:14 * alanharnum has quit
+2016-01-29T07:45:03 * alanharnum joined the channel
+2016-01-29T07:46:35 * alanharnum has quit
+2016-01-29T07:47:09 * alanharnum joined the channel
+2016-01-29T07:48:59 * alanharn_ joined the channel
+2016-01-29T07:50:52 * alanharn_ has quit
+2016-01-29T07:50:52 * alanharnum joined the channel
+2016-01-29T07:52:32 * alanharn_ joined the channel
+2016-01-29T07:54:33 * alanharnum joined the channel
+2016-01-29T07:56:12 * alanharn_ joined the channel
+2016-01-29T07:56:12 * alanharnum has quit
+2016-01-29T07:58:13 * alanharnum joined the channel
+2016-01-29T07:59:57 * alanharn_ joined the channel
+2016-01-29T08:01:48 * alanharnum joined the channel
+2016-01-29T08:03:36 * alanharn_ joined the channel
+2016-01-29T08:05:38 * alanharnum joined the channel
+2016-01-29T08:07:21 * alanharn_ joined the channel
+2016-01-29T08:09:20 * alanharnum joined the channel
+2016-01-29T08:10:59 * alanharn_ joined the channel
+2016-01-29T08:13:05 * alanharnum joined the channel
+2016-01-29T08:14:43 * alanharn_ joined the channel
+2016-01-29T08:16:49 * alanharnum joined the channel
+2016-01-29T08:18:37 * alanharn_ joined the channel
+2016-01-29T08:20:21 * alanharnum joined the channel
+2016-01-29T08:22:21 * alanharn_ joined the channel
+2016-01-29T08:24:04 * alanharnum joined the channel
+2016-01-29T08:26:06 * alanharn_ joined the channel
+2016-01-29T08:26:06 * alanharnum has quit
+2016-01-29T08:27:44 * alanharnum joined the channel
+2016-01-29T08:29:49 * alanharnum joined the channel
+2016-01-29T08:31:32 * alanharnum joined the channel
+2016-01-29T08:33:33 * alanharnum joined the channel
+2016-01-29T08:35:15 * alanharnum joined the channel
+2016-01-29T08:37:16 * alanharn_ joined the channel
+2016-01-29T08:38:59 * alanharnum joined the channel
+2016-01-29T08:40:49 * alanharn_ joined the channel
+2016-01-29T08:42:50 * alanharnum joined the channel
+2016-01-29T08:44:11 * alanharnum has quit
+2016-01-29T08:44:40 * alanharnum joined the channel
+2016-01-29T08:46:20 * alanharn_ joined the channel
+2016-01-29T08:46:20 * alanharnum has quit
+2016-01-29T08:48:25 * alanharnum joined the channel
+2016-01-29T08:50:08 * alanharn_ joined the channel
+2016-01-29T08:52:08 * alanharnum joined the channel
+2016-01-29T08:53:47 * alanharn_ joined the channel
+2016-01-29T08:53:47 * alanharnum has quit
+2016-01-29T08:55:47 * alanharnum joined the channel
+2016-01-29T08:57:28 * alanharn_ joined the channel
+2016-01-29T08:59:18 * alanharnum joined the channel
+2016-01-29T09:01:11 * alanharnum joined the channel
+2016-01-29T09:02:58 * alanharnum joined the channel
+2016-01-29T09:04:50 * alanharn_ joined the channel
+2016-01-29T09:06:49 * alanharnum joined the channel
+2016-01-29T09:08:28 * alanharn_ joined the channel
+2016-01-29T09:10:31 * alanharnum joined the channel
+2016-01-29T09:12:14 * alanharn_ joined the channel
+2016-01-29T09:14:08 * alanharnum joined the channel
+2016-01-29T09:16:08 * alanharn_ joined the channel
+2016-01-29T09:17:59 * alanharnum joined the channel
+2016-01-29T09:19:42 * alanharn_ joined the channel
+2016-01-29T09:19:42 * alanharnum has quit
+2016-01-29T09:21:43 * alanharnum joined the channel
+2016-01-29T09:23:21 * alanharn_ joined the channel
+2016-01-29T09:25:27 * alanharnum joined the channel
+2016-01-29T09:27:05 * alanharnum joined the channel
+2016-01-29T09:28:30 * alanharnum has quit
+2016-01-29T09:29:07 * alanharnum joined the channel
+2016-01-29T09:30:49 * alanharnum joined the channel
+2016-01-29T09:35:28 * alanharnum has quit
+2016-01-29T13:23:56 * Justin_o joined the channel
+2016-01-29T13:31:58 * the-t-in-rtf joined the channel
+2016-01-29T13:53:30 * michelled joined the channel
+2016-01-29T13:54:48 * simonjb joined the channel
+2016-01-29T13:58:30 * michelled joined the channel
+2016-01-29T14:00:43 * michelled has quit
+2016-01-29T14:06:24 * cindyli joined the channel
+2016-01-29T14:12:10 * michelled joined the channel
+2016-01-29T14:14:17 * alanharnum joined the channel
+2016-01-29T14:20:32 <cindyli> good morning, Bosmon
+2016-01-29T14:20:56 <Bosmon> Good morning CINDY QI LI!
+2016-01-29T14:21:37 <cindyli> yesterday simonjb and i were talking about how to share one single in memory data store instance in the flow manager for the security server, and the preference server for the authFinder
+2016-01-29T14:22:06 <cindyli> we were thinking to instantiate a data store component at the top level and distribute it to those 2 parts, like this: https://github.com/cindyli/universal/blob/GPII-1521/gpii/configs/cloudBased.development.all.local.json#L5-L15
+2016-01-29T14:22:45 <Bosmon> Yes
+2016-01-29T14:22:45 <cindyli> however, i found distributing (or overwriting) one actual subcomponent threw error
+2016-01-29T14:22:50 <Bosmon> I think you have it slightly wrong
+2016-01-29T14:22:55 <cindyli> oh
+2016-01-29T14:23:03 * anastasiac joined the channel
+2016-01-29T14:23:04 <cindyli> where is the problem?
+2016-01-29T14:23:10 <Bosmon> Well, maybe two problems
+2016-01-29T14:23:28 <Bosmon> For a start, you are attempting to broadcast "to the component" rather than to the options which designate the component
+2016-01-29T14:23:43 <Bosmon> So to replace the component\'s designation you would need to broadcast to options.components.oauth2DataStore
+2016-01-29T14:23:56 <Bosmon> Secondly I think you are broadcasting the wrong material
+2016-01-29T14:23:59 <cindyli> ah ha
+2016-01-29T14:24:21 <Bosmon> "record" represents literal material
+2016-01-29T14:24:36 <Bosmon> And so you would need to broadcast a reference which resolves from the point of view of the target
+2016-01-29T14:24:53 <Bosmon> E.g. something like {cloudBased.development.all.local}.oauth2DataStore
+2016-01-29T14:25:20 <cindyli> right. exactly.
+2016-01-29T14:25:39 <cindyli> how can that slip out of my mind. very helpful. thanks, Bosmon
+2016-01-29T14:25:42 <Bosmon> It is the other variant, "source" which resolve from the point of view of the source
+2016-01-29T14:25:51 <Bosmon> Although it seems we rarely use "source" these days
+2016-01-29T14:26:10 <Bosmon> I think, based on our increasing ability with options distributions to "get it right first time"
+2016-01-29T14:26:26 <Bosmon> I think that "source" is a basically "facade-forming pattern" - that is, some options have been sent to you, and you want to send them on
+2016-01-29T14:26:44 <Bosmon> But with the increased power of distributeOptions, it\'s now usually possible for the ultimate source to address the ultimate target in a single step
+2016-01-29T14:27:27 <cindyli> i see.
+2016-01-29T14:29:17 * simonjb has quit
+2016-01-29T14:39:15 * alanharnum has quit
+2016-01-29T14:55:32 * anastasiac joined the channel
+2016-01-29T14:55:52 * alanharnum joined the channel
+2016-01-29T14:57:00 * simonjb joined the channel
+2016-01-29T15:17:22 * clown joined the channel
+2016-01-29T16:26:09 * the-t-in-rtf has quit
+2016-01-29T16:40:44 * michelled has quit
+2016-01-29T17:05:54 * the-t-in-rtf joined the channel
+2016-01-29T17:08:05 * the-t-in-rtf has quit
+2016-01-29T17:41:00 * cindyli has quit
+2016-01-29T18:38:06 * cindyli joined the channel
+2016-01-29T18:38:25 * jessm joined the channel
+2016-01-29T18:43:51 * alanharnum joined the channel
+2016-01-29T18:49:10 * colinclark joined the channel
+2016-01-29T18:58:36 * michelled joined the channel
+2016-01-29T19:32:07 * colinclark has quit
+'
+

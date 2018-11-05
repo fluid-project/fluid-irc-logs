@@ -1,0 +1,145 @@
+b'2014-01-07T01:04:36 * colinclark has quit
+2014-01-07T02:10:44 * colinclark joined the channel
+2014-01-07T02:19:05 * sgithens has quit
+2014-01-07T02:35:05 * sgithens joined the channel
+2014-01-07T02:48:48 * colinclark has quit
+2014-01-07T03:14:35 * sgithens has quit
+2014-01-07T03:24:01 * colinclark joined the channel
+2014-01-07T04:20:53 * colinclark has quit
+2014-01-07T04:26:24 * yzen joined the channel
+2014-01-07T04:34:33 * colinclark joined the channel
+2014-01-07T06:07:42 * sgithens joined the channel
+2014-01-07T06:12:13 * colinclark has quit
+2014-01-07T06:43:33 * yzen has quit
+2014-01-07T07:00:43 * sgithens has quit
+2014-01-07T10:52:39 * the-t-in-rtf joined the channel
+2014-01-07T13:34:17 * Bosmon7 joined the channel
+2014-01-07T13:49:09 * cindyli joined the channel
+2014-01-07T13:49:26 * yzen joined the channel
+2014-01-07T13:59:59 * anvk joined the channel
+2014-01-07T14:02:34 * yzen has quit
+2014-01-07T14:10:23 * Jess_ joined the channel
+2014-01-07T14:26:20 * yzen joined the channel
+2014-01-07T14:35:08 * kasparnet joined the channel
+2014-01-07T15:04:48 * colinclark joined the channel
+2014-01-07T15:07:00 <yzen> Bosmon: hi
+2014-01-07T15:08:01 <yzen> so as i was mentioning in im, when my tests reference a component in the sequence that has createOnEvent attribute, it seems like the component is created 2ce and different references to it get different components
+2014-01-07T15:13:08 * Jess_ has quit
+2014-01-07T15:14:16 <yzen> Bosmon: ^
+2014-01-07T15:14:21 <yzen> Bosmon7: ^
+2014-01-07T15:15:17 <Bosmon7> yzen - if this happens, it should represent a bug
+2014-01-07T15:15:52 <Bosmon7> But it does raise the issue of what you actually expect to discuver on the first reference
+2014-01-07T15:18:59 <Bosmon7> If the component is listed as createOnEvent, then you should not attempt to issue a reference to it before its event
+2014-01-07T15:19:18 <Bosmon7> So whilst there may well be a bug in the framework, it seems that there is a bug in the issuing configuration too
+2014-01-07T15:19:20 <yzen> Bosmon7: well that\'s the thing, technically i would only want to resolve https://github.com/yzen/universal/blob/master/gpii/node_modules/flowManager/test/UpdateTests.js#L170 at the time of step execution, i don\'t actually need it right away
+2014-01-07T15:20:02 <yzen> Bosmon7: well i agree, but all of those things are part of the sequence, so my expectation was that if i have the event fired first i should be ok to issue a reference to it later on
+2014-01-07T15:20:25 <yzen> Bosmon7: perhaps there\'s a more sound approach to testing such a scenario ?
+2014-01-07T15:21:21 <Bosmon7> yzen - all references in a sequence only resolve at the appropriate point in the sequence, so the resolution should not be happening early
+2014-01-07T15:22:00 <yzen> Bosmon7: ok, in that case i think i might be using module source inappropriately and it\'s being resolved as part of component options resolution
+2014-01-07T15:22:11 <Bosmon7> That is, your reference in the highlighted line will not be evaluated until the previous step is complete
+2014-01-07T15:22:11 <Bosmon7> Anything other than that that you observe will also be an error
+2014-01-07T15:22:24 <Bosmon7> yzen - aha
+2014-01-07T15:23:12 <yzen> Bosmon7: well the argument that is passed to the moduleSource function is resolved via ioc
+2014-01-07T15:23:29 <Bosmon7> yzen - how, exactly
+2014-01-07T15:23:38 <Bosmon7> Should I look at that Kettle reference you pasted earlier?
+2014-01-07T15:23:47 <yzen> Bosmon7: one sec ill give you the link
+2014-01-07T15:24:44 <yzen> this https://github.com/yzen/kettle/blob/FLUID-5185/test/utils/js/KettleTestUtils.js#L302-L355
+2014-01-07T15:28:45 <yzen> Bosmon7: ^
+2014-01-07T15:29:24 <Bosmon7> yzen - thanks
+2014-01-07T15:29:27 <Bosmon7> So far "by eye" it looks reasonable but I will keep reading
+2014-01-07T15:29:53 * clown joined the channel
+2014-01-07T15:29:54 <yzen> Bosmon7: well this https://github.com/yzen/kettle/blob/FLUID-5185/test/utils/js/KettleTestUtils.js#L333
+2014-01-07T15:30:16 <yzen> has the sequence and that reference to the component
+2014-01-07T15:30:26 <yzen> will it be expanded recursively
+2014-01-07T15:30:26 <yzen> ?
+2014-01-07T15:31:45 <Bosmon7> There is a mergePolicy on fluid.test.testCaseHolder that should be preventing early expansion of moduleSource
+2014-01-07T15:31:45 <Bosmon7> Oh
+2014-01-07T15:31:45 <Bosmon7> I see
+2014-01-07T15:31:45 <Bosmon7> Yes, this is awkward
+2014-01-07T15:31:55 <Bosmon7> And seems unnecessary
+2014-01-07T15:34:04 <Bosmon7> No, sorry, I was confused
+2014-01-07T15:34:07 <Bosmon7> It seems fine
+2014-01-07T15:34:20 <Bosmon7> And the argument should be expanded just once
+2014-01-07T15:34:56 <Bosmon7> But the issue is that you have the options just sitting there at top level on the component itself
+2014-01-07T15:35:02 <Bosmon7> On line 333
+2014-01-07T15:35:38 <Bosmon7> So unless you protect them, they will have already been expanded before the point they reach moduleSource
+2014-01-07T15:37:24 <Bosmon7> yzen ^
+2014-01-07T15:37:58 * anastasiac joined the channel
+2014-01-07T15:38:35 <yzen> Bosmon7: well how do you think i should protect them ?
+2014-01-07T15:38:51 <Bosmon7> yzen - with a mergePolicy of your own
+2014-01-07T15:39:02 <Bosmon7> I\'m trying to see what happens to your "testDefs"
+2014-01-07T15:39:16 <Bosmon7> But it seems like you just need to protect "sequence"
+2014-01-07T15:39:37 <Bosmon7> This presumably belongs in the mergePolicy of kettle.tests.testCaseHolder
+2014-01-07T15:42:05 <yzen> Bosmon7: trying
+2014-01-07T15:44:50 <yzen> Bosmon7: interesting, do i need to protect options.sequence or options.modules.tests.sequence?
+2014-01-07T15:45:26 <Bosmon7> yzen.... whatever is the highest path holding your configuration
+2014-01-07T15:45:35 <Bosmon7> Perhaps it is actually options.modules
+2014-01-07T15:46:22 <Bosmon7> But I didn\'t see a "modules" level in your testDefs so I assumed it was not there
+2014-01-07T15:46:57 <yzen> Bosmon7: no i have moduleSource, which afaik creates modules
+2014-01-07T15:47:28 <yzen> but it uses options.sequence to build it\'s sequence
+2014-01-07T15:47:35 <Bosmon7> yzen ok well
+2014-01-07T15:47:43 <Bosmon7> Just protect it, whatever it is :)
+2014-01-07T15:48:33 <yzen> lol
+2014-01-07T15:49:50 <yzen> and it works :)
+2014-01-07T15:53:08 <Bosmon7> yzen - I guess since your reference is to args: "{kettle.tests.testCaseHolder}.options" you might actually need another level of containment
+2014-01-07T15:53:08 <Bosmon7> Well ok
+2014-01-07T15:53:08 <Bosmon7> "sequence" is fixed
+2014-01-07T15:53:08 <Bosmon7> But this implies that the thing can only test one sequence.... but that is how it is set up anyway
+2014-01-07T15:58:04 * jessm joined the channel
+2014-01-07T16:03:49 * kasparnet has quit
+2014-01-07T16:11:13 * kasparnet joined the channel
+2014-01-07T16:26:34 * sgithens joined the channel
+2014-01-07T17:30:09 * colinclark has quit
+2014-01-07T17:45:28 * nanook_ has quit
+2014-01-07T17:45:52 * nanook_ joined the channel
+2014-01-07T17:47:00 * cindyli has quit
+2014-01-07T18:01:02 * sgithens has quit
+2014-01-07T18:09:00 * sgithens joined the channel
+2014-01-07T18:21:51 * colinclark joined the channel
+2014-01-07T18:22:18 * Bosmon8 joined the channel
+2014-01-07T18:22:37 * Bosmon7 has quit
+2014-01-07T18:22:49 * michelled joined the channel
+2014-01-07T18:57:33 * sgithens has quit
+2014-01-07T18:58:00 * sgithens joined the channel
+2014-01-07T19:09:55 * cindyli joined the channel
+2014-01-07T19:20:51 * sgithens has quit
+2014-01-07T19:23:30 * cindyli has quit
+2014-01-07T19:33:36 * sgithens joined the channel
+2014-01-07T19:54:53 * clown has quit
+2014-01-07T20:05:46 * clown joined the channel
+2014-01-07T20:05:46 * clown is now known as clown_mtg
+2014-01-07T20:18:42 * cindyli joined the channel
+2014-01-07T20:32:18 * michelled has quit
+2014-01-07T20:37:00 <anastasiac> yzen, where do lifecycle handlers live in the code? they\'re in one of the platform-specific repositories, right?
+2014-01-07T20:37:56 * michelled joined the channel
+2014-01-07T20:46:11 <yzen> anastasiac: is that what would were looking for ? https://github.com/GPII/universal/blob/master/gpii/node_modules/lifecycleActions/src/LifecycleActions.js
+2014-01-07T20:53:53 <anastasiac> yzen, not sure :-) I\'m looking for the "lifecycle handlers" described here: http://wiki.gpii.net/index.php/Lifecycle_Handler  Your page describes one of them, but others are also mentioned
+2014-01-07T20:54:42 <yzen> oh ya it is sort of everything
+2014-01-07T20:54:54 <yzen> so lifecycle actions are a form of it
+2014-01-07T20:55:04 <yzen> setSettings is a special one that lifecycle manager understands
+2014-01-07T20:55:23 <yzen> then platform specific ones are in the platform specific repos as you mentioned
+2014-01-07T20:56:01 <anastasiac> hm. Ok, I\'ll start with that, and ask more questions as they occur to me. Thanks, yzen
+2014-01-07T20:57:01 <yzen> anastasiac: sure ill try to find examples in code of platform ones
+2014-01-07T20:57:36 <anastasiac> yzen, the whiteboard says "universal: API for apps (events)"  I\'m not sure why the "events" is there. Does this mean "only document the events that each app fires" ? or more like "make sure to include any events an app might fire" or something else?
+2014-01-07T21:12:16 <yzen> well i m guessing it\'s twofold : one give some sort of explanation how events can be leveraged in kettle apps and the other one is specific to the actual existing events in universal apps
+2014-01-07T21:12:42 <anastasiac> it doesn\'t seem like the universal apps fire very many events...
+2014-01-07T21:12:50 <anastasiac> matchmaker, yes
+2014-01-07T21:12:57 * cindyli has quit
+2014-01-07T21:13:03 <yzen> flow manager most importantly
+2014-01-07T21:13:19 <yzen> i would look at all request handlers not just the app js files
+2014-01-07T21:13:27 <yzen> like UserLogin.js UserLogout.js
+2014-01-07T21:13:44 <yzen> those are most important
+2014-01-07T21:18:56 * colinclark has quit
+2014-01-07T21:21:19 * clown_mtg has quit
+2014-01-07T21:23:50 * colinclark joined the channel
+2014-01-07T21:24:27 * colinclark has quit
+2014-01-07T21:27:31 * colinclark joined the channel
+2014-01-07T21:40:09 * clown joined the channel
+2014-01-07T22:03:22 * clown has left the channel
+2014-01-07T22:20:55 * anvk has quit
+2014-01-07T22:31:00 * yzen has quit
+2014-01-07T22:34:13 * kasparnet has quit
+2014-01-07T22:43:02 * anastasiac has quit
+2014-01-07T23:28:20 * jessm has quit
+'
+

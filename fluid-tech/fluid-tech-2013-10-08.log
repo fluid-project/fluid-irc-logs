@@ -1,0 +1,145 @@
+b'2013-10-08T01:03:21 * mrvisser joined the channel
+2013-10-08T01:08:12 * mrvisser has quit
+2013-10-08T02:02:40 * colinclark joined the channel
+2013-10-08T02:40:32 * colinclark has quit
+2013-10-08T04:45:58 * yzen has quit
+2013-10-08T07:09:29 * kasparnet joined the channel
+2013-10-08T07:21:45 * Bosmon2 joined the channel
+2013-10-08T07:24:36 * Bosmon has quit
+2013-10-08T07:42:39 * kasparnet has quit
+2013-10-08T07:45:26 * kasparnet joined the channel
+2013-10-08T10:22:12 * kasparnet has quit
+2013-10-08T10:35:26 * kasparnet joined the channel
+2013-10-08T10:45:18 * mrvisser joined the channel
+2013-10-08T11:21:02 * michelled joined the channel
+2013-10-08T12:34:13 * mrvisser has quit
+2013-10-08T12:34:33 * jessm joined the channel
+2013-10-08T12:43:39 * mrvisser joined the channel
+2013-10-08T12:46:56 * cindyli joined the channel
+2013-10-08T13:11:33 * colinclark joined the channel
+2013-10-08T13:41:55 * yzen joined the channel
+2013-10-08T14:26:51 * anastasiac joined the channel
+2013-10-08T14:41:02 * kasparnet has quit
+2013-10-08T14:45:27 * clown joined the channel
+2013-10-08T15:16:15 * sgithens joined the channel
+2013-10-08T15:23:39 * mrvisser has quit
+2013-10-08T15:54:30 * mrvisser joined the channel
+2013-10-08T16:02:54 * mrvisser has quit
+2013-10-08T16:02:56 * mrvisser_ joined the channel
+2013-10-08T16:54:15 * colinclark has quit
+2013-10-08T17:16:39 * colinclark joined the channel
+2013-10-08T17:51:53 * Bosmon2 is now known as Bosmon
+2013-10-08T18:36:29 * yzen has quit
+2013-10-08T18:38:28 * mrvisser_ has quit
+2013-10-08T18:40:10 * clown has quit
+2013-10-08T18:47:06 * mrvisser joined the channel
+2013-10-08T18:52:15 * clown joined the channel
+2013-10-08T18:52:27 * clown is now known as clown_mtg
+2013-10-08T18:52:42 * jessm has quit
+2013-10-08T19:49:12 * yzen joined the channel
+2013-10-08T20:12:44 * sgithens has quit
+2013-10-08T20:15:45 <yzen> Bosmon: hi
+2013-10-08T20:19:32 <Bosmon> Hi yzen
+2013-10-08T20:19:54 <yzen> Bosmon: hi, so we are talking about the first use case
+2013-10-08T20:19:59 <Bosmon> We were in the middle of discussing different strategies that could be used to replace the use of demands blocks by different styles of deployment of dynamic grades and IoCSS
+2013-10-08T20:20:23 <yzen> where we need to come up with some kind of pattern of inferring the request handler grade
+2013-10-08T20:20:45 <yzen> that grade will define an invoker (handle) that handles the request itself
+2013-10-08T20:21:45 <yzen> Bosmon: so i m thinking of using a dynamic grade for the handler component
+2013-10-08T20:21:57 <yzen> something like "inferFromContext"
+2013-10-08T20:22:33 <Bosmon> yzen - seems reasonable
+2013-10-08T20:22:42 <Bosmon> Do you have a sketch, or a particular query about how it might work?
+2013-10-08T20:22:45 <yzen> Bosmon: that invoker will return a consistent name
+2013-10-08T20:22:48 <yzen> sure
+2013-10-08T20:22:49 <yzen> one sec
+2013-10-08T20:25:13 <yzen> Bosmon: so this is on top of the existing handler code
+2013-10-08T20:25:13 <yzen> http://pastebin.com/LH8WFHNy
+2013-10-08T20:26:37 <yzen> or even http://pastebin.com/6J2ru4Xr
+2013-10-08T20:26:39 <Bosmon> yzen - that\'s interesting, although I wonder why you split up the work in that particular way - since presumably some OTHER invoker does the work of computing the string "context" which is applied as a member
+2013-10-08T20:27:14 <yzen> Bosmon: yes context is attached somewhere else
+2013-10-08T20:27:35 <Bosmon> It seems that that other computation may as well come up with the complete grade name
+2013-10-08T20:27:47 <Bosmon> Since there\'s no reason to expect 3rd parties to put all their handlers into our namespace
+2013-10-08T20:30:35 * clown_mtg has quit
+2013-10-08T20:33:47 <yzen> this ?
+2013-10-08T20:33:48 <yzen> http://pastebin.com/PfEREXAd
+2013-10-08T20:34:15 * anvk has quit
+2013-10-08T20:35:08 * cindyli has quit
+2013-10-08T20:38:00 <Bosmon> yzen - btw, dynamic grades involving "fluid.identity" are unnecessary
+2013-10-08T20:38:12 <Bosmon> You can actually mention the IoC-resolved name of a grade directly, if it is there as a member
+2013-10-08T20:38:52 <Bosmon> I guess it\'s more interesting to focus on the details of how "context" itself is inferred
+2013-10-08T20:38:52 <yzen> Bosmon: member of that component ?
+2013-10-08T20:39:04 <Bosmon> Since it would be nice to come up with a kind of "mini-framework" for this
+2013-10-08T20:39:18 <Bosmon> yzen - yes, so long as it doesn\'t itself depend on the output dynamic grade material :)
+2013-10-08T20:39:44 <yzen> Bosmon: can it depend on an ion resolved name from another component ?
+2013-10-08T20:39:50 <Bosmon> yzen - yes
+2013-10-08T20:39:59 <Bosmon> Any IoC-resolved value is fine, so long as it doesn\'t cause a circularity
+2013-10-08T20:40:07 <yzen> so i can just put "{request}.handlerContext" as a gradeName without resolving it as a member
+2013-10-08T20:40:11 <Bosmon> yzen - yes
+2013-10-08T20:40:13 <yzen> ok
+2013-10-08T20:41:01 <yzen> Bosmon: so here\'s how the context is generated right now https://github.com/fluid-project/kettle/blob/master/lib/server.js#L98-L106
+2013-10-08T20:41:10 <Bosmon> You generally need to be a bit more careful with circularity with dynamic grade names than in usual contexts
+2013-10-08T20:41:19 <Bosmon> Although the recent FLUID-5155 fixes have improved this enormously
+2013-10-08T20:41:29 <yzen> Bosmon: ya
+2013-10-08T20:41:55 <yzen> Bosmon: so till not we typeTagged the context so ion could find it
+2013-10-08T20:41:59 <yzen> if we get rid of demands
+2013-10-08T20:42:04 <yzen> we just need a grade name
+2013-10-08T20:42:09 <Bosmon> yzen - that\'s interesting - indeed, yes, there is no need to typeTag as you say
+2013-10-08T20:42:12 <Bosmon> A simple string will be fine now
+2013-10-08T20:42:24 <Bosmon> BUT the new challenge is that of TIMING
+2013-10-08T20:42:36 <Bosmon> We need to ensure that this string is definitely present before the request tries to resolve it
+2013-10-08T20:43:03 <Bosmon> I guess the "onHandlers" event takes care of this, since it needed to beforehand anyway
+2013-10-08T20:43:18 <yzen> yes timing is not an issue
+2013-10-08T20:43:23 <Bosmon> ok cool
+2013-10-08T20:43:52 <yzen> so all i did there is replaced the request.context line with
+2013-10-08T20:43:52 <yzen> request.handlerContext = fluid.model.composeSegments(
+2013-10-08T20:43:53 <yzen> "kettle.requests.request.handler", context);
+2013-10-08T20:44:06 <yzen> which is not much of a framework
+2013-10-08T20:44:58 <Bosmon> :)
+2013-10-08T20:45:06 <Bosmon> I\'m still struggling a little to see/remember how it works
+2013-10-08T20:45:31 <Bosmon> So it seems "handlers" are supplied in options directly
+2013-10-08T20:45:57 <Bosmon> Which itself seems a little dodgy
+2013-10-08T20:46:03 <Bosmon> Can we remember why we didn\'t turn these into components?
+2013-10-08T20:46:13 <yzen> ?
+2013-10-08T20:46:16 <yzen> not sure i follow
+2013-10-08T20:46:20 <Bosmon> The handlers
+2013-10-08T20:46:22 <yzen> handlers are components
+2013-10-08T20:46:36 <yzen> they are created by the request component
+2013-10-08T20:46:37 <Bosmon> They don\'t look like they are components
+2013-10-08T20:46:38 <Bosmon> registerHandlers: {
+2013-10-08T20:46:39 <Bosmon> funcName: "kettle.server.registerHandlers",
+2013-10-08T20:46:39 <Bosmon> args: ["{that}.server", "{that}.options.handlers"]
+2013-10-08T20:46:39 <Bosmon> },
+2013-10-08T20:46:44 <Bosmon> I see the argument being supplied by this block
+2013-10-08T20:46:50 <yzen> oh that
+2013-10-08T20:46:53 <yzen> that is different
+2013-10-08T20:46:53 <Bosmon> But I guess there is some ambiguity in what we refer to as "handlesr"
+2013-10-08T20:46:55 <Bosmon> "handlers"
+2013-10-08T20:46:57 <yzen> that is a different handler
+2013-10-08T20:47:03 <Bosmon> "erm - great" : P
+2013-10-08T20:47:05 <yzen> that\'s a handler specified by the app
+2013-10-08T20:47:14 <yzen> request handler is a request handler
+2013-10-08T20:47:32 <Bosmon> So what is a "plain handler"
+2013-10-08T20:47:56 <Bosmon> It looks like it is a bunch of options, with members such as "route" and "type"
+2013-10-08T20:48:15 <Bosmon> And that the "type" field appears to resolve into a function on the server
+2013-10-08T20:48:19 <Bosmon> How exactly does this happen....
+2013-10-08T20:48:57 <yzen> well ok
+2013-10-08T20:49:03 <yzen> route is the url it handles
+2013-10-08T20:49:08 <yzen> type is the type of request it resolves
+2013-10-08T20:49:13 <yzen> name is the context atm
+2013-10-08T20:49:20 <Bosmon> I don\'t see much about this in our existing documentation page
+2013-10-08T20:49:21 <Bosmon> http://wiki.gpii.net/index.php/Configuration
+2013-10-08T20:49:25 <Bosmon> Is it explained somewhere else?
+2013-10-08T20:53:20 <yzen> i believe it needs to be written
+2013-10-08T21:18:29 * anastasiac has quit
+2013-10-08T21:22:36 * mrvisser_ joined the channel
+2013-10-08T21:22:51 * mrvisser has quit
+2013-10-08T21:38:01 * mrvisser_ has quit
+2013-10-08T21:38:36 * mrvisser joined the channel
+2013-10-08T21:43:31 * mrvisser has quit
+2013-10-08T21:55:03 * yzen has quit
+2013-10-08T22:30:53 * sgithens joined the channel
+2013-10-08T22:42:32 * sgithens has quit
+2013-10-08T23:09:14 * sgithens joined the channel
+2013-10-08T23:40:47 * mrvisser joined the channel
+2013-10-08T23:41:54 * michelled has quit
+'
+

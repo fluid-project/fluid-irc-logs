@@ -1,0 +1,319 @@
+b'2016-02-24T22:16:57 * Jess_ joined the channel
+2016-02-24T22:16:57 * Jess_ has quit
+2016-02-24T22:36:26 * jhung joined the channel
+2016-02-24T22:39:29 * colinclark has quit
+2016-02-24T22:46:20 * yzen is now known as yzen_
+2016-02-24T22:50:34 * yzen_ has quit
+2016-02-24T22:54:35 * lliskovoi_ joined the channel
+2016-02-24T22:58:17 * lliskovoi has quit
+2016-02-24T23:03:10 * scott_gonzalez has quit
+2016-02-24T23:10:11 * scott_gonzalez joined the channel
+2016-02-24T23:36:06 * mbrenn_iskme has quit
+2016-02-24T23:37:35 * jhung joined the channel
+2016-02-24T23:38:12 * kasparnet has quit
+'
+
+b'2016-02-24T18:50:10 <colinclark> oh fascinating
+2016-02-24T18:50:29 * alanharnum joined the channel
+2016-02-24T18:50:33 <colinclark> Bind values to models from where?
+2016-02-24T18:50:36 <colinclark> anywhere?
+2016-02-24T18:50:43 <Bosmon> It does some of what the non-existent renderer\'s binding does, and some of what it doesn\'t do, in a standalone where
+2016-02-24T18:51:06 <Bosmon> It binds a view component to the DOM, as the N-E R does in a more half-assed way
+2016-02-24T18:52:42 <Justin_o> Bosmon: I haven\'t had any luck with your suggested resolutions.. i tried setting up a model relay with backwards: "liveOnly" and also tried removing the default model value for stickKeysEnabled in the keyboardInput component
+2016-02-24T18:52:43 * lliskovoi_ joined the channel
+2016-02-24T18:52:59 <Justin_o> i was sure what you meant about the asynchronous option though, so i haven\'t tried anything for that
+2016-02-24T18:53:03 <Bosmon> Justin_o - could you check in your adjusted code into a branch?
+2016-02-24T18:53:05 <Justin_o> sorry, wasn\'t
+2016-02-24T18:53:13 <Bosmon> And I will try that out too
+2016-02-24T18:53:20 <Bosmon> I was just in the middle of writing up a JIRA for this
+2016-02-24T18:53:51 <Justin_o> Bosmon: okay, did you want me to put 1 or both of those things i tried into the branch?
+2016-02-24T18:54:12 <Bosmon> Justin_o - just what you have described just not
+2016-02-24T18:54:14 <Bosmon> just now
+2016-02-24T18:54:17 <Bosmon> With the "liveOnly"
+2016-02-24T18:54:22 <Bosmon> And without the default value
+2016-02-24T18:54:51 <Justin_o> okay... i\'ll have it up soon
+2016-02-24T18:55:07 <Bosmon> Thanks, Justin_o
+2016-02-24T18:55:31 * lliskovoi has quit
+2016-02-24T18:55:53 * lliskovoi joined the channel
+2016-02-24T18:57:18 <Justin_o> Bosmon: https://github.com/jobara/first-discovery/tree/test-sprint3-integration
+2016-02-24T18:57:25 <Bosmon> Thanks, Justin_o
+2016-02-24T18:57:29 <Bosmon> looking at it now
+2016-02-24T18:57:49 <Justin_o> Bosmon: thanks
+2016-02-24T19:02:47 <Bosmon> Hi there Justin_o - it looks like you adjusted the wrong relay
+2016-02-24T19:02:55 <Bosmon> The one causing the problem is the one that leads to the keyboardInput control
+2016-02-24T19:03:06 <Bosmon> Which is the one which is currently in the double-creation condition
+2016-02-24T19:03:18 <Bosmon> I pasted the link to its relay earlier in the chat here
+2016-02-24T19:03:20 * gtirloni joined the channel
+2016-02-24T19:06:21 * clown joined the channel
+2016-02-24T19:06:44 * clown is now known as Guest14386
+2016-02-24T19:07:17 <Justin_o> :( i know.. i keep doing this by accident for some reason
+2016-02-24T19:07:43 <Justin_o> i guess cause it\'s the first subcomponent.. i keep changing it by accident
+2016-02-24T19:08:04 * yzen joined the channel
+2016-02-24T19:11:11 <Justin_o> Bosmon: fixed, but same issue
+2016-02-24T19:15:33 * lliskovoi joined the channel
+2016-02-24T19:17:44 * lliskovoi joined the channel
+2016-02-24T19:22:32 <klown> jhernandez:  nearly two years in the making :-)  Thanks!
+2016-02-24T19:23:25 * lliskovoi joined the channel
+2016-02-24T19:27:31 * lliskovoi joined the channel
+2016-02-24T19:29:16 * alanharnum has quit
+2016-02-24T19:29:29 <Bosmon> Justin_o - ok
+2016-02-24T19:29:43 <Bosmon> It looks like the corruption of the transaction state is too severe to recover from
+2016-02-24T19:30:01 <Bosmon> I wrapped the body of "relayEvents" here in a fluid.invokeLater(), and the problem seems to have gone away
+2016-02-24T19:30:01 <Bosmon> https://github.com/pga03/first-discovery/blob/sprint3-integration/src/js/panels.js#L377
+2016-02-24T19:30:08 <Bosmon> I\'ll write up the framework problem in a JIRA now
+2016-02-24T19:30:34 * lliskovoi has quit
+2016-02-24T19:30:39 <Bosmon> Interestingly this is a kind of general problem that reactive frameworks are prone to, which is what led the Facebook React team to prohibit synchronous two-way relay
+2016-02-24T19:30:57 * lliskovoi joined the channel
+2016-02-24T19:31:33 <jhernandez> klown: yay!!!
+2016-02-24T19:32:06 <Bosmon> Did you know we had a "reactive framework" btw? : P
+2016-02-24T19:32:34 <Justin_o> no i didn\'t
+2016-02-24T19:32:44 <jhernandez> klown: I also fixed a few problems that affected the UI, so feel free to pull master and give it a try
+2016-02-24T19:33:06 <Justin_o> Bosmon: i\'ll try the fluid.invokeLater after the community meeting
+2016-02-24T19:33:24 <Justin_o> fluid-everyone: community meeting today, it will be on "Case Studies of User Creativity in Computing: Super Mario Maker"
+2016-02-24T19:33:26 <Justin_o> should be fun
+2016-02-24T19:33:30 <Bosmon> Oh gosh
+2016-02-24T19:33:36 <Bosmon> I had forgotten it was that today
+2016-02-24T19:34:28 <Bosmon> I\'m wondering if we have a bunch of Confluence spam coming up
+2016-02-24T19:34:36 <Bosmon> THe 3 users who just joined up look suspicious
+2016-02-24T19:37:31 * colinclark joined the channel
+2016-02-24T19:38:09 * lliskovoi has quit
+2016-02-24T19:38:12 * the-t-in-rtf has quit
+2016-02-24T19:39:12 * the-t-in-rtf joined the channel
+2016-02-24T19:40:42 * zamcnema joined the channel
+2016-02-24T19:43:01 * lliskovoi joined the channel
+2016-02-24T19:43:45 * the-t-in-rtf has quit
+2016-02-24T19:46:18 * lliskovoi joined the channel
+2016-02-24T19:48:25 * clown_mtg joined the channel
+2016-02-24T19:48:25 * lliskovoi joined the channel
+2016-02-24T19:55:28 <Bosmon> Hi there gtirloni - I\'m finding a lot of clipping and distortion in Vidyo conversations coming from the standup room
+2016-02-24T19:55:46 <Bosmon> It looks like it isn\'t to do with the microphones, since it seems they all behave the same
+2016-02-24T19:56:01 <Bosmon> And I\'m not sure it\'s to do with Vidyo itself either, since conversations I have with individuals seem fine
+2016-02-24T20:02:48 * cindyli joined the channel
+2016-02-24T20:06:18 * lliskovoi joined the channel
+2016-02-24T20:10:53 <jhung> Bosmon: I haven\'t noticed any issues on my end.
+2016-02-24T20:24:36 * jhung1 joined the channel
+2016-02-24T20:29:24 * cindyli joined the channel
+2016-02-24T20:30:21 * jessm joined the channel
+2016-02-24T20:40:41 * cindyli has quit
+2016-02-24T20:58:54 * cindyli joined the channel
+2016-02-24T21:01:49 <colinclark> danayo: SINGING DISCOVERY CATS!
+2016-02-24T21:02:02 <danayo> YES!!!!!!!
+2016-02-24T21:02:15 <danayo> I was just thinking something similar
+2016-02-24T21:03:09 <danayo> some kind of audio-based story building or something colinclark
+2016-02-24T21:03:50 <danayo> with singing cats of course
+2016-02-24T21:03:54 <colinclark> :)
+2016-02-24T21:06:57 <michelled> I can record Arthur if you want ;)
+2016-02-24T21:11:05 <colinclark> does he sing, michelled?
+2016-02-24T21:11:19 * cindyli joined the channel
+2016-02-24T21:11:39 * colinclark has quit
+2016-02-24T21:13:03 <michelled> he certainly squeaks a lot
+2016-02-24T21:14:25 * sepidehshahi joined the channel
+2016-02-24T21:14:42 * colinclark joined the channel
+2016-02-24T21:15:48 * alanharnum joined the channel
+2016-02-24T21:19:37 <jessm> alanharnum: wanna talk for a minute re: math
+2016-02-24T21:19:40 <jessm> ?
+2016-02-24T21:19:45 <alanharnum> jessm: sure
+2016-02-24T21:24:00 * clown_mtg is now known as clown
+2016-02-24T21:24:33 <clown> jhnernandez, you wrote "klown: I also fixed a few problems that affected the UI, so feel free to pull master and give it a try"  Looks good.
+2016-02-24T21:25:33 <clown> Now, I want the default number of items displayed to be more than 3.
+2016-02-24T21:25:43 * clown is never satisfied.
+2016-02-24T21:28:04 * jhernandez has quit
+2016-02-24T21:29:21 <Justin_o> bens01: was talking to Bosmon earlier in the channel about the issue with reset.
+2016-02-24T21:30:23 <bens01> Justin_o, was watching some of that, was this the fix? " I wrapped the body of "relayEvents" here in a fluid.invokeLater(),"
+2016-02-24T21:30:42 <Justin_o> bens01: yes, that\'s it  https://botbot.me/freenode/fluid-work/2016-02-24/?msg=60842530&page=2
+2016-02-24T21:30:57 <Justin_o> that should take care of the immediate issue with the keyboardInput component
+2016-02-24T21:31:09 <Justin_o> bens01: however, there is an additional problem with the confirmation pgae
+2016-02-24T21:31:10 <Justin_o> page
+2016-02-24T21:31:50 <Justin_o> that should be more straight forward to address though, as it seems the issue are all related to the expectations of values being present. However, we have just cleared all of them out with the reset
+2016-02-24T21:32:56 <bens01> that i think uses a model listener, so on clear out it gets triggered, but there are null values in the changeContext
+2016-02-24T21:35:16 * jhung1 has quit
+2016-02-24T21:35:40 <Bosmon> Yes, there are
+2016-02-24T21:35:44 <Bosmon> Because you put them there : P
+2016-02-24T21:35:55 <jessm> fluid-everyone: http://simplyaccessible.com/article/the-accessibility-stack/ nice article
+2016-02-24T21:36:31 <Justin_o> bens01: you\'re probably getting undefined values because the action before this was to delete all of the model. as part of reset.
+2016-02-24T21:37:06 * zamcnema has quit
+2016-02-24T21:37:24 <Bosmon> https://github.com/pga03/first-discovery/blob/sprint3-integration/src/js/panels.js#L1392
+2016-02-24T21:37:37 <Bosmon> All the repetitive code in this method would be better implemented using data binding
+2016-02-24T21:42:16 <bens01> Bosmon, ala this method? http://docs.fluidproject.org/infusion/development/tutorial-gettingStartedWithInfusion/RendererComponents.html
+2016-02-24T21:43:45 <Bosmon> bens01 - yes, although there is a rather more lightweight "data binder" going through review right now
+2016-02-24T21:43:45 <Bosmon> https://github.com/GPII/gpii-binder/pull/1
+2016-02-24T21:44:04 * danayo has quit
+2016-02-24T21:44:12 <Bosmon> https://github.com/the-t-in-rtf/gpii-binder/blob/GPII-1579/src/js/binder.js
+2016-02-24T21:44:28 <Bosmon> You could lift the implementation from here, it\'s only about 20 lines
+2016-02-24T21:45:42 <Bosmon> A light addition would use a stringTemplate action to append the units on the end.... "x" or "wpm"
+2016-02-24T21:45:53 <Bosmon> But I believe the project is short of time now, I imagine this will get punted for a bit
+2016-02-24T21:47:27 * danayo joined the channel
+2016-02-24T21:49:05 <Bosmon> But still, doing something like this might be quicker than the annoyance of adding a changeContext.value === undefined ? "" : changeContext.value.thing  branch to each one of these data binding actions
+2016-02-24T21:49:13 <bens01> Bosmon, thank you for that link. This panel is one of the remaining issues we hope to fix with an unrelated...
+2016-02-24T21:49:25 <bens01> Bosmon, yep, my thoughts exactly.. while we\'re in there
+2016-02-24T21:50:01 <Bosmon> We\'ve been trying to break out the data binding system from the renderer for a long time, but it\'s only been recently that someone had the cycles to look at it
+2016-02-24T21:50:26 <Bosmon> If you end up copying this code and making some improvements, please copy them back to the-t-in-rtf on a pull request to him
+2016-02-24T21:50:49 <bens01> i haven\'t looked yet if it supports expanders
+2016-02-24T21:51:04 <bens01> but that would be great for our usage to concatenate a model value + a unit
+2016-02-24T21:51:13 <Bosmon> Yup
+2016-02-24T21:51:21 <Bosmon> The units can go into the "long" form of his binding block there
+2016-02-24T21:52:23 <Bosmon> A reasonable way to do this would be to add "template" entry there, and make a call to this utility http://docs.fluidproject.org/infusion/development/CoreAPI.html#fluid-stringtemplate-template-terms- before you make the $().text call
+2016-02-24T21:54:30 <Bosmon> In terms of dealing with initial page load: https://github.com/pga03/first-discovery/blob/sprint3-integration/src/js/panels.js#L1220
+2016-02-24T21:54:39 <bens01> that is what one of our devs is working on actually.. but he is out sick. murphy\'s law has made most of us sick in the last 36 hours..
+2016-02-24T21:55:35 <Bosmon> A reasonable way of avoiding notification during construction is to add the    excludeSource: "init" annotation to this block
+2016-02-24T21:55:40 <Bosmon> Which is described in the docs here: http://docs.fluidproject.org/infusion/development/ChangeApplierAPI.html#source-tracking-and-filtering-in-model-listener-blocks
+2016-02-24T21:56:25 <Bosmon> This will avoid the unsightly 500ms timeout that you currently have at the head : P
+2016-02-24T21:56:34 <Bosmon> But moving this to a "binder" like system will make this all moot anyway
+2016-02-24T21:57:08 <bens01> yes that seems best
+2016-02-24T22:00:36 * jhernandez joined the channel
+2016-02-24T22:04:38 * sepidehshahi joined the channel
+2016-02-24T22:06:56 * sepidehshahi has left the channel
+'
+
+b'2016-02-24T00:45:05 * kasparnet has quit
+2016-02-24T01:00:05 * danayo joined the channel
+2016-02-24T01:19:34 * colinclark joined the channel
+2016-02-24T01:54:02 * danayo has quit
+2016-02-24T01:57:05 * colinclark joined the channel
+2016-02-24T03:43:33 * yzen joined the channel
+2016-02-24T05:42:52 * colinclark joined the channel
+2016-02-24T05:58:15 * colinclark joined the channel
+2016-02-24T06:26:00 * yzen is now known as yzen_
+2016-02-24T06:30:27 * yzen_ has quit
+2016-02-24T08:07:14 * the-t-in-rtf joined the channel
+2016-02-24T09:09:30 * amatas joined the channel
+2016-02-24T09:27:09 * yzen joined the channel
+2016-02-24T09:45:36 * the-t-in-rtf has quit
+2016-02-24T09:46:26 * the-t-in-rtf joined the channel
+2016-02-24T10:17:40 * kasparnet joined the channel
+2016-02-24T11:39:01 * jhung joined the channel
+2016-02-24T11:42:15 * the-t-in-rtf has quit
+2016-02-24T12:07:56 * the-t-in-rtf joined the channel
+2016-02-24T12:15:59 * kasparnet has quit
+2016-02-24T12:22:06 * bens01 joined the channel
+2016-02-24T12:23:31 * kasparnet joined the channel
+2016-02-24T12:32:33 * the-t-in-rtf has quit
+2016-02-24T12:56:38 * the-t-in-rtf joined the channel
+2016-02-24T13:11:33 * kasparnet has quit
+2016-02-24T13:22:20 * kasparnet joined the channel
+2016-02-24T13:26:46 * Justin_o joined the channel
+2016-02-24T13:51:37 * yzen joined the channel
+2016-02-24T13:59:41 * Jess_ joined the channel
+2016-02-24T14:02:08 * Jess_ has quit
+2016-02-24T14:05:30 * gtirloni joined the channel
+2016-02-24T14:06:19 * simonjb joined the channel
+2016-02-24T14:07:46 * yzen is now known as yzen_
+2016-02-24T14:11:48 * cindyli joined the channel
+2016-02-24T14:12:34 * yzen_ has quit
+2016-02-24T14:30:52 * yzen joined the channel
+2016-02-24T14:32:30 * sepidehshahi joined the channel
+2016-02-24T14:39:00 * michelled joined the channel
+2016-02-24T14:41:46 * gtirloni joined the channel
+2016-02-24T14:43:48 * alanharnum joined the channel
+2016-02-24T14:55:29 * clown joined the channel
+2016-02-24T15:05:40 * colinclark joined the channel
+2016-02-24T15:13:21 * BenMerkley joined the channel
+2016-02-24T15:14:39 <BenMerkley> Hello! Quick question for the RESET button on Fluid is there a way to translate it?
+2016-02-24T15:14:49 <BenMerkley> Didnt see it in the messages folder
+2016-02-24T15:15:12 * danayo joined the channel
+2016-02-24T15:15:24 * lliskovoi joined the channel
+2016-02-24T15:16:20 * lliskovoi joined the channel
+2016-02-24T15:21:12 * Yan_Hu joined the channel
+2016-02-24T15:24:26 <bens01> Justin_o, we\'re switching some routes around on the test site to deploy a new version
+2016-02-24T15:25:36 <Justin_o> bens01: thanks for the update.. I\'m still going through some debugging of the ctrl-alt-r reset.. we\'re tracking things down but still haven\'t isolated the cause
+2016-02-24T15:27:12 <Justin_o> BenMerkley: unfortunately it is not currently localizable through the message bundles. It\'s currently pulled straight from the markup. We have a ticket filed for this, and hope to actually start working on it soon. https://issues.fluidproject.org/browse/FLUID-5868
+2016-02-24T15:29:35 <BenMerkley> Thanks for letting me know Justin_o!
+2016-02-24T15:29:43 <BenMerkley> Much apreciated
+2016-02-24T15:29:53 <BenMerkley> Justin_o: ++
+2016-02-24T15:30:15 <Justin_o> BenMerkley: no problem :) and sorry about the bug.
+2016-02-24T15:30:45 <BenMerkley> Not need to be sorry :)
+2016-02-24T15:30:49 * simonjb joined the channel
+2016-02-24T15:31:23 <Justin_o> BenMerkley: thanks :)
+2016-02-24T15:31:41 <Justin_o> Bosmon: do you have some time to pair debug something with cindyli and I?
+2016-02-24T15:45:39 * BenMerkley has left the channel
+2016-02-24T15:51:20 * sepidehshahi has quit
+2016-02-24T15:51:51 * sepidehshahi joined the channel
+2016-02-24T16:15:22 <Justin_o> bens01: I won\'t be able to make it to the Standup today and will only have limited time to do testing this afternoon. Could you let me know if anything comes up at the meeting today?
+2016-02-24T16:17:43 <bens01> Justin_o, will do. biggest change this morning is that these are resolved: 1) tab to language list puts focus on selected language 2) TTS warnings when reaching max and min values on ranged panels (text size, line spacing, etc)
+2016-02-24T16:18:19 <Justin_o> bens01: cool thanks.. has FD been redeployed?
+2016-02-24T16:18:20 * cindyli joined the channel
+2016-02-24T16:18:23 <bens01> Justin_o, we are working through the other items tagged high priority by Michelle
+2016-02-24T16:18:35 <bens01> Justin_o, yes, redeployed with those
+2016-02-24T16:18:53 <Justin_o> bens01: thanks.. i\'ll go through and retest those first.
+2016-02-24T16:19:53 <bens01> Justin_o, additionally, there is logging on the FD-server now so if the http 502 comes up again we can troubleshoot more. There is also gzip compression on FD-server load times are improved
+2016-02-24T16:20:21 <Justin_o> bens01: that\'s awesome
+2016-02-24T16:26:10 * gtirloni_ joined the channel
+2016-02-24T16:27:23 * gtirloni_ has left the channel
+2016-02-24T16:28:15 * [idrc_slackbot] joined the channel
+2016-02-24T16:28:24 * [idrc_slackbot] has left the channel
+2016-02-24T16:37:29 <Bosmon> Hi Justin_o
+2016-02-24T16:37:48 <Bosmon> So I have reproduced the problem with the ctrl-alt-r keybinding you described to me
+2016-02-24T16:38:01 <Bosmon> As you suspected, this is caused by destroying a component before it has finished constructing
+2016-02-24T16:38:09 <Bosmon> That is, the "keyboardInput" component
+2016-02-24T16:38:23 <Bosmon> I\'m just looking in to why this is happening, but presumably you have some clues
+2016-02-24T16:38:23 * gtirloni joined the channel
+2016-02-24T16:38:58 <Bosmon> I think this would be a failure in any case, although one would hope that we can get the framework to produce a more helpful diagnostic than it currently does
+2016-02-24T16:39:13 <Bosmon> Do you have an idea why the keyboardInput component would be destroyed before it is constructed?
+2016-02-24T16:39:48 <Bosmon> Oh yes, I see something worrying
+2016-02-24T16:40:01 <Bosmon> There are two recursive calls to "gpii.firstDiscovery.panel.keyboard.relayEvents"
+2016-02-24T16:40:32 <Bosmon> Caused, in turn, by two recursive calls to the component\'s "refreshView" method
+2016-02-24T16:40:56 <Bosmon> Which, themselves, in turn, are caused by two recursive calls to "saveAndApply"
+2016-02-24T16:41:35 * sepidehshahi has quit
+2016-02-24T16:43:22 <Bosmon> So, in the first change, the model is being cleared
+2016-02-24T16:43:40 * sepidehshahi joined the channel
+2016-02-24T16:44:06 * colinclark has quit
+2016-02-24T16:44:43 <Bosmon> I\'m puzzled about the distinction you have in "relayEvents" between offerAsistance being false, and being undefined
+2016-02-24T16:45:49 * jhung is now known as jhung_away
+2016-02-24T16:48:32 <Justin_o> Bosmon: yah, that component has a strange construction that could probably be refined at some point. It\'s basically done to represent this tri-state it has where it starts by providing the user with an opportunity to test if they need the accomodation
+2016-02-24T16:48:39 <Justin_o> i should be "test" in quotes
+2016-02-24T16:48:47 <Bosmon> In the second change, the model is attempting to initialise with gpii_firstDiscovery_stickyKeys: false
+2016-02-24T16:49:46 <Bosmon> This looks like a mistake, given the purpose of the overall change is to clear the model
+2016-02-24T16:49:49 <Justin_o> Bosmon: the curious bit is that this all worked in the prior version of the FD tool, http://build.fluidproject.org/first-discovery/demos/prefsServerIntegration/
+2016-02-24T16:50:01 <Justin_o> Bosmon: yes, that would seem like an error
+2016-02-24T16:50:30 <Bosmon> This is what kicks off the 2nd round of changes whilst the first is still in place
+2016-02-24T16:50:52 <Justin_o> Bosmon: could it be related to the relay working backwards from one of the sub components
+2016-02-24T16:51:55 <Justin_o> so maybe the parent model is reset, but the model from the subcomponent hadn\'t finished relaying its model change up yet?
+2016-02-24T16:55:35 <Bosmon> Justin_o - yes, my best initial guess is that the spurious model contents are caused by this default value here: https://github.com/pga03/first-discovery/blob/sprint3-integration/src/js/keyboardInput.js#L94
+2016-02-24T16:56:10 <Justin_o> Bosmon: that should be undefined?
+2016-02-24T16:56:12 <Bosmon> I imagine that as the fresh instance of this component starts to construct, it tries to relay this value back to the root model
+2016-02-24T16:56:34 <Bosmon> Justin_o - either it should be undefined, or the default relay rule in the builder should not try to relay it back
+2016-02-24T16:56:39 <Justin_o> Bosmon: okay, but why did this all work before?
+2016-02-24T16:57:34 <Justin_o> Bosmon: that one is the preference value though, so it does need to be communicated.. maybe liveOnly though
+2016-02-24T16:57:51 <Bosmon> Justin_o - yes, it should be liveOnly
+2016-02-24T16:57:58 <Bosmon> I\'m trying to find the relay rule responsible for this
+2016-02-24T16:58:11 <Bosmon> Do you happen to know where they live?
+2016-02-24T16:59:51 <Bosmon> Ah here it is
+2016-02-24T16:59:55 <Bosmon> Yes, it is an implicit relay rule
+2016-02-24T17:00:25 <Bosmon> https://github.com/pga03/first-discovery/blob/sprint3-integration/src/js/panels.js#L288
+2016-02-24T17:00:26 <Bosmon> Here it is
+2016-02-24T17:00:46 <Bosmon> So this rule tries to relay the value "false" back to the root model, whilst the transaction is still in progress trying to clear the model
+2016-02-24T17:00:51 <Bosmon> This then causes general chaos
+2016-02-24T17:02:27 <Bosmon> The system self-reacts, and tries to recreate the keyboardInput component in response to a 2nd "onInitInput" event whilst the 1st one is still in the process of notifying its listeners
+2016-02-24T17:02:37 <Bosmon> You will see two firings of "onInitInput" on the stack which is clearly a mistake
+2016-02-24T17:03:07 <Bosmon> There are several ways to work around this, although the framework should have given you an immediate diagnostic when you tried to destroy a component whilst it was still creating
+2016-02-24T17:03:28 <Bosmon> Firstly, you can rewrite the relay rule to be explicit and only relay forwards rather than backwards
+2016-02-24T17:03:35 <Bosmon> Secondly, you could just remove the initial default value
+2016-02-24T17:04:10 <Bosmon> THirdly, you could make the operation of gpii.firstDiscovery.panel.keyboard.relayEvents asynchronous so that it waits for the current model transaction to complete before it attempts to start a fresh one
+2016-02-24T17:04:26 <Bosmon> I think any of these three schemes would make the problem go away
+2016-02-24T17:04:41 <Bosmon> In the meantime I can write this up as an area where we can improve diagnostics
+2016-02-24T17:04:59 * sepidehshahi has quit
+2016-02-24T17:05:11 * michelled has quit
+2016-02-24T17:05:24 <Justin_o> Bosmon: thanks
+2016-02-24T17:05:35 <Bosmon> There are two faults going on at the same time - firstly, there is a second "init transaction" going on whilst another it still in progress on the same components
+2016-02-24T17:05:46 <Bosmon> secondly, a component was destroyed before it got to the end of its construction phase
+2016-02-24T17:05:55 <Justin_o> i\'ll try some of those options when i get back later.. cindy and I did try to change the model relay rules before and used backward never, but it was still failing at the same place... i\'ll try some more later though
+2016-02-24T17:20:35 * mbrenn_iskme joined the channel
+2016-02-24T17:33:14 * bens02 joined the channel
+2016-02-24T17:34:48 * bens01 has quit
+2016-02-24T17:38:29 * bens02 is now known as bens01
+2016-02-24T18:40:18 * cindyli joined the channel
+2016-02-24T18:40:19 * sepidehshahi joined the channel
+2016-02-24T18:40:28 * clown has quit
+2016-02-24T18:40:55 * colinclark joined the channel
+2016-02-24T18:43:15 * yzen has quit
+2016-02-24T18:45:20 * lliskovoi joined the channel
+2016-02-24T18:46:50 * Yan_Hu joined the channel
+2016-02-24T18:47:06 <colinclark> Bosmon: What is a "GPII binder?"
+2016-02-24T18:47:37 <Bosmon> colinclark - it\'s a packaging of some DOM binding code I wrote once which is being managed and improved by the-t-in-rtf
+2016-02-24T18:47:51 <Bosmon> Somewhat different to some DOM binding code I wrote on two other occasions....
+2016-02-24T18:48:21 <Bosmon> Particularly, this deals with binding values to models
+2016-02-24T18:48:28 <Bosmon> Rather than binding to the DOM in general
+2016-02-24T18:48:38 * michelled joined the channel
+2016-02-24T18:50:04 * sepidehshahi joined the channel
+'
+

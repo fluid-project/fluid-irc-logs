@@ -1,0 +1,462 @@
+b'2016-09-02T22:37:59 <avtar> and with that i bid you adieu
+2016-09-02T22:38:10 <gloob> adios
+2016-09-02T22:38:42 <avtar> auf wiedersehen
+2016-09-02T23:38:37 * stegru has quit
+'
+
+b'2016-09-02T20:27:58 <alanharnum2> there\'s an area on the screen of the orientation demo that\'s supposed to drop in the sensor data
+2016-09-02T20:28:17 <alanharnum2> yeah, that appears to be the issue
+2016-09-02T20:28:25 <alanharnum2> the events are sent fine, but the logging isn\'t working
+2016-09-02T20:29:01 <alanharnum2> well that\'s a good problem i guess
+2016-09-02T20:29:16 <alanharnum2> lesson learned for about the 1000th time: make sure you\'re testing the thing you actually care about
+2016-09-02T20:29:20 <alanharnum2> rather than a byproduct
+2016-09-02T20:31:37 * cindyli has quit
+2016-09-02T20:34:58 <Bosmon7> ah cool
+2016-09-02T20:40:35 <alanharnum2> or maybe not - it\'s much more pronounced on an iOS device
+2016-09-02T20:40:43 <alanharnum2> i\'ll see if I can try & figure out more next week
+2016-09-02T20:40:49 <alanharnum2> think there may be something more going on
+2016-09-02T20:41:15 <alanharnum2> it looks like there\'s issues with JSON.stringify in the Android Chrome browser, which may be causing other issues if JSON.stringify is being used in other places to send data
+2016-09-02T20:43:09 <avtar> bens___: ping
+2016-09-02T20:44:22 <Bosmon7> alanharnum - interesting
+2016-09-02T20:44:29 <Bosmon7> Perhaps there are some native types lurking in amongst the data
+2016-09-02T20:47:01 <alanharnum2> possibly - i\'ll try & dig further next week
+2016-09-02T20:54:54 * alanharnum2 has quit
+2016-09-02T21:01:11 * michelled1 has quit
+2016-09-02T21:05:34 * yzen_ has quit
+2016-09-02T21:08:22 * clown has left the channel
+2016-09-02T21:09:40 <avtar> gloob: ping
+2016-09-02T21:09:56 <gloob> avtar: pong
+2016-09-02T21:10:17 <avtar> bens___, Bosmon, Bosmon7, stegru: gloob and i discovered today that the gpii windows build is failing
+2016-09-02T21:11:03 <avtar> https://gist.github.com/michelled/bb3a065d0a16e650e3f3417a20f3c2cd
+2016-09-02T21:11:06 <gloob> (with the new box)
+2016-09-02T21:11:39 * alanharnum has quit
+2016-09-02T21:11:46 <avtar> but bens___, gio, and i ran builds and tests with the same box a few days ago including last night
+2016-09-02T21:11:46 <gloob> it doesn\'t happens with current vagrant windows-10 box in atlas (0.3.0)
+2016-09-02T21:12:02 <avtar> without any issues
+2016-09-02T21:12:08 <gloob> avtar: I tested it with the 0.3.0 and it doesn\'t happen
+2016-09-02T21:15:01 <gloob> avtar: ah, yes, probably, correct
+2016-09-02T21:16:06 <gloob> avtar: but I run 10 minutes ago a build with 0.3.0 and it build successfully
+2016-09-02T21:17:03 <gloob> avtar: trying again with 0.3.0 to be 100% sure
+2016-09-02T21:19:50 <avtar> gloob: but if everything was working yesterday for multiple people with the newer box it leads me to believe what\'s changed is dependencies getting pulled in as part of gpii/windows provisioning
+2016-09-02T21:20:36 <avtar> https://github.com/GPII/windows/tree/master/provisioning
+2016-09-02T21:21:24 <avtar> node is pinned to 4.4.3
+2016-09-02T21:22:02 <avtar> it looks like chocolatey\'s python is still at 2.7.11 https://chocolatey.org/packages/python2
+2016-09-02T21:22:46 <avtar> and then there are the bits that npm is pulling in
+2016-09-02T21:30:17 <gloob> avtar: https://gist.github.com/gloob/320dc79e38297dd0ff017660f70db6f9
+2016-09-02T21:30:40 <gloob> avtar: so, why I can build it without problems with 0.3.0?
+2016-09-02T21:31:38 <avtar> gloob: older versions of ms build tools comes to mind
+2016-09-02T21:31:47 <avtar> but that\'s just a guess at this point
+2016-09-02T21:31:54 <gloob> avtar: yes, something of that
+2016-09-02T21:32:28 <avtar> if we saw this issue with 0.4.5 right after it was built then we could suspect the build tools that are bundled in the box
+2016-09-02T21:32:44 <gloob> the good thing is that the inductor of the bug it is in the toolchain added in the new box or in the new box itself
+2016-09-02T21:33:25 <avtar> but since the build was fine yesterday then what\'s changing now is whatever is getting installed from external sources whenever a new environment is created
+2016-09-02T21:34:47 <avtar> gloob: another bug is that even though msbuild is erroring out the provisioning process isn\'t failing
+2016-09-02T21:34:50 <avtar> ==> default: gyp ERR! stack Error: `C:\\Program Files (x86)\\MSBuild\\14.0\\bin\\msbuild.exe` failed with exit code: 1
+2016-09-02T21:35:38 <gloob> avtar: yes, that is clearly a bug
+2016-09-02T21:36:20 <gloob> avtar: what I think it happened is that it was compiled before with 0.3.0 box and after adding the new box version it failed, but because it was a silent error verything was running ok
+2016-09-02T21:37:04 <gloob> I\'m almost 100% sure that if we were deleting gyp compiled output before we would see this from the beginning
+2016-09-02T21:37:22 <gloob> I think that is a second interesting improvement
+2016-09-02T21:37:34 <gloob> to do somehow of provisioning clean
+2016-09-02T21:37:38 <gloob> a la make clean
+2016-09-02T21:38:26 <avtar> yeah
+2016-09-02T21:38:53 <Bosmon7> avtar, gloob - very interesting
+2016-09-02T21:39:16 <gloob> or, the second scenario is that there\'s something that is being pulled from the box differently?
+2016-09-02T21:40:45 <gloob> Bosmon7: do you compile windows gpii in your windows host?
+2016-09-02T21:41:15 <gloob> Bosmon7: or always through vagrant?
+2016-09-02T21:43:19 <Bosmon7> gloob - I\'ll tell you a somewhat dirty truth
+2016-09-02T21:43:29 <Bosmon7> I\'ve still not yet succeeded in getting vagrant windows boxes running on this machine : P
+2016-09-02T21:43:36 <Bosmon7> Perhaps someday soon
+2016-09-02T21:43:37 * gloob hearing
+2016-09-02T21:43:39 <Bosmon7> I always build in my host
+2016-09-02T21:43:44 <avtar> uh oh
+2016-09-02T21:43:44 <gloob> that is interesting
+2016-09-02T21:44:10 <avtar> https://github.com/nodejs/node-gyp/issues/1011#issuecomment-241976374
+2016-09-02T21:44:50 <gloob> great, so bumping to > 3.4.0 fix it
+2016-09-02T21:44:56 <avtar> gonna try that
+2016-09-02T21:45:04 <gloob> perfect
+2016-09-02T21:45:11 <Bosmon7> avtar - yet another reason to hoik ourselves up to npm 3
+2016-09-02T21:45:17 <avtar> yes :/
+2016-09-02T21:45:21 <gloob> I will write the build.bat issue in jira
+2016-09-02T21:45:29 <avtar> thanks gloob!
+2016-09-02T21:45:32 <Bosmon7> I still need to roll that Infusion release
+2016-09-02T21:45:41 <Bosmon7> Well, let me do it now
+2016-09-02T21:45:57 <gloob> Bosmon7: please please please
+2016-09-02T21:46:04 <Bosmon7> There\'s a few fixes I\'d really like, but a release costs nothing!
+2016-09-02T21:46:24 <gloob> this is somehow a GPII Friday\'s party night
+2016-09-02T21:46:44 <avtar> gloob: we\'ve had a couple gpii windows friday parties :P
+2016-09-02T21:46:54 <Bosmon7> I am so old that I feel proud rather than ashamed to be doing this on a Friday night :)
+2016-09-02T21:47:17 <gloob> Bosmon7: I understand that :P
+2016-09-02T21:47:36 <avtar> i don\'t know how you two do this on fridays when you have tiny people to raise...
+2016-09-02T21:47:46 <avtar> i can barely manage my own life
+2016-09-02T21:47:57 <gloob> avtar: in my case, she is sleeping now
+2016-09-02T21:48:24 <gloob> avtar: well, I can barely manage my own life now, so...
+2016-09-02T21:51:04 <Bosmon7> avtar - right now they are sleeping
+2016-09-02T21:51:14 <Bosmon7> snap
+2016-09-02T21:51:37 <Bosmon7> ok incredibly enough I think this vagrant box is actually running : P
+2016-09-02T21:51:56 <gloob> Bosmon7: anyway now it is the good times for you, you are just the errands guy, things getting interesting in the long run, sorry
+2016-09-02T21:53:35 <Bosmon7> Poor, feeble little 2007 laptop
+2016-09-02T21:53:42 <Bosmon7> It was never designed for this thrashing
+2016-09-02T21:54:02 <gloob> sure not, my macbook is from 2008 and cry hard with vagrant
+2016-09-02T21:54:45 <Bosmon7> ok, so this failed again
+2016-09-02T21:54:57 <Bosmon7> default: WinRM transport: negotiate
+2016-09-02T21:54:57 <Bosmon7> ==> default: Forcing shutdown of VM...
+2016-09-02T21:54:57 <Bosmon7> ==> default: Destroying VM and associated drives...
+2016-09-02T21:54:57 <Bosmon7> E:/programs/vagrant/embedded/gems/gems/httpclient-2.8.0/lib/httpclient/session.rb:800:in `rescue in block in parse_heade
+2016-09-02T21:54:57 <Bosmon7> r\': HTTPClient::KeepAliveDisconnected: An established connection was aborted by the software in your host machine. @ io_
+2016-09-02T21:54:58 <Bosmon7> fillbuf - fd:7  (HTTPClient::KeepAliveDisconnected)
+2016-09-02T21:54:58 <Bosmon7> from E:/programs/vagrant/embedded/gems/gems/httpclient-2.8.0/lib/httpclient/session.rb:791:in `block in parse_he
+2016-09-02T21:54:59 <Bosmon7> ader\'
+2016-09-02T21:55:02 <Bosmon7> Ring any bells, avtar, gloob?
+2016-09-02T21:55:23 <Bosmon7> The VM did visibly seem to try to start up
+2016-09-02T21:55:59 <gloob> sounds to me
+2016-09-02T21:56:06 <gloob> you need to uprise the timeout
+2016-09-02T21:56:10 <gloob> your machine is crazy slow
+2016-09-02T21:57:09 <gloob> If I remember well there\'s two kind of timeouts that you can add in the Vagrantfile
+2016-09-02T21:57:24 <Bosmon7> Sure, my machine is crazy slow
+2016-09-02T21:57:44 <Bosmon7> Ok gloob, an Infusion is published - you can try binding to version 2.0.0-dev.20160902T155354Z.b963420
+2016-09-02T21:58:37 <Bosmon7> This has my fix for FLUID-5940
+2016-09-02T21:58:48 <avtar> sorry, all
+2016-09-02T21:58:56 <avtar> still trying to set this up and take a snapshot before i proceed
+2016-09-02T21:58:58 <avtar> one sec
+2016-09-02T21:59:20 <gloob> Bosmon7: do a vagrant restart
+2016-09-02T21:59:54 <Bosmon7> vagrant reload, you mean?
+2016-09-02T21:59:55 <Bosmon7> Or what
+2016-09-02T22:00:51 <gloob> Bosmon7: yes "vagrant reload"
+2016-09-02T22:01:01 <gloob> Bosmon7: if same happened, add in Vagrantfile this, config.winrm.timeout - The max number of seconds to wait for a WinRM response, defaults to 1800 seconds.
+2016-09-02T22:01:18 <Bosmon7> I\'m pretty sure it didn\'t take that long
+2016-09-02T22:01:36 <Bosmon7> 30 minutes for a response?
+2016-09-02T22:01:39 <Bosmon7> It was a most 5 minutes
+2016-09-02T22:01:59 <Bosmon7> vagrant reload gives "==> default: VM not created. Moving on..."
+2016-09-02T22:02:13 <gloob> config.vm.boot_timeout = 1800
+2016-09-02T22:02:13 <Bosmon7> Indeed somehow the VM seems to be gone
+2016-09-02T22:02:33 <Bosmon7> It was certainly there for a while
+2016-09-02T22:06:57 <gloob> oh, Bosmon7 which vagrant version are you using?
+2016-09-02T22:07:23 <gloob> by the way, thank you for the release!
+2016-09-02T22:23:23 <avtar> Bosmon7, gloob: upgrading node-gyp to 3.4.0 appears to resolve the build issue https://paste.fedoraproject.org/420134/
+2016-09-02T22:24:13 <gloob> great
+2016-09-02T22:24:30 <avtar> unit and acceptance tests pass with the 0.4.5 box
+2016-09-02T22:24:51 <gloob> PR it
+2016-09-02T22:27:08 <avtar> gloob: i tested this by updating npm\'s bundled node-gyp https://github.com/nodejs/node-gyp/wiki/Updating-npm\'s-bundled-node-gyp#windows
+2016-09-02T22:28:41 <avtar> can we move towards npm 3.*?
+2016-09-02T22:30:00 <gloob> we are on it
+2016-09-02T22:32:32 <gloob> avtar: upgrading to npm3 it get fixed too?
+2016-09-02T22:34:25 <gloob> ok, I understand that yes
+2016-09-02T22:34:26 <gloob> npm bundles its own, internal, copy of node-gyp.
+2016-09-02T22:35:11 <gloob> avtar: I will speed up with the new PRs for npm3 now that Bosmon7 did the new release of infusion
+2016-09-02T22:35:18 <gloob> but now, call it a day
+2016-09-02T22:35:29 <gloob> thank you gentlemen and good night
+2016-09-02T22:35:34 <avtar> gloob: same here
+2016-09-02T22:35:49 <avtar> btw it\'s a long weekend here so i\'ll be back on tuesday
+2016-09-02T22:36:02 <gloob> avtar: right, have fun!
+2016-09-02T22:36:07 <avtar> another btw https://github.com/npm/npm/wiki/Troubleshooting#upgrading-on-windows
+2016-09-02T22:36:39 <avtar> looks like this https://github.com/felixrieseberg/npm-windows-upgrade needs to be used to potentially avoid the path issues
+2016-09-02T22:37:03 <gloob> we can add it into the provisioning scripts no?
+2016-09-02T22:37:16 <avtar> that\'s up to you to find out on monday ;)
+2016-09-02T22:37:29 <gloob> :/
+2016-09-02T22:37:47 <gloob> let\'s see what I can miserably do
+'
+
+b'2016-09-02T14:49:48 <stegru> ok
+2016-09-02T14:50:02 <Bosmon7> But we just need to keep the idea in mind
+2016-09-02T14:50:12 <Bosmon7> And make sure we don\'t do anything that suddenly massively raises the costs of supporting XP
+2016-09-02T14:50:17 <Bosmon7> (to the best our of knowledge)
+2016-09-02T14:54:29 <Bosmon7> I think the next CI environment we need is Windows 10 32-bit
+2016-09-02T14:54:37 <Bosmon7> Then Windows 8, then Windows 7
+2016-09-02T14:54:56 <Bosmon7> Then we can dream of thinking about XP, if we miraculously find ourselves awash with resources :)
+2016-09-02T14:57:40 <stegru> xp, the victim of its own success
+2016-09-02T14:59:34 <Bosmon7> Yeah
+2016-09-02T14:59:44 <Bosmon7> I still had XP on my mother\'s PC until last year
+2016-09-02T14:59:54 <Bosmon7> And she didn\'t enjoy the upgrade
+2016-09-02T15:06:08 * jhung joined the channel
+2016-09-02T15:08:18 <stegru> Bosmon: GPII-1540 doesn\'t reproduce on 32-bit windows 7 - if the magnifier is left open, it appears on the lock screen. if it is killed instantly, it doesn\'t appear
+2016-09-02T15:09:48 <stegru> so it wont reproduce on windows 7 in general
+2016-09-02T15:11:10 <Bosmon7> stegru - excellent, really good to know
+2016-09-02T15:11:31 <Bosmon7> I was just starting the download of our giant vagrant box on this tiny bargain basement BT broadband :)
+2016-09-02T15:12:09 <Bosmon7> ah
+2016-09-02T15:12:16 <Bosmon7> There are some broken versions of this aren\'t there....
+2016-09-02T15:13:13 <stegru> of..?
+2016-09-02T15:14:10 <Bosmon7> Right, I need vagrant 1.8.4 ....
+2016-09-02T15:14:12 <Bosmon7> I remember this now
+2016-09-02T15:14:34 <stegru> oh i just loaded it directly in virtual box
+2016-09-02T15:15:12 <stegru> i had an iso lying around
+2016-09-02T15:27:12 <avtar> Bosmon7: are you still downloading at the moment?
+2016-09-02T15:28:04 <avtar> because there\'s a newer 0.4.5 box that we\'re waiting to release next week
+2016-09-02T15:28:25 <avtar> you might as well grab that instead and save some bandwidth later
+2016-09-02T15:54:08 * alanharnum has quit
+2016-09-02T17:06:15 * jhung joined the channel
+2016-09-02T17:21:03 * simonjb joined the channel
+2016-09-02T17:21:36 <simonjb> hey avtar is it still useful for me to test the new windows box?
+2016-09-02T17:22:01 <gloob> simonjb: I think that yes, because you are the only windows tester :P
+2016-09-02T17:22:37 <gloob> prfff, XP is going to be the most expensive to implement in vagrant I guess
+2016-09-02T17:36:57 * alanharnum joined the channel
+2016-09-02T17:40:04 <alanharnum> Bosmon / Bosmon7: thank you for that merge - glad to have that in!
+2016-09-02T17:41:59 <avtar> gloob: simonjb uses opensuse whereas i use windows 10
+2016-09-02T17:43:18 <avtar> simonjb: i wasn\'t aware of this but ben uses rhel and he said everything checked out with the new changes so you don\'t need to spend time on that if you don\'t want to
+2016-09-02T17:44:01 * jhung has quit
+2016-09-02T17:46:29 * michelled1 joined the channel
+2016-09-02T17:48:24 * gtirloni joined the channel
+2016-09-02T17:48:27 * michelled has quit
+2016-09-02T17:58:26 <gloob> avtar: ah, I understand it reversed
+2016-09-02T18:07:00 * stegru has quit
+2016-09-02T18:11:10 * alanharnum joined the channel
+2016-09-02T18:14:49 <avtar> gloob: i\'m not going to hold it against you :)
+2016-09-02T18:16:27 * bens___ joined the channel
+2016-09-02T18:37:32 * jhung joined the channel
+2016-09-02T19:09:20 * anvk has left the channel
+2016-09-02T19:09:37 * stegru joined the channel
+2016-09-02T19:11:33 <gloob> avtar: phewww
+2016-09-02T19:13:49 * yzen_ joined the channel
+2016-09-02T19:16:49 * yzen has quit
+2016-09-02T19:31:35 <Bosmon7> Hi there alanharnum - thanks so much for all your work on the TTS component!
+2016-09-02T19:31:45 <Bosmon7> Sorry to drag out the review so long
+2016-09-02T19:31:51 * jhung has quit
+2016-09-02T19:32:07 <alanharnum> Bosmon7: i\'m glad we took the time to get it right
+2016-09-02T19:32:12 <Bosmon7> Hey alanharnum - do you by any chance happen to know what I need to put on a Nexus demo?
+2016-09-02T19:32:15 <Bosmon7> or how I can do it?
+2016-09-02T19:32:30 <Bosmon7> My guess is I need something like 1 laptop and 2 Android devices of some kind?
+2016-09-02T19:32:54 <Bosmon7> Oh wow
+2016-09-02T19:32:59 <Bosmon7> Sorry, I should have checked my mail
+2016-09-02T19:33:02 <alanharnum> At minimum for it to be at all interesting you probably need 1 laptop + 1 other device
+2016-09-02T19:33:14 <alanharnum> Bosmon7: I was about to ask that as my next question :)
+2016-09-02T19:33:30 <alanharnum> i did a slight cleanup of my rough notes from working with Simon
+2016-09-02T19:34:08 <Bosmon7> Ah
+2016-09-02T19:34:10 <alanharnum> note that I was using my Mac laptop as the control computer, though I don\'t think there should be any issue using a Windows one
+2016-09-02T19:34:13 <Bosmon7> We do have an Android client, right?
+2016-09-02T19:34:19 <Bosmon7> The instructions mention iPads etc
+2016-09-02T19:34:55 <alanharnum> I\'m not sure the Orientation demo works properly with Android
+2016-09-02T19:35:04 <Bosmon7> Oh dear
+2016-09-02T19:35:12 <alanharnum> but any of the others should, though the piano doesn\'t display well on my phone
+2016-09-02T19:35:40 <Bosmon7> How do the clients work?
+2016-09-02T19:35:46 <Bosmon7> Is it all just webapps or what?
+2016-09-02T19:35:49 <alanharnum> just webapps
+2016-09-02T19:36:11 <alanharnum> you connect the clients to a network where they can reach the control computer, which is running the Nexus demos as well as the Nexus
+2016-09-02T19:36:30 <Bosmon7> ok
+2016-09-02T19:36:34 <alanharnum> and it\'s serving the demos on port 8080, they connect to various demo pages on there
+2016-09-02T19:36:50 <Bosmon7> So when you say the Orientation demo doesn\'t work properly, this will be a limitation of some HTML5 API in some Android browser?
+2016-09-02T19:36:58 <alanharnum> i\'m not 100% sure
+2016-09-02T19:37:08 <alanharnum> i think i tested it briefly with my phone & it didn\'t work
+2016-09-02T19:37:08 <Bosmon7> This is demo which we do in the video, right?
+2016-09-02T19:37:15 <Bosmon7> Which has one person pinging and one person wobulating?
+2016-09-02T19:37:15 <alanharnum> yup, the musical one
+2016-09-02T19:37:27 <alanharnum> but i never looked too closely at why it didn\'t
+2016-09-02T19:37:35 <Bosmon7> Ok
+2016-09-02T19:37:44 <Bosmon7> Well we have a couple of days to tinker with this
+2016-09-02T19:37:52 <Bosmon7> But in theory it would be nice to be able to produce a demo on Thursday
+2016-09-02T19:37:53 <Bosmon7> perhaps Friday
+2016-09-02T19:38:18 <Bosmon7> I have access to 2 Android tablets and 2 Android phones of various vintages
+2016-09-02T19:38:20 <Bosmon7> Sadly no Apple equipment
+2016-09-02T19:38:40 <alanharnum> i am reasonably certain it would be pretty quick to get the orientation sensor working with Android as well
+2016-09-02T19:38:53 <Bosmon7> ok
+2016-09-02T19:38:58 <Bosmon7> That\'s awesome
+2016-09-02T19:39:03 <alanharnum> if you run any of various HTML5 demos for the orientation sensor, they work fine
+2016-09-02T19:39:07 <alanharnum> (in Android browser)
+2016-09-02T19:39:09 <Bosmon7> Asterics is only required for the headtracker, right?
+2016-09-02T19:39:15 <alanharnum> so i suspect it\'s something about our implementation, etc
+2016-09-02T19:39:17 <Bosmon7> So I can skip that if I just want to demo "orientation"
+2016-09-02T19:39:20 <alanharnum> yes
+2016-09-02T19:39:24 <Bosmon7> ok
+2016-09-02T19:39:27 <Bosmon7> That cuts out a lot
+2016-09-02T19:39:39 <alanharnum> yeah Asterics setup is the most complicated piece
+2016-09-02T19:39:48 <Bosmon7> That just leaves me to figure out how on earth I can share my connection over Wifi on Windows
+2016-09-02T19:39:52 <Bosmon7> Which is something I\'ve never seen work very well
+2016-09-02T19:40:00 <Bosmon7> I can certainly take my own router along to the demo
+2016-09-02T19:40:06 <Bosmon7> But that itself needs to connect to something
+2016-09-02T19:40:09 <Bosmon7> Actually I guess it doesn\'t
+2016-09-02T19:40:22 <Bosmon7> I can just make a private network with it pretty easily, I guess
+2016-09-02T19:40:25 <alanharnum> you shouldn\'t need an actual internet connection i believe
+2016-09-02T19:40:28 <Bosmon7> ok
+2016-09-02T19:40:29 <alanharnum> a private network should be fine
+2016-09-02T19:40:34 <Bosmon7> This is the beginnings of a plan
+2016-09-02T19:40:48 <Bosmon7> I\'ll tinker with stuff over the weekend and share my findings
+2016-09-02T19:40:52 <alanharnum> i believe Windows may be the same as as Mac in that you have to have an Ethernet internet connection to turn on connection sharing via wifi
+2016-09-02T19:41:12 <Bosmon7> Will it be obvious what the URL etc is for the Orientation demo?
+2016-09-02T19:41:41 <alanharnum> it\'s pretty easy to find in OSX or Linux using ifconfig
+2016-09-02T19:42:01 <alanharnum> should be similar in Windows via ipconfig or similar, although firewall etc might make it more complicated
+2016-09-02T19:42:11 <Bosmon7> Ok, I guess there\'s just the index.html
+2016-09-02T19:42:16 <alanharnum> yeah
+2016-09-02T19:42:41 <alanharnum> a client device on the private network needs to go (via browser) to a URL like "http:192.168.1.105:8080" and go to demos from there
+2016-09-02T19:43:03 <Bosmon7> Ok
+2016-09-02T19:43:04 <Bosmon7> https://github.com/simonbates/nexus-demos/blob/master/demos/device-orientation/index.html
+2016-09-02T19:43:06 <Bosmon7> I see this
+2016-09-02T19:43:12 <Bosmon7> But it is just for the orientation bit
+2016-09-02T19:43:26 <Bosmon7> How do I do the full demo with one person making sounds and one person doing orientation?
+2016-09-02T19:43:50 <alanharnum> You need (at minimum):
+2016-09-02T19:43:59 <alanharnum> - the bonang synth open in a browser on the control computer
+2016-09-02T19:44:05 <Bosmon7> ah ok
+2016-09-02T19:44:35 <alanharnum> - a controller demo open in a browser on the control computer or a client device
+2016-09-02T19:45:11 <alanharnum> - a client device with an orientation sensor with a browser open to the orientation demo
+2016-09-02T19:45:14 <alanharnum> then you can get the "wobble"
+2016-09-02T19:48:09 <alanharnum> when do you need to demo this?
+2016-09-02T19:51:09 * alanharn_ joined the channel
+2016-09-02T19:51:25 * alanharn_ is now known as alanharnum2
+2016-09-02T19:52:04 <alanharnum2> Bosmon / Bosmon7: gonna test the Android tilt situation on my setup RQ so I can give you a better answer
+2016-09-02T20:00:00 <Bosmon7> Thursday or Friday
+2016-09-02T20:00:04 <Bosmon7> Thanks so much, alanharnum2!
+2016-09-02T20:03:51 <alanharnum2> Bosmon7: it definitely doesn\'t work, but I\'m gonna see if I can figure out why
+2016-09-02T20:04:31 <alanharnum2> it\'s possible it\'s because of this, but I get that as a warning message after I hook the phone up in debug mode, rather than an error: https://sites.google.com/a/chromium.org/dev/Home/chromium-security/deprecating-powerful-features-on-insecure-origins
+2016-09-02T20:10:24 <Bosmon7> Ah, fascinating
+2016-09-02T20:11:00 * gtirloni has quit
+2016-09-02T20:19:29 <alanharnum2> Bosmon7: Actually I think it may work fine
+2016-09-02T20:19:40 <alanharnum2> the issue seems to be that (not sure why on this) the visible logging doesn\'t work
+2016-09-02T20:19:46 <alanharnum2> on the actual demo page
+2016-09-02T20:19:56 <alanharnum2> but as far as I can tell it\'s sending signals successfully
+2016-09-02T20:20:09 <alanharnum2> and you can get the "wobble" effect with an Android device
+2016-09-02T20:20:40 <alanharnum2> iirc we never looked at it too closely, just saw it wasn\'t visibly logging the signals, assumed it wasn\'t working, shrugged, and went to iOS devices given the timelines
+2016-09-02T20:26:34 <Bosmon7> oh ok
+2016-09-02T20:26:36 <Bosmon7> That\'s great
+2016-09-02T20:26:42 <Bosmon7> What is the "visible logging"?
+2016-09-02T20:26:48 <Bosmon7> alanharnum2
+'
+
+b'2016-09-02T01:41:36 * bens___ has quit
+2016-09-02T02:03:56 * michelled joined the channel
+2016-09-02T02:53:11 * michelled has quit
+2016-09-02T07:54:16 * stegru joined the channel
+2016-09-02T10:32:05 * michelled joined the channel
+2016-09-02T10:36:28 * michelled has quit
+2016-09-02T10:39:13 * gtirloni joined the channel
+2016-09-02T11:00:28 * scott_gonzalez_ joined the channel
+2016-09-02T11:07:31 * scott_gonzalez has quit
+2016-09-02T11:33:46 * michelled joined the channel
+2016-09-02T11:38:24 * michelled has quit
+2016-09-02T11:39:48 * jhung joined the channel
+2016-09-02T12:31:57 * cindyli joined the channel
+2016-09-02T12:34:26 * michelled joined the channel
+2016-09-02T12:38:35 * michelled has quit
+2016-09-02T12:57:18 * anvk joined the channel
+2016-09-02T12:57:51 * anvk has quit
+2016-09-02T13:06:31 * anvk joined the channel
+2016-09-02T13:12:57 * alanharnum joined the channel
+2016-09-02T13:25:40 * jhung is now known as jhung_away
+2016-09-02T13:31:28 * yzen joined the channel
+2016-09-02T13:36:38 * clown joined the channel
+2016-09-02T13:47:26 * yzen has quit
+2016-09-02T13:48:04 * kavya joined the channel
+2016-09-02T13:52:50 * yzen joined the channel
+2016-09-02T13:52:50 * yzen is now known as yzen_
+2016-09-02T13:53:08 * yzen_ is now known as yzen
+2016-09-02T13:56:12 <Bosmon7> Hi there avtar - do you know if we have standard VM images of 32-bit versions of Windows?
+2016-09-02T13:56:49 <avtar> hey Bosmon7
+2016-09-02T13:56:50 * michelled joined the channel
+2016-09-02T13:56:54 <avtar> no we don\'t
+2016-09-02T13:57:26 <avtar> gloob has a jira for that
+2016-09-02T13:57:48 <Bosmon7> ok
+2016-09-02T13:57:55 <Bosmon7> I\'d like to test stegru\'s patch for https://issues.gpii.net/browse/GPII-1540
+2016-09-02T13:58:56 <Bosmon7> How did you do your testing, stegru... did you just happen to have one around?
+2016-09-02T13:59:10 <Bosmon7> Hi cindyli, sorry I missed your question last night
+2016-09-02T13:59:32 <stegru> no, i don\'t have one - i just started the magnifier manually
+2016-09-02T13:59:41 <cindyli> no problem Bosmon7, it was pretty late at ur time
+2016-09-02T14:00:56 <cindyli> i pinged u because there\'s an issue with having a createOnEvent on a express middleware. gpii.express has its own way to wire up children middle wares
+2016-09-02T14:01:13 <Bosmon7> Started the magnifier manually....
+2016-09-02T14:01:19 <Bosmon7> I guess I\'m still pretty confused about this bug
+2016-09-02T14:01:51 <cindyli> i guess tony might be able to shed some light
+2016-09-02T14:02:09 <Bosmon7> cindyli - I don\'t think that createOnEvent is meaningfull for a piece of express middleware
+2016-09-02T14:02:20 <Bosmon7> The whole point of the express idiom is that the application structure is known statically
+2016-09-02T14:02:25 <stegru> i think both the 32 and 64-bit magnifier (and osk) perform the same - but the 32-bit one writes to the 32-bit part of the registry, which 64-bit windows doesn\'t read
+2016-09-02T14:03:07 <Bosmon7> stegru - ah, you mean you started the 32-bit magnifier manually?
+2016-09-02T14:03:08 <cindyli> Bosmon7: good to know. probably instead of restarting the pouch express middleware, i should restart the entire express
+2016-09-02T14:03:34 <Bosmon7> cindyli - sounds like an awful mess
+2016-09-02T14:03:49 <cindyli> :(
+2016-09-02T14:04:22 <Bosmon7> I\'m trying to convince atkins that we need to ditch express-pouchdb
+2016-09-02T14:04:29 <Bosmon7> It\'s so riddled with limitations and problems
+2016-09-02T14:04:45 <stegru> Bosmon: no, 64-bit (node executes the 32-bit)
+2016-09-02T14:04:57 <Bosmon7> Yes, it does sound like there\'s no alternative to putting express-pouchdb in its own express server
+2016-09-02T14:05:00 <Bosmon7> And then restarting that
+2016-09-02T14:05:05 <Bosmon7> This will deal with your routing problems too
+2016-09-02T14:05:19 <cindyli> ok, trying
+2016-09-02T14:05:21 * michelled has quit
+2016-09-02T14:05:55 <Bosmon7> stegru - sorry to be so dim
+2016-09-02T14:06:14 <Bosmon7> I\'m really having trouble wrapping my head around all the conditions for this bug : P
+2016-09-02T14:06:46 <Bosmon7> So when you said in the JIRA comment.... "I\'ve been reproducing this with the method that Sandra Ellett-Salmoran discovered" ... "My initial findings are in Windows 10 (and possibly 8, 7 unknown)"
+2016-09-02T14:06:54 <Bosmon7> These were all with 64-bit versions of Windows then, right?
+2016-09-02T14:07:23 <stegru> erm..
+2016-09-02T14:07:50 <stegru> 32... Environment:
+2016-09-02T14:07:50 <stegru> GPII.151214.031038.msi
+2016-09-02T14:07:50 <stegru> Windows 8.1 32-bit
+2016-09-02T14:07:58 <Bosmon7> Well right
+2016-09-02T14:08:03 <Bosmon7> But I\'m talking about your reproduction of it
+2016-09-02T14:08:03 * michelled joined the channel
+2016-09-02T14:08:07 <Bosmon7> And you said you didn\'t have any 32-bit windows?
+2016-09-02T14:08:51 <stegru> that\'s right, i started it manually - in fact, i did not realise it mattered until later on
+2016-09-02T14:09:41 <Bosmon7> Ok, you started it manually - what did you do next?
+2016-09-02T14:10:22 * jhung_away has quit
+2016-09-02T14:11:01 <stegru> I killed it (manually at first, but also via gpii by logging out)
+2016-09-02T14:11:19 <stegru> then I did alt+ctrl+del, and it came back again
+2016-09-02T14:11:47 <Bosmon7> Ah
+2016-09-02T14:12:17 <Bosmon7> But how did you convince the GPII to log out and kill something which it hadn\'t created
+2016-09-02T14:12:27 <Bosmon7> I guess you closed the magnifier it opened, and then opened another one?
+2016-09-02T14:12:58 <stegru> it just kills any process by that name, regardless of who/what started it
+2016-09-02T14:13:01 <Bosmon7> Right
+2016-09-02T14:14:03 <Bosmon7> But because of GPII-1757, it starts the wrong one?
+2016-09-02T14:14:22 <stegru> yes, and i did not realise that until i started 1757
+2016-09-02T14:15:30 <stegru> when i did my final testing (after I fixed it), i used GPII properly - and it worked, although it turns out that test wasn\'t accurate enough
+2016-09-02T14:19:06 <Bosmon7> ok
+2016-09-02T14:19:21 <Bosmon7> Really sorry for this tedious line of questioning.... but I\'m still not sure that I have this all straight
+2016-09-02T14:19:38 <Bosmon7> So 1757 bites, ONLY when the bitness of node and Windows is mismatched?
+2016-09-02T14:19:53 <stegru> yes, that\'s right
+2016-09-02T14:20:22 <Bosmon7> So, if I have both a 64-bit node and a 64-bit windows, we should NOT have 1757
+2016-09-02T14:20:50 <Bosmon7> And therefore I should be able to observe 1540, with respect to the magnifier?
+2016-09-02T14:21:08 <Bosmon7> Or is that I should NOT be able to observe 1540...........
+2016-09-02T14:21:38 <Bosmon7> IF we launch the correct (64-bit magnifier).... it should be dumping its stuff in the correct part of the registry
+2016-09-02T14:21:39 <stegru> hang on, i\'ve lost it now
+2016-09-02T14:22:15 <Bosmon7> And then when I CTRL-ALT-DEL, it should reappear after the GPII kills it crassly?
+2016-09-02T14:22:25 <stegru> that\'s right.. 64bit node on 64-bit OS.. no 1757
+2016-09-02T14:22:52 <Bosmon7> I\'m just trying to work out which giant Windows machine image it\'s best worth my while to download in order to observe this bug :)
+2016-09-02T14:23:06 <stegru> 32-bit node on 64 bit os = 1757, but not 1540
+2016-09-02T14:23:11 <Bosmon7> For some reason I can\'t provoke it on the only VM I have on this machine, which is a 64-bit Windows 7
+2016-09-02T14:23:26 <stegru> it could be a windows 8+ problem
+2016-09-02T14:23:29 <Bosmon7> But I\'m trying to work out whether that\'s just because it\'s Windows 7 or because I don\'t completely understand the bug
+2016-09-02T14:23:31 <Bosmon7> ok
+2016-09-02T14:23:58 <stegru> i started to install 32-bit 7 last night, so i\'ll finish it and check
+2016-09-02T14:24:05 <Bosmon7> ok
+2016-09-02T14:24:42 <stegru> i think it is 8+, because of the accessibility something-or-another.. you know, that msdn link from a few weeks back
+2016-09-02T14:25:20 <Bosmon7> Oh right
+2016-09-02T14:25:24 <Bosmon7> v.interesting
+2016-09-02T14:25:43 <stegru> yes: Ease of Access \xe2\x80\x93 Assistive Technology Registration https://msdn.microsoft.com/en-us/library/windows/desktop/bb879984.aspx
+2016-09-02T14:25:51 <Bosmon7> I went to the photo printing kiosk at the chemist\'s round the corner from here just now and I found that it was sitting on an ancient Windows XP box :)
+2016-09-02T14:25:56 <stegru> "Windows 8 introduces several configuration options that..."
+2016-09-02T14:26:00 <Bosmon7> Good luck to us making that accessible
+2016-09-02T14:26:09 <stegru> xp is everywhere
+2016-09-02T14:26:19 <Bosmon7> Yes
+2016-09-02T14:26:33 <stegru> my daughter needs it to dual-boot to play the sims
+2016-09-02T14:26:48 <Bosmon7> I\'ve been one of the stick-in-the-muds since the earliest days of the project suggesting that we couldn\'t ultimately, in the long run afford to forget about XP
+2016-09-02T14:26:55 <stegru> and i\'m clinging onto it because the update servers for drivers are dead
+2016-09-02T14:26:59 <Bosmon7> And in fact its people with accessibility needs who are the most likely to have outdated IT kit
+2016-09-02T14:27:05 <stegru> exactly
+2016-09-02T14:27:21 <Bosmon7> We are now discovering this is exactly the case at the American Job Centres we may be deploying at
+2016-09-02T14:27:36 <Bosmon7> Hats off to Mozilla for continuing to make builds of Firefox available for XP
+2016-09-02T14:27:55 <stegru> yeh, some people have no choice to use it
+2016-09-02T14:28:42 <Bosmon7> https://github.com/nodejs/node/issues/3804
+2016-09-02T14:28:48 <Bosmon7> Looks like we\'ll at least get support for node 4.x on XP
+2016-09-02T14:28:58 <Bosmon7> So we\'d better take care not to leave this ecosystem behind completely
+2016-09-02T14:29:22 * gtirloni joined the channel
+2016-09-02T14:30:00 <Bosmon7> node 4.x is competent enough, and will have been in LTS for 18 months by the time it gets supplanted
+2016-09-02T14:30:04 <Bosmon7> So we may be able to get lucky with this
+2016-09-02T14:30:17 <Bosmon7> I worry about electron though
+2016-09-02T14:30:28 <Bosmon7> They\'ve always been more aggressive about pushing V8 versions
+2016-09-02T14:30:44 <stegru> is it possible to target both node 4 and 6?
+2016-09-02T14:30:52 <Bosmon7> stegru - I think so, yes
+2016-09-02T14:31:16 <Bosmon7> As we discussed in our Windows meetings, use of node 4 together with npm 3 is just an inconvenience, rather than a show-stopper
+2016-09-02T14:31:26 <Bosmon7> It just requires us to proliferate yet more and more CI configurations
+2016-09-02T14:31:30 <Bosmon7> "just"
+2016-09-02T14:31:34 <stegru> ok
+2016-09-02T14:32:16 <Bosmon7> The problem is, if we deliver desktop UI using electron, I don\'t believe there\'s any viable version of that bound to a node 4-era version of V8
+2016-09-02T14:32:39 <Bosmon7> Anyway, we won\'t be tackling this for a couple of years
+2016-09-02T14:32:48 <Bosmon7> For the initial pilots, I think we will get to choose our hardware
+2016-09-02T14:32:56 <stegru> next year\'s problem :)
+2016-09-02T14:33:04 <Bosmon7> Perhaps by 2018 XP might really be starting to fade away
+2016-09-02T14:33:08 <Bosmon7> Although I\'m not holding my breath
+2016-09-02T14:33:59 * gtirloni has quit
+2016-09-02T14:34:30 * gtirloni joined the channel
+2016-09-02T14:34:38 <stegru> so.. (i don\'t want to say this, but) if XP support could be a future requirement, then shouldn\'t there still be some tests on XP?
+2016-09-02T14:35:27 <stegru> just sanity tests
+2016-09-02T14:36:21 <kavya> Stegru: yes..we need to have some tests
+2016-09-02T14:37:12 <kavya> i raised the same issue with sandra..MS doesnt support xp anymore
+2016-09-02T14:37:35 * kavya has quit
+2016-09-02T14:38:08 * kavya joined the channel
+2016-09-02T14:39:42 <stegru> well, i wont be actively testing my things on XP (unless ordered, of course), but i\'ll certainly keep XP in mind
+2016-09-02T14:46:56 <Bosmon7> stegru - in theory, yes - but even mounting sanity tests costs more than we can afford at the moment
+2016-09-02T14:47:00 <Bosmon7> We need to priorities our environments
+2016-09-02T14:49:14 <Bosmon7> prioritise
+'
+

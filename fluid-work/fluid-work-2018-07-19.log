@@ -1,0 +1,257 @@
+b'2018-07-19T17:58:37 * alanharnum joined the channel
+2018-07-19T18:07:22 * avtar joined the channel
+2018-07-19T18:10:36 * danayo has quit
+2018-07-19T18:10:36 * danayo_ is now known as danayo
+2018-07-19T18:32:39 * gtirloni joined the channel
+2018-07-19T18:44:34 * colinclark joined the channel
+2018-07-19T18:49:55 <gmoss> alanharnum: if/whenever you have time this afternoon, i\'m available to meet and discuss UIO at any point
+2018-07-19T18:50:17 <alanharnum> gmoss: sure thing - we just started our meeting a bit late, but i\'ll touch base when i can
+2018-07-19T18:50:19 <gmoss> also I\'ve added l10n files for each of the four languages we laid out in the Jira: https://github.com/BlueSlug/infusion/commit/02ba7de8fb1136c45b4a8a654e981f829bbd8002
+2018-07-19T18:50:20 <gmoss> sure
+2018-07-19T18:56:57 <cindyli> Bosmon: i\'m having an interesting problem and wonder how the preference sent from PSP client affects the binding of model changes in between PSPChannel and lifecycle manager session
+2018-07-19T18:57:02 <cindyli> at this line - https://github.com/cindyli/universal/blob/GPII-3213/tests/UntrustedPSPIntegrationTests.js#L258
+2018-07-19T18:57:46 <cindyli> if the prefs is "http://registry\\\\.gpii\\\\.net/common/magnification", PSPchannel will receive the correct "preferencesApplied" message - https://pastebin.com/C0v0W5ct
+2018-07-19T18:59:50 <cindyli> if the prefs is changed to "pitch", as what\'s in there right now, PSP channel will receive an extra "userUpdate" before the correct one - https://pastebin.com/hCwKpDPK
+2018-07-19T19:01:53 <cindyli> "userUpdate" model change is always fired by lifecycle manager in both cases - https://github.com/cindyli/universal/blob/GPII-3213/gpii/node_modules/lifecycleManager/src/LifecycleManager.js#L242
+2018-07-19T19:02:52 <cindyli> the strange thing is why PSP channel sees different things when using different prefs
+2018-07-19T19:03:14 <Bosmon> cindyli - well, the only possible source of "userUpdate" is gpii.lifecycleManager.applyPreferences, right?
+2018-07-19T19:03:41 * gtirloni has quit
+2018-07-19T19:04:04 <cindyli> yes
+2018-07-19T19:05:08 * VictorNG joined the channel
+2018-07-19T19:07:46 * gtirloni joined the channel
+2018-07-19T19:08:00 <Bosmon> cindyli - I\'m actually a bit puzzled what "userUpdate" is actually for, as a source
+2018-07-19T19:08:06 <Bosmon> I know I did review this
+2018-07-19T19:08:27 <Bosmon> Surely the change source really is the PSP
+2018-07-19T19:08:30 <cindyli> Bosmon: it\'s to tell this model change is from PSP
+2018-07-19T19:08:32 <Bosmon> or at least, the channel
+2018-07-19T19:08:37 <cindyli> yes
+2018-07-19T19:08:38 <Bosmon> Yes, but there is already a change source type of PSP
+2018-07-19T19:09:01 <sgithens> cindyli: On the DbDataStore, for the readPayload options, is there someway I could specify something like: `rows.*.doc` to pull out the doc from each row and return them as an array?
+2018-07-19T19:09:15 <Bosmon> sgithens - no
+2018-07-19T19:09:20 <cindyli> Bosmon: right, i will have a look
+2018-07-19T19:09:38 <sgithens> Bosmon: thx
+2018-07-19T19:10:40 <Bosmon> sgithens - https://github.com/fluid-project/kettle/blob/master/lib/dataSource-core.js#L355
+2018-07-19T19:15:36 <sgithens> ah
+2018-07-19T19:15:48 <sgithens> so I can make a transform func for it
+2018-07-19T19:15:50 <sgithens> that\'s nice
+2018-07-19T19:16:22 <sgithens> Bosmon: do you know off hand if one of the canned transform functions does something like that?
+2018-07-19T19:32:57 * avtar has quit
+2018-07-19T19:33:25 * colinclark has quit
+2018-07-19T19:33:41 <Bosmon> sgithens - well, in practice you might try to use wildcards - https://github.com/fluid-project/infusion/blob/master/tests/framework-tests/core/js/ModelTransformationTests.js#L3074
+2018-07-19T19:33:45 <Bosmon> Since there is at least one test for them
+2018-07-19T19:33:51 <Bosmon> But nobody has tries this for several years
+2018-07-19T19:34:19 <sgithens> I will try... A WILD CARD
+2018-07-19T19:39:00 <stegru> 2nd opinion, Bosmon: I\'m about to use the ini file parser, reckon I should re-write it first? (it does work fine for my purposes)
+2018-07-19T19:40:21 <Bosmon> stegru - erm, yes
+2018-07-19T19:40:29 <Bosmon> stuff like tests would be great
+2018-07-19T19:41:50 <stegru> :D
+2018-07-19T19:46:42 <cindyli> Bosmon: now i figured out why "userUpdate" is in place instead of "PSP"
+2018-07-19T19:47:23 <cindyli> this is from the master, "PSP" source is only used for these model changes: https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/PSPChannel.js#L30-L41
+2018-07-19T19:47:55 <cindyli> the preferences change on lifecycleManager.model is not considered one of those
+2018-07-19T19:48:47 <cindyli> the test shows this intention: https://github.com/GPII/universal/blob/master/tests/shared/PSPIntegrationTestDefs.js#L239
+2018-07-19T19:48:58 <Bosmon> OK
+2018-07-19T19:49:09 <Bosmon> So the PSP source is only intended for use on the pspChannel\'s model?
+2018-07-19T19:49:17 <Bosmon> And the userUpdate source is intended for use on the lifecycleManager\'s model?
+2018-07-19T19:50:16 <cindyli> well, there\'s a model binding between PSP channel model and lifecycle manager session model
+2018-07-19T19:50:42 <cindyli> https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/PSPChannel.js#L76-L77
+2018-07-19T19:52:09 <Bosmon> cindyli - yes
+2018-07-19T19:52:14 <Bosmon> So ok, we understand this setup now
+2018-07-19T19:52:18 <Bosmon> What does this imply for your issue?
+2018-07-19T19:52:21 <cindyli> PSP sources are used on model.settingControls and model.activeContextName
+2018-07-19T19:54:07 <cindyli> i haven\'t figured out if this is related to the issue i had with different prefs triggering different set of model changes
+2018-07-19T19:54:53 <cindyli> this is just to tell modifying "userUpdate" to "PSP" will break the intention in the master at least
+2018-07-19T19:55:02 <Bosmon> cindyli yes, ok
+2018-07-19T19:55:06 * gtirloni has quit
+2018-07-19T19:55:25 <Bosmon> cindyli - it\'s odd that both of your transcripts show both magnification and volume updating always
+2018-07-19T19:56:39 <cindyli> "both"?
+2018-07-19T19:56:51 <Bosmon> cindyli - well, see this one
+2018-07-19T19:56:54 <Bosmon> https://pastebin.com/hCwKpDPK
+2018-07-19T19:56:54 <cindyli> what transcripts do you mean
+2018-07-19T19:57:01 <Bosmon> What happens is that you send an update to "pitch"
+2018-07-19T19:57:07 <Bosmon> But what you receive is an update for 3 preferences
+2018-07-19T19:58:57 * colinclark joined the channel
+2018-07-19T19:59:12 <cindyli> prefs for "context1" looks like - https://github.com/cindyli/universal/blob/GPII-3213/tests/data/preferences/context1.json5
+2018-07-19T19:59:25 <cindyli> this is what i\'ve modified in my branch
+2018-07-19T19:59:35 <cindyli> by adding speechRate and pitch
+2018-07-19T20:00:09 <cindyli> apparently, the system is able to tranform "magnification" and "volume", but not "speechRate" and "pitch"
+2018-07-19T20:00:46 <cindyli> i wonder if this is related to the problem i had
+2018-07-19T20:02:47 * VictorNG has quit
+2018-07-19T20:06:31 <cindyli> it seems my case is similar to this PSP test case that\'s already in the master: Settings change by PSP with scoped common term
+2018-07-19T20:06:34 <cindyli> https://github.com/GPII/universal/blob/master/tests/shared/PSPIntegrationTestDefs.js#L235
+2018-07-19T20:07:41 <cindyli> the prefs change on "http://registry\\\\.gpii\\\\.net/applications/org\\\\.gnome\\\\.desktop\\\\.a11y\\\\.magnifier.http://registry\\\\.gpii\\\\.net/common/magnification" also expects 2 message types on "modelChanged" and "preferencesApplied"
+2018-07-19T20:08:05 <cindyli> although I haven\'t figured out what it means by "scoped common term"
+2018-07-19T20:18:11 * jhung joined the channel
+2018-07-19T20:21:13 * avtar joined the channel
+2018-07-19T20:21:36 <Bosmon> cindyli - scoped common term is what you have there
+2018-07-19T20:21:37 * alanharnum joined the channel
+2018-07-19T20:21:42 <Bosmon> A common term nested within an application term
+2018-07-19T20:23:20 <cindyli> ok. thanks, Bosmon
+2018-07-19T20:26:43 * clown joined the channel
+2018-07-19T20:39:02 * cindyli has quit
+2018-07-19T20:44:11 * cindyli joined the channel
+2018-07-19T20:46:35 <cindyli> Bosmon: when the save button is clicked and prefs are saved, what message should be sent to PSP client? shall we introduce a new message instead of "preferencesApplied" that === applied on computer + auto save?
+2018-07-19T20:47:24 <Bosmon> The existing message should be ok for now
+2018-07-19T20:47:39 <cindyli> "preferences applied"?
+2018-07-19T20:49:13 <gmoss> oh haha I\'ve seen this
+2018-07-19T20:49:14 <gmoss> forgot about it
+2018-07-19T20:49:17 <gmoss> so good
+2018-07-19T20:49:56 <gmoss> whoops, sorry y\'all, was meant for a private chat
+2018-07-19T21:17:40 * danayo_ joined the channel
+2018-07-19T21:22:43 * jhung has quit
+2018-07-19T22:17:43 * michelled has quit
+2018-07-19T22:58:05 * colinclark joined the channel
+2018-07-19T23:08:17 * Justin_o has quit
+'
+
+b'2018-07-19T00:59:04 * mrtyler has quit
+2018-07-19T01:05:58 * mrtyler joined the channel
+2018-07-19T01:44:22 * jhernandez has quit
+2018-07-19T01:46:48 * kavya has quit
+2018-07-19T01:48:46 * jhernandez joined the channel
+2018-07-19T01:52:34 * jhernandez has quit
+2018-07-19T01:53:09 * jhernandez joined the channel
+2018-07-19T02:03:47 * jhernandez has quit
+2018-07-19T02:14:48 * jhernandez joined the channel
+2018-07-19T02:17:34 * jhernandez has quit
+2018-07-19T02:17:45 * jhernandez joined the channel
+2018-07-19T02:36:41 * michelled joined the channel
+2018-07-19T02:45:14 * danayo has quit
+2018-07-19T03:12:14 * michelled has quit
+2018-07-19T07:14:57 * mrtyler joined the channel
+2018-07-19T07:26:21 * dandimitrov joined the channel
+2018-07-19T07:27:54 * dandimitrov has quit
+2018-07-19T07:28:15 * dandimitrov joined the channel
+2018-07-19T07:29:26 * dandimitrov has quit
+2018-07-19T07:36:55 * dandimitrov_ has quit
+2018-07-19T07:38:05 * dandimitrov joined the channel
+2018-07-19T07:38:20 * mrtyler joined the channel
+2018-07-19T07:42:57 * mrtyler has quit
+2018-07-19T07:57:33 * georgitodorov joined the channel
+2018-07-19T09:02:58 <javjarfer[m]> Good morning everyone! I saw that we have some nested transformation in the SR, some of them depends in the two inputs to be defined
+2018-07-19T09:03:37 <javjarfer[m]> I just wanted to know if that is our current approach or if I should make my own transformation that takes into account the "not defined case"
+2018-07-19T09:04:13 <javjarfer[m]> for example "fluid.transform.quantize" doesn\'t offer a \'not defined\' option, so in case of not being defined, you cannot give a value based on other key
+2018-07-19T09:15:00 * mrtyler joined the channel
+2018-07-19T09:20:36 * dandimitrov has quit
+2018-07-19T09:22:30 * dandimitrov joined the channel
+2018-07-19T09:25:38 * dandimitrov has quit
+2018-07-19T09:42:44 <the-t-in-rtf> Hi, @javjarfer[m]
+2018-07-19T09:43:00 <the-t-in-rtf> I had a similar use case in some import work I did, and ended up writing my own transform:
+2018-07-19T09:43:01 <the-t-in-rtf> https://github.com/the-t-in-rtf/ul-import/blob/UL-67/src/js/transforms.js#L140
+2018-07-19T09:43:49 <the-t-in-rtf> I mean stripping not defined values.
+2018-07-19T09:43:54 <the-t-in-rtf> not specifically the quantize use case.
+2018-07-19T09:54:57 <javjarfer[m]> hi the-t-in-rtf , okay, but I see that your point was the same, to add to the domain or your transform null values
+2018-07-19T09:56:31 <javjarfer[m]> Okay, I will make my own to solve the issue I think
+2018-07-19T09:57:02 <the-t-in-rtf> good luck.
+2018-07-19T09:57:27 <javjarfer[m]> hahaha thanks, well, for now I think I\'m going to follow the same approach some solutions have in the SR
+2018-07-19T09:57:34 <javjarfer[m]> that is that both values needs to be defined
+2018-07-19T09:57:49 <javjarfer[m]> but after this week, when I should have finished the first wave settings
+2018-07-19T09:57:53 <the-t-in-rtf> eventually we\'ll be able to enforce things like that.
+2018-07-19T09:57:56 * mrtyler joined the channel
+2018-07-19T09:57:57 <javjarfer[m]> I will go for it
+2018-07-19T09:58:12 <javjarfer[m]> > <@freenode_the-t-in-rtf:matrix.org> eventually we\'ll be able to enforce things like that.
+2018-07-19T09:58:13 <javjarfer[m]> would be really nice
+2018-07-19T09:58:44 <javjarfer[m]> enforcing rules in how settings should be used in order to transform to work, should be a temporary solution
+2018-07-19T09:59:24 <javjarfer[m]> I will work after finishing this in a permanent solution including a transformation that lets you add whatever you want to the input domain of another transformation
+2018-07-19T09:59:33 * dandimitrov joined the channel
+2018-07-19T11:00:14 <stegru> javjarfer[m]: why not wrap the quantize transform in something that can detect undefined?
+2018-07-19T11:01:39 <javjarfer[m]> hi stegru , the only one that can do such a thing is the valueMapper I think, and you cannot match a wildcard which you can pass to a inner transfomr
+2018-07-19T11:02:21 * mrtyler joined the channel
+2018-07-19T11:03:06 <stegru> ah
+2018-07-19T11:03:44 * dandimitrov has quit
+2018-07-19T11:04:49 <stegru> what about the \'condition\' transform?
+2018-07-19T11:08:31 * Justin_o joined the channel
+2018-07-19T11:08:39 <javjarfer[m]> stegru: with the condition transform the problem is that it checks if the path is true or false, not it\'s existence
+2018-07-19T11:08:47 <javjarfer[m]> you cannot reuse the path for detection + having a value
+2018-07-19T11:09:16 <stegru> but you can put a binaryOp inside the condition, for value === undefined?
+2018-07-19T11:10:06 <stegru> i think I understand now
+2018-07-19T11:13:07 <javjarfer[m]> stegru: well, if you use a binaryOp to detect nullity + a condition to switch whether true or false I think it\'s possible
+2018-07-19T11:13:29 <stegru> ok
+2018-07-19T11:13:39 <javjarfer[m]> problem is that you will have blocks of transformations repeated in the false and true, but I think it\'s not such an issue
+2018-07-19T11:14:10 <javjarfer[m]> stegru: thanks for the suggestion, I think could be a better solution, I will try it
+2018-07-19T11:19:16 <stegru> ok
+2018-07-19T11:23:10 * cindyli joined the channel
+2018-07-19T11:24:50 * mrtyler has quit
+2018-07-19T11:29:59 <the-t-in-rtf> Hi, gang.  I will be in the Vidyo room in just a moment.
+2018-07-19T11:30:12 <sgithens> the-t-in-rtf almost ready
+2018-07-19T11:34:36 * dandimitrov joined the channel
+2018-07-19T11:38:53 <the-t-in-rtf> @Bosmon, we are in the room waiting.
+2018-07-19T11:48:18 <jhernandez> Bosmon, stegru, javjarfer[m] are we having a windows meeting today?
+2018-07-19T11:48:41 <stegru> would you like one, jhernandez ?
+2018-07-19T11:48:49 <jhernandez> any urgent business to talk about?
+2018-07-19T11:48:59 <stegru> not from me
+2018-07-19T11:49:58 <jhernandez> nothing here either
+2018-07-19T11:50:14 <jhernandez> at least at this moment
+2018-07-19T12:09:31 * jhernandez has quit
+2018-07-19T12:10:35 * michelled joined the channel
+2018-07-19T12:10:45 * dandimitrov has quit
+2018-07-19T12:21:42 * alanharnum joined the channel
+2018-07-19T12:22:54 <javjarfer[m]> not from me too
+2018-07-19T12:27:25 * dandimitrov joined the channel
+2018-07-19T12:46:56 * gtirloni joined the channel
+2018-07-19T12:56:51 <Justin_o> Bosmon: I got an e-mail from GitHub that explains why my PR wasn\'t updating. They had a service disruption when I pushed up to my branch.
+2018-07-19T12:57:01 <Bosmon> Justin_o - yes, I got it too
+2018-07-19T12:57:06 <Bosmon> I\'ll take a look at your pull after this meeting
+2018-07-19T12:57:42 <Justin_o> Bosmon: thanks :)
+2018-07-19T12:58:10 <Justin_o> I just made another small change to it this morning anyways, but I think it should be all ready now.
+2018-07-19T13:11:26 * mrtyler joined the channel
+2018-07-19T13:14:54 * clown joined the channel
+2018-07-19T13:21:39 * Hassany2 joined the channel
+2018-07-19T13:25:23 * jhung joined the channel
+2018-07-19T13:43:15 * mrtyler joined the channel
+2018-07-19T13:47:35 * mrtyler has quit
+2018-07-19T13:51:32 * georgitodorov has quit
+2018-07-19T13:55:31 * avtar joined the channel
+2018-07-19T14:02:30 * dandimitrov has quit
+2018-07-19T14:04:45 * alanharnum joined the channel
+2018-07-19T14:14:22 * dandimitrov joined the channel
+2018-07-19T14:57:12 * dandimitrov has quit
+2018-07-19T15:01:31 * sepidehshahi joined the channel
+2018-07-19T15:01:43 * danayo joined the channel
+2018-07-19T15:10:41 * danayo_ joined the channel
+2018-07-19T15:12:53 * avtar has quit
+2018-07-19T15:16:44 * jhung1 joined the channel
+2018-07-19T15:23:30 <alanharnum> we\'re doing some investigation of how setting locale actually works (and is tested) as part of constructing a PR for bringing in some multilingual UIO work from recent SJRK work, and going down a bit of a rabbit hole...
+2018-07-19T15:24:32 <alanharnum> I\'m trying to understand some of the history behind how the locale is set, which is seeming quite byzantine to me - see comments on the documentation issue at https://issues.fluidproject.org/browse/FLUID-6197
+2018-07-19T15:25:38 <alanharnum> basically - the documentation at https://docs.fluidproject.org/infusion/development/LocalizationInThePreferencesFramework.html#specifying-a-localization says something that is now outdated in terms of where the preferences framework actually expects the locale to be stored
+2018-07-19T15:26:09 <alanharnum> I\'m also not sure that documentation was ever actually correct, as the tests at https://github.com/fluid-project/infusion/blob/master/tests/framework-tests/preferences/js/PrefsEditorTests.js#L733-L745 don\'t use that method to set the locale
+2018-07-19T15:28:57 <alanharnum> my instinct is that a reasonable end user would expect to be able to set a locale via a top-level option on fluid.uiOptions.prefsEditor but it also looks like something may be being done to persist the locale to the settings store (if you can set it)
+2018-07-19T15:30:07 <alanharnum> and I don\'t want to just start making changes without understanding some of the context for the past decisions around setting the locale, so any comments on the above would be appreciated (Justin_o, maybe, have you got some insight?)
+2018-07-19T15:30:53 <gmoss> alanharnum: this may be of import - the location of locale that we were overriding in the storytelling tool was not the same as that listed in the infusion docs you just linked. docs say "{prefsEditorLoader}.settings.locale" but we\'re using {prefsEditorLoader}.options.components.messageLoader.options.locale"
+2018-07-19T15:31:46 <alanharnum> gmoss: yeah, that was the quick fix I found when I was doing the experimental multilingual work, since the documented way didn\'t work - I\'ve been digging into the actual implementation more yesterday / today to understand why the documented way didn\'t work
+2018-07-19T15:35:53 * jhernandez joined the channel
+2018-07-19T15:55:10 * alanharnum joined the channel
+2018-07-19T16:04:35 * alanharnum has quit
+2018-07-19T16:04:42 * sepidehshahi joined the channel
+2018-07-19T16:04:54 * danayo_ has quit
+2018-07-19T16:23:36 * alanharnum2 joined the channel
+2018-07-19T16:52:50 * mrtyler joined the channel
+2018-07-19T16:56:45 * jhernandez has quit
+2018-07-19T16:56:59 * danayo joined the channel
+2018-07-19T16:57:14 * alanharnum joined the channel
+2018-07-19T16:59:02 <sgithens> cindyli Bosmon the-t-in-rtf I see the few extra notes at the end of the pad but any other major revelations after I had to drop off?  And then it looks like we\'ll pick up on Tuesday?
+2018-07-19T17:00:42 * alanharnum joined the channel
+2018-07-19T17:03:31 * danayo_ joined the channel
+2018-07-19T17:05:20 * dandimitrov joined the channel
+2018-07-19T17:06:47 <cindyli> i think so, sgithens
+2018-07-19T17:07:17 <cindyli> the-t-in-rtf has sent an invite for next Tuesday same time
+2018-07-19T17:08:57 <the-t-in-rtf> Yeah, the only thing we did was agree on another meeting.
+2018-07-19T17:09:06 <sgithens> :)
+2018-07-19T17:09:18 * dandimitrov has quit
+2018-07-19T17:46:57 * jhernandez joined the channel
+2018-07-19T17:48:28 <cindyli> Bosmon: a question with "preferencesApplied" message sent to PSP client:
+2018-07-19T17:49:07 <cindyli> when event "preferencesApplied" is fired, a message "preferencesApplied" will be sent to PSP to notify this state
+2018-07-19T17:49:48 <cindyli> after we hooked PSP with cloud save, this event is now an aggregate event that waits for:
+2018-07-19T17:49:59 <cindyli> 1. updated prefs are applied to the local computer
+2018-07-19T17:50:09 <cindyli> 2. the auto save has saved applied prefs to the cloud
+2018-07-19T17:50:59 <cindyli> with settings with memory I\'m working on, #2 now only save prefs that are allowed to be save to the cloud
+2018-07-19T17:51:40 <cindyli> so, there\'s a case where a setting or settings that are not allowed to be auto saved are changed, #2 will not happen
+2018-07-19T17:52:27 <cindyli> and this will in turn not fire the "preferencesApplied" event, which then causes the message "preferencesApplied" not be sent to PSP client
+2018-07-19T17:52:52 <Bosmon> cindyli - you mean that #2 is represented by the "preferencesSavedSuccess" event?
+2018-07-19T17:52:57 <cindyli> yes
+2018-07-19T17:53:53 <Bosmon> cindyli - I think it is reasonable to fire this event synchronously and automatically in case the save is for a non-autosave setting
+2018-07-19T17:54:18 <cindyli> ok
+2018-07-19T17:54:28 <cindyli> will do
+2018-07-19T17:54:48 * alanharnum has quit
+2018-07-19T17:55:14 * alanharnum joined the channel
+'
+

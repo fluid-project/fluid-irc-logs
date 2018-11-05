@@ -1,0 +1,241 @@
+b'2013-10-15T18:26:38 <Bosmon> It may well be worth trying to get the former working, since it will be a nice general facility
+2013-10-15T18:27:50 <Justin_o> Bosmon: okay, would resolvPathSegment be on the Resolver itself?
+2013-10-15T18:28:05 <Bosmon> Justin_o - yes - well, you can put it where you like
+2013-10-15T18:28:20 <Justin_o> Bosmon: you mean a method on the component itself?
+2013-10-15T18:28:24 <Justin_o> then
+2013-10-15T18:28:27 <Bosmon> You could even dump a fake "strings" object that just contains it
+2013-10-15T18:28:42 <Bosmon> And then you would be able to resolve options.strings.slidingPanelShowText or whatever
+2013-10-15T18:28:56 <Bosmon> Although that would prevent you from using that area for literal strings
+2013-10-15T18:29:06 <Justin_o> Bosmon: yes..
+2013-10-15T18:29:19 <Justin_o> Bosmon: so we\'d still end up with an expander per string
+2013-10-15T18:29:20 <Bosmon> This is a somewhat halfbaked area of the framework, but it will save a lot of time here
+2013-10-15T18:29:23 <Bosmon> Justin_o - you wouldn\'t
+2013-10-15T18:29:33 <Bosmon> I think you haven\'t understood about the "resolvePathSegment" method
+2013-10-15T18:29:33 <Justin_o> if we didn\'t use the expander for the entire strings block
+2013-10-15T18:29:45 <Bosmon> This is a framework facility which allows custom resolving of EL path segments
+2013-10-15T18:29:54 <Justin_o> ah.. i haven\'t :)
+2013-10-15T18:30:00 <Justin_o> can you explain it a bit more
+2013-10-15T18:30:02 <Bosmon> For example, it is the thing which allows {that}.dom.thing to be resolved into the DOM binder\'s "locate" method
+2013-10-15T18:30:26 <Bosmon> Similarly it would enable {that}.stringBundle.slidingPanelShowText to be resolved into the message resolver etc.
+2013-10-15T18:31:24 <Justin_o> Bosmon: okay.. so first question.. for every strings in your stings block you would have a reference to {that}.stringBundle.slidingPanelShowText
+2013-10-15T18:31:49 <Bosmon> Justin_o - ideally you would have no references at all
+2013-10-15T18:31:58 <Bosmon> How are these strings used, in any case?
+2013-10-15T18:32:59 <Justin_o> Bosmon: there are two cases 1) in the renderer.. which i think means the message resolver took care of everything and we didn\'t need to worry about what\'s in the strings block 2) through some jquery method
+2013-10-15T18:33:09 <Justin_o> for cases where the renderer isn\'t used
+2013-10-15T18:33:37 <Bosmon> ok
+2013-10-15T18:33:52 <Bosmon> So it looks like this scheme will be helpful to take case or case 2)
+2013-10-15T18:33:54 <Bosmon> of case 2)
+2013-10-15T18:33:57 <Bosmon> Until we get ourselves a proper renderer
+2013-10-15T18:35:28 <Justin_o> Bosmon: so that means that when we want to use a string in a component direcctly we wouldn\'t use something like that.options.strings.slidingPanelShowText and instead would call that.stringBundle.slidingPanelShowText
+2013-10-15T18:35:45 <Bosmon> Justin_o - yes, something like that
+2013-10-15T18:36:06 <Justin_o> Bosmon: okay... is there any documentation or something you could point me at for writing such a facility
+2013-10-15T18:36:19 <Bosmon> Justin_o - I don\'t believe so
+2013-10-15T18:36:27 <Bosmon> anastasiac might know :)
+2013-10-15T18:36:40 <Justin_o> Bosmon: ah.. she\'s off for the rest of the day :(
+2013-10-15T18:36:57 <Bosmon> Well, it\'s easy enough
+2013-10-15T18:37:08 <Bosmon> You just create a "thing" with a method on it called "resolvePathSegment"
+2013-10-15T18:37:13 <Bosmon> Similarly to the way the current DOM binder does
+2013-10-15T18:40:10 <Justin_o> Bosmon: ah okay.. so basically i use an expander there that returns a proper object
+2013-10-15T18:41:13 <Bosmon> Justin_o - yes
+2013-10-15T18:41:20 <Bosmon> And you can put this into some base grade of the panel
+2013-10-15T18:41:26 <Bosmon> Given it is the same for every component
+2013-10-15T18:42:04 <Justin_o> Bosmon: thanks.. makes sense.. i\'ll look into that
+2013-10-15T18:49:12 <Justin_o> Bosmon: hmm.. just looking at this a bit more closely.. so 1) this won\'t mess up the DOM binder right.. and will it only work through IoC?
+2013-10-15T18:49:48 <Justin_o> the and there is 2)
+2013-10-15T18:49:57 * clown has quit
+2013-10-15T18:51:01 <Bosmon> Justin_o - right
+2013-10-15T18:51:33 <Justin_o> Bosmon: okay.. and in cases where they need to access it directly though a that object and not IoC they will have to do the lookup manually?
+2013-10-15T18:52:06 <Justin_o> Bosmon: also we have cases where were are converting namespaced keys with an array
+2013-10-15T18:53:58 <Justin_o> Bosmon: for example https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/messages/contrast.json
+2013-10-15T18:55:18 <Justin_o> i suppose the lookup can also attempt to determine if a namespace exists if string itself doesn\'t exist
+2013-10-15T18:56:14 * clown joined the channel
+2013-10-15T18:57:53 <Bosmon> Justin_o - noone needs to access things directly :)
+2013-10-15T18:58:22 <Justin_o> Bosmon: okay.. and how did the dom binder link to the "dom" path segment
+2013-10-15T18:58:34 <Bosmon> Justin_o ?
+2013-10-15T18:58:40 <Justin_o> Bosmon: i can only see this that.resolvePathSegment = that.locate;
+2013-10-15T18:58:46 <Bosmon> Justin_o - that\'s it
+2013-10-15T18:58:48 <Bosmon> That is the entire mechanism
+2013-10-15T18:58:52 <Justin_o> but how does that translate to "{that}.dom.something"
+2013-10-15T18:59:06 <Justin_o> how does it know about the "dom" portion of the path segment
+2013-10-15T18:59:16 <Bosmon> Justin_o - the "dom" portion is the address of the DOM binder itself
+2013-10-15T18:59:45 <Justin_o> ah i see
+2013-10-15T19:00:24 <Justin_o> okay.. so i need a member on the component that resolves to the message resolver and then i set the resolveSegmentPath on that to the lookup method
+2013-10-15T19:14:37 <Justin_o> Bosmon: i\'ve filed a jira http://issues.fluidproject.org/browse/FLUID-5180
+2013-10-15T19:17:56 <Bosmon> Thanks, Justin_o
+2013-10-15T19:17:57 <Bosmon> Very clear
+2013-10-15T19:18:20 <Justin_o> Bosmon: thanks
+2013-10-15T19:19:36 * thealphanerd joined the channel
+2013-10-15T19:57:54 * sgithens has quit
+2013-10-15T20:08:54 * cindyli has quit
+2013-10-15T20:16:31 * michelled has quit
+2013-10-15T20:37:54 * thealphanerd has quit
+2013-10-15T20:49:54 * clown has quit
+2013-10-15T20:56:31 * anvk has quit
+2013-10-15T20:57:45 * clown joined the channel
+2013-10-15T21:12:28 * clown has left the channel
+2013-10-15T21:14:14 * greggy has quit
+2013-10-15T21:27:11 * thealphanerd joined the channel
+2013-10-15T21:31:58 * jhung has quit
+2013-10-15T21:51:46 * michelled joined the channel
+2013-10-15T22:06:24 * sgithens joined the channel
+2013-10-15T22:13:35 * yzen has quit
+2013-10-15T22:36:53 * kasparnet joined the channel
+2013-10-15T22:37:42 * michelled has quit
+2013-10-15T22:52:11 * kasparnet has quit
+2013-10-15T23:17:56 * jessm has quit
+2013-10-15T23:25:04 * cindyli joined the channel
+2013-10-15T23:25:17 * cindyli has quit
+'
+
+b'2013-10-15T00:40:21 * thealphanerd has quit
+2013-10-15T00:48:56 * mrvisser has quit
+2013-10-15T00:50:24 * thealphanerd joined the channel
+2013-10-15T01:01:57 * kasparnet joined the channel
+2013-10-15T01:02:03 * sgithens has quit
+2013-10-15T01:18:26 * thealphanerd has quit
+2013-10-15T01:59:34 * mrvisser joined the channel
+2013-10-15T02:04:52 * mrvisser has quit
+2013-10-15T02:15:35 * kasparnet has quit
+2013-10-15T05:16:09 * kasparnet joined the channel
+2013-10-15T05:21:04 * kasparnet has quit
+2013-10-15T05:58:18 * thealphanerd joined the channel
+2013-10-15T06:03:20 * thealphanerd has quit
+2013-10-15T06:03:34 * thealphanerd joined the channel
+2013-10-15T06:53:49 * thealphanerd has quit
+2013-10-15T06:57:07 * thealphanerd joined the channel
+2013-10-15T07:20:33 * thealphanerd has quit
+2013-10-15T07:49:45 * thealphanerd joined the channel
+2013-10-15T07:50:11 * thealphanerd has quit
+2013-10-15T09:25:32 * kasparnet joined the channel
+2013-10-15T09:46:13 * jhernandez joined the channel
+2013-10-15T09:53:25 * thealphanerd joined the channel
+2013-10-15T11:35:33 * mrvisser joined the channel
+2013-10-15T12:00:26 * fouks_f joined the channel
+2013-10-15T12:02:04 * cindyli joined the channel
+2013-10-15T12:03:46 <fouks_f> guys is this the place to ask for help if I can\'t figure out how to use the fluid video player ?
+2013-10-15T12:08:32 <jhernandez> fouks_f: hey!
+2013-10-15T12:08:42 <jhernandez> I guess that this could be a good place to ask
+2013-10-15T12:08:50 <jhernandez> also there is #fluid-tech
+2013-10-15T12:09:25 <fouks_f> so the tech channel is more appropriate ?
+2013-10-15T12:10:34 <jhernandez> maybe
+2013-10-15T12:11:26 <jhernandez> anyway
+2013-10-15T12:11:41 <jhernandez> I think that we\'re mostly the same people on both channels
+2013-10-15T12:11:46 <jhernandez> :]
+2013-10-15T12:14:42 * thealphanerd has quit
+2013-10-15T12:18:01 * jhung joined the channel
+2013-10-15T12:24:22 * Justin_o joined the channel
+2013-10-15T12:30:34 * jhung has quit
+2013-10-15T12:30:56 * jhung joined the channel
+2013-10-15T12:45:58 * mrvisser has quit
+2013-10-15T12:52:35 * mrvisser joined the channel
+2013-10-15T12:53:50 * fouks_f has quit
+2013-10-15T12:56:32 * anvk joined the channel
+2013-10-15T13:02:53 * jessm joined the channel
+2013-10-15T13:06:25 * greggy joined the channel
+2013-10-15T13:07:13 * anvk has quit
+2013-10-15T13:10:16 * michelled joined the channel
+2013-10-15T13:10:48 * anvk joined the channel
+2013-10-15T13:10:48 * anastasiac joined the channel
+2013-10-15T13:32:11 * yzen joined the channel
+2013-10-15T14:02:45 * sgithens joined the channel
+2013-10-15T14:08:18 * [o__o] has left the channel
+2013-10-15T14:10:18 * [o__o] joined the channel
+2013-10-15T14:19:12 * mrvisser has quit
+2013-10-15T14:19:30 * mrvisser joined the channel
+2013-10-15T14:51:13 * jhung has quit
+2013-10-15T14:53:26 * jhung joined the channel
+2013-10-15T15:19:07 <Justin_o> yzen: renderer question for you.. when using a fluid.renderer.selection.inputs renderer expander.. can you only set the text of a label and nothing else.. can you use decorators or anything?
+2013-10-15T15:21:38 <yzen> Justin_o: id think you should be able to use decorators
+2013-10-15T15:25:36 <Justin_o> yzen: any idea how you would add one
+2013-10-15T15:25:38 <Justin_o> ?
+2013-10-15T15:25:54 <yzen> do you have an example of your tree so far ?
+2013-10-15T15:27:23 <Justin_o> yzen: you can look at the contrast adjuster panel from the preferences framework https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Panels.js#L232-L300
+2013-10-15T15:27:40 <Justin_o> yzen: i\'m trying to see if we can get rid of the style function that has to run after rendering
+2013-10-15T15:28:17 <yzen> Justin_o: so can you have a decorators block in tree: {...}
+2013-10-15T15:28:27 <yzen> afaik you should be able to
+2013-10-15T15:30:18 <yzen> cindyli: hi
+2013-10-15T15:30:29 <cindyli> hi, yzen
+2013-10-15T15:31:39 <yzen> cindyli: question about distributeOptions, can we delete things somehow ?
+2013-10-15T15:32:22 <cindyli> yzen: you can pass down emptyComponent :)
+2013-10-15T15:32:31 <cindyli> you wanna delete an option?
+2013-10-15T15:32:37 <yzen> cindyli: yes
+2013-10-15T15:33:29 <cindyli> yzen: you can certainly pass down a null or undefined, but don\'t think you can delete the path completely
+2013-10-15T15:33:52 <yzen> alright ill try thanks :)
+2013-10-15T15:34:03 <cindyli> np
+2013-10-15T15:40:14 <Justin_o> yzen: i\'ll try that, but what would i use as the key?
+2013-10-15T15:41:03 <yzen> Justin_o: so decorator will be the key, not sure what it\'d be attached to
+2013-10-15T15:42:00 * jhernandez has quit
+2013-10-15T15:44:36 * cindyli has quit
+2013-10-15T15:44:42 * cindyli joined the channel
+2013-10-15T15:54:17 * jhung has quit
+2013-10-15T15:57:23 <Justin_o> yzen: yes.. i was just thinking that.... i guess i could give it a try and see what happens
+2013-10-15T16:16:00 <Justin_o> yzen: so this doesn\'t seem to have any affect http://pastie.org/private/vjrfanbtln2jq22t1j8g
+2013-10-15T16:16:37 <yzen> is the class added to anything at all ?
+2013-10-15T16:20:22 * jessm has quit
+2013-10-15T16:22:26 <yzen> cindyli: is it possible to distribute options to siblings ?
+2013-10-15T16:23:05 <Justin_o> yzen: i couldn\'t find it anywhere
+2013-10-15T16:23:10 <yzen> hmm
+2013-10-15T16:23:18 <yzen> it might be a bug in the renderer perhaps
+2013-10-15T16:24:10 <Justin_o> yzen: okay.. thanks
+2013-10-15T16:32:16 * jessm joined the channel
+2013-10-15T16:34:02 * jhung joined the channel
+2013-10-15T16:34:15 <cindyli> yzen: no, i don\'t think it\'s possible to distribute options to siblings
+2013-10-15T16:41:50 * cindyli has quit
+2013-10-15T16:41:57 <yzen> Bosmon:
+2013-10-15T16:45:37 * cindyli joined the channel
+2013-10-15T17:06:13 * anastasiac has quit
+2013-10-15T17:11:52 * kasparnet has quit
+2013-10-15T17:20:27 * thealphanerd joined the channel
+2013-10-15T17:32:36 * thealphanerd has quit
+2013-10-15T17:40:27 * thealphanerd joined the channel
+2013-10-15T17:42:13 * clown joined the channel
+2013-10-15T17:48:03 * michelled_ joined the channel
+2013-10-15T17:48:29 * michelled has quit
+2013-10-15T17:48:30 * michelled_ is now known as michelled
+2013-10-15T17:52:47 * jhernandez joined the channel
+2013-10-15T18:04:02 <Justin_o> Bosmon: are you there?
+2013-10-15T18:04:10 <Bosmon> Hi Justin_o
+2013-10-15T18:04:45 <Justin_o> Bosmon: hello.. i just wanted to follow up on that conversation cindyli and I were having with you the other day about message bundles and message lookup
+2013-10-15T18:06:00 <Justin_o> Bosmon: I think we were talking about it in this log http://wiki.fluidproject.org/display/fluid/fluid-work+IRC+Logs-2013-10-10
+2013-10-15T18:06:08 <Bosmon> Justin_o - yes
+2013-10-15T18:06:46 <Justin_o> Bosmon: I think we left off with cindyli\'s question "do you mean to have 2 message bundles, one is the message resolver, the other contains string mappings"
+2013-10-15T18:06:53 <Bosmon> Yers
+2013-10-15T18:07:03 <Bosmon> I don\'t think I could understand that question :)
+2013-10-15T18:07:13 <cindyli> haha
+2013-10-15T18:07:20 <Bosmon> I believe my idea was to compose a bundle out of IoC references
+2013-10-15T18:07:28 <Bosmon> Rather than using 1 expander per reference, which is incredibly cumbersome
+2013-10-15T18:08:10 <Justin_o> Bosmon: should each component have its own messageResolver?
+2013-10-15T18:08:28 <Justin_o> Bosmon: what do you mean by compose a bundle out of IoC references?
+2013-10-15T18:08:31 <Bosmon> Justin_o - possibly .....
+2013-10-15T18:08:50 <Bosmon> Justin_o - it seems that all that is required is for one component to have a bundle composed out of a selection of messages held in other bundles?
+2013-10-15T18:11:24 <Justin_o> Bosmon: I think the messageLoader combines the bundles from all of the components into a single bundle. Is that correct cindyli?
+2013-10-15T18:11:44 <cindyli> exactly, Justin_o
+2013-10-15T18:11:49 <cindyli> and Bosmon
+2013-10-15T18:12:15 <Justin_o> cindyli: how do we prevent collisions?
+2013-10-15T18:12:39 <cindyli> Bosmon: no prevention. the latter would overwrite the former :)
+2013-10-15T18:13:04 <cindyli> ou, wrong direction. Justin_o: ^
+2013-10-15T18:13:16 <Justin_o> :) no problem
+2013-10-15T18:13:54 * mrvisser has quit
+2013-10-15T18:14:21 <Justin_o> Bosmon: so i guess the question would be "how to use this combined bundle" in each component without requiring the expander.
+2013-10-15T18:16:33 <Bosmon> Justin_o - I\'m still not really sure I understand what kind of use case this is
+2013-10-15T18:16:43 <Bosmon> Why are we combining several bundles into one here?
+2013-10-15T18:16:44 <Justin_o> Maybe this will help a bit
+2013-10-15T18:16:45 <Justin_o> http://wiki.fluidproject.org/display/docs/Localization+in+the+Preferences+Framework
+2013-10-15T18:17:27 <Justin_o> Bosmon: ^
+2013-10-15T18:19:41 <Bosmon> Wow, this is quite a thorough document
+2013-10-15T18:19:47 <Bosmon> But it still doesn\'t quite answer my question :)
+2013-10-15T18:20:03 <Bosmon> Is it simply the fact that we have ended up with different names for the same strings, in different scopes?
+2013-10-15T18:21:17 <Justin_o> i don\'t think so.. i think we have it so that each panel can supply it\'s own message bundle and the message loader does the loading of it in and combines them all into a single message bundle for the entire prefs stack
+2013-10-15T18:22:04 <Bosmon> expander: {
+2013-10-15T18:22:04 <Bosmon> func: "fluid.slidingPanel.lookupMsg",
+2013-10-15T18:22:04 <Bosmon> args: ["{that}.msgBundle", "slidingPanelShowText"]
+2013-10-15T18:22:04 <Bosmon> }
+2013-10-15T18:22:50 <Justin_o> Bosmon: wouldn\'t you have to do a lookup or resolve to get the string out?
+2013-10-15T18:23:03 * mrvisser joined the channel
+2013-10-15T18:24:18 <Justin_o> since it\'s in a messageResolver
+2013-10-15T18:24:24 * thealphanerd has quit
+2013-10-15T18:24:38 <Bosmon> Justin_o - well, you might, but perhaps it needn\'t look like this : P
+2013-10-15T18:24:54 <Justin_o> Bosmon: okay.. what would you suggest?
+2013-10-15T18:26:21 <Bosmon> Well, there are two main options ..... one, a "resolvePathSegment" method, or two, the "compact expander syntax"
+'
+

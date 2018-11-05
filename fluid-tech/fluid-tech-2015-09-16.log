@@ -1,0 +1,131 @@
+b'2015-09-16T00:40:49 * alanharnum joined the channel
+2015-09-16T00:44:18 * alanharnum joined the channel
+2015-09-16T01:05:31 * colinclark joined the channel
+2015-09-16T01:59:59 * alanharnum joined the channel
+2015-09-16T03:29:41 * alanharnum joined the channel
+2015-09-16T04:31:05 * alanharnum joined the channel
+2015-09-16T05:31:51 * alanharnum joined the channel
+2015-09-16T06:33:12 * alanharnum joined the channel
+2015-09-16T06:45:41 * kasparnet joined the channel
+2015-09-16T07:34:58 * alanharnum joined the channel
+2015-09-16T07:41:28 * kasparnet has quit
+2015-09-16T07:44:38 * kasparnet joined the channel
+2015-09-16T08:26:21 * kasparnet has quit
+2015-09-16T08:37:07 * kasparnet joined the channel
+2015-09-16T08:39:26 * alanharnum joined the channel
+2015-09-16T09:41:56 * alanharnum joined the channel
+2015-09-16T10:44:22 * alanharnum joined the channel
+2015-09-16T10:50:07 * alanharnum joined the channel
+2015-09-16T11:03:10 * kasparnet has quit
+2015-09-16T11:03:32 * alanharnum joined the channel
+2015-09-16T11:03:47 * kasparnet joined the channel
+2015-09-16T11:08:06 * kasparnet has quit
+2015-09-16T12:05:34 * Justin_o joined the channel
+2015-09-16T12:13:45 * michelled joined the channel
+2015-09-16T12:16:02 * kasparnet joined the channel
+2015-09-16T12:23:56 * the-t-in-rtf has quit
+2015-09-16T12:34:57 * the-t-in-rtf joined the channel
+2015-09-16T12:46:30 * Justin_o has quit
+2015-09-16T12:46:51 * Justin_o joined the channel
+2015-09-16T12:57:05 * alanharnum joined the channel
+2015-09-16T12:58:59 * cindyli joined the channel
+2015-09-16T13:07:21 * colinclark joined the channel
+2015-09-16T13:08:05 * michelled has quit
+2015-09-16T13:25:21 * simonjb joined the channel
+2015-09-16T14:46:23 <cindyli> Bosmon, colinclark, alanharnum, Justin_o and I are having some discussions on the implementation of the pie legend - https://github.com/cindyli/chartAuthoring/blob/FLOE-404/src/js/legend.js
+2015-09-16T14:46:31 <cindyli> our discussion - https://github.com/fluid-project/chartAuthoring/pull/4#discussion-diff-39518049
+2015-09-16T14:47:49 <cindyli> we\'d like to hear your opinion of whether we should change its implementation to use the infusion. right now, as you see, it\'s using d3 library
+2015-09-16T14:49:34 <colinclark> When you say "change its implementation to use Infusion," can you elaborate a bit?
+2015-09-16T14:49:37 <alanharnum> specifically, it\'s rendering an HTML table using D3
+2015-09-16T14:50:05 <alanharnum> the question is basically, "should we do this with Infusion instead?"
+2015-09-16T14:50:15 <alanharnum> to keep D3 bounded purely to dealing with SVG
+2015-09-16T14:50:41 <colinclark> "Do this with Infusion" means "use the DOM binder and jQuery," is that correct?
+2015-09-16T14:50:47 <cindyli> yes
+2015-09-16T14:50:48 <alanharnum> yup
+2015-09-16T14:51:22 <colinclark> Ok
+2015-09-16T14:51:32 <colinclark> So I need some help pulling out all the issues here
+2015-09-16T14:51:42 <colinclark> Cindy mentioned a D3 plugin for generating legends
+2015-09-16T14:51:55 <colinclark> you can see a comment from Bosmon saying that this could be a viable solution
+2015-09-16T14:52:09 <colinclark> why didn\'t we use it, and do we want to consider it? or are there good reasons not to?
+2015-09-16T14:52:44 <colinclark> Secondly, alanharnum when you say "I think the main rationale for drawing the legend with D3 is to use the same paradigm to binding data to DOM elements and managing updates from the model as is used for the pie," can you unpack that a bit for me?
+2015-09-16T14:53:37 <alanharnum> basically, there\'s two overlapping but distinct domain boundaries for usage of D3, at least in my head - 1) "We use D3 for binding model data to SVG elements and keeping those SVGs up to date" vs. 2) "We use D3 for binding model data to information-visualization related DOM elements and keeping those elements up to date"
+2015-09-16T14:54:20 <alanharnum> Under #1, strictly speaking any data-binding / visualization that uses HTML elements instead of SVG should be done with Infusion
+2015-09-16T14:54:43 <colinclark> What would change about this function, were you to use the DOM Binder and jQuery instead of D3? https://github.com/cindyli/chartAuthoring/blob/FLOE-404/src/js/legend.js#L120-L186
+2015-09-16T14:55:01 <alanharnum> Under #2, it\'s acceptable to use D3 to manage both SVG and HTML elements, as long as they\'re visualization-related
+2015-09-16T14:56:57 <alanharnum> colinclark: it would need to be rewritten to use DOM binder / jQuery, instead of D3\'s conventions
+2015-09-16T14:57:04 <alanharnum> as would the .create function
+2015-09-16T14:58:55 <colinclark> Right
+2015-09-16T14:58:57 <colinclark> that part I get :)
+2015-09-16T14:59:12 <colinclark> I\'m wondering if you can describe what the essential difference would be, in this context?
+2015-09-16T14:59:19 <colinclark> just so I understand better
+2015-09-16T15:01:13 <alanharnum> ok - if the .draw were broken out into more discrete functions (which it probably should be anyway), there\'s three main things going on when .draw is called
+2015-09-16T15:02:35 <colinclark> ok
+2015-09-16T15:02:45 <alanharnum> After the model dataSet is bound so that each point of data is associated with a "tr" DOM element (that happens at 131-134)...
+2015-09-16T15:03:53 <alanharnum> 1) New "tr" elements are appended if necessary (the "addedRows" parts from 136-161), if corresponding DOM elements don\'t already exist for the bound data
+2015-09-16T15:04:42 <alanharnum> 2) Each "tr" row is then updated based on the bound data (163-175)
+2015-09-16T15:05:41 <alanharnum> 3) Any "tr" whose data was removed from the bound model is removed from the DOM as well (177-179)
+2015-09-16T15:07:43 <alanharnum> Important to understanding how this happens is there\'s a "key" function passed when the data is originally bound (at 132-134) - this makes an association between the "id" from the model data and the "id" of the corresponding DOM element
+2015-09-16T15:07:49 <Bosmon> I think either form of rendering is reasonable, so long as we can arrange that the component appears from the outside like some kind of normal viewComponent
+2015-09-16T15:07:54 <Bosmon> As well as model component
+2015-09-16T15:08:27 <Bosmon> For example - what happens if the data in the "dataSetWithColors" model changes?
+2015-09-16T15:09:51 <Bosmon> Also I\'m a little puzzled by the "sort" at the end of the function body
+2015-09-16T15:09:58 <Bosmon> Isn\'t "rows" a collection of DOM nodes?
+2015-09-16T15:10:34 <Bosmon> Well, a "D3 selection"
+2015-09-16T15:10:38 <Bosmon> What is the effect of sorting one of those?
+2015-09-16T15:11:43 <alanharnum> D3 resorts the nodes based on the sort function
+2015-09-16T15:12:25 <Bosmon> oh yes, ok
+2015-09-16T15:12:34 <Bosmon> This isn\'t a proper array, so the sort isn\'t a proper sort :)
+2015-09-16T15:13:09 <Bosmon> At first I was suspecting some kind of diabolical magic : P
+2015-09-16T15:13:29 <alanharnum> diabolical magic is how I\'d describe much of D3 ;)
+2015-09-16T15:13:47 <alanharnum> I think the dataSetWithColors needs some thinking
+2015-09-16T15:14:24 <alanharnum> i do think there\'s value to separating the "raw" dataset from the user-configured colors
+2015-09-16T15:15:17 <Bosmon> alanharnum - sure - but how does it actually work?
+2015-09-16T15:15:23 <alanharnum> but atm the answer to "what happens if the data in the "dataSetWithColors" model changes?" is "nothing", because the listener is only on the dataSet model, and dataSetWithColors is constructed based on a relay when that changes
+2015-09-16T15:15:31 <Bosmon> ah ok
+2015-09-16T15:15:33 <Bosmon> Yes I see that now
+2015-09-16T15:16:32 <alanharnum> I think Justin_o & cindyli also discussed the issue that as currently implemented in the overall pieChart component, you can specify different colors for the legend & the pie, and desync them :P
+2015-09-16T15:16:36 <alanharnum> which is not proper behaviour
+2015-09-16T15:16:41 <Bosmon> alanharnum - ok
+2015-09-16T15:16:59 <Bosmon> Well, making sure such things stay in sync is definitely one of the responsibilities of the Infusionising of this group of components
+2015-09-16T15:17:04 <Bosmon> We are all about INTEGRATION after all : P
+2015-09-16T15:17:09 <alanharnum> yup
+2015-09-16T15:17:59 <alanharnum> if either form of rendering is reasonable, the question is about how we make the component appear like a normal viewComponent from the outside, & whether we\'ve achieved that here
+2015-09-16T15:18:26 <Bosmon> alanharnum - I think the implementation represents one of the reasonable strategies for implementing this, yes
+2015-09-16T15:19:04 <Bosmon> The DOM binder currently doesn\'t it make it very easy to address "one of a repeating set of things" and so we needn\'t necessarily try very hard to make these things (legend elements) addressible through it
+2015-09-16T15:19:36 <alanharnum> Bosmon: OK - that would have been one of my questions, as the Infusion naif in the room
+2015-09-16T15:19:48 <Bosmon> BUt given I assume it does have a perfectly regular table structure, one reasonable approach might be to make the DOM binder aware of the selectors which will return all the elements of a particular type, and let the user assume that their DOM indexes will agree with their data index
+2015-09-16T15:20:06 <alanharnum> basically, "how hard would it be to implement D3-like enter/exit/update paradigms with Infusion"
+2015-09-16T15:20:07 <Bosmon> BUt that isn\'t enormously important since it doesn\'t represent a very realistic use case for now
+2015-09-16T15:20:21 <Bosmon> alanharnum - what you are referring to is what we describe as the NEW RENDERER : P
+2015-09-16T15:20:29 <Bosmon> Which I imagine won\'t be implemented in less than about a year
+2015-09-16T15:20:39 <Bosmon> For the time being we need to fend for ourselves with "native technologies" : P
+2015-09-16T15:21:06 <alanharnum> NEW RENDERER > OLD RENDERER?!?
+2015-09-16T15:21:30 <Bosmon> Just making sure that i) the component is a reasonable modelComponent (that is, it has a publically advertised model with a reasonable layout and update semantics), and is ii) minimally a viewComponent (that is, it has a container, and has made some efforts to advertise useful selectors in its DOM binder) is all we really need to do
+2015-09-16T15:21:42 <alanharnum> ok cool
+2015-09-16T15:22:04 <Bosmon> How your DOM elements actually get into the document is a decision up to the "taste" of the implementor
+2015-09-16T15:23:13 <Bosmon> I guess it would be helpful to expose all the event binding primitives of your component in a usefully overrideable way
+2015-09-16T15:23:32 <Bosmon> And also to be able to expose any raw materials it generates its markup from
+2015-09-16T15:24:13 <Bosmon> If the primitives for generating the markup are just kept in code, it will be harder for future integrators to add accessibility decoration to it
+2015-09-16T15:24:46 <Bosmon> But the actual MECHANISM for producing DOM nodes, assuming you can meet these requirements, is up for grabs
+2015-09-16T15:26:22 <alanharnum> yes, I think the legend should be template-based in a future round for some of those reasons
+2015-09-16T15:26:35 * michelled joined the channel
+2015-09-16T15:26:42 <alanharnum> giving an integrator the option to do it as a vertical layout rather than a horizontal, or outside of a table, etc etc
+2015-09-16T16:03:02 * clown joined the channel
+2015-09-16T17:55:42 * alanharnum joined the channel
+2015-09-16T18:35:44 * cindyli joined the channel
+2015-09-16T18:35:47 * michelled joined the channel
+2015-09-16T18:36:13 * alanharnum joined the channel
+2015-09-16T18:43:40 * alanharnum joined the channel
+2015-09-16T18:45:51 * the-t-in-rtf has quit
+2015-09-16T18:46:09 * the-t-in-rtf joined the channel
+2015-09-16T18:56:54 * the-t-in-rtf has quit
+2015-09-16T18:57:38 * the-t-in-rtf joined the channel
+2015-09-16T19:24:18 * alanharnum joined the channel
+2015-09-16T19:49:37 * cindyli joined the channel
+2015-09-16T19:58:47 * alanharnum joined the channel
+2015-09-16T21:21:56 * the-t-in-rtf has quit
+2015-09-16T21:27:16 * the-t-in-rtf joined the channel
+2015-09-16T22:39:59 * alanharnum joined the channel
+2015-09-16T23:34:32 * kasparnet has quit
+'
+

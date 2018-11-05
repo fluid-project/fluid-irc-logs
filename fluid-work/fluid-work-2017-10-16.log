@@ -1,0 +1,252 @@
+b'2017-10-16T16:23:02 <Bosmon> Justin_o - right, this is what the namespace filter is for
+2017-10-16T16:23:11 <Bosmon> But yes, there are two usages on write
+2017-10-16T16:23:22 <Bosmon> i) the backwards use of the onRead filters to prepare for the write
+2017-10-16T16:23:33 <Bosmon> ii) the forwards use of a SUBSET of the onRead filters to interpret the returned payload
+2017-10-16T16:26:25 <Justin_o> Bosmon: okay, so for this new implementation we are thinking that for i) this will now be separate and explicit handlers to onWrite (no more reversal of onRead handlers) ii) this is handled with another event afterWrite? or additional namespaced listeners?
+2017-10-16T16:29:45 * kavya has quit
+2017-10-16T16:34:49 <michelled> grrrero: when would you like to meet today?
+2017-10-16T16:38:53 <grrrero> michelled: Anytime you\'re free!
+2017-10-16T16:39:31 <michelled> I\'m free now, if you\'d like :)
+2017-10-16T16:39:42 <grrrero> Ok cool!
+2017-10-16T16:39:50 <grrrero> Vidyo direct?
+2017-10-16T16:41:33 * alanharnum has quit
+2017-10-16T16:45:27 <michelled> Justin_o: is this pull request still required? https://github.com/fluid-project/infusion-docs/pull/127
+2017-10-16T16:45:51 * avtar joined the channel
+2017-10-16T16:47:07 <Justin_o> michelled: yes, it looks like that\'s still needed
+2017-10-16T16:51:54 <Justin_o> Bosmon: so i think i\'m understanding the "ii) the forwards use of a SUBSET of the onRead filters to interpret the returned payload" a bit better now. So the issue is that the return value from the write, which we want to include in the resolution to the promise, may need to be parsed.
+2017-10-16T16:52:02 * alanharnum joined the channel
+2017-10-16T16:55:06 <Justin_o> Bosmon: so i guess we could either keep things as they are and use some subset of the transformation flow from the onRead chain, or we can change this to be part of the onWrite chain only. The later has the freedom of providing an alternative transformation chain if the response to write is in fact different than a response to a read (although that seems unlikely), but it also seems problematic to implement. There
+2017-10-16T16:55:06 <Justin_o> will need to be some new identifiable stage in the chain before the promise is resolved. I suppose another pseudoEvent could work.. onWriteResponse or something like that
+2017-10-16T16:55:16 <Justin_o> Bosmon: what do you think would be the best approach
+2017-10-16T16:59:01 * jhernandez has quit
+2017-10-16T17:04:26 * colinclark has quit
+2017-10-16T17:05:07 * colinclark joined the channel
+2017-10-16T17:06:00 * gtirloni joined the channel
+2017-10-16T17:07:48 <Bosmon> Justin_o - yes, onWriteResponse seems like a reasonable idea
+2017-10-16T17:21:17 <Justin_o> Bosmon: okay, cool thanks i\'ll see where i can get with that
+2017-10-16T17:21:27 <Bosmon> Justin_o - cool
+2017-10-16T17:47:41 * stegru has quit
+2017-10-16T17:53:14 * alanharnum joined the channel
+2017-10-16T17:53:33 * simonjb joined the channel
+2017-10-16T17:53:42 * danayo_ joined the channel
+2017-10-16T17:58:58 * michelled joined the channel
+2017-10-16T17:59:08 * michelled joined the channel
+2017-10-16T17:59:17 * michelled has quit
+2017-10-16T18:01:36 * michelled joined the channel
+2017-10-16T18:12:27 * the-t-in-rtf joined the channel
+2017-10-16T18:21:47 * michelled1 joined the channel
+2017-10-16T18:25:03 * Jess_ has quit
+2017-10-16T18:25:15 * Jess_ joined the channel
+2017-10-16T18:25:35 <ussjoin> The RSA bad key issue affects Yubikeys, they\'re announcing a recall: https://www.yubico.com/keycheck/
+2017-10-16T18:28:07 <simonjb> ussjoin: oh wow, what a day!
+2017-10-16T18:43:08 * gtirloni has quit
+2017-10-16T18:43:16 * gtirloni_ joined the channel
+2017-10-16T18:47:13 * danayo_ has left the channel
+2017-10-16T18:48:44 * jhung joined the channel
+2017-10-16T18:52:29 * stegru joined the channel
+2017-10-16T18:53:46 * cindyli joined the channel
+2017-10-16T18:56:31 * danayo has left the channel
+2017-10-16T18:57:28 * danayo_ joined the channel
+2017-10-16T18:58:10 * danayo_ joined the channel
+2017-10-16T18:59:38 * danayo_ has quit
+2017-10-16T19:00:17 * sepidehshahi has quit
+2017-10-16T19:02:44 * danaayotte joined the channel
+2017-10-16T19:03:39 * sepidehshahi joined the channel
+2017-10-16T19:04:32 * alanharnum2 joined the channel
+2017-10-16T19:22:49 * alanharnum joined the channel
+2017-10-16T19:24:10 <Justin_o> Bosmon: does this look about right for the datasource.. i still have to write the tests, but want to make sure that we\'re on the same page first.
+2017-10-16T19:24:32 <Justin_o> https://www.irccloud.com/pastebin/IOBWpmCu/
+2017-10-16T19:28:48 * alanharnum joined the channel
+2017-10-16T19:56:42 * jhung has quit
+2017-10-16T19:58:24 * jhung joined the channel
+2017-10-16T20:01:30 * alanharnum joined the channel
+2017-10-16T20:01:38 * alanharnum joined the channel
+2017-10-16T20:12:34 * the-t-in-rtf joined the channel
+2017-10-16T20:15:39 * colinclark joined the channel
+2017-10-16T20:21:37 * alanharnum joined the channel
+2017-10-16T20:22:52 * jhung has quit
+2017-10-16T20:26:03 * cindyli has quit
+2017-10-16T20:34:22 * colinclark has quit
+2017-10-16T20:35:03 * colinclark joined the channel
+2017-10-16T20:35:54 * cindyli joined the channel
+2017-10-16T20:47:32 * stegru has quit
+2017-10-16T20:48:07 * alanharnum joined the channel
+2017-10-16T20:48:57 * the-t-in-rtf has quit
+2017-10-16T20:51:00 * stegru joined the channel
+2017-10-16T20:51:26 * alanharnum2 joined the channel
+2017-10-16T20:58:33 * michelled1 has quit
+2017-10-16T21:00:31 * alanharnum2 has quit
+2017-10-16T21:01:41 * clown has quit
+2017-10-16T21:11:17 * simonjb has quit
+2017-10-16T21:16:14 <Bosmon> Hi there Justin_o
+2017-10-16T21:16:17 <Bosmon> Sorry not to get back to you earlier
+2017-10-16T21:16:40 <Bosmon> Your design looks pretty good - I would name "initialPayload" something else, in order to emphasise its naming in common between read and write
+2017-10-16T21:16:54 <Bosmon> We may not couple them together any more, but we do want to make the structural analogy totally clear :)
+2017-10-16T21:17:24 <Bosmon> My vague plan was for something like "backing" in order to stir up the idea of something like "backing store" but you may have some other ideas
+2017-10-16T21:17:51 <Bosmon> And of course lots of this still needs to be axed - e.g. "setResponseTransform"
+2017-10-16T21:23:35 * stegru has quit
+2017-10-16T21:24:55 * Jess_ has quit
+2017-10-16T21:26:57 * amatas has quit
+2017-10-16T22:17:12 * yuriy__ has quit
+2017-10-16T22:17:29 * yuriy__ joined the channel
+2017-10-16T22:28:43 * colinclark has quit
+2017-10-16T22:40:44 * mrtyler joined the channel
+2017-10-16T22:41:43 * colinclark joined the channel
+2017-10-16T22:46:09 * Justin_o has quit
+2017-10-16T22:56:42 * colinclark has quit
+2017-10-16T23:47:59 * avtar has quit
+2017-10-16T23:48:28 * mrtyler joined the channel
+'
+
+b'2017-10-16T06:10:24 * the-t-in-rtf has quit
+2017-10-16T06:15:16 * amatas joined the channel
+2017-10-16T07:05:42 * amatas has quit
+2017-10-16T07:06:34 * amatas joined the channel
+2017-10-16T07:17:30 * amatas has quit
+2017-10-16T07:17:41 * amatas joined the channel
+2017-10-16T07:22:39 * the-t-in-rtf joined the channel
+2017-10-16T07:47:30 * georgitodorov joined the channel
+2017-10-16T08:02:29 * stegru joined the channel
+2017-10-16T08:42:58 * yuriy__ has quit
+2017-10-16T08:43:04 * yuriy__ joined the channel
+2017-10-16T09:44:47 * amatas_ joined the channel
+2017-10-16T09:46:39 * amatas has quit
+2017-10-16T09:46:41 * amatas_ is now known as amatas
+2017-10-16T10:05:50 * the-t-in-rtf has quit
+2017-10-16T10:27:20 * the-t-in-rtf joined the channel
+2017-10-16T11:04:42 * jhernandez joined the channel
+2017-10-16T12:26:15 * alanharnum joined the channel
+2017-10-16T12:26:32 <alanharnum> debugging by sonification: https://twitter.com/Fraxtil/status/919799942033506305
+2017-10-16T12:27:49 * amatas has quit
+2017-10-16T12:29:34 * jhung joined the channel
+2017-10-16T12:36:04 * Justin_o joined the channel
+2017-10-16T12:55:38 * alanharnum has quit
+2017-10-16T12:58:22 * cindyli joined the channel
+2017-10-16T13:14:22 * simonjb joined the channel
+2017-10-16T13:23:51 * Jess_ joined the channel
+2017-10-16T13:28:20 * clown joined the channel
+2017-10-16T13:30:22 * amatas joined the channel
+2017-10-16T13:34:59 * clown1 joined the channel
+2017-10-16T13:35:36 * clown1 joined the channel
+2017-10-16T13:35:41 * grrrero joined the channel
+2017-10-16T13:37:23 * clown1 joined the channel
+2017-10-16T13:43:08 * the-t-in-rtf1 joined the channel
+2017-10-16T13:48:15 * the-t-in-rtf has quit
+2017-10-16T13:50:28 * clown1 joined the channel
+2017-10-16T13:52:27 * clown has quit
+2017-10-16T13:55:51 * colinclark joined the channel
+2017-10-16T14:03:34 * alanharnum joined the channel
+2017-10-16T14:08:41 * Student joined the channel
+2017-10-16T14:11:59 * Student has left the channel
+2017-10-16T14:13:04 * danayo_ joined the channel
+2017-10-16T14:15:24 <Justin_o> Bosmon: starting to look into FLUID-6209 again today. I\'m wondering what the TODO on this line actually means https://github.com/fluid-project/kettle/blob/master/lib/dataSource-core.js#L226
+2017-10-16T14:18:19 * georgitodorov has quit
+2017-10-16T14:22:09 * danayo_ has quit
+2017-10-16T14:29:02 * danayo_ joined the channel
+2017-10-16T14:29:17 <Bosmon> Justin_o - right, it just means that this material obviously doesn\'t belong in dataSource-core
+2017-10-16T14:29:31 <Bosmon> But instead in dataSource-url
+2017-10-16T14:31:37 <Justin_o> Bosmon: ah i see, so i\'ll just delete it in my port to infusion
+2017-10-16T14:31:54 * michelled joined the channel
+2017-10-16T14:32:22 <Justin_o> Bosmon: also for removing getImpl for example, i see there is a comment about that https://github.com/fluid-project/kettle/blob/master/lib/dataSource-core.js#L231-L233
+2017-10-16T14:32:38 <Justin_o> Bosmon: taking this along with https://issues.fluidproject.org/browse/KETTLE-55
+2017-10-16T14:32:48 <Bosmon> Justin_o - that\'s right, yes
+2017-10-16T14:33:01 <Bosmon> getImpl should be replaced with "just another namespaced listener"
+2017-10-16T14:33:15 <Justin_o> Bosmon: i\'m unsure, are we talking about a new pseudo event or using onRead
+2017-10-16T14:33:28 <Bosmon> Justin_o - just the same one, onRead
+2017-10-16T14:33:53 <Justin_o> Bosmon: okay, and it\'s purpose is to load in the initial dataset, with is to say, not perform a transformation at all
+2017-10-16T14:34:17 <Bosmon> Justin_o - yes, that\'s right
+2017-10-16T14:34:30 <Justin_o> okay cool thanks
+2017-10-16T14:34:48 <Bosmon> We didn\'t realise when first designing the DataSource that we could improve its architecture in this way, given the transforms and pseudoevent were just a "bolt-on" improvement
+2017-10-16T14:35:06 <Bosmon> But eventually we realised that the pseudoevent idiom was powerful enough to account for 100% of the activity of the DataSource
+2017-10-16T14:35:18 <Bosmon> the-t-in-rtf1 has done some work in this area so will be interested
+2017-10-16T14:38:56 <the-t-in-rtf1> Just wanted to check a couple of things in case they\'ve changed.
+2017-10-16T14:39:12 <the-t-in-rtf1> Has anything happened with cookie jars and dataSources?
+2017-10-16T14:39:28 <the-t-in-rtf1> I can\'t use them for anything that requires a session cookie, for example, and would like to.
+2017-10-16T14:39:49 <the-t-in-rtf1> Also wanted to see if you\'d thought any more about error handling.
+2017-10-16T14:42:21 <the-t-in-rtf1> Most of my code has lots of points at which I only want to process on success or error, which is only possible if you can get hold of the promise returned by a get/set
+2017-10-16T14:47:56 <Justin_o> Bosmon: ^
+2017-10-16T14:49:33 * mrtyler joined the channel
+2017-10-16T14:52:43 <the-t-in-rtf1> Anyway, I have been thinking about the whole pseudoevent idiom in another context, where I also want to have the ability for any stage in the "normal" chain to divert to an "error" chain without any further processing occurring in the "normal" chain.
+2017-10-16T14:56:26 * kavya joined the channel
+2017-10-16T15:12:36 * the-t-in-rtf1 has quit
+2017-10-16T15:13:31 <ussjoin> Hello, world.
+2017-10-16T15:20:47 <Justin_o> Bosmon: i\'m a bit confused by the current implementation of kettle.dataSource.set https://github.com/fluid-project/kettle/blob/master/lib/dataSource-core.js#L262-L279
+2017-10-16T15:21:20 <ussjoin> Named attack release: KRACK (Key Reinstallation AttaCK). https://www.krackattacks.com/ -- this is a catastrophic breach on wifi security. Assume every person within range of your wireless network now has full access to the network, until patches are released. Readable guidance page on how to slightly risk-reduce while we wait: https://www.alexhudson.com/2017/10/15/wpa2-broken-krack-now/
+2017-10-16T15:21:52 <Justin_o> Bosmon: why is the onWrite reversed? and it appears that the onRead transformations on line 269 are not reversed.. or am i just reading this all wrong.
+2017-10-16T15:22:17 <Justin_o> Bosmon: additionally won\'t this end up calling the our handler to get the initial payload now that we are doing away with getImpl/setImpl
+2017-10-16T15:22:40 <Justin_o> and the filtering of namespaces only appears to be a list of namespaces to run, but having the opposite could help in the situation
+2017-10-16T15:22:45 <Justin_o> Bosmon: any thoughts?
+2017-10-16T15:23:13 <ussjoin> https://arstechnica.com/information-technology/2017/10/crypto-failure-cripples-millions-of-high-security-keys-750k-estonian-ids/ -- RSA keys generated by an RSA-issued library (developed by Infineon) are relatively-trivially factorizable.
+2017-10-16T15:23:55 <ussjoin> (Looks like it also affects a lot of TPMs on laptops....)_
+2017-10-16T15:25:18 <ussjoin> Also the US Supreme Court is going to decide whether to blow up a very, very old treaty---the (actually several treaties that comprise) Peace of Westphalia, 1648: https://arstechnica.com/tech-policy/2017/10/supreme-court-to-decide-if-us-has-right-to-data-on-worlds-servers/
+2017-10-16T15:25:28 <colinclark> ussjoin: welcome back!
+2017-10-16T15:25:54 <ussjoin> colinclark: Thanks! It looks like the security world held things together just until I returned, given that all of the above came out *today*. :-)
+2017-10-16T15:26:01 <colinclark> :)
+2017-10-16T15:26:04 <colinclark> yes
+2017-10-16T15:26:16 <colinclark> when i saw that it was scheduled to be released, i knew you\'d have a fun first day back
+2017-10-16T15:27:05 <colinclark> Have any WiFi router vendors released patches yet, to your knowledge?
+2017-10-16T15:27:11 <ussjoin> No.
+2017-10-16T15:27:19 <colinclark> I see that Apple has squeezed out a quick update to iOS
+2017-10-16T15:27:24 <ussjoin> Also it\'s apparently primarily the wifi *clients* that need to update.
+2017-10-16T15:27:32 <colinclark> ok, that\'s good to know
+2017-10-16T15:27:37 <ussjoin> Which means that we have another zombie IOT bug on our hands.
+2017-10-16T15:27:43 <colinclark> yes
+2017-10-16T15:27:48 <colinclark> brutal
+2017-10-16T15:27:58 * danayo_ joined the channel
+2017-10-16T15:29:01 <ussjoin> "Our attack is especially catastrophic against version 2.4 and above of wpa_supplicant, a Wi-Fi client commonly used on Linux. "
+2017-10-16T15:29:17 <ussjoin> "Because Android uses wpa_supplicant, Android 6.0 and above also contains this vulnerability. This makes it trivial to intercept and manipulate traffic sent by these Linux and Android devices. Note that currently 41% of Android devices are vulnerable to this exceptionally devastating variant of our attack."
+2017-10-16T15:31:03 * alanharnum has quit
+2017-10-16T15:31:10 * danayo_ has quit
+2017-10-16T15:31:50 <amatas> I\'ve received the update on my desktop and laptop this morning: https://git.archlinux.org/svntogit/packages.git/commit/trunk?h=packages/wpa_supplicant&id=9c1bda00a846ff3b60e7c4b4f60b28ff4a8f7768
+2017-10-16T15:32:12 <ussjoin> amatas: Of *course* you run Arch. :-)
+2017-10-16T15:33:11 <ussjoin> My concern is more that a lot of Android devices don\'t receive updates, or receive them only like every 6mo or so. And IoStuffThatShouldn\'tEverBeConnectedToTheInternet (often abbreviated IoT) never gets patched.
+2017-10-16T15:34:00 <amatas> right
+2017-10-16T15:34:54 <amatas> it isn\'t easy to setup a WPA enterprise wifi at my parent\'s home
+2017-10-16T15:35:03 <ussjoin> https://forum.mikrotik.com/viewtopic.php?f=21&t=126695 -- colinclark to your point, Mikrotik says they are *not* affected in their newest versions, so if you have stuff running RouterOS, check versions.
+2017-10-16T15:35:14 <ussjoin> amatas: And WPA-E is affected too. :-(
+2017-10-16T15:35:51 <amatas> oh!, I believed to read that wasn\'t affected
+2017-10-16T15:36:34 <ussjoin> amatas Yeah... read the KrackAttacks website. There is one subvulnerability that doesn\'t apply to -E, but the core devastating one does. That said, sadly, I know of a lot of enterprise networks that use WPA2-PSK, despite my pleading with them.
+2017-10-16T15:37:46 <ussjoin> But yes, I feel your family tech support pain. My parents run Linux because I got tired of wiping their systems every time they got malware---but luckily their Linux machines all are on Ethernet. So that\'s better than it might be.
+2017-10-16T15:49:36 <amatas> My life changed when I teach my father in law how to format and install windows by himself.
+2017-10-16T15:50:34 <amatas> the family has to consider that the data on his harddisk is ephemeral
+2017-10-16T15:57:16 <Justin_o> danayo, gmoss: i\'ve updated the calendar, it was only in the room booking before, thanks for letting me know it wasn\'t there.
+2017-10-16T15:57:45 <gmoss> Justin_o: thanks for adding it, and no problem :)
+2017-10-16T16:02:33 * danayo_ joined the channel
+2017-10-16T16:02:40 <cindyli> Bosmon: are you coming to the meeting?
+2017-10-16T16:02:41 * alanharnum joined the channel
+2017-10-16T16:02:44 <cindyli> data model review
+2017-10-16T16:04:14 * the-t-in-rtf joined the channel
+2017-10-16T16:04:15 * sepidehshahi joined the channel
+2017-10-16T16:08:02 <Bosmon> Hi there Justin_o - the namespaces on onWrite are reversed because you need to do the transformations in an opposite order than when reading
+2017-10-16T16:08:24 <Bosmon> For example, if converting from JSON is the first step on reading, rendering back to JSON is the last step on writing
+2017-10-16T16:08:28 <Justin_o> Bosmon: but wouldn\'t that reverse the order of events assigned to the onWrite?
+2017-10-16T16:08:50 <Bosmon> Justin_o - yes, exactly
+2017-10-16T16:09:11 <Justin_o> so when you have priority of "after:encoding" it actually happens before encoding?
+2017-10-16T16:09:22 <Justin_o> for onWrite
+2017-10-16T16:09:30 <Bosmon> Justin_o - yes, well, this is indeed an important usability point
+2017-10-16T16:09:34 <Bosmon> And the-t-in-rtf has noted this too
+2017-10-16T16:09:47 * danayo_ has quit
+2017-10-16T16:09:51 <Bosmon> So I suggest that this is something that we indeed fix when we reimplement dataSources
+2017-10-16T16:10:04 <Bosmon> I was just running you through the reasoning that led the original implementation to be the way it is
+2017-10-16T16:10:27 * the-t-in-rtf has quit
+2017-10-16T16:10:28 <Bosmon> But indeed a system which when you write "after:encoding" sometimes does something before encoding is a usability crevasse
+2017-10-16T16:11:49 <Justin_o> Bosmon: okay that makes sense.. so the other thing is that now our initial payload is at the head of the onRead queue
+2017-10-16T16:12:06 <Justin_o> and i don\'t think we\'ll want to run that at the back end of the onWrite
+2017-10-16T16:12:28 <Bosmon> Justin_o - some of the-t-in-rtf\'s comments also implied he wanted greater independence between reading and writing
+2017-10-16T16:12:43 <Bosmon> Even to the extent that one could "mix and match" separate strategies for reading and writing independently
+2017-10-16T16:13:01 <Bosmon> So removing the coupling between priorities of the listeners to onRead and onWrite is consistent with that direction
+2017-10-16T16:13:44 <Bosmon> Justin_o - but the so-called "initial payload" for the onWrite queue is the listener which actually does the writing
+2017-10-16T16:13:51 <Bosmon> So it is indeed at the end
+2017-10-16T16:14:14 * danayo_ joined the channel
+2017-10-16T16:14:16 <Justin_o> Bosmon: right but it may be a completely different function than what was used for onRead
+2017-10-16T16:14:21 <Bosmon> Justin_o - yes
+2017-10-16T16:14:41 <Justin_o> Bosmon: so if i\'m understanding correctly, we won\'t back step through the onRead listeners anymore as part of onset?
+2017-10-16T16:16:17 <Bosmon> Justin_o - well, what\'s going on here is mirroring a certain aspect of standard kinds of HTTP services
+2017-10-16T16:16:27 <Bosmon> Whether these are HTTP form posts, or posts into CouchDB
+2017-10-16T16:16:37 <Bosmon> What happens it that quite often, from a write, there is some kind of "return payload"
+2017-10-16T16:17:17 <Bosmon> And this typically, but not always, is in the same kind of format as the payload which was written
+2017-10-16T16:17:37 <Bosmon> And so, for example, if it is a JSON payload, it will need to get decoded again
+2017-10-16T16:17:58 <Bosmon> But, again, the odd way in which we treat this as "stepping through part of the onRead filters" I think will have to go
+2017-10-16T16:18:25 <Justin_o> Bosmon: maybe i misunderstood something.. so that was actually to handle the response to writing as opposed to setting things up to do the actual write?
+'
+

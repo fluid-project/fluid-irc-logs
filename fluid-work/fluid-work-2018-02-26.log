@@ -1,0 +1,162 @@
+b'2018-02-26T22:03:03 * clown has quit
+2018-02-26T22:08:39 * alanharnum has quit
+2018-02-26T22:11:55 * avtar has quit
+2018-02-26T22:14:27 * michelled1 has quit
+2018-02-26T22:22:41 * stegru has quit
+2018-02-26T22:23:31 * simonjb has quit
+2018-02-26T22:48:09 * jessm has quit
+2018-02-26T22:56:27 * amatas has quit
+'
+
+b'2018-02-26T06:52:32 * georgitodorov joined the channel
+2018-02-26T08:04:43 * amatas joined the channel
+2018-02-26T08:36:32 * georgitodorov has quit
+2018-02-26T08:54:28 * georgitodorov joined the channel
+2018-02-26T08:55:25 * stegru joined the channel
+2018-02-26T08:57:25 * yuriy__ has quit
+2018-02-26T08:57:38 * yuriy__ joined the channel
+2018-02-26T10:10:44 * jhernandez joined the channel
+2018-02-26T10:32:52 <georgitodorov> Bosmon: Hey, Antranig! We fixed the settings broker tests and pushed the changes. It turns out that the problem was not the two listeners back to back in the sequence.
+2018-02-26T10:33:26 <georgitodorov> Or, maybe this was the problem but the fix was to actually wait for a model changed event on a different component (on the app instead of on the settings broker)
+2018-02-26T10:34:19 <georgitodorov> This made the tests pass. Also, it turned out that previously the last two elements in the test sequence were executed twice (i.e. some component may not have been destroyed or may have been created again mysteriously)
+2018-02-26T10:34:46 <georgitodorov> Anyway, if you think that the PR is now in good shape, you can merge it into master.
+2018-02-26T11:40:45 <Bosmon> OK, thanks georgitodorov - I\'ll rerun the tess here now
+2018-02-26T11:40:47 <Bosmon> tests
+2018-02-26T12:05:57 <Bosmon> jhernandez - wow, well done VVANTTUNNEZZ!
+2018-02-26T12:06:06 <Bosmon> Pull for electron 1.8.1 woohoo
+2018-02-26T12:06:45 <jhernandez> Bosmon: heh, let\'s see if it passes CI - it does here ... :)
+2018-02-26T12:06:48 <jhernandez> and yes
+2018-02-26T12:06:58 <jhernandez> I\'ve finally decided to go to 1.8.1
+2018-02-26T12:07:05 <Bosmon> jhernandez - just about to merge georgitodorov \'s big pull for the surveys
+2018-02-26T12:08:46 <jhernandez> Bosmon: cool, go ahead, I can update mine afterwards
+2018-02-26T12:09:59 <jhernandez> in any case, I have to come back to the windows one before, the creation of the installer was failing
+2018-02-26T12:13:37 * gtirloni joined the channel
+2018-02-26T12:15:41 * gtirloni has quit
+2018-02-26T12:41:57 * gtirloni joined the channel
+2018-02-26T12:46:33 <Bosmon> jhernandez - rather peculiar failure
+2018-02-26T12:46:38 <Bosmon> I can\'t immediately see what the cause is
+2018-02-26T12:46:56 <Bosmon> Oh no wait there it is
+2018-02-26T12:47:05 <Bosmon> It\'s just an "Object has been destroyed" in the middle
+2018-02-26T12:50:03 <Bosmon> Very easy to fix
+2018-02-26T12:50:04 <Bosmon> https://github.com/GPII/gpii-app/blob/8f9bdc247e883359228fd3340d80e4260daf71a8/src/main/psp.js#L180
+2018-02-26T12:50:25 <Bosmon> jhernandez - I suggest what is done here is rather than adding a raw listener, instead to relay the raw electron event to an Infusion event onDisplayMetricsChanged
+2018-02-26T12:50:32 <Bosmon> And then position the code below as a listener
+2018-02-26T12:50:49 <Bosmon> This will then ensure that everything is neutered when the app is torn down
+2018-02-26T12:51:42 <Bosmon> Should really do the same with the blur listener too
+2018-02-26T13:08:02 * alanharnum joined the channel
+2018-02-26T13:25:20 * Justin_o joined the channel
+2018-02-26T13:37:18 * cindyli joined the channel
+2018-02-26T13:58:10 * gtirloni joined the channel
+2018-02-26T14:07:35 * clown joined the channel
+2018-02-26T14:11:15 <Justin_o> Bosmon: could you explain this comment some more.. i\'m not sure what you mean about the more elaborate namespace. https://github.com/fluid-project/infusion/pull/867#discussion_r166663906
+2018-02-26T14:11:45 <Bosmon> Justin_o - I was just wondering whether it made sense to roll these all into the same event, and just add more priority constraints
+2018-02-26T14:14:04 <jhernandez> Bosmon: okay, I\'ll update the pull request with that little fix after my "doggie" break
+2018-02-26T14:14:23 <jhernandez> thanks a lot for the tip!
+2018-02-26T14:18:01 * michelled joined the channel
+2018-02-26T14:19:16 <Justin_o> Bosmon: so a couple things I\'m confused about is that you mention onFetch/afterFetch errors but there is only onFetchError event.. do you mean the regular onFetch/afterFetch onWrite/afterWrite events? Also, if that is the case and we just have an onWrite and onFetch event i\'m not sure how to break up the functionality for sequencing that is in the fetch and write implementation.
+2018-02-26T14:20:13 * sepidehshahi joined the channel
+2018-02-26T14:20:29 * amatas has quit
+2018-02-26T14:20:42 <Bosmon> Justin_o - yes, this is what I saw
+2018-02-26T14:20:48 * michelled has quit
+2018-02-26T14:20:51 <Bosmon> Which suggested to me it may make sense to keep the events separate for now
+2018-02-26T14:21:03 <Bosmon> But I was just making sure that we evaluated this alternative design
+2018-02-26T14:21:23 * amatas joined the channel
+2018-02-26T14:21:51 <Justin_o> Bosmon: ah okay.. i know i tried a bunch of different things when writing this before.. but can\'t remember all the variations any more :(
+2018-02-26T14:24:01 <Justin_o> Bosmon: I suppose there might be a way to structure it as part of the event sequence for onWrite and onFetch.. i can explore that a bit more
+2018-02-26T14:25:27 <Bosmon> I think the current design works, it\'s just I\'m growing a little suspicious of "linked events"
+2018-02-26T14:25:43 <Bosmon> Since there is no clear way to associate a particular firing of one event to a particular firing of another one, when looking from the outside
+2018-02-26T14:33:12 * simonjb joined the channel
+2018-02-26T14:36:38 <Justin_o> Bosmon: that\'s very true.. so do you think i should leave it as is for now?
+2018-02-26T14:37:15 <Bosmon> Justin_o - well, that\'s my feeling, but what do you think?
+2018-02-26T14:37:21 <Bosmon> You\'re closer to the design at present
+2018-02-26T14:38:32 <Justin_o> Bosmon: i guess so, but the works been spread out enough that I keep forgetting what I\'ve done :( I\'ll try to spend some time this morning investigating the alternative approach and if that doesn\'t yield any results I\'ll leave it as is.
+2018-02-26T14:38:41 <Bosmon> Justin_o - awesome, thanks
+2018-02-26T14:38:48 <Justin_o> Bosmon: also, what do you think we should do about https://issues.fluidproject.org/browse/FLUID-6249?focusedCommentId=38835&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-38835
+2018-02-26T14:38:58 <Justin_o> in relation to FLUID-6209
+2018-02-26T14:48:13 <Bosmon> Justin_o - it\'s a little hard to follow
+2018-02-26T14:48:19 <Bosmon> "This is even the case if the modelListener for saving the panelIndex is set to exclude init. It seems that this is happening because the initial model values are also being set in the model which triggers a save."
+2018-02-26T14:48:23 <Bosmon> What is the connection here?
+2018-02-26T14:48:57 <Justin_o> initial model values are the defaults for the preferences
+2018-02-26T14:49:29 <Bosmon> So why does this trigger a save?
+2018-02-26T14:49:31 <Justin_o> I\'m assuming that because these are applied to the model, it is triggering an auto save
+2018-02-26T14:49:46 <Bosmon> But you say that you have set "exclude init"
+2018-02-26T14:50:02 <Justin_o> exclude init for the panelIndex
+2018-02-26T14:50:11 <Justin_o> which is part of the components state and not a preference
+2018-02-26T14:50:46 <Justin_o> that is the model would look something like this {panelIndex: 0, preferences: {contrast: "default"}}
+2018-02-26T14:51:13 <Justin_o> but the prefs framework will strip out the default values for preferences before saving them to the store
+2018-02-26T14:51:21 <Bosmon> Ah ok
+2018-02-26T14:51:32 <Bosmon> Could you flesh out the explanation with that detail?
+2018-02-26T14:51:42 <Bosmon> That is that the model is in two parts, etc.
+2018-02-26T14:52:02 <Justin_o> will do..
+2018-02-26T14:54:13 * grrrero joined the channel
+2018-02-26T14:57:18 <Justin_o> Bosmon: I\'ve edited the comment, https://issues.fluidproject.org/browse/FLUID-6249?focusedCommentId=38835&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-38835
+2018-02-26T14:57:46 <Justin_o> Hopefully it\'s more clear now, but let me know if further clarification is needed
+2018-02-26T14:57:51 <georgitodorov> Bosmon: We have just prepared the PR for the error dialog functionality: https://github.com/GPII/gpii-app/pull/39
+2018-02-26T15:04:54 * georgitodorov has quit
+2018-02-26T15:28:53 * michelled joined the channel
+2018-02-26T15:41:10 <cindyli> amatas, amatas[m], how can i trigger the CI for this pull request to re-run? the CI fails at running node tests that i cannot re-produce with my local VM so thinking to re-run the CI. it seems commenting with "ok to test" doesn\'t help
+2018-02-26T15:41:28 <cindyli> https://github.com/GPII/universal/pull/591
+2018-02-26T15:45:49 <cindyli> amatas, amatas, never mind. "ok to test" works, just a little delay ;)
+2018-02-26T16:06:08 <simonjb> Justin_o, cindyli, and others: Do we have any Fluid code anywhere for sending HTTP requests that would work both in Node.js and in browser? I looked but didn\'t see anything. Before I implement my own HTTP request grade I wanted to check if such a thing exists?
+2018-02-26T16:07:03 <cindyli> simonjb: the same code that works in both?
+2018-02-26T16:07:19 <simonjb> or, an API that works in both
+2018-02-26T16:07:39 <simonjb> a common API I can program to that will work in both environments
+2018-02-26T16:08:02 <simonjb> I can write my own layer but wanted to check if we had own already
+2018-02-26T16:08:10 * aditya95 joined the channel
+2018-02-26T16:08:24 <simonjb> I want to write code that send HTTP requests that works in both Node.js and browser
+2018-02-26T16:08:24 <Justin_o> simonjb: I have a datasource in my FLUID-6209 branch that is based off the one from kettle
+2018-02-26T16:08:41 <Justin_o> you\'d still need to write your own code to do the actual request though
+2018-02-26T16:09:18 <Justin_o> simonjb: https://github.com/jobara/infusion/blob/FLUID-6209/src/framework/core/js/DataSource.js
+2018-02-26T16:09:23 * aditya95 has quit
+2018-02-26T16:09:44 <Justin_o> also the branch is still going through code review, not sure when it will be merged in
+2018-02-26T16:10:09 * aditya_96 joined the channel
+2018-02-26T16:12:50 <cindyli> simonjb: universal repo has some browser tests that utliize the browserified kettle url data source: https://github.com/GPII/universal/blob/master/scripts/browserifyTestDependency.js
+2018-02-26T16:13:34 * aditya_96 has quit
+2018-02-26T16:13:38 <simonjb> thanks cindyli
+2018-02-26T16:13:47 <cindyli> np
+2018-02-26T16:14:15 <Justin_o> simonjb: i rewrote the stores in the prefs framework to use the datasource https://github.com/jobara/infusion/blob/FLUID-6209/src/framework/preferences/js/Store.js
+2018-02-26T16:14:47 * aditya_96 joined the channel
+2018-02-26T16:15:13 <Justin_o> simonjb: i believe these are examples of use from kettle\'s implementation https://github.com/fluid-project/kettle/blob/master/lib/dataSource-url.js
+2018-02-26T16:15:15 * aditya_96 has quit
+2018-02-26T16:32:09 <jhernandez> Bosmon: I\'ve just pushed a small update to my pr. Not sure if it\'ll do the trick though, since the tests are passing on my VM
+2018-02-26T16:39:22 <cindyli> simonjb, Bosmon: when you have time, can you review my pull request that implements the new GPII data model - https://github.com/GPII/universal/pull/591
+2018-02-26T16:40:16 * sepidehshahi has quit
+2018-02-26T16:45:35 * sepidehshahi joined the channel
+2018-02-26T16:54:30 * avtar joined the channel
+2018-02-26T17:04:45 * jessm joined the channel
+2018-02-26T17:08:50 * danayo joined the channel
+2018-02-26T17:25:02 * avtar has quit
+2018-02-26T17:26:07 * yuriy__ has quit
+2018-02-26T17:26:20 * yuriy__ joined the channel
+2018-02-26T17:31:58 * kavya joined the channel
+2018-02-26T17:35:17 * yuriy__ has quit
+2018-02-26T17:36:49 * michelled has quit
+2018-02-26T17:41:55 * michelled joined the channel
+2018-02-26T17:47:45 * michelled has quit
+2018-02-26T17:48:43 <Justin_o> simonjb: https://github.com/fluid-project/infusion/blob/master/demos/prefsFramework/js/prefsEditorDemo.js#L34-L46
+2018-02-26T18:01:48 * jhung joined the channel
+2018-02-26T18:27:39 * stegru has quit
+2018-02-26T18:30:33 <Bosmon> jhernandez - I thought it would work :)
+2018-02-26T18:34:12 <jhernandez> heh, yes, thanks!!
+2018-02-26T18:35:54 * alanharnum has quit
+2018-02-26T18:38:00 * michelled joined the channel
+2018-02-26T18:39:04 * avtar joined the channel
+2018-02-26T18:48:34 <michelled> grrrero: is now good to check in?
+2018-02-26T19:00:02 * alanharnum joined the channel
+2018-02-26T19:03:40 * Victor_ joined the channel
+2018-02-26T19:07:00 * anonymousmarmot joined the channel
+2018-02-26T19:07:40 * anonymousmarmot has quit
+2018-02-26T19:15:32 * danayo joined the channel
+2018-02-26T19:15:56 * danayo has quit
+2018-02-26T19:16:18 * stegru joined the channel
+2018-02-26T19:18:27 * Victor_ has quit
+2018-02-26T19:19:08 * Victor_ joined the channel
+2018-02-26T19:35:08 * michelled1 joined the channel
+2018-02-26T19:37:16 * michelled has quit
+2018-02-26T19:51:36 * gtirloni has quit
+2018-02-26T20:23:13 * Victor_ has quit
+2018-02-26T20:49:47 * jhung has quit
+2018-02-26T21:19:15 * cindyli has quit
+2018-02-26T21:29:00 * sepidehshahi has quit
+'
+

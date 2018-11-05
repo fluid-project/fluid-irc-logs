@@ -1,0 +1,446 @@
+b'2017-02-09T17:15:40 <mrtyler> but idk who does the actual starting
+2017-02-09T17:15:46 <mrtyler> and i\'m not sure exactly how to dig in and debug
+2017-02-09T17:17:41 <gtirloni> let me try a few things here, one sec
+2017-02-09T17:18:56 <mrtyler> take your time :) i banged my head against this for a few hours the other night
+2017-02-09T17:19:23 <mrtyler> molecule is cool tho so i think it\'s worth the trouble
+2017-02-09T17:19:49 <mrtyler> it found a bunch of problems in the collectd role *before i wrote a single test*
+2017-02-09T17:19:59 <mrtyler> just because it runs playbooks (and a linter)
+2017-02-09T17:20:36 <alanharnum> i would be quite happy if Molecule eases the process of playbook development
+2017-02-09T17:20:45 <alanharnum> because as-is I end up kluding together things like https://github.com/waharnum/ansible-development-template
+2017-02-09T17:21:51 <mrtyler> alanharnum: yup, i think molecule does what you want out of the box (you get one vm instead of a fleet of vms but i\'m not actually sure why you want a fleet of vms for local testing?)
+2017-02-09T17:22:12 <mrtyler> alanharnum: you are free to clone the repos i linked and play around with \'molecule test\' to see what it does (or tries to do)
+2017-02-09T17:22:15 <alanharnum> i think the answer is mostly "because i can"
+2017-02-09T17:22:41 <alanharnum> and I wanted to be able to do things like "configure this VM as a database server, and this one as an application that connects to it", etc
+2017-02-09T17:22:44 <mrtyler> then why stop at 3? why not 10? why not 100? why not a wall of virtual machines?!
+2017-02-09T17:23:03 <mrtyler> and the host machines will pay for them
+2017-02-09T17:26:20 <alanharnum> <insert Pink Floyd joke>
+2017-02-09T17:28:10 <gloob> what\'s molecule?
+2017-02-09T17:28:35 <mrtyler> gloob: http://molecule.readthedocs.io/en/stable-1.19/
+2017-02-09T17:28:42 <gloob> oic, a testing framework for ansible
+2017-02-09T17:28:56 <gloob> mrtyler: yes, but I prefer the warmer conversation with an human
+2017-02-09T17:28:57 <gloob> sometimes
+2017-02-09T17:29:16 <mrtyler> gloob: then software development might not be the right career for you ;)
+2017-02-09T17:29:47 <gloob> mrtyler: but we are talking right?
+2017-02-09T17:30:02 <gloob> mrtyler: are you real? who are you?
+2017-02-09T17:30:17 <mrtyler> gloob: i\'m an eggdrop bot
+2017-02-09T17:30:30 <gloob> mrtyler: help
+2017-02-09T17:30:49 <mrtyler> gloob: here is the contents of my help file:
+2017-02-09T17:30:52 <mrtyler> 
+2017-02-09T17:31:03 <gloob> mrtyler: banner Hi everyone
+2017-02-09T17:31:24 <mrtyler> gloob: Hi: Bad command or file name
+2017-02-09T17:31:42 <gloob> ok, so molecule
+2017-02-09T17:31:48 <gloob> let me see that examples
+2017-02-09T17:32:22 <gloob> so you pass this https://github.com/mrtyler/ansible-collectd
+2017-02-09T17:32:25 <gloob> and ok?
+2017-02-09T17:32:37 <gloob> ah, you need a .molecule.yml
+2017-02-09T17:32:43 <gloob> without dot
+2017-02-09T17:32:48 <mrtyler> yes that\'s the one i\'m asking gio for help on
+2017-02-09T17:32:54 <gloob> and it\'s done
+2017-02-09T17:32:56 <mrtyler> but it runs enough to give you an idea
+2017-02-09T17:33:10 <gtirloni> mrtyler: the influxdb role is able to start the service because the influxdb package provides a sysV-type script, which ansible\'s service module can understand. the collectd package only provides a systemd unit file, which needs the systemd daemon to be running... and ansible\'s service module fails
+2017-02-09T17:33:50 <mrtyler> gtirloni: ok neat. where is the sysv init script? cuz it\'s not the one i posted about before -- that looks decidedly non-sysv
+2017-02-09T17:33:56 <gtirloni> ./etc/init.d/influxdb comes from that init.sh file
+2017-02-09T17:34:03 <mrtyler> oh
+2017-02-09T17:34:29 <mrtyler> is there an rpm postinstall or something that adds it to /etc ?
+2017-02-09T17:34:34 <mrtyler> i guess there must be
+2017-02-09T17:34:39 <gtirloni> probably
+2017-02-09T17:34:50 <gtirloni> rpm -qp --scripts package.rpm will show it
+2017-02-09T17:35:56 <mrtyler> ugh, it needs the actual rpm file?
+2017-02-09T17:36:03 <mrtyler> let me go find that
+2017-02-09T17:36:05 <mrtyler> anyway
+2017-02-09T17:36:11 <mrtyler> how do you think we should proceed?
+2017-02-09T17:36:24 <mrtyler> can i just add a dumb sysv-init (via ansible) and use that for testing?
+2017-02-09T17:36:52 <mrtyler> is this going to be a big problem for our ansible roles and we\'ll end up having to repeat that strategy everywhere we want to use molecule?
+2017-02-09T17:37:32 <mrtyler> we could look into improving molecule->docker->systemd relations, but that seems like a tough road
+2017-02-09T17:38:00 <mrtyler> we could try using vagrant instead of docker. i don\'t like this since it\'s soooo much slower (and when i tried it, i encountered a different error and gave up)
+2017-02-09T17:38:05 <gtirloni> it seems people start systemd inside the container just for the test -- https://www.jeffgeerling.com/blog/2016/how-i-test-ansible-configuration-on-7-different-oses-docker
+2017-02-09T17:38:13 <gtirloni> i prefer docker too
+2017-02-09T17:38:13 <mrtyler> but maybe it\'s more reliable
+2017-02-09T17:42:12 <mrtyler> gtirloni: ok let me explore running systemd inside the container
+2017-02-09T17:42:45 <mrtyler> i *really* don\'t like that setup in general since it misses the point of docker, but in this case (where docker is a stand-in for a real server, as jeff notes in the blog) i guess it\'s more reasonable
+2017-02-09T17:42:55 <gtirloni> yeah, i agree
+2017-02-09T17:43:08 <mrtyler> ok thanks for your help gio
+2017-02-09T17:43:12 <gtirloni> yw!!
+2017-02-09T17:43:40 <mrtyler> i\'m *hoping* this is the last big hurdle and i can post some PRs later today
+2017-02-09T17:44:29 <mrtyler> hypothetically, what do you think of the "dumb sysv init script for testing only" idea?
+2017-02-09T17:45:04 <mrtyler> esp since the init script is really just a smoke test -- can this service be started even after you mucked with all the config files
+2017-02-09T17:45:20 <mrtyler> i don\'t really care to verify that ansible and systemd do the right thing re: service stop/start commands
+2017-02-09T17:47:15 <mrtyler> hypothetical 2: assuming i get systemd working with the collectd role, should i also get systemd working with the influxdb role (i.e. not rely on it accidentally including a legacy sysvinit script in its package)
+2017-02-09T17:49:08 <gtirloni> yeah, i think it\'s reasonable to expect that the integration between ansible/systemd is reliable at this point. if you can start collectd in the same way the systemd service would (with the same parameters) by using a dumb sysv-type init script you just drop in /etc/init.d, that should be fine to validate the rest of the functionality
+2017-02-09T17:50:05 <gtirloni> in case #2, influxdb supplies both sysv and systemd services, so systemd should work fine too (it does, since we\'re using it in i-0023)
+2017-02-09T17:51:01 <gtirloni> we were lucky (or unlucky, maybe) that ansible\'s service module tries to support a bunch of different init systems :)
+2017-02-09T17:51:18 <gtirloni> can you change which centos image molecule uses ?
+2017-02-09T17:51:33 <mrtyler> gtirloni: right, i know influxdb works in production. i\'m just thinking of wehther it\' useful to have consistency between roles, i.e. all roles are tested the same way
+2017-02-09T17:51:45 <gtirloni> i think it\'s useful
+2017-02-09T17:51:49 <mrtyler> gtirloni: yes. molecule.yml
+2017-02-09T17:52:15 <gtirloni> https://hub.docker.com/r/centos/systemd/
+2017-02-09T17:52:17 <gtirloni> maybe this will work
+2017-02-09T17:52:38 <mrtyler> interesting!
+2017-02-09T17:52:52 <mrtyler> ok to summarize
+2017-02-09T17:53:25 <mrtyler> 1. try to get collectd role working with systemd
+2017-02-09T17:53:52 <mrtyler> 2. if that works, to keep things consistent amongst our roles, i\'ll try to get influxdb working the same way
+2017-02-09T17:54:13 <mrtyler> 3. if it doesn\'t work, i\'ll write a dumb sysvinit script to at least get us past this problem right now. we can re-evaluate later.
+2017-02-09T17:55:02 <gtirloni> sounds like a plan!
+2017-02-09T17:55:06 <mrtyler> cool
+2017-02-09T17:55:15 <mrtyler> thx again. i\'ll update you when... i have an update :)
+2017-02-09T17:55:55 <gtirloni> btw, the influxdb role should probably have a "enable influxdb" task, because influxdb is getting start by chance.. because the "restart influxdb" handler gets notified when the config file changes (in case it doesn\'t change, in production, influxdb could be in stopped state)..
+2017-02-09T17:56:26 <mrtyler> gtirloni: good point. i\'ve made a note.
+2017-02-09T17:56:28 <gtirloni> cool, thx for working on this.. this role testing stuff is great
+2017-02-09T17:56:32 <jhernandez> gloob: hst is IN
+2017-02-09T17:56:57 <mrtyler> gtirloni: yeah i was so excited about it and then this little hiccup kind of destroyed my faith in humanity :3
+2017-02-09T17:57:04 <mrtyler> but yeah, i think this will be a good thing in the long run
+2017-02-09T17:57:09 <mrtyler> worth the trouble (at least for now)
+2017-02-09T17:57:43 <mrtyler> another pro: you were able to repro my error in like 5 minutes with basically no setup
+2017-02-09T17:57:50 <mrtyler> that kind of thing has definite value
+2017-02-09T17:57:53 <jhernandez> michelled stegru: I\'ve just pushed gloob\'s HST branch into gpii-app/hst-2017
+2017-02-09T17:57:55 <gtirloni> yep, that was cool too
+2017-02-09T17:57:58 <jhernandez> JFYI
+2017-02-09T17:58:00 <gtirloni> :)
+2017-02-09T17:58:15 <michelled> thx for the heads up jhernandez
+2017-02-09T17:59:00 * clown joined the channel
+2017-02-09T17:59:00 <stegru> ok
+2017-02-09T17:59:58 <jhernandez> now I gotta run, but first thing I want to do tomorrow is to merge stegru\'s https://github.com/michelled/gpii-app/pull/4 in
+2017-02-09T18:00:38 <stegru> ohh, the anticipation
+2017-02-09T18:01:49 <gloob> jhernandez: breakdancing in my house now
+2017-02-09T18:02:12 <jhernandez> stegru: https://www.youtube.com/watch?v=3j3okb3kuts xDD
+2017-02-09T18:02:17 <stegru> cd ..
+2017-02-09T18:02:29 <gloob> dir
+2017-02-09T18:02:37 <gloob> type README.md
+2017-02-09T18:02:41 <gloob> qbasic
+2017-02-09T18:02:47 <gloob> load ""
+2017-02-09T18:02:49 <jhernandez> gloob: xDD
+2017-02-09T18:03:09 <stegru> heh
+2017-02-09T18:03:23 <gloob> the only feature I miss of IRC is gif\'s autoplay
+2017-02-09T18:04:11 <gloob> how you feel after the pr was merged? https://media.giphy.com/media/26FL5PjiCXYMA48OA/giphy.gif
+2017-02-09T18:05:34 <stegru> ahh, so that\'s where you went when you left us
+2017-02-09T18:06:06 <jhernandez> hahaha
+2017-02-09T18:06:21 <jhernandez> gotta run now, see you tomorrow guys
+2017-02-09T18:07:55 <gloob> adios
+2017-02-09T18:13:59 <mrtyler> btw gio we were right; there\'s a postinstall script:
+2017-02-09T18:14:00 <mrtyler> function install_systemd {
+2017-02-09T18:14:00 <mrtyler> cp -f $SCRIPT_DIR/influxdb.service /lib/systemd/system/influxdb.service
+2017-02-09T18:14:00 <mrtyler> systemctl enable influxdb
+2017-02-09T18:14:01 <mrtyler> }
+2017-02-09T18:14:37 <mrtyler> but uh... that means systectl enable is running inside the container when the package gets installed (with no reported error)
+2017-02-09T18:14:42 <mrtyler> so not sure what\'s up with that
+2017-02-09T18:14:46 <mrtyler> doesn\'t change the plan tho :)
+2017-02-09T18:15:18 <mrtyler> btw it ALSO does update-rc.d and chkconfig
+2017-02-09T18:16:14 <mrtyler> oh wait i\'m dumb, it falls back to chkconfig if systemctl isn\'t installed
+2017-02-09T18:16:33 <mrtyler> ok this definitely explains why influxdb works in the container then
+2017-02-09T18:18:23 * simonjb joined the channel
+2017-02-09T18:48:10 * mrtyler joined the channel
+2017-02-09T19:02:55 <stegru> gloob: the vm worked
+2017-02-09T19:07:36 <gloob> stegru: yay!
+2017-02-09T19:48:33 * mrtyler joined the channel
+2017-02-09T20:00:24 * gtirloni joined the channel
+2017-02-09T20:11:26 * clown joined the channel
+2017-02-09T20:29:21 * alanharnum joined the channel
+2017-02-09T22:20:30 * alanharnum joined the channel
+2017-02-09T22:46:31 * mrtyler joined the channel
+2017-02-09T23:07:45 * colinclark joined the channel
+'
+
+b'2017-02-09T14:43:20 <gloob> that should work
+2017-02-09T14:43:27 <gloob> did you have any error?
+2017-02-09T14:43:34 * mrtyler joined the channel
+2017-02-09T14:47:09 <gloob> stegru: my chages was for gpii-app build process, there\'s some changes in the hst-2017 branch anyway
+2017-02-09T14:50:25 <stegru> gloob: ok, where shall I get gpii-app from? I\'ll fire that up
+2017-02-09T14:52:12 * clown joined the channel
+2017-02-09T14:57:29 * colinclark joined the channel
+2017-02-09T14:58:20 * jessm joined the channel
+2017-02-09T15:04:59 <gloob> stegru: this https://github.com/GPII/gpii-app/pull/2 is expected to land in gpii/gpii-app:HST
+2017-02-09T15:06:15 <stegru> ok gloob
+2017-02-09T15:06:37 * alanharnum joined the channel
+2017-02-09T15:11:33 <mrtyler> hi jhernandez. i\'m in today. ping me if you\'re still free to chat!
+2017-02-09T15:12:35 <gloob> jhernandez: I checked here and all is working fine so far
+2017-02-09T15:12:40 <gloob> jhernandez: double check is welcome
+2017-02-09T15:16:01 <jhernandez> gloob: is not welcome, IT IS REQUIRED
+2017-02-09T15:16:03 <jhernandez> :P
+2017-02-09T15:16:44 <jhernandez> mrtyler: I think you are pinging JJ, not me ?
+2017-02-09T15:17:14 <mrtyler> jhernandez: whoops! sorry
+2017-02-09T15:17:33 <mrtyler> i guess he\'s not here
+2017-02-09T15:18:25 <jhernandez> hehe, no prob
+2017-02-09T15:25:37 <michelled> gloob - if you edit the https://github.com/GPII/gpii-app/pull/2 pull request, you can change the base branch so it will be communicated on the pull request which branch you want it to land in
+2017-02-09T15:31:27 <gloob> michelled: yes, but the problem is that gpii/gpii-app:HST doesn\'t exists yet and should be created from this PR and this PR keeps open for including in master too
+2017-02-09T15:31:54 <gloob> or that\'s what, it seems, we were doing with the "soft branches" before
+2017-02-09T15:33:24 <michelled> I thought the interface allowed me to specify a branch that didn\'t exist yet\xe2\x80\xa6. I guess I didn\'t go through the entire process.
+2017-02-09T15:33:37 * javjarfer joined the channel
+2017-02-09T15:33:44 <gloob> mrtyler: your man is here
+2017-02-09T15:33:49 <gloob> michelled: I think nope
+2017-02-09T15:34:11 <michelled> gloob: I didn\'t realize you were hoping to land that in master. Can you put a comment on it to make it clear what you expect to change or improve before it lands?
+2017-02-09T15:34:23 <michelled> that would be awesome to have that work making it\'s way to master!
+2017-02-09T15:34:32 <michelled> its
+2017-02-09T15:35:00 <javjarfer> gloob, thanks you, we have already talked :)
+2017-02-09T15:36:47 <gloob> michelled: yes, it\'s in my TODO list, I have a lot of questions to answer
+2017-02-09T15:36:54 <michelled> cool :)
+2017-02-09T15:37:01 <gloob> michelled: in fact, my first PR to you is still pending
+2017-02-09T15:37:28 <gloob> but I focused to have a working bootstrapping + build chain that we can use
+2017-02-09T15:37:42 <jhernandez> michelled: yes, this is what I\'m trying to do, to drive Ale to document as much as we can during his work on this
+2017-02-09T15:37:51 <jhernandez> this way we all win
+2017-02-09T15:38:18 <gloob> I will bomb all the PRs afterwards potentially
+2017-02-09T15:38:26 <gloob> bomb bomb bomb
+2017-02-09T15:38:34 <gloob> I need to relax
+2017-02-09T15:39:04 <michelled> +1 for documentation :) (I too will take this advice)
+2017-02-09T15:39:37 <gloob> our classic lack
+2017-02-09T15:39:46 <gloob> I\'m the worst
+2017-02-09T15:39:47 <gloob> after
+2017-02-09T15:39:55 * gloob looking all the gang
+2017-02-09T15:40:39 <jhernandez> xDDD
+2017-02-09T15:47:26 <gloob> ==> default:     131 Warning(s)
+2017-02-09T15:47:31 <gloob> that create pain inside me
+2017-02-09T15:55:57 * kasparnet joined the channel
+2017-02-09T16:19:03 * kasparnet has quit
+2017-02-09T16:28:32 * kasparnet joined the channel
+2017-02-09T16:32:31 <jhernandez> gloob: okay, now everything works as expected from vagrant up \'til the end
+2017-02-09T16:41:44 <gloob> yay!!!
+2017-02-09T16:42:36 <mrtyler> gtirloni: i could use some help with ansible / collectd if you have a few minutes today
+2017-02-09T16:44:22 <gtirloni> mrtyler: sure
+2017-02-09T16:45:35 <mrtyler> gtirloni: ok great
+2017-02-09T16:45:58 <mrtyler> i am trying to get the collectd role up and running with molecule
+2017-02-09T16:46:09 <mrtyler> (i need collectd for influxdb, which is how i got here)
+2017-02-09T16:46:41 <mrtyler> molecule spins up a docker container and runs ansible rules against that container
+2017-02-09T16:46:50 <gtirloni> ok
+2017-02-09T16:46:54 <mrtyler> this worked swimmingly for influxdb
+2017-02-09T16:47:11 <mrtyler> but i\'m having trouble with collectd and/or systemd
+2017-02-09T16:47:22 <mrtyler> someone is unable to start collectd inside the container
+2017-02-09T16:47:32 <mrtyler> let\'s see if i can get you a repro case
+2017-02-09T16:47:39 <mrtyler> can you clone this? git@github.com:mrtyler/ansible-collectd
+2017-02-09T16:47:47 <gtirloni> let me try
+2017-02-09T16:47:53 <mrtyler> and then do you have a working virtualenv?
+2017-02-09T16:48:03 <mrtyler> on your local machine
+2017-02-09T16:48:16 <mrtyler> s/local machine/machine where you do work/
+2017-02-09T16:49:05 <gtirloni> yep
+2017-02-09T16:49:17 <gtirloni> but i think this role should fail inside a container because it messes around with selinux and systemd
+2017-02-09T16:50:02 <gtirloni> it should probably skip selinux/systemd tasks
+2017-02-09T16:50:29 <mrtyler> selinux is already skipped
+2017-02-09T16:50:55 <mrtyler> when: collectd_selinux_permissive and ansible_selinux and ansible_selinux.status != \'disabled\'
+2017-02-09T16:50:59 <gtirloni> cool
+2017-02-09T16:51:10 <mrtyler> (i had to add the middle clause -- an error caught thanks to molecule! :))
+2017-02-09T16:51:21 <mrtyler> systemd might be weird BUT
+2017-02-09T16:51:29 <mrtyler> this same approach appears to work fine with influxdb
+2017-02-09T16:51:54 <mrtyler> i.e. ansible seems able to run influxdb in a container, using the same ansible service: stanza
+2017-02-09T16:52:11 * alanharnum joined the channel
+2017-02-09T16:52:25 <mrtyler> one thing i notice is that the influxdb package includes: /usr/lib/influxdb/scripts/init.sh
+2017-02-09T16:52:31 <mrtyler> while collectd has no similar entity
+2017-02-09T16:52:32 <gtirloni> interesting, i\'d expect it to complain that systemd socket is not available
+2017-02-09T16:53:31 <mrtyler> i can get you to a repro case for influxdb as well, if you wwant to see that work
+2017-02-09T16:54:13 <mrtyler> git@github.com:mrtyler/ansible-role-influxdb but it needs a small change or it will fail in a different way (it needs collectd, which i can\'t provide because i\'m stuck on this other problem for collectd :))
+2017-02-09T16:55:14 <gtirloni> ok, let me try molecule with both here
+2017-02-09T16:55:36 <mrtyler> ok i can walk you through venv setup or you can install system packages if you prefer
+2017-02-09T16:56:01 <mrtyler> check requirements.txt for all the packages you\'ll need, if doing it system-level / by hand
+2017-02-09T16:56:41 <gtirloni> ok
+2017-02-09T16:56:52 <alanharnum> i highly recommend venv if you\'re doing Python stuff
+2017-02-09T16:56:57 <mrtyler> me2
+2017-02-09T16:57:08 <alanharnum> very straightforward, hugely valuable
+2017-02-09T16:57:13 * alanharnum loves venv
+2017-02-09T16:57:14 <mrtyler> but this is just a one off
+2017-02-09T16:57:28 <alanharnum> yeah if just a one off may not be needed
+2017-02-09T16:57:40 * kasparnet has quit
+2017-02-09T16:57:47 * alanharnum was just installing scrapy last night for some stuff and was reminded how smooth the venv experience is
+2017-02-09T16:58:16 <mrtyler> alanharnum: fun fact: i actually tried to do system packages for this task using macports. it failed in like a million ways, the last straw being that the macports flake8 package is simply broken and will not run as installed
+2017-02-09T16:58:27 <gtirloni> i usually use venv when i\'m coding in python, but for these utilities that i\'m going to use all the time, from everywhere, i just go with the system packages
+2017-02-09T16:58:55 <gtirloni> ok, got the same error here. checking it out now...
+2017-02-09T16:58:55 <mrtyler> alanharnum: oh, and this was after macports didn\'t have molecule at all, which lead to "sudo pip install"
+2017-02-09T16:58:59 <alanharnum> mrtyler: I\'m a homebrew > macports user myself
+2017-02-09T16:59:07 <alanharnum> so cannot comment
+2017-02-09T16:59:18 <alanharnum> not as in I think brew is necessarily better, but i have literally never used macports
+2017-02-09T16:59:24 <mrtyler> alanharnum: yes. several of my friends said the same thing. i think it\'s probably time to move but i didn\'t want to drop my ansible work to do it
+2017-02-09T17:00:27 <mrtyler> gtirloni: so you made it to "fatal: [ansible-collectd]: FAILED! => {"changed": false, "failed": true, "msg": "no service or tool found for: collectd"}"
+2017-02-09T17:00:30 <mrtyler> ?
+2017-02-09T17:00:40 <gtirloni> TASK [ansible-collectd : Enable systemd service] *******************************
+2017-02-09T17:00:40 <gtirloni> fatal: [ansible-collectd]: FAILED! => {"changed": false, "failed": true, "msg": "Could not find the requested service collectd: cannot enable"}
+2017-02-09T17:01:00 <mrtyler> ah ok you have the version where i set use=systemd in the service: stanza
+2017-02-09T17:01:05 <mrtyler> which, as you see, also fails
+2017-02-09T17:01:22 <mrtyler> you can comment it out in tasks/deploy.yml to get the error i posted
+2017-02-09T17:01:27 <gtirloni> ok
+2017-02-09T17:01:49 <mrtyler> btw i also made the collectd deploy.yml look exactely like the influxdb deploy.yml
+2017-02-09T17:01:51 * the-t-in-rtf joined the channel
+2017-02-09T17:02:07 <mrtyler> i.e. state: restarted instead of state: started, and comment out enabled: yes
+2017-02-09T17:02:13 <mrtyler> didn\'t change anything :(
+2017-02-09T17:06:59 <gtirloni> yeah, i think that task must be skipped... avtar created a role a while ago called \'facts\' (https://github.com/idi-ops/ansible-facts/blob/master/tasks/always.yml#L34-L44) that added some complementary variables so the \'when\' clause would read better... (\'when: not is_docker\')
+2017-02-09T17:07:04 <gtirloni> https://ybin.me/p/d1a8e8ac8a72ea04#ab9JNX7MeCkkXIolS7NAFzB+jlw2lP8QDOpQHx9+vmg=
+2017-02-09T17:08:10 <mrtyler> yeah the d-bus error is super annoying because it makes it hard to investigate what systemd inside the container thinks it\'s doing
+2017-02-09T17:08:31 <mrtyler> i found some workarounds for that (--run-privileged and a bunch of other crap i guess) but i haven\'t tried to do them yet
+2017-02-09T17:08:48 <mrtyler> re: skipping these tasks: i think that seriously blunts the usefulness of testing
+2017-02-09T17:08:49 <gtirloni> now, why influxdb doesn\'t have this problem... did you get further than this? https://ybin.me/p/d92d6e1b68a68d47#RZDPZED+HgaK/ZVDSRsT8wG3at3FKQG/DqDcn9FL9tA=
+2017-02-09T17:08:57 <mrtyler> and maybe makes molecule worthless
+2017-02-09T17:09:14 * javjarfer has quit
+2017-02-09T17:09:21 <mrtyler> so i definitely don\'t want to do that
+2017-02-09T17:09:26 <mrtyler> plus, as discussed, influxdb appears to work fine
+2017-02-09T17:09:39 <mrtyler> making things actually work would be better, i\'m pretty sure ;)
+2017-02-09T17:10:12 <mrtyler> gtirloni: re: influxdb: yes, comment out everything (or at least the top stanza) from tasks/configure.yml
+2017-02-09T17:10:20 <gtirloni> i think it\'s because this role considers itself to be living in a systemd world.. for running inside a container, it either would delegate starting ccollectd to docker itself or setup supervisor. can molecule run collectd by itself maybe?
+2017-02-09T17:10:44 <mrtyler> molecule doesn\'t (shouldn\'t) really do anything on its own. it runs ansible code
+2017-02-09T17:11:03 <mrtyler> gtirloni: influxdb also considers itself to be "living in a systemd world" afaict?
+2017-02-09T17:12:02 <gtirloni> i don\'t see systemd referenced in the influxdb role, so i think not
+2017-02-09T17:12:16 <mrtyler> where do you see it referenced in collectd?
+2017-02-09T17:12:36 <gtirloni> the package certainly install the required files if you were to use the systemd unit, but unless you actively try to enable the \'influxdb\' unit and start it.. it\'s just sitting dormant
+2017-02-09T17:12:52 <mrtyler> gtirloni: it runs in the container that molecule starts
+2017-02-09T17:12:59 <gtirloni> here: https://github.com/mrtyler/ansible-collectd/blob/master/tasks/deploy.yml#L3-L8
+2017-02-09T17:13:07 <mrtyler> molecule login -> ps auxwf and you will see it
+2017-02-09T17:13:27 <mrtyler> gtirloni: i added use: systemd as an attempt at a workaround. it did not work
+2017-02-09T17:13:50 <mrtyler> gtirloni: you wrote the comment that mentions systemd. you are a smart guy but that line is only a comment :)
+2017-02-09T17:14:04 <mrtyler> any other references?
+2017-02-09T17:14:13 <gtirloni> i think i don\'t understand who is starting the \'influxdb\' process then
+2017-02-09T17:14:32 <mrtyler> i agree it\'s hard to suss out with all the layers
+2017-02-09T17:14:34 <gtirloni> what comment?
+2017-02-09T17:14:40 <mrtyler> - name: Enable systemd service
+2017-02-09T17:14:47 <mrtyler> i guess that\'s not a comment
+2017-02-09T17:14:49 <gtirloni> it\'s not commented :)
+2017-02-09T17:15:05 <mrtyler> the point is that it is arbitrary text that does not inform collectd\'s architecture
+2017-02-09T17:15:30 <mrtyler> it *should* be that ansible is causing influxdb to run
+2017-02-09T17:15:36 <mrtyler> actually it *must* be that
+'
+
+b'2017-02-09T00:27:02 * stegru has quit
+2017-02-09T00:29:26 * colinclark joined the channel
+2017-02-09T02:34:09 * colinclark joined the channel
+2017-02-09T02:34:09 * colinclark has quit
+2017-02-09T02:58:08 * -- BotBot disconnected, possible missing messages --
+2017-02-09T03:01:19 * -- BotBot disconnected, possible missing messages --
+2017-02-09T03:03:23 * [o__o] joined the channel
+2017-02-09T04:10:06 * Tabs16 joined the channel
+2017-02-09T07:09:12 * Tabs16 has quit
+2017-02-09T07:13:18 * the-t-in-rtf joined the channel
+2017-02-09T07:16:21 * amatas joined the channel
+2017-02-09T07:52:10 * kasparnet joined the channel
+2017-02-09T08:11:24 * kasparnet has quit
+2017-02-09T08:33:45 * the-t-in-rtf joined the channel
+2017-02-09T08:52:29 * stegru joined the channel
+2017-02-09T09:47:54 * kasparnet joined the channel
+2017-02-09T10:03:15 * gtirloni joined the channel
+2017-02-09T10:07:38 * amatas joined the channel
+2017-02-09T10:07:44 * kasparnet has quit
+2017-02-09T10:09:10 * kasparnet joined the channel
+2017-02-09T10:09:40 * kasparnet has quit
+2017-02-09T10:30:53 <stegru> gloob: hello?
+2017-02-09T10:39:39 <the-t-in-rtf> @stegru, they usually come online at 14:00 your time.
+2017-02-09T10:43:34 <stegru> the-t-in-rtf: yes, I thought the chance was slim
+2017-02-09T10:47:50 <the-t-in-rtf> I usually assume that anyone surprisingly online before 15:00 CET is actually someone\'s pet walking on the keyboard.
+2017-02-09T10:48:19 <the-t-in-rtf> or batting at the mouse.
+2017-02-09T10:48:46 * kasparnet joined the channel
+2017-02-09T11:26:31 * kasparnet has quit
+2017-02-09T11:59:32 * stegru has quit
+2017-02-09T12:08:04 <gloob> argh
+2017-02-09T12:08:06 <gloob> almost
+2017-02-09T12:09:17 <gloob> the-t-in-rtf: haha, well I\'m fully up around 11:00 CET, but I don\'t remember that IRC exists until one hour later or so
+2017-02-09T12:25:15 <jhernandez> que?
+2017-02-09T12:25:55 * Justin_o joined the channel
+2017-02-09T12:39:21 <gloob> ke?
+2017-02-09T12:39:38 <gloob> where is stegru when you need it?
+2017-02-09T12:45:32 * gtirloni wishes IRC was more async :(
+2017-02-09T12:51:27 * stegru joined the channel
+2017-02-09T12:52:22 <gloob> stegru: hi
+2017-02-09T12:52:24 <gloob> stegru: que?
+2017-02-09T12:52:37 <stegru> hiya
+2017-02-09T12:53:11 <stegru> gloob: i was wondering how stable your provisioning scripts where
+2017-02-09T12:55:40 <stegru> I started a new box while I went for lunch, so I thought I\'d try your latest scripts
+2017-02-09T12:56:32 <gloob> stegru: I\'m jsut fixing a minor problem
+2017-02-09T12:56:48 <jhernandez> stegru: he\'s fixing a chicken-egg problem
+2017-02-09T12:56:51 <gloob> I think we will have a somehow-stable provisioning gpii-app in minutes
+2017-02-09T12:57:00 <stegru> ah ok
+2017-02-09T12:57:13 <jhernandez> yes, I was in the middle of trying everything together
+2017-02-09T12:58:35 <stegru> mine failed just after updating chrome - i was using the "windows" repo
+2017-02-09T12:59:09 <jhernandez> stegru: I\'ve just ran vagrant up in windows and went okay
+2017-02-09T13:00:24 <jhernandez> what error are you gettting?
+2017-02-09T13:00:29 <stegru> yes, I don\'t think it was the provisioning script that broke
+2017-02-09T13:01:11 <stegru> http://pastebin.com/vzLjWXXX
+2017-02-09T13:01:53 <jhernandez> I\'ve never seen this before
+2017-02-09T13:01:58 <jhernandez> weird
+2017-02-09T13:02:42 <stegru> i was using windows master, but copied gloob\'s provisioning directory from his HST branch
+2017-02-09T13:02:51 <jhernandez> the thing is that the upgrade finished well and right after that it says "Forcing shutdown" ...
+2017-02-09T13:04:26 <jhernandez> stegru, gloob\'s hst is merged in windows/hst-2017 already
+2017-02-09T13:04:54 <jhernandez> you can use that branch instead if you want to
+2017-02-09T13:04:59 * cindyli joined the channel
+2017-02-09T13:05:11 * Tabs16 joined the channel
+2017-02-09T13:06:46 <stegru> doing it now
+2017-02-09T13:07:04 <stegru> i thought i\'d come back to a shiny new vm
+2017-02-09T13:08:04 <stegru> oh jhernandez, what version of virtualbox are you using, on linux?
+2017-02-09T13:10:04 <jhernandez> stegru: 5.0.18_SUSE r106667
+2017-02-09T13:10:22 <jhernandez> it\'s a bit out of date but it works for me
+2017-02-09T13:11:03 <stegru> yes, i\'ve been having problems with 5.1 - i\'m back on 5.0.32 and it\'s been ok
+2017-02-09T13:11:20 <jhernandez> oh really? what kind of problems?
+2017-02-09T13:11:54 <stegru> windows would crash after a few minutes - it wouldn\'t provision
+2017-02-09T13:12:14 <jhernandez> mmm
+2017-02-09T13:12:32 <jhernandez> does it say that vagrant couldn\'t connect to the box or something similar?
+2017-02-09T13:12:57 <stegru> no, windows just crashed
+2017-02-09T13:13:01 <jhernandez> okok
+2017-02-09T13:13:03 <stegru> blue screen
+2017-02-09T13:13:06 <jhernandez> no idea then
+2017-02-09T13:13:12 <jhernandez> BLUE SCREEN?!
+2017-02-09T13:13:23 <jhernandez> the infamous windows BLUE SCREEN?
+2017-02-09T13:13:27 <jhernandez> :P
+2017-02-09T13:13:35 <stegru> the :( one
+2017-02-09T13:13:45 <jhernandez> xD
+2017-02-09T13:21:43 <stegru> ah it\'s provisioning now.. got passed where it failed
+2017-02-09T13:23:15 <jhernandez> sweet
+2017-02-09T13:23:50 <stegru> gloob: , do you think it would be a good idea to make the provisioning scripts print out the commands as they\'re executed? if it fails then we know what line
+2017-02-09T13:24:37 <stegru> TRON
+2017-02-09T13:32:03 * Tabs16 has quit
+2017-02-09T13:32:23 * Tabs16 joined the channel
+2017-02-09T13:32:28 * Tabs16 has left the channel
+2017-02-09T13:34:02 <gloob> stegru: probably, yes, we can circumvent Invoke-Expression and add more debugging information, probably there\'s a more verbose debug mode in PS1? I think is a good idea
+2017-02-09T13:34:11 <gloob> stegru: fire an issue
+2017-02-09T13:34:27 <gloob> stegru: Tron? as the movie or as a buddy?
+2017-02-09T13:34:31 <gloob> how do you know that? xD
+2017-02-09T13:34:49 <stegru> tron the debugging command
+2017-02-09T13:35:13 <stegru> https://en.wikipedia.org/wiki/TRON_command
+2017-02-09T13:35:19 <gloob> wow, you old schooler man
+2017-02-09T13:35:44 <gloob> yes, something like that
+2017-02-09T13:36:13 <stegru> yes, none of this printf("hi") shit for me!
+2017-02-09T13:36:33 <gloob> ahhh
+2017-02-09T13:36:36 <stegru> or console.log even
+2017-02-09T13:36:38 <gloob> the verbose thing os PS1
+2017-02-09T13:36:47 <gloob> s/os/of
+2017-02-09T13:36:59 <stegru> Set-PSDebug -Trace 1
+2017-02-09T13:37:19 <gloob> OMG
+2017-02-09T13:37:27 <gloob> you know that you change a file
+2017-02-09T13:37:33 <gloob> it\'s under git
+2017-02-09T13:37:39 <gloob> and you retrieve another file from internet
+2017-02-09T13:37:41 <gloob> with the same name
+2017-02-09T13:37:44 <stegru> yes?
+2017-02-09T13:37:47 <stegru> i\'ve done that
+2017-02-09T13:37:48 <gloob> and destroy all your changes?
+2017-02-09T13:37:58 <stegru> oh?
+2017-02-09T13:38:11 <gloob> Build.ps1 everywhere xD
+2017-02-09T13:38:53 <gloob> OH MAN
+2017-02-09T13:38:55 <gloob> I commited it
+2017-02-09T13:38:57 <gloob> thanks god
+2017-02-09T13:40:42 <stegru> did you know about the "previous versions" feature of windows?
+2017-02-09T13:44:29 <gloob> no
+2017-02-09T13:44:34 <gloob> how is that
+2017-02-09T13:47:05 <stegru> if you right-click on a directory, there\'s something like "previous versions"
+2017-02-09T13:47:51 <gloob> interesting
+2017-02-09T13:48:08 <stegru> it saved my life a few times
+2017-02-09T13:48:27 <gloob> although I\'m in a uncharted space, it\'s the vagrant directory linked with vagrant black magic to the osx guest directory where I was actually editing
+2017-02-09T13:49:16 <stegru> thought you where still on windows
+2017-02-09T13:49:17 <gloob> oh Restore PRevious version
+2017-02-09T13:49:24 <gloob> interesting, yes
+2017-02-09T13:49:30 <gloob> from where is this here?
+2017-02-09T13:49:37 <gloob> how much levels of restoring you can do?
+2017-02-09T13:49:58 <stegru> i don\'t know - i think the older files just go when space is required
+2017-02-09T13:50:10 <gloob> stegru: interesting features, thanks
+2017-02-09T13:50:41 <stegru> i wouldn\'t just delete a load of files and thing "these will be safe", though
+2017-02-09T13:50:46 <stegru> think
+2017-02-09T13:50:54 <gloob> but for this kind of situations is ideal
+2017-02-09T13:51:01 <stegru> yeh, exactly
+2017-02-09T13:51:28 <stegru> i deleted a source directory once, thinking i had checked it all in
+2017-02-09T13:51:52 <gloob> jhernandez: I killed the chicken and let the eggs, please review it, I just pushed it
+2017-02-09T13:53:39 <gloob> awesome comment from my side
+2017-02-09T13:55:08 <gloob> fist intead of first, no commas, anyway
+2017-02-09T14:01:54 * michelled joined the channel
+2017-02-09T14:11:10 * alanharnum joined the channel
+2017-02-09T14:15:36 <gloob> stegru: you want to trigger a gpii-windows vm or a gpii-app vm?
+2017-02-09T14:15:40 * simonjb joined the channel
+2017-02-09T14:16:07 <stegru> ohh i\'ve just done one gloob
+2017-02-09T14:16:38 <gloob> does it works?
+2017-02-09T14:17:20 <stegru> it failed during msbuild.. building the rfid listerner
+2017-02-09T14:17:45 <stegru> gloob: well, it didn\'t fail - it paused
+2017-02-09T14:22:08 <stegru> gloob: , if you\'ve made a new change in the past 30 mins, I can run it again?
+2017-02-09T14:25:02 <gloob> gpii-windows or gpii-app?
+2017-02-09T14:25:04 <gloob> master or HST?
+2017-02-09T14:27:30 <stegru> windows..
+2017-02-09T14:27:39 <stegru> On branch hst-2017
+2017-02-09T14:28:25 <stegru> GPII repo
+'
+

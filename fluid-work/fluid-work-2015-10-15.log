@@ -1,0 +1,309 @@
+b'2015-10-15T23:52:31 * Justin_o has quit
+2015-10-15T23:55:06 * avtar has quit
+2015-10-15T23:55:17 * amatas has quit
+'
+
+b'2015-10-15T16:31:05 <Bosmon> There would be widespread outrage if npm installs failed all the time like this
+2015-10-15T16:31:25 <Justin_o> Bosmon: I\'d expect that :)
+2015-10-15T16:31:31 <Bosmon> I suspect that the vagrant folks have not implemented filesystem synchronisation properly in their shared folders impl on Windows
+2015-10-15T16:31:49 * gtirloni joined the channel
+2015-10-15T16:32:00 <Justin_o> Bosmon: i\'m writing up some tests now for the publish module, will you be around for a while longer. I\'m hoping you can look at it before i request to move the repo over to the fluid-project space
+2015-10-15T16:32:04 <Bosmon> What I guess happens is, that for a small interval of time after you have written a file in a shared folder, it will be "locked" somehow - and on a very slow machine, npm can try to rename the file within that interval of time
+2015-10-15T16:32:20 <Bosmon> Justin_o - sure - looking forward to it
+2015-10-15T16:32:25 <Justin_o> Bosmon: thanks :)
+2015-10-15T16:32:50 <Bosmon> So if it helps any with the CentOS issue, I also got a dialog box from VirtualBox that reads this:
+2015-10-15T16:32:50 <Justin_o> Bosmon: avtar and simonjb were speculating that it might have to do with the path length... but we hadn\'t tried it out locally yet
+2015-10-15T16:33:13 <Bosmon> "VT-x/AMD-V hardware acceleration is not available on your system. Your 64-bit guest will fail to detect a 64-bit CPU and will not be able to boot"
+2015-10-15T16:33:56 <Justin_o> Bosmon: :(
+2015-10-15T16:34:04 <Justin_o> is that something you could enable?
+2015-10-15T16:34:15 <Bosmon> Justin_o - I don\'t think the path length is an issue - the length of the path which triggers the error is only 104 characters which is massively shorter than any FS limits
+2015-10-15T16:34:23 <Bosmon> Justin_o - I have no idea :)
+2015-10-15T16:35:16 <Bosmon> Justin_o - actually yes
+2015-10-15T16:35:19 <Bosmon> I remember this now
+2015-10-15T16:35:59 <Bosmon> I had a BIOS setting I needed to flip in order to get my OS/2 guests working and I recently reset my BIOS settings to the defaults following a lot of boot hassle...... I\'ll go back into the BIOS and see if I can find that setting again
+2015-10-15T16:36:14 <Justin_o> Bosmon: hopefully that\'ll fix it
+2015-10-15T16:36:47 * slim_ has quit
+2015-10-15T16:40:30 <Bosmon> Justin_o - although I had to change the port number in the app when I started it outside the VM, 8080 is an extremely commonly used one
+2015-10-15T16:40:49 <Bosmon> Also it wasn\'t clear to me which URL I should visit in order to see the app, the README suggested that "/" should be resolvable which it wasn\'t
+2015-10-15T16:41:20 * sepidehshahi has quit
+2015-10-15T16:41:51 <Bosmon> Ok, looks like the BIOS setting is unexpectedly named "SVM" ...
+2015-10-15T16:43:18 <Justin_o> Bosmon:  in this particular case you\'d need to go to one of the demos.. e.g. http://localhost:8080/demos/prefsServerIntegration/
+2015-10-15T16:43:23 <Justin_o> which is the one with the integrations
+2015-10-15T16:44:13 <Justin_o> Bosmon: I guess i should update the readme to be /demos
+2015-10-15T16:44:18 <Justin_o> maybe that would be clearer
+2015-10-15T16:45:39 <Justin_o> i\'ve made a minor change to the README
+2015-10-15T16:45:42 <Justin_o> Bosmon: ^
+2015-10-15T16:51:34 * gtirloni joined the channel
+2015-10-15T16:54:40 * gtirloni joined the channel
+2015-10-15T16:56:45 <Bosmon> Justin_o - thanks
+2015-10-15T16:59:55 * sepidehshahi joined the channel
+2015-10-15T17:06:24 * alanharnum joined the channel
+2015-10-15T17:17:48 <avtar> Bosmon: just to confirm, do the contents of Justin_o\'s branch works for you using your local, non-vm node setup?
+2015-10-15T17:18:23 <Bosmon> avtar - yes
+2015-10-15T17:18:24 <avtar> *work
+2015-10-15T17:20:47 <avtar> ok that\'s good to know
+2015-10-15T17:21:10 <avtar> i tested this now using a windows 8.1 machine and get the same error you reported earlier
+2015-10-15T17:21:59 <avtar> i tested it on monday on the same machine and was able to bring up the vm and access the demo
+2015-10-15T17:22:15 <avtar> that was before this change https://github.com/jobara/first-discovery-server/commit/3fad2b01026fcc92e67a3380bf1d50686f5ed1c7
+2015-10-15T17:36:56 * colinclark joined the channel
+2015-10-15T17:42:27 * gtirloni joined the channel
+2015-10-15T17:54:32 * gtirloni joined the channel
+2015-10-15T17:59:29 <Bosmon> avtar - I imagine the appearance of the error will be extremely inconsistent
+2015-10-15T18:03:05 <avtar> Bosmon: yes, that appears to be the case :/
+2015-10-15T18:03:29 <Bosmon> If we were interested, we could try running 10 trials before and after, but my guess is that the base frequency of the problem will be pretty consistent
+2015-10-15T18:03:41 <Bosmon> In that the operative driver is that "npm is thrashing the filesystem a lot"
+2015-10-15T18:03:59 <Bosmon> My impression is that the problem is "frequent enough to consider that this approach is unworkable" : P
+2015-10-15T18:23:59 * clown joined the channel
+2015-10-15T18:25:49 * danayo joined the channel
+2015-10-15T18:27:22 * sepidehshahi joined the channel
+2015-10-15T18:36:58 * gtirloni joined the channel
+2015-10-15T18:37:51 * colinclark has quit
+2015-10-15T18:50:39 * colinclark joined the channel
+2015-10-15T18:57:07 * gtirloni joined the channel
+2015-10-15T19:16:07 <colinclark> Bosmon: Presumably we\'re not anywhere near doing this: https://botbot.me/freenode/fluid-work/2015-10-09/?msg=51520861&page=1
+2015-10-15T19:19:30 <Bosmon> Well, not enormously near... but I guess it wouldn\'t be terribly hard, if we had decided to
+2015-10-15T19:19:45 <Bosmon> It seems like a step in the wrong direction though, if we\'re planning for a "micromodulic" future
+2015-10-15T19:22:05 <colinclark> yes, it is
+2015-10-15T19:22:59 <colinclark> yet node-jqunit represents a somehow apparently confusing thing for some people
+2015-10-15T19:23:09 <colinclark> it\'s a bit strange
+2015-10-15T19:31:44 <Justin_o> Bosmon: sorry, should have pinged you here instead of the design channel about https://github.com/jobara/publish/pull/1
+2015-10-15T19:37:56 * clown joined the channel
+2015-10-15T19:56:49 <Bosmon> No worries, Justin_o... I didn\'t even notice which channel it was in : P
+2015-10-15T20:02:29 * kasparnet has quit
+2015-10-15T20:15:29 * kasparnet joined the channel
+2015-10-15T20:21:48 * gtirloni_ joined the channel
+2015-10-15T20:22:29 * anvk has quit
+2015-10-15T21:01:26 * sepidehshahi has left the channel
+2015-10-15T21:19:19 * gtirloni joined the channel
+2015-10-15T21:22:28 * gtirloni joined the channel
+2015-10-15T21:27:21 * kasparnet has quit
+2015-10-15T21:33:28 * kasparnet joined the channel
+2015-10-15T21:37:24 <avtar> Bosmon: ping
+2015-10-15T21:39:27 <Bosmon> Hi there AVVATTAR :)
+2015-10-15T21:41:32 <avtar> how\'s it going?
+2015-10-15T21:42:49 <Bosmon> It is tolerable
+2015-10-15T21:42:51 <Bosmon> How is it over there?
+2015-10-15T21:44:37 <avtar> well, it\'s the end of the day
+2015-10-15T21:44:46 <avtar> it started raining
+2015-10-15T21:45:00 <avtar> i have a not so great workaround for you
+2015-10-15T21:45:18 <Bosmon> What is it?
+2015-10-15T21:45:48 <avtar> do you have powershell >= 3 installed?
+2015-10-15T21:45:52 <Bosmon> No
+2015-10-15T21:46:03 <Bosmon> I don\'t use it
+2015-10-15T21:46:17 <Bosmon> How might it help?
+2015-10-15T21:46:26 <avtar> https://docs.vagrantup.com/v2/synced-folders/smb.html
+2015-10-15T21:46:54 <Bosmon> bah
+2015-10-15T21:46:56 <avtar> smb shared folders need it
+2015-10-15T21:47:09 <avtar> you\'ll also need to run the cygwin shell as an administrator
+2015-10-15T21:47:29 <avtar> but beyond that i haven\'t been able to come up with a workaround for this issue
+2015-10-15T21:47:39 <Bosmon> Yes
+2015-10-15T21:47:57 <Bosmon> It may be, as colinclark is sometimes suggesting, that we may have to abandon vagrant-based solutions
+2015-10-15T21:48:07 <avtar> gtirloni mentioned he was able to get a particular config working on a win10 host but i saw the same error with win 8.1
+2015-10-15T21:48:22 <avtar> well, the issue is not so much vagrant, as virtualbox shared folders
+2015-10-15T21:48:27 <Bosmon> Yes
+2015-10-15T21:48:28 <avtar> which is what docker uses under the hood
+2015-10-15T21:48:34 <Bosmon> !!!!!!!!!!
+2015-10-15T21:48:37 <Bosmon> !!!!!!!!!!!!!!!!!!!
+2015-10-15T21:48:40 <avtar> so
+2015-10-15T21:48:51 <Bosmon> Docker uses them too?
+2015-10-15T21:49:06 <avtar> https://docs.docker.com/machine/drivers/virtualbox/
+2015-10-15T21:49:46 <Bosmon> Ok
+2015-10-15T21:49:53 <Bosmon> What about other solutions for hosting Docker containers on Windows
+2015-10-15T21:49:57 <Bosmon> Such as the so-called "Hyper-V" ......
+2015-10-15T21:52:05 <avtar> looks like they share more than just one project directory https://github.com/docker/boot2docker/issues/1
+2015-10-15T21:52:41 <avtar> i\'m not sure about hyper-v
+2015-10-15T21:54:38 <Bosmon> SMB shares don\'t sound encouraging
+2015-10-15T21:54:54 <Bosmon> I think, in practice, we are just trying to be too ambitious - we don\'t really, I think, need "shared folders" at all
+2015-10-15T21:55:04 <Bosmon> We simply need to get "some files" into the VM from the outside
+2015-10-15T21:55:29 <Bosmon> actually
+2015-10-15T21:55:37 <Bosmon> Perhaps that\'s a better route to a solution
+2015-10-15T21:55:49 <Bosmon> That is, to continue with the existing shared folders route, but share them to a different path
+2015-10-15T21:55:57 <Bosmon> And then copy them to an unshared path in order to run npm on them
+2015-10-15T21:58:17 <avtar> yeah i came across that suggestion as well, step 3 on http://perrymitchell.net/article/npm-symlinks-through-vagrant-windows/
+2015-10-15T21:59:35 <Bosmon> Ok
+2015-10-15T21:59:39 <avtar> i\'ll try it out tomorrow
+2015-10-15T21:59:44 <Bosmon> That seems like useful confirmation
+2015-10-15T21:59:49 <Bosmon> What\'s your opinion of it?
+2015-10-15T22:01:21 <Bosmon> The symlink idea seems a little wacky, but I guess it is a quicker way to get around the problem than a bulk copy
+2015-10-15T22:02:22 <Bosmon> But it seems this "setextradata" will be another point of fragility
+2015-10-15T22:04:53 <avtar> yes
+2015-10-15T22:05:04 <Bosmon> The post he references suggests that Vagrant made this a default in 2013
+2015-10-15T22:05:08 <Bosmon> So we may get away without it
+2015-10-15T22:05:09 <avtar> it\'s disabled by default https://www.virtualbox.org/ticket/10085#comment:12
+2015-10-15T22:05:12 <Bosmon> Ah
+2015-10-15T22:05:21 <Bosmon> https://github.com/mitchellh/vagrant/issues/713#issuecomment-4416384
+2015-10-15T22:06:53 <Bosmon> Anyway, if this doesn\'t work, we can simply issue a cp -pr : P
+2015-10-15T22:07:06 <avtar> this is what i learned today https://github.com/mitchellh/vagrant/issues/1953#issuecomment-147920047
+2015-10-15T22:07:18 <avtar> things broke when virtualbox 5 was released
+2015-10-15T22:07:45 <Bosmon> urgh
+2015-10-15T22:07:47 <Bosmon> ok, fine
+2015-10-15T22:07:56 <avtar> giovanni said this worked for him on the win10 host https://gist.github.com/avtar/c83d22b29ca7099734dd#file-gistfile1-txt-L48
+2015-10-15T22:08:09 <Bosmon> ok
+2015-10-15T22:08:21 <avtar> but i tried all different variations on win8 which is probably closer to your env
+2015-10-15T22:08:39 <Bosmon> I think trying to do too much within the shared folders area is just asking for trouble
+2015-10-15T22:08:50 <Bosmon> We should be grateful enough we can get any files into it at all :)
+2015-10-15T22:09:09 <avtar> yes
+2015-10-15T22:09:25 <avtar> this is why i initially opted for rsync
+2015-10-15T22:09:31 <Bosmon> Get them in, SMASH\'N\'GRAB, then GET OUT
+2015-10-15T22:10:00 <avtar> i\'ll try the other workaround tomorrow and let you know how that goes
+2015-10-15T22:10:09 <Bosmon> avtar - awesome
+2015-10-15T22:10:21 <Bosmon> I am convinced we will get there in the end
+2015-10-15T22:10:26 <Bosmon> Even if it means..... COPYING SOME FILES
+2015-10-15T22:19:51 <avtar> http://oliverguenther.de/2015/05/docker-host-volume-synchronization/
+2015-10-15T22:20:45 <avtar> all these workaround seem very familiar :/
+2015-10-15T22:21:19 <avtar> i\'d be curious to know what the experience is like with vmware
+2015-10-15T22:27:13 <Bosmon> I\'ve never been able to get files into a vmware either
+'
+
+b'2015-10-15T00:28:04 * colinclark joined the channel
+2015-10-15T00:45:12 * danayo joined the channel
+2015-10-15T01:03:25 * kasparnet has quit
+2015-10-15T01:04:24 * kasparnet joined the channel
+2015-10-15T01:33:14 * Bosmon8 joined the channel
+2015-10-15T01:35:39 * Bosmon7 has quit
+2015-10-15T01:55:06 * kasparnet has quit
+2015-10-15T02:39:16 * danayo joined the channel
+2015-10-15T03:03:39 * colinclark joined the channel
+2015-10-15T03:23:23 * [o__o] joined the channel
+2015-10-15T04:55:43 * kasparnet joined the channel
+2015-10-15T04:59:59 * kasparnet has quit
+2015-10-15T07:16:43 * slim_ joined the channel
+2015-10-15T08:04:10 * slim_ has quit
+2015-10-15T08:21:27 * the-t-in-rtf has quit
+2015-10-15T08:25:26 * the-t-in-rtf joined the channel
+2015-10-15T08:38:32 * slim_ joined the channel
+2015-10-15T08:56:49 * slim_ has quit
+2015-10-15T08:57:18 * slim_ joined the channel
+2015-10-15T09:02:56 * slim__ joined the channel
+2015-10-15T09:29:39 * kasparnet joined the channel
+2015-10-15T10:28:18 * slim_ has quit
+2015-10-15T10:28:25 * slim__ has quit
+2015-10-15T10:28:54 * slim_ joined the channel
+2015-10-15T11:03:19 * slim_ has quit
+2015-10-15T11:54:55 * anvk joined the channel
+2015-10-15T12:04:08 * michelled joined the channel
+2015-10-15T12:13:36 * slim_ joined the channel
+2015-10-15T12:26:22 * Justin_o joined the channel
+2015-10-15T12:33:48 * michelled joined the channel
+2015-10-15T12:34:02 * jhung joined the channel
+2015-10-15T12:35:29 * colinclark joined the channel
+2015-10-15T12:38:28 * avtar has quit
+2015-10-15T12:38:37 * avtar joined the channel
+2015-10-15T12:55:02 * colinclark has quit
+2015-10-15T12:59:32 * cindyli joined the channel
+2015-10-15T13:04:13 * alanharnum joined the channel
+2015-10-15T13:07:29 * kasparnet has quit
+2015-10-15T13:19:27 * gtirloni joined the channel
+2015-10-15T13:19:36 * kasparnet joined the channel
+2015-10-15T13:20:47 * clown joined the channel
+2015-10-15T13:28:32 * sepidehshahi joined the channel
+2015-10-15T13:32:40 * simonjb joined the channel
+2015-10-15T13:35:32 * colinclark joined the channel
+2015-10-15T13:36:37 <Justin_o> Bosmon: another crazy npm bug eh :(
+2015-10-15T13:38:17 * the-t-in-rtf has quit
+2015-10-15T13:38:37 * the-t-in-rtf joined the channel
+2015-10-15T13:38:53 <slim_> which jqunit does fluid use? looking for docs
+2015-10-15T13:39:26 <the-t-in-rtf> I have a hash I have been using which is compatible with Fluid 2.0, but @bosmon is probably the best to ask.
+2015-10-15T13:39:34 <slim_> this one https://github.com/fluid-project/node-jqUnit
+2015-10-15T13:39:42 <slim_> no assert lib for gpii?
+2015-10-15T13:40:06 <the-t-in-rtf> I have been using this hash:  "jqUnit": "git://github.com/fluid-project/node-jqUnit.git#d46bb932fa4069770852c51a92182939958f2d75",
+2015-10-15T13:40:18 <the-t-in-rtf> Antranig can comment on whether master is recent enough.
+2015-10-15T13:40:26 <the-t-in-rtf> What do you mean by no assert lib?
+2015-10-15T13:40:58 <slim_> the-t-in-rtf: doh - of course xunit includes asserts
+2015-10-15T13:41:25 <the-t-in-rtf> Yes, I sometimes have to look at the docs for QUnit to see what\'s supported, but there are a good range.
+2015-10-15T13:41:26 <slim_> hash?
+2015-10-15T13:41:32 <the-t-in-rtf> a particular commit.
+2015-10-15T13:41:39 <slim_> oh. I see
+2015-10-15T13:41:43 <the-t-in-rtf> for example a branch that has not been merged.
+2015-10-15T13:42:12 <slim_> I\'m ussing whatever gets installed for GPII - am running low down unit tests
+2015-10-15T13:42:25 <slim_> should find right package.sjon I gue3ss :0
+2015-10-15T13:42:26 <the-t-in-rtf> It only matters if you are in the Fluid 2.0 world.
+2015-10-15T13:42:37 <the-t-in-rtf> For example, if you are in the post autoInit world
+2015-10-15T13:42:38 <slim_> ooh - am i? I doubt it
+2015-10-15T13:42:42 <slim_> I\'m in GPII world
+2015-10-15T13:43:16 <the-t-in-rtf> As long as you have a matching set of infusion and jqUnit, it should make very little difference to you.
+2015-10-15T13:43:52 <slim_> so I\'m using whatever require() is finding.
+2015-10-15T13:44:04 <the-t-in-rtf> Yes, which is based on your package.json / npm install
+2015-10-15T13:44:04 <slim_> would like matching docs as adding new tests
+2015-10-15T13:44:23 <the-t-in-rtf> unless you have installed it globally, which seems like a very bad idea.
+2015-10-15T13:44:54 <the-t-in-rtf> Anyway, open your package.json, you should be able to paste the URL there into a browser and see / search the source online.
+2015-10-15T13:45:20 <slim_> hmm nothing explict  in package.json windows - ho hum
+2015-10-15T13:47:38 <slim_> the-t-in-rtf: yeah - it\'s in universal package.json - tah
+2015-10-15T13:48:07 <slim_> git://github.com/fluid-project/node-jqUnit.git#e2083fba5404c8e7a474712102871150c037e20b
+2015-10-15T13:49:10 <the-t-in-rtf> The syntax is slightly different, here it is online:  https://github.com/fluid-project/node-jqUnit/tree/e2083fba5404c8e7a474712102871150c037e20b
+2015-10-15T13:49:51 <slim_> aha - was trying to figure out why couldn\'t open it with git protocol :) -thanks very much
+2015-10-15T13:49:52 <the-t-in-rtf> That is definitely old world.
+2015-10-15T13:50:03 <the-t-in-rtf> It still uses autoInit.
+2015-10-15T13:51:03 <the-t-in-rtf> Odd, so does the version I have.
+2015-10-15T13:51:07 <slim_> didn\'t know you could do that with GitHub - nice
+2015-10-15T13:51:37 <the-t-in-rtf> It is more tedious than it should be, you have to browse the commits and compare the hash by eyeball.
+2015-10-15T13:51:42 <slim_> but guess that underlies PR reviews etc
+2015-10-15T13:51:50 <slim_> oh
+2015-10-15T13:52:23 <slim_> the-t-in-rtf: out of interest why a fluid specific version of jqUnit?
+2015-10-15T13:53:58 <the-t-in-rtf> I assume like so much else a wrapper was needed to be able to write tests largely as configuration.
+2015-10-15T13:54:06 * slim_ read the docs and get an idea :)
+2015-10-15T13:54:23 <slim_> ye - looks like it from Readme
+2015-10-15T13:54:24 <the-t-in-rtf> There are also often bugs and shortcomings in the things we evolve into components.
+2015-10-15T13:54:37 <the-t-in-rtf> Which that one level of wrapping and abstraction lets us address.
+2015-10-15T13:56:04 <slim_> sure - though we them end up maintain it  - though can alleviate risk with careful management.
+2015-10-15T13:56:26 <slim_> Plus there is a view that every thing you require you need to understand and take ownership of
+2015-10-15T13:56:48 * Bosmon8 has quit
+2015-10-15T14:09:26 * danayo joined the channel
+2015-10-15T14:44:19 * anastasiac joined the channel
+2015-10-15T15:01:34 * colinclark has quit
+2015-10-15T15:08:13 * colinclark joined the channel
+2015-10-15T15:15:09 * gtirloni joined the channel
+2015-10-15T15:30:55 * colinclark joined the channel
+2015-10-15T15:42:20 * sepidehshahi joined the channel
+2015-10-15T15:43:00 * alanharnum joined the channel
+2015-10-15T15:46:46 <colinclark> slim_: You\'re not in the Infusion 2.0 world yet
+2015-10-15T15:46:56 <colinclark> and the-t-in-rtf: node-jqunit will work with any version of Infusion
+2015-10-15T15:47:16 <colinclark> either the 1.9.x branch currently used by the GPII core framework, or the 2.x line you\'re using
+2015-10-15T15:47:33 <colinclark> by virtue of the fact that node-jqunit binds with very little of Infusion itslef
+2015-10-15T15:49:42 <colinclark> slim_: I\'m not sure I understand your question about "a Fluid-specific version of jqUnit"
+2015-10-15T15:49:56 <colinclark> You\'re aware that the Fluid community created jqUnit, right?
+2015-10-15T15:50:05 <colinclark> it\'s an xUnit-style wrapper around QUnit
+2015-10-15T15:50:30 <colinclark> which also adds very useful support for running the same tests in both a browser and Node.js
+2015-10-15T15:56:56 <the-t-in-rtf> Thanks @colinclark, not sure why I originally fixated on that comment.  Likely it was paired with the specific 2.0 compatible Kettle that I needed to use in newer work.
+2015-10-15T15:57:02 <the-t-in-rtf> s/comment/commit/
+2015-10-15T15:57:16 * gtirloni joined the channel
+2015-10-15T15:57:19 <colinclark> yep, perhaps
+2015-10-15T15:57:26 <the-t-in-rtf> By that I mean that I saw it in a working example and copied both.
+2015-10-15T15:57:31 <the-t-in-rtf> Not that it necessarily is required\xe2\x80\xa6 :P
+2015-10-15T15:57:36 <colinclark> I use node-jqunit in osc.js, one of my libaries
+2015-10-15T15:57:41 <colinclark> which doesnt even depend on Infusion
+2015-10-15T15:57:48 <colinclark> what\'s so great about it is how you can run the same tests in both environments
+2015-10-15T15:58:00 <the-t-in-rtf> My comment was related to its own tests.
+2015-10-15T15:58:03 <colinclark> right
+2015-10-15T15:58:12 <the-t-in-rtf> Which do use 1.9 isms like "autoInit"
+2015-10-15T15:58:18 <colinclark> ah, yes
+2015-10-15T15:58:33 <colinclark> I believe the plan is to roll node-jqUnit back into Infusion
+2015-10-15T15:58:41 <colinclark> rather than dealing with circular dependencies
+2015-10-15T16:00:00 <colinclark> since jqUnit itself ships as part of Infusion
+2015-10-15T16:00:50 <Bosmon> colinclark - is that the plan? : P
+2015-10-15T16:01:04 <Bosmon> btw, avtar, Justin_o - bad news on the new vagrant stuff, I\'m afraid
+2015-10-15T16:01:35 <Bosmon> https://github.com/fluid-project/first-discovery-server/pull/2#issuecomment-148386418
+2015-10-15T16:01:48 <Bosmon> The name of the bad news is.....   ETXTBSY
+2015-10-15T16:01:56 <Bosmon> An unpreposessing name if ever I saw one
+2015-10-15T16:03:22 * colinclark has quit
+2015-10-15T16:05:28 * clown has quit
+2015-10-15T16:13:17 <Justin_o> Bosmon: avtar simonjb and I were just talking about that
+2015-10-15T16:13:26 <Justin_o> Bosmon: avtar is going to try it out on a machine here
+2015-10-15T16:13:44 <Justin_o> Bosmon: also, are you able to run my pull request locally, outside of using the vm
+2015-10-15T16:14:14 * alanharnum joined the channel
+2015-10-15T16:18:33 * clown joined the channel
+2015-10-15T16:23:11 * gtirloni joined the channel
+2015-10-15T16:28:57 <Bosmon> Justin_o - yes, the pull request itself works fine
+2015-10-15T16:29:11 <Bosmon> Unfortunately I have a couple more problems to report - firstly, the new Centos VM you have upgraded to doesn\'t run on my machine
+2015-10-15T16:29:11 <Justin_o> Bosmon: that\'s good at least :)
+2015-10-15T16:29:40 <Bosmon> It reports at startup: "This kernel requires an x86-64 CPU, but only detected an i686 CPU: This processor is unsupported in CentOS 7"
+2015-10-15T16:29:46 <Justin_o> Bosmon: simonjb had been wondering if the error you reported was specific to the VM or if it could be an issue in general.
+2015-10-15T16:30:06 <Justin_o> Bosmon: oh, you have a 32bit processor?
+2015-10-15T16:30:09 <Bosmon> Justin_o - I expect it will be an issue in general - my best guess is that this is a fault in the implementation of vagrant shared folders
+2015-10-15T16:30:19 <Bosmon> Justin_o - actually I don\'t, but I have a 64bit AMD processor
+2015-10-15T16:30:36 <Bosmon> Which is usually recognised as 64 bit for most purposes, but clearly not for the purposes of this VM
+2015-10-15T16:30:38 <Justin_o> Bosmon: sorry, in general i meant outside of using a vm at all
+2015-10-15T16:30:43 <Justin_o> and just running on windows..
+2015-10-15T16:30:53 <Bosmon> Justin_o - no, I expect the npm script will run just fine outside a VM
+'
+

@@ -1,0 +1,220 @@
+b'2016-09-12T20:55:59 * clown has quit
+2016-09-12T20:56:00 <simonjb> hi Bosmon / Bosmon7 are you available for some consulting?
+2016-09-12T20:56:04 * jhung has quit
+2016-09-12T20:56:34 <simonjb> I\'ve changed the failure handling of the Nexus Write Defaults but it\'s not right yet
+2016-09-12T20:56:53 <simonjb> I have some ideas on fixing but wanted to get your advice
+2016-09-12T20:57:04 <simonjb> https://github.com/simonbates/nexus/blob/master/src/Nexus.js#L78-L101
+2016-09-12T20:57:42 <simonjb> The problem is that in the failure case, I\'ll still end up trying to fire onSuccess
+2016-09-12T20:58:09 <simonjb> the \'success\' variable is left over from an earlier version that used exceptions
+2016-09-12T20:58:18 <simonjb> but in the current form it\'s broken
+2016-09-12T20:58:41 <simonjb> I need to differentiate between failure and success case
+2016-09-12T20:59:31 <simonjb> Idea 1: change my failure handler to fire an exception and differentiate between success and failure using presence or not of an exception
+2016-09-12T21:00:43 <simonjb> Idea 2: Before firing onSuccess at the end of the function, replace if (success) check with a check that tests if the request has been submitted and only fire success if it hasn\'t yet been submitted
+2016-09-12T21:01:02 <simonjb> Or a much better way that I haven\'t thought of :)
+2016-09-12T21:07:45 * colinclark joined the channel
+2016-09-12T21:17:00 * the-t-in-rtf has quit
+2016-09-12T21:20:37 <Bosmon7> simonjb - so I don\'t think it is reasonable for this request to statefully add a listener to the failure event
+2016-09-12T21:20:46 <Bosmon7> For a start, this will cause a race condition with respect to other requests
+2016-09-12T21:21:17 <simonjb> ok, cool, good to know, thanks Bosmon7
+2016-09-12T21:21:40 <Bosmon7> Kettle already has a builtin failure handler that causes request rejection on a fluid.fail
+2016-09-12T21:22:04 <simonjb> yes, the point of this was to send a 400, rather than 500
+2016-09-12T21:22:08 <Bosmon7> ok
+2016-09-12T21:22:48 <simonjb> it actually might not be worth it
+2016-09-12T21:22:50 <Bosmon7> If you want that, I suggest you just override the handler permanently
+2016-09-12T21:23:06 <Bosmon7> And write a JIRA explaining how Infusion\'s error handling is improperly scoped : P
+2016-09-12T21:23:32 <Bosmon7> It\'s really impossible to expect to distinguish between one call to fluid.fail and another in the current architecture
+2016-09-12T21:23:42 <simonjb> if I make it a permanent override, it will be hard to differentiate between when I want 400 and other values
+2016-09-12T21:23:51 <Bosmon7> Yes
+2016-09-12T21:24:00 <Bosmon7> It will be hard, because its essentially impossible : P
+2016-09-12T21:24:07 <simonjb> because all we have is fluid.fail
+2016-09-12T21:24:10 <Bosmon7> Yes
+2016-09-12T21:24:17 <Bosmon7> One day we will have something brilliant
+2016-09-12T21:24:37 <simonjb> ok, in that case, I\'m tempted to remove this special handling and just leave the default kettle handling in place
+2016-09-12T21:24:47 <Bosmon7> simonjb - that\'s probably best
+2016-09-12T21:24:57 <Bosmon7> I think your only reasonable options are to leave it the way it is or override it permanently
+2016-09-12T21:25:33 <simonjb> and I don\'t think that overriding permanently buys a whole lot without more information at the time of failure
+2016-09-12T21:25:46 <Bosmon7> yes
+2016-09-12T21:25:55 <simonjb> to be able to handle different failures in different ways
+2016-09-12T21:27:25 <simonjb> ok, I think I\'ll remove the special failure handling -- I will leave the kettle.test.pushInstrumentedErrors in place in the test so that I can verify the 500 response
+2016-09-12T21:27:48 <Bosmon7> simonjb - yes
+2016-09-12T21:27:49 <simonjb> https://github.com/simonbates/nexus/blob/aab06ae4477351da5a6edbab6aa716e7507b2b74/tests/WriteDefaultsTests.js#L143
+2016-09-12T21:28:05 <Bosmon7> In future we will be able to scope invocations to fluid.fail i) by location in the component tree, ii) by category of failure
+2016-09-12T21:28:14 <Bosmon7> Right now we can do neither, there is just a dumb string
+2016-09-12T21:28:19 <simonjb> Bosmon7: excellent
+2016-09-12T21:28:41 <simonjb> thanks for your feedback :)
+2016-09-12T21:28:59 <Bosmon7> simonjb - no worries, this is all highly strategic stuff
+2016-09-12T21:29:25 <Bosmon7> I\'ve had interesting chats with PETTRIECCHECK, one of the Revolutionary Computer Scientists here, about error handling
+2016-09-12T21:29:31 <Bosmon7> In the end, "an error will be a thing"
+2016-09-12T21:29:38 <Bosmon7> That is, something computable
+2016-09-12T21:29:59 <Bosmon7> Rather than just a string displayed to some end user which is the traditional establishment view of an error.......
+2016-09-12T21:43:13 * simonjb has quit
+2016-09-12T21:43:52 * gtirloni has quit
+2016-09-12T21:43:53 * amatas has quit
+2016-09-12T22:03:25 * colinclark has quit
+2016-09-12T22:11:50 * colinclark joined the channel
+2016-09-12T22:16:27 * colinclark joined the channel
+2016-09-12T22:26:18 * yzen is now known as yzen_
+2016-09-12T22:40:38 * colinclark has quit
+2016-09-12T22:52:22 * Jess__ joined the channel
+2016-09-12T22:53:39 * Jess_ has quit
+2016-09-12T23:02:02 * colinclark joined the channel
+2016-09-12T23:02:22 * colinclark has quit
+2016-09-12T23:10:10 * cindyli joined the channel
+2016-09-12T23:11:18 * cindyli has quit
+2016-09-12T23:23:52 * alanharnum joined the channel
+2016-09-12T23:28:13 * alanharnum has quit
+2016-09-12T23:31:07 * Justin_o has quit
+'
+
+b'2016-09-12T00:34:14 * jhung joined the channel
+2016-09-12T00:38:33 * jhung has quit
+2016-09-12T01:15:50 * jhernandez has quit
+2016-09-12T01:21:14 * sgithens joined the channel
+2016-09-12T01:34:53 * jhung joined the channel
+2016-09-12T01:39:03 * jhung has quit
+2016-09-12T02:19:39 * sgithens has quit
+2016-09-12T02:35:34 * jhung joined the channel
+2016-09-12T02:40:03 * jhung has quit
+2016-09-12T03:36:15 * jhung joined the channel
+2016-09-12T03:40:33 * jhung has quit
+2016-09-12T04:37:29 * jhung joined the channel
+2016-09-12T04:41:33 * jhung has quit
+2016-09-12T05:38:08 * jhung joined the channel
+2016-09-12T05:42:33 * jhung has quit
+2016-09-12T06:14:32 * amatas joined the channel
+2016-09-12T06:21:39 * the-t-in-rtf joined the channel
+2016-09-12T06:38:48 * jhung joined the channel
+2016-09-12T06:43:04 * jhung has quit
+2016-09-12T06:54:27 * amatas joined the channel
+2016-09-12T07:28:16 * the-t-in-rtf joined the channel
+2016-09-12T07:39:31 * jhung joined the channel
+2016-09-12T07:43:33 * jhung has quit
+2016-09-12T08:40:12 * jhung joined the channel
+2016-09-12T09:40:51 * jhung joined the channel
+2016-09-12T09:44:00 * jhernandez joined the channel
+2016-09-12T10:41:32 * jhung joined the channel
+2016-09-12T10:45:33 * jhung has quit
+2016-09-12T11:42:44 * jhung joined the channel
+2016-09-12T12:10:28 * jhung joined the channel
+2016-09-12T12:14:33 * jhung has quit
+2016-09-12T12:18:46 * dinuka joined the channel
+2016-09-12T12:18:58 * dinuka has quit
+2016-09-12T12:30:56 * colinclark joined the channel
+2016-09-12T12:34:21 * Justin_o joined the channel
+2016-09-12T12:53:54 * cindyli joined the channel
+2016-09-12T12:58:43 * the-t-in-rtf has quit
+2016-09-12T12:59:49 * the-t-in-rtf joined the channel
+2016-09-12T13:01:20 * simonjb joined the channel
+2016-09-12T13:02:35 * jhung joined the channel
+2016-09-12T13:21:35 * kavya joined the channel
+2016-09-12T13:21:54 * cindyli joined the channel
+2016-09-12T13:39:10 * gtirloni joined the channel
+2016-09-12T13:39:12 * danayo joined the channel
+2016-09-12T13:53:14 * yzen joined the channel
+2016-09-12T13:55:11 * yzen has quit
+2016-09-12T13:55:55 * yzen joined the channel
+2016-09-12T14:01:03 <the-t-in-rtf> Hi, @avtar @gtirloni @amatas.  Which room are we using for our meeting?
+2016-09-12T14:01:12 * alanharnum joined the channel
+2016-09-12T14:01:16 <avtar> i just unlocked mine
+2016-09-12T14:10:19 * alanharnum has quit
+2016-09-12T14:18:22 * ewbjr joined the channel
+2016-09-12T14:18:28 * alanharnum joined the channel
+2016-09-12T14:18:47 * Jess_ joined the channel
+2016-09-12T14:23:39 * Yan_Hu joined the channel
+2016-09-12T14:34:18 * simonjb joined the channel
+2016-09-12T14:54:39 * Bosmon7 joined the channel
+2016-09-12T14:55:30 * alanharnum has quit
+2016-09-12T14:59:57 * alanharnum joined the channel
+2016-09-12T15:00:19 * clown joined the channel
+2016-09-12T15:31:20 * alanharnum has quit
+2016-09-12T15:34:27 * danayo has quit
+2016-09-12T15:34:47 * clown has quit
+2016-09-12T15:35:15 * clown joined the channel
+2016-09-12T15:39:37 * clown has quit
+2016-09-12T15:52:29 * alanharnum joined the channel
+2016-09-12T15:52:38 * kavya has quit
+2016-09-12T16:12:58 * clown joined the channel
+2016-09-12T16:17:10 * cindyli joined the channel
+2016-09-12T16:20:32 * bens__ joined the channel
+2016-09-12T16:55:59 * jhung_away has quit
+2016-09-12T16:57:08 * the-t-in-rtf joined the channel
+2016-09-12T17:03:25 * clown has quit
+2016-09-12T17:04:10 * jhung joined the channel
+2016-09-12T17:04:21 * yzen has quit
+2016-09-12T17:08:23 <Justin_o> fluid-everyone: floe planning meeting
+2016-09-12T17:11:10 * alanharnum has quit
+2016-09-12T17:14:07 <Bosmon7> Hi there avtar
+2016-09-12T17:14:26 <Bosmon7> I\'m trying to remember what the situation is wrt recent versions of vagrant
+2016-09-12T17:14:33 <Bosmon7> I seem to remember you have a new box definition
+2016-09-12T17:14:56 <Bosmon7> But I don\'t seem to see the pull request for it
+2016-09-12T17:18:42 <Bosmon7> gtirloni - do you remember the story with our new windows box?
+2016-09-12T17:23:05 <gtirloni> Bosmon7: v0.4.5 should be the latest available through vagrant. this was the PR that introduced DoIt: https://github.com/idi-ops/packer-windows/pull/7
+2016-09-12T17:23:27 <gtirloni> avtar later found a fix for some issue that showed up at the last minute
+2016-09-12T17:24:17 <gtirloni> I don\'t know all of the details for that one, but I believe it was included in the last box version
+2016-09-12T17:24:49 <Bosmon7> gtirloni - ok, so the idea is that I just install 0.4.5 and everything just magically works?
+2016-09-12T17:25:34 <gtirloni> that\'s the hope, yeah
+2016-09-12T17:25:43 <Bosmon7> Ok
+2016-09-12T17:26:36 <Bosmon7> And VirtualBox 5.1.4 is ok to use now?
+2016-09-12T17:27:14 <gtirloni> not yet, shared folders is broken with that version
+2016-09-12T17:27:28 <Bosmon7> ok
+2016-09-12T17:27:30 <gtirloni> we\'ve tested on vagrant 1.8.4/1.8.5 and vbox 5.0.26
+2016-09-12T17:27:34 <Bosmon7> Thanks
+2016-09-12T17:27:57 <gtirloni> https://www.virtualbox.org/wiki/Download_Old_Builds_5_0
+2016-09-12T17:28:13 <gtirloni> https://releases.hashicorp.com/vagrant/
+2016-09-12T17:28:33 <Bosmon7> We should add something to our qi-development-environments repository to explain this
+2016-09-12T17:30:54 <gtirloni> that\'s a good point, i\'ll prepare a PR
+2016-09-12T17:32:53 <Bosmon7> Thanks, gtirloni
+2016-09-12T17:32:56 <gtirloni> yw
+2016-09-12T17:45:18 * the-t-in-rtf has quit
+2016-09-12T17:48:54 * kavya joined the channel
+2016-09-12T17:49:41 * yzen joined the channel
+2016-09-12T18:27:20 <gtirloni> Bosmon7: little warning about vbox51 https://github.com/GPII/qi-development-environments/pull/8
+2016-09-12T18:29:29 * danayo joined the channel
+2016-09-12T18:36:50 * alanharnum joined the channel
+2016-09-12T18:37:19 * lliskovoi joined the channel
+2016-09-12T18:44:29 <avtar> Bosmon7, gtirloni: sorry, i wasn\'t paying attention to irc during the last meeting
+2016-09-12T18:45:16 <avtar> most of the bits you need are packaged in the 0.4.5 box itself and then this pr was related https://github.com/GPII/windows/pull/87
+2016-09-12T18:47:28 <jhung> Justin_o: was tomorrow 12p okay to meet with Jesse, Sam Reid, and John Blanco about sonification tools?
+2016-09-12T18:49:05 <Justin_o> jhung: should be okay..
+2016-09-12T18:49:48 <jhung> k
+2016-09-12T19:21:50 <cindyli> Bosmon, Bosmon7, i tried with browserify (http://browserify.org/) and hit a couple of difficulties with getting kettle being able to be used in browsers
+2016-09-12T19:21:57 <cindyli> 1, the path calculated in fluid.js (https://github.com/fluid-project/infusion/blob/master/src/module/fluid.js#L39) returns an absolute path of "/../../../../../node_modules/infusion/src/module" instead of a relative path.
+2016-09-12T19:21:58 <cindyli> 2, brwoserify is not able to handle the dynamic requires such as https://github.com/fluid-project/infusion/blob/master/src/module/fluid.js#L97
+2016-09-12T19:23:20 <cindyli> simonjb and I talked about it this morning and figured it might be better off by ditching the use of kettle and create a new data source component using gpii.pouchdb
+2016-09-12T19:24:07 <cindyli> so, this component would be replaced by the new pouch back data source in testing: https://github.com/cindyli/universal/blob/GPII-1821/gpii/node_modules/gpii-oauth2/gpii-oauth2-datastore/src/DbDataStore.js#L22
+2016-09-12T19:25:45 <cindyli> the new data source still needs some of the implementations that have been done by "kettle.dataSource.URL" and "kettle.dataSource.CouchDB", for example, the handling of "termMap", "directModel" and "rules" of "writePayload" and "readPayload"
+2016-09-12T19:26:08 <cindyli> do you think this approach makes sense?
+2016-09-12T19:32:26 <Justin_o> simonjb: the latest infusion dev build has been published. 2.0.0-dev.20160911T222604Z.b86ecbb
+2016-09-12T19:32:42 <simonjb> thanks Justin_o
+2016-09-12T19:32:46 <Justin_o> simonjb: no problem
+2016-09-12T19:44:38 * clown joined the channel
+2016-09-12T19:54:35 <Bosmon7> cindyli - these are really interesting discoveries
+2016-09-12T19:55:04 <Bosmon7> I\'m not very enthusiastic about the approach of duplicating the code we have
+2016-09-12T19:55:11 <Bosmon7> If you think we are pressed for time, we can do it
+2016-09-12T19:55:23 <Bosmon7> But it would be more profitable in the long run to tackle the issues raised by the use of browserify
+2016-09-12T19:55:33 <Bosmon7> Because we will have to work with it in the end
+2016-09-12T19:57:44 <Bosmon7> On the other hand, an AJAX-backed dataSource is something we need too
+2016-09-12T19:58:02 <Bosmon7> cindyli - could you write up your discoveries in a JIRA, with some detailed replication steps?
+2016-09-12T19:58:03 <Bosmon7> Cheers
+2016-09-12T19:58:50 * the-t-in-rtf joined the channel
+2016-09-12T19:59:04 <cindyli> sure, Bosmon7. i can spend some more time on brwoserify
+2016-09-12T19:59:49 <Bosmon7> Both of the issues relate to our module infrastructure in fluid.js and module.js
+2016-09-12T20:00:00 <cindyli> that\'s true
+2016-09-12T20:00:01 <Bosmon7> So it looks like we will need to find some kind of browserify API to assist with this
+2016-09-12T20:00:19 <Bosmon7> And "sniff" for it at load time to discover if we are in a browserify "module loading" environment
+2016-09-12T20:11:26 <Bosmon7> cindyli - I think that the-t-in-rtf was interested in the work of an AJAX-backed DataSource so you should keep him informed of any such work
+2016-09-12T20:13:53 <cindyli> Bosmon7: just to clarify the reason we need an AJAX-backed DataSource in this work is to deal with the http requests
+2016-09-12T20:14:17 <cindyli> the http requests sent by couch/pouch data store
+2016-09-12T20:15:32 <cindyli> in the case of testing, the AJAX-backed DataSource receives http requests, processes with gpii.pouch and returns the response?
+2016-09-12T20:19:20 <cindyli> i was originally thinking to add one more grade to dbDataSource component (https://github.com/cindyli/universal/blob/GPII-1821/gpii/node_modules/gpii-oauth2/gpii-oauth2-datastore/src/DbDataStore.js#L22) to override kettle.dataSource.get() and kettle.dataSource.set() with gpii.pouch method calls
+2016-09-12T20:21:24 <cindyli> well, after looking more into kettle.dataSource.get(), i guess i cannot since it includes the handling for directModel etc
+2016-09-12T20:22:58 <alanharnum> cindyli: as I mentioned in the planning meeting, it may be worth looking at https://github.com/fluid-project/myl3/pull/1 - this has some of my work on implementing a non-Kettle PouchDB datasource
+2016-09-12T20:23:04 <alanharnum> with some comments from Bosmon / Bosmon7
+2016-09-12T20:23:39 <alanharnum> we should make sure to align so that we\'re not doing the same work with substantial overlap
+2016-09-12T20:24:08 * clown has quit
+2016-09-12T20:24:37 <cindyli> thanks, alanharnum, having a look
+2016-09-12T20:27:16 * bens__ has quit
+2016-09-12T20:34:37 * jhernandez has quit
+2016-09-12T20:55:40 * clown joined the channel
+'
+

@@ -1,0 +1,283 @@
+b'2017-08-23T17:06:45 <michelled> good eye, Bosmon! thanks
+2017-08-23T17:07:05 <simonjb> ussjoin, cindyli: ok, great -- how about meeting now? shall we meet on skype?
+2017-08-23T17:07:12 <Bosmon> michelled ??!
+2017-08-23T17:09:42 <michelled> well, I think the tests are back to hanging. but at least they are being queued now
+2017-08-23T17:10:03 <cindyli> good for me, simonjb, ussjoin
+2017-08-23T17:11:51 * alanharnum has quit
+2017-08-23T17:12:17 * alanharnum joined the channel
+2017-08-23T17:28:00 * jhung_away is now known as jhung
+2017-08-23T17:28:18 * Jess_ has quit
+2017-08-23T17:42:57 * kasparnet has quit
+2017-08-23T17:57:36 * alanharnum has quit
+2017-08-23T17:58:02 * alanharnum joined the channel
+2017-08-23T18:02:09 * alanharnum has quit
+2017-08-23T18:14:28 <clown> jhung, here\'s a somewhat lengthy response.
+2017-08-23T18:14:46 <clown> 1.  Don\'t use longdesc since there is no "go" action in this case.
+2017-08-23T18:15:35 <clown> 2. I don\'t know how well ATs support longdesc.  Likely not well because it isn\'t well handled in accessibility APIs.
+2017-08-23T18:19:20 * alanharnum joined the channel
+2017-08-23T18:19:39 <clown> 3.  According to the HTML mapping guide, the name of a figure is taken from the caption.
+2017-08-23T18:19:59 <clown> 3a.  Here\'s the link:  https://w3c.github.io/html-aam/#el-figure
+2017-08-23T18:21:00 <clown> 3b.  So, the way to go should be to not use "alt" on the <img>, but supply <figcaption> text.
+2017-08-23T18:21:42 <clown> 4.  If you need a description, use aria-describedby
+2017-08-23T18:22:05 <clown> 4a: https://w3c.github.io/aria/aria/aria.html#aria-describedby
+2017-08-23T18:22:39 * mrtyler has quit
+2017-08-23T18:23:12 <clown> 5. if you want the description to toggle between a visible/hidden, use aria-details, along with HTML <details><summary> \xe2\x80\xa6 </summary></details>
+2017-08-23T18:23:25 <clown> 5a. https://w3c.github.io/aria/aria/aria.html#aria-details
+2017-08-23T18:24:03 <clown> 6. end
+2017-08-23T18:24:20 <clown> any questions, jhung?
+2017-08-23T18:26:21 * clown brb
+2017-08-23T18:28:51 <jhung> clown: ok. I think this is helping a lot. Let me see if I can make up an example\xe2\x80\xa6
+2017-08-23T18:28:58 * mrtyler joined the channel
+2017-08-23T18:32:23 * alanharnum has quit
+2017-08-23T18:32:28 <jhung> So if I had a screen capture of UI Options. The caption delivers information more relevant to the context, like: "Figure 1: UI Options allows users to personalize interfaces to fit their needs and preferences.". The aria-describedby would be more literal like: "An image of a webpage with a horizontal area divided into panels \xe2\x80\xa6"
+2017-08-23T18:32:49 * alanharnum joined the channel
+2017-08-23T18:33:34 * alanharnum joined the channel
+2017-08-23T18:36:01 <jhung> We could also make a toggle for the description using the straregy in point 5. Would it be bad to put the more literal description in a <p id="foo"> </p> in the <figcaption> and put aria-describedby="foo" on the image clown?
+2017-08-23T18:37:44 <jhung> Actually clown, here\'s a more specific example: https://github.com/dayotte/floeproject.org/blob/FLOE-528/news/2017-08-23-self-assessment-toolkit.html#L99
+2017-08-23T18:39:50 <jhung> You can see there is a caption and a long alt-text. In this case the alt text should go into a new element (like a <p> or <summary>), and aria-describedby used to point to that new element.
+2017-08-23T18:48:43 <clown> jhung, I\'m catching up, and helping cindyli at the same time.  "One moment, please".
+2017-08-23T18:50:51 <jhung> no problem clown. Take your time.
+2017-08-23T18:50:51 * alanharnum joined the channel
+2017-08-23T18:52:22 * koo5 joined the channel
+2017-08-23T18:52:57 * alanharnum has quit
+2017-08-23T18:53:03 * alanharnum joined the channel
+2017-08-23T18:57:24 * alanharnum has quit
+2017-08-23T18:57:44 <Bosmon> michelled - that\'s pretty suspicious
+2017-08-23T18:57:50 * alanharnum joined the channel
+2017-08-23T18:59:42 * alanharnum joined the channel
+2017-08-23T19:02:00 * alanharnum has quit
+2017-08-23T19:02:11 * alanharnum joined the channel
+2017-08-23T19:02:46 * alanharnum has quit
+2017-08-23T19:03:12 * alanharnum joined the channel
+2017-08-23T19:04:51 * kasparnet joined the channel
+2017-08-23T19:05:58 * kasparne_ joined the channel
+2017-08-23T19:07:45 * alanharnum has quit
+2017-08-23T19:08:41 * kasparne_ has quit
+2017-08-23T19:09:21 * kasparnet has quit
+2017-08-23T19:16:16 * alanharnum joined the channel
+2017-08-23T19:18:09 <clown> jhung, I\'ve taken a look at the accessibility tree that example generates, and it\'s not terrible, but it\'s kind of confusing.
+2017-08-23T19:19:14 <clown> The <img> is actually an image link, and that link gets its name from the img\'s alt text.
+2017-08-23T19:20:10 <clown> So:  you have a figure with its name taken from the figure caption, a link with a looong name, taken from the alt text, and an image also with the same loooong name as the link.
+2017-08-23T19:22:53 <clown> I\'m inclined to agree with you:  ditch the alt text (set it to the empty string), and make that text available via <details><summary> for visual usesrs, and use aria-details (not aria-describedby) for AT users.
+2017-08-23T19:23:56 <clown> I"m not sure where you put the <details><summary>.  Just below the figure, perhaps?
+2017-08-23T19:27:04 <clown> Also, since there is an image link, it\'s keyboard navigable:  Tabbing through the page, lands you on the link (<a href="\xe2\x80\xa6">).
+2017-08-23T19:27:47 <clown> I would have expected to land on the figure\xe2\x80\xa6  hmmmm\xe2\x80\xa6.
+2017-08-23T19:31:52 <clown> Would if be better to set tabindex="0" on the <figure>, and tabindex="-1" on the <a>?  But, then you wouldn\'t be able to activate the link
+2017-08-23T19:33:09 <michelled> Bosmon: indeed. I\'m also noticing that the tests aren\'t adding up correctly now. meaning it reports the number of unit tests separately from the number of integration tests instead of reporting the total number of tests
+2017-08-23T19:34:33 <danayo> clown, jhung: jumping in here - you mean you wouldn\'t be able to open the figure link with the keyboard, yes? I think that\'s problematic - we want KB user to be able to view the larger image if desired
+2017-08-23T19:40:57 <clown> danayo:  yes, that was my worry.
+2017-08-23T19:42:28 <clown> so, I take back the idea of making the figure the tab navigation thing.
+2017-08-23T19:49:17 <jhung> clown, danayo: so I guess the solution here is to leave the alt text empty, Put a <details><summary> block below (or somewhere) on the page and use aria-details.
+2017-08-23T19:50:07 <clown> yes, jhung.
+2017-08-23T19:50:41 <jhung> We could hide the details the same way we hide the skip links - by using CSS and put that details block in the tab order.
+2017-08-23T19:51:06 <clown> but, I\'m wondering then what the name of the link should be.  Probably something like "larger view of this image".
+2017-08-23T19:51:30 <clown> jhung, the details/summary is automtically hidden by the browser.
+2017-08-23T19:51:41 <jhung> ah ok clown.
+2017-08-23T19:52:09 <clown> that\'s one of its nice features:  it\'s shows up as a "twiddle triangle".
+2017-08-23T19:52:14 <clown> if you know what I mean by that.
+2017-08-23T19:53:20 <jhung> clown, that\'s great. I\'ll work with danayo to get this implemented for this particular example.
+2017-08-23T19:53:32 <clown> documentation and examples here:  https://developer.mozilla.org/en-US/docs/Web/HTML/Element/details
+2017-08-23T19:54:17 <danayo> thanks clown & jhung
+2017-08-23T19:55:01 <clown> you\'re most welcome, danayo
+2017-08-23T19:56:25 <danayo> clown jhung so I\'m thinking we\'d want the twiddle triangle to show up next to the figure caption?
+2017-08-23T19:57:22 <jhung> danayo: Yes. Maybe right after the caption?
+2017-08-23T20:00:12 <jhung> danayo: I\'ll make the changes in my own branch, and I\'ll submit a pull request to your branch so you can merge it into your code. Then this will automatically update the pull request that\'s already there under the Fluid Project repository. Man, that\'s confusing. :D
+2017-08-23T20:03:01 * Jess_ joined the channel
+2017-08-23T20:04:12 <danayo> ok jhung, I was just trying to see if I could make it work - I\'ll keep trying and then compare to what you\'ve got
+2017-08-23T20:05:02 <jhung> danayo: in that case I\'ll leave you to it. I can help review of course. :)
+2017-08-23T20:06:27 <clown> jhung, danayo, Also the twiddle triangle is automatically tab-focusable.
+2017-08-23T20:07:23 <danayo> ah, nice clown. i just got it working. the order of figure caption / details / summary had me confused for a bit
+2017-08-23T20:08:45 <danayo> jhung, clown: should I still provide some brief al-text ?
+2017-08-23T20:10:03 <jhung> danayo: yes. It should describe where that link will take someone. So maybe "See larger version of this image"?
+2017-08-23T20:10:22 <danayo> right, ok jhung, thanks
+2017-08-23T20:10:26 <jhung> Or "Go to larger version of this image".
+2017-08-23T20:10:47 * javjarfer_ joined the channel
+2017-08-23T20:10:48 <danayo> maybe "open larger version of this image"?
+2017-08-23T20:10:50 <danayo> jhugn
+2017-08-23T20:10:53 <danayo> jung!
+2017-08-23T20:10:56 <danayo> oh my
+2017-08-23T20:11:00 <danayo> jhung!!
+2017-08-23T20:11:13 <jhung> lol
+2017-08-23T20:12:38 <jhung> "open" may not be the appropriate term since we\'re technically not opening anything (i.e. it\'s not a new tab nor does it spawn an external viewer).
+2017-08-23T20:12:42 <jhung> ^danayo
+2017-08-23T20:14:18 * javjarfer has quit
+2017-08-23T20:14:32 <danayo> jhung: hmmm...it does feel like something gets opened though, I guess because it requires using the back button in the browser to get back - I guess it comes back to that question of needing to provide a way to "close" the image ...
+2017-08-23T20:20:36 <jhung> danayo: I think we may need a second opinion on that. "Open" to me implies something different.
+2017-08-23T20:23:01 <danayo> that\'s fine jhung, I\'m happy to use "see" or "view" instead
+2017-08-23T20:23:28 * jhung has left the channel
+2017-08-23T20:23:32 * jhung joined the channel
+2017-08-23T20:23:39 <danayo> jhung i have a question about how to use aria-details - do you have a minute?
+2017-08-23T20:25:18 <jhung> but what you bring up is a very interesting point though. Lightboxes have become so prevalent that the once common practice of linking to larger images could actually be more confusing danayo.
+2017-08-23T20:28:00 <danayo> i agree jhung, there does seem to be an expectation to have a close button. so it gets into the question of thumbnails and accessibility etc that we were discussing recently
+2017-08-23T20:29:14 * cindyli joined the channel
+2017-08-23T20:34:43 * cindyli has quit
+2017-08-23T20:46:06 * Jess_ joined the channel
+2017-08-23T20:57:37 * jhung has quit
+2017-08-23T21:11:01 * Jess_ has quit
+2017-08-23T21:20:10 * alanharnum joined the channel
+2017-08-23T21:26:15 * alanharnum has quit
+2017-08-23T21:26:21 * alanharnum2 joined the channel
+2017-08-23T21:26:31 * alanharnum2 has quit
+2017-08-23T21:30:09 * amatas has quit
+2017-08-23T21:32:24 * gtirloni_ joined the channel
+2017-08-23T21:35:50 * gtirloni has quit
+2017-08-23T21:38:41 * stegru has quit
+2017-08-23T21:44:56 * kasparnet joined the channel
+2017-08-23T22:43:28 * Justin_o has quit
+2017-08-23T22:50:50 * javjarfer_ has quit
+2017-08-23T23:18:03 * kasparnet has quit
+2017-08-23T23:30:11 * mrtyler joined the channel
+'
+
+b'2017-08-23T00:01:03 * javjarfer_ has quit
+2017-08-23T00:24:21 * alanharnum joined the channel
+2017-08-23T00:29:21 * alanharnum has quit
+2017-08-23T01:25:59 * avtar joined the channel
+2017-08-23T01:25:59 * avtar has quit
+2017-08-23T02:27:29 * alanharnum joined the channel
+2017-08-23T02:34:35 * alanharnum has quit
+2017-08-23T04:32:39 * alanharnum joined the channel
+2017-08-23T04:38:51 * alanharnum has quit
+2017-08-23T05:53:54 * mrtyler has quit
+2017-08-23T06:33:52 * amatas joined the channel
+2017-08-23T06:36:50 * alanharnum joined the channel
+2017-08-23T07:03:03 * kasparnet joined the channel
+2017-08-23T08:01:35 * amatas has quit
+2017-08-23T08:41:04 * alanharnum joined the channel
+2017-08-23T08:51:22 * ewbjr has quit
+2017-08-23T08:51:50 * ewbjr joined the channel
+2017-08-23T08:53:43 * javjarfer joined the channel
+2017-08-23T08:58:37 * javjarfer_ joined the channel
+2017-08-23T08:59:25 * koo5 joined the channel
+2017-08-23T09:01:39 * javjarfer has quit
+2017-08-23T09:09:56 <javjarfer_> Hi! Good morning, Bosmon do you have a couple of minutes?
+2017-08-23T09:21:13 * javjarfer_ is now known as javjarfer
+2017-08-23T09:29:02 <Bosmon> Hi there javjarfer
+2017-08-23T09:33:05 * javjarfer has quit
+2017-08-23T09:33:33 <Bosmon> kasparnet - ok, so I am beginning my investigations of the prehistory of the untrusted flowManager at revision 9cf58658c32d90c4bd5d1b7f36af27a14d282cb0
+2017-08-23T09:33:45 <Bosmon> Which was the branch merge immediately before your GPII-2297
+2017-08-23T09:39:48 * stegru joined the channel
+2017-08-23T10:18:55 * javjarfer joined the channel
+2017-08-23T10:19:23 <javjarfer> Bosmon, hi again! Sorry I need to quit this for a while
+2017-08-23T10:45:15 * alanharnum joined the channel
+2017-08-23T10:51:45 * alanharnum has quit
+2017-08-23T11:09:51 * gtirloni joined the channel
+2017-08-23T11:15:43 * michelled joined the channel
+2017-08-23T11:32:32 * grrrero joined the channel
+2017-08-23T11:50:15 * alf joined the channel
+2017-08-23T11:50:24 * alf is now known as amatas
+2017-08-23T11:55:26 * kasparnet has quit
+2017-08-23T11:56:15 * amatas has quit
+2017-08-23T11:56:20 * kasparnet joined the channel
+2017-08-23T12:03:28 * scott_gonzalez has quit
+2017-08-23T12:07:29 * scott_gonzalez joined the channel
+2017-08-23T12:24:50 * Justin_o joined the channel
+2017-08-23T12:49:34 * alanharnum joined the channel
+2017-08-23T13:06:31 * jhung joined the channel
+2017-08-23T13:11:15 <jhung> ping michelled. Got a sec to chat?
+2017-08-23T13:12:25 <michelled> yep!
+2017-08-23T13:12:35 <michelled> jhung: call when you\'re ready
+2017-08-23T13:12:38 <jhung> ok
+2017-08-23T13:13:24 * cindyli joined the channel
+2017-08-23T13:24:38 * alf joined the channel
+2017-08-23T13:25:56 * amatas joined the channel
+2017-08-23T13:26:16 * alf has quit
+2017-08-23T13:43:26 * alanharnum joined the channel
+2017-08-23T13:44:22 * alanharnum2 joined the channel
+2017-08-23T14:05:05 * Jess_ joined the channel
+2017-08-23T14:10:18 <stegru> cindyli: hi
+2017-08-23T14:10:38 <cindyli> hi stegru
+2017-08-23T14:11:07 <stegru> just been speaking with sandra, and she says you\'re waiting for me to do something - what is it exactly, and how urgent is it?
+2017-08-23T14:12:51 * clown joined the channel
+2017-08-23T14:15:00 <cindyli> stegru: when sandra followed up with me, I said the implementation for the access requester is put on hold because we don\'t have enough time for it to meet the end of oct timeline, and it also depends on your work with gpii-service
+2017-08-23T14:15:30 <stegru> ah yes that\'s what i thought.. thanks cindyli
+2017-08-23T14:15:41 <stegru> i thought there was something that i had missed
+2017-08-23T14:15:45 <cindyli> it\'s not urgent since we think the access requester is not planned for the first pass on PCP
+2017-08-23T14:16:00 <cindyli> nah, i think that is it
+2017-08-23T14:17:58 <stegru> i\'m working on the service->gpii communications at the moment.. (it\'s done enough to make a PR soon)...
+2017-08-23T14:18:14 <stegru> you asked for a test for it the other day, so here it is...
+2017-08-23T14:19:14 <stegru> cindyli: https://github.com/stegru/gpii-service/blob/GPII-2338/tests/gpii-pipe-test.js#L317
+2017-08-23T14:20:48 <stegru> and the client (GPII, or access requester) would contain this: https://github.com/stegru/gpii-service/blob/GPII-2338/tests/gpii-pipe-test-child.js#L18
+2017-08-23T14:27:13 <cindyli> reading..
+2017-08-23T14:36:05 <cindyli> stegru: i think it\'s straightforward. if the pipe read/write code should be on the window platform but the access requester is intended to be useful across platforms, i\'m thinking I probably should create placeholder subcomponent on the access requester to be in charge of input read and output write, then we write actual pipe code in the windows repo
+2017-08-23T14:36:38 <stegru> yes, that was also my thought cindyli
+2017-08-23T14:37:05 <cindyli> cool. we can talk about these things in detail when it comes to implement the access reqeuster. thanks, stegru
+2017-08-23T14:37:11 <stegru> yep
+2017-08-23T14:39:37 <cindyli> grrrero: i wonder if you have some time today to pair up on some code reviews for jhung\'s wordpress plugin pull request?
+2017-08-23T14:41:58 <grrrero> cindyli: Sure, what time would you like? I\'m meeting with Justin_o at 2pm (maybe til 3?)
+2017-08-23T14:45:48 <cindyli> grrrero: now?
+2017-08-23T14:45:55 <grrrero> Oh ok sure!
+2017-08-23T14:46:05 <grrrero> ^ cindyli
+2017-08-23T14:46:17 <cindyli> at my desk, grrrero?
+2017-08-23T14:46:44 <clown> cindyli:  https://twitter.com/stevefaulkner/status/473184025046421504
+2017-08-23T14:47:17 <cindyli> thanks, clown
+2017-08-23T14:47:37 <clown> actually, cindyli, a better url (takes you directly there): https://codepen.io/stevef/full/LasCJ/
+2017-08-23T15:00:45 * mrtyler joined the channel
+2017-08-23T15:08:57 * alanharnum joined the channel
+2017-08-23T15:12:25 * alanharnum has quit
+2017-08-23T15:12:31 * alanharnum2 joined the channel
+2017-08-23T15:20:37 * danayo joined the channel
+2017-08-23T15:24:50 * koo5 has quit
+2017-08-23T15:27:50 * jessm joined the channel
+2017-08-23T15:47:55 * ussjoin joined the channel
+2017-08-23T15:52:08 <jhung> clown I have an image description question for you\xe2\x80\xa6
+2017-08-23T15:53:45 * ussjoin has quit
+2017-08-23T15:54:06 * ussjoin joined the channel
+2017-08-23T15:55:07 * ussjoin has quit
+2017-08-23T15:55:30 * ussjoin joined the channel
+2017-08-23T15:56:05 <clown> jhung, yes?
+2017-08-23T15:56:17 * clown runs and hides
+2017-08-23T15:56:44 <jhung> lol I think you know what
+2017-08-23T15:56:48 <jhung> \'s coming.
+2017-08-23T15:57:05 * alanharnum2 has quit
+2017-08-23T15:57:32 * alanharnum joined the channel
+2017-08-23T15:57:43 <jhung> clown: currently we use a <figure><img alt="\xe2\x80\xa6"></img><figcaption></figcaption></figure> pattern for images in many of our websites.
+2017-08-23T15:57:49 <clown> actually I don\'t, jhung.  Note, though, the GPII arch meeting starts in 3 min.
+2017-08-23T15:58:03 <jhung> ok
+2017-08-23T15:58:24 * alanharnum has quit
+2017-08-23T15:58:26 <clown> but, keep typing.  I\'ll look it over and think about it as I can.
+2017-08-23T15:58:26 <jhung> clown: would adding a longdesc to the <img ..> in this case be redundant?
+2017-08-23T15:58:30 * alanharnum joined the channel
+2017-08-23T16:00:34 <clown> jhung:  prior question: longdesc is a link.  Is the intent of the UX for users to go to another page or another part of the current page for the description text?  In other words, is the context switch (to another place) necessary?
+2017-08-23T16:02:15 <jhung> clown: ah. The caption is usually right above or below the image, so there\'s no context switching usually.
+2017-08-23T16:02:40 <jhung> Do we know how well supported longdesc is with current ATs clown?
+2017-08-23T16:11:03 * alanharnum2 joined the channel
+2017-08-23T16:13:53 * alanharnum has quit
+2017-08-23T16:35:37 * jhung is now known as jhung_away
+2017-08-23T16:36:46 * alanharnum2 has quit
+2017-08-23T16:37:12 * alanharnum joined the channel
+2017-08-23T16:41:32 * simonjb joined the channel
+2017-08-23T16:41:37 * alanharnum has quit
+2017-08-23T16:43:58 * alanharnum joined the channel
+2017-08-23T16:49:36 * alanharnum has quit
+2017-08-23T16:51:05 <Justin_o> simonjb, danayo: I\'ve sent you both some variations on the loading indicator for UIO+. Hopefully you get it, the attachments added up to about 14MB. Please let me know if you don\'t get it, and thanks for the help looking at them.
+2017-08-23T16:54:46 <simonjb> thanks Justin_o, I will take a look
+2017-08-23T16:55:10 <simonjb> welcome ussjoin :)
+2017-08-23T16:55:19 <ussjoin> Hi!
+2017-08-23T16:55:37 * alanharnum joined the channel
+2017-08-23T16:55:47 <simonjb> ussjoin, cindyli: would a time work for you both to get together today for a chat?
+2017-08-23T16:56:21 <ussjoin> I\'m free any time today other than 11-11:30AM (PDT). So lmk what works best for you.
+2017-08-23T16:57:14 <Justin_o> simonjb: thanks
+2017-08-23T16:58:31 <Bosmon> michelled - as far as I can see the code within node-jqunit for reporting to the OS on zero fixtures is correct: https://github.com/fluid-project/node-jqunit/blob/master/lib/jqUnit-node.js#L181
+2017-08-23T16:58:40 <Bosmon> So there must be some problem with how the tests are being invoked by CI
+2017-08-23T16:59:42 <Bosmon> Oh I see
+2017-08-23T16:59:43 <Bosmon> Here it is
+2017-08-23T16:59:49 <Bosmon> You have a custom reporter here:
+2017-08-23T16:59:57 <Bosmon> https://github.com/michelled/gpii-app/blob/GPII-2092/tests.js#L15
+2017-08-23T16:59:58 <Bosmon> Very odd
+2017-08-23T17:01:21 <michelled> Bosmon: I think kasparnet put that in so that the tests exit - otherwise they were just hanging. kasparnet, am I remembering correctly?
+2017-08-23T17:01:48 <Bosmon> Well it\'s very strange, since the corresponding line in jqUnit-node does exactly the same thing
+2017-08-23T17:01:50 <kasparnet> yes, that\'s correct michelled
+2017-08-23T17:02:22 <Bosmon> Perhaps they are sensitive to the process.stdout.write hack that perhaps isn\'t necessary any more?
+2017-08-23T17:02:45 * Jess_ joined the channel
+2017-08-23T17:02:57 <Bosmon> But I\'d try removing this line and see what happens
+2017-08-23T17:03:10 <michelled> ok, thx
+2017-08-23T17:03:44 <Bosmon> Or perhaps there is a bug in process.stdout.write in electron?
+2017-08-23T17:03:45 <Bosmon> https://github.com/fluid-project/node-jqunit/blob/master/lib/jqUnit-node.js#L194
+2017-08-23T17:04:01 <Bosmon> Another thing you can try is to monkey-patch this line in node-jqunit to remove that layer of wrapping
+2017-08-23T17:05:27 <Bosmon> It seems that this bug was fixed in node 0.12
+2017-08-23T17:05:31 <cindyli> ussjoin, simonjb, anytime is good for me
+2017-08-23T17:05:38 <michelled> huh, it looks like taking that line out is running the tests! I\'m not sure yet if they all pass or not
+2017-08-23T17:05:51 <Bosmon> So we should be able to remove this if it is what is causing problems on electron
+'
+

@@ -1,0 +1,303 @@
+b'2015-02-25T21:01:47 <clown> or so.
+2015-02-25T21:02:34 * colinclark has quit
+2015-02-25T21:17:07 <Justin_o> that is very early
+2015-02-25T21:24:34 <clown> simonjb:  http://www.w3.org/TR/wai-aria-1.1/#aria-relevant
+2015-02-25T21:24:45 <clown> and also http://www.w3.org/TR/wai-aria-1.1/#aria-atomic
+2015-02-25T21:26:01 * colinclark joined the channel
+2015-02-25T21:32:45 * kasparnet has quit
+2015-02-25T21:33:27 <Justin_o> cindyli: do you think something like this would be safe to add to the panel grade https://github.com/fluid-project/first-discovery/blob/master/tests/js/panelsTests.js#L95-L100
+2015-02-25T21:34:01 <Justin_o> instead of "{that}.options.testMessages" it would be "{that}.options.messageBase"
+2015-02-25T21:34:24 <Justin_o> then you\'d just pass the fetched message down to that messageBase option
+2015-02-25T21:36:44 <Justin_o> cindyli: or do you remember a reason why we didn\'t just pass these straight into the strings block?
+2015-02-25T21:36:53 <Justin_o> Bosmon7: do you have a thought on that?
+2015-02-25T21:38:34 <Bosmon7> "the fetched message"?
+2015-02-25T21:38:40 <Justin_o> Bosmon7: yes
+2015-02-25T21:38:50 <Bosmon7> Just one message?
+2015-02-25T21:40:02 <Justin_o> Bosmon7: yes... for here I\'m trying to think of ways to pass the components specific message bundle to it.. not the merged one that we have right now
+2015-02-25T21:40:58 <Bosmon7> Justin_o - I\'m confused whether you\'re talking about a message bundle or a single message
+2015-02-25T21:44:06 <Justin_o> bundle
+2015-02-25T21:44:16 <Justin_o> Bosmon7: or an object anyways
+2015-02-25T21:44:23 * simonjb has quit
+2015-02-25T21:44:28 <Justin_o> Bosmon7: so the fetch returns a object of objects
+2015-02-25T21:44:40 <Justin_o> that it had pulled in from all of the various message json files
+2015-02-25T21:45:51 <Bosmon7> Justin_o - it will be better for the component constructing the panel to just pass in a parentBundle that is already correct
+2015-02-25T21:45:59 <Bosmon7> We don\'t want to merge the bundles together, we just want to connect them
+2015-02-25T21:46:21 <Bosmon7> As we discovered in CSpace, the majority of the time spent constructing the component tree was spent on needlessly merging bundles together
+2015-02-25T21:46:44 <Justin_o> Bosmon7: yes, we only get the correct strings to the component, or that is the goal anyways, but do i have to really create a message resolver for this.. since the component already has it\'s own
+2015-02-25T21:47:19 <Justin_o> Bosmon7: the parentBundle i believe is itself a messageResolver
+2015-02-25T21:47:37 <Justin_o> or i could be wrong, but i figure it would be quicker just to merge the fetched strings with a component\'s strings block
+2015-02-25T21:49:26 <Bosmon7> Justin_o - it won\'t be quicker, and will create a lot of garbage
+2015-02-25T21:49:53 <Bosmon7> As we discussed on Monday, it is quicker to set up a structure chaining together existing objects rather than explicitly merge them in a big bang
+2015-02-25T21:50:10 <Justin_o> okay.. so would something like this be better https://github.com/fluid-project/first-discovery/blob/master/tests/js/panelsTests.js#L95-L100
+2015-02-25T21:50:11 <Bosmon7> As well as occupying much less space in memory
+2015-02-25T21:51:14 * kasparnet joined the channel
+2015-02-25T21:51:17 <Justin_o> Bosmon7: or would it be better to rework this https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L92-L101
+2015-02-25T21:51:32 <Bosmon7> Justin_o - we should take the opportunity to correct this strategy
+2015-02-25T21:51:39 <Bosmon7> Since "messaegeResolver" is a proper component now
+2015-02-25T21:51:49 <Justin_o> and have it create many messageResolvers that we pass down directly, rather than what i had proposed to have them created in the panel
+2015-02-25T21:51:56 <Bosmon7> We should move this into the components area of the panel rather than being a crazy "func in an expander" : p
+2015-02-25T21:51:59 <Justin_o> Bosmon7: you mean use it a a subcomponent?
+2015-02-25T21:52:02 <Bosmon7> Yes
+2015-02-25T21:52:04 <Justin_o> :)
+2015-02-25T21:52:04 * michelled joined the channel
+2015-02-25T21:52:08 <Justin_o> i was thinking about that too
+2015-02-25T21:53:36 <Justin_o> Bosmon7: okay.. cool.. so the fetch will still just be an object of objects of strings.. these will be properly sourced down into the messageBase options of the messageResolver subcomponent that is bound as the components own parentBundle?
+2015-02-25T21:53:39 <Justin_o> does that make sense?
+2015-02-25T21:53:57 <Justin_o> or i guess we could use it as the messageSource for a renderComponent
+2015-02-25T21:54:03 <Justin_o> since all the panels are renderer components
+2015-02-25T21:54:16 <Justin_o> Bosmon7: does that all sound correct?
+2015-02-25T21:54:44 <Bosmon7> Justin_o - it\'s hard to tell : P
+2015-02-25T21:54:44 <Bosmon7> https://github.com/fluid-project/infusion/blob/master/src/framework/renderer/js/RendererUtilities.js#L201
+2015-02-25T21:54:48 <Bosmon7> As we know, this code is an awful mess
+2015-02-25T21:55:30 <Bosmon7> We should take the opportunity to i) set up our own dedicated messageResolver subcomponent attached to our component, and ii) explicitly connect that to rendererOptions.messageSource so it doesn\'t try to construct its own one
+2015-02-25T21:55:46 <Justin_o> Bosmon7: okay will do
+2015-02-25T21:56:02 <Bosmon7> Other than that we should iii) never merge together messages objects by ourselves and always make use of the "parents" option of the messageResolver instead to do its own fallback
+2015-02-25T21:56:26 <Justin_o> Bosmon7: i don\'t think i understand iii
+2015-02-25T21:56:36 <Justin_o> at least the second half of it
+2015-02-25T21:56:48 * michelled has quit
+2015-02-25T21:56:57 <Bosmon7> Justin_o - the idea is that if a key is not found in one bundle, the search falls back to the parent bundle
+2015-02-25T21:57:07 <Justin_o> it seems to be in the way this will be constructed that the strings block of a component will always be ignored
+2015-02-25T21:57:07 <Bosmon7> I\'m not sure if we have any application-wide strings but I suspect that we will in the end
+2015-02-25T21:57:13 <Bosmon7> Justin_o - yes, that\'s correct
+2015-02-25T21:57:14 * michelled joined the channel
+2015-02-25T21:57:27 <Bosmon7> it is time to start ignoring the strings block, it is an old-fashioned kind of "toy model" for message handling
+2015-02-25T21:57:38 <Justin_o> Bosmon7: okay.. yah we probably don\'t have anything that are in the parent bundle anymore
+2015-02-25T21:57:54 <Justin_o> at least not now
+2015-02-25T21:58:06 <Justin_o> Bosmon7: so strings will eventually disappear ?
+2015-02-25T21:58:10 <Bosmon7> We should make it clear that integrators should not expect to store anything in the "strings" block since it actively fights against properly and efficiently localising the application
+2015-02-25T21:58:31 <Bosmon7> Well, it won\'t "disappear" as such, it\'s just at an inappropriate level of sophistication for the prefs framework
+2015-02-25T21:58:31 * michelled has quit
+2015-02-25T21:58:44 <Justin_o> Bosmon7: okay, will this be something that will happen to every component in the future, the need to supply a separate json message file
+2015-02-25T21:58:45 <Justin_o> ?
+2015-02-25T21:58:53 <Bosmon7> I imagine that people making small-scale "throwaway" kinds of components will find it convenient
+2015-02-25T21:59:01 * michelled joined the channel
+2015-02-25T21:59:22 <Justin_o> Bosmon7: okay... i guess i\'d like to be able to use the strings block as the final fall back
+2015-02-25T21:59:29 <Justin_o> if a proper message bundle isn\'t found
+2015-02-25T22:00:15 * michelled has quit
+2015-02-25T22:00:41 * michelled joined the channel
+2015-02-25T22:01:04 <Bosmon7> Justin_o - I guess you can write that into the end of the "parents" entry in the messageResolver\'s options
+2015-02-25T22:01:12 <Bosmon7> So that it ends up being checked last
+2015-02-25T22:01:35 <Justin_o> Bosmon7: so the parentBundle doesn\'t actually have to be a resolver it can be a plain object?
+2015-02-25T22:01:48 <Bosmon7> Justin_o - it needs to be a resolver
+2015-02-25T22:01:58 * michelled has quit
+2015-02-25T22:02:02 <Bosmon7> Justin_o - as we decided, the RendererUtilities algorithm is incorrect since it checks the local strings first rather than last
+2015-02-25T22:02:07 <Justin_o> Bosmon7: ah so i\'d have to construct a new one
+2015-02-25T22:02:25 * michelled joined the channel
+2015-02-25T22:02:30 <Bosmon7> Justin_o - but the parent should already have made a resolver in any case
+2015-02-25T22:02:37 <Justin_o> Bosmon7: okay, so at this point is it better to ignore the strings block until and this will be sorted out in the new renderer?
+2015-02-25T22:02:50 <Bosmon7> Justin_o - may as well ignore the strings block in the prefs framework, yes
+2015-02-25T22:02:54 <Justin_o> i don\'t think i follow that part Bosmon7
+2015-02-25T22:03:41 * michelled has quit
+2015-02-25T22:04:07 * michelled joined the channel
+2015-02-25T22:05:25 * michelled has quit
+2015-02-25T22:05:44 <Bosmon7> I mean, for the purposes of defining panels in the prefs framework, the strings block should be ignored
+2015-02-25T22:05:51 * michelled joined the channel
+2015-02-25T22:06:20 <Justin_o> Bosmon7:  :) okay.. it shall be so
+2015-02-25T22:07:08 * michelled has quit
+2015-02-25T22:07:35 * michelled joined the channel
+2015-02-25T22:08:17 * Sepideh has quit
+2015-02-25T22:09:30 * michelled has quit
+2015-02-25T22:09:57 * michelled joined the channel
+2015-02-25T22:11:14 * michelled has quit
+2015-02-25T22:11:40 * michelled joined the channel
+2015-02-25T22:13:55 * michelled has quit
+2015-02-25T22:14:24 * michelled joined the channel
+2015-02-25T22:15:38 * michelled has quit
+2015-02-25T22:16:05 * michelled joined the channel
+2015-02-25T22:17:21 * michelled has quit
+2015-02-25T22:17:48 * michelled joined the channel
+2015-02-25T22:19:48 * michelled has quit
+2015-02-25T22:20:15 * michelled joined the channel
+2015-02-25T22:21:31 * michelled has quit
+2015-02-25T22:21:58 * michelled joined the channel
+2015-02-25T22:23:14 * michelled has quit
+2015-02-25T22:23:40 * michelled joined the channel
+2015-02-25T22:25:24 * michelled has quit
+2015-02-25T22:25:50 * michelled joined the channel
+2015-02-25T22:27:27 * michelled has quit
+2015-02-25T22:27:55 * michelled joined the channel
+2015-02-25T22:29:10 * michelled has quit
+2015-02-25T22:29:39 * michelled joined the channel
+2015-02-25T22:30:53 * michelled has quit
+2015-02-25T22:31:22 * michelled joined the channel
+2015-02-25T22:32:37 * michelled has quit
+2015-02-25T22:32:44 * Sepideh joined the channel
+2015-02-25T22:33:00 <Bosmon7> Sepideh - here is a short starting point on cognitive accessibility from Clayton et al
+2015-02-25T22:33:01 <Bosmon7> http://www.w3.org/WAI/RD/2012/easy-to-read/paper6/
+2015-02-25T22:33:06 * michelled joined the channel
+2015-02-25T22:33:39 * clown has quit
+2015-02-25T22:34:43 * michelled has quit
+2015-02-25T22:35:10 * michelled joined the channel
+2015-02-25T22:36:27 * michelled has quit
+2015-02-25T22:36:56 * michelled joined the channel
+2015-02-25T22:38:10 * michelled has quit
+2015-02-25T22:38:39 * michelled joined the channel
+2015-02-25T22:38:39 * Sepideh has quit
+2015-02-25T22:40:15 * michelled has quit
+2015-02-25T22:40:42 * michelled joined the channel
+2015-02-25T22:41:27 * jessm has quit
+2015-02-25T22:44:16 * Sepideh joined the channel
+2015-02-25T22:50:49 * Sepideh has quit
+2015-02-25T22:51:40 * colinclark has quit
+2015-02-25T22:53:49 * danaayotte has quit
+2015-02-25T22:54:03 * Sepideh joined the channel
+2015-02-25T22:54:14 * michelled has quit
+2015-02-25T22:55:35 * Sepideh has left the channel
+2015-02-25T22:55:35 * cindyli has quit
+2015-02-25T22:56:55 * kasparnet has quit
+2015-02-25T22:57:15 * anastasiac has quit
+2015-02-25T23:03:50 * Bosmon7 has quit
+'
+
+b'2015-02-25T07:23:32 * Bosmon7 joined the channel
+2015-02-25T07:54:25 * Bosmon7 has quit
+2015-02-25T08:52:12 * the-t-in-rtf joined the channel
+2015-02-25T08:52:12 * the-t-in-rtf has quit
+2015-02-25T08:58:21 * the-t-in-rtf joined the channel
+2015-02-25T08:58:22 * the-t-in-rtf has quit
+2015-02-25T08:58:36 * the-t-in-rtf joined the channel
+2015-02-25T08:59:07 * the-t-in-rtf has quit
+2015-02-25T08:59:34 * the-t-in-rtf joined the channel
+2015-02-25T09:30:29 * the-t-in-rtf has quit
+2015-02-25T09:36:28 * the-t-in-rtf joined the channel
+2015-02-25T13:40:28 * Justin_o joined the channel
+2015-02-25T13:48:46 * yzen joined the channel
+2015-02-25T13:51:10 * cindyli joined the channel
+2015-02-25T14:11:32 * anvk joined the channel
+2015-02-25T14:17:27 * Sepideh joined the channel
+2015-02-25T14:18:28 * anastasiac joined the channel
+2015-02-25T14:29:48 * danaayotte joined the channel
+2015-02-25T14:30:34 <Justin_o> cindyli: is FLOE-270 ready for another round of code review?
+2015-02-25T14:30:45 <cindyli> yes, Justin_o
+2015-02-25T14:30:54 <Justin_o> cindyli: okay, i\'ll look at that now
+2015-02-25T14:30:59 <cindyli> thanks
+2015-02-25T14:34:56 * jessm joined the channel
+2015-02-25T14:40:46 * kasparnet joined the channel
+2015-02-25T14:40:57 <Justin_o> danaayotte: for the larger and smaller buttons in the first discovery tool, did we want it to read out "select to increase size" and "select to decrease size" or did we want to keep it as "larger" and "smaller" for now because it gets read every time you interact with the buttons.
+2015-02-25T14:41:53 * yzen joined the channel
+2015-02-25T14:43:21 <danaayotte> Justin_o we decided to leave it as "larger" and "smaller" for now
+2015-02-25T14:43:31 <Justin_o> danaayotte: thanks
+2015-02-25T14:48:23 <Justin_o> cindyli: I left you a couple small comments on the FLOE-270 pull request
+2015-02-25T14:48:38 <cindyli> ok. thanks, will do it now
+2015-02-25T14:49:14 <Justin_o> cindyli: thanks
+2015-02-25T14:49:24 <cindyli> np
+2015-02-25T14:58:04 * clown joined the channel
+2015-02-25T15:08:16 * simonjb joined the channel
+2015-02-25T15:09:07 * colinclark joined the channel
+2015-02-25T15:10:09 <colinclark> Hey Sepideh, do you want to chat with me and Kasper this afternoon--maybe after the GPII architecture meeting which ends at 1 pm--about ideas for your sprint group and stuff?
+2015-02-25T15:11:27 * Sepideh has left the channel
+2015-02-25T15:11:40 * kasparnet has quit
+2015-02-25T15:12:05 * Sepideh joined the channel
+2015-02-25T15:18:20 * kasparnet joined the channel
+2015-02-25T15:24:48 * danaayotte has quit
+2015-02-25T15:28:28 <Sepideh> Hi colinclark, sorry I just saw your message. That\xe2\x80\x99s a great idea if you and Kasper have time.
+2015-02-25T15:28:38 <colinclark> ok, cool
+2015-02-25T15:28:53 <colinclark> kasparnet: Are you free after the architecture meeting?
+2015-02-25T15:31:07 <cindyli> Justin_o: the pull request for FLOE-270 is ready for another review. thanks
+2015-02-25T15:31:33 <Justin_o> cindyli: thanks, i\'ll take another look
+2015-02-25T15:48:54 * michelled joined the channel
+2015-02-25T15:49:11 * the-t-in-rtf has quit
+2015-02-25T15:50:55 <Justin_o> Bosmon2: could you please add details to http://issues.fluidproject.org/browse/FLUID-5599, including those links from the RSF days.
+2015-02-25T15:52:08 <Justin_o> cindyli: would we still need the prefsEditorType option for the case where prefsEditors are constructed with grades instead of an auxiliary schema?
+2015-02-25T15:52:25 <Justin_o> or i guess they could just add the grades directly
+2015-02-25T15:52:51 <cindyli> that\'s true. also i think prefsEditorType option is only used in builder
+2015-02-25T15:54:13 <Justin_o> okay
+2015-02-25T15:55:26 <Justin_o> cindyli: i\'ve added those infusion improvement jiras to the floe iteration plan page http://wiki.fluidproject.org/display/fluid/Floe+Iteration+Plan
+2015-02-25T15:55:48 <cindyli> great. thanks, Justin_o
+2015-02-25T15:55:56 <Justin_o> no problem
+2015-02-25T15:56:35 * danaayotte joined the channel
+2015-02-25T15:57:19 * the-t-in-rtf joined the channel
+2015-02-25T16:00:10 * kasparnet has quit
+2015-02-25T16:00:25 * simonjb has quit
+2015-02-25T16:04:48 * the-t-in-rtf has quit
+2015-02-25T16:05:25 <Justin_o> cindyli: I merged in your FLOE-270 pull request
+2015-02-25T16:05:35 <cindyli> yay. thanks, Justin_o
+2015-02-25T16:05:44 <Justin_o> thank you
+2015-02-25T16:19:47 <Justin_o> cindyli: do you think that any of the new jiras i filed for Infusion improvements regarding the message bundles, will be affected by your FLUID-5552 pull?
+2015-02-25T16:21:21 <cindyli> checking how the message bundle is distributed..
+2015-02-25T16:24:20 <cindyli> it looks ok, Justin_o, seems my FLUID-5552 pull won\'t affect the split of the message bundle
+2015-02-25T16:24:31 <Justin_o> cindyli: thanks
+2015-02-25T16:24:41 <cindyli> np
+2015-02-25T16:29:36 * simonjb joined the channel
+2015-02-25T16:31:13 * yzen_ joined the channel
+2015-02-25T16:37:16 * kasparnet joined the channel
+2015-02-25T16:38:16 * Sepideh has quit
+2015-02-25T16:48:02 * Sepideh joined the channel
+2015-02-25T16:52:17 * michelled has quit
+2015-02-25T16:53:40 <kasparnet> colinclark, Sepideh: We\'re not gonna be able to leave here until after the arch. meeting, and I guess it\'s 45 mins to get to the office
+2015-02-25T16:53:46 <kasparnet> but can meet at 14\'ish
+2015-02-25T16:55:18 <Sepideh> colinclark, no worries. I\xe2\x80\x99ll be here till 5:30 today and can talk anytime that you and kasper had a little bit of time. And if we coun\xe2\x80\x99t meet, I\xe2\x80\x99ll try to some reading to prepare myself for the sprint. Thanks:)
+2015-02-25T16:55:37 <Sepideh> *couldn\xe2\x80\x99t
+2015-02-25T16:55:41 * michelled joined the channel
+2015-02-25T17:05:51 <clown> colinclark:  arch meeting\xe2\x80\xa6
+2015-02-25T17:06:45 <jhernandez> colinclark: we need you here! http://home.comcast.net/~bubblegumusic/archieslp.JPG
+2015-02-25T17:06:48 <jhernandez> :P
+2015-02-25T17:06:57 <colinclark> lol
+2015-02-25T17:07:25 <colinclark> gimme one sec
+2015-02-25T17:15:32 * Bosmon7 joined the channel
+2015-02-25T17:36:07 * colinclark has quit
+2015-02-25T17:45:04 * the-t-in-rtf joined the channel
+2015-02-25T18:00:25 <Bosmon7> Hi cindyli, Justin_o
+2015-02-25T18:00:37 <Justin_o> Bosmon7: hello
+2015-02-25T18:00:40 <Bosmon7> Here is the reference to the JAVER naming scheme for resource bundle fallback based on language
+2015-02-25T18:00:42 <Bosmon7> http://docs.oracle.com/javase/7/docs/api/java/util/ResourceBundle.html#getBundle(java.lang.String,%20java.util.Locale,%20java.lang.ClassLoader)
+2015-02-25T18:00:58 <cindyli> great. thanks, Bosmon7
+2015-02-25T18:01:08 <Bosmon7> I think just implementing this as far as baseName_language_country would be good enough for now
+2015-02-25T18:03:11 <Justin_o> Bosmon7: thanks, here\'s the jira for that work http://issues.fluidproject.org/browse/FLUID-5599?src=confmacro#comment-25378
+2015-02-25T18:03:20 <cindyli> Bosmon7: so the top component should add two more options for language and country?
+2015-02-25T18:03:39 <Justin_o> Bosmon7: please feel free to modify that jira as needed
+2015-02-25T18:09:58 * anvk has left the channel
+2015-02-25T18:17:11 * kasparnet has quit
+2015-02-25T18:28:16 * Sepideh has quit
+2015-02-25T18:28:28 * colinclark joined the channel
+2015-02-25T18:36:28 * Bosmon7 has quit
+2015-02-25T18:46:40 * Sepideh joined the channel
+2015-02-25T19:08:59 * Sepideh has quit
+2015-02-25T19:20:49 * Sepideh joined the channel
+2015-02-25T19:25:38 <jessm> anastasiac: i just tweeted about the sprint \xe2\x80\x94 JT wants us to use the #floea11ysprint hashtag \xe2\x80\x94 mind re(tweeting) from floe and IDRC?
+2015-02-25T19:25:50 <jessm> colinclark: you might want to use the # too ^
+2015-02-25T19:26:08 <colinclark> Man, I haven\'t tweeted in ages
+2015-02-25T19:26:10 <anastasiac> jessm, I don\xe2\x80\x99t have credentials for idrc, but i\xe2\x80\x99ll do fluidproject
+2015-02-25T19:26:15 <colinclark> I guess this is a good excuse
+2015-02-25T19:33:54 * kasparnet joined the channel
+2015-02-25T19:34:28 * anastasiac_ joined the channel
+2015-02-25T19:34:29 * kasparnet has quit
+2015-02-25T19:34:46 * kasparnet joined the channel
+2015-02-25T19:35:46 * Sepideh has quit
+2015-02-25T19:36:17 * anastasiac has quit
+2015-02-25T19:36:18 * anastasiac_ is now known as anastasiac
+2015-02-25T19:36:59 * Bosmon7 joined the channel
+2015-02-25T19:43:20 * cindyli1 joined the channel
+2015-02-25T19:44:52 * danaayotte has quit
+2015-02-25T19:46:48 * cindyli has quit
+2015-02-25T19:47:48 * cindyli1 has quit
+2015-02-25T20:00:57 * cindyli joined the channel
+2015-02-25T20:02:13 * cindyli1 joined the channel
+2015-02-25T20:02:13 * cindyli has quit
+2015-02-25T20:11:06 <colinclark> Bosmon7: There it is... https://www.npmjs.com/package/flocking
+2015-02-25T20:11:26 <colinclark> https://github.com/colinbdclark/Flocking/releases
+2015-02-25T20:11:57 <colinclark> Myles was very worried that someone would take the npm name "flocking"
+2015-02-25T20:11:59 <colinclark> someone with boids
+2015-02-25T20:12:05 <colinclark> but it looks like I still managed to get it
+2015-02-25T20:12:16 <Bosmon7> BOIDS!
+2015-02-25T20:12:28 <Bosmon7> cool
+2015-02-25T20:49:44 * cindyli1 has quit
+2015-02-25T20:50:11 * anastasiac has quit
+2015-02-25T20:51:29 * cindyli joined the channel
+2015-02-25T20:52:21 * anastasiac joined the channel
+2015-02-25T20:53:01 * danaayotte joined the channel
+2015-02-25T20:54:11 * Sepideh joined the channel
+2015-02-25T20:54:13 * michelled has quit
+2015-02-25T20:56:40 <clown> Justin_o:  this may be useful to your PHeT group: https://www.w3.org/wiki/SVG_Accessibility
+2015-02-25T20:56:51 <clown> Although, it is very early days.
+2015-02-25T20:57:32 <Justin_o> clown: thanks, i\'ll take  look at that
+2015-02-25T20:57:58 <clown> Justin_o:   I found it because I thought it was relevant to the group I\'m in.  I may still use it.
+2015-02-25T20:58:14 <clown> note that the W3C servers seems to be slow today\xe2\x80\xa6
+2015-02-25T20:58:33 <Justin_o> ah okay, that explains why it still hasn\'t open
+2015-02-25T20:58:42 <Justin_o> i feel like it is ironic that they aren\'t working well though :)
+2015-02-25T21:00:46 <Justin_o> clown: the section on sonification seems lacking
+2015-02-25T21:01:16 <clown> Justin_o:  as I said, "it is very early days".
+2015-02-25T21:01:22 <Justin_o> :)
+2015-02-25T21:01:41 <clown> The graphcis a11y group at W3C just started like last Dec.
+'
+

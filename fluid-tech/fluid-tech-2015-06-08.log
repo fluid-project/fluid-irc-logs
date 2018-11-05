@@ -1,0 +1,80 @@
+b'2015-06-08T10:42:20 * kasparnet joined the channel
+2015-06-08T11:32:27 <the-t-in-rtf> Greetings.   Does anyone know how to refer to a viewComponent\'s container from a selector definition?
+2015-06-08T11:33:05 <the-t-in-rtf> I want to define selectors that operate on the container by default, but allow others to override those definitions.
+2015-06-08T11:33:35 <the-t-in-rtf> I know that fluid.locate() with no arguments or a bogus argument will return the container.
+2015-06-08T11:33:45 <the-t-in-rtf> Can I just define the selector as null or ""
+2015-06-08T11:33:46 <the-t-in-rtf> ?
+2015-06-08T11:33:55 <the-t-in-rtf> ping @Bosmon
+2015-06-08T11:35:31 <Bosmon> Morning the-t-in-rtf
+2015-06-08T11:35:33 <Bosmon> You must use ""
+2015-06-08T11:35:46 <the-t-in-rtf> I am glad my second guess was reasonable.
+2015-06-08T11:35:48 <the-t-in-rtf> :)
+2015-06-08T11:36:37 <the-t-in-rtf> Thanks for the confirmation.  I am deep into the handlebars rework we discussed.
+2015-06-08T12:19:50 * Justin_o joined the channel
+2015-06-08T12:29:07 * cindyli joined the channel
+2015-06-08T12:54:32 * michelled joined the channel
+2015-06-08T13:12:58 * simonjb joined the channel
+2015-06-08T13:18:45 * simonjb has quit
+2015-06-08T13:23:25 * simonjb joined the channel
+2015-06-08T14:21:45 * michelled has quit
+2015-06-08T15:12:20 <the-t-in-rtf> I just discovered that using that.locate("") has side effects.  If you use that element\'s methods like replaceWith, the changes are not visible in that.dom (but are visible to jQuery).
+2015-06-08T15:12:41 <the-t-in-rtf> Using any named selector within the container results in changes that are visible within that.dom.
+2015-06-08T15:13:44 * kasparnet has quit
+2015-06-08T15:32:37 * michelled joined the channel
+2015-06-08T16:00:37 * clown joined the channel
+2015-06-08T16:05:37 * michelled has quit
+2015-06-08T16:21:24 <Bosmon> the-t-in-rtf - see our DOM binder API page at https://wiki.fluidproject.org/display/docs/DOM+Binder+API
+2015-06-08T16:21:40 <Bosmon> If you use any methods which replace DOM elements wholesale, you need to use the "clear()" method to clear its cache
+2015-06-08T16:22:26 <Bosmon> But in general you can\'t expect to replace the container node for a Fluid component completely without disrupting the binder
+2015-06-08T16:23:08 <Bosmon> This is the purpose of the special listener which I directed to you earlier, in the prefs framework panels.js:
+2015-06-08T16:23:08 <Bosmon> https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Panels.js#L147
+2015-06-08T16:29:13 * simonjb has quit
+2015-06-08T16:31:47 * kasparnet joined the channel
+2015-06-08T16:34:58 <the-t-in-rtf> Thanks.  Is there a general version of that I can reuse?
+2015-06-08T16:35:23 <the-t-in-rtf> Or should I just use the five lines of that in my own function?
+2015-06-08T16:35:54 <Bosmon> the-t-in-rtf - yes, please copy them, plus add a reference to where the other duplicate is
+2015-06-08T16:36:22 <the-t-in-rtf> Sounds good.
+2015-06-08T16:59:36 * simonjb joined the channel
+2015-06-08T17:06:33 * anastasiac joined the channel
+2015-06-08T17:19:47 * kasparnet has quit
+2015-06-08T17:32:03 * anastasiac has quit
+2015-06-08T17:35:22 * anastasiac joined the channel
+2015-06-08T17:49:21 * kasparnet joined the channel
+2015-06-08T18:26:57 * the-t-in-rtf has quit
+2015-06-08T18:27:31 * the-t-in-rtf joined the channel
+2015-06-08T18:33:29 <the-t-in-rtf> Unfortunately, using the existing container\'s constructor and selector results in an empty dom.
+2015-06-08T18:34:36 <the-t-in-rtf> @Bosmon: Is there something outside the class you sent that listens to the dom event?
+2015-06-08T18:34:53 <the-t-in-rtf> the onDomBind event, I mean?
+2015-06-08T18:35:56 <Bosmon> the-t-in-rtf - that function I pasted is bound to the listener
+2015-06-08T18:36:20 <the-t-in-rtf> Yes, I did something similar but wired in after the template content was updated.
+2015-06-08T18:36:29 <Bosmon> So what is actually in that.container.selector?
+2015-06-08T18:36:39 <the-t-in-rtf> just a sec.
+2015-06-08T18:37:08 <the-t-in-rtf> .viewport, the correct selector for the container.
+2015-06-08T18:37:14 <Bosmon> ok
+2015-06-08T18:37:42 <the-t-in-rtf> the constructor appears reasonable, but when called as in the example results in an empty dom.
+2015-06-08T18:37:54 <Bosmon> the-t-in-rtf - why do you imagine that is?
+2015-06-08T18:38:13 <Bosmon> Does any element matching the selector exist in the document?
+2015-06-08T18:38:48 <Bosmon> And when you say "an empty dom", I imagine you mean, "an empty jQuery"?
+2015-06-08T18:39:02 <the-t-in-rtf> yes, I can see that I need to restart the server to pick up some template changes.
+2015-06-08T18:39:06 <the-t-in-rtf> that may explain it.
+2015-06-08T18:40:08 <the-t-in-rtf> Yup, that was it.
+2015-06-08T18:40:14 <Bosmon> cool
+2015-06-08T18:42:53 <the-t-in-rtf> Thanks again.  I will expand the tests to cover some of the new features in the morning and submit a pull request.
+2015-06-08T18:42:59 <Bosmon> the-t-in-rtf - cheers!
+2015-06-08T19:10:19 * cindyli joined the channel
+2015-06-08T19:23:10 * the-t-in-rtf has quit
+2015-06-08T19:28:33 * kasparnet has quit
+2015-06-08T19:44:00 * the-t-in-rtf joined the channel
+2015-06-08T19:53:25 * anastasiac joined the channel
+2015-06-08T19:53:38 * anastasiac has quit
+2015-06-08T19:56:57 * the-t-in-rtf has quit
+2015-06-08T19:57:37 * kasparnet joined the channel
+2015-06-08T20:49:58 * kasparnet has quit
+2015-06-08T20:50:33 * the-t-in-rtf joined the channel
+2015-06-08T21:02:10 * clown has quit
+2015-06-08T21:22:25 * simonjb has quit
+2015-06-08T22:22:04 * Justin_o has quit
+2015-06-08T23:29:36 * cindyli joined the channel
+2015-06-08T23:55:42 * cindyli has quit
+'
+

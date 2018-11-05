@@ -1,0 +1,178 @@
+b"2017-08-07T22:52:35 <Bosmon> 15:34:01.035:  Transformer got lifecycleInstructions {
+2017-08-07T22:53:18 <Bosmon> I think the mere fact that it can take so long to process the logon is a problem in itself
+2017-08-07T22:53:40 <Bosmon> If the GPII takes 17 seconds to log the user on on any realistic system, we could say that it is not usable
+2017-08-07T22:54:02 <Bosmon> So I guess I'm not excited at increasing this timeout much further
+2017-08-07T22:55:19 <jhernandez> Bosmon: I do agree with you
+2017-08-07T22:55:41 <jhernandez> 17 secs is a lot
+2017-08-07T22:55:53 <Bosmon> So I think it would be useful to look into any resource constraints on the system, or get any insight into why it is running so slow
+2017-08-07T22:56:01 * gtirloni has quit
+2017-08-07T23:04:03 <jhernandez> one simple thing we can do is to run these tests from gpii/windows and see the differences between running them on node and electron
+2017-08-07T23:07:55 <Bosmon> yes, sounds useful
+2017-08-07T23:08:33 <Bosmon> Is it running in CI on a box identical to the vagrant one?
+2017-08-07T23:08:37 <Bosmon> Configured with 2GB of RAM
+2017-08-07T23:12:07 <Bosmon> When I run the JournalIntegrationTests in my own Windows vagrant box, it takes about 1 second to get the user's session opened
+2017-08-07T23:13:13 <jhernandez> yes, CI runs exactly the same box as we do
+2017-08-07T23:13:25 <jhernandez> (apparently)
+2017-08-07T23:13:51 <Bosmon> I wonder what physical hardware it is running it on
+2017-08-07T23:13:56 <Bosmon> And what else that machine is busy with
+2017-08-07T23:16:07 <jhernandez> it's true, I have better times here on my humble laptop
+"
+
+b'2017-08-07T10:03:14 <jhernandez> Bosmon: bonjour
+2017-08-07T10:03:53 <jhernandez> I\'ve tested the dpi stuff and so far it works fine
+2017-08-07T10:05:13 <jhernandez> this morning I\'ve been trying to reproduce this issue (https://ci.gpii.net/job/gpii-app-test/53/consoleFull) locally
+2017-08-07T10:05:22 <jhernandez> no success :/
+2017-08-07T10:06:22 <jhernandez> I\'ve already talked to amatas to see whether he\'s able to reproduce it
+2017-08-07T10:08:01 <Bosmon> "User with token os_win7 has no active session" ?
+2017-08-07T10:09:34 <jhernandez> yes
+2017-08-07T10:09:38 <jhernandez> weird
+2017-08-07T10:09:59 <Bosmon> Looks like some interesting kind of race condition
+2017-08-07T10:10:05 <Bosmon> Given that the user has already tried to log out
+2017-08-07T10:10:12 <Bosmon> But the logout process has taken some extreme amount of time
+2017-08-07T10:10:54 <Bosmon> I do notice these kinds of extreme delays inside the gpii-app
+2017-08-07T10:11:04 <Bosmon> Do you remember that other failure we get where it fails to log on within 2 seconds?
+2017-08-07T10:11:13 <Bosmon> And so triggers a failure in the JournalIntegrationTests
+2017-08-07T10:11:15 <jhernandez> yeah, I\'ve asked Alfredo whether a hugh cpu/memory load can be the reason
+2017-08-07T10:11:18 <Bosmon> I suspect this is something very similar
+2017-08-07T10:11:39 <jhernandez> mm, I can\'t remember any issue like that
+2017-08-07T10:11:55 <Bosmon> Fish had a test failure like that on a previous commit
+2017-08-07T10:12:02 <Bosmon> Some time last week
+2017-08-07T10:12:18 <jhernandez> interesting
+2017-08-07T10:12:59 <jhernandez> but IIRC she got rid of them after updating the refs
+2017-08-07T10:13:08 <Bosmon> Well, she seemed to get rid of them
+2017-08-07T10:13:23 <Bosmon> I predict we will get random failures like this scattered in different parts of the code
+2017-08-07T10:13:35 <Bosmon> So actually the stack trace is quite interesting here
+2017-08-07T10:14:06 <Bosmon> Praise God we decided not to go with asynchronous promises : P
+2017-08-07T10:14:39 <Bosmon> Its in the middle of     at Object.gpii.settingsHandlers.checkRereadSettings (\\\\vboxsrv\\vagrant\
+ode_modules\\universal\\gpii\
+ode_modules\\settingsHandlers\\src\\settingsHandlerUtilities.js:242:19)
+2017-08-07T10:15:11 <Bosmon> In the middle of a big promise sequence
+2017-08-07T10:15:22 <jhernandez> a "big promise"
+2017-08-07T10:15:26 <jhernandez> la gran promesa!
+2017-08-07T10:15:29 <Bosmon> HAHAHAHA
+2017-08-07T10:16:21 <Bosmon> Better to have la gran tortuga
+2017-08-07T10:16:43 <Bosmon> And so it has got up to here:     at gpii.lifecycleManager.processUpdate (\\\\vboxsrv\\vagrant\
+ode_modules\\universal\\gpii\
+ode_modules\\lifecycleManager\\src\\LifecycleManager.js:629:19)
+2017-08-07T10:18:05 <Bosmon> So it has been trying to write the mousTrailing setting
+2017-08-07T10:18:19 <Bosmon> Actually all of them
+2017-08-07T10:18:40 <Bosmon> It has 3 tries
+2017-08-07T10:18:46 <Bosmon> Presumably it then succeeds
+2017-08-07T10:19:39 <Bosmon> It jams for 5 seconds trying to logout, and then seems to succeed after 6 seconds
+2017-08-07T10:26:13 <Bosmon> Ok
+2017-08-07T10:26:45 <Bosmon> So I guess it\'s unclear whether the logout succeeds because we genuinely succeed in writing the settings, or because of the error we trigger in trying to write them
+2017-08-07T10:26:49 <Bosmon> I guess it can\'t be the latter
+2017-08-07T10:27:07 <Bosmon> Because the error we trigger in trying to write them is because we have logged out
+2017-08-07T10:33:40 <Bosmon> Ok
+2017-08-07T10:33:46 <Bosmon> We have this disturbing comment here: https://github.com/GPII/universal/blob/master/gpii/node_modules/settingsHandlers/src/settingsHandlerUtilities.js#L237
+2017-08-07T10:34:04 <Bosmon> I think we just need to axe the "rewriteEvery" behaviour
+2017-08-07T10:34:23 <Bosmon> In the years since then stegru has improved our settings handlers to the stage where we don\'t need it
+2017-08-07T10:34:41 <Bosmon> And, more, I think he has also introduced some genuinely async settings handlers that this comment warns against
+2017-08-07T10:34:53 <Bosmon> So the only effect of this behaviour is to corrupt the system if a settings action takes more than 4 seconds
+2017-08-07T10:35:33 <jhernandez> mmmm
+2017-08-07T10:37:07 <Bosmon> The fact you can\'t reproduce this behaviour locally only adds to the idea that this is a race condition triggered by a loaded machine
+2017-08-07T10:37:49 <Bosmon> https://github.com/GPII/universal/blob/master/gpii/node_modules/lifecycleManager/src/LifecycleManager.js#L27
+2017-08-07T10:37:55 <Bosmon> Let\'s set this value to 0 and see what happens
+2017-08-07T10:38:57 <jhernandez> right, let\'s see what happens
+2017-08-07T10:40:14 * amatas joined the channel
+2017-08-07T10:44:21 <amatas> jhernandez: these are the steps that the CI run for the gpii-app repository: https://github.com/GPII/ci-service/blob/master/jenkins_jobs/gpii-app.yml#L43-L84
+2017-08-07T10:44:43 <amatas> check the "shell" lines, 51,66 and 84
+2017-08-07T10:45:34 <amatas> if I check out the PR #19 and run those commands, I get "Error: ENOENT: no such file or directory, open \'\\\\vboxsrv\\vagrant\
+ode_modules\\electron\\path.txt\'"
+2017-08-07T10:47:24 <jhernandez> amatas: right, I\'m triggering the tests via winrm as the ci does - but can\'t reproduce your issue either
+2017-08-07T10:48:58 <amatas> do you have a different issue?
+2017-08-07T10:49:31 <jhernandez> amatas: silly question but, did you provision the machine? this is, npm install has completed installing everything
+2017-08-07T10:50:29 <amatas> I run the https://github.com/GPII/ci-service/blob/master/jenkins_jobs/gpii-app.yml#L51 and seems that that command provision the machine
+2017-08-07T10:51:29 <amatas> the node_modules directory contains a lot of npm packages
+2017-08-07T10:51:42 <jhernandez> Bosmon: I set the rewriteEvery to 0 and it worked fine - no failing tests
+2017-08-07T10:51:48 <jhernandez> amatas: okay
+2017-08-07T10:52:24 <Bosmon> jhernandez - so the failures in CI were fairly consistent?
+2017-08-07T10:52:38 <jhernandez> then, 3 different results in 3 different set-ups
+2017-08-07T10:55:41 <jhernandez> Bosmon: checking the results from the previous ci build of the same pull request
+2017-08-07T10:56:28 <amatas> jhernandez: I\'m going to try again with the node_modules directory  wiped
+2017-08-07T10:59:02 * stegru joined the channel
+2017-08-07T10:59:56 <jhernandez> Bosmon: they are not consistent, check this failure https://ci.gpii.net/job/gpii-app-test/52/consoleText
+2017-08-07T11:01:33 <jhernandez> in that case one of the failures are: Restoration of bad journal file doesn\'t jam system
+2017-08-07T11:14:58 <Bosmon> jhernandez - yes, that is the one I mentioned earlier
+2017-08-07T11:18:06 * gtirloni joined the channel
+2017-08-07T11:43:46 <amatas> jhernandez: sorry for the mess, but with a clean checkout of the repository I get the same errors that shown at the CI
+2017-08-07T11:45:00 <amatas> jq: FAIL: Module "gpii.tests.acceptance.windows.builtIn.config tests" Test name "Journal state and restoration" - Message: Received correct journal time in journal list markup - at sequence position 13 of 27
+2017-08-07T11:45:05 <amatas> jq: FAIL: Module "gpii.tests.acceptance.windows.builtIn.config tests" Test name "Journal state and restoration" - Message: Received correct journal time in journal list markup - at sequence position 25 of 27
+2017-08-07T11:45:11 <amatas> jq: FAIL: Module "gpii.tests.acceptance.windows.builtIn.config tests" Test name "Restoration of bad journal file doesn\'t jam system" - Message: Received correct journal time in journal list markup - at sequence position 13 of 15
+2017-08-07T11:45:27 <amatas> A total of 1113 tests run, with 3 failed tests.
+2017-08-07T11:48:06 <jhernandez> amatas: interesting
+2017-08-07T12:41:21 * gtirloni joined the channel
+2017-08-07T12:58:34 <Bosmon> yup
+2017-08-07T12:58:37 <Bosmon> That is the one
+2017-08-07T12:58:48 <Bosmon> I\'ll write up a JIRA and make a pull for all of these issues
+2017-08-07T12:59:03 * pratik_r joined the channel
+2017-08-07T12:59:13 * pratik_r has left the channel
+2017-08-07T13:06:36 <jhernandez> Bosmon: oh, nice - can you reproduce the issue locally? I\'ll try on my mac now since amatas is telling me that he could reproduce it on 3 different set-ups. But so far, I can\'t reproduce it here
+2017-08-07T13:18:24 * gtirloni joined the channel
+2017-08-07T13:43:55 <Bosmon> No, I can\'t reproduce it
+2017-08-07T14:06:09 <jhernandez> :/ can\'t reproduce in my mac either
+2017-08-07T14:07:37 * javjarfer joined the channel
+2017-08-07T14:15:11 <gtirloni> jhernandez: I can try to reproduce it here, what\'s the PR#?
+2017-08-07T14:17:05 <jhernandez> gtirloni: hey
+2017-08-07T14:17:15 <jhernandez> this is the pull request https://github.com/GPII/gpii-app/pull/19
+2017-08-07T14:19:10 <gtirloni> ok
+2017-08-07T14:44:48 * mrtyler joined the channel
+2017-08-07T14:51:58 <gtirloni> All tests concluded: 1110/1113 total passed in 580001ms - FAIL
+2017-08-07T14:52:13 <gtirloni> vbox 5.1.26, vagrant 1.9.7, inclusivedesign/windows10-eval-x64-Apps v2017.07.15
+2017-08-07T14:52:20 <gtirloni> jhernandez: ^
+2017-08-07T14:53:23 <gtirloni> there\'s an warning about Electron being blocked by Windows Firewall
+2017-08-07T14:54:04 <gtirloni> \\\\vboxsrv\\vagrant\
+ode_modules\\electron\\dist\\electron.exe
+2017-08-07T15:02:22 <gtirloni> adding the firewall exception doesn\'t help subsequent tests so it doesn\'t seem related, i think.
+2017-08-07T15:40:57 * mrtyler has quit
+2017-08-07T15:45:02 <jhernandez> right, not related
+2017-08-07T15:53:10 <jhernandez> okay, updated vbox on my mac, started from a fresh copy of gpii-app and now I\'m getting a different error
+2017-08-07T16:02:14 * mrtyler joined the channel
+2017-08-07T16:11:31 <jhernandez> this time, the problem is related with a bounce rule rejecting to log out a user
+2017-08-07T16:52:46 <Bosmon> Hey jhernandez - I\'ve raised https://issues.gpii.net/browse/GPII-2522 for our race conditions, will have a pull shortly
+2017-08-07T16:52:54 <Bosmon> Thanks for the fix for DPI, stegru - retesting now
+2017-08-07T17:00:10 <jhernandez> Bosmon: okay, thanks for creating the JIRA! I\'m still trying to reproduce the issue here so we can debug more easily - I guess that I\'ll need to stress my virtual machine and see whether it fails consistently
+2017-08-07T17:19:35 <stegru> i\'m sick of this SPI function
+2017-08-07T17:21:42 <Bosmon> Hey there stegru - all merged up now
+2017-08-07T17:21:44 <Bosmon> Which SPI function?
+2017-08-07T17:31:08 <stegru> \'the\' SPI function
+2017-08-07T17:32:03 <stegru> whenever there is a random failure, it\'s guaranteed that SystemParametersInfo is somewhere in the log
+2017-08-07T17:34:50 <stegru> also, I\'m underwhelmed by your review of SPI, Bosmon :)
+2017-08-07T17:34:58 <stegru> DPI, i meant
+2017-08-07T17:39:57 * javjarfer has quit
+2017-08-07T18:02:33 * javjarfer joined the channel
+2017-08-07T18:04:15 <jhernandez> DPI merged - yay!!
+2017-08-07T18:28:17 <Bosmon> stegru - why\'s that
+2017-08-07T18:28:21 <Bosmon> Were there no comments?
+2017-08-07T18:31:39 <Bosmon> jhernandez - ok, looks like this gpii-app CI run got the settings handler failure again
+2017-08-07T18:31:48 <Bosmon> I\'ll have my pull in a bit ...
+2017-08-07T18:32:41 <jhernandez> yeah, I updated the pull to be in sync with both masters of universal and windows
+2017-08-07T18:32:55 <jhernandez> thanks for taking care of it
+2017-08-07T18:33:54 <jhernandez> just let me know when it\'s ready so I can push further updates on my end and see whether it solves the issue on ci
+2017-08-07T18:34:28 <jhernandez> also, I\'ll be around if you need me to do some debugging
+2017-08-07T18:37:08 * javjarfer has quit
+2017-08-07T18:53:00 * amatas has quit
+2017-08-07T18:55:32 * amatas joined the channel
+2017-08-07T20:33:56 <Bosmon> jhernandez - here\'s the universal pull
+2017-08-07T20:36:05 * stegru has quit
+2017-08-07T20:47:33 <jhernandez> Bosmon: cool, thanks! I\'ll give it a try after dinner :)
+2017-08-07T22:23:02 * amatas has quit
+2017-08-07T22:42:51 <Bosmon> Hi there jhernandez
+2017-08-07T22:43:02 <Bosmon> So interestingly it failed again
+2017-08-07T22:43:05 <Bosmon> But we\'re getting closer
+2017-08-07T22:43:28 <Bosmon> It seems that the system takes nearly 6 seconds to parse the journal files
+2017-08-07T22:43:36 <Bosmon> I\'ll simply double the timeout again : P
+2017-08-07T22:45:23 <Bosmon> Well wait
+2017-08-07T22:45:26 <Bosmon> This first failure is crazy
+2017-08-07T22:45:49 <Bosmon> 15:34:29.472:  Parsed link date 2017-08-07T22:34:17.129Z to time 1502145257129 expected to be in range [1502145240347, 1502145244347]
+2017-08-07T22:46:21 <Bosmon> Here it took 17 seconds
+2017-08-07T22:50:01 <Bosmon> Well, I guess it\'s true
+2017-08-07T22:50:02 <Bosmon> 15:33:59.519:  Successfully queued test Journal state and restoration
+2017-08-07T22:50:08 <Bosmon> This is when the test run starts
+2017-08-07T22:50:23 <jhernandez> yeah, I found one with 8 secs, but you beat me with 17
+2017-08-07T22:51:04 <Bosmon> It takes 6 seconds just to get the matchmaking done: 15:34:06.988:  userLogonHandling.startLifecycle got final payload {
+2017-08-07T22:51:16 <Bosmon> My suspicion is that this is something to do with the logging
+2017-08-07T22:51:34 <Bosmon> Since when it is logging short payloads it bowls along quite quickly
+2017-08-07T22:52:35 <Bosmon> It\'s got the lifecycleInstructions within a couple of seconds
+'
+

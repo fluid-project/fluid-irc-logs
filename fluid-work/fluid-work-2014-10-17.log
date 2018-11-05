@@ -1,0 +1,243 @@
+b'2014-10-17T17:47:20 <Bosmon> https://github.com/fluid-project/infusion/blob/master/tests/lib/qunit/js/qunit.js#L1225
+2014-10-17T17:47:23 <Bosmon> Here\'s the relevant code
+2014-10-17T17:47:29 <Bosmon> You can see that it is just hard-coded in
+2014-10-17T17:48:09 <Justin_o> ah and this is where we get those global failures from
+2014-10-17T17:48:14 <Bosmon> right
+2014-10-17T17:48:37 <Justin_o> yes.. it\'s too bad it wasn\'t exposed
+2014-10-17T17:49:12 <Bosmon> I guess in theory we could rescue this by creating an entire node.js context just to keep QUnit in, and give it a little fake "window" object in a sandbox
+2014-10-17T17:49:21 <Bosmon> And then when it assigns its onerror handler in, we could grab it : P
+2014-10-17T17:50:42 <Bosmon> But it\'s a lot of work to go to, to rescue 20 lines of code.....
+2014-10-17T17:54:54 <Bosmon> Looks like there have been very big changes to qunit since we last took a copy............
+2014-10-17T17:55:06 <Bosmon> It has all become modularised and now has a build system
+2014-10-17T17:55:14 <Justin_o> really
+2014-10-17T17:55:31 <Justin_o> how long ago did they do that.. i thought we just updated earlier this year
+2014-10-17T17:57:54 <Bosmon> no
+2014-10-17T17:58:01 <Bosmon> Our version is about 15 months old
+2014-10-17T17:58:07 <Justin_o> it\'s that old
+2014-10-17T17:58:13 <Bosmon> Wow, and looks like they are planning very major API changes for QUnit 2.0
+2014-10-17T17:58:14 <Justin_o> so we didn\'t update it when we updated jQuery?
+2014-10-17T17:58:26 <Bosmon> Including removing QUnit.start() and QUnit.stop()
+2014-10-17T17:58:36 <Justin_o> Bosmon: what are they replacing that with?
+2014-10-17T17:58:43 <Bosmon> I\'m not sure
+2014-10-17T17:58:50 <Justin_o> hmm
+2014-10-17T17:58:52 <Bosmon> Just browsing their current trunk source
+2014-10-17T17:59:13 <Bosmon> uff
+2014-10-17T17:59:18 <Bosmon> They\'re also removing QUnit.asyncTest
+2014-10-17T18:01:41 <Justin_o> they must have a new mechanism for all this
+2014-10-17T18:06:11 <anastasiac> cindyli, just saw your FLUID-5529 bug. Did I miss some when I worked on http://issues.fluidproject.org/browse/FLUID-5523 ?
+2014-10-17T18:07:12 <Justin_o> Bosmon, anastasiac: do you know if the keyboard a11y plugin is doing something to focus. I\'m finding that the mouse isn\'t able to actually put focus on something, or at least not retain it.
+2014-10-17T18:07:18 <anastasiac> or is your issue referring to something else, cindyli?
+2014-10-17T18:07:19 <Justin_o> you can sort of see this in the current demo
+2014-10-17T18:07:20 <Justin_o> http://build.fluidproject.org/infusion/demos/keyboard-a11y/
+2014-10-17T18:07:41 <Justin_o> if you use the keyboard to set the rank and then use the mouse to change it, you can see that the focus styling remains on the one that was changed by the keyboard
+2014-10-17T18:08:46 <cindyli> anastasiac: ha, just noticed urls have been fixed in the master. might just Justin_o\'s branch is not up to date. checking..
+2014-10-17T18:08:50 <Bosmon> Justin_o - I think it\'s more that we are not doing anything
+2014-10-17T18:09:00 <Bosmon> I believe that non-form HTML elements do not focus when clicked
+2014-10-17T18:09:22 <Justin_o> Bosmon: oh
+2014-10-17T18:09:30 <Justin_o> so i should just push focus to it on click?
+2014-10-17T18:09:37 <Bosmon> Well, you might
+2014-10-17T18:09:43 <Bosmon> In general this kind of thing is very hazardous
+2014-10-17T18:09:49 <Justin_o> hmm
+2014-10-17T18:09:56 <Justin_o> so i should just leave it?
+2014-10-17T18:10:08 <Bosmon> It\'s hard to give a clear answer on that
+2014-10-17T18:10:13 <Justin_o> okay
+2014-10-17T18:10:41 <Bosmon> A lot depends on the effect you are trying to achieve - whether it relates to focus styling, or the behaviour experienced by a screenreader user, or other
+2014-10-17T18:10:57 <Justin_o> hmm.. focus styling in this case i guess
+2014-10-17T18:11:25 <Justin_o> but maybe it doesn\'t matter
+2014-10-17T18:11:55 <Justin_o> it\'s more obvious in my changes though because the individual star gets focus styling instead of the whole set
+2014-10-17T18:12:44 <cindyli> anastasiac: mainly cuz Justin_o\'s branch is not up to date. seems only one place is missed out in ur fix - https://github.com/fluid-project/infusion/blob/master/tests/manual-tests/components/inlineEdit/rich/json/config.json#L11
+2014-10-17T18:13:22 <Bosmon> Justin_o - I guess what the issue really is, is that the plugin works by dynamically manipulating tabindex so that the currently selected element (with the keyboard) has tabindex 0
+2014-10-17T18:13:31 <Bosmon> This means that it, and only it, can participate in focus
+2014-10-17T18:13:38 <anastasiac> ah, good catch, cindyli. Do you think that warrants the whole JIRA, or should you just fix it in your current work?
+2014-10-17T18:13:50 <Bosmon> If we wanted to complete this issue, we might improve the behaviour so that clicking on the element with the mouse has the same effect
+2014-10-17T18:14:14 <Bosmon> Oh, I see that it does
+2014-10-17T18:14:21 <Justin_o> Bosmon: you mean add tabindex on click?
+2014-10-17T18:14:42 <Bosmon> Justin_o - yes - in fact I think this is really just a timing issue
+2014-10-17T18:14:56 <Bosmon> Since at the time the browser services the click event, the star you click on has tabindex of -1
+2014-10-17T18:15:02 <Bosmon> Which implies that the browser won\'t want to focus it
+2014-10-17T18:15:28 <Bosmon> "in theory" this could be a harmless fix to the a11y plugin, but "in practice", all hell could break loose : P
+2014-10-17T18:15:38 <cindyli> anastasiac: i think should be easy to fix in the current work. what do you think, Justin_o
+2014-10-17T18:16:05 <Justin_o> cindyli: sure, just leave a comment on the pull for me
+2014-10-17T18:16:15 <cindyli> thanks, Justin_o and anastasiac
+2014-10-17T18:16:25 <Justin_o> Bosmon: :) i\'m not sure how it could be fixed, would we have to add tabindex on mouseover?
+2014-10-17T18:16:41 <Bosmon> Justin_o - the tabindex already arrives, as a result of the natural "select" logic
+2014-10-17T18:16:58 <Bosmon> What we would add, would be a (probably asynchronous) handler that after the click, moved focus onto the now focusable element
+2014-10-17T18:17:28 <Justin_o> Bosmon: okay
+2014-10-17T18:17:33 <Bosmon> Whether the browser chooses to honour it synchronously or asynchronously would probably be highly browser-dependent
+2014-10-17T18:17:36 <Justin_o> so still manually pushing focus
+2014-10-17T18:17:46 <Bosmon> So we would have to do a lot of testing to verify the functionality
+2014-10-17T18:17:53 <Justin_o> :(
+2014-10-17T18:46:11 * cindyli has quit
+2014-10-17T19:02:23 * cindyli joined the channel
+2014-10-17T19:26:24 * michelled joined the channel
+2014-10-17T19:32:12 * the-t-in-rtf has quit
+2014-10-17T19:37:44 * the-t-in-rtf joined the channel
+2014-10-17T19:37:53 * the-t-in-rtf has quit
+2014-10-17T20:07:55 * jhung has quit
+2014-10-17T20:09:01 * jhernand1z has quit
+2014-10-17T20:19:13 * michelled has quit
+2014-10-17T20:27:58 * cindyli has quit
+2014-10-17T20:52:26 * michelled joined the channel
+2014-10-17T21:09:40 * clown has quit
+2014-10-17T21:14:16 * yzen has quit
+2014-10-17T21:19:05 * anastasiac has quit
+2014-10-17T21:24:20 * kasparnet has quit
+2014-10-17T21:28:24 * simonjb has quit
+2014-10-17T21:38:41 * michelled has quit
+2014-10-17T22:10:12 * kasparnet joined the channel
+2014-10-17T23:52:11 * michelled joined the channel
+2014-10-17T23:52:40 * michelled has quit
+'
+
+b'2014-10-17T00:26:02 * colinclark joined the channel
+2014-10-17T00:27:03 * colinclark has quit
+2014-10-17T00:43:39 * kasparnet joined the channel
+2014-10-17T00:47:47 * kasparnet has quit
+2014-10-17T02:17:43 * jhernandez has quit
+2014-10-17T02:43:36 * yzen joined the channel
+2014-10-17T02:56:04 * yzen has quit
+2014-10-17T02:56:39 * yzen joined the channel
+2014-10-17T03:02:52 * yzen has quit
+2014-10-17T03:18:49 * yzen joined the channel
+2014-10-17T04:18:08 * yzen has quit
+2014-10-17T04:18:17 * yzen_ joined the channel
+2014-10-17T05:43:04 * kasparnet joined the channel
+2014-10-17T06:10:54 * kasparnet has quit
+2014-10-17T06:24:55 * yzen_ has quit
+2014-10-17T06:52:32 * yzen joined the channel
+2014-10-17T06:57:30 * yzen has quit
+2014-10-17T09:08:25 * jhernandez joined the channel
+2014-10-17T09:38:13 * yzen joined the channel
+2014-10-17T09:42:52 * yzen has quit
+2014-10-17T09:44:48 * slim_ joined the channel
+2014-10-17T09:45:49 * slim__ joined the channel
+2014-10-17T09:49:28 * slim_ has quit
+2014-10-17T10:02:46 * the-t-in-rtf has quit
+2014-10-17T10:03:05 * the-t-in-rtf joined the channel
+2014-10-17T10:24:17 * jhernand1z joined the channel
+2014-10-17T10:26:46 * jhernandez has quit
+2014-10-17T11:39:22 * kasparnet joined the channel
+2014-10-17T11:40:28 * kasparnet has quit
+2014-10-17T11:41:02 * jhung joined the channel
+2014-10-17T11:57:30 * michelled joined the channel
+2014-10-17T12:13:16 * Justin_o joined the channel
+2014-10-17T12:15:08 * kasparnet joined the channel
+2014-10-17T12:15:20 * yzen joined the channel
+2014-10-17T12:19:18 * slim__ has quit
+2014-10-17T12:41:55 * cindyli joined the channel
+2014-10-17T12:53:09 * yzen has quit
+2014-10-17T13:11:29 * heidiv joined the channel
+2014-10-17T13:18:19 * yzen joined the channel
+2014-10-17T14:01:23 * slim_ joined the channel
+2014-10-17T14:11:34 * clown joined the channel
+2014-10-17T15:12:47 * anastasiac joined the channel
+2014-10-17T15:14:28 * heidiv has quit
+2014-10-17T15:15:43 * slim_ has quit
+2014-10-17T15:28:16 * slim_ joined the channel
+2014-10-17T15:39:47 * jhung is now known as jhung_away
+2014-10-17T15:43:46 * cindyli has quit
+2014-10-17T15:47:39 * simonjb joined the channel
+2014-10-17T16:06:03 * cindyli joined the channel
+2014-10-17T16:08:46 * slim_ has quit
+2014-10-17T16:37:32 * michelled has quit
+2014-10-17T16:45:30 * jhung_away is now known as jhung
+2014-10-17T17:06:23 <Justin_o> Bosmon: when the onCreate event is fired, what should happen with this.
+2014-10-17T17:06:27 <Justin_o> https://www.irccloud.com/pastebin/CkMp32mK
+2014-10-17T17:10:02 <Bosmon> Justin_o - the proper behaviour should be that the 1st element of the list should be discarded
+2014-10-17T17:10:21 <Justin_o> Bosmon: okay.. that\'s what happening, but i hadn\'t expected that
+2014-10-17T17:10:44 <Justin_o> Bosmon: i\'m wondering why it can take an array if it will only honour the last one
+2014-10-17T17:10:47 <Bosmon> Justin_o - you don\'t get to violate the namespace laws by shoving an array of listeners in place of one : P
+2014-10-17T17:11:05 <Justin_o> Bosmon: :) okay, but maybe it shouldn\'t accept an array at all then
+2014-10-17T17:11:27 <Bosmon> Justin_o - well, the syntax is that an array of listeners is acceptable for any entry in "listeners"
+2014-10-17T17:11:44 <Bosmon> In fact with the current framework, the first listener entry isn\'t discarded completely
+2014-10-17T17:11:56 <Justin_o> Bosmon: no, what happens to it?
+2014-10-17T17:11:59 <Bosmon> If you called onCreate.removeListener("makeFiveStarsNavigable") you would uncover it again
+2014-10-17T17:12:25 <Justin_o> would both listeners be added to the onCreate method then?
+2014-10-17T17:12:34 <Bosmon> Justin_o - no, only one listener is ever attached at a time
+2014-10-17T17:12:45 <Bosmon> But the new semantic is that any overridden listeners are placed in a stack
+2014-10-17T17:12:46 <Justin_o> Bosmon: so what would happen if the array had 3 listeners?
+2014-10-17T17:13:01 <Bosmon> Justin_o - you would only ever get the most recently added listener active
+2014-10-17T17:13:09 <Bosmon> This has always been the semantic
+2014-10-17T17:13:11 <Justin_o> and if you removed the namespace?
+2014-10-17T17:13:24 <Justin_o> by calling onCreate.removeListener("makeFiveStarsNavigable")
+2014-10-17T17:13:29 <Justin_o> what would happen?
+2014-10-17T17:13:29 <Bosmon> Recently there has been a change that if you removed the listener by namespace, you would uncover the next one back
+2014-10-17T17:13:31 <Bosmon> And so on
+2014-10-17T17:13:41 <Bosmon> If you removed the namespace with 3, the 2nd one would be active
+2014-10-17T17:13:44 <Justin_o> so you would have to remove it twice to get to the first
+2014-10-17T17:13:47 <Bosmon> Yes
+2014-10-17T17:14:23 <Justin_o> okay.. what happens with overriding? os if another grade were to change a listener
+2014-10-17T17:14:37 <Bosmon> The rules are always the same, irrespective of how the listeners get there
+2014-10-17T17:14:39 <Justin_o> and then a user of that grade wanted to remove the listener.. would the original comeback or none
+2014-10-17T17:14:46 <Bosmon> Whether they are added all at once, or separately
+2014-10-17T17:15:28 <Justin_o> Bosmon: wouldn\'t that be confusing for a user much further up the stack of merged grades, since they may not know what has been overridden
+2014-10-17T17:15:39 <Bosmon> Justin_o - well, they always know what is overridden
+2014-10-17T17:15:45 <Bosmon> The most recent overrider always wins
+2014-10-17T17:16:14 <Bosmon> In practice noone removes listeners in any case, unless they had added them programmatically
+2014-10-17T17:16:19 <Justin_o> hmm.. i guess i mean, they may not know that anything was overridden vs what is new configuration in the most recent grade
+2014-10-17T17:16:29 <Bosmon> So this behaviour isn\'t particularly relevant to the grade overriding situation
+2014-10-17T17:16:48 <Bosmon> Well in practice, noone knows anything, unless they did it themselves : P
+2014-10-17T17:16:56 <Justin_o> Bosmon: that\'s true.. i guess they would more typically just have it do something innocuous as opposed to removing.
+2014-10-17T17:16:57 <Bosmon> You can never know how many further grades down the stack there might be
+2014-10-17T17:17:14 <Bosmon> This behaviour was put in mainly for the rare kind of programmatic users that still exist
+2014-10-17T17:17:31 <Bosmon> As it turns out, it\'s crucial to be able to stack up error handlers in node.js in this way
+2014-10-17T17:17:43 <Bosmon> And this is all done programmatically, whenever a module loads or a test case runs
+2014-10-17T17:18:11 <Bosmon> And actually you can imagine that the behaviour is also helpful in some IoC-driven situations too
+2014-10-17T17:18:23 <Bosmon> Imagine a dynamically generated component, which appeared partway through the lifetime of its parent
+2014-10-17T17:18:32 <Bosmon> And it contributed a namespaced listener to one of its parents events
+2014-10-17T17:18:44 <Bosmon> This would "knock off" any existing listener that the parent had there
+2014-10-17T17:19:02 <Bosmon> Now, under the old behaviour, once this component is destroyed, its listener would be deregistered, leaving nothing behind
+2014-10-17T17:19:27 <Bosmon> And this is very likely not what anyone wants - the process of creating and destroying a subcomponent has permanently destroyed an existing listener that it knew nothing about
+2014-10-17T17:19:44 <Bosmon> Under the new behaviour, when the subcomponent is destroyed, the listener it contributed will be removed, restoring the previous "top listener"
+2014-10-17T17:20:27 <Justin_o> Bosmon: okay.. i think that makes sense, and what we are saying is don\'t remove a listener you didn\'t put there.. if you don\'t want the behaviour, just override to a no-op
+2014-10-17T17:20:40 <Bosmon> Justin_o - right
+2014-10-17T17:20:57 <Bosmon> You can always suppress an existing listener by sticking fluid.identity in there
+2014-10-17T17:21:21 <Bosmon> And as it turns out, there\'s no declarative way to remove a listener in any case
+2014-10-17T17:22:37 <Bosmon> And so programmatic removal of listeners is only done in very special cases
+2014-10-17T17:22:50 <Bosmon> Typically when you\'re interacting with some external system whose lifecycle you have no control over
+2014-10-17T17:23:02 <Bosmon> e.g. the node module system, or QUnit
+2014-10-17T17:33:53 <Justin_o> Bosmon: right
+2014-10-17T17:34:31 <Bosmon> The situation I ran into was where kettle wanted to contribute one kind of uncaught exception handler, and then node-jqunit contributed another one
+2014-10-17T17:34:36 <Bosmon> The combination of those two was fine
+2014-10-17T17:34:37 <Justin_o> Bosmon: thanks for the explanation.. i think the acceptance of an array is still a bit confusing, but I can see how you\'d want to keep things consistent.. so i guess it will be a documentation thing
+2014-10-17T17:34:48 <Bosmon> but then I wanted to write a test case which TESTED the effect of the uncaught exception handler
+2014-10-17T17:35:10 <Bosmon> So I wanted, just for the duration of the test, to override "whatever the current uncaught exception handler was", but at the end of the test, to restore it
+2014-10-17T17:35:12 <Justin_o> Bosmon: ah
+2014-10-17T17:35:26 <Justin_o> how do you restore it?
+2014-10-17T17:35:49 <Bosmon> Justin_o - so I used the namespaced listener scheme to organise handlers to the node.js uncaught exception handler
+2014-10-17T17:36:03 <Bosmon> So all I need to do now is at the end of the test, to remove the particular listener by namespace
+2014-10-17T17:36:11 <Bosmon> Which then restores whatever other one happened to be at the top of the stack
+2014-10-17T17:36:40 <Bosmon> We actually already have a custom scheme for something like this in the "fluid.pushSoftFailure" scheme - but it seemed wasteful to just hard-code yet another one
+2014-10-17T17:36:42 <Justin_o> Bosmon: right i see
+2014-10-17T17:36:48 <Bosmon> fluid.pushSoftFailure deals with the semantics of fluid.fail()
+2014-10-17T17:37:05 <Bosmon> Whereas what I wanted to deal with here was the semantics of the node uncaught exception handler
+2014-10-17T17:37:39 <Bosmon> As you might expect, the default setup is where one of these just forwards to the other - that is, a call to fluid.fail() traditionally triggers the uncaught exception handler
+2014-10-17T17:37:51 <Bosmon> but in different environments, and especially in test cases, you need a lot of fine control over this
+2014-10-17T17:38:23 <Justin_o> yes.. i can see needing that, especially for tests..
+2014-10-17T17:38:29 <Bosmon> I now just this evening found yet another THIRD tiresome kind of bug
+2014-10-17T17:38:42 <Bosmon> That is, a bug which could only be manifested in the REAL uncaught exception handler
+2014-10-17T17:39:11 <Bosmon> What you would like to depend on, is if any uncaught exception is triggered, that test run will definitely be a failure
+2014-10-17T17:39:39 <Bosmon> But I found an annoying hole in the system - in that if the failure occurs before QUnit even starts up, there is noone to inform of the fact that the test run should be a failure
+2014-10-17T17:40:20 <Bosmon> And typically a user just reads the very last line of a test run to see if it was a success - they\'re unlikely to see if a fatal exception has been logged earlier
+2014-10-17T17:40:43 <Bosmon> So I had to put an extra branch in that just calls "system.exit(1)" if an uncaught exception is met before QUnit starts up
+2014-10-17T17:40:48 <Bosmon> But now.... I would like to test THAT
+2014-10-17T17:41:11 <Bosmon> Unfortunately the only way of doing this is to fire up a completely separate process holding the failing test fixture and check for its output ..........
+2014-10-17T17:42:28 <Justin_o> Bosmon: i take it that is only an issue in node
+2014-10-17T17:42:42 <Justin_o> or do we have a risk of these silent failures in the browser too?
+2014-10-17T17:43:14 <Bosmon> Justin_o - I think they are actually possible in the browser.. but you\'d have to work very hard to trigger one
+2014-10-17T17:43:26 <Bosmon> Imagine you had wrapped all of your test cases in a document.ready() call
+2014-10-17T17:43:36 <Bosmon> And then you had some code which triggered an error before this point
+2014-10-17T17:43:58 <Bosmon> In that case, the error wouldn\'t be flagged in the QUnit UI
+2014-10-17T17:44:27 <Bosmon> ah wait no
+2014-10-17T17:44:29 <Bosmon> I tell a lie
+2014-10-17T17:44:37 <Bosmon> QUnit has a custom window.onerror handler
+2014-10-17T17:44:52 <Bosmon> So it is prepared for global errors in the browser as soon as its code has loaded
+2014-10-17T17:45:10 <Bosmon> It\'s just that it doesn\'t have the equivalent for node.js errors, since by default it doesn\'t come with any node packaging
+2014-10-17T17:45:35 <Justin_o> Bosmon: ah okay
+2014-10-17T17:45:47 <Bosmon> It\'s a shame, of course, that it doesn\'t give its window.onerror handler a global name or expose it in any way
+2014-10-17T17:45:54 <Bosmon> If it did, it would have been easy for us to reuse it
+2014-10-17T17:46:04 <Bosmon> But then this is typically how people other than us do their work : P
+2014-10-17T17:46:15 <Bosmon> Every library typically sets its users up for a world operate by cut n paste
+2014-10-17T17:47:05 <Justin_o> :(
+'
+

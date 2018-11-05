@@ -1,0 +1,278 @@
+b'2015-05-20T15:53:47 * michelled joined the channel
+2015-05-20T15:55:06 * michelled has quit
+2015-05-20T15:55:30 * michelled joined the channel
+2015-05-20T15:57:02 <anastasiac> cindyli, my FLOE-343 pull request is updated
+2015-05-20T15:57:35 <cindyli> thanks, anastasiac, having a look..
+2015-05-20T15:59:56 * anastasiac has quit
+2015-05-20T16:22:16 * sepideh has quit
+2015-05-20T16:27:57 <jhernandez> clown: I\'m leaving in 20 mins or so
+2015-05-20T16:28:14 <clown> jhernandez: okay.
+2015-05-20T16:28:30 <clown> I have nothing pressing at the moment.
+2015-05-20T16:28:39 <jhernandez> meanwhile, which test is failing?
+2015-05-20T16:30:39 <jhernandez> everything that is xrandr-related is passing here
+2015-05-20T16:32:16 * gtirloni_ joined the channel
+2015-05-20T16:32:43 * gtirloni_ joined the channel
+2015-05-20T16:32:46 * gtirloni_ has quit
+2015-05-20T16:37:11 <clown> sorry, jhernandez, I was distracted.  Let me look
+2015-05-20T16:39:50 <clown> jhernandez:  First one:  FAIL: Module "GPII Xrandr Module" Test name "Running tests for Xrandr Bridge" - Message: Checking that \'setScreenSize\' is callable
+2015-05-20T16:40:11 <clown> Second one:  FAIL: Module "GPII Xrandr Module" Test name "Running tests for Xrandr Bridge" - Message: Checking that \'setScreenSize\' sets the resolution
+2015-05-20T16:40:31 <clown> I guess the second failure is implied by the first.
+2015-05-20T16:41:19 <clown> Also, I played with the xrandr command line utility to try to change the screen resolution that way.  That fails as well.
+2015-05-20T16:42:44 <clown> Finally, I tried changing the resolution through the "Displays" control panel, and discovered that there is no resolution available other than the one the screen is current set to.
+2015-05-20T16:42:53 <jhernandez> oh
+2015-05-20T16:43:27 <jhernandez> ok
+2015-05-20T16:43:28 <clown> But, I can change the resolution by changing the size of the VM\'s window.
+2015-05-20T16:46:30 <clown> btw, jhernandez, after the second failure \xe2\x80\x94 the test of setScreenSize \xe2\x80\x94 node appears to have hung.  That\'s also strange.
+2015-05-20T16:46:51 * clown should try running the tests in debug mode.
+2015-05-20T16:48:19 <jhernandez> yes, it is
+2015-05-20T16:50:22 <clown> "yes, it is"  \xe2\x80\x94 what is "it", jhernandez?
+2015-05-20T16:50:39 <jhernandez> xD
+2015-05-20T16:50:41 <jhernandez> "node appears to have hung.  That\'s also strange"
+2015-05-20T16:50:49 <clown> oh, right.  :-)
+2015-05-20T16:51:32 <jhernandez> perhaps we need to add some kind of verification before performing the calls
+2015-05-20T16:51:33 <jhernandez> dunno
+2015-05-20T16:51:49 * sepideh joined the channel
+2015-05-20T16:51:57 <jhernandez> I would need to reproduce the issue
+2015-05-20T16:52:08 * anastasiac joined the channel
+2015-05-20T16:52:24 <jhernandez> and then look when and why it gets hung
+2015-05-20T16:53:43 <clown> I\'ll keep looking too.  It hangs on line 49:  xrandr.setScreenResolution(resolution.width, resolution.height);
+2015-05-20T16:54:22 <jhernandez> looks like both you and Bosmon are experiencing a similar issue -> https://github.com/GPII/linux/blob/master/tests/UnitTests.sh#L33
+2015-05-20T16:54:50 <clown> But, they didn\'t crash before I did all the updates.
+2015-05-20T16:54:55 <jhernandez> mmm
+2015-05-20T16:54:58 <clown> They actuall worked.
+2015-05-20T16:55:02 <jhernandez> that\'s strange
+2015-05-20T16:55:04 <clown> *actually
+2015-05-20T16:56:31 <jhernandez> I assume that, when you updated it, you built the native components again, isn\'t it?
+2015-05-20T16:57:00 <clown> yes, or rather, I did "grunt build".
+2015-05-20T16:57:05 <jhernandez> ok ok
+2015-05-20T16:57:34 <clown> hmmm\xe2\x80\xa6 was I supposed to deleate something from universal
+2015-05-20T16:57:43 <clown> I remember doing that in the past.
+2015-05-20T16:57:46 <clown> *delete
+2015-05-20T16:58:03 <jhernandez> I don\'t know
+2015-05-20T16:58:45 <jhernandez> in any case, if the problem is only with xrandr, the problem is there
+2015-05-20T16:58:49 <jhernandez> nothing to do with universal
+2015-05-20T16:59:54 <clown> Just to be sure, I just did both \'grunt clean\' followed by \'grunt build\' and then ran the xrandr tests again.  Same failures.
+2015-05-20T17:00:17 <clown> aha.  right you are.  "nothing to do with universal".
+2015-05-20T17:00:54 <clown> jhernandez:  I have to go to another telecon.  I will continue looking around, if you like.
+2015-05-20T17:01:30 <clown> have a nice evening!
+2015-05-20T17:01:30 <jhernandez> whatever you want
+2015-05-20T17:01:45 <clown> well, I want a million dollars  ;-)
+2015-05-20T17:02:02 <jhernandez> I\'m not sure how critical is a problem in a vm for us
+2015-05-20T17:02:19 <jhernandez> ie, I have some problems that are vm-related with windows too
+2015-05-20T17:04:16 * clown is now known as clown_mtg
+2015-05-20T17:05:10 <jhernandez> so if you want and you have time for, it would be nice to find the root of the problem and get it fixed (or at least, workaround it)
+2015-05-20T17:08:03 <clown_mtg> okay jhernandez
+2015-05-20T17:08:17 * cindyli joined the channel
+2015-05-20T17:09:15 * kasparnet has quit
+2015-05-20T17:11:18 * lliskovoi joined the channel
+2015-05-20T17:31:16 * danaayotte joined the channel
+2015-05-20T17:33:14 * clown_mtg is now known as clown
+2015-05-20T17:47:11 <Justin_o> Bosmon: do you have a thought on this http://issues.fluidproject.org/browse/FLOE-346
+2015-05-20T17:47:46 <Justin_o> it seems that the code is in place https://github.com/fluid-project/first-discovery/blob/master/src/js/panels.js#L108-L114
+2015-05-20T17:47:50 <anastasiac> danaayotte, would you say the language in the FD tool wireframes is finalized? ready for translation?
+2015-05-20T17:48:59 <Justin_o> Bosmon: however, the value returned from that.model.value is not exact it\'s 0.20000000000000004 instead of 0.2
+2015-05-20T17:50:13 <Bosmon> Justin_o - if you\'re confident that the value can\'t become less than the minimum, I suggest you compare it using the fluid.model.isSameValue utility
+2015-05-20T17:50:40 <Justin_o> Bosmon: i believe there is a model relay to prevent it from going out of range
+2015-05-20T17:50:45 <Bosmon> Justin_o - cool
+2015-05-20T17:50:58 <Justin_o> Bosmon: https://github.com/fluid-project/first-discovery/blob/master/src/js/panels.js#L34-L42
+2015-05-20T18:02:52 <Justin_o> cindyli: could you please review my pull request for FLOE-346 https://github.com/fluid-project/first-discovery/pull/53
+2015-05-20T18:03:11 <cindyli> ok, Justin_o
+2015-05-20T18:03:33 <Justin_o> tahnks
+2015-05-20T18:03:34 <Justin_o> thanks
+2015-05-20T18:04:17 <cindyli> Justin_o: can you also take the chance to fix what danaayotte and anstasia talked in the design channel? to rename "controls" to "buttons"
+2015-05-20T18:04:29 <Justin_o> cindyli: I did :)
+2015-05-20T18:04:40 <cindyli> great. thanks, Justin_o
+2015-05-20T18:12:09 * kasparnet joined the channel
+2015-05-20T18:19:04 * sepideh has quit
+2015-05-20T18:23:16 * sepideh joined the channel
+2015-05-20T18:25:43 * michelled has quit
+2015-05-20T18:26:00 * michelled joined the channel
+2015-05-20T18:27:38 * michelled joined the channel
+2015-05-20T18:29:37 * michelled joined the channel
+2015-05-20T18:30:36 <anastasiac> Justin_o, are we doing the community workshop?
+2015-05-20T18:31:53 <Justin_o> anastasiac: yes, should start soon
+2015-05-20T18:32:32 <Justin_o> fluid-everyone: today we have a 3 part community meeting 1) inclusive branding 2) UIO on mobile 3) UIO a11y review discussion
+2015-05-20T18:34:41 * michelled has quit
+2015-05-20T18:37:09 * cindyli1 joined the channel
+2015-05-20T18:38:09 * sepideh has quit
+2015-05-20T18:38:49 * cindyli has quit
+2015-05-20T19:05:09 * michelled joined the channel
+2015-05-20T19:05:44 <michelled> http://piratepad.net/dpCgdukJfy
+2015-05-20T19:06:03 * kasparnet has quit
+2015-05-20T19:10:04 * cindyli1 has quit
+2015-05-20T19:20:26 * cindyli joined the channel
+2015-05-20T19:23:01 * lliskovoi has quit
+2015-05-20T19:33:16 * kasparnet joined the channel
+2015-05-20T19:35:09 * cindyli has quit
+2015-05-20T20:03:06 * lliskovoi joined the channel
+2015-05-20T20:08:36 * cindyli joined the channel
+2015-05-20T20:21:30 * michelled joined the channel
+2015-05-20T20:21:45 * yzen_ joined the channel
+2015-05-20T20:23:56 * cindyli has quit
+2015-05-20T20:39:28 * kasparnet has quit
+2015-05-20T20:40:01 * kasparnet joined the channel
+2015-05-20T20:40:57 * clown joined the channel
+2015-05-20T20:44:04 * anvk has quit
+2015-05-20T20:48:25 * clown has quit
+2015-05-20T20:57:37 * sepideh joined the channel
+2015-05-20T20:58:34 * michelled joined the channel
+2015-05-20T21:04:58 * anastasiac has quit
+2015-05-20T21:09:34 * lliskovoi has quit
+2015-05-20T21:37:41 * avtar has quit
+2015-05-20T22:08:42 * sepideh has left the channel
+2015-05-20T23:01:14 * murilocrivellari has quit
+2015-05-20T23:36:46 * Justin_o has quit
+'
+
+b'2015-05-20T00:06:24 * gtirloni has quit
+2015-05-20T00:28:05 * yzen joined the channel
+2015-05-20T01:55:32 * colinclark joined the channel
+2015-05-20T03:25:11 * danaayotte joined the channel
+2015-05-20T04:46:43 * colinclark has quit
+2015-05-20T07:26:16 * the-t-in-rtf joined the channel
+2015-05-20T07:58:48 * kasparnet joined the channel
+2015-05-20T08:41:04 * the-t-in-rtf has quit
+2015-05-20T08:42:40 * the-t-in-rtf joined the channel
+2015-05-20T08:51:46 * the-t-in-rtf1 joined the channel
+2015-05-20T08:51:46 * the-t-in-rtf has quit
+2015-05-20T09:18:38 * kasparnet has quit
+2015-05-20T09:25:15 * the-t-in-rtf1 has quit
+2015-05-20T09:25:38 * the-t-in-rtf joined the channel
+2015-05-20T09:37:47 * the-t-in-rtf1 joined the channel
+2015-05-20T09:37:47 * the-t-in-rtf has quit
+2015-05-20T09:50:00 * the-t-in-rtf joined the channel
+2015-05-20T09:50:04 * the-t-in-rtf1 has quit
+2015-05-20T09:52:45 * the-t-in-rtf has quit
+2015-05-20T09:54:32 * the-t-in-rtf joined the channel
+2015-05-20T10:46:20 * kasparnet joined the channel
+2015-05-20T11:02:21 * kasparnet has quit
+2015-05-20T12:22:06 * Justin_o joined the channel
+2015-05-20T12:41:43 * michelled joined the channel
+2015-05-20T12:44:02 * yzen joined the channel
+2015-05-20T12:48:24 * michelled has left the channel
+2015-05-20T12:48:29 * michelled joined the channel
+2015-05-20T12:48:42 * cindyli joined the channel
+2015-05-20T12:59:08 * kasparnet joined the channel
+2015-05-20T13:00:06 * kasparnet has quit
+2015-05-20T13:00:52 * kasparnet joined the channel
+2015-05-20T13:07:11 * anvk joined the channel
+2015-05-20T13:11:20 * gtirloni joined the channel
+2015-05-20T13:15:08 * kasparnet has quit
+2015-05-20T13:23:20 * anastasiac joined the channel
+2015-05-20T13:24:53 * sepideh joined the channel
+2015-05-20T13:30:42 * the-t-in-rtf has quit
+2015-05-20T13:30:54 * the-t-in-rtf joined the channel
+2015-05-20T13:39:42 <anastasiac> good morning, Justin_o. Regarding your comments on the high-contrast themes pull request...
+2015-05-20T13:40:14 <anastasiac> I\xe2\x80\x99ve tried everything I can to stop the \xe2\x80\x98flashing\xe2\x80\x99 on hover; it\xe2\x80\x99s not about transparency. I\xe2\x80\x99ve made everything and the kitchen sink transparent, and it\xe2\x80\x99s not helping
+2015-05-20T13:40:47 <anastasiac> also, I left a comment on the pull request about the disabled +/- buttons. I don\xe2\x80\x99t have those in my branch; they\xe2\x80\x99re not in master yet, are they?
+2015-05-20T13:41:37 <Justin_o> anastasiac: the +/- were for the text size, which is in master
+2015-05-20T13:42:31 <anastasiac> ah! when it\xe2\x80\x99s maxed out\xe2\x80\xa6 right. It still has hover styles in the regular theme, too\xe2\x80\xa6 ok, I\xe2\x80\x99ll look into that
+2015-05-20T13:42:40 <Justin_o> anastasiac: cool, thanks
+2015-05-20T13:42:42 <anastasiac> but I\xe2\x80\x99m not sure what to do about the flashing.
+2015-05-20T13:42:56 <Justin_o> can we screen share for a couple minutes
+2015-05-20T13:43:05 <anastasiac> Justin_o, by flashing, you mean the fact that a smaller rectangle seems to take a different amount of time to change colour, right?
+2015-05-20T13:43:07 <anastasiac> yes
+2015-05-20T13:43:12 <Justin_o> yes
+2015-05-20T13:43:40 <anastasiac> hang on, give me two minutes
+2015-05-20T13:43:45 <anastasiac> can I ping you?
+2015-05-20T13:44:50 * yzen joined the channel
+2015-05-20T13:48:43 * danaayotte joined the channel
+2015-05-20T13:56:40 * avtar joined the channel
+2015-05-20T13:59:32 * jessm joined the channel
+2015-05-20T14:00:48 <anastasiac> Justin_o, cindyli: I\xe2\x80\x99ve issued a pull request for something danaayotte noticed yesterday \xe2\x80\x93\xc2\xa0that the prefs are not in the right order: https://github.com/fluid-project/first-discovery/pull/50
+2015-05-20T14:01:02 <anastasiac> I added it to the iteration page, in the first table
+2015-05-20T14:01:23 <Justin_o> anastasiac: thanks, did you make sure all the tests are still passing
+2015-05-20T14:01:40 <Justin_o> the testUtils has a map of their order
+2015-05-20T14:02:20 <anastasiac> oy, thanks for the reminder to check. Didn\xe2\x80\x99t know that was coded into the tests
+2015-05-20T14:02:53 <anastasiac> actually, yes, I did, since I did that
+2015-05-20T14:04:08 <Bosmon> fluid-everyone - together with the-t-in-rtf, we learned something useful about git today
+2015-05-20T14:04:37 <Bosmon> In that I discovered that, when trying to preview what the result of merging in a pull request will be, simply running "git diff master" will not be a correct summary of the changes
+2015-05-20T14:04:50 <Bosmon> In the case that the branch state that the pull request was issued against is older than that of current master
+2015-05-20T14:05:16 <Bosmon> This, I think, also explains why github pull request diffs often appear to be "stale" - they don\'t move along with the state of the current master as it evolves
+2015-05-20T14:06:21 <Bosmon> In this case, I seemed to see the opposite - the pull request seemingly showed "too few" changes - because it only represented a small change with respect to its original parent
+2015-05-20T14:06:38 <Bosmon> So, the commands to be used locally to reproduce this effect are explained on this stackexchange: http://stackoverflow.com/questions/5817579/how-can-i-preview-a-merge-in-git
+2015-05-20T14:07:02 <Bosmon> In particular one should use the bizarre syntax involving ".." or "..." in order to correctly see what the effect of merging a pull request will be
+2015-05-20T14:07:50 <Bosmon> Since a plain "git diff" will just show you ALL the differences, whether these result from the pull request state being "new" or its original target being "old"
+2015-05-20T14:07:57 <the-t-in-rtf> I ended up testing my changes by adding an "upstream" remote, checkout out upstream/master, and then running a command like `git diff \xe2\x80\xa6branch-name`.
+2015-05-20T14:08:03 <the-t-in-rtf> checking
+2015-05-20T14:09:31 <Justin_o> Bosmon: this is an issue when master is out of date?
+2015-05-20T14:09:37 * clown joined the channel
+2015-05-20T14:10:13 <Bosmon> Justin_o - it\'s not master being out of date, but the original state of the repo from which the branch (pull request)
+2015-05-20T14:10:25 <Bosmon> I had updated my local repository fully with both master, and the pull request branch
+2015-05-20T14:10:31 <Bosmon> But git diff still showed a huge diff
+2015-05-20T14:11:05 <Bosmon> The issue was in fact that the pull request\'s version of "master" was out of date, rather than mine
+2015-05-20T14:11:56 <Bosmon> I mean, it is "sort of obvious" but there were lots of aspects of the situation that made it confusing : P
+2015-05-20T14:12:27 <Bosmon> Especially since for my "touchstone" of what the merge was doing, I was looking at a package.json file where I had the wrong expectation about which was the older and newer version
+2015-05-20T14:13:02 <Bosmon> I *thought* what I was doing was merging in a tiny pull request that just changed two words in a README file
+2015-05-20T14:13:12 <Bosmon> But when I ran "git diff master" I saw a huge list of changes, and paniced
+2015-05-20T14:13:13 <anastasiac> Justin_o, test-utils updated
+2015-05-20T14:13:46 * murilocrivellari joined the channel
+2015-05-20T14:14:58 * simonjb joined the channel
+2015-05-20T14:15:30 * kasparnet joined the channel
+2015-05-20T14:16:36 <Justin_o> anastasiac: thanks
+2015-05-20T14:16:55 <cindyli> thanks, anastasiac
+2015-05-20T14:17:14 <Justin_o> Bosmon: ah i see..
+2015-05-20T14:18:02 <Justin_o> Bosmon: my typical approach for this type of thing is to create a test branch example test-FLUID-XXXX that is created off an updated master.. then i merge the pull request branch into that
+2015-05-20T14:18:26 <Justin_o> which should allow diffs with master to be up-to-date and i can make sure that things work as expected when it gets into master
+2015-05-20T14:21:19 <Bosmon> Justin_o - cool
+2015-05-20T14:28:14 <cindyli> Justin_o: can you review my pull request for FLOE-341 - https://github.com/fluid-project/first-discovery/pull/51
+2015-05-20T14:28:21 <Justin_o> cindyli: sure
+2015-05-20T14:28:26 <cindyli> thanks, Justin_o
+2015-05-20T14:39:12 <anastasiac> Justin_o, the high-contrast theme pull request is ready for another look
+2015-05-20T14:39:44 <Justin_o> anastasiac: thanks, i\'ll take a look at it again
+2015-05-20T14:40:05 * avtar has left the channel
+2015-05-20T14:40:23 * avtar joined the channel
+2015-05-20T14:45:57 <Justin_o> cindyli: i\'ve merged the FLOE-341 pull request
+2015-05-20T14:46:12 <cindyli> thanks, Justin_o
+2015-05-20T14:46:16 * kasparnet has quit
+2015-05-20T14:48:29 * kasparnet joined the channel
+2015-05-20T14:48:48 <murilocrivellari> hi, michelled
+2015-05-20T14:49:04 <michelled> hi murilocrivellari
+2015-05-20T14:49:07 <michelled> how\'s it going?
+2015-05-20T14:49:50 <murilocrivellari> michelled: good, thanks! Can I have the FD vector files to work on the visuals with sign language?
+2015-05-20T14:50:04 <michelled> I don\'t have them :) danaayotte: do you?
+2015-05-20T14:50:08 <michelled> ^
+2015-05-20T14:54:40 <danaayotte> hi murilocrivellari, here is a link to the latest ai file for FD tool https://www.dropbox.com/s/ugbsbun8wni4b2i/FD%20tool%20for%20May%202015%20workshop%20v3.ai?dl=0
+2015-05-20T14:55:47 <murilocrivellari> danaayotte: thanks! :)
+2015-05-20T14:56:09 <danaayotte> np!
+2015-05-20T14:57:07 <danaayotte> let me know if you need anything else murilocrivellari. Let\'s check in later today
+2015-05-20T14:59:35 * the-t-in-rtf1 joined the channel
+2015-05-20T14:59:36 * the-t-in-rtf has quit
+2015-05-20T14:59:54 <murilocrivellari> danaayotte: sure! I\'m working on possibilities for the visuals/functionality right now. I\'ll show you my ideas later on. Thanks
+2015-05-20T15:00:04 <danaayotte> great
+2015-05-20T15:09:36 <Justin_o> cindyli: could you please review my pull request for FLOE-335
+2015-05-20T15:09:37 <Justin_o> https://github.com/fluid-project/first-discovery/pull/52
+2015-05-20T15:09:52 <cindyli> sure, Justin_o
+2015-05-20T15:09:56 <Justin_o> cindyli: thanks
+2015-05-20T15:10:00 <cindyli> np
+2015-05-20T15:19:42 <cindyli> Justin_o: in terms of this priority - https://github.com/jobara/first-discovery/blob/FLOE-335/src/js/panels.js#L672, is there a reason to use the specific -2 rather than -1 or something else?
+2015-05-20T15:19:55 <cindyli> just curious
+2015-05-20T15:20:07 <Justin_o> cindyli: so something could go in between the two listeners if needed
+2015-05-20T15:20:37 <cindyli> ah, very considerate :)
+2015-05-20T15:20:48 <Justin_o> :)
+2015-05-20T15:31:40 * michelled has quit
+2015-05-20T15:31:59 * yzen_ joined the channel
+2015-05-20T15:32:05 * michelled joined the channel
+2015-05-20T15:33:23 * michelled has quit
+2015-05-20T15:33:48 * michelled joined the channel
+2015-05-20T15:37:08 * michelled joined the channel
+2015-05-20T15:37:08 * sepideh has quit
+2015-05-20T15:37:34 * michelled has quit
+2015-05-20T15:37:58 * michelled joined the channel
+2015-05-20T15:39:43 * michelled has quit
+2015-05-20T15:40:07 * michelled joined the channel
+2015-05-20T15:40:27 * yzen joined the channel
+2015-05-20T15:41:26 * michelled has quit
+2015-05-20T15:41:58 * michelled joined the channel
+2015-05-20T15:43:59 * michelled has quit
+2015-05-20T15:44:23 * michelled joined the channel
+2015-05-20T15:45:42 * michelled has quit
+2015-05-20T15:46:07 * michelled joined the channel
+2015-05-20T15:47:48 * michelled has quit
+2015-05-20T15:48:12 * michelled joined the channel
+2015-05-20T15:48:44 * sepideh joined the channel
+2015-05-20T15:49:59 * michelled joined the channel
+2015-05-20T15:51:39 * michelled has quit
+2015-05-20T15:52:04 * michelled joined the channel
+'
+

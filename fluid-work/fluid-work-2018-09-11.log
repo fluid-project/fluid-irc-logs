@@ -1,0 +1,124 @@
+b'2018-09-11T07:36:34 * dandimitrov joined the channel
+2018-09-11T09:12:37 * dandimitrov has quit
+2018-09-11T09:15:55 * dandimitrov joined the channel
+2018-09-11T10:03:11 * dandimitrov has quit
+2018-09-11T10:17:49 * dandimitrov joined the channel
+2018-09-11T12:04:22 * michelled joined the channel
+2018-09-11T12:21:37 * alanharnum joined the channel
+2018-09-11T12:22:12 * Justin_o joined the channel
+2018-09-11T12:38:27 <Justin_o> gtirloni: hello.. sorry to bother you.. i\'m having some trouble with the CI setup for the Infusion repo. It doesn\'t seem to let me trigger the testing. https://github.com/fluid-project/infusion/pull/931#issuecomment-420014820
+2018-09-11T12:38:54 <Justin_o> Can you direct me where to look at the configuration for it?
+2018-09-11T12:39:48 <Justin_o> alanharnum: ^
+2018-09-11T12:41:01 <gtirloni> Justin_o: hey! looks like a did a bad copy/paste job. You need to be added here: https://github.com/fluid-project/ci-service/blob/master/jenkins_jobs/macros.yml
+2018-09-11T12:41:21 <alanharnum> thanks gtirloni, i\'ll add him
+2018-09-11T12:41:50 <Justin_o> gtirloni, alanharnum: thanks
+2018-09-11T12:41:54 <gtirloni> i may have copied this from gpii/ci-service and forgot to review the admin list
+2018-09-11T12:42:51 <Justin_o> i\'m having trouble opening github. It looks like they are having problems https://status.github.com/messages
+2018-09-11T12:43:12 <alanharnum> Justin_o: you should be added to the admin list now
+2018-09-11T12:43:40 <Justin_o> alanharnum: thanks
+2018-09-11T12:46:21 <Justin_o> alanharnum:  is this list used for just infusion or other fluid-project repos too?
+2018-09-11T12:46:42 <alanharnum> Justin_o: it should cover all fluid-project repos, we should review it at some point
+2018-09-11T12:47:30 <Justin_o> alanharnum: i\'m looking at it now.. i guess only admins can trigger tests for non-whitelisted users?
+2018-09-11T12:47:38 <alanharnum> correct
+2018-09-11T12:48:03 <alanharnum> whitelisted users will kick off a CI job automatically, admins can trigger a job with "ok to test"
+2018-09-11T12:48:54 <Justin_o> thanks, so i\'m thinking only those that can merge code should be admins.
+2018-09-11T12:49:17 <Justin_o> this is different for different repos, but i guess it should be fine to include them all in the list
+2018-09-11T13:01:09 * cindyli joined the channel
+2018-09-11T13:02:09 <Justin_o> alanharnum: i\'m going to change you to be the Project Lead for the Infrastructure JIRA space
+2018-09-11T13:02:18 * michelled has quit
+2018-09-11T13:02:19 <alanharnum> Justin_o: thanks
+2018-09-11T13:08:40 * jhung joined the channel
+2018-09-11T13:09:13 <gtirloni> it might be useful to add ops people to the admin list, for helping with CI issues
+2018-09-11T13:11:37 * alanharnum has quit
+2018-09-11T13:21:35 <dandimitrov> Hey, stegru, I was hoping you could give us a hand with a problem we\xe2\x80\x99ve been struggling with in the gpii-app, that involves changes to the display metrics of the Windows machine - DPI, resolution, high contrast...
+2018-09-11T13:21:42 <dandimitrov> Part of the problem seems to be caused by an event that Electron provides that should indicate such changes are already applied to the system. However, it appears that that isn\xe2\x80\x99t the case - this event seems to be fired too early, before the Windows\xe2\x80\x99s UI has been rescaled.
+2018-09-11T13:22:22 <dandimitrov> Are you familiar with a low level event in Windows that is fired AFTER all changes to the display have finished? For example, when a DPI change is fully applied, meaning that everything is rescaled and after that the event is fired
+2018-09-11T13:22:54 <dandimitrov> I also tried a mechanism for system level events that Electron provides but without success - https://github.com/electron/electron/blob/master/docs/api/browser-window.md#winhookwindowmessagemessage-callback-windows
+2018-09-11T13:22:55 <dandimitrov> and listened for the event - https://docs.microsoft.com/en-us/windows/desktop/hidpi/wm-dpichanged  but again it was fired too early :/
+2018-09-11T13:23:39 <stegru> ok
+2018-09-11T13:23:52 <stegru> yes, wm_dpichanged would have been my guess
+2018-09-11T13:26:52 * Jess_ joined the channel
+2018-09-11T13:29:48 <stegru> dandimitrov: WM_DISPLAYCHANGE would be another attempt, it might also be sent before it\'s applied
+2018-09-11T13:29:50 <stegru> https://docs.microsoft.com/en-us/windows/desktop/gdi/wm-displaychange
+2018-09-11T13:30:35 <dandimitrov> stegru: I\xe2\x80\x99ll give it a try with the Electron mechanism
+2018-09-11T13:31:10 <stegru> you could also set a timeout when the message is received
+2018-09-11T13:33:08 <dandimitrov> we\xe2\x80\x99ve been using a timeout with the Electron\xe2\x80\x99s event as well but there seem to be problem with that as we don\xe2\x80\x99t know how fast the machine is
+2018-09-11T13:45:35 * clown joined the channel
+2018-09-11T13:48:27 <dandimitrov> stegru: That event seem to be fired even earlier (before Electron\xe2\x80\x99s event) :/ Can you think of some other approach that may work :?
+2018-09-11T13:51:09 <stegru> yes, detect when the window position has changed.. WM_WINDOWPOSCHANGED - I presume electron already has an event for this
+2018-09-11T13:51:13 * avtar joined the channel
+2018-09-11T13:51:58 <stegru> https://docs.microsoft.com/en-us/windows/desktop/winmsg/wm-windowposchanged
+2018-09-11T13:52:51 <jhung> fluid-everyone: the design crit will start in 8 minutes. Today we\'re talking about the word spacing icon in UIO.
+2018-09-11T13:53:58 <stegru> that\'s probably the best one, dandimitrov, because you\'re reacting to the position changing and not just the dpi changing (there may be other reason the position changed)
+2018-09-11T13:56:28 <stegru> there\'s also WM_SIZE and WM_MOVE
+2018-09-11T13:57:35 * alanharnum joined the channel
+2018-09-11T13:57:38 * alanharnum has quit
+2018-09-11T13:59:50 * cindyli1 joined the channel
+2018-09-11T14:01:27 * cindyli has quit
+2018-09-11T14:02:53 * michelled joined the channel
+2018-09-11T14:11:06 * avtar has quit
+2018-09-11T14:13:25 <dandimitrov> stegru: still these are sent just before the Electron event\xe2\x80\xa6
+2018-09-11T14:13:41 <stegru> damn
+2018-09-11T14:14:46 <stegru> maybe set a timer that polls the position for a few seconds, and if the position has changed call your "fix the pop-ups" function?
+2018-09-11T14:15:21 <stegru> it looks like electron also listens on those events, then takes some time for it to adjust
+2018-09-11T14:16:32 <dandimitrov> stegru: I tried finding out what system events electron uses but it\xe2\x80\x99s not an easy job
+2018-09-11T14:16:48 <dandimitrov> yep, it look like it
+2018-09-11T14:17:22 * kavya joined the channel
+2018-09-11T14:18:19 <dandimitrov> Here\xe2\x80\x99s the start of their code if you\xe2\x80\x99re interested - https://github.com/electron/electron/pull/1016/files#diff-3b478e7f2b2e9193ee209e91535ec89aR37
+2018-09-11T14:18:32 <dandimitrov> It looks like they
+2018-09-11T14:19:27 <dandimitrov> they\xe2\x80\x99re using some Qt/Chromium library there - https://github.com/RSATom/Qt/blob/master/qtwebengine/src/3rdparty/chromium/ui/display/display_change_notifier.cc
+2018-09-11T14:26:46 <stegru> ah ok
+2018-09-11T14:27:54 * jhernandez joined the channel
+2018-09-11T14:28:04 <stegru> jhernandez :*
+2018-09-11T14:32:12 <stegru> dandimitrov, sort of related, in case you didn\'t know: https://github.com/electron/electron/issues/1207 - electron doesn\'t provide a way of detecting window movement
+2018-09-11T14:33:36 <stegru> oh no, there\'s a \'resize\' and \'move\' event
+2018-09-11T14:34:06 * alanharnum joined the channel
+2018-09-11T14:34:17 <dandimitrov> stegru: yep, seems like an old issue
+2018-09-11T14:34:57 <dandimitrov> stegru: but there are a lot of issues for DPI changes that are still present
+2018-09-11T14:36:31 <stegru> that\'s why I aim for good old 96dpi screens ;)
+2018-09-11T14:37:48 <jhernandez> stegru: :*
+2018-09-11T14:43:19 * alanharnum has quit
+2018-09-11T14:43:46 * dandimitrov has quit
+2018-09-11T14:44:03 * dandimitrov joined the channel
+2018-09-11T14:44:27 * dandimitrov has quit
+2018-09-11T15:05:30 * kavya has quit
+2018-09-11T15:20:33 <michelled> fluid-everyone: IDRC planning will be at 11:30
+2018-09-11T15:29:39 <michelled> fluid-everyone: IDRC planning is starting soon
+2018-09-11T15:35:48 <cindyli1> michelled: i\'m in a GPII meeting and cannot attend the planning
+2018-09-11T15:38:35 * sepidehshahi joined the channel
+2018-09-11T15:46:49 * sepidehshahi_ joined the channel
+2018-09-11T15:46:49 * sepidehshahi has quit
+2018-09-11T15:46:49 * sepidehshahi_ is now known as sepidehshahi
+2018-09-11T15:59:49 * alanharnum joined the channel
+2018-09-11T16:19:27 * clown joined the channel
+2018-09-11T16:21:00 <Justin_o> gmoss: would you mind doing the debrief community meeting, regarding the GSoC summit, on Oct 17?
+2018-09-11T16:23:58 <gmoss> Justin_o: sure that date probably works best for me, since it will be fresh in my memory
+2018-09-11T16:24:09 <gmoss> literally the day after my return
+2018-09-11T16:24:25 <gmoss> (taking the redeye in tuesday morning)
+2018-09-11T16:24:43 <Justin_o> cool.. hope you won\'t be too tired
+2018-09-11T16:28:11 * michelled joined the channel
+2018-09-11T16:46:53 * alanharnum2 joined the channel
+2018-09-11T17:13:01 * michelled has quit
+2018-09-11T17:14:57 * cindyli1 has quit
+2018-09-11T17:19:06 * alanharnum2 has quit
+2018-09-11T17:21:54 * avtar joined the channel
+2018-09-11T17:55:43 * michelled joined the channel
+2018-09-11T17:55:59 * alanharnum joined the channel
+2018-09-11T18:05:04 <avtar> alanharnum, the-t-in-rtf: https://azure.microsoft.com/en-us/blog/announcing-azure-pipelines-with-unlimited-ci-cd-minutes-for-open-source/
+2018-09-11T18:08:00 * michelled1 joined the channel
+2018-09-11T18:09:23 * cindyli joined the channel
+2018-09-11T18:13:10 * alanharnum joined the channel
+2018-09-11T18:44:19 <Justin_o> cindyli: would you have time to review this PR? https://github.com/fluid-project/infusion/pull/932
+2018-09-11T18:46:07 <cindyli> sure, Justin_o
+2018-09-11T18:46:46 <Justin_o> cindyli: thanks
+2018-09-11T19:47:55 * michelled1 has quit
+2018-09-11T20:01:51 * michelled joined the channel
+2018-09-11T20:17:11 * cindyli has quit
+2018-09-11T20:50:20 * michelled has quit
+2018-09-11T21:46:07 * gtirloni has quit
+2018-09-11T21:46:07 * gtirloni joined the channel
+2018-09-11T22:47:14 * michelled joined the channel
+2018-09-11T22:59:31 * avtar has quit
+2018-09-11T23:46:21 * Jess_ joined the channel
+'
+

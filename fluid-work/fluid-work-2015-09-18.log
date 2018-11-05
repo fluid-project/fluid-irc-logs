@@ -1,0 +1,237 @@
+b'2015-09-18T15:26:17 <Justin_o> :(
+2015-09-18T15:27:13 * clown joined the channel
+2015-09-18T16:08:44 <cindyli1> Justin_o: can you review my pull request - https://github.com/fluid-project/infusion/pull/637
+2015-09-18T16:10:47 <Justin_o> sure
+2015-09-18T16:16:19 <jessm> fluid-everyone: microsoft links mentioned at standup
+2015-09-18T16:16:26 <jessm> https://vimeo.com/connectingthefilm
+2015-09-18T16:16:35 <jessm> www.Microsoft.com/design/inclusive
+2015-09-18T16:16:41 <jessm> Www.hackingmars.com
+2015-09-18T16:16:46 <jessm> that Mars movie looks cool!
+2015-09-18T16:26:53 <Justin_o> cindyli1: I\'ve left comments on your pull request for FLUID-5770
+2015-09-18T16:27:10 <cindyli1> thanks, Justin_o. will take a look soon
+2015-09-18T16:27:16 <Justin_o> thanks
+2015-09-18T16:30:47 <gtirloni> jessm: very interesting documentary, thx. quite inspiring.
+2015-09-18T16:31:13 <jessm> it\xe2\x80\x99s cool
+2015-09-18T16:33:28 <Justin_o> cindyli1: can you remind me where the notes are from our meeting with Bosmon and simonjb about the structure of the security docs in couch
+2015-09-18T16:34:05 <cindyli1> Justin_o: https://wiki.gpii.net/w/CouchDB_security_persistence_2015-09-14
+2015-09-18T16:34:22 <Justin_o> cindyli1: thanks
+2015-09-18T16:34:27 <cindyli1> np
+2015-09-18T16:36:20 <Justin_o> simonjb: I\'m looking at the notes from our couchdb meeting with boson.
+2015-09-18T16:36:21 <Justin_o> bosmon
+2015-09-18T16:36:27 <Justin_o> "using gpiiToken rather than userId as our public indexing scheme for users, and ii) using the oauth clientId rather than the raw CouchDB document index as our index for clients"
+2015-09-18T16:36:50 <Justin_o> does that mean that couch still has an _id field and a gpiiToken or clientId: field
+2015-09-18T16:37:17 <Justin_o> or just the _id filed with the value that would have been at gpiiToken / clientId
+2015-09-18T16:38:27 <simonjb> I believe the later
+2015-09-18T16:38:53 <simonjb> Justin_o: it depends on whether the _id field is required or not
+2015-09-18T16:39:03 <simonjb> if it\'s required, then we would need to set it
+2015-09-18T16:39:49 <Justin_o> simonjb: i guess i mean, is the structure like {_id: "some_uuid", gpiiToken: "someToken"} or "{_id: "someToken"}
+2015-09-18T16:39:51 <simonjb> but if CouchDB can be told that some other named property is the id, then would could use something else
+2015-09-18T16:40:18 <simonjb> ah, ok
+2015-09-18T16:40:56 <simonjb> Justin_o: that depends on the individual situation
+2015-09-18T16:41:42 <simonjb> the advantage of the _id: "someToken" is that we can reduce the number of queries in some cases
+2015-09-18T16:42:04 <simonjb> but it limits us to having only one record for that id
+2015-09-18T16:42:11 <Justin_o> i\'m wondering about this statement in the integration section "We have a "dataSource" written in Kettle which simply abstracts Couch\'s update semantics for PUT/POST requests, and eliminates the need for clients to parse and restore _rev and _id fields"
+2015-09-18T16:42:41 <simonjb> in general it\'s a good practice to always a synthetic primary key, as it provides the most flexibility
+2015-09-18T16:42:59 <simonjb> but for CouchDB, we may want to consider other options
+2015-09-18T16:43:14 <Justin_o> simonjb: okay, so {_id: "some_uuid", gpiiToken: "someToken"} is probably what we were expecting
+2015-09-18T16:43:29 <Justin_o> hmm.. okay.. well i\'ll start with this for now, and see how things go i guess
+2015-09-18T16:45:43 <Justin_o> simonjb: also any reason why i shouldn\'t put our test data for security in the top level testData directory in universal.
+2015-09-18T16:46:58 <simonjb> Justin_o: that seems reasonable to me, just make a subdirectory for it
+2015-09-18T16:47:44 <simonjb> Justin_o: actually, what is the scope of this testData?
+2015-09-18T16:48:24 <simonjb> Justin_o: for acceptance tests or for really using the system?
+2015-09-18T16:49:06 <Justin_o> simonjb: i\'m putting it in a security sub directory. Users, clients, etc for testing. I guess the views will go somewhere in the gpii-oauth2-datastore directory
+2015-09-18T16:49:12 <Justin_o> as that will actually be needed for us
+2015-09-18T16:49:13 <Justin_o> use
+2015-09-18T16:50:17 <simonjb> Justin_o: ok, that sounds good to me
+2015-09-18T16:50:57 <Justin_o> simonjb: thanks
+2015-09-18T16:53:53 <cindyli1> Justin_o: i replied to your comments for FLUID-5770.
+2015-09-18T16:54:38 <Justin_o> cindyli1: thanks
+2015-09-18T16:54:49 <cindyli1> np.
+2015-09-18T16:55:11 * slim__ joined the channel
+2015-09-18T16:59:30 <Justin_o> avtar, cindyli1, simonjb: I\'ve added test data for the couchdb docs in my GPII-1274 branch. https://github.com/jobara/universal/tree/GPII-1274/testData/security
+2015-09-18T17:04:50 <cindyli1> cool. thanks, Justin_o
+2015-09-18T17:06:57 <cindyli> Justin_o: you have "_id" fields in those json data, i guess they will be replaced by what avtar showed us of "_id": {{items[0]}}. Just wonder if they could be removed from testData files to reduce the confusion?
+2015-09-18T17:07:29 <Justin_o> cindyli: avtar was asking us to add them in to the documents so that they wouldn\'t have to use the templating.
+2015-09-18T17:07:40 <Justin_o> at least that\'s how i understood it
+2015-09-18T17:07:44 <Justin_o> avtar: could you confirm?
+2015-09-18T17:07:45 <cindyli> ok
+2015-09-18T17:07:51 <avtar> cindyli: those replacements only take place when the preferences server is deployed
+2015-09-18T17:08:25 <avtar> err.. when a couchdb instance is deployed for the preferences server
+2015-09-18T17:08:55 * slim__ has quit
+2015-09-18T17:09:09 * slim_ has quit
+2015-09-18T17:10:05 <cindyli> i see. so "_id"s might be useful for development setup such as when using pounchDB, Justin_o, avtar?
+2015-09-18T17:11:01 <avtar> cindyli: i\'m not super familiar with pouchdb so i can\'t comment :/
+2015-09-18T17:11:10 <cindyli> :)
+2015-09-18T17:13:14 <avtar> but as far as i know these preferences sets https://github.com/GPII/universal/tree/master/testData/preferences have never contained the _id fields because the preferences server used a development environment that didn\'t rely on couchdb, it accessed the documents directly from the file system
+2015-09-18T17:13:52 <avtar> so for production environments, where couchdb was/is used, the sets had to be modified before couchdb would accept them
+2015-09-18T17:17:47 <gtirloni> avtar: are you familiar with PunchDB ? http://bit.ly/1LCKVsP
+2015-09-18T17:17:55 * jhung joined the channel
+2015-09-18T17:20:52 <Justin_o> cindyli: i left some more comments for FLUID-5770. I\'m not sure I\'m making sense though, so please let me know.
+2015-09-18T17:21:14 <cindyli> sure. replying, Justin_o
+2015-09-18T17:21:30 <Justin_o> thanks
+2015-09-18T17:22:25 <avtar> gtirloni: yup, i\'ve seen that before https://c1.staticflickr.com/3/2883/10771401996_7c003ff910_b.jpg
+2015-09-18T17:22:38 <gtirloni> lol
+2015-09-18T17:22:58 <gtirloni> talk about prior art
+2015-09-18T17:27:03 * alanharnum joined the channel
+2015-09-18T17:27:41 * kasparnet has quit
+2015-09-18T17:29:44 * simonjb has quit
+2015-09-18T19:46:51 * cindyli joined the channel
+2015-09-18T20:03:02 * alanharnum joined the channel
+2015-09-18T20:19:18 <cindyli> Justin_o: have time to talk about this comment - consolidateDataAndColors
+2015-09-18T20:19:30 <cindyli> sorry, wrong, the link - https://github.com/fluid-project/chartAuthoring/pull/4/files#r39856541
+2015-09-18T22:04:39 * jhung joined the channel
+2015-09-18T23:08:44 * yzen joined the channel
+'
+
+b'2015-09-18T00:18:42 * danayo joined the channel
+2015-09-18T00:22:06 * danayo has quit
+2015-09-18T00:43:07 * jhung joined the channel
+2015-09-18T01:40:10 * yzen joined the channel
+2015-09-18T02:45:00 * alanharnum joined the channel
+2015-09-18T02:47:37 * yzen joined the channel
+2015-09-18T04:47:24 * alanharnum joined the channel
+2015-09-18T06:00:33 * alanharnum joined the channel
+2015-09-18T06:02:27 * alanharnum joined the channel
+2015-09-18T06:04:17 * alanharn_ joined the channel
+2015-09-18T06:06:12 * alanharnum joined the channel
+2015-09-18T06:08:13 * alanharn_ joined the channel
+2015-09-18T06:09:51 * alanharnum joined the channel
+2015-09-18T06:09:51 * alanharn_ has quit
+2015-09-18T06:11:58 * alanharn_ joined the channel
+2015-09-18T06:11:58 * alanharnum has quit
+2015-09-18T06:13:44 * alanharnum joined the channel
+2015-09-18T06:15:29 * alanharn_ joined the channel
+2015-09-18T06:17:17 * alanharnum joined the channel
+2015-09-18T06:19:12 * alanharnum joined the channel
+2015-09-18T06:21:05 * alanharn_ joined the channel
+2015-09-18T06:23:00 * alanharnum joined the channel
+2015-09-18T06:24:59 * alanharn_ joined the channel
+2015-09-18T06:26:58 * alanharnum joined the channel
+2015-09-18T06:28:42 * alanharn_ joined the channel
+2015-09-18T06:30:46 * alanharnum joined the channel
+2015-09-18T06:32:35 * alanharn_ joined the channel
+2015-09-18T06:34:20 * alanharnum joined the channel
+2015-09-18T06:36:15 * alanharn_ joined the channel
+2015-09-18T06:38:18 * alanharnum joined the channel
+2015-09-18T06:40:05 * alanharn_ joined the channel
+2015-09-18T06:42:03 * alanharnum joined the channel
+2015-09-18T06:43:46 * alanharn_ joined the channel
+2015-09-18T06:45:40 * alanharnum joined the channel
+2015-09-18T06:47:31 * alanharn_ joined the channel
+2015-09-18T06:49:32 * alanharnum joined the channel
+2015-09-18T06:51:18 * alanharn_ joined the channel
+2015-09-18T06:51:24 * alanharnum has quit
+2015-09-18T06:52:27 * alanharnum joined the channel
+2015-09-18T06:53:21 * alanharn_ joined the channel
+2015-09-18T06:55:11 * alanhar__ joined the channel
+2015-09-18T06:57:06 * alanharn_ joined the channel
+2015-09-18T06:58:40 * alanharnum has quit
+2015-09-18T06:58:40 * alanharn_ has quit
+2015-09-18T06:58:50 * alanharnum joined the channel
+2015-09-18T07:00:54 * alanharn_ joined the channel
+2015-09-18T07:02:58 * alanharnum joined the channel
+2015-09-18T07:04:33 * alanharn_ joined the channel
+2015-09-18T07:06:32 * alanharnum joined the channel
+2015-09-18T07:08:20 * alanharnum joined the channel
+2015-09-18T07:10:14 * alanharn_ joined the channel
+2015-09-18T07:12:18 * alanharnum joined the channel
+2015-09-18T07:14:03 * alanharnum joined the channel
+2015-09-18T07:16:00 * alanharn_ joined the channel
+2015-09-18T07:16:19 * slim_ joined the channel
+2015-09-18T07:17:49 * alanharnum joined the channel
+2015-09-18T07:19:46 * alanharn_ joined the channel
+2015-09-18T07:21:30 * alanharnum joined the channel
+2015-09-18T07:23:34 * alanharnum joined the channel
+2015-09-18T07:25:23 * alanharn_ joined the channel
+2015-09-18T07:27:08 * alanharnum joined the channel
+2015-09-18T07:29:12 * alanharn_ joined the channel
+2015-09-18T07:31:03 * alanharnum joined the channel
+2015-09-18T07:32:46 * alanharn_ joined the channel
+2015-09-18T07:34:40 * alanharnum joined the channel
+2015-09-18T07:36:34 * alanharn_ joined the channel
+2015-09-18T07:38:32 * alanharnum joined the channel
+2015-09-18T07:40:31 * alanharn_ joined the channel
+2015-09-18T07:42:21 * alanharnum joined the channel
+2015-09-18T07:42:22 * alanharn_ has quit
+2015-09-18T07:44:06 * alanharn_ joined the channel
+2015-09-18T07:44:06 * alanharnum has quit
+2015-09-18T07:46:10 * alanharnum joined the channel
+2015-09-18T07:47:54 * alanharnum joined the channel
+2015-09-18T07:49:58 * alanharn_ joined the channel
+2015-09-18T07:51:52 * alanharnum joined the channel
+2015-09-18T07:53:36 * alanharnum joined the channel
+2015-09-18T07:55:30 * alanharn_ joined the channel
+2015-09-18T07:55:59 * alanharnum joined the channel
+2015-09-18T07:57:30 * alanhar__ joined the channel
+2015-09-18T07:59:14 * alanharn_ joined the channel
+2015-09-18T08:01:09 * alanharnum joined the channel
+2015-09-18T08:03:09 * alanharn_ joined the channel
+2015-09-18T08:05:00 * alanharnum joined the channel
+2015-09-18T08:06:47 * alanharn_ joined the channel
+2015-09-18T08:08:50 * alanharnum joined the channel
+2015-09-18T08:10:45 * alanharnum joined the channel
+2015-09-18T08:12:28 * alanharn_ joined the channel
+2015-09-18T08:14:33 * alanharnum joined the channel
+2015-09-18T08:16:26 * alanharn_ joined the channel
+2015-09-18T08:18:22 * alanharnum joined the channel
+2015-09-18T08:20:06 * alanharnum joined the channel
+2015-09-18T08:22:06 * alanharn_ joined the channel
+2015-09-18T08:23:50 * alanharnum joined the channel
+2015-09-18T08:24:27 * the-t-in-rtf joined the channel
+2015-09-18T08:25:50 * alanharnum joined the channel
+2015-09-18T08:27:36 * alanharn_ joined the channel
+2015-09-18T08:29:23 * slim__ joined the channel
+2015-09-18T08:29:34 * alanharnum joined the channel
+2015-09-18T08:31:22 * alanharn_ joined the channel
+2015-09-18T08:31:22 * alanharnum has quit
+2015-09-18T08:31:36 * slim_ has quit
+2015-09-18T08:56:53 * alanharnum joined the channel
+2015-09-18T09:01:16 * slim_ joined the channel
+2015-09-18T09:47:23 * kasparnet joined the channel
+2015-09-18T09:58:26 * alanharnum joined the channel
+2015-09-18T10:05:00 * alanharnum has quit
+2015-09-18T10:16:28 * slim__ has quit
+2015-09-18T10:17:12 * slim_ has quit
+2015-09-18T10:38:56 * kasparnet has quit
+2015-09-18T10:42:49 * alanharnum joined the channel
+2015-09-18T10:47:44 * kasparnet joined the channel
+2015-09-18T11:15:47 * alanharn_ joined the channel
+2015-09-18T11:19:27 * gtirloni joined the channel
+2015-09-18T12:08:55 * cindyli joined the channel
+2015-09-18T12:14:54 * alanharnum joined the channel
+2015-09-18T12:15:38 * yzen joined the channel
+2015-09-18T12:16:59 * alanharnum has quit
+2015-09-18T12:24:26 * Justin_o joined the channel
+2015-09-18T12:32:34 * jhung joined the channel
+2015-09-18T12:50:24 * alanharnum joined the channel
+2015-09-18T12:51:11 <cindyli> Justin_o: while working on the first discovery FLOE-331 with FLOE-416, the infusion upgrade, merged in, i noticed the definitions of primary schemas still have "autoinit": https://github.com/jobara/first-discovery/blob/FLOE-416/src/schemas/schemas.js#L164-L249
+2015-09-18T12:55:05 * gtirloni joined the channel
+2015-09-18T12:56:34 <cindyli> Justin_o: the infusion master also has a new commit merged in to remove the use of all "autoInit" in the infusion. we probably wanna upgrade infusion in the FLOE-416 to include that change too since when I search "autoInit" in my FLOE-331 branch, it still shows up for https://github.com/jobara/first-discovery/blob/FLOE-416/src/lib/infusion/src/components/textToSpeech/js/MockTTS.js that sits in the lib infusion directory
+2015-09-18T12:57:04 <Justin_o> cindyli: thanks for spotting those. I\'ll do that today
+2015-09-18T12:57:19 <cindyli> thanks, Justin_o
+2015-09-18T13:06:01 <cindyli> Justin_o: in FLOE-416, a use of "fluid.eventedComponent" that can be replaced with "fluid.component": https://github.com/jobara/first-discovery/blob/FLOE-416/src/js/panels.js#L928
+2015-09-18T13:06:40 <Justin_o> cindyli: thanks. would you mind commenting on that in the pull request?
+2015-09-18T13:06:51 <cindyli> sure
+2015-09-18T13:11:07 <Justin_o> thanks
+2015-09-18T13:12:30 * gtirloni joined the channel
+2015-09-18T13:14:39 * slim_ joined the channel
+2015-09-18T13:18:55 * jessm joined the channel
+2015-09-18T13:23:59 * alanharnum joined the channel
+2015-09-18T13:40:41 * yzen joined the channel
+2015-09-18T13:53:49 * simonjb joined the channel
+2015-09-18T14:00:04 * cindyli1 joined the channel
+2015-09-18T14:40:32 * yzen has quit
+2015-09-18T14:40:38 * yzen_ joined the channel
+2015-09-18T15:11:56 * jhung joined the channel
+2015-09-18T15:17:03 <Justin_o> cindyli1: hmm.. found a problem with the selfVoicing tests. It seems the cancel method isn\'t using the mock, so it is causing an error in Firefox.
+2015-09-18T15:17:32 <cindyli1> Justin_o: which branch is this?
+2015-09-18T15:17:37 <Justin_o> FLOE-416
+2015-09-18T15:17:42 <cindyli1> ok
+2015-09-18T15:18:25 <Justin_o> cindyli1: i\'ll fix that up now, but it may take me a bit of time to sort things out.
+2015-09-18T15:19:33 <cindyli1> i know, with all those changes. fortunately, selfVoicing tests are relatively on its own. thanks, Justin_o
+2015-09-18T15:22:15 * alanharnum joined the channel
+2015-09-18T15:25:24 <Justin_o> cindyli1: okay, i have the test working again. I\'ve updated my branch.
+2015-09-18T15:25:51 <cindyli1> that\'s fast. thanks, Justin_o
+2015-09-18T15:26:16 <Justin_o> it\'s not the most elegant solution but it works
+'
+

@@ -1,0 +1,134 @@
+b'2014-10-06T00:20:18 * kasparnet has quit
+2014-10-06T01:30:10 * jhernandez has quit
+2014-10-06T04:22:13 * the-t-in-rtf has quit
+2014-10-06T04:22:45 * the-t-in-rtf joined the channel
+2014-10-06T08:10:37 * kasparnet joined the channel
+2014-10-06T08:29:36 * jhernandez joined the channel
+2014-10-06T10:21:50 * kasparnet has quit
+2014-10-06T10:29:28 * kasparnet joined the channel
+2014-10-06T10:58:00 * kasparnet has quit
+2014-10-06T11:05:43 * kasparnet joined the channel
+2014-10-06T11:41:25 * jhung joined the channel
+2014-10-06T12:07:57 * michelled joined the channel
+2014-10-06T12:13:24 * Justin_o joined the channel
+2014-10-06T12:20:45 <amilchev> hey Justin_o
+2014-10-06T12:21:05 <Justin_o> amilchev: hello
+2014-10-06T12:21:13 <amilchev> I\'ve updated https://github.com/GPII/prefsEditors/pull/71 with some tests
+2014-10-06T12:21:36 <amilchev> they all pass in node-webkit, but throw a weird error on FF
+2014-10-06T12:22:23 <amilchev> whenever you have the time, could have a quick look at them and see if 1) it\'s the same with you and 2) wtf is this
+2014-10-06T12:24:47 <amilchev> it\'s related to jqUnit-browser.js\'s  isVisible and notVisible and the message is "pok @ ..."
+2014-10-06T12:28:41 * cindyli joined the channel
+2014-10-06T12:33:37 <Justin_o> amilchev: i think part of your message may have been stripped out
+2014-10-06T12:33:54 <Justin_o> amilchev: i don\'t see what "this" is referring to
+2014-10-06T12:35:13 <amilchev> Justin_o: do you mean here https://github.com/GPII/prefsEditors/pull/71/files#diff-1fc4fac22d5e4661daf587ef6b6666b8R63
+2014-10-06T12:36:38 <Justin_o> amilchev: i mean in your point "2)" that you made above
+2014-10-06T12:37:40 <amilchev> ooh
+2014-10-06T12:38:09 <amilchev> "this error - have you seen it, why does it appear in FF but not in node-webkit"..
+2014-10-06T12:38:18 <amilchev> this is what I meant
+2014-10-06T12:39:01 <Justin_o> oh :) okay.. i\'ll take a look.. i\'m going to try to get my fedora instance running again today. I didn\'t get a chance to look into it again after the call on thursday and i was off on friday.a
+2014-10-06T12:39:24 <amilchev> Justin_o: whenever you have the time..thx
+2014-10-06T13:03:13 * danaayotte joined the channel
+2014-10-06T13:03:49 <michelled> Bosmon, kasparnet, sgithens___ : where is the security meeting held?
+2014-10-06T13:04:24 <kasparnet> michelled: I guess room 2 - despite what the calendar says
+2014-10-06T13:04:53 <kasparnet> https://global.gotomeeting.com/join/619028605
+2014-10-06T13:05:30 <michelled> Justin_o: ^
+2014-10-06T13:06:00 * yzen joined the channel
+2014-10-06T13:06:24 <Justin_o> michelled: thanks
+2014-10-06T13:06:26 * anvk joined the channel
+2014-10-06T13:06:32 <kasparnet> sgithens___: ^
+2014-10-06T13:07:41 * amilchev has left the channel
+2014-10-06T13:14:03 * heidiv joined the channel
+2014-10-06T13:33:09 * amilchev joined the channel
+2014-10-06T13:39:31 * slim joined the channel
+2014-10-06T13:56:17 * clown joined the channel
+2014-10-06T14:12:58 * anastasiac joined the channel
+2014-10-06T14:16:02 * michelled has quit
+2014-10-06T14:36:40 <Justin_o> amilchev: I was looking at your unit tests for https://github.com/GPII/prefsEditors/pull/71
+2014-10-06T14:38:15 <Justin_o> amilchev: it seems that the problem is related to the selector you are passing in not being found. so the visibility tests are all failing
+2014-10-06T14:39:12 <Justin_o> pok is the underlying qunit assertion that is being run. It looks like a boolean tests similar to assertTrue, so the failure is just that the result didn\'t evaluate to true.
+2014-10-06T14:39:25 <Justin_o> amilchev: hope that helps
+2014-10-06T14:40:07 <amilchev> Justin_o: why is this selector not found and how come node-webkit finds it?
+2014-10-06T14:40:46 <Justin_o> amilchev: not sure about the later. For the former, I\'m assuming the test is run before the element is added to the DOM.
+2014-10-06T14:41:40 <Justin_o> amilchev: if you put a break point in jqUnit-browser on the isVisible and isHidden tests you can inspect the DOM and see if the elements you want are actually present.
+2014-10-06T14:42:39 <amilchev> Justin_o: thx
+2014-10-06T14:43:56 <Justin_o> amilchev: let me know how it goes
+2014-10-06T15:03:37 <amilchev> Justin_o: yes, indeed the pcp hasn\'t even begun to render
+2014-10-06T15:04:12 <amilchev> at the time noVisible is called
+2014-10-06T15:04:18 <amilchev> notVisible*
+2014-10-06T15:05:43 <amilchev> Justin_o: how do I make sure the tests start only after this member is ready https://github.com/radmanovi4/prefsEditors/blob/gpii-752/tests/js/pcpStatusMessagesTests.js#L23-L39
+2014-10-06T15:07:15 <amilchev> could it be whatever you suggested when we talked about adding extra grade with "onReady" listener to the prefsEditor section in the fluid.prefs.create func?
+2014-10-06T15:08:57 <Justin_o> amilchev: something like that yes.. you need to wait for an event.. for the IoCTesting framework if you have to wait on an event that is triggered during/by the creation process you need to use the IoCSS syntax.. here is an example
+2014-10-06T15:08:59 <Justin_o> https://github.com/fluid-project/infusion/blob/master/tests/test-core/testTests/js/TestingTests.js#L118
+2014-10-06T15:09:25 <Justin_o> that says bind to the onReady event of the initTest component that will be created later.
+2014-10-06T15:10:04 <Justin_o> and you\'ll need to setup a createOnEvent like this one that has been commented out. https://github.com/fluid-project/infusion/blob/master/tests/test-core/testTests/js/TestingTests.js#L80-L83
+2014-10-06T15:10:34 <Justin_o> of course you wouldn\'t comment this out in yours, it was just done for testing a specific issue.
+2014-10-06T15:11:27 * anastasiac has quit
+2014-10-06T15:12:31 * michelled joined the channel
+2014-10-06T15:12:55 <amilchev> Justin_o hah ok, let me try that
+2014-10-06T15:18:30 * anastasiac joined the channel
+2014-10-06T15:19:28 * jhernandez has quit
+2014-10-06T15:28:37 <amilchev> Justin_o: btw just wondering doesn\'t this achieve the same effect? https://github.com/GPII/prefsEditors/blob/master/tests/js/textfieldStepperTests.js#L95-L97
+2014-10-06T15:29:07 <amilchev> by using listenerMaker and makerArgs
+2014-10-06T15:36:21 <Bosmon> amilchev - listenerMaker is unnecessary in recent versions of Infusion
+2014-10-06T15:36:36 * cindyli has quit
+2014-10-06T15:36:43 <Bosmon> You can just supply a regular listener + args
+2014-10-06T15:41:38 <amilchev> Bosmon thx
+2014-10-06T15:46:34 * danaayotte has quit
+2014-10-06T15:57:16 * anastasiac has quit
+2014-10-06T15:58:45 * cindyli joined the channel
+2014-10-06T16:00:42 * michelled has quit
+2014-10-06T16:04:15 <Justin_o> amilchev: you can generally just listen to events, but you have to do something to trigger them first. In the case where this happens atomically through the creation process you have to use the IoCSS syntax and etc to have the sequence setup correctly.
+2014-10-06T16:10:48 * jessm joined the channel
+2014-10-06T16:12:59 * michelled joined the channel
+2014-10-06T16:13:00 * anastasiac joined the channel
+2014-10-06T16:17:50 * michelled has quit
+2014-10-06T16:19:01 * michelled joined the channel
+2014-10-06T16:36:49 * jhung is now known as jhung_away
+2014-10-06T16:51:38 * clown has quit
+2014-10-06T16:53:33 * anvk has quit
+2014-10-06T16:54:21 * anvk joined the channel
+2014-10-06T17:01:47 * clown joined the channel
+2014-10-06T17:01:51 * clown is now known as clown_mtg
+2014-10-06T17:04:31 * kasparnet has quit
+2014-10-06T17:07:56 * anastasiac has quit
+2014-10-06T17:08:41 * anastasiac joined the channel
+2014-10-06T17:20:51 * jhung_away is now known as jhung
+2014-10-06T17:22:58 * danaayotte_ joined the channel
+2014-10-06T17:42:01 * slim has quit
+2014-10-06T17:42:16 * michelled has quit
+2014-10-06T17:43:39 * michelled joined the channel
+2014-10-06T18:25:12 * jhernandez joined the channel
+2014-10-06T18:41:28 * danaayotte_ has quit
+2014-10-06T18:43:03 * danaayotte_ joined the channel
+2014-10-06T18:52:53 * michelled has quit
+2014-10-06T18:56:26 * clown_mtg has quit
+2014-10-06T19:14:38 * clown joined the channel
+2014-10-06T19:25:03 * michelled joined the channel
+2014-10-06T19:50:12 * anastasiac has quit
+2014-10-06T19:55:14 * anastasiac joined the channel
+2014-10-06T19:55:16 * heidiv has quit
+2014-10-06T20:05:16 * kasparnet joined the channel
+2014-10-06T20:10:05 * kasparnet has quit
+2014-10-06T20:16:21 * anvk has quit
+2014-10-06T20:30:32 * kasparnet joined the channel
+2014-10-06T20:31:11 * cindyli has quit
+2014-10-06T20:34:17 * kasparnet has quit
+2014-10-06T20:40:37 * the-t-in-rtf has quit
+2014-10-06T20:43:26 * kasparnet joined the channel
+2014-10-06T20:44:39 * jhung has quit
+2014-10-06T20:50:41 * michelled has quit
+2014-10-06T20:53:14 * kasparnet has quit
+2014-10-06T20:56:57 * kasparnet joined the channel
+2014-10-06T21:05:44 * clown has quit
+2014-10-06T21:07:54 * anastasiac has quit
+2014-10-06T21:15:25 * yzen has quit
+2014-10-06T21:21:01 * jhernandez has quit
+2014-10-06T21:36:02 * danaayotte_ has quit
+2014-10-06T22:07:35 * Justin_o has quit
+2014-10-06T22:11:51 * jhernandez joined the channel
+2014-10-06T22:39:41 * yzen joined the channel
+2014-10-06T22:53:42 * kasparnet has quit
+2014-10-06T22:56:52 * yzen has quit
+2014-10-06T22:56:56 * jessm has quit
+'
+

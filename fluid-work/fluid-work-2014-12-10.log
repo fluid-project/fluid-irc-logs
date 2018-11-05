@@ -1,0 +1,396 @@
+b'2014-12-10T22:58:05 <avtar> it\'s going well
+2014-12-10T22:58:20 <avtar> except when i try to run windows acceptance tests
+2014-12-10T22:58:34 <Bosmon> oh dear
+2014-12-10T22:58:37 <avtar> well
+2014-12-10T22:58:59 <avtar> it could just be me and i\'m about to post to gpii-arch but thought i would check who was hanging out in the channel first
+2014-12-10T22:59:17 <Bosmon> And what result do you get?
+2014-12-10T23:00:01 <avtar> this is where one of the tests is b0rking https://github.com/GPII/universal/blob/master/testData/solutions/win32.json#L15 with 20:38:07.059:  FATAL ERROR: Uncaught exception: ENOENT, no such file or directory \'C:\\Users\\GPIITestUser\\AppData\\Roaming\\Freedom Scientific\\JAWS\\15.0\\Settings\\VoiceProfiles.ini\'
+2014-12-10T23:00:11 <avtar> full output http://pastie.org/pastes/9773151/text
+2014-12-10T23:00:15 <Bosmon> Ah well
+2014-12-10T23:00:19 <Bosmon> that one is for KASPARNETT
+2014-12-10T23:00:24 <Bosmon> He wrote the JAWS integration :)
+2014-12-10T23:00:38 <Bosmon> I assume it\'s true that the profile doesn\'t exist
+2014-12-10T23:00:41 <Bosmon> Is JAWS installed on the system?
+2014-12-10T23:01:28 <avtar> absolutely not :/
+2014-12-10T23:01:50 <Bosmon> Well then, I can only assume that the instructions for running the acceptance tests are faulty...
+2014-12-10T23:01:50 <avtar> but i assumed that this was getting mocked
+2014-12-10T23:01:56 <avtar> ok
+2014-12-10T23:02:03 <Bosmon> No mocks in acceptance tests
+2014-12-10T23:02:06 <Bosmon> it is their job to run for real
+2014-12-10T23:02:15 <Bosmon> It is integration tests which have mocks
+2014-12-10T23:02:20 <Bosmon> And they run from the universal repo
+2014-12-10T23:02:34 <avtar> so here\'s the issue
+2014-12-10T23:03:11 <avtar> i would like to run these tests on windows VMs with jenkins
+2014-12-10T23:04:48 <avtar> i don\'t think simon installed any third party software on his previous vm besides just enough pieces like nodejs, npm, etc to meet gpii framework requirements
+2014-12-10T23:05:05 <Bosmon> Well sure
+2014-12-10T23:05:16 <Bosmon> But it is the job of the acceptance tests to test actual solutions
+2014-12-10T23:05:37 <Bosmon> For example, I assume nvda is installed on the system?
+2014-12-10T23:06:17 <Bosmon> Otherwise those tests would not run either
+2014-12-10T23:06:52 * jessm has quit
+2014-12-10T23:07:22 <avtar> no, no other third party software is installed
+2014-12-10T23:08:06 <Bosmon> ok
+2014-12-10T23:08:40 <avtar> i guess my question is how valuable are these test results if only windows specific features are being tested
+2014-12-10T23:08:54 <Bosmon> I\'m not sure I can understand your question :)
+2014-12-10T23:08:57 <Bosmon> Can you restate it?
+2014-12-10T23:09:05 <avtar> i can always try :|
+2014-12-10T23:12:45 <Bosmon> Well
+2014-12-10T23:12:52 <Bosmon> 100% of the value of these tests is to test windows specific features
+2014-12-10T23:12:57 <Bosmon> That is what they were designed for
+2014-12-10T23:12:59 <Bosmon> Does that help? : P
+2014-12-10T23:13:55 <avtar> yes, and how much of a requirement is it that jaws related tests are run whenever changes are made in the universal or windows repos?
+2014-12-10T23:14:52 <Bosmon> Well, my first response was, "it is an absolutely essential requirement"
+2014-12-10T23:15:00 <Bosmon> But clearly that is not absolutely and literally true
+2014-12-10T23:15:06 <Bosmon> But still, it is the purpose these tests were written for
+2014-12-10T23:15:16 <Bosmon> If it\'s more than we can manage at the moment, we will just have to disable the test
+2014-12-10T23:15:32 <Bosmon> The purpose of the tests is to test that the system actually works!
+2014-12-10T23:16:04 <Bosmon> And for a user who is using JAWS, that implies testing that it correctly ends up activating JAWS if that is what the user\'s preferences imply .....
+2014-12-10T23:16:21 <Bosmon> I\'m not sure I\'m really helping
+2014-12-10T23:16:37 <Bosmon> It\'s what you get for asking a question of a person with a heavy cold close to midnight : P
+2014-12-10T23:17:10 <Bosmon> You can ask a question of KASPARNETT in the morning if you want a 2nd and no doubt much milder opinion.......
+2014-12-10T23:18:04 <avtar> the coke zero version eh?
+2014-12-10T23:19:05 <Bosmon> Doesn\'t coke zero still contain caffeine? : P
+2014-12-10T23:19:34 <avtar> most likely but just less sugar
+2014-12-10T23:19:42 <avtar> or different type of sugar
+2014-12-10T23:20:15 <avtar> if i had to drink coke then i would just opt for the copious amount of sugar
+2014-12-10T23:20:25 <avtar> so antranig, i choose you
+2014-12-10T23:21:03 <avtar> but i\'m reading pages 4 and 5 of this document http://www.freedomscientific.com/Content/Documents/Manuals/JAWS/JAWS-Quick-Start-Guide.pdf and i have a feeling dealing with jaws licensing in the cluster isn\'t going to be straightforward
+2014-12-10T23:21:10 <Bosmon> Yes
+2014-12-10T23:21:19 <Bosmon> It will probably make our problems with Windows licencing look quite tame
+2014-12-10T23:21:26 <avtar> agreed
+2014-12-10T23:21:26 <avtar> :/
+2014-12-10T23:21:35 <Bosmon> So yes, feel free to disable those tests for now
+2014-12-10T23:21:42 <Bosmon> but this is an issue which we must raise AT THE HIGHEST LEVEL .....
+2014-12-10T23:22:11 <Bosmon> Since obviously this issue will come up in spades and whatever other suits are relevant once we start testing the system with more and more solutions
+2014-12-10T23:22:31 <Bosmon> But really it will be a requirement on our cluster that we can bring up a machine "with any relevant solution installed" up whenever we please
+2014-12-10T23:22:39 <Bosmon> And presumably it will be the job of our vendors, ultimately, to assist us
+2014-12-10T23:25:02 <avtar> let me try nvda this vm for now and see if at least that requirement can be met so that we have something to appease the benevolent dictators
+2014-12-10T23:25:07 <Bosmon> cool
+2014-12-10T23:25:16 <Bosmon> Cheers, AVTTAR
+2014-12-10T23:25:30 <avtar> thanks for your help, Bosmon++
+2014-12-10T23:26:02 <Bosmon> Sorry I couldn\'t be more helpful
+2014-12-10T23:26:15 <Bosmon> Are you familiar with that incredible new TV show..... *******TTTOAST*******....... OF LONDON?
+2014-12-10T23:26:56 <avtar> can\'t say that i am
+2014-12-10T23:27:19 <Bosmon> It is from the same writer who produced Father Ted and THE IT CROWD
+2014-12-10T23:29:20 <avtar> i\'ve watched a couple episodes of it crowd but never heard of father ted
+2014-12-10T23:30:01 <avtar> the last british tv show that i was really into was \'the thick of it\'
+2014-12-10T23:31:15 <Bosmon> Ah
+2014-12-10T23:31:17 <Bosmon> A modernist : P
+2014-12-10T23:33:58 <avtar> that too was only because my roommate at the time would watch it
+2014-12-10T23:34:15 <avtar> i\'ve been weaning myself off media
+2014-12-10T23:34:24 <avtar> or trying
+2014-12-10T23:34:26 <Bosmon> media!
+2014-12-10T23:35:46 <Bosmon> What if the thing played from a USB stick
+2014-12-10T23:35:59 <Bosmon> Or perhaps some form of PCI-e SSD contraption?
+2014-12-10T23:36:10 <Bosmon> Would be it ok to watch it then?
+2014-12-10T23:36:29 <avtar> perhaps
+2014-12-10T23:36:33 <avtar> but in moderation :)
+2014-12-10T23:55:49 <avtar> Bosmon, kasparnet: i\'m going to vote for sticking with just the builtIn target for now
+2014-12-10T23:56:27 <avtar> i can add a sound card to the vm running on the lab computer but getting the same experience on openstack isn\'t going to be as straightforward https://lists.launchpad.net/openstack/msg20011.html
+2014-12-10T23:57:18 <avtar> we don\'t have that type of direct access to the compute nodes, the cluster vendor prefers to abstract all that away
+2014-12-10T23:57:31 * kasparnet has quit
+'
+
+b'2014-12-10T14:47:30 <Justin_o> Bosmon: in that case could i just do a regular strings block and use UIVerbatim in the prototree for all of them.. it would be less secure though. but if we were going to convert all of the strings to the verbatim form anyways, i don\'t really see a difference
+2014-12-10T14:48:01 <Bosmon> Justin_o - presumably the idea was to allow the integrator the choice whether he wanted to have strings encoded or unencoded
+2014-12-10T14:48:04 <Justin_o> i guess this is all theoretical though, since the security pages won\'t really be reused by anyone..
+2014-12-10T14:48:33 <Bosmon> If every string in the bundle is interpreted as markup, we lose the ability to put simple text in there
+2014-12-10T14:48:37 <Bosmon> Yes, it is largely theoretical
+2014-12-10T14:48:39 <Justin_o> and i could just as easily just use my foreknowledge to select the correct type in my component
+2014-12-10T14:48:53 * clown joined the channel
+2014-12-10T14:49:16 <Justin_o> Bosmon: should i just take the simple route now, of knowing which ones need markup, or would it make more sense to start on one of these other paths now
+2014-12-10T14:49:24 <Bosmon> Justin_o - it would be best to take the simple route now
+2014-12-10T14:49:29 <Bosmon> We don\'t really have all that much time
+2014-12-10T14:49:55 <Justin_o> Bosmon: that\'s a very good point.. okay.. i\'ll start with the simple route for now
+2014-12-10T14:50:04 <Bosmon> This discussion is logged here in IRC now for those who come after us who are interested in this requirement :)
+2014-12-10T14:50:51 <Justin_o> Bosmon: yes.. good to have a record and thanks for the conversation
+2014-12-10T14:50:57 <Bosmon> Cheers, Justin_o
+2014-12-10T14:58:44 * danaayotte joined the channel
+2014-12-10T15:13:12 * slim_jim has quit
+2014-12-10T15:15:50 * slim_jim joined the channel
+2014-12-10T15:17:07 * simonjb joined the channel
+2014-12-10T15:26:39 * slim_jim has quit
+2014-12-10T15:34:18 * Sepideh has quit
+2014-12-10T15:35:23 * slim_jim joined the channel
+2014-12-10T15:44:55 <kasparnet> jhernandez: hey Javi
+2014-12-10T15:44:59 <kasparnet> sorry for having ignored you
+2014-12-10T15:45:06 <kasparnet> :)
+2014-12-10T15:45:10 <kasparnet> how are things going on it
+2014-12-10T15:45:22 <kasparnet> still stuck on the multi-resolve issue?
+2014-12-10T15:45:35 <jhernandez> kasparnet: no prob, I\'ve been busy too
+2014-12-10T15:45:41 <jhernandez> yeah
+2014-12-10T15:45:59 <jhernandez> I\'ll clean up the code and share something with you
+2014-12-10T15:46:05 <kasparnet> ok, cool
+2014-12-10T16:28:37 <jhernandez> Bosmon: kasparnet https://github.com/javihernandez/universal/commit/ea4eb9683c90354bae1908ee95979eacbd679592
+2014-12-10T16:30:44 <jhernandez> and, this is the client I\'m testing with -> https://gist.github.com/javihernandez/503eb5dea8e9b1bca829
+2014-12-10T16:30:46 * Sepideh joined the channel
+2014-12-10T16:31:01 * danaayotte has quit
+2014-12-10T16:32:51 <Bosmon> jhernandez - you forgot to commit the WebSocketsSettingsHandler
+2014-12-10T16:34:55 <jhernandez> yeah
+2014-12-10T16:34:57 <jhernandez> Bosmon: https://github.com/javihernandez/universal/commit/976919a7f70daf592e455377084c202a4b988160
+2014-12-10T16:35:12 <jhernandez> sorry, just did an amend
+2014-12-10T16:35:31 <jhernandez> and a push -f
+2014-12-10T16:35:35 * Sepideh has quit
+2014-12-10T16:37:06 <Bosmon> Yes, it\'s a mess, isn\'t it, that settingsHandlers are not components....
+2014-12-10T16:37:49 <Bosmon> You still have the same bug whereby two calls to "set" will end up notifying all their clients twice
+2014-12-10T16:38:05 <Bosmon> Also, what if the client is not connected at the time the "set" call is received, but connects afterwards?
+2014-12-10T16:38:08 <Bosmon> Then the update will be lost
+2014-12-10T16:39:06 <jhernandez> yeah, the code right now is very simple
+2014-12-10T16:40:26 <jhernandez> just wanted to show you a first draft, and the problem when returning the promise
+2014-12-10T16:49:21 * Sepideh joined the channel
+2014-12-10T16:57:42 * michelled joined the channel
+2014-12-10T16:59:45 * Bosmon7 joined the channel
+2014-12-10T17:03:31 * Sepideh has left the channel
+2014-12-10T17:04:16 <kasparnet> Bosmon: arch meeting
+2014-12-10T17:04:21 <Bosmon> kasparnet - yes, trying
+2014-12-10T17:04:34 <Bosmon> Somehow the stupid client keeps directing me to the web version of gotomeeting
+2014-12-10T17:20:21 * lliskovoi joined the channel
+2014-12-10T17:27:44 * danaayotte joined the channel
+2014-12-10T17:28:11 * avtar joined the channel
+2014-12-10T17:44:20 * avtar has quit
+2014-12-10T17:50:21 * Sepideh joined the channel
+2014-12-10T17:53:04 * jhung has quit
+2014-12-10T17:57:30 * avtar joined the channel
+2014-12-10T17:57:43 <avtar> kasparnet: ping
+2014-12-10T17:57:43 * Sepideh has quit
+2014-12-10T17:57:49 <kasparnet> avtar: pong
+2014-12-10T17:57:56 <kasparnet> though a quick one - gotta run in a sec
+2014-12-10T17:58:14 <avtar> i was wondering if you had run the windows acceptance tests recently
+2014-12-10T17:58:21 <avtar> after the mega merge
+2014-12-10T17:59:54 <kasparnet> yes
+2014-12-10T17:59:57 <kasparnet> they all pass
+2014-12-10T18:00:12 <kasparnet> though they sometimes leave windows in a limbo between high-contrast and regular theme
+2014-12-10T18:00:37 <avtar> ok
+2014-12-10T18:00:47 <avtar> when are you back?
+2014-12-10T18:03:06 <avtar> nm talking to simonjb
+2014-12-10T18:06:17 <kasparnet> avtar: I have to eat now, and then have a two hour meeting in the commune about who we our new housemate should be - so probably completely dead in the head after that
+2014-12-10T18:06:36 <kasparnet> I\'ll check IRC after that, but wont be of much use probably :)
+2014-12-10T18:06:37 * jhernandez has quit
+2014-12-10T18:08:35 <avtar> kasparnet: is it possible for me to have a vote in this housemate decision?
+2014-12-10T18:08:50 <avtar> are their profiles online somewhere?
+2014-12-10T18:09:58 * Sepideh joined the channel
+2014-12-10T18:18:17 <kasparnet> haha, well - I\'ll make that suggestion to the group when we eat now
+2014-12-10T18:18:33 <kasparnet> "Avtar the sysadmin would like his vote to count as well"
+2014-12-10T18:18:42 * jhernandez joined the channel
+2014-12-10T18:18:47 <kasparnet> I\'ll skype you in to our discussion :D
+2014-12-10T18:18:51 * cindyli has quit
+2014-12-10T18:18:53 <kasparnet> ok.. gotta run - foods ready
+2014-12-10T18:19:01 <avtar> have fun
+2014-12-10T18:19:13 * kasparnet has quit
+2014-12-10T18:19:13 * Sepideh has quit
+2014-12-10T18:20:56 * michelled has quit
+2014-12-10T18:28:13 * danaayotte has quit
+2014-12-10T18:32:33 * slim_jim has quit
+2014-12-10T18:38:24 * Sepideh joined the channel
+2014-12-10T18:47:54 * lliskovoi has left the channel
+2014-12-10T19:02:46 * michelled joined the channel
+2014-12-10T19:13:56 * avtar has quit
+2014-12-10T19:14:38 * avtar joined the channel
+2014-12-10T19:15:52 * cindyli joined the channel
+2014-12-10T19:20:09 * danaayotte joined the channel
+2014-12-10T19:21:08 * jhung joined the channel
+2014-12-10T19:29:17 * Sepideh has quit
+2014-12-10T19:30:39 * jhung has quit
+2014-12-10T19:33:03 * michelled has quit
+2014-12-10T19:33:03 * jhung joined the channel
+2014-12-10T19:33:45 * danaayotte has quit
+2014-12-10T19:36:24 * michelled joined the channel
+2014-12-10T19:39:09 * michelled_ joined the channel
+2014-12-10T19:40:18 * cindyli1 joined the channel
+2014-12-10T19:41:53 * michelled has quit
+2014-12-10T19:41:53 * michelled_ is now known as michelled
+2014-12-10T19:41:57 * cindyli has quit
+2014-12-10T19:52:16 * cindyli1 has quit
+2014-12-10T19:54:06 * yzen joined the channel
+2014-12-10T20:06:57 * cindyli joined the channel
+2014-12-10T20:31:08 * kasparnet joined the channel
+2014-12-10T20:33:40 * cindyli has quit
+2014-12-10T20:36:29 * cindyli joined the channel
+2014-12-10T20:45:48 * jhung has quit
+2014-12-10T20:46:56 * cindyli has quit
+2014-12-10T20:48:34 * kasparnet has quit
+2014-12-10T20:55:22 * michelled has quit
+2014-12-10T20:57:12 * cindyli joined the channel
+2014-12-10T20:58:18 * jhung joined the channel
+2014-12-10T21:01:05 * danaayotte joined the channel
+2014-12-10T21:18:55 * cindyli has quit
+2014-12-10T21:25:20 * kasparnet joined the channel
+2014-12-10T21:25:27 * jhung has quit
+2014-12-10T21:29:17 * Sepideh joined the channel
+2014-12-10T21:31:03 * kasparnet has quit
+2014-12-10T21:40:37 * Sepideh has quit
+2014-12-10T21:45:47 * kasparnet joined the channel
+2014-12-10T21:48:02 * kasparnet has quit
+2014-12-10T22:00:47 * clown has left the channel
+2014-12-10T22:01:56 * simonjb has quit
+2014-12-10T22:06:04 * anvk has quit
+2014-12-10T22:18:08 * Sepideh joined the channel
+2014-12-10T22:18:23 * Sepideh has left the channel
+2014-12-10T22:20:54 * yzen is now known as 
+2014-12-10T22:24:50 * danaayotte has quit
+2014-12-10T22:28:13 * danaayotte joined the channel
+2014-12-10T22:34:10 * yzen joined the channel
+2014-12-10T22:35:12 * yzen is now known as 
+2014-12-10T22:45:35 * kasparnet joined the channel
+2014-12-10T22:48:28 <avtar> Bosmon, Bosmon7, kasparnet: ping
+2014-12-10T22:52:02 * danaayotte has quit
+2014-12-10T22:57:06 <Bosmon> Hi there AVVTTAR!
+2014-12-10T22:57:19 <avtar> oh well hello there
+2014-12-10T22:57:24 <avtar> how goes it?
+2014-12-10T22:57:29 <avtar> talk to me
+2014-12-10T22:57:37 <Bosmon> Well, it\'s tolerable
+2014-12-10T22:57:41 <Bosmon> Fairly bad cold this evening
+2014-12-10T22:57:43 <Bosmon> How is it over there?
+'
+
+b'2014-12-10T00:40:02 * colinclark joined the channel
+2014-12-10T00:40:12 * colinclark has quit
+2014-12-10T00:59:43 * kasparnet has quit
+2014-12-10T01:10:07 * prontotest joined the channel
+2014-12-10T01:10:07 * prontotest has left the channel
+2014-12-10T02:01:02 * michelled joined the channel
+2014-12-10T03:22:43 * kasparnet joined the channel
+2014-12-10T03:26:57 * kasparnet has quit
+2014-12-10T03:30:53 * michelled has quit
+2014-12-10T04:22:27 * yzen joined the channel
+2014-12-10T08:23:05 * yzen joined the channel
+2014-12-10T08:26:56 * yzen has quit
+2014-12-10T09:09:29 * slim_jim joined the channel
+2014-12-10T09:31:27 * kasparnet joined the channel
+2014-12-10T09:33:37 * kasparnet has quit
+2014-12-10T09:34:06 * kasparnet joined the channel
+2014-12-10T09:46:15 <kasparnet> morning Bosmon
+2014-12-10T11:08:28 <Bosmon> KASSPER KASSPERSSEN!
+2014-12-10T11:09:12 <Bosmon> kasparnet
+2014-12-10T11:32:18 <jhernandez> KASPERSKY
+2014-12-10T11:32:20 <jhernandez> xDD
+2014-12-10T11:59:12 <kasparnet> hey Bosmon, jhernandez: sorry was in a VM
+2014-12-10T11:59:20 <kasparnet> so no pings for me
+2014-12-10T11:59:39 <kasparnet> s/pings/notifications/
+2014-12-10T12:00:00 <kasparnet> Bosmon: I had a question for you, but I dont really remember what it was ... so prob. not that important
+2014-12-10T12:28:11 <jhernandez> kasparnet: no prob
+2014-12-10T12:30:26 <jhernandez> Bosmon: kasparnet btw, I\'ve been working on the browser thing and got something (more or less) working
+2014-12-10T12:33:32 <jhernandez> right now I have a bi-directional websockets channel in the flowmanager, waiting for clients
+2014-12-10T12:35:08 <jhernandez> in the other side, I wrote a settings handler making use of the connected clients, getting and setting settings through signals and listeners
+2014-12-10T12:36:59 <jhernandez> to test all this, I wrote a super simple client that connects to the flowmanager and waits for signals from the settings handler
+2014-12-10T12:39:31 <jhernandez> although I can get and set settings in the client, when performing a login action, my get/set functions are returning before the real result of the operation arrives
+2014-12-10T12:43:28 <jhernandez> Bosmon: how should I solve this problem?
+2014-12-10T12:45:15 <jhernandez> a) should I wait until the result has arrived to perform the return? or b) should I return a promise of the value? c) I\'m TOTALLY WRONGG
+2014-12-10T12:48:43 <kasparnet> jhernandez: that\'s awesome to hear you\'re making progress on this stuff
+2014-12-10T12:49:35 <kasparnet> yeah - the way the settingshandlers are currently implemented (and bosmon can correct the stuff I got wrong :) ) is that they return a promise for the value
+2014-12-10T12:50:00 <jhernandez> kasparnet: right
+2014-12-10T12:51:02 <jhernandez> thanks
+2014-12-10T12:51:16 * kasparnet is just looking at the code for settingshandlers
+2014-12-10T12:52:24 <jhernandez> yeah, I took a look at some of them, but in my case, the problem is that my get function is as follows
+2014-12-10T12:55:48 <jhernandez> function get (payload) {
+2014-12-10T12:55:48 <jhernandez> // I make some operations to find the socket I\'m going to work with
+2014-12-10T12:55:48 <jhernandez> // once I have the socket, I make
+2014-12-10T12:55:48 <jhernandez> socket.emit("getSettings", payload)
+2014-12-10T12:55:48 <jhernandez> // when the client is done, it triggers "gotSettings",
+2014-12-10T12:55:51 <jhernandez> socket.on("gotSettings", function (returnPayload) {
+2014-12-10T12:55:53 <jhernandez> // here I have the value to return
+2014-12-10T12:55:56 <jhernandez> return returnPayload;
+2014-12-10T12:55:58 <jhernandez> });
+2014-12-10T12:56:01 <jhernandez> }
+2014-12-10T12:56:03 <jhernandez> kasparnet: I have something like this
+2014-12-10T12:59:07 <jhernandez> and at this point, I\'m not sure how to return a promise of that
+2014-12-10T13:02:06 <Bosmon> jhernandez - perfectly simple
+2014-12-10T13:02:15 <kasparnet> I *think* it\'s done by creating a promise (ie. before the socket.on):
+2014-12-10T13:02:16 <Bosmon> Make a fluid.promise() at the start of the function
+2014-12-10T13:02:26 <Bosmon> And then call "resolve" on it rather than returnPayload
+2014-12-10T13:02:26 <kasparnet> ah - bosmon to the rescue
+2014-12-10T13:02:29 <Bosmon> And then return the promise
+2014-12-10T13:03:30 <jhernandez> that simple? right? - let me try it
+2014-12-10T13:04:02 <kasparnet> Bosmon: something like this: https://code.stypi.com/kaspermarkus/promiseExample.js
+2014-12-10T13:04:04 <kasparnet> ?*
+2014-12-10T13:04:33 <Bosmon> Yes kasparnet - that is it
+2014-12-10T13:04:38 <kasparnet> jhernandez: ^
+2014-12-10T13:05:24 * jhung joined the channel
+2014-12-10T13:09:02 <jhernandez> kasparnet: heh
+2014-12-10T13:09:03 <jhernandez> thanks
+2014-12-10T13:09:15 <jhernandez> but
+2014-12-10T13:10:08 <jhernandez> I\'m having this problem
+2014-12-10T13:10:09 <jhernandez> FATAL ERROR: Uncaught exception: Object Error: resolving promise [object Object] which has received "resolve" has no method \'Assertion failure - check console for details\'
+2014-12-10T13:10:19 <Bosmon> Yes well
+2014-12-10T13:10:25 <Bosmon> You can only resolve it once
+2014-12-10T13:10:46 <Bosmon> Obviously your communications are faulty
+2014-12-10T13:11:28 <Bosmon> It has to behave like a settings handler
+2014-12-10T13:11:31 <Bosmon> And produce exactly one value
+2014-12-10T13:11:43 <Bosmon> Aren\'t I glad I put in that error diagnostic now!
+2014-12-10T13:23:13 <jhernandez> ok, still not working
+2014-12-10T13:23:18 <jhernandez> :/
+2014-12-10T13:23:52 <kasparnet> is your promise.resolve function getting called multiple times?
+2014-12-10T13:24:03 <jhernandez> well, not yet
+2014-12-10T13:24:47 <jhernandez> right now I\'m "hardcoding" my get function in order to deal with just one element to see things working
+2014-12-10T13:26:35 <jhernandez> but, even by having this, I guess that I should remove the listener after getting the result
+2014-12-10T13:26:37 <kasparnet> so even resolving the promise just once gives you that error
+2014-12-10T13:27:12 <jhernandez> but, if I remove the listener my promise won\'t be resolved
+2014-12-10T13:27:15 <jhernandez> xD
+2014-12-10T13:28:40 <kasparnet> cant you remove it immediately after resolving the promise?
+2014-12-10T13:31:52 <jhernandez> nope, already tried it
+2014-12-10T13:33:25 <jhernandez> kasparnet: let me update the stypi
+2014-12-10T13:34:29 <jhernandez> https://code.stypi.com/kaspermarkus/promiseExample.js
+2014-12-10T13:37:56 * simonjb joined the channel
+2014-12-10T13:38:51 <kasparnet> jhernandez: I dont think it\'s clear to me what the current problem is... Is it that the resolving happens several times?
+2014-12-10T13:39:16 <kasparnet> ie. several gotSettings messages?
+2014-12-10T13:40:45 <jhernandez> if I remove the listener *looks like* it doesn\'t like it
+2014-12-10T13:40:48 <jhernandez> and
+2014-12-10T13:41:04 <jhernandez> id I do not remove it, *looks like* it\'s being called so many times
+2014-12-10T13:42:02 <jhernandez> not sure, so let me play a little bit more with it
+2014-12-10T13:47:56 <Bosmon> You probably can\'t remove the listener with the existing sockets.io API, perhaps
+2014-12-10T13:48:25 <Bosmon> VVANTUNNEZZ!
+2014-12-10T13:50:24 <kasparnet> jhernandez: so I know it\'s dirty, but perhaps try just using a flag
+2014-12-10T13:50:30 <kasparnet> like the example in the stypi pad
+2014-12-10T13:50:33 <kasparnet> (i\'ve updated it)
+2014-12-10T13:50:55 * kasparnet has quit
+2014-12-10T13:52:14 * kasparnet joined the channel
+2014-12-10T13:55:27 <Bosmon> Yes, and what will you do with your flag when the 2nd request comes through for your settings handler?
+2014-12-10T13:58:24 * cindyli joined the channel
+2014-12-10T14:02:07 <kasparnet> Bosmon: well, wouldn\'t that result in a new call to the top level "get" function - ie. resetting the flag?
+2014-12-10T14:05:44 * anvk joined the channel
+2014-12-10T14:08:45 * Sepideh joined the channel
+2014-12-10T14:09:27 * jessm joined the channel
+2014-12-10T14:14:20 <Bosmon> No, you have a fundamental bug that will lead the socket to accumulate listeners
+2014-12-10T14:14:26 <Bosmon> It gets an extra one every time round your loop
+2014-12-10T14:16:36 * Sepideh has quit
+2014-12-10T14:22:21 <kasparnet> yeah ok, good point
+2014-12-10T14:22:42 <jhernandez> heh
+2014-12-10T14:23:11 <jhernandez> sorry, I\'ve been afk
+2014-12-10T14:27:14 * Sepideh joined the channel
+2014-12-10T14:27:37 <jhernandez> Bosmon: kasparnet just updated the stypi with the problem I\'m getting
+2014-12-10T14:27:41 <jhernandez> (right now)
+2014-12-10T14:27:41 <Justin_o> Bosmon: just catching up from our conversation yesterday
+2014-12-10T14:28:27 <Justin_o> Bosmon: i think at one point you mentioned that it wasn\'t good to have markup in the strings block because it could lead to insecure implementations.. so we started putting them in markup blocks instead..
+2014-12-10T14:28:46 <Justin_o> Bosmon: but i\'d guess that localization wouldn\'t work with the markup block
+2014-12-10T14:29:53 <Bosmon> Justin_o - I guess it is a potential risk
+2014-12-10T14:30:07 <Bosmon> but the attacker would already have had to get us to load a "hostile string bundle" or so
+2014-12-10T14:30:17 <Bosmon> You\'d assume in that case they could probably get us to load arbitrary JS also
+2014-12-10T14:30:29 <Justin_o> Bosmon: that\'s possible yes
+2014-12-10T14:30:42 <Justin_o> Bosmon: i think it was that the markup block vs string block was explicit
+2014-12-10T14:32:13 <Justin_o> Bosmon: also, this may go against the previous point in some ways, we\'d need to have some for knowledge that a string contained markup since the prototree would need to be instructed to render things as verbatim instead...
+2014-12-10T14:32:26 <Bosmon> Justin_o - yes, we would have to have that knowledge
+2014-12-10T14:32:39 <Bosmon> But presumably the application designer would decide this up front
+2014-12-10T14:32:44 * simonjb has quit
+2014-12-10T14:33:07 <Justin_o> Bosmon: sure because i know how i want mine to be styled, but the integrator should have a choice in that too
+2014-12-10T14:33:41 <Justin_o> and yes, they do have the ability, but it could be very difficult depending on the complexity of the prototree, or worse, a full tree
+2014-12-10T14:33:42 <Bosmon> Yes, it is a little awkward
+2014-12-10T14:34:01 <Bosmon> It\'s hard to think of a way that could be achieved with the means we have at the moment
+2014-12-10T14:34:29 <Justin_o> Bosmon: okay.. yah.. true.. so for the moment i\'ll use the strings block with markup and verbatim rendering
+2014-12-10T14:34:33 <Bosmon> One possibility is to have an "extended string bundle format"
+2014-12-10T14:34:40 <Justin_o> Bosmon: what does that mean
+2014-12-10T14:34:45 <Justin_o> how would that look
+2014-12-10T14:34:54 <Bosmon> Where the strings would have to include a little metadata representing whether they had been markup-encoded or not
+2014-12-10T14:35:17 <Bosmon> It seems a little cumbersome, but it\'s the only kind of scheme that could accomplish this with any grace, I think
+2014-12-10T14:35:44 <Bosmon> So for example rather than just having a plain string as the value, there would be a little block such as { verbatim: true, markup: "......"}
+2014-12-10T14:41:07 <Justin_o> Bosmon: like this?
+2014-12-10T14:41:10 <Justin_o> https://www.irccloud.com/pastebin/yiciHPtU
+2014-12-10T14:41:36 <Bosmon> Justin_o - yes, like that
+2014-12-10T14:42:04 <Justin_o> so the protoTree would take functions that returned an object representing the correct config?
+2014-12-10T14:42:31 <Bosmon> Justin_o - well, perhaps a cleaner way would be to have the protoTree just include UIVerbatim components
+2014-12-10T14:42:45 <Bosmon> And then have a step of pre-processing the string bundle to upgrade every bare string to the verbatim form
+2014-12-10T14:42:51 <Justin_o> for every possible string
+2014-12-10T14:43:11 <Justin_o> do we have to do the upgrade
+2014-12-10T14:43:20 <Justin_o> if they were all verbatim it shouldn\'t matter right
+2014-12-10T14:43:30 <Justin_o> or do message keys not work in verbatim components
+2014-12-10T14:44:58 <Bosmon> I believe UIMessage is supported within UIVerbatim, yes
+'
+

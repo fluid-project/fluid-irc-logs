@@ -1,0 +1,276 @@
+b'2018-03-19T17:12:45 * colinclark joined the channel
+2018-03-19T17:12:45 <michelled> give us a sec to find a space
+2018-03-19T17:14:03 <michelled> jhung: meet us in the standup room
+2018-03-19T17:14:09 <jhung> ok
+2018-03-19T17:18:21 * alanharnum_away joined the channel
+2018-03-19T17:19:15 * shivam_vyas joined the channel
+2018-03-19T17:31:12 * Bosmon joined the channel
+2018-03-19T17:37:45 * alanharnum_away joined the channel
+2018-03-19T17:41:34 * sepidehshahi has quit
+2018-03-19T17:41:39 * kasparnet joined the channel
+2018-03-19T17:42:00 <Justin_o> gmoss: thanks for sharing the results
+2018-03-19T17:42:58 * alanharnum_away has quit
+2018-03-19T17:48:06 * alanharnum_away joined the channel
+2018-03-19T17:48:27 * sepidehshahi joined the channel
+2018-03-19T17:50:04 * kasparnet has quit
+2018-03-19T17:50:19 * kasparnet joined the channel
+2018-03-19T17:59:23 <michelled> gmoss, alanharnum_away: I\'m in the collab room when ever you are ready
+2018-03-19T18:01:02 <gmoss> michelled alanharnum_away I\'ll be there in a few minutes, just preparing some brain juice :)
+2018-03-19T18:03:06 * alanharnum_away has quit
+2018-03-19T18:03:19 * sepidehshahi joined the channel
+2018-03-19T18:03:33 * alanharnum_away joined the channel
+2018-03-19T18:04:08 <simonjb> cindyli: I added some comments to https://github.com/GPII/universal/pull/585
+2018-03-19T18:04:16 <simonjb> sorry for the delay in getting to it!
+2018-03-19T18:04:34 * kasparnet has quit
+2018-03-19T18:04:36 <cindyli> thanks, simonjb. will address them soon
+2018-03-19T18:05:23 <simonjb> cindyli: and https://github.com/GPII/universal/pull/591 is good to look at now, right?
+2018-03-19T18:05:47 <cindyli> yes, it is, simonjb
+2018-03-19T18:05:55 <simonjb> great, will look at it now
+2018-03-19T18:06:08 * kasparnet joined the channel
+2018-03-19T18:08:54 * ShadX_ joined the channel
+2018-03-19T18:18:46 * kvuser joined the channel
+2018-03-19T18:28:37 <kvuser> cindyli: The PR(#79) i\'ve sent before is working fine. I\'ve tested it. But, there\'s warning coming on the top "Deprecated: mysql_real_escape_string(): The mysql extension is deprecated and will be removed in the future: use mysqli or PDO instead ....." because i\'ve updated all the mysql_* functions except mysqli_escape_string(). the-t-in-rtf
+2018-03-19T18:30:02 <kvuser> As i need to pass the db link in mysqli_escape_string() as first parameter. And there are some files which have used this function but do not require db link otherwise.  But since this function escapes the URI input, we can\'t ignore it.
+2018-03-19T18:30:58 * danayo joined the channel
+2018-03-19T18:31:00 <cindyli> kvuser: which pull request are you referring to?
+2018-03-19T18:31:19 <cindyli> i see, https://github.com/inclusive-design/AChecker/pull/79
+2018-03-19T18:31:23 <kvuser> cindyli: We can now create a custom escape function which will return a safe URI or we can pass the db connection in the parameter.The latter is more safe i guess. But I do not know how do i pass the db link in some files. For example, in /checker/index.php file, how do i access the link
+2018-03-19T18:31:38 <kvuser> Yes. PR #79
+2018-03-19T18:33:02 <kvuser> cindyli: Including the class. and then making an object and then accessing it via some function can be a way.  But, I believe there must be some other way as well.
+2018-03-19T18:33:57 * stegru has quit
+2018-03-19T18:34:01 <cindyli> kvuser: which line in checker/index.php are you referring to? I didn\'t find any mysql function calls in there
+2018-03-19T18:36:56 * gtirloni has quit
+2018-03-19T18:37:50 <kvuser> cindyli: Check this Line https://github.com/inclusive-design/AChecker/blob/master/checker/index.php#L131
+2018-03-19T18:39:53 <kvuser> Here.. $addslashes() is mysql_escape_string(). If i change the defintion of addslashes to mysqli_escape_string. It gives an error.
+2018-03-19T18:41:11 <kvuser> cindyli: So, we can either hide the warning for now. Because other mysql_* functions have been updated to mysqli_*. Else, we need to pass db link in each file using these functions.
+2018-03-19T18:41:25 * gtirloni joined the channel
+2018-03-19T18:42:29 <cindyli> kvuser: i see. I think the example you gave is a misuse of $addslashes(). according to php doc - http://php.net/manual/en/mysqli.real-escape-string.php
+2018-03-19T18:42:35 <cindyli> Escapes special characters in a string for use in an SQL statement, taking into account the current charset of the connection
+2018-03-19T18:42:43 * Siddhant_k joined the channel
+2018-03-19T18:43:11 <cindyli> escaping url should use a different escape function
+2018-03-19T18:43:18 <cindyli> thanks for catching this bug, kvuser
+2018-03-19T18:44:15 <cindyli> of course, when the url is saved into the database, it still needs to be escaped as a string in a SQL, which is via addslashes
+2018-03-19T18:45:16 <cindyli> since all AChecker db manipulations are thru DAO classes. At then, DAO will provide a class variable $db
+2018-03-19T18:45:19 <kvuser> cindyli: So, we can create a custom function and pass it in that function to get escaped string?
+2018-03-19T18:45:41 <cindyli> well, it depends on the situation
+2018-03-19T18:46:33 * alanharnum_away joined the channel
+2018-03-19T18:47:13 * Vinay_ joined the channel
+2018-03-19T18:47:23 <cindyli> as said, if the escape is for saving into database, addslashes should be performed in a DAO class instead of checker/index.php
+2018-03-19T18:47:24 * Siddhant_k has quit
+2018-03-19T18:48:04 <cindyli> if what\'s done in checker/index.php is to escape an url, the line here should use urlencode() instead of $addslashes
+2018-03-19T18:50:08 <kvuser> cindyli: I think I\'ve seen this use in few other files as well. So, the code needs some refactoring. For this PR, should i hide the warning. And start working on this another issue>
+2018-03-19T18:51:08 <cindyli> kvuser: no, never hide warnings
+2018-03-19T18:51:13 * alanharnum_away has quit
+2018-03-19T18:51:59 <cindyli> i think this issue could be addressed in the same pull request due to its nature of mysql upgrade
+2018-03-19T18:52:20 <kvuser> cindyli: Okay! Cool. Thanks.
+2018-03-19T18:52:41 <cindyli> thanks very much for your contribution, kvuser
+2018-03-19T18:52:47 <kvuser> I\'ll fix it asap and update the PR.
+2018-03-19T18:52:54 <cindyli> thanks
+2018-03-19T18:55:51 <gtirloni> cindyli kvuser: which php and mysql versions are we targeting? just curious
+2018-03-19T18:56:08 <kvuser> cindyli: It\'s my pleasure to contribute in such an awesome project. It\'s rare to find quality php projects with clean and well organized code.
+2018-03-19T18:57:28 <cindyli> gtirloni: PHP 7+ and mysql 5.6 i believe
+2018-03-19T18:58:08 <gtirloni> awesome, thanks!
+2018-03-19T19:05:57 * stegru joined the channel
+2018-03-19T19:06:00 * alanharnum_away joined the channel
+2018-03-19T19:07:21 <Vinay_> jhung : Sir, as I can clearly see one of the main objective of project is to synchronize the print copy and source content. My question is do we need to build the entire workflow from scratch or is there any starting part available?
+2018-03-19T19:08:22 <Vinay_> And sir also, in the project description three example workflow\'s are provided, does all three are in project\'s scope ?
+2018-03-19T19:10:23 <jhung> Vinay_: the work flow we have been using is a manual process. Whenever someone updates the web version, the PDF is manually updated using Adobe InDesign or Adobe Illustrator. This manual update can take a long time and we would like that to be easier (i.e. some automation could help).
+2018-03-19T19:12:11 <Vinay_> Sir, is there any documentation where I can learn more about Inclusive Design Guide which would help me to understand the project in a greater depth and hence would help me building a better proposal?
+2018-03-19T19:12:16 <jhung> Vinay_: the 3 examples are just examples to help illustrate a possible solution - there may be better solutions out there. This project is to research possible solutions, document them, and create a proof-of-concept / prototype of some of them.
+2018-03-19T19:13:50 <jhung> Vinay_: a good place to start is to look at the Github repository which the web version is created from. You will see there that there is all the content, but the PDFs I linked in the project description are already out of sync. The project will help us with solving this problem of keeping the two updated.
+2018-03-19T19:15:33 * kvuser has quit
+2018-03-19T19:16:01 * kvuser joined the channel
+2018-03-19T19:18:03 <Vinay_> Thanks a lot sir, I got some pointers to get started.
+2018-03-19T19:18:43 <jhung> No problem Vinay_
+2018-03-19T19:23:12 * alanharnum_away joined the channel
+2018-03-19T19:26:57 * ShadX_ has quit
+2018-03-19T19:37:44 * sgithens joined the channel
+2018-03-19T19:49:46 * alanharnum_away joined the channel
+2018-03-19T19:51:35 * kvuser has quit
+2018-03-19T19:54:59 * alanharnum_away has quit
+2018-03-19T20:05:46 * kasparnet has quit
+2018-03-19T20:10:37 * shivam_vyas has left the channel
+2018-03-19T20:10:56 * alanharnum_away joined the channel
+2018-03-19T20:11:14 * danayo has quit
+2018-03-19T20:11:28 * danayo joined the channel
+2018-03-19T20:13:16 * simonjb joined the channel
+2018-03-19T20:20:09 * Vinay_ has quit
+2018-03-19T20:22:42 * alanharnum_away joined the channel
+2018-03-19T20:24:05 * mrtyler has quit
+2018-03-19T20:26:15 * alanharnum_away has quit
+2018-03-19T20:26:23 * alanharnum_away joined the channel
+2018-03-19T20:29:14 * jhung has quit
+2018-03-19T20:34:15 * sepidehshahi has quit
+2018-03-19T20:42:54 * ShadX_ joined the channel
+2018-03-19T20:50:43 * simonjb has quit
+2018-03-19T21:06:18 * gtirloni has quit
+2018-03-19T21:28:28 * danayo joined the channel
+2018-03-19T21:32:52 * ShadX_ has quit
+2018-03-19T21:33:40 * kasparnet joined the channel
+2018-03-19T21:39:23 * mrtyler joined the channel
+2018-03-19T21:39:43 * alanharnum_away joined the channel
+2018-03-19T21:43:04 * alanharnum_away joined the channel
+2018-03-19T21:51:10 * alanharnum_away has quit
+2018-03-19T21:51:16 * kasparnet has quit
+2018-03-19T21:52:01 * kasparnet joined the channel
+2018-03-19T22:15:17 * kasparnet has quit
+2018-03-19T22:15:30 * kasparnet joined the channel
+2018-03-19T22:19:38 * hagerhosny19 has quit
+2018-03-19T22:29:24 <mrtyler> kasparnet: your RtF email is disabled :\'(, so you may want to subscribe to architecture@ using a different email
+2018-03-19T22:31:13 <colinclark> :\'(
+2018-03-19T22:33:45 <sgithens> :\'(
+2018-03-19T23:11:14 * kasparnet has quit
+'
+
+b'2018-03-19T00:00:57 * alanharnum_away has quit
+2018-03-19T00:17:55 * alanharnum_away joined the channel
+2018-03-19T01:25:25 * alanharnum_away joined the channel
+2018-03-19T01:47:13 * alanharnum_away joined the channel
+2018-03-19T01:52:39 * alanharnum_away has quit
+2018-03-19T02:04:26 * jhernandez has quit
+2018-03-19T02:13:19 * alanharnum_away joined the channel
+2018-03-19T02:17:57 * alanharnum_away has quit
+2018-03-19T02:19:44 * mrtyler joined the channel
+2018-03-19T02:37:29 * alanharnum_away joined the channel
+2018-03-19T02:42:21 * alanharnum_away has quit
+2018-03-19T02:57:00 * alanharnum_away joined the channel
+2018-03-19T02:57:41 * VictorA_NG joined the channel
+2018-03-19T03:12:19 * VictorA_NG has quit
+2018-03-19T03:14:35 * alanharnum_away joined the channel
+2018-03-19T03:19:42 * VictorA_NG joined the channel
+2018-03-19T03:36:45 * alanharnum_away joined the channel
+2018-03-19T03:41:45 * alanharnum_away has quit
+2018-03-19T03:45:11 * alanharnum_away joined the channel
+2018-03-19T03:50:40 * VictorA_NG has quit
+2018-03-19T04:10:00 * alanharnum_away joined the channel
+2018-03-19T04:14:33 * alanharnum_away has quit
+2018-03-19T04:33:08 * alanharnum_away joined the channel
+2018-03-19T04:38:09 * alanharnum_away has quit
+2018-03-19T04:39:53 * mrtyler joined the channel
+2018-03-19T04:51:48 * alanharnum_away joined the channel
+2018-03-19T05:15:08 * alanharnum_away joined the channel
+2018-03-19T05:39:42 * alanharnum_away joined the channel
+2018-03-19T05:44:44 * alanharnum_away has quit
+2018-03-19T06:05:13 * alanharnum_away joined the channel
+2018-03-19T06:10:53 * alanharnum_away joined the channel
+2018-03-19T06:15:29 * alanharnum_away has quit
+2018-03-19T06:31:36 * hagerhosny19 joined the channel
+2018-03-19T06:33:49 * alanharnum_away joined the channel
+2018-03-19T06:56:06 * alanharnum_away joined the channel
+2018-03-19T07:21:37 * alanharnum_away joined the channel
+2018-03-19T07:26:46 * alanharnum_away has quit
+2018-03-19T07:29:10 * alanharnum_away joined the channel
+2018-03-19T07:35:54 * alanharnum_away joined the channel
+2018-03-19T07:53:37 * alanharnum_away joined the channel
+2018-03-19T08:11:44 * alanharnum_away joined the channel
+2018-03-19T08:27:44 * georgitodorov joined the channel
+2018-03-19T08:32:19 * alanharnum_away joined the channel
+2018-03-19T08:41:16 * hagerhosny19 has quit
+2018-03-19T08:55:01 * kasparnet joined the channel
+2018-03-19T08:58:15 * alanharnum_away joined the channel
+2018-03-19T09:03:35 * alanharnum_away has quit
+2018-03-19T09:09:54 * hagerhosny19 joined the channel
+2018-03-19T09:26:44 * alanharnum_away joined the channel
+2018-03-19T09:28:32 * stegru joined the channel
+2018-03-19T09:28:38 * jhernandez joined the channel
+2018-03-19T09:38:23 * gloob has quit
+2018-03-19T09:38:50 * gloob joined the channel
+2018-03-19T09:49:12 * alanharnum_away joined the channel
+2018-03-19T10:06:25 * alanharnum_away joined the channel
+2018-03-19T10:20:52 * alanharnum_away joined the channel
+2018-03-19T10:43:05 * alanharnum_away joined the channel
+2018-03-19T10:48:17 * alanharnum_away has quit
+2018-03-19T11:00:16 * the-t-in-rtf joined the channel
+2018-03-19T11:03:41 * alanharnum_away joined the channel
+2018-03-19T11:06:03 * ShadX_ joined the channel
+2018-03-19T11:08:07 * alanharnum_away has quit
+2018-03-19T11:10:16 * ShadX__ joined the channel
+2018-03-19T11:14:45 * ShadX_ has quit
+2018-03-19T11:29:14 * alanharnum_away joined the channel
+2018-03-19T11:29:22 * ShadX_ joined the channel
+2018-03-19T11:32:45 * ShadX__ has quit
+2018-03-19T11:34:09 * alanharnum_away has quit
+2018-03-19T11:59:49 * alanharnum_away joined the channel
+2018-03-19T12:02:07 * the-t-in-rtf joined the channel
+2018-03-19T12:04:02 * gtirloni joined the channel
+2018-03-19T12:05:09 * alanharnum_away has quit
+2018-03-19T12:10:13 * alanharnum_away joined the channel
+2018-03-19T12:14:27 * alanharnum_away has quit
+2018-03-19T12:14:35 * kasparnet has quit
+2018-03-19T12:16:12 * ShadX__ joined the channel
+2018-03-19T12:16:12 * ShadX_ has quit
+2018-03-19T12:16:26 * kasparnet joined the channel
+2018-03-19T12:19:04 * jhung joined the channel
+2018-03-19T12:25:21 * Justin_o joined the channel
+2018-03-19T12:27:35 * alanharnum_away joined the channel
+2018-03-19T12:32:33 * alanharnum_away has quit
+2018-03-19T12:41:56 * ShadX__ has quit
+2018-03-19T12:50:26 * alanharnum_away joined the channel
+2018-03-19T12:51:19 * cindyli joined the channel
+2018-03-19T12:51:36 * gtirloni has quit
+2018-03-19T12:51:48 * gtirloni joined the channel
+2018-03-19T12:54:01 * simonjb joined the channel
+2018-03-19T12:54:49 * alanharnum_away has quit
+2018-03-19T12:55:00 * gtirloni_ joined the channel
+2018-03-19T12:55:46 * gtirloni has quit
+2018-03-19T12:56:48 * Haider joined the channel
+2018-03-19T12:59:32 * gtirloni joined the channel
+2018-03-19T13:00:37 <dandimitrov__> Hey Bosmon! We\'ve been trying the approach with distributing translations from a component higher in the hierarchy. We have a single component that "knows" about the i18n and it updates the dependent components\' messages for grades it finds from the message keys. Ref: https://github.com/danailbd/gpii-app/commit/c49061c44f8d5faf2d013cac7072501d1d81e68b#diff-bc685c59057ecd52516b874e2d4f418fR76
+2018-03-19T13:00:42 <dandimitrov__> In simple cases it works properly but as it distributes messages relatively early (on creation of the distributor itself) if there are subcomponents (somewhere in the hierarchy) with createOnEvent, they won\'t receive the initial distribution of messages. Is there some mechanism for generating `distributeOptions` dynamically? We could use such to add direct model links (bi-directional) or at least some event firing that would trigger the
+2018-03-19T13:00:42 <dandimitrov__> distribution for that component.
+2018-03-19T13:10:15 * colinclark joined the channel
+2018-03-19T13:13:35 * cindyli joined the channel
+2018-03-19T13:14:55 * alanharnum_away joined the channel
+2018-03-19T13:19:22 * alanharnum_away has quit
+2018-03-19T13:21:59 * clown joined the channel
+2018-03-19T13:29:01 * jessm joined the channel
+2018-03-19T13:29:57 * kasparnet has quit
+2018-03-19T13:30:31 * sepidehshahi joined the channel
+2018-03-19T13:31:16 * kasparnet joined the channel
+2018-03-19T13:35:23 * alanharnum_away joined the channel
+2018-03-19T13:48:37 * alanharnum_away joined the channel
+2018-03-19T14:00:34 * grrrero joined the channel
+2018-03-19T14:02:39 * hzxelbf joined the channel
+2018-03-19T14:02:40 * hzxelbf has quit
+2018-03-19T14:26:41 * kasparnet has quit
+2018-03-19T14:30:21 * mrtyler joined the channel
+2018-03-19T14:37:25 * VictorA_NG joined the channel
+2018-03-19T14:38:06 <Justin_o> colinclark, bosmon, the-t-in-rtf: I\'m reviewing https://github.com/fluid-project/fluid-publish/pull/10
+2018-03-19T14:38:30 <Justin_o> so one thing I\'m noticing is that in the change we checkout package-lock.json to revert it. This is to address the issue specified in https://issues.fluidproject.org/browse/FLUID-6250
+2018-03-19T14:38:46 <Justin_o> however, if there is no package-lock.json file it will through an error
+2018-03-19T14:38:58 <colinclark> yes
+2018-03-19T14:39:08 <Justin_o> i guess this is the case for both older versions of NPM and also if your project decided not to version it
+2018-03-19T14:39:14 <colinclark> right
+2018-03-19T14:39:25 <colinclark> doesn\'t seem a terribly robust solution
+2018-03-19T14:42:35 <Justin_o> colinclark: looks like you can check if a file is tracked by git https://stackoverflow.com/questions/2405305/how-to-tell-if-a-file-is-git-tracked-by-shell-exit-code
+2018-03-19T14:43:20 <Justin_o> So i guess we could iterate over a set of files to revert and only run the command if they are actually being tracked.
+2018-03-19T14:44:14 * michelled joined the channel
+2018-03-19T14:53:46 <colinclark> seems reasonable
+2018-03-19T14:55:53 <Justin_o> i left a comment on the PR about the above
+2018-03-19T15:14:56 * georgitodorov has quit
+2018-03-19T15:19:04 <Justin_o> cindyli: The FLUID-6262 PR is ready for more review https://github.com/fluid-project/infusion/pull/883
+2018-03-19T15:19:40 <cindyli> thanks, Justin_o. will take a look
+2018-03-19T15:19:47 <Justin_o> cindyli: thanks
+2018-03-19T15:19:50 <cindyli> np
+2018-03-19T15:34:13 * alanharnum_away joined the channel
+2018-03-19T15:38:51 * alanharnum_away has quit
+2018-03-19T15:42:26 * sepidehshahi has quit
+2018-03-19T15:50:31 * sepidehshahi joined the channel
+2018-03-19T15:51:40 * Haider has quit
+2018-03-19T16:08:03 * cindyli has quit
+2018-03-19T16:11:58 * michelled joined the channel
+2018-03-19T16:13:56 * cindyli joined the channel
+2018-03-19T16:14:12 * alanharnum_away joined the channel
+2018-03-19T16:21:34 * VictorA_NG has quit
+2018-03-19T16:21:37 <michelled> grrrero, jhung: when is a good time to talk through the cleanup of the WP a11y theme outstanding branches?
+2018-03-19T16:22:20 <grrrero> michelled jhung I\xe2\x80\x99m free anytime on my way to IDRC
+2018-03-19T16:30:40 <michelled> simonjb: for the bottom of your lists of pull requests :) https://issues.fluidproject.org/browse/KETTLE-66
+2018-03-19T16:30:42 <michelled> thanks!
+2018-03-19T16:32:58 <jhung> michelled: I have time this afternooon.
+2018-03-19T16:35:58 <michelled> jhung: cool, I\'ll ping you when grrrero is in
+2018-03-19T16:37:20 <jhung> michelled: sure
+2018-03-19T16:52:49 <gmoss> fluid-everyone: if anyone is interested, StackOverflow released the results of their 2018 dev survey a few days ago: https://insights.stackoverflow.com/survey/2018/
+2018-03-19T17:10:52 <michelled> jhung: are you available now?
+2018-03-19T17:12:35 <jhung> michelled: sure
+'
+

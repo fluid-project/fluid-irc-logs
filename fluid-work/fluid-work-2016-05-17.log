@@ -1,0 +1,568 @@
+b'2016-05-17T17:45:55 <Bosmon> I don\'t see any update
+2016-05-17T17:46:31 * alanharnum joined the channel
+2016-05-17T17:46:33 <Bosmon> Ok I see one now!
+2016-05-17T17:47:50 <jhernandez> hahaha
+2016-05-17T17:47:54 * sepidehshahi has quit
+2016-05-17T17:52:11 <jhernandez> Bosmon: ok, just pushed another commit
+2016-05-17T17:53:30 <Bosmon> Ok, thanks jhernandez - looks much better!
+2016-05-17T17:53:35 <Bosmon> And this works on "2nd try" right?
+2016-05-17T17:53:45 <jhernandez> yup
+2016-05-17T17:53:56 <Bosmon> jhernandez - awesome
+2016-05-17T17:54:03 <Bosmon> I\'ll fix up the rest tonight
+2016-05-17T17:54:09 <jhernandez> it fails on "check that setttings are restored" when orca settings file doesn\'t exist
+2016-05-17T17:55:35 <jhernandez> thanks a lot, I really had a bad time figuring out whether the problem was my implementation or the testing framework
+2016-05-17T17:59:35 * sepidehshahi joined the channel
+2016-05-17T17:59:41 * simonjb joined the channel
+2016-05-17T18:01:31 * simonjb joined the channel
+2016-05-17T18:02:24 <simonjb> //whoami
+2016-05-17T18:02:57 * simonjb has quit
+2016-05-17T18:04:48 * simonjb joined the channel
+2016-05-17T18:12:12 * simonjb joined the channel
+2016-05-17T18:16:36 * danayo joined the channel
+2016-05-17T18:21:32 * simonjb2 joined the channel
+2016-05-17T18:22:11 <Bosmon> Hi there simonjb, simonjb2 - I\'ve updated my Kettle pull at https://github.com/fluid-project/kettle/pull/21 for the issue you spotted on Friday
+2016-05-17T18:22:37 <Bosmon> It depends on the following infusion update https://github.com/fluid-project/infusion/pull/712 which perhaps Justin_o or colinclark could take a look at
+2016-05-17T18:23:13 <colinclark> I should have time this afternoon
+2016-05-17T18:23:18 <colinclark> but I will need to read the JIRA thoroughly
+2016-05-17T18:23:26 <Bosmon> It\'s quite an interesting one
+2016-05-17T18:23:29 <simonjb> thanks Bosmon
+2016-05-17T18:23:30 <colinclark> I spent some time looking at the code on the weekend
+2016-05-17T18:23:36 <colinclark> but it wasn\'t clear what exactly was motivating it
+2016-05-17T18:23:46 <colinclark> or what its impact will be on our code in general
+2016-05-17T18:23:58 <colinclark> does it mean we will always delegate to fluid.require() now?
+2016-05-17T18:24:06 * simonjb2 has quit
+2016-05-17T18:25:35 <Bosmon> colinclark - for any framework code, I think it might, yes
+2016-05-17T18:25:42 <colinclark> ok
+2016-05-17T18:25:44 <Bosmon> I was just reading this npm issue: https://github.com/npm/npm/issues/2063
+2016-05-17T18:25:58 <Bosmon> It appears that cyclic modules are properly supported in npm 3
+2016-05-17T18:26:07 <Bosmon> But I don\'t think they could actually cover all cases of them
+2016-05-17T18:26:38 <Bosmon> Certainly not in our world where we have numerous git-based dependencies which escape its policy
+2016-05-17T18:29:04 <Bosmon> In any case, we aren\'t going to move up to npm 3, I think, before we move off the node 4 LTS ecosystem
+2016-05-17T18:29:17 <Bosmon> Which looks like it won\'t be till October at a minimum when node 6 becomes LTS
+2016-05-17T18:31:05 <Bosmon> The issue is that kettle now depends on gpii-pouchdb as a devDependency
+2016-05-17T18:31:08 * the-t-in-rtf joined the channel
+2016-05-17T18:31:18 <Bosmon> gpii-pouchdb depends on gpii-express as a hard dependency, which depends on kettle as a devDependency
+2016-05-17T18:31:27 * the-t-in-rtf has quit
+2016-05-17T18:32:45 <Bosmon> Within gpii-express, the following statement appears: https://github.com/GPII/gpii-express/blob/master/tests/js/lib/request.js#L4
+2016-05-17T18:33:25 <colinclark> yes
+2016-05-17T18:33:26 <Bosmon> Which attempts to load kettle as a plain dependency
+2016-05-17T18:33:46 <Bosmon> NOW - if the reason that gpii-express has been loaded, is because gpii-pouchdb is a devDependency of something else, its OWN devDependencies will not be installed
+2016-05-17T18:34:00 <Bosmon> So I think this is an issue that will never be resolved by an improved npm
+2016-05-17T18:34:17 <Bosmon> It is something we could resolve in future by some form of MONOREPO pattern
+2016-05-17T18:34:33 <Bosmon> In which kettle-testing, and gpii-testing, both became individually addressible npm artefacts
+2016-05-17T18:34:44 <Bosmon> I mean, gpii-express-testing
+2016-05-17T18:36:48 <Bosmon> I think at core, the issue is that the npm "devDependencies" abstraction isn\'t subtle enough to deal with this kind of transitivity
+2016-05-17T18:36:52 <Bosmon> I think we\'ve run into such a thing before
+2016-05-17T18:38:04 <Bosmon> I think the only credible answer is to factor all these projects into smaller modules, which we don\'t have time for at present
+2016-05-17T18:39:04 <Bosmon> And even THEN the resolution would require us to move to npm 3
+2016-05-17T18:46:56 * alanharnum joined the channel
+2016-05-17T18:57:47 <colinclark> Bosmon: I forget if you ever responded to my question about the short-term to do list I made in the note pad for the releases meeting today?
+2016-05-17T18:58:04 <Bosmon> colinclark - I don\'t believe I did
+2016-05-17T18:58:07 <colinclark> Down here on line 40: https://pad.gpii.net/p/technical-governance-for-releases-u262omb
+2016-05-17T18:58:16 <colinclark> I just wondered if you thought it looked about right
+2016-05-17T18:58:33 * gloob joined the channel
+2016-05-17T19:03:00 * gloob has quit
+2016-05-17T19:08:31 <Bosmon> Yes colinclark - I think that sounds excellent
+2016-05-17T19:12:24 * kasparnet joined the channel
+2016-05-17T19:18:43 <colinclark> gtirloni, in an email to the meeting attendees and the ops list mentioned the idea of per-person dev deployments
+2016-05-17T19:18:48 <colinclark> which I was thinking we could live without
+2016-05-17T19:18:59 <colinclark> assuming amatas\' work is working soon
+2016-05-17T19:19:13 <colinclark> There is certainly value to being able to deploy a personal fork or whatever
+2016-05-17T19:20:19 <colinclark> but my impression is that we\'re better off focusing on making it insanely easy for a developer to spin up a "full stack" right on their local machine
+2016-05-17T19:20:25 <colinclark> what\'s your impression of this, Bosmon?
+2016-05-17T19:21:15 <Bosmon> I agree
+2016-05-17T19:33:39 * PaliwalSparsh has quit
+2016-05-17T20:15:12 * alanharnum joined the channel
+2016-05-17T20:22:17 <alanharnum> colinclark: I can\'t help but think you and Bosmon could use this for inspiration next time you\'re working on cutting-edge Infusion demos: https://twitter.com/oioiiooixiii/status/732349012007866369
+2016-05-17T20:22:47 <colinclark> oh dear
+2016-05-17T20:22:53 <Bosmon> argh
+2016-05-17T20:23:03 <colinclark> how do I get this image out of my head?
+2016-05-17T20:23:04 <colinclark> :)
+2016-05-17T20:23:27 <Bosmon> Endless recursion of an intolerant crank!
+2016-05-17T20:23:35 <Bosmon> It\'s not the form of inspiration we really need :)
+2016-05-17T20:23:57 <colinclark> I don\'t know if "intolerant" is quite the word I\'d use
+2016-05-17T20:24:01 <colinclark> seems more suited to Linus
+2016-05-17T20:24:22 <colinclark> I saw him speak once about reforming copyright law for artists
+2016-05-17T20:24:30 <colinclark> and while I think he misunderstood what it was to be an artist
+2016-05-17T20:24:36 <colinclark> he was pretty pragmatic in an interesting way
+2016-05-17T20:31:28 * lliskovoi_ joined the channel
+2016-05-17T20:31:36 * lliskovoi_ has quit
+2016-05-17T20:35:53 * jhung has quit
+2016-05-17T20:52:34 * wale has quit
+2016-05-17T20:59:25 * gloob joined the channel
+2016-05-17T21:03:33 * gloob has quit
+2016-05-17T21:04:16 * sepidehshahi has left the channel
+2016-05-17T21:07:45 * anvk has quit
+2016-05-17T21:10:10 * yzen has quit
+2016-05-17T21:35:56 * danayo has quit
+2016-05-17T21:56:25 * kasparnet has quit
+2016-05-17T22:18:36 * yzen joined the channel
+2016-05-17T22:39:44 * Justin_o has quit
+2016-05-17T22:59:41 * yzen is now known as yzen_
+2016-05-17T23:00:09 * gloob joined the channel
+2016-05-17T23:04:04 * yzen_ has quit
+2016-05-17T23:04:30 * gloob has quit
+2016-05-17T23:07:32 * yzen joined the channel
+2016-05-17T23:29:13 * bens__ has quit
+2016-05-17T23:29:14 * yzen is now known as yzen_
+2016-05-17T23:30:38 * alanharnum joined the channel
+2016-05-17T23:33:33 * yzen_ has quit
+2016-05-17T23:35:03 * alanharnum has quit
+'
+
+b'2016-05-17T15:26:28 <kasparnet> amatas: I\'m wondering if this is what screws it up:
+2016-05-17T15:26:33 <kasparnet> ==> server: Forwarding ports...
+2016-05-17T15:26:33 <kasparnet> server: 8081 => 8081 (adapter 1)
+2016-05-17T15:26:45 <kasparnet> this is part of the output when running: vagrant server up
+2016-05-17T15:26:49 <gloob> permission in the github group
+2016-05-17T15:30:34 <gloob> colinclark: summarizing, if you need something related to the windows installer, I\'m happy to receive input about priorities and potential good-to-have stuff
+2016-05-17T15:30:40 <gloob> just ping me
+2016-05-17T15:38:07 * Dinuka joined the channel
+2016-05-17T15:38:45 <colinclark> gloob: permissions?
+2016-05-17T15:38:48 <colinclark> can you elaborate?
+2016-05-17T15:40:53 * the-t-in-rtf has quit
+2016-05-17T15:41:51 * sepidehshahi has quit
+2016-05-17T15:45:33 <gloob> https://github.com/orgs/GPII/teams
+2016-05-17T15:45:36 * the-t-in-rtf joined the channel
+2016-05-17T15:45:40 <gloob> check InstallerProjects
+2016-05-17T15:46:10 <gloob> Thanos21 (aka Thanos) is "committer" for installer repositories
+2016-05-17T15:46:20 <gloob> in cloud4all era that was good
+2016-05-17T15:46:27 <gloob> now we have somehow a problem
+2016-05-17T15:46:44 <gloob> because I want that they have some kind of validation through PR acceptance
+2016-05-17T15:46:53 <gloob> as every contribution to GPII-core does
+2016-05-17T15:47:31 <gloob> colinclark: ^S
+2016-05-17T15:47:56 <colinclark> yes
+2016-05-17T15:48:05 <colinclark> Thanos, like anyone else, has to earn commit access
+2016-05-17T15:48:23 <colinclark> If he\'s starting from scratch, we should make a new, empty organizational repository for the installer
+2016-05-17T15:48:35 <colinclark> and he can make pull requests to it like any other component of the system
+2016-05-17T15:48:43 <gloob> https://github.com/GPII/gpii-wix-installer
+2016-05-17T15:48:44 <colinclark> we\'ll have to determine who the best reviewers are for his work
+2016-05-17T15:48:47 * sepidehshahi joined the channel
+2016-05-17T15:49:03 * michelled has quit
+2016-05-17T15:49:37 <colinclark> I think we will need to change this team\'s access
+2016-05-17T15:49:42 <gloob> exactly
+2016-05-17T15:49:43 <colinclark> I wonder why this was ever set up like this in the first place?
+2016-05-17T15:49:57 <gloob> who knows, whatever
+2016-05-17T15:50:18 <colinclark> I guess the idea was that the installer was one of these "incubated" repositories
+2016-05-17T15:50:24 <gloob> probably
+2016-05-17T15:50:34 <colinclark> being really clear about this was one of the reasons I suggested a separate organization for such repos
+2016-05-17T15:50:40 <gloob> yes
+2016-05-17T15:50:47 <colinclark> but sgithens told me it was somehow "uncool"
+2016-05-17T15:50:50 <gloob> that will make it clear and simpler
+2016-05-17T15:50:52 * simonjb joined the channel
+2016-05-17T15:51:02 <colinclark> is Thanos starting from scratch?
+2016-05-17T15:51:02 <gloob> :-)
+2016-05-17T15:51:08 <gloob> they are using the same repo
+2016-05-17T15:51:10 <colinclark> ok
+2016-05-17T15:51:21 <gloob> Nikos asked me for permissions
+2016-05-17T15:51:47 <gloob> I told him about the current gpii-core PR schema
+2016-05-17T15:51:53 <gloob> I want to follow it
+2016-05-17T15:52:01 <colinclark> Yes, absolutely not
+2016-05-17T15:52:04 <colinclark> :)
+2016-05-17T15:52:09 <gloob> my idea is to help him with the PRs
+2016-05-17T15:52:18 <colinclark> I can\'t quite tell if this makes sense
+2016-05-17T15:52:28 <gloob> and let another one to finally kick it in
+2016-05-17T15:52:30 <colinclark> but my impression is that we should create a new repository called gpii-windows-installer
+2016-05-17T15:52:34 <colinclark> and have them target pull requests to it
+2016-05-17T15:52:43 <colinclark> since everything, from scratch, will have to be reviewed
+2016-05-17T15:52:43 <gloob> no problem anyway
+2016-05-17T15:52:45 <gloob> makes sense
+2016-05-17T15:52:49 <colinclark> do you think that will be very painful for them?
+2016-05-17T15:52:50 <gloob> good for me
+2016-05-17T15:52:51 <gloob> no
+2016-05-17T15:52:55 <colinclark> kasparnet: Does this make sense to you, too?
+2016-05-17T15:53:33 <colinclark> I don\'t know if there\'s an easier way
+2016-05-17T15:53:37 <colinclark> which would preserve history
+2016-05-17T15:53:40 <colinclark> perhaps that is worthwhile
+2016-05-17T15:53:44 <gloob> question pending is what to do with wix repo
+2016-05-17T15:53:55 <gloob> you can copy a git repository history
+2016-05-17T15:54:02 <gloob> but
+2016-05-17T15:54:04 <gloob> let me see
+2016-05-17T15:54:12 <gloob> eleven commits
+2016-05-17T15:54:18 <kasparnet> I think doing the review from scratch, etc., makes sense - if that was the question
+2016-05-17T15:54:42 <colinclark> yup, exactly kasparnet
+2016-05-17T15:56:24 <kasparnet> amatas: ok - that seems to do the trick on port 8081
+2016-05-17T15:56:48 <kasparnet> I gotta run now but will try and wrap things up later or tomorrow morning
+2016-05-17T15:57:00 <colinclark> I hadn\'t heard of electron-builder, gloob
+2016-05-17T15:57:04 <colinclark> it looks quite interesting
+2016-05-17T15:57:14 <gloob> really promising
+2016-05-17T15:57:24 <gloob> I want to do a PoC in the mac branch
+2016-05-17T15:57:52 <colinclark> cool
+2016-05-17T15:57:58 <gloob> but I have a lot of over my plate
+2016-05-17T15:58:04 <colinclark> nice that it bundles Squirrel with it
+2016-05-17T15:58:13 <colinclark> yes, understandable
+2016-05-17T15:58:20 <gloob> what is squirrel?
+2016-05-17T15:58:30 * the-t-in-rtf has quit
+2016-05-17T15:59:02 <colinclark> https://github.com/Squirrel
+2016-05-17T15:59:24 <gloob> uhummmmmmmmmmmmmm
+2016-05-17T15:59:25 <colinclark> I believe it\'s very widely used for a lot of different apps
+2016-05-17T15:59:39 <gloob> this is in the same wavelength of Installation on-demand
+2016-05-17T15:59:44 <colinclark> we\'ll need to use it ourselves soon
+2016-05-17T15:59:53 <colinclark> auto-updates, anyway
+2016-05-17T16:00:13 <gloob> good, yes
+2016-05-17T16:00:28 <colinclark> I guess we should make sure that everything Thanos is doing will be compatible with using Squirrel
+2016-05-17T16:00:32 <colinclark> so that a user can come along and install the GPII
+2016-05-17T16:00:40 <gloob> good point
+2016-05-17T16:00:41 <colinclark> and then we will be able to push updates to clients once it\'s installed
+2016-05-17T16:00:57 <gloob> let me check if I have that modeled in jira
+2016-05-17T16:02:23 * jhung joined the channel
+2016-05-17T16:02:28 <colinclark> cool
+2016-05-17T16:04:43 <gloob> well, added
+2016-05-17T16:16:13 <Justin_o> PaliwalSparsh: here\'s an article about keyboard accessibility from WebAIM http://webaim.org/techniques/keyboard/
+2016-05-17T16:17:42 * jhung has quit
+2016-05-17T16:19:40 <gloob> kasparnet: did you say that the wix installer is not accessible?
+2016-05-17T16:22:44 <gloob> I will track that too
+2016-05-17T16:23:31 <gloob> ah it was tracked
+2016-05-17T16:23:36 <gloob> \\o/
+2016-05-17T16:24:52 * Dinuka joined the channel
+2016-05-17T16:26:47 * kasparnet has quit
+2016-05-17T16:57:30 * gloob has quit
+2016-05-17T16:57:56 * gloob joined the channel
+2016-05-17T17:02:50 * gloob has quit
+2016-05-17T17:06:43 * alanharnum has quit
+2016-05-17T17:06:50 * Dinuka has quit
+2016-05-17T17:11:22 <jhernandez> Bosmon: I\'ve just addressed your last comments on the linux pull
+2016-05-17T17:11:38 <jhernandez> BUT, tests are still broken
+2016-05-17T17:11:50 <Bosmon> jhernandez - ok
+2016-05-17T17:11:52 <jhernandez> both orca\'s and integration tests are broken
+2016-05-17T17:12:04 <Bosmon> For the standard reason, or a new reason?
+2016-05-17T17:13:10 <jhernandez> I\'ve almost managed to get the integration tests working, but now looks like we\'re having a race condition somewhere
+2016-05-17T17:13:18 <jhernandez> probably related to node-jqUnit, but not sure
+2016-05-17T17:13:42 <Bosmon> Would you like to try to fix it?
+2016-05-17T17:15:15 <jhernandez> I would love to, but I\'m not sure whether the changes I\'ve done so far in our integration testing framework make sense
+2016-05-17T17:15:35 * simonjb2 joined the channel
+2016-05-17T17:15:58 <Bosmon> What changes have you done?
+2016-05-17T17:16:22 <jhernandez> would a git diff work for you?
+2016-05-17T17:16:33 * simonjb joined the channel
+2016-05-17T17:16:36 * jhung joined the channel
+2016-05-17T17:16:50 <Bosmon> Ok, I will look
+2016-05-17T17:16:57 <Bosmon> I thought you might have a verbal description of your strategy : P
+2016-05-17T17:17:51 <Bosmon> Ok well, you presumably made these changes in universal where you have not committed them?
+2016-05-17T17:17:51 <jhernandez> haha
+2016-05-17T17:18:11 <jhernandez> exactly, I didn\'t push them
+2016-05-17T17:18:19 <Bosmon> Well, please show them to me
+2016-05-17T17:18:23 <jhernandez> does this diff work http://pastebin.com/JtSvMp6c ?
+2016-05-17T17:19:41 <Bosmon> Yes, this is rubbish
+2016-05-17T17:19:46 <jhernandez> OF COURSE!
+2016-05-17T17:19:49 <Bosmon> Most of your assertions will execute after the test sequence has finished
+2016-05-17T17:19:49 <jhernandez> :D
+2016-05-17T17:20:05 <jhernandez> exactly
+2016-05-17T17:20:43 <Bosmon> Ok, don\'t worry, I will look at it later this evening
+2016-05-17T17:21:46 * lliskovoi joined the channel
+2016-05-17T17:22:33 * lliskovoi joined the channel
+2016-05-17T17:23:10 <Bosmon> jhernandez - you don\'t seem to have addressed many of my comments
+2016-05-17T17:23:43 <Bosmon> Did you commit your changes?
+2016-05-17T17:23:57 <Bosmon> It\'s ok if it fails in the "first run" case for orca, I\'ll fix that part myself
+2016-05-17T17:24:41 * simonjb has quit
+2016-05-17T17:24:50 * colinclark joined the channel
+2016-05-17T17:27:49 * gtirloni joined the channel
+2016-05-17T17:37:22 * danayo has quit
+2016-05-17T17:39:12 * simonjb joined the channel
+2016-05-17T17:41:42 <jhernandez> Bosmon: oh, that fluid.map thing, hold a sec
+2016-05-17T17:45:53 <Bosmon> jhernandez - in fact all of my comments on orcaSettingsHandler.js
+'
+
+b'2016-05-17T14:09:41 <simonjb> Dinuka: no problem, did you see the meeting doodle poll on the gpii architecture list?
+2016-05-17T14:10:12 <simonjb> or did you find out about it by another means?
+2016-05-17T14:10:12 <Dinuka> gpii?
+2016-05-17T14:10:37 <Dinuka> I saw that in the channel I think
+2016-05-17T14:10:42 <simonjb> ah, ok
+2016-05-17T14:11:32 <simonjb> Avtar sent an email with the meeting details to the gpii architecture list
+2016-05-17T14:11:54 <simonjb> that explains why you didn\'t see it -- I\'m guessing you aren\'t on that list?
+2016-05-17T14:12:48 <Dinuka> ah.... I saw that from the email...... now only it came to my mind
+2016-05-17T14:12:48 * danayo joined the channel
+2016-05-17T14:12:54 <Dinuka> sorry simonjb
+2016-05-17T14:13:04 <simonjb> no problem at all
+2016-05-17T14:13:29 <Dinuka> I just saw the email
+2016-05-17T14:13:45 <simonjb> are you on the gpii architecture list?
+2016-05-17T14:14:15 <Dinuka> no
+2016-05-17T14:14:23 <Dinuka> Im there only in fluid-work@fluidproject.org
+2016-05-17T14:15:24 <Dinuka> should I subscribe to gpii
+2016-05-17T14:15:30 * bens__ joined the channel
+2016-05-17T14:16:40 <simonjb> Dinuka: it might be of interest to you but it\'s not essential to your work I think
+2016-05-17T14:16:58 <Dinuka> I\'l try to join in technology meetings in the future
+2016-05-17T14:17:20 <simonjb> the GPII is a project that is using Fluid technology extensively and a number of us are working on it
+2016-05-17T14:17:46 <Dinuka> ah
+2016-05-17T14:18:03 <Dinuka> anyway..... Wednesday 7.30 would be fine  for our meeting
+2016-05-17T14:18:11 <Dinuka> I can make it
+2016-05-17T14:18:25 <simonjb> Dinuka: it\'s no problem, I was just wanting to figure out if you hadn\'t received notification of the meeting (but had heard about it and added yourself to the poll)
+2016-05-17T14:18:45 <simonjb> Dinuka: that\'s great
+2016-05-17T14:19:36 <Dinuka> yeah
+2016-05-17T14:20:24 <Dinuka> since I had a small background also... I though that I could share some thing and get some more knowledge too
+2016-05-17T14:21:25 <simonjb> Dinuka: sorry that we didn\'t get the meeting info to you -- next time we\'ll be sure to include you
+2016-05-17T14:21:41 <Dinuka> great
+2016-05-17T14:22:10 <Dinuka> simonjb: where are we doing our meeting tmrw..... is it in hangouts or skype
+2016-05-17T14:23:19 <simonjb> Dinuka: I\'m good with either of those (and we also have our own video conferencing system called vidyo) -- do you have a preference?
+2016-05-17T14:23:52 <Dinuka> yeah.... will give it a try
+2016-05-17T14:25:52 <simonjb> Dinuka: if you are interested in GPII, here are some links: http://gpii.net/ and https://wiki.gpii.net/w/Main_Page
+2016-05-17T14:26:27 <simonjb> Dinuka: which video conferencing would you like to use tomorrow?
+2016-05-17T14:27:50 <Dinuka> for tomrw, shall we use hangouts, lets move to vidyo next time
+2016-05-17T14:28:32 <simonjb> Dinuka: that works for me -- looking forward to chatting with you tomorrow
+2016-05-17T14:29:13 <Dinuka> me too..... simonjb
+2016-05-17T14:31:24 * sepidehshahi joined the channel
+2016-05-17T14:33:52 * PaliwalSparsh has quit
+2016-05-17T14:35:00 * lliskovoi joined the channel
+2016-05-17T14:36:19 * PaliwalSparsh joined the channel
+2016-05-17T14:42:14 * sepidehshahi has quit
+2016-05-17T14:55:52 <colinclark> kasparnet, Bosmon: Do you guys have a quick second to chat here?
+2016-05-17T14:56:00 <Bosmon> Sure
+2016-05-17T14:56:04 <kasparnet> sure
+2016-05-17T14:56:15 <colinclark> I guess the lingering question for me related to releases is the installer
+2016-05-17T14:56:28 <colinclark> I think that SILO is working on a new version of it
+2016-05-17T14:56:33 <colinclark> but is it something we can release?
+2016-05-17T14:56:45 <colinclark> or can the previous version suffice in some way?
+2016-05-17T14:56:49 * Yan_Hu joined the channel
+2016-05-17T14:57:45 <kasparnet> stating the obvious, but that depends on what we consider sufficient for a release
+2016-05-17T14:57:56 <kasparnet> I think the old installer script was working relatively well
+2016-05-17T14:58:06 <colinclark> kasparnet: Are there obvious insufficiencies in the Cloud4All installer?
+2016-05-17T14:58:17 <colinclark> Or should it be okay to continue using until the SILO contract is done?
+2016-05-17T14:58:20 <kasparnet> I think accessibility might be an issue
+2016-05-17T14:58:47 <kasparnet> but other than that, I think it\'s ok
+2016-05-17T14:58:48 <colinclark> Meaning, the installer doesn\'t work well with a screen reader?
+2016-05-17T14:58:58 <colinclark> or something else?
+2016-05-17T14:58:59 <amatas> colinclark, I know that is not a priority, but I think that the same assumptions applied to the SILO\'s installer can be applied to the Linux packages.
+2016-05-17T14:59:11 <colinclark> amatas: No, I think it should be a priority
+2016-05-17T14:59:17 <colinclark> we fully support both Windows and Linux
+2016-05-17T14:59:41 <colinclark> so we should ship Linux packages alongside our npm releases and the Windows installer
+2016-05-17T14:59:57 <kasparnet> colinclark: tbh, I\'m not sure -- I just dont think it has been tested for keyboard, screen reader, etc., accessiblity
+2016-05-17T14:59:59 <amatas> ah ok, I thought that windows installer was in the top of the list because the LGS and jobcenters,...
+2016-05-17T15:00:30 <amatas> but is good to know that Linux is at the same level :)
+2016-05-17T15:00:37 <colinclark> I think it should be, anyway, amatas
+2016-05-17T15:00:45 <colinclark> kasparnet: Okay, fair enough
+2016-05-17T15:00:48 <colinclark> not ideal, but fair enough
+2016-05-17T15:01:51 <colinclark> kasparnet: Am I right that the current installer is built nightly, but using SILO\'s own infrastructure?
+2016-05-17T15:02:05 <colinclark> amatas: Do you know if we\'ve looked at ways to build the Windows installer ourselves?
+2016-05-17T15:02:08 <kasparnet> colinclark: yes, that\'s correct
+2016-05-17T15:02:17 <colinclark> Will it ultimately require a Windows VM running in our infrastructure?
+2016-05-17T15:02:39 * sepidehshahi joined the channel
+2016-05-17T15:02:57 <colinclark> kasparnet: How do you feel about the default solutions registry and device reporters mocks that we ship in master? Are they sufficient for basic functionality of the GPII for demos and the like?
+2016-05-17T15:03:21 <colinclark> I guess a lot of what Steve has done with the LGS is just shipped specific AT with the GPII itself, and made sure that the config files all align
+2016-05-17T15:03:28 <kasparnet> for demos that we do ourself, I think they\'re pretty decent
+2016-05-17T15:03:51 <kasparnet> if it\'s something we\'re shipping to other people, I think in particular the device reporter stuff is brittle
+2016-05-17T15:04:09 <colinclark> brittle how?
+2016-05-17T15:04:57 <amatas> colinclark, not sure if there was something official, but some time ago I tried to build our own windows installer: https://github.com/amatas/gpii-package-manager/blob/master/Templates/package.nuspec
+2016-05-17T15:04:59 <kasparnet> well - it\'s expecting certain things to be installed on the device, so if eg. you delete NVDA + configs, I think the system would crash
+2016-05-17T15:05:04 <kasparnet> with no sensible error messages
+2016-05-17T15:05:05 <amatas> https://github.com/amatas/gpii-package-manager
+2016-05-17T15:05:30 * simonjb has quit
+2016-05-17T15:05:42 <amatas> That was a "concept project" were I tried to manage gpii as a linux package in windows
+2016-05-17T15:05:45 <colinclark> amatas: Do you have an impression of how long it would take you to get to the point where we can automatically build the Windows installer ourselves, based on the work you\'ve already done?
+2016-05-17T15:06:00 <colinclark> kasparnet: Ok, that\'s good to know
+2016-05-17T15:11:41 <amatas> colinclark, in that repository I use nupkg, it seems that SILO will use electron packager
+2016-05-17T15:12:14 <amatas> anyway both approaches will be commands or powershell scripts that will run in a windows box
+2016-05-17T15:12:50 <amatas> so I guess that it will be easy to setup a CI task that builds a windows installer
+2016-05-17T15:13:08 <kasparnet> hey amatas
+2016-05-17T15:13:13 <kasparnet> https://github.com/amatas/vagrant-gpii-server-client/blob/master/provisioning/preferences-server-vars.yml
+2016-05-17T15:13:22 <colinclark> Are you comfortable with it being a blocker for a 0.3.0 release, amatas?
+2016-05-17T15:13:40 <kasparnet> it seems that the server uses port 8081 as well
+2016-05-17T15:13:48 <kasparnet> (when running vagrant up from your repo)
+2016-05-17T15:14:06 <kasparnet> do you have a sense of what it could be that takes up that port?
+2016-05-17T15:14:48 <colinclark> kasparnet, Bosmon, amatas: Do you feel like the list on line 40 here is about right? https://pad.gpii.net/p/technical-governance-for-releases-u262omb
+2016-05-17T15:14:57 <kasparnet> it doesn\'t happen when I run the preferencesServer.production config manually on my own device
+2016-05-17T15:15:03 <amatas> kasparnet, let me check, because I my env I have 8082 listening
+2016-05-17T15:17:56 <kasparnet> amatas: 8082 is indeed listening
+2016-05-17T15:18:16 <amatas> kasparnet, That doesn\'t make sense: https://github.com/GPII/universal/blob/master/gpii/configs/preferencesServer.production.json#L10
+2016-05-17T15:18:18 <kasparnet> so I can do curl 192.168.50.10:8082/preferences/carla
+2016-05-17T15:18:20 <gloob> nono
+2016-05-17T15:18:22 <kasparnet> which works
+2016-05-17T15:18:26 <gloob> silo is using wix
+2016-05-17T15:18:37 <gloob> we will try to provide a PoC with electron builder
+2016-05-17T15:19:12 <kasparnet> but my localhost:8081 is blocked
+2016-05-17T15:19:13 <amatas> kasparnet, maybe an old setup
+2016-05-17T15:19:19 <kasparnet> whenever I launch the VM
+2016-05-17T15:19:30 * danayo has quit
+2016-05-17T15:19:38 <gloob> deadline for this implementation is end of July so I suggest to wait
+2016-05-17T15:20:05 <amatas> kasparnet, do you have modified files inside the VM?, I recommend to destroy it and spin up again
+2016-05-17T15:20:07 <gloob> now silo is integrating with our atlas windows vm generated based on windows vagrant boxes
+2016-05-17T15:20:23 <kasparnet> amatas: only files inside the fedora vm
+2016-05-17T15:20:41 <kasparnet> so its: vagrant destroy && vagrant up
+2016-05-17T15:20:43 <kasparnet> ?*
+2016-05-17T15:20:47 <gloob> I will try to notify in architecture mail list about progress :-)
+2016-05-17T15:20:54 <amatas> vagrant destroy server && vagrant up server
+2016-05-17T15:20:54 <gloob> w.r.t. windows installer
+2016-05-17T15:21:19 * alanharn_ joined the channel
+2016-05-17T15:21:23 <kasparnet> amatas: if I only want to run the preferences server - do I do: vagrant up server?
+2016-05-17T15:21:30 <kasparnet> or just vagrant up?
+2016-05-17T15:21:44 <amatas> vagrant up [name of the virtual machine]
+2016-05-17T15:21:59 <amatas> and the server VM only has a couchdb + preferences server + nodejs (https)
+2016-05-17T15:22:03 <kasparnet> colinclark: did you see gloob\'s info about the installer?
+2016-05-17T15:22:39 <colinclark> i just did now
+2016-05-17T15:22:43 <gloob> I mean, replying to colinclark the idea is to integrate with our infrastructure
+2016-05-17T15:22:57 <gloob> so, if they are actually generating windows installer nightly in their infrastructure
+2016-05-17T15:23:05 <gloob> they should integrate with our current setup
+2016-05-17T15:23:09 <colinclark> What is "electron builder," gloob?
+2016-05-17T15:23:13 * danayo joined the channel
+2016-05-17T15:23:30 <gloob> colinclark: https://github.com/electron-userland/electron-builder
+2016-05-17T15:23:30 <colinclark> and what is an altas windows vm?
+2016-05-17T15:24:25 <gloob> https://github.com/idi-ops/packer-windows generate box that we publish https://atlas.hashicorp.com/inclusivedesign/boxes/windows10-eval
+2016-05-17T15:24:38 <colinclark> oh, oh
+2016-05-17T15:24:40 <kasparnet> amatas: ok - that might be my issue
+2016-05-17T15:24:46 <colinclark> avtar\'s vagrant boxes, yes :)
+2016-05-17T15:24:58 <gloob> atlas is the registry of hashicorp for vm boxes
+2016-05-17T15:24:58 <colinclark> thanks, gloob
+2016-05-17T15:25:01 <gloob> np
+2016-05-17T15:25:09 <colinclark> I\'m not super keen to wait until July
+2016-05-17T15:25:13 <gloob> that we should have our own
+2016-05-17T15:25:16 <colinclark> is there any incremental progress that SILO has made?
+2016-05-17T15:25:16 <gloob> so
+2016-05-17T15:25:19 <gloob> no
+2016-05-17T15:25:28 <gloob> they had holidays along my sick leave
+2016-05-17T15:25:33 <gloob> so we are starting really
+2016-05-17T15:25:35 <gloob> BUT
+2016-05-17T15:25:46 <gloob> the good thing is that we can prioritze the integration in our CI stack
+2016-05-17T15:26:07 <gloob> also there\'s an open question
+2016-05-17T15:26:22 <gloob> about permissions with the installer group, but I have pending an e-mail about
+'
+
+b'2016-05-17T00:30:08 * danayo joined the channel
+2016-05-17T00:55:01 * danayo has quit
+2016-05-17T00:59:25 * yzen joined the channel
+2016-05-17T01:08:00 * danayo joined the channel
+2016-05-17T01:20:23 * yzen is now known as yzen_
+2016-05-17T01:22:57 * cindyli has quit
+2016-05-17T01:25:10 * yzen_ has quit
+2016-05-17T01:59:31 * alanharnum joined the channel
+2016-05-17T02:09:58 * colinclark joined the channel
+2016-05-17T03:16:24 * alanharnum joined the channel
+2016-05-17T03:41:28 * danayo has quit
+2016-05-17T03:46:45 * alanharnum joined the channel
+2016-05-17T03:51:14 * from-fluid-IRC has quit
+2016-05-17T03:52:21 * from-fluid-IRC joined the channel
+2016-05-17T04:01:12 * from-fluid-IRC has left the channel
+2016-05-17T04:01:41 * from-fluid-IRC joined the channel
+2016-05-17T06:37:56 * the-t-in-rtf joined the channel
+2016-05-17T06:40:36 * amatas joined the channel
+2016-05-17T06:48:30 * alanharnum joined the channel
+2016-05-17T07:49:35 * alanharnum joined the channel
+2016-05-17T07:51:58 * gloob joined the channel
+2016-05-17T07:54:09 * alanharnum has quit
+2016-05-17T08:50:23 * alanharnum joined the channel
+2016-05-17T09:51:04 * alanharnum joined the channel
+2016-05-17T10:00:48 <amatas> hi Bosmon, are you around?
+2016-05-17T10:08:09 <Bosmon> Hi amatas
+2016-05-17T10:09:08 <amatas> I\'ve been trying to fix the tests
+2016-05-17T10:09:43 <amatas> and I figured out that all depends on this line https://github.com/amatas/GPII-universal/blob/master/gpii/configs/cloudBased.production.json#L15 to work properly
+2016-05-17T10:10:18 <amatas> it doesn\'t matter the content of line: https://github.com/amatas/GPII-universal/blob/master/gpii/configs/production.with.logging.json#L15
+2016-05-17T10:13:42 <amatas> I\'m using this code of this branch: https://github.com/amatas/GPII-universal/tree/GPII-1781/examples/gpii-production-tests
+2016-05-17T10:32:05 * the-t-in-rtf joined the channel
+2016-05-17T10:42:48 * the-t-in-rtf has quit
+2016-05-17T10:51:56 * alanharnum joined the channel
+2016-05-17T10:55:47 * the-t-in-rtf joined the channel
+2016-05-17T10:58:29 <Bosmon> amatas - yes, I see that this is a way in which the config system in trunk is broken
+2016-05-17T10:58:45 <Bosmon> Sadly kaspernet is not here in order to account for it : P
+2016-05-17T10:59:12 <amatas> :(
+2016-05-17T10:59:33 <Bosmon> amatas - so, just make sure you override "devUrls" rather than "cloudBasedUrls" in your driver and it should be fine
+2016-05-17T10:59:39 <amatas> well, I\'ll keep trying to fix them
+2016-05-17T11:00:19 <Bosmon> And derive from the productionWithLogging instead
+2016-05-17T11:00:27 <Bosmon> Since that is the config that productionConfigTests wants to use
+2016-05-17T11:00:29 <amatas> Bosmon, https://github.com/amatas/GPII-universal/commit/3e1aaaa2a1d9cdb4f4036a4aa55b38b1adf5206c
+2016-05-17T11:00:50 <Bosmon> ok
+2016-05-17T11:01:21 <amatas> The latest commit was only an attempt
+2016-05-17T11:31:46 * alanharnum joined the channel
+2016-05-17T11:41:25 * bens__ joined the channel
+2016-05-17T12:14:42 * kasparnet joined the channel
+2016-05-17T12:20:39 * Justin_o joined the channel
+2016-05-17T12:31:07 * gtirloni joined the channel
+2016-05-17T12:32:23 * alanharnum has quit
+2016-05-17T12:40:59 * lliskovoi joined the channel
+2016-05-17T12:45:41 * lliskovoi has quit
+2016-05-17T12:47:10 * yzen joined the channel
+2016-05-17T12:50:21 * lliskovoi joined the channel
+2016-05-17T12:52:57 * lliskovoi has quit
+2016-05-17T12:53:39 * lliskovoi joined the channel
+2016-05-17T12:55:29 * lliskovoi has quit
+2016-05-17T12:56:42 * lliskovoi joined the channel
+2016-05-17T13:00:14 * lliskovoi joined the channel
+2016-05-17T13:00:26 * lliskovoi has quit
+2016-05-17T13:01:52 * jhung joined the channel
+2016-05-17T13:03:20 * simonjb joined the channel
+2016-05-17T13:04:02 * michelled joined the channel
+2016-05-17T13:05:54 <avtar> fluid-everyone: test coverage chit chat starting in the fluid-standup vidyo room if you\'re like to join https://conf.inclusivedesign.ca/flex.html?roomdirect.html&key=xemU59x8DtnO41eCMtCpCioWaRI
+2016-05-17T13:06:02 <avtar> the-t-in-rtf ^
+2016-05-17T13:06:57 <Bosmon> Hi avtar - I\'m pretty confused about my calendar
+2016-05-17T13:07:04 <Bosmon> It seems to be showing the meeting an hour from now
+2016-05-17T13:07:13 * PaliwalSparsh joined the channel
+2016-05-17T13:07:39 <Bosmon> Perhaps I have mixed up the meetings
+2016-05-17T13:09:44 * the-t-in-rtf has quit
+2016-05-17T13:10:22 * the-t-in-rtf joined the channel
+2016-05-17T13:11:11 * cindyli joined the channel
+2016-05-17T13:11:19 <Bosmon> Hey cindyli - you\'re on holiday :)
+2016-05-17T13:11:29 <Bosmon> PaliwalSparsh - did you get set up with a Vidyo client?
+2016-05-17T13:11:42 <PaliwalSparsh> yes
+2016-05-17T13:11:43 <Bosmon> er account
+2016-05-17T13:11:44 <Bosmon> ok
+2016-05-17T13:11:46 * jessm joined the channel
+2016-05-17T13:12:01 <avtar> the-t-in-rtf: https://pad.gpii.net/p/test-coverage-17-05-2016-pg42o0i
+2016-05-17T13:13:55 <gtirloni> Fluid Calendar: https://calendar.google.com/calendar/embed?src=u4ts3bmnc6k144uj2oh3aiuumo%40group.calendar.google.com&ctz=America/Sao_Paulo
+2016-05-17T13:14:28 <gtirloni> without my timezone :P https://calendar.google.com/calendar/embed?src=u4ts3bmnc6k144uj2oh3aiuumo%40group.calendar.google.com
+2016-05-17T13:15:01 <Bosmon> Oh yes, there it is!
+2016-05-17T13:15:24 <PaliwalSparsh> Bosmon last time danayo mailed me a link to get connected to the server.
+2016-05-17T13:15:57 <Bosmon> PaliwalSparsh - did the link avtar paste just now not work?
+2016-05-17T13:17:11 <PaliwalSparsh> Got it. Thanks Bosmon.
+2016-05-17T13:18:04 * yzen is now known as yzen_
+2016-05-17T13:18:06 * colinclark joined the channel
+2016-05-17T13:20:28 <kasparnet> Bosmon: looking at the production tests stuff
+2016-05-17T13:20:44 <Bosmon> kasparnet - I think it is ok
+2016-05-17T13:20:51 <kasparnet> but not 100% sure how to go about it - and not 100% what we\'re after
+2016-05-17T13:21:08 <Bosmon> We don\'t need to spend too much more time on the stuff in trunk, as long as we are confident we know how to get it working based on the configs that are already there
+2016-05-17T13:22:07 <Bosmon> If amatas can point me to at least ONE working configuration which uses the pattern we want, we can just start working now on fixing up the equivalent stuff in the GPII-1318 branch
+2016-05-17T13:22:16 <Bosmon> It looks like the dependence structure of the options in trunk is buggered anyway
+2016-05-17T13:22:24 <kasparnet> ok
+2016-05-17T13:22:29 <Bosmon> There\'s this whole area named "cloudBasedUrls" which is looks like nothing ever reads
+2016-05-17T13:22:33 * yzen_ has quit
+2016-05-17T13:22:35 <Bosmon> it
+2016-05-17T13:22:56 <kasparnet> yeah, I think you\'re right about that
+2016-05-17T13:23:11 <Bosmon> I axed that in GPII-1318 since it didn\'t make any sense
+2016-05-17T13:23:15 <Bosmon> So that\'s one less problem we have :)
+2016-05-17T13:23:56 <kasparnet> ... so, do we plan to have our production test test against preferences.gpii.net by default, and then against the secondary VM when run in context of the CI?
+2016-05-17T13:24:08 <Bosmon> kasparnet - yes
+2016-05-17T13:24:27 <kasparnet> ok
+2016-05-17T13:24:44 <Bosmon> And to derive the CI config from the "default production" config so it changes as little as possible - ideally just the one URL
+2016-05-17T13:24:54 <kasparnet> yup
+2016-05-17T13:25:32 <simonjb> PaliwalSparsh: I see you on the shared pad but I don\'t see you on the vidyo chat -- did you want to join?
+2016-05-17T13:26:01 <kasparnet> I think the CI config derivation should be relatively straight forward... I\'m a bit confused about how to best modify the test to use a different config based on the context in which it is being run
+2016-05-17T13:26:06 <PaliwalSparsh> Yes actually I got the link for pad only :)
+2016-05-17T13:26:13 <Bosmon> kasparnet - we\'re not going to do that!
+2016-05-17T13:26:21 <Bosmon> There are just different configs for different contexts
+2016-05-17T13:26:27 <Bosmon> And then.... DOCUMENTATION :)
+2016-05-17T13:26:32 <Bosmon> USE THIS CONFIG IN THIS CONTEXT : P
+2016-05-17T13:27:00 <simonjb> PaliwalSparsh: https://conf.inclusivedesign.ca/flex.html?roomdirect.html&key=xemU59x8DtnO41eCMtCpCioWaRI
+2016-05-17T13:27:38 * sepidehshahi joined the channel
+2016-05-17T13:28:01 <Bosmon> kasparnet - there are two meetings
+2016-05-17T13:28:13 <Bosmon> The current CI-coverage meeting, and then the following release process meeting
+2016-05-17T13:28:15 <Bosmon> I was also confused
+2016-05-17T13:28:29 <kasparnet> ahhhhh
+2016-05-17T13:28:36 <kasparnet> cheers Bosmon!!!
+2016-05-17T13:29:09 <Bosmon> Hi PaliwalSparsh - could you mute your mic when you are not speaking, since we get some feedback from time to time
+2016-05-17T13:29:19 <PaliwalSparsh> oh sorry
+2016-05-17T13:29:27 <kasparnet> Bosmon: so in terms of production tests - our production tests is this: https://github.com/GPII/universal/blob/master/tests/ProductionConfigTests.js right now
+2016-05-17T13:29:30 <Bosmon> cheers, np!
+2016-05-17T13:29:41 <kasparnet> which is useing a specific config
+2016-05-17T13:29:53 * alanharnum joined the channel
+2016-05-17T13:29:58 <kasparnet> (or rather each test is using a specific config)
+2016-05-17T13:30:20 * anvk joined the channel
+2016-05-17T13:30:47 <kasparnet> and is currently running against preferences.gpii.net
+2016-05-17T13:31:13 <kasparnet> but this shouldn\'t be the case for the CI
+2016-05-17T13:31:29 <kasparnet> and I take it we dont want to create a special case CI test
+2016-05-17T13:32:20 <kasparnet> so not sure how "There are just different configs for different contexts" works - since we have a single test that we want to use differeent configs depending on contexts
+2016-05-17T13:32:51 <kasparnet> and yes - I realize the irony in the wording of my message
+2016-05-17T13:35:59 <avtar> https://github.com/codecov/example-node
+2016-05-17T13:40:34 <Bosmon> kasparnet - yes we will create a special case CI test
+2016-05-17T13:41:42 * yzen joined the channel
+2016-05-17T13:42:07 <kasparnet> ok cool - that\'s sounds really straight forward
+2016-05-17T13:43:32 <kasparnet> Bosmon: so if I make a test case that will work with amatas\' VMs for master (ignoring, for now the issue with https) we feel ok with the CI and production tests
+2016-05-17T13:54:22 * wale joined the channel
+2016-05-17T13:56:49 <amatas> kasparnet, actually the CI VMs are using "server:8082" as preferences host and port
+2016-05-17T14:04:01 <kasparnet> amatas: yeah, I got that
+2016-05-17T14:04:12 <kasparnet> mostly I was unsure about how many configs and tests we wanted
+2016-05-17T14:05:56 * Dinuka joined the channel
+2016-05-17T14:06:12 <amatas> kasparnet, I\'m trying to derive this config https://github.com/amatas/GPII-universal/blob/master/tests/ProductionConfigTests.js#L92 using this config file https://github.com/amatas/GPII-universal/blob/GPII-1781/examples/gpii-production-tests/GPIIProductionTests.json, when it\'s run with this driver: https://github.com/amatas/GPII-universal/blob/GPII-1781/examples/gpii-production-tests/driver.js
+2016-05-17T14:06:32 <simonjb> hi Dinuka!
+2016-05-17T14:06:48 <Dinuka> Hi simonjb
+2016-05-17T14:07:14 <Dinuka> Sorry I didnt know how those technical meetings are happenning in fluid
+2016-05-17T14:07:24 <Dinuka> I voted
+2016-05-17T14:08:33 * bens__ has quit
+2016-05-17T14:09:01 <Dinuka> I have done code coverage related work also before
+2016-05-17T14:09:14 <Dinuka> for unit testing
+'
+

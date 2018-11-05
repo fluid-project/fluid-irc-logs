@@ -1,0 +1,309 @@
+b'2017-08-25T21:55:58 * kasparnet has quit
+2017-08-25T22:41:05 * amatas has quit
+2017-08-25T23:47:10 * stegru has quit
+'
+
+b'2017-08-25T18:36:46 * ussjoin joined the channel
+2017-08-25T18:36:48 <cindyli> simonjb: if the answer is yes, at granting access tokens to gpii installations, the existence of the sent-in gpii token should not be checked because it might be anonymous
+2017-08-25T18:38:36 * ussjoin joined the channel
+2017-08-25T18:41:51 <simonjb> cindyli: Up until now, the model has been to only store gpii tokens in the database that have associated users, and to consider tokens not in the database as \'anonymous\'
+2017-08-25T18:42:50 <simonjb> provisioning a new token does not require writing anything to the auth database
+2017-08-25T18:43:02 <simonjb> only when it\'s associated to a user
+2017-08-25T18:43:29 * alanharnum joined the channel
+2017-08-25T18:43:39 <simonjb> now, whether this is the right model going forward is a very good question
+2017-08-25T18:44:05 <simonjb> we have had a separation between the auth database and the preferences database
+2017-08-25T18:44:30 <simonjb> an option going forward would be to move them closer together
+2017-08-25T18:44:45 * ussjoin joined the channel
+2017-08-25T18:45:16 <simonjb> so, right now, a gpii token document in the db means that it\'s been added to a user account
+2017-08-25T18:45:30 <simonjb> rather than some preferences exist for that token
+2017-08-25T18:45:54 <simonjb> the auth database doesn\'t know which preferences exist and which do not
+2017-08-25T18:47:28 <simonjb> cindyli: if the current code checks for a gpii token before issuing an access token, it will only work for \'registered\' or \'non-anonymous\' tokens
+2017-08-25T18:51:04 <cindyli> simonjb: if so, is it correct that it doesn\'t make sense to check for a gpii token at issuing an access token as gpii installations should work with any gpii tokens, anonymous or registered?
+2017-08-25T18:52:27 <simonjb> thinking...
+2017-08-25T18:53:40 <simonjb> cindyli: in the current implementation, does the gpiiToken property of gpiiAppInstallationAuthorizations store the actual token value or the id of the token record?
+2017-08-25T18:54:08 <cindyli> simonjb: it stores the actual token value
+2017-08-25T18:55:03 <simonjb> ok, so it would be fairly easy to just remove the check and we could support gpiiAppInstallationAuthorization docs without any paired gpiiToken doc
+2017-08-25T18:55:08 <simonjb> ?
+2017-08-25T18:55:10 <cindyli> simonjb: no, it actually stores the id of the token record
+2017-08-25T18:55:17 <cindyli> sad...
+2017-08-25T18:55:20 <simonjb> ok
+2017-08-25T18:57:47 <simonjb> we should maybe rename the property to gpiiTokenId if we continue with that model
+2017-08-25T18:57:59 <simonjb> but let\'s think through this first
+2017-08-25T18:59:08 <cindyli> simonjb: we probably should save the actual token value, like what webPrefsConsumerAuthorization does
+2017-08-25T19:00:11 <simonjb> it would be good, I think, to have consistency
+2017-08-25T19:01:56 <simonjb> the question we need to answer is: do we want to have entries in the auth database for all provisioned tokens
+2017-08-25T19:02:09 <simonjb> Bosmon, are you around?
+2017-08-25T19:02:47 <grrrero> jhung: Do you know anything about the UIO Wordpress Plugin?
+2017-08-25T19:03:37 <simonjb> cindyli: and for onboardedSolutionAuthorization, it is also the token value?
+2017-08-25T19:03:55 <ussjoin> simonjb cindyli: I\'m confused; the system as it currently stands just accepts any input as "anonymous" if it\'s not in the database?
+2017-08-25T19:04:48 <simonjb> ussjoin: in particular, a gpii token value, for the purpose of filtering the contents
+2017-08-25T19:05:18 <simonjb> the preferences are stored keyed by gpii token
+2017-08-25T19:05:44 <cindyli> simonjb: onboardedSolutionAuthorization uses the token value too
+2017-08-25T19:05:56 <simonjb> and optionally, a user can register a token with a user account (username, password)
+2017-08-25T19:06:30 <simonjb> when a gpii token is registered with an account, it enables the owner to do some management
+2017-08-25T19:06:47 <simonjb> such as revoke and add additional preferences filtering to it
+2017-08-25T19:07:04 <simonjb> such as this gpii token can only be used with these solutions
+2017-08-25T19:07:22 <simonjb> and for solution A, only share this subset of preferences
+2017-08-25T19:07:39 <simonjb> if a token isn\'t associated to an account, we consider it \'anonymous\'
+2017-08-25T19:07:46 <jhung> grrrero: a little.
+2017-08-25T19:07:50 <simonjb> and don\'t do any privacy filtering on it
+2017-08-25T19:08:08 <grrrero> jhung: Any docs on this available anywhere yet?
+2017-08-25T19:08:14 <simonjb> the full preferences are always available to the match making system when the token is used
+2017-08-25T19:09:01 <simonjb> in the \'anonymous\' case
+2017-08-25T19:09:17 <jhung> There isn\'t much documentation grrrero. There\'s a little on the Wiki https://wiki.fluidproject.org/display/fluid/UI+Options+Wordpres+Plugin+Development+Guide
+2017-08-25T19:09:37 <grrrero> jhung: Good start!! Thanks!
+2017-08-25T19:10:05 <jhung> The readme might have some as well, but it\'s been something we should definitely improve grrrero. I think there may be a Jira for improving the plugin docs.
+2017-08-25T19:10:22 * stegru joined the channel
+2017-08-25T19:10:37 <grrrero> jhung: Will look more into it; Justin_o has this as a JIRA to use responsive UIO
+2017-08-25T19:10:57 <jhung> grrrero: Yes! That would be awesome.
+2017-08-25T19:11:01 * kasparnet has quit
+2017-08-25T19:11:25 <simonjb> ussjoin: and now cindyli is adding oauth2 checking to the endpoint used by the local flow manager to retrieve settings
+2017-08-25T19:12:22 <ussjoin> But the tokens aren\'t recorded anywhere---so I can send, say, "\' OR 1=1 AND DROP TABLE Users;\'" as my OAuth token and that\'ll just get marked as anonymous?
+2017-08-25T19:12:33 <ussjoin> (My SQL syntax is, of course, wrong.)
+2017-08-25T19:12:53 <simonjb> no, gpii token := oauth2 token
+2017-08-25T19:13:07 <simonjb> sorry, gpii token != oauth2 token
+2017-08-25T19:13:28 <ussjoin> Gotcha. So as my GPII token, then?
+2017-08-25T19:13:34 <simonjb> yes
+2017-08-25T19:13:54 <simonjb> but it will result in no preferences
+2017-08-25T19:14:59 <simonjb> for each gpii token that has preferences, there will be an entry in the preferences database
+2017-08-25T19:15:22 <simonjb> but right now, not every gpii token has an entry in the \'auth\' database
+2017-08-25T19:15:37 <simonjb> only ones that have been registered with an account
+2017-08-25T19:15:50 <simonjb> cindyli: did I get that right?
+2017-08-25T19:16:13 <cindyli> yes, simonjb
+2017-08-25T19:16:24 <gtirloni> simonjb: is it correct to say that the components accessing the preferences database are only doing GET requests so data modification/removal is not allowed (if they were to manipulate the input data trying to tricky the system into doing something harmful)?
+2017-08-25T19:17:59 <simonjb> gtirloni: as of right now, I believe that there is a totally unprotected endpoint that will let you write preferences -- is this still the case as far as you know cindyli?
+2017-08-25T19:19:23 <cindyli> yes, at the moment, the only update/write endpoint is provided by the preferences server and it is unprotected
+2017-08-25T19:19:33 <grrrero> fluid-everyone: Trying to run vagrant up on my local machine but getting this error
+2017-08-25T19:19:36 <grrrero> https://www.irccloud.com/pastebin/MxCMOkpG/
+2017-08-25T19:19:47 * jhernandez has quit
+2017-08-25T19:19:49 <grrrero> Anyone know how to fix this?
+2017-08-25T19:20:25 <cindyli> gtirloni: one task on my list is to add a secured endpoint on the cloud based flow manager which we hope would be the only component that is able to send requests to the unsecured preferences server endpoint
+2017-08-25T19:20:45 <gtirloni> grrrero: looks like the server where the box file is located is having some trouble, i\'d try again a few times
+2017-08-25T19:20:56 <grrrero> gtirloni: Ok, thanks!
+2017-08-25T19:21:14 <cindyli> i hope there\'s a way to config the unsecured end point not to be accessible by other parties
+2017-08-25T19:21:29 <ussjoin> gtirloni: Also, remember that SQLi and similar input manipulations don\'t respect HTTP verbs---they work at a deeper level.
+2017-08-25T19:21:44 <simonjb> and the cloud based flow manager endpoint will only allow a subset of the preferences to be edited? am I remembering correctly? only the ones supported by the pcp with memory
+2017-08-25T19:22:12 <ussjoin> grrrero: Concur with gtirloni---but a wget on that file worked for me, so it might just be a transient CDN error.
+2017-08-25T19:22:12 <cindyli> that\'s true, ussjoin
+2017-08-25T19:22:32 <grrrero> ussjoin: Yeah it started up for me on 2nd try! Thanks!!
+2017-08-25T19:22:40 <gtirloni> ussjoin: that\'s interesting, i didn\'t know that. in our case it\'s couchdb so i\'m thinking we\'re doing direct requests to it (from the preferences server), but i\'m not sure if we\'re using some ORM-like package
+2017-08-25T19:22:41 <grrrero> gtirloni ^
+2017-08-25T19:24:39 <simonjb> gtirloni, ussjoin: I think in general we are pretty careful about not building machine instructions with string concatenation, so hopefully injection attacks should be not common but is absolutely something to verify, 100%
+2017-08-25T19:24:57 <cindyli> simonjb: i\'m going to modify the pull request for GPII-2435 to use token values for "gpiiToken" fields associated with gpiiAppInstallationAuthorizations
+2017-08-25T19:25:08 <gtirloni> grrrero: cool! the box is hosted on our cdn (cachefly) but vagrant first does a request to vagrantcloud\'s API, gets a HTTP redirect and goes looking for it in the CDN.. that web service sometimes has some problems, but they\'re usually quick to fix. glad it\'s working. I don\'t know which OS you\'re using, but if the download % seems stalled, don\'t panic.. it uses curl behind the scenes and sometimes there\'s some trouble with buffering in vagrant
+2017-08-25T19:25:29 <grrrero> gtirloni: download completed, so it\'s all good! Thank you :)
+2017-08-25T19:25:30 <gtirloni> cindyli simonjb: nice, thanks for the details
+2017-08-25T19:26:46 <gtirloni> grrrero: if you don\'t mind me asking, which project are you spinning up? curious about the centos box (vs fedora)
+2017-08-25T19:26:50 <cindyli> simonjb: in terms of whether the auth database should store all gpii tokens, we need a discussion with more ppl. for now, I\'m going to assume the auth database doesn\'t have all gpii token records
+2017-08-25T19:27:07 <grrrero> gtirloni: I\'m opening the Wordpress UIO plugin
+2017-08-25T19:27:09 <cindyli> that means I will remove the check of gpii tokens at granting access tokens for gpii app installation
+2017-08-25T19:27:12 <cindyli> s
+2017-08-25T19:27:20 <cindyli> do you think that\'s ok?
+2017-08-25T19:27:24 <cindyli> simonjb: ^
+2017-08-25T19:27:56 <gtirloni> grrrero: ah ok, i worked on that automation a whiiiile ago, i hope it\'s littered with "here be dragons" warnings. jhung and I can help with any issues you find out
+2017-08-25T19:28:07 <grrrero> Awesome thanks gtirloni and jhung
+2017-08-25T19:28:45 <jhung> gtirloni: It\'s an oldie, but a goodie.
+2017-08-25T19:28:50 <gtirloni> jhung: lol
+2017-08-25T19:28:56 <ussjoin> simonjb cindyli: Even if SQLi isn\'t the principal issue, it seems like allowing unconfirmable tokens in is likely to lead to issues. What would be involved in recording all tokens and validating them (both in form, first, before anything is done, and then later that they actually exist)?
+2017-08-25T19:32:38 <simonjb> ussjoin cindyli: I think I spoke too quickly about not using string concatenation -- we do use string replacement
+2017-08-25T19:32:45 <simonjb> for example https://github.com/GPII/universal/blob/master/gpii/node_modules/gpii-oauth2/gpii-oauth2-datastore/src/DbDataStore.js#L135
+2017-08-25T19:33:15 <simonjb> we should definitely validate in form as ussjoin says
+2017-08-25T19:33:51 <cindyli> ussjoin: i agree it would be safer to keep track of all issued gpii tokens and think about the workflow of provisioning new gpii tokens
+2017-08-25T19:39:36 <simonjb> actually, maybe we do URL escaping when we populate the view URLs? if not that would be worth doing, but I think also validating token form as early as possible is also very good to do
+2017-08-25T19:42:57 <simonjb> ok, sorry, looks like we do encode the termMap values: https://github.com/fluid-project/kettle/blob/master/lib/dataSource-url.js#L75
+2017-08-25T19:47:36 <cindyli> well.. I\'m blocked by whether all gpii tokens will be tracked :(
+2017-08-25T19:48:40 <ussjoin> cindyli: Can we change the answer from no to yes? It feels like that\'s doable, but I\'m not familiar with the code, so you\'re a better judge of the possibility of that statement.
+2017-08-25T19:49:22 <simonjb> cindyli: is the "Input validation" entry on https://wiki.gpii.net/w/GPII_Security_Plan the best place to track validation of gpii token format?
+2017-08-25T19:49:58 <simonjb> as a task
+2017-08-25T19:50:10 <ussjoin> If tokens are all tracked, then we can do the two-part check I alluded to above: first, check (really simple regexes are good, though there are often even stronger checks) that the token is of the form a token should be (e.g., "exactly 22 characters, lowercase alpha + numbers, no punctuation" or whatever it happens to be). Then, IFF the first check passed and the other first-line validations passed, check if the token is in the
+2017-08-25T19:50:10 <ussjoin> database.
+2017-08-25T19:54:09 <cindyli> ussjoin: it\'s technically doable. we need to check with the UX team on the workflow of provisioning gpii tokens and figure out how we can track them in the databse
+2017-08-25T19:54:42 <cindyli> simonjb: that seems a reasonable place to track
+2017-08-25T19:54:55 <simonjb> cindyli: I will add a note
+2017-08-25T19:54:58 <cindyli> thanks, simonjb
+2017-08-25T19:56:13 <cindyli> ussjoin, simonjb, i can bring up this question, about tracking all gpii tokens, in the arch meeting next week
+2017-08-25T20:00:03 <ussjoin> Cool; thank you.
+2017-08-25T20:01:47 <cindyli> simonjb, ussjoin, for now, I will assume all gpii tokens are tracked but not all of them are associated with user accounts
+2017-08-25T20:02:12 <cindyli> simonjb: i will still update the pull request for GPII-2435 to use token values for gpiiToken fields
+2017-08-25T20:02:37 <cindyli> i mean for gpii app installation authorization records
+2017-08-25T20:03:01 <simonjb> cindyli: that seems like a good approach for now and I agree on making gpiiToken values consistent across authorization types
+2017-08-25T20:03:23 <cindyli> cool. thanks
+2017-08-25T20:03:26 * kasparnet joined the channel
+2017-08-25T20:04:28 <simonjb> cindyli: and in the short term, for testing, we can manually add gpii tokens to the database before we sort out provisioning
+2017-08-25T20:05:22 <cindyli> simonjb: yes, that\'s how i\'m thinking to fix the acceptance test for using anonymous tokens with /untrusted-settings endpoint
+2017-08-25T20:06:01 <cindyli> simonjb: it would be a much more complex story in reality
+2017-08-25T20:06:53 <simonjb> cindyli: yes, we will need to work through the provisioning process and relationship between auth data and prefs data
+2017-08-25T20:07:53 <cindyli> ya, worry about the timeline for pcp with memory
+2017-08-25T20:09:44 <simonjb> thanks for bringing this up cindyli :)
+2017-08-25T20:10:31 <cindyli> no problem. thanks for explanations and ideas, simonjb and ussjoin
+2017-08-25T20:10:43 <simonjb> ussjoin: great that you are available to help us!
+2017-08-25T20:22:39 <simonjb> cindyli ussjoin: I added a note on validating GPII token format https://wiki.gpii.net/w/GPII_Security_Plan#Authorization_server
+2017-08-25T20:23:02 * alanharnum has quit
+2017-08-25T20:23:03 <cindyli> thanks, simonjb
+2017-08-25T20:23:28 * alanharnum joined the channel
+2017-08-25T20:27:45 * alanharnum has quit
+2017-08-25T20:28:15 <cindyli> simonjb: noticed the code is actually saving actual token values into authorization records, just some of my test data is mistakenly using id of the token records. so should be an easy fix
+2017-08-25T20:30:22 * jhung has quit
+2017-08-25T20:36:15 * simonjb has quit
+2017-08-25T20:44:57 * alanharnum joined the channel
+2017-08-25T20:58:06 * gtirloni has quit
+2017-08-25T21:01:27 * clown has quit
+2017-08-25T21:12:53 * cindyli has quit
+2017-08-25T21:25:15 * alanharnum joined the channel
+2017-08-25T21:26:10 * michelled has left the channel
+2017-08-25T21:28:25 * alanharnum2 joined the channel
+2017-08-25T21:51:32 * javjarfer__ has quit
+'
+
+b'2017-08-25T04:10:07 * mrtyler has quit
+2017-08-25T05:18:24 * danayo joined the channel
+2017-08-25T08:15:58 * amatas joined the channel
+2017-08-25T09:28:57 * jhernandez joined the channel
+2017-08-25T09:29:43 <jhernandez> Bosmon: buenos dias
+2017-08-25T09:49:33 * kasparnet joined the channel
+2017-08-25T09:50:29 * stegru joined the channel
+2017-08-25T10:16:05 * kasparnet has quit
+2017-08-25T10:33:47 <Bosmon> jhernandez - VVERNANDDEZZ!
+2017-08-25T10:35:03 * javjarfer joined the channel
+2017-08-25T10:36:29 * kasparnet joined the channel
+2017-08-25T10:54:51 * kasparnet has quit
+2017-08-25T10:58:58 * gtirloni joined the channel
+2017-08-25T11:26:19 * javjarfer_ joined the channel
+2017-08-25T11:27:30 * javjarfer__ joined the channel
+2017-08-25T11:30:58 * javjarfer_ has quit
+2017-08-25T11:31:27 * javjarfer_ joined the channel
+2017-08-25T11:34:34 * javjarfer__ has quit
+2017-08-25T11:34:50 * javjarfer__ joined the channel
+2017-08-25T11:36:12 <javjarfer> hi kasparnet! Would you have a couple of minutes?
+2017-08-25T11:37:32 * javjarfer_ has quit
+2017-08-25T11:57:37 * kasparnet joined the channel
+2017-08-25T12:03:09 * kasparnet has quit
+2017-08-25T12:05:03 * cindyli joined the channel
+2017-08-25T12:33:07 * cindyli joined the channel
+2017-08-25T13:02:07 * simonjb joined the channel
+2017-08-25T13:04:44 * jhung joined the channel
+2017-08-25T13:09:48 * javjarfer has quit
+2017-08-25T13:18:33 * Jess_ joined the channel
+2017-08-25T13:19:29 * alanharnum joined the channel
+2017-08-25T13:20:42 * javjarfer joined the channel
+2017-08-25T13:24:32 <javjarfer> Hi everyone! Anyone has worked with this code in particular at any time? https://github.com/GPII/universal/blob/master/gpii/node_modules/lifecycleManager/src/Resolvers.js#L40
+2017-08-25T13:24:55 <javjarfer> I\'m trying to use it to resolve a value of a payload for a test, but isn\'t so trivial
+2017-08-25T13:26:55 <stegru> I haven\'t, but do you have an example of what you\'re trying to do?
+2017-08-25T13:27:56 <javjarfer> yes, I have it, just a second
+2017-08-25T13:29:23 <Bosmon> Hi there javjarfer
+2017-08-25T13:29:30 <Bosmon> What would you like to resolve :)
+2017-08-25T13:29:32 <javjarfer__> Bosmon, hi!
+2017-08-25T13:29:35 <javjarfer__> https://pastebin.com/pDVjmJMc
+2017-08-25T13:30:19 <javjarfer__> there it\'s, I want to resolve that environment variable, I have modified the resolver for being able to accept CWD
+2017-08-25T13:30:35 <javjarfer__> but I cant get the right way to call the grade to resolve it for me
+2017-08-25T13:33:37 * grrrero joined the channel
+2017-08-25T13:35:14 <stegru> not answering your question, but CWD will be the current directory when gpii was started.. which could be anything (but normally the gpii root)
+2017-08-25T13:35:33 <Bosmon> javjarfer__ - also, CWD is not set as a standard variable on my system
+2017-08-25T13:35:46 <Bosmon> Are you perhaps trying to apply some Linux thinking here to Windows?
+2017-08-25T13:37:36 <stegru> ah, it\'s "CD".. but that\'s not a real variable
+2017-08-25T13:37:54 <stegru> %CD%
+2017-08-25T13:38:07 <Bosmon> ah how interesting
+2017-08-25T13:38:15 <Bosmon> And does it appear nonetheless in node\'s process.env?
+2017-08-25T13:38:19 <stegru> no
+2017-08-25T13:38:22 <Bosmon> Right
+2017-08-25T13:38:24 <stegru> just checked
+2017-08-25T13:38:39 <javjarfer> yes yes, I have implemented it as process.cwd();
+2017-08-25T13:39:04 <javjarfer> it is not a standard variable
+2017-08-25T13:39:22 <javjarfer> and it has suffered change in different versions of node for what I have been reading
+2017-08-25T13:40:08 <stegru> oh, you did process.env.CWD = process.cwd() ?
+2017-08-25T13:40:20 <Bosmon> That\'s terrible
+2017-08-25T13:40:40 <Bosmon> Anyway, please see stegru\'s earlier comment
+2017-08-25T13:40:41 <javjarfer> well in resolver I did = if (name == "CWD) return process.cwd();
+2017-08-25T13:40:59 <javjarfer> not actually setting a variable in node process, just using
+2017-08-25T13:41:02 <Bosmon> The value of CWD is not a stable determiner of a position in the filesystem
+2017-08-25T13:41:10 <Bosmon> javjarfer - consider this some early code review :)
+2017-08-25T13:42:03 <javjarfer> haha thanks, I know it isn\'t but I have see that files are loaded like that is several tests, using the _dirname variable from node
+2017-08-25T13:42:17 <Bosmon> javjarfer__ - well that\'s completely different, isn\'t it
+2017-08-25T13:42:34 <Bosmon> _dirname at least has a knowable value given a particular file in the filesystem
+2017-08-25T13:42:38 <Bosmon> Whereas CWD doesn\'t
+2017-08-25T13:42:53 <Bosmon> And, indeed you will only see such stuff in test cases
+2017-08-25T13:43:08 <Bosmon> For something that you intend to use in production, I suggest you use some kind of module-relative path as described in http://docs.fluidproject.org/infusion/development/NodeAPI.html#node-js-module-apis
+2017-08-25T13:43:24 <stegru> for tests especially, the "CWD" could be anything, depending on how the test is invoked.. eg, "node tests/UnitTests.js" or "cd tests ; node UnitTests.js" will give different values
+2017-08-25T13:45:04 <stegru> you could copy the wallpaper to %temp%, then use {environment}.temp
+2017-08-25T13:45:24 <javjarfer> yes, thanks, I know that is not the best way to get the path, thanks for the tip about the module-relative, I will look at it :), but it was just a hack for being if I was able to call the resolution on payloads for tests
+2017-08-25T13:46:12 <javjarfer> stegru, that is really simple, could be an approach yes, I will also consider it when looking to the module-relative
+2017-08-25T13:46:15 <javjarfer> thanks
+2017-08-25T13:49:44 <stegru> unfusions documentation is really good, it always impresses me
+2017-08-25T13:49:57 <stegru> so is infusion\'s
+2017-08-25T13:50:23 * alanharnum joined the channel
+2017-08-25T13:52:02 <Bosmon> javjarfer - ok, the point of tests is that they are self-contained, so the true environment resolvers are generally disabled
+2017-08-25T13:53:11 <Bosmon> javjarfer - a mock "nameResolver" is injected here: https://github.com/GPII/universal/blob/master/gpii/node_modules/testing/src/Testing.js#L124
+2017-08-25T13:53:23 * alanharnum has quit
+2017-08-25T13:53:29 * alanharnum joined the channel
+2017-08-25T13:54:18 <Bosmon> javjarfer, and, for example, for integration tests, the nameResolver is implemented here: https://github.com/GPII/universal/blob/master/gpii/node_modules/testing/src/Integration.js#L77
+2017-08-25T13:56:44 <javjarfer> Bosmon, okay, thanks you, I get your point, for this kind of self content test is better to simply mock that part, in order to keep the result self contained
+2017-08-25T13:59:44 <cindyli> hi simonjb, thanks for more reviews on the pull request for GPII-2435. i\'ve addressed them and pushed up.
+2017-08-25T14:00:40 <simonjb> thanks cindyli, I\'ll take a look
+2017-08-25T14:01:36 <cindyli> simonjb: just received a notification of your last comment, the push doesn\'t include the fix for that one ;) i will wait for a bunch to come and do another round of fix
+2017-08-25T14:02:06 <simonjb> :)
+2017-08-25T14:05:57 <javjarfer> Bosmon, those are great resources to look at, is there any doc about the mocks or the \'design\' followed for doing the integration tests?
+2017-08-25T14:10:06 * michelled joined the channel
+2017-08-25T14:11:52 <Bosmon> javjarfer - sadly no docs for this design, no
+2017-08-25T14:12:01 <Bosmon> We just have general docs for those writing acceptance tests here: https://wiki.gpii.net/w/Writing_Acceptance_Tests
+2017-08-25T14:12:46 * mrtyler joined the channel
+2017-08-25T14:18:41 <javjarfer> Bosmon, great, thanks, looking at it
+2017-08-25T14:49:37 * alf joined the channel
+2017-08-25T14:50:16 * alf is now known as amatas_
+2017-08-25T15:03:38 * amatas_ has quit
+2017-08-25T15:04:30 * amatas_ joined the channel
+2017-08-25T15:19:39 * alanharnum joined the channel
+2017-08-25T15:28:03 * alanharnum joined the channel
+2017-08-25T15:30:55 <simonjb> good morning ussjoin and cindyli
+2017-08-25T15:31:07 <ussjoin> Good morning simonjb!
+2017-08-25T15:31:19 <cindyli> ussjoin or simonjb: can you send me the link to the meeting room again?
+2017-08-25T15:31:25 <ussjoin> https://hangouts.google.com/hangouts/_/raisingthefloor.org/sec-team?authuser=0
+2017-08-25T15:31:33 <cindyli> thanks
+2017-08-25T15:31:34 <ussjoin> (It\'s also in the calendar invite)
+2017-08-25T15:32:13 <cindyli> right, found it
+2017-08-25T15:32:49 * clown joined the channel
+2017-08-25T15:41:42 <cindyli> ussjoin: https://flowmanager.gpii.net/login
+2017-08-25T15:41:51 <cindyli> https://preferences.gpii.net/
+2017-08-25T16:00:33 * alanharnum has quit
+2017-08-25T16:00:59 * alanharnum joined the channel
+2017-08-25T16:02:46 * danayo joined the channel
+2017-08-25T16:07:45 * alanharnum joined the channel
+2017-08-25T16:40:34 * gtirloni_ joined the channel
+2017-08-25T16:43:12 * gtirloni has quit
+2017-08-25T16:44:53 * michelled joined the channel
+2017-08-25T17:03:54 * amatas_ has quit
+2017-08-25T17:10:11 * alanharnum has quit
+2017-08-25T17:10:38 * alanharnum joined the channel
+2017-08-25T17:11:00 * alanharnum has quit
+2017-08-25T17:11:05 * alanharnum joined the channel
+2017-08-25T17:13:56 * avtar joined the channel
+2017-08-25T17:20:57 <ussjoin> Have people in here used Slack before?
+2017-08-25T17:24:51 * cindyli joined the channel
+2017-08-25T17:25:22 * avtar has quit
+2017-08-25T17:29:51 * michelled joined the channel
+2017-08-25T17:43:17 <michelled> alanharnum, grrrero: I think you\'ll find this article danayo tweeted to be super interesting: https://qz.com/1042852/using-a-fitness-app-taught-me-the-scary-truth-about-why-privacy-settings-are-a-feminist-issue/
+2017-08-25T17:44:35 <michelled> danayo: thanks for sharing that - I guess we have a ton more work to do in that space
+2017-08-25T17:44:58 <alanharnum> michelled danayo grrrero yeah, super-interesting
+2017-08-25T17:46:01 <alanharnum> & I think a part of the whole pathology of the tech world that bases its sense of precaution, safety and privacy on almost exclusively the experiences of white male engineers implementing products
+2017-08-25T17:48:36 <grrrero> alanharnum: danayo: \xe2\x80\x9cIf you don\xe2\x80\x99t like something, you can opt out of it\xe2\x80\x9d -- this concept technically lets companies wash their hands off of issues like this
+2017-08-25T17:49:44 <grrrero> It\'s interesting how they\'ll suddenly be super pro-privacy when a user tries to gain more control over their own experiences and then companies will just say "but you didn\'t opt on so like \xc2\xaf\\_(\xe3\x83\x84)_/\xc2\xaf"
+2017-08-25T17:49:53 <grrrero> *opt out
+2017-08-25T17:50:07 <alanharnum> yeah, it\'s interesting how even the article contains this phrasing: "Failing to opt out of Leaderboards was admittedly my blunder." - it\'s a very pervasive idea
+2017-08-25T17:50:40 <grrrero> Yeah as if the fault is all on the user side
+2017-08-25T17:50:41 <ussjoin> It\'s also going to be exciting when the GDPR beats these companies with a very large hammer indeed. 4% of worldwide gross revenue for reasonable expectation violations or cross-use without *explicit opt-in* consent.
+2017-08-25T17:50:41 <alanharnum> as the author points out, how many companies manage privacy fails the Clapham omnibus / reasonable person test
+2017-08-25T17:51:34 <ussjoin> (Or IIRC 20M in penalties, whichever is *higher*. So if you company makes less than 20M, the first GDPR violation will be your last.)
+2017-08-25T17:57:16 * alanharnum has quit
+2017-08-25T18:02:05 * alanharnum joined the channel
+2017-08-25T18:06:25 * kasparnet joined the channel
+2017-08-25T18:12:37 * ussjoin_ joined the channel
+2017-08-25T18:20:02 * kasparnet has quit
+2017-08-25T18:26:48 * stegru has quit
+2017-08-25T18:29:35 * kasparnet joined the channel
+2017-08-25T18:30:40 * kasparnet has quit
+2017-08-25T18:32:53 <cindyli> hi simonjb, when a gpii installation sends a request to /access_token endpoint to request an access token, it sends along the gpii token. right now, this gpii token is verified to ensure it does exist in the auth database - https://github.com/cindyli/universal/blob/GPII-2435/gpii/node_modules/gpii-oauth2/gpii-oauth2-authz-server/src/AuthorizationService.js#L224
+2017-08-25T18:33:09 * kasparnet joined the channel
+2017-08-25T18:33:32 <cindyli> when I\'m working on securing /untrusted-settings endpoint, i noticed it\'s able to handle anonymous gpii tokens - https://github.com/cindyli/universal/blob/GPII-2435/gpii/node_modules/flowManager/src/CloudBasedFlowManager.js#L261
+2017-08-25T18:34:52 <cindyli> the latter code seems assuming not all gpii tokens are stored in the auth database
+2017-08-25T18:35:48 <cindyli> i\'d like to check with you if the auth database only meant to store gpii tokens that have authorizations associated with?
+'
+

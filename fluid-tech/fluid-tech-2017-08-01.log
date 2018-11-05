@@ -1,0 +1,268 @@
+b'2017-08-01T15:59:05 <mrtyler> right
+2017-08-01T15:59:17 <mrtyler> nothing is foolproof here. there will always be a way to get to >108 characters
+2017-08-01T15:59:37 <mrtyler> we also don\'t directly control the creation of /home/gitlab-runner -- the gitlab-runner package does that for us
+2017-08-01T16:00:09 <mrtyler> so it would be something like: install package, mv /home/gitlab-runner /gitlab, edit gitlab-runner user to point to new homedir
+2017-08-01T16:00:47 <mrtyler> i sort of like a dedicated /ci-tmp but then developers need that dir to exist locally :\\
+2017-08-01T16:01:07 <mrtyler> (or we would need to inject /ci-tmp into TMPDIR somehow, which is not *so* bad)
+2017-08-01T16:01:38 <Bosmon> I read a little about the arm wrestling
+2017-08-01T16:01:50 <Bosmon> I agree with stegru that trying to embed secrets in the installer is non-workable
+2017-08-01T16:02:31 <gtirloni> mrtyler: i\'m reading a bit more about the parts involved, i don\'t have a better solution from the top of my mind right now
+2017-08-01T16:02:47 <mrtyler> gtirloni: a little more context from my code\'s tmpdir handling: https://github.com/gpii-ops/gpii-terraform/blob/master/dev/Rakefile
+2017-08-01T16:03:04 <mrtyler> and https://github.com/gpii-ops/gpii-terraform/blob/master/rakefiles/build.rake
+2017-08-01T16:03:29 <gtirloni> thanks
+2017-08-01T16:04:16 <mrtyler> anyway thanks gio. i\'ll keep thinking about it. lmk if anything springs to mind :)
+2017-08-01T16:04:22 <gtirloni> will do
+2017-08-01T16:04:39 * alanharnum joined the channel
+2017-08-01T16:08:23 <mrtyler> and obv if anyone else in here has ideas, please share :)
+2017-08-01T16:17:14 <gtirloni> mrtyler: if terraform can talk to its plugins over tcp instead of a socket file, that might help... I know packer uses tcp but I can\'t find much about that and terraform
+2017-08-01T16:17:47 <mrtyler> hmm i haven\'t seen any configuration for that but i\'ll take a look
+2017-08-01T16:20:09 <mrtyler> Plugins are executed as a separate process and communicate with the main Terraform binary over an RPC interface.
+2017-08-01T16:20:45 * colinclark joined the channel
+2017-08-01T16:20:51 <mrtyler> This means that each plugin is an independent program, and instead of communicating via shared memory, the main process communicates with the plugin process over HTTP
+2017-08-01T16:22:01 <mrtyler> so i guess they\'re doing http over this socket? kinda weird
+2017-08-01T16:22:08 <mrtyler> https://www.terraform.io/docs/internals/internal-plugins.html
+2017-08-01T16:24:58 <mrtyler> there\'s also this (nbering is an active fellow in the terraform gitter): https://github.com/hashicorp/go-plugin/issues/27
+2017-08-01T16:28:34 * the-t-in-rtf joined the channel
+2017-08-01T16:32:41 * avtar joined the channel
+2017-08-01T16:34:32 <gtirloni> interesting! so it looks like terraform re-executes itself to start a plugin like `terraform internal-plugin provider aws` ... but i can\'t find much beyond that. supposedly that\'s where it would reply with the socket file or a tcp port for the main terraform process to talk to the plugin... /me gets lost in the woods
+2017-08-01T16:36:52 <mrtyler> i read it the same as you
+2017-08-01T16:37:06 * the-t-in-rtf joined the channel
+2017-08-01T16:37:13 <mrtyler> next step would be to start reading terraform code but i don\'t think i can solve my problem from that end
+2017-08-01T16:37:31 <mrtyler> i think i just have to accept a shorter path
+2017-08-01T16:37:54 * alanharnum joined the channel
+2017-08-01T16:37:55 <mrtyler> so current plan is:
+2017-08-01T16:38:05 <gtirloni> maybe removing \'noexec\' from /tmp won\'t be too bad. all our users are in /home with complete access to create executables there... i\'m on the fence about it after reading more about CIS benchmarks
+2017-08-01T16:38:19 <mrtyler> - ansible-gpii-ci-worker will create /citmp, mode 0700, owned by gitlab-runner
+2017-08-01T16:38:33 <mrtyler> - rakefile will detect if that dir exists. if so, use it. if not, fall back to ./rake-tmp
+2017-08-01T16:38:40 <mrtyler> - the end :)
+2017-08-01T16:38:58 <mrtyler> we could also remove noexec and then i would just do step 2 :)
+2017-08-01T16:39:08 <mrtyler> but step 1 is not a big deal if you don\'t want to disrupt /tmp
+2017-08-01T16:41:26 * grrrero joined the channel
+2017-08-01T16:42:01 <gtirloni> i think it\'s fine to change /tmp.. we can do a more thorough security review in the future. as it is right now, i can think of a dozen different ways to create a executable (if jenkins, gitlab-runner, etc would allow it)
+2017-08-01T16:42:11 <gtirloni> just removed \'noexec\' from it
+2017-08-01T16:42:46 <mrtyler> ok cool
+2017-08-01T16:43:07 <mrtyler> i\'ll tweak the rakefile to start using /tmp instead
+2017-08-01T16:49:41 * clown has quit
+2017-08-01T16:50:41 * clown joined the channel
+2017-08-01T17:03:43 * Jess_ joined the channel
+2017-08-01T17:15:09 * clown joined the channel
+2017-08-01T17:30:59 * clown joined the channel
+2017-08-01T17:31:45 * javjarfer has quit
+2017-08-01T17:46:02 * clown joined the channel
+2017-08-01T17:49:07 * cindyli joined the channel
+2017-08-01T17:56:19 * the-t-in-rtf1 joined the channel
+2017-08-01T17:56:19 * the-t-in-rtf has quit
+2017-08-01T18:05:15 * simonjb joined the channel
+2017-08-01T18:07:01 * the-t-in-rtf joined the channel
+2017-08-01T18:10:22 * the-t-in-rtf joined the channel
+2017-08-01T18:22:27 * stegru has quit
+2017-08-01T18:24:31 * the-t-in-rtf1 joined the channel
+2017-08-01T18:26:09 * alanharn_ joined the channel
+2017-08-01T18:27:39 * Jess_ joined the channel
+2017-08-01T18:37:31 * gtirloni joined the channel
+2017-08-01T18:43:24 * javjarfer joined the channel
+2017-08-01T18:43:44 * the-t-in-rtf joined the channel
+2017-08-01T18:54:51 * the-t-in-rtf1 joined the channel
+2017-08-01T19:01:16 * stegru joined the channel
+2017-08-01T19:05:31 <alanharn_> Justin_o colinclark: https://github.com/NaturalNode/natural
+2017-08-01T19:06:34 * stegru has quit
+2017-08-01T19:14:11 <colinclark> Bosmon: ^
+2017-08-01T19:23:53 * simonjb joined the channel
+2017-08-01T19:52:00 * the-t-in-rtf joined the channel
+2017-08-01T20:21:12 <Justin_o> colinclark, Bosmon: so i did some testing of the of the boundary event on chrome and got no events firing.
+2017-08-01T20:21:27 <colinclark> uh oh
+2017-08-01T20:21:30 <colinclark> it never fires?
+2017-08-01T20:21:57 <Justin_o> colinclark: https://bugs.chromium.org/p/chromium/issues/detail?id=422030
+2017-08-01T20:22:17 <Justin_o> so it seems that in addition to there being bugs around it occasionally, it also depends on which voice gets used
+2017-08-01T20:22:42 <Justin_o> we have just been using the default, which seems to now use a voice that doesn\'t support boundary events
+2017-08-01T20:23:32 * javjarfer has quit
+2017-08-01T20:25:12 <Justin_o> i\'m going to try to find a voice that actually supports it, just to see what it looks like, and think if there is a way we can optionally support it
+2017-08-01T20:25:20 <colinclark> that makes sense
+2017-08-01T20:25:36 <colinclark> so if we already know that we can\'t rely on it, how does that change our design?
+2017-08-01T20:25:42 <colinclark> if at all?
+2017-08-01T20:27:06 <Justin_o> colinclark: i\'m thinking we do the block level high lighting, and potentially for voices that support it you get the second highlight per word.. of course it would just be a lot easier to only support the block level highlighting
+2017-08-01T20:27:17 <Justin_o> maybe i should just start with that given time and etc
+2017-08-01T20:27:18 <colinclark> right
+2017-08-01T20:27:22 <colinclark> ok, i see what you mean
+2017-08-01T20:27:33 <colinclark> we can\'t feed the synthesizer a word at a time
+2017-08-01T20:27:38 <colinclark> or it will talk all weird
+2017-08-01T20:28:08 <colinclark> and if we don\'t get the boundary event, we simply have no feedback about where in the utterance, at any given point in time, the engine is at
+2017-08-01T20:28:19 <Justin_o> that\'s correct
+2017-08-01T20:28:34 <Justin_o> and yah, we suspect it won\'t know how to pronounce words if given one at a time
+2017-08-01T20:28:34 <colinclark> So best case scenario we try to provide good defaults\xe2\x80\x94i.e. voices that support the boundary event
+2017-08-01T20:28:44 <colinclark> yeah, it would never work
+2017-08-01T20:28:45 <Justin_o> i had an issue like that when there was a space before a period
+2017-08-01T20:28:52 <colinclark> right
+2017-08-01T20:29:14 <Justin_o> colinclark: problem is we don\'t necessarily know what voices are provided on the system
+2017-08-01T20:29:25 <Justin_o> i guess in the case of the browser extension we an assume google chrome ones
+2017-08-01T20:30:07 <Justin_o> we can request the set of voices that the system supports though, but it can take a while to return
+2017-08-01T20:32:16 <colinclark> how long?
+2017-08-01T20:34:36 <Justin_o> colinclark: try this in your browser speechSynthesis.getVoices();
+2017-08-01T20:34:40 <Justin_o> the first call is the slow one
+2017-08-01T20:34:46 <Justin_o> if you run it again, it will return right away
+2017-08-01T20:36:00 <colinclark> is it an asynchronous api?
+2017-08-01T20:36:07 <Justin_o> i believe so
+2017-08-01T20:37:31 <colinclark> it\'s very bizarre
+2017-08-01T20:37:36 <colinclark> since the "spec" says nothing about this
+2017-08-01T20:38:13 <colinclark> Safari and Firefox appear to return results synchonously, but Chrome does not
+2017-08-01T20:39:24 <Justin_o> rather unfortunate eh
+2017-08-01T20:39:30 <colinclark> indeed
+2017-08-01T21:23:22 * mrtyler joined the channel
+2017-08-01T21:55:52 * amatas has quit
+2017-08-01T22:36:25 * avtar has quit
+2017-08-01T23:10:43 * stegru joined the channel
+2017-08-01T23:26:44 * stegru has quit
+'
+
+b'2017-08-01T01:39:49 * jhernandez has quit
+2017-08-01T05:19:00 * the-t-in-rtf joined the channel
+2017-08-01T06:07:38 * amatas joined the channel
+2017-08-01T07:25:56 * javjarfer joined the channel
+2017-08-01T07:33:13 * the-t-in-rtf joined the channel
+2017-08-01T08:39:51 * stegru joined the channel
+2017-08-01T08:43:20 * the-t-in-rtf joined the channel
+2017-08-01T10:22:40 * jhernandez joined the channel
+2017-08-01T10:56:15 * gtirloni joined the channel
+2017-08-01T11:45:10 * simonjb joined the channel
+2017-08-01T11:53:53 * the-t-in-rtf1 joined the channel
+2017-08-01T11:59:32 * javjarfer has quit
+2017-08-01T12:01:48 * javjarfer joined the channel
+2017-08-01T12:32:10 * cindyli joined the channel
+2017-08-01T12:35:27 * Justin_o joined the channel
+2017-08-01T13:15:22 * clown joined the channel
+2017-08-01T13:20:36 * colinclark joined the channel
+2017-08-01T13:26:15 * javjarfer has quit
+2017-08-01T13:31:14 * the-t-in-rtf joined the channel
+2017-08-01T13:46:22 * clown joined the channel
+2017-08-01T13:49:31 * alanharnum joined the channel
+2017-08-01T14:16:19 * the-t-in-rtf has quit
+2017-08-01T14:35:19 * javjarfer joined the channel
+2017-08-01T14:39:11 * clown joined the channel
+2017-08-01T14:39:31 <cindyli> jhernandez, stegru, i have a question about windows installer and wonder if you can help. The question is that, when creating a GPII windows installer exe file, is it possible to securely store one or two string values within the installer exe file? That means, those values are not stored such as in a plain text or config file that is a part of the installer package and can be easily read by the installer person.
+2017-08-01T14:40:06 <stegru> no
+2017-08-01T14:40:25 <cindyli> what?! oh no
+2017-08-01T14:41:01 <stegru> is it a "very secure secret"?
+2017-08-01T14:41:48 <stegru> who or what must read these values?
+2017-08-01T14:42:15 <cindyli> stegru: i\'m thinking to store a initial access token which will be validated at the auth server for dynamic application registration, so that we can get rid of the step that require the installer person to login with a GPII account for requesting oauth client credential
+2017-08-01T14:42:45 <cindyli> the access requester module will read this value and send it to the GPII cloud to exchange for a client credential
+2017-08-01T14:43:44 <cindyli> it means, if this initial access token is compromised, it can be used by anyone to request a valid client credential
+2017-08-01T14:45:34 <stegru> ok
+2017-08-01T14:46:42 <stegru> (i\'m thinking)
+2017-08-01T14:47:15 <stegru> so, the user downloads the installer, which has a token specific to them?
+2017-08-01T14:47:37 <cindyli> yes, each installer has its unique token that is generated by the auth server
+2017-08-01T14:48:49 <stegru> ok, I see where you\'re coming from but I don\'t think that\'s a good idea because it makes it awkward to distribute the installer file
+2017-08-01T14:49:40 <stegru> also, if the installer is signed, then it can\'t be changed (although 10 years ago I found a way to work-around that.. but that\'s another story)
+2017-08-01T14:50:32 * Jess_ joined the channel
+2017-08-01T14:50:39 <cindyli> stegru: can we dynamically generate the installer then sign it. or the signed installer means one single same installer for every download?
+2017-08-01T14:51:35 <stegru> dynamically signing might be against the policy of whoever is providing the certificates
+2017-08-01T14:51:55 <cindyli> ok i see
+2017-08-01T14:52:28 <cindyli> sad...
+2017-08-01T14:53:43 <stegru> i can work around that if desperate.. i know how to change a signed exe without it breaking
+2017-08-01T14:54:10 <stegru> but anyway, I\'m not sure on how to keep this value secret
+2017-08-01T14:54:14 <cindyli> is the work around legal, stegru ;)
+2017-08-01T14:54:52 <stegru> i guess so
+2017-08-01T14:56:05 <stegru> i wanted to do something similar to what you want, putting a unique thing for each download
+2017-08-01T14:56:30 <cindyli> ah ha, curious about what your unique thing is
+2017-08-01T14:57:26 <stegru> well, a signed exe looks like this: "[exe header][code][certificate]"
+2017-08-01T14:57:39 <cindyli> what is [code]
+2017-08-01T14:57:51 <cindyli> oh, actual source code
+2017-08-01T14:57:52 <stegru> the executable
+2017-08-01T14:57:54 <stegru> yes
+2017-08-01T14:57:59 <stegru> but compiled
+2017-08-01T14:58:02 <cindyli> ok
+2017-08-01T14:58:35 <stegru> there\'s something in the header that specifies the length of the exe file, because adding the signature changes the size of the file, these bytes are ignored while signing it
+2017-08-01T14:59:03 <stegru> so i just add my own information at the end of the file, and update the size value in the header
+2017-08-01T14:59:37 <stegru> "[exe header][code][certificate][my shit]"
+2017-08-01T14:59:48 <cindyli> haha
+2017-08-01T15:00:50 <cindyli> stegru: can we write the unique string as a line of assigning variable code into the source code before compiling the source?
+2017-08-01T15:01:30 <stegru> well, yes that\'s possible
+2017-08-01T15:02:06 <jhernandez> cindyli: just seen this conversation
+2017-08-01T15:02:07 <stegru> so you\'d have something like password = "%PASSWORD%", and do a search and replace?
+2017-08-01T15:02:16 <cindyli> exactly
+2017-08-01T15:02:28 <cindyli> jhernandez: love to see you and hear your opinion
+2017-08-01T15:02:56 <stegru> yes, putting a secret code into it isn\'t a problem (only a small one).. it\'s keeping it secret that is the bigger problem
+2017-08-01T15:02:57 <jhernandez> but ... when distributing the installer, it\'ll always have the same credentials
+2017-08-01T15:03:14 <jhernandez> maybe I\'m confused
+2017-08-01T15:03:21 <cindyli> jhernandez: what do you mean "the same credentials"?
+2017-08-01T15:03:21 * jhernandez reads back
+2017-08-01T15:03:25 <cindyli> ok
+2017-08-01T15:03:35 <stegru> yes, we\'re thinking about generating a new one for each download (i don\'t agree with it)
+2017-08-01T15:04:26 <stegru> it would make distribution of it difficult
+2017-08-01T15:04:37 <stegru> you cou;dn;t put it on a CDN
+2017-08-01T15:05:26 <cindyli> agree, to do so, we need a simple automated code generator before packaging up the installer
+2017-08-01T15:05:47 * the-t-in-rtf joined the channel
+2017-08-01T15:06:00 <stegru> so the user installs, and a code generator thing is ran on their computer?
+2017-08-01T15:07:36 <cindyli> no, user clicks on a "download GPII" link, behind the scene, will run the code generator, writes that line of code like initalAccessToken = "aaa" into the source code, compile the source code, package up the installer, then send it down the stream to the user
+2017-08-01T15:07:52 <jhernandez> wow
+2017-08-01T15:08:07 <cindyli> so the download would not be downloading a static installer, there would be a generation process
+2017-08-01T15:08:23 <jhernandez> that\'s a lot of mumbo jumbo - isn\'t it?
+2017-08-01T15:09:06 <jhernandez> so, the creation of the installer is a "closed" process
+2017-08-01T15:09:07 <cindyli> unless we could think of a better way
+2017-08-01T15:09:15 <stegru> i know where you\'re coming from, cindyli, but it\'s not very practical
+2017-08-01T15:09:22 <jhernandez> I mean, we\'re going to sign the installer - in fact there\'s already a pull request for that
+2017-08-01T15:09:42 <cindyli> :\'(
+2017-08-01T15:10:03 <stegru> what problem is this trying to solve, anyway?
+2017-08-01T15:10:30 <jhernandez> I guess that we don\'t want an untrusted installation to perform calls through the cloud-based (secured) flowManager
+2017-08-01T15:10:40 <jhernandez> am I right cindyli?
+2017-08-01T15:10:49 <cindyli> yes
+2017-08-01T15:10:59 <stegru> why can\'t the person install another file, that\'s specific to them
+2017-08-01T15:11:01 <cindyli> one sec, in a meeting
+2017-08-01T15:11:04 <stegru> ok
+2017-08-01T15:11:36 <jhernandez> okay, what if we disable such communication until the installation has been "trusted"?
+2017-08-01T15:11:44 <stegru> 1. They download the shrink-wrapped installer, 2. They log in, and download a "GPII unlocker" file
+2017-08-01T15:12:04 <stegru> 2. i mean, log into the cloud
+2017-08-01T15:13:13 <cindyli> i\'m back. my part is done in the meeting :)
+2017-08-01T15:13:31 <stegru> "hi cindy here.. i\'ve done nothing this week"
+2017-08-01T15:13:39 <jhernandez> hahaha
+2017-08-01T15:13:52 <jhernandez> cindyli, stegru: do you want to have a discussion about this?
+2017-08-01T15:13:53 <cindyli> right, haha
+2017-08-01T15:14:07 <jhernandez> I can open the gotomeeeting room if you want
+2017-08-01T15:14:13 <stegru> i think we should have an arm wrestle about it!
+2017-08-01T15:14:19 <cindyli> jhernandez, stegru, that would be great. can we ask simonjb and Bosmon as well
+2017-08-01T15:14:44 <cindyli> simonjb is in the same meeting as well, it will end in probably 15 minutes
+2017-08-01T15:15:31 <jhernandez> I\'ll be around for an hour more - today I have another band practice
+2017-08-01T15:15:42 <cindyli> ok
+2017-08-01T15:15:54 <stegru> practicing your air guitar?
+2017-08-01T15:15:57 <cindyli> Bosmon: would you be available in 15 minutes to join an arm wrestling conversation
+2017-08-01T15:16:22 <cindyli> simonjb: ^
+2017-08-01T15:16:32 <jhernandez> stegru: haha - practicing on how to make the people think that I can play the guitar :P
+2017-08-01T15:17:00 <stegru> haha
+2017-08-01T15:17:34 <simonjb> cindyli: I\'m available
+2017-08-01T15:18:39 <cindyli> cool
+2017-08-01T15:30:20 <cindyli> jhernandez, simonjb, stegru, can we meet now? which room?
+2017-08-01T15:30:50 <stegru> ya
+2017-08-01T15:31:19 <jhernandez> cindyli: I\'ll open room3
+2017-08-01T15:31:22 <cindyli> thanks
+2017-08-01T15:31:47 <jhernandez> https://app.gotomeeting.com/?meetingId=161482213
+2017-08-01T15:39:40 * mrtyler joined the channel
+2017-08-01T15:46:50 * clown joined the channel
+2017-08-01T15:48:39 <mrtyler> gtirloni: hi
+2017-08-01T15:48:54 <mrtyler> i am running into this problem, which is new to me: https://unix.stackexchange.com/questions/367008/why-is-socket-path-length-limited-to-a-hundred-chars
+2017-08-01T15:49:04 <mrtyler> i believe this is the cause of an error while running ci:
+2017-08-01T15:49:27 <mrtyler> plugin init: listen unix /home/gitlab-runner/builds/ec7bc357/0/gpii-ops/g
+2017-08-01T15:49:28 <mrtyler> pii-terraform/rake-tmp/dev-gitlab-runner-prereqs/plugin176039491: bind: invalid argument
+2017-08-01T15:49:48 <mrtyler> note that path is >108 characters
+2017-08-01T15:50:22 <mrtyler> so i guess i need to move my tmp directory out of the ci /builds/ hierarchy and up into /tmp, where the resulting path will be short enough
+2017-08-01T15:50:25 <mrtyler> however
+2017-08-01T15:50:40 <mrtyler> /tmp is mounted noexec on h5, which is why i started putting tmpdirs into the ci dir in the first place
+2017-08-01T15:50:49 <mrtyler> so
+2017-08-01T15:50:53 <gtirloni> hi
+2017-08-01T15:50:57 <mrtyler> i think my solutions are:
+2017-08-01T15:51:04 <mrtyler> 1. remount /tmp without noexec
+2017-08-01T15:51:14 <mrtyler> 2. create a dedicated /citmp which allows exec and use that
+2017-08-01T15:51:21 <mrtyler> what do you think of that?
+2017-08-01T15:51:27 <mrtyler> any other ideas on how to work around this limitation?
+2017-08-01T15:52:24 <mrtyler> i guess another option is to try to shorten the part of the path i control (mostly the dev-gitlab-runner-prereqs part)
+2017-08-01T15:52:55 <mrtyler> maybe all tmpdirs should just be called c.a.j.p.d.j.r. :p
+2017-08-01T15:53:04 <gtirloni> yeah, if gitlab-runner wouldn\'t use the full path then it\'d be shorther
+2017-08-01T15:53:48 <gtirloni> or is it rake that\'s using it?
+2017-08-01T15:54:24 <mrtyler> well, this part is effectively managed by gitlab-runner: /home/gitlab-runner/builds/ec7bc357/0/gpii-ops/gpii-terraform/
+2017-08-01T15:54:38 <mrtyler> this part is managed by me: rake-tmp/dev-gitlab-runner-prereqs/
+2017-08-01T15:54:46 <mrtyler> this part is managed by terraform: plugin176039491
+2017-08-01T15:54:56 <mrtyler> does that answer your question?
+2017-08-01T15:55:08 <gtirloni> yep, completely
+2017-08-01T15:58:00 <gtirloni> i\'d prefer to keep /tmp as noexec, even though there might be other paths that work as an entrypoint for attacks... it\'s supposed to put off automated exploits that depend on that
+2017-08-01T15:58:15 <gtirloni> maybe we can move the gitlab-runner user over to /gitlab ..
+2017-08-01T15:58:52 <gtirloni> it\'s not a robust solution, we just need a bigger path to happen and it\'s going to break again
+'
+

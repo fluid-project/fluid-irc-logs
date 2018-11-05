@@ -1,0 +1,259 @@
+b'2016-04-07T18:31:35 * the-t-in-rtf joined the channel
+2016-04-07T18:48:45 * Bosmon7 joined the channel
+2016-04-07T18:53:33 * sepidehshahi joined the channel
+2016-04-07T18:53:57 <colinclark> simonjb: There is, but I\'m quite distracted
+2016-04-07T18:54:03 <colinclark> and may have to dig it out of one of my compositions
+2016-04-07T18:54:11 <simonjb> ok
+2016-04-07T18:54:14 <colinclark> basically a model synth has a model containing a member "inputs"
+2016-04-07T18:54:35 <colinclark> those correspond with inputs to the synth\'s unit generators
+2016-04-07T18:54:41 <colinclark> so you\'ll have to give your oscillator an id
+2016-04-07T18:54:43 <colinclark> "carrier" or whatever
+2016-04-07T18:55:07 <colinclark> or "modulator"
+2016-04-07T18:55:10 <colinclark> i guess in this case
+2016-04-07T18:55:19 <colinclark> so the path you\'ll want is "modulator.freq"
+2016-04-07T18:55:34 <colinclark> and the model synth represents this a kind of "mirror" of the hierarchy of the ugens
+2016-04-07T18:55:46 <colinclark> i.e. model: { inputs: { modulator: { freq: 10
+2016-04-07T18:56:36 <simonjb> colinclark: got it, and an update to the model will be reflected in the corresponding ugen property?
+2016-04-07T18:59:01 <colinclark> yes
+2016-04-07T18:59:04 <colinclark> correct
+2016-04-07T19:03:54 * bens_ joined the channel
+2016-04-07T19:04:55 <simonjb> colinclark: is now still good for you to chat? (delayed is also ok for me as I\'m in the middle or something)
+2016-04-07T19:05:15 <colinclark> delayed :)
+2016-04-07T19:05:21 <simonjb> ok :)
+2016-04-07T19:05:25 <simonjb> 4pm?
+2016-04-07T19:06:44 * the-t-in-rtf has quit
+2016-04-07T19:07:09 <bens_> anyone familiar w/ the LGS (Library GPII System)? I\'m looking for what solutions its able to enact on windows.. and if there are any others than what is described here: https://github.com/sgithens/library-gpii-system/blob/master/lgs-station/lgs-solutions/win32.json
+2016-04-07T19:08:16 <colinclark> sgithens is who you want to chat with, bens_. Doesn\'t look like he\'s here right now, but usually is.
+2016-04-07T19:08:50 <bens_> hi colinclark, thanks... i\'ll look for him here
+2016-04-07T19:10:02 <colinclark> Awesome. nice to see you back in the channel, bens_! I hope things are well with you.
+2016-04-07T19:35:06 <simonjb> hey Bosmon, Bosmon7: is it possible to do a model relay with nested transforms? would we have any examples anywhere? thanks!
+2016-04-07T19:35:26 <Bosmon7> simonjb - it might be barely possible
+2016-04-07T19:35:35 <simonjb> :)
+2016-04-07T19:35:37 <Bosmon7> But it has never, to my knowledge, been attempted and is not recommended
+2016-04-07T19:35:51 <simonjb> ok, what is the recommended alternative?
+2016-04-07T19:35:52 <Bosmon7> The "relay" idiom emphasises the use of multiple chained single transforms
+2016-04-07T19:36:04 <Bosmon7> That is, single transforms each of which immediately hit a further concrete path in the model
+2016-04-07T19:36:14 <Bosmon7> This is also more in keeping with our idiom of "universal addressibility"
+2016-04-07T19:36:22 <simonjb> ok, got it
+2016-04-07T19:36:38 <Bosmon7> In that the "interior" of the transform remains constantly addressible, making it easier to understand how to advise or modify the design
+2016-04-07T19:36:56 <Bosmon7> This is the answer to the question I asked colinclark in the Linz streetcar in 2011 : P
+2016-04-07T19:37:10 <simonjb> :)
+2016-04-07T19:37:16 <simonjb> thanks Bosmon7
+2016-04-07T19:37:44 <Bosmon7> Which is.... "How can we ensure that all the interior points of a complex model transformation continue to have names?"
+2016-04-07T19:37:50 <Bosmon7> The answer is.... "By simply doing it" : P
+2016-04-07T19:38:20 <Bosmon7> We spent some time building up the theory and implementation of nested transforms with kasparne_ at the beginning, but the result has never been very usable and comprehensible
+2016-04-07T19:38:29 <Bosmon7> But it\'s something you are forced to when your transform is a "one-shot deal"
+2016-04-07T19:38:33 <Bosmon7> As all our original transforms wer
+2016-04-07T19:38:45 <Bosmon7> That is, a process with a single, well-defined input and a single, well-defined output
+2016-04-07T19:38:52 <Bosmon7> But avoiding casting the process in that way is the key to escape
+2016-04-07T19:40:44 * cindyli joined the channel
+2016-04-07T19:42:53 <simonjb> thanks Bosmon7, am I right in thinking that we don\'t have an abs transform?
+2016-04-07T19:43:41 <simonjb> ultimately I want: model.a = abs(model.b) / x
+2016-04-07T19:44:19 <Bosmon7> simonjb - any existing pure one-arg function can just be used directly as a transform, including Math.abs
+2016-04-07T19:44:41 <Bosmon7> The case you\'re dealing with there will eventually be handled by our "reduced expression parser"
+2016-04-07T19:45:16 <simonjb> as in singleTransform: { type: "Math.abs" }
+2016-04-07T19:45:51 <simonjb> Bosmon7: ^
+2016-04-07T19:46:16 <simonjb> ?
+2016-04-07T19:46:20 <Bosmon7> To be honest, the case is simple enough that it might be worth just trying to use a nested transform...........
+2016-04-07T19:46:24 <Bosmon7> simonjb, yes, like that
+2016-04-07T19:46:48 <simonjb> Bosmon7: I was trying but couldn\'t seem to get it right
+2016-04-07T19:48:38 <simonjb> Using the named interior values approach is fine
+2016-04-07T19:49:28 <simonjb> and I think I only need one extra named value -- the abs result
+2016-04-07T19:50:20 <Bosmon7> simonjb - the example I can find here is this: https://github.com/fluid-project/infusion/blob/master/tests/framework-tests/core/js/DataBindingTests.js#L1159
+2016-04-07T19:50:36 <Bosmon7> You need to use the more verbose "transform" member rather than "singleTransform"
+2016-04-07T19:50:51 <Bosmon7> But yes, the chained method is reasonable
+2016-04-07T19:52:39 * Bosmon7 has quit
+2016-04-07T20:00:40 * bens_ has quit
+2016-04-07T20:01:18 <jhung> colinclark, avtar - are we having a QI meeting?
+2016-04-07T20:02:05 * gloob joined the channel
+2016-04-07T20:02:52 * gloob_ joined the channel
+2016-04-07T20:02:52 * gloob has quit
+2016-04-07T20:02:56 * gloob_ has quit
+2016-04-07T20:05:47 <avtar> jhung: perhaps we should have it tomorrow when alan\'s around?
+2016-04-07T20:05:57 <avtar> colinclark, michelled ^
+2016-04-07T20:06:34 <michelled> makes sense avtar
+2016-04-07T20:07:05 <jhung> ok
+2016-04-07T20:14:35 * sepidehshahi has left the channel
+2016-04-07T20:21:03 <colinclark> simonjb: I will be free in five minutes if you\'ve got time to chat
+2016-04-07T20:22:16 * anvk has quit
+2016-04-07T20:24:19 <simonjb> good for me colinclark
+2016-04-07T20:24:49 <colinclark> i\'ll just try to finish some lunch
+2016-04-07T20:24:56 <colinclark> almost done
+2016-04-07T20:36:43 * bens_ joined the channel
+2016-04-07T20:39:09 * danayo joined the channel
+2016-04-07T20:40:54 * gtirloni joined the channel
+2016-04-07T20:42:27 * bens_ has quit
+2016-04-07T20:54:24 * gloob joined the channel
+2016-04-07T20:59:17 * gloob has quit
+2016-04-07T21:01:51 * Bosmon7 joined the channel
+2016-04-07T21:03:31 * yzen_ has quit
+2016-04-07T21:47:36 * bens_ joined the channel
+2016-04-07T22:04:00 * bens_ has quit
+2016-04-07T22:23:36 * dsharma has quit
+2016-04-07T22:37:58 * Justin_o has quit
+2016-04-07T22:59:46 * gloob joined the channel
+2016-04-07T23:00:30 * gloob_ joined the channel
+2016-04-07T23:00:31 * gloob has quit
+2016-04-07T23:00:38 * gloob_ has quit
+2016-04-07T23:01:05 * gloob joined the channel
+2016-04-07T23:01:23 * gloob has quit
+2016-04-07T23:01:30 * gloob joined the channel
+2016-04-07T23:01:38 * gloob has quit
+2016-04-07T23:02:07 * gloob joined the channel
+2016-04-07T23:06:52 * gloob has quit
+2016-04-07T23:13:16 * colinclark joined the channel
+2016-04-07T23:54:50 * kasparne_ has quit
+'
+
+b'2016-04-07T00:23:32 * danayo joined the channel
+2016-04-07T00:39:52 * Bosmon7 joined the channel
+2016-04-07T03:11:28 * Bosmon8 joined the channel
+2016-04-07T03:14:11 * Bosmon7 has quit
+2016-04-07T03:32:10 * wale has quit
+2016-04-07T05:14:11 * danayo joined the channel
+2016-04-07T07:31:21 * the-t-in-rtf joined the channel
+2016-04-07T07:32:52 * amatas joined the channel
+2016-04-07T07:48:42 * kasparnet joined the channel
+2016-04-07T07:49:45 * kasparnet has quit
+2016-04-07T07:52:03 * kasparnet joined the channel
+2016-04-07T08:06:27 * PaliwalSparsh joined the channel
+2016-04-07T08:39:08 * gloob joined the channel
+2016-04-07T09:36:03 * PaliwalSparsh has quit
+2016-04-07T10:21:43 * the-t-in-rtf has quit
+2016-04-07T11:12:20 * gtirloni joined the channel
+2016-04-07T11:48:35 * PaliwalSparsh joined the channel
+2016-04-07T11:49:03 * PaliwalSparsh has quit
+2016-04-07T11:59:03 * wale joined the channel
+2016-04-07T12:02:40 * jessm joined the channel
+2016-04-07T12:10:52 * the-t-in-rtf joined the channel
+2016-04-07T12:21:11 * Justin_o joined the channel
+2016-04-07T12:33:00 * kasparne_ joined the channel
+2016-04-07T12:36:33 * kasparnet has quit
+2016-04-07T12:45:06 * michelled joined the channel
+2016-04-07T13:00:39 * anvk joined the channel
+2016-04-07T13:02:04 * kasparne_ has quit
+2016-04-07T13:07:35 * cindyli joined the channel
+2016-04-07T13:14:57 * the-t-in-rtf has quit
+2016-04-07T13:16:20 * kasparnet joined the channel
+2016-04-07T13:18:51 * PaliwalSparsh joined the channel
+2016-04-07T13:20:36 * the-t-in-rtf joined the channel
+2016-04-07T13:20:40 <PaliwalSparsh> @Justin_o I added the aria-disabled attribute by making changes in pager.js but I am not able to get enough info on how to write css for focus using keyboard. I tried searching it but was unsuccessfull can you help.
+2016-04-07T13:21:24 <Justin_o> PaliwalSparsh: you\'d do that in JS too, but I believe it was recommended to not remove focus from the disabled link.. so you should be okay
+2016-04-07T13:21:59 <PaliwalSparsh> @Justin_o so do i need to make that change
+2016-04-07T13:22:08 * dsharma joined the channel
+2016-04-07T13:22:28 <PaliwalSparsh> @Justin_o in current page link
+2016-04-07T13:24:35 <Justin_o> PaliwalSparsh: oh i think we\'re talking about different things sorry
+2016-04-07T13:24:50 <Justin_o> PaliwalSparsh: you mean how there should still be focus styling for the current page link
+2016-04-07T13:25:04 <Justin_o> so that\'s like hover, you\'d use the :focus pseudo selector
+2016-04-07T13:25:57 <PaliwalSparsh> Justin_o: I will try it then. Actually I thought that would be different from normal focus.
+2016-04-07T13:26:17 <Justin_o> what do you mean by normal focus?
+2016-04-07T13:26:45 <PaliwalSparsh> One when we use mouse and one when we use tab to navigate through webpage
+2016-04-07T13:27:07 <PaliwalSparsh> we cannot focus with mouse on a link
+2016-04-07T13:27:36 <cindyli> the-t-in-rtf: i wonder if you have some time to meet to talk about user management system?
+2016-04-07T13:28:03 <PaliwalSparsh> @Justin_o ^
+2016-04-07T13:28:48 <cindyli> the-t-in-rtf: it doesn\'t have to be now, we can schedule a time that works for you
+2016-04-07T13:28:56 <Justin_o> PaliwalSparsh: the :focus pseudo selector should cover the case where an element is focused using either the keyboard or mouse
+2016-04-07T13:29:23 <PaliwalSparsh> @Justin_o great I will make the change and push the PR then.
+2016-04-07T13:29:32 <Justin_o> PaliwalSparsh: thanks
+2016-04-07T13:29:34 <PaliwalSparsh> @Justin_o thanks
+2016-04-07T13:29:56 <Justin_o> PaliwalSparsh: please let me know when you\'ve done that, maybe leave a comment in the PR and I\'ll try to take a look at it
+2016-04-07T13:29:57 <the-t-in-rtf> Hi, @cindyli.  I\'d like to keep Antranig involved.  My schedule is a bit more open than his, I am generally available until 18:00 CET.
+2016-04-07T13:30:07 <the-t-in-rtf> See if you can find a time early next week that works for him.
+2016-04-07T13:30:09 <PaliwalSparsh> Justin_o ok
+2016-04-07T13:31:12 <cindyli> the-t-in-rtf: sure
+2016-04-07T13:33:13 <cindyli> Bosmon, Bosmon8, can i schedule a time with you and the-t-in-rtf to talk about user management system? in particular, the ways to make use of gpii-express-user in universal repo to accommodate the functionalities we currently have with OAuth login and privacy setting.
+2016-04-07T13:35:10 * Katy joined the channel
+2016-04-07T13:37:14 * yzen joined the channel
+2016-04-07T13:38:31 * Awesome_A joined the channel
+2016-04-07T13:40:56 <wale> Morning Cindy
+2016-04-07T13:41:24 * simonjb joined the channel
+2016-04-07T13:41:32 * sepidehshahi joined the channel
+2016-04-07T13:41:38 <wale> like to hear about the universal repo
+2016-04-07T13:43:08 <wale> I think I took a look at the gpii-express-user code on the wiki but will like to hear how we are developing the model as it pertains to the user management system
+2016-04-07T13:43:37 <wale> guessing Bosman=Tony?
+2016-04-07T13:47:01 <cindyli> wale: sure. you are welcome to join our talk too when we have a time scheduled.
+2016-04-07T13:47:14 <cindyli> for your information, the universal repo - https://github.com/gpii/universal
+2016-04-07T13:47:37 <wale> great .. thanks
+2016-04-07T13:47:48 <cindyli> wale: Bosmon or Bosmon8 === Antranig, the-t-in-rtf === Tony
+2016-04-07T13:48:08 <wale> ahh ... ok
+2016-04-07T13:48:39 <cindyli> wale, it would be great if you can add my irc nick name "cindyli" when you ping me, so i will get an alert of having a new msg and won\'t keep you waiting too long
+2016-04-07T13:49:03 <wale> yup yup ... got you
+2016-04-07T13:49:09 <cindyli> thanks, wale
+2016-04-07T13:52:10 * jhung joined the channel
+2016-04-07T13:52:25 <wale> cindyli, any early thoughts around the model for the user management system?
+2016-04-07T13:54:24 <Bosmon> Hi there wale - so I think we are establishing a few criteria for our technology evaluation exercise
+2016-04-07T13:54:30 <Bosmon> I\'ll be writing up a wiki page with them shortly
+2016-04-07T13:54:53 <Bosmon> Which of course you are welcome to contribute to
+2016-04-07T13:55:56 <wale> k Bosmon I saw a fluid page earlier around the eval criteria process
+2016-04-07T13:56:07 * colinclark joined the channel
+2016-04-07T14:00:25 * kasparne_ joined the channel
+2016-04-07T14:00:28 * jhung joined the channel
+2016-04-07T14:00:31 * Yan_Hu joined the channel
+2016-04-07T14:01:07 <PaliwalSparsh> Justin_o : I have pushed the PR, checked it with a screen reader and tried to integrate all we discussed.
+2016-04-07T14:01:39 * danayo joined the channel
+2016-04-07T14:03:34 * kasparnet has quit
+2016-04-07T14:03:40 * simonjb joined the channel
+2016-04-07T14:08:44 * Awesome_A has quit
+2016-04-07T14:19:38 * the-t-in-rtf has quit
+2016-04-07T14:19:57 * the-t-in-rtf joined the channel
+2016-04-07T14:27:37 * the-t-in-rtf has quit
+2016-04-07T14:34:03 * PaliwalSparsh has quit
+2016-04-07T14:44:41 * the-t-in-rtf joined the channel
+2016-04-07T14:53:16 <Bosmon> cindyli, the-t-in-rtf, wale, Katy - I\'ve written up a draft wiki page for our User Management Library assessment process at https://wiki.gpii.net/w/Criteria_for_Evaluating_User_Management_Libraries
+2016-04-07T14:53:30 <cindyli> thanks, Bosmon
+2016-04-07T14:53:39 <wale> thanks Bosman
+2016-04-07T14:53:42 <wale> that was rather quick
+2016-04-07T14:53:45 <Bosmon> Please add in additional criteria and also additional options for the technology - ideally we would want to assess considerably more than 2 candidates :)
+2016-04-07T14:55:08 <wale> agreed
+2016-04-07T14:55:35 * the-t-in-rtf has quit
+2016-04-07T14:55:48 <wale> presumably open and compatible with infusion I suppose?
+2016-04-07T14:57:14 * the-t-in-rtf joined the channel
+2016-04-07T14:57:56 <kasparne_> Bosmon8, colinclark, jhernandez: screen resolution talk
+2016-04-07T14:57:59 <kasparne_> room 1
+2016-04-07T14:59:37 <colinclark> ok
+2016-04-07T14:59:59 * PaliwalSparsh joined the channel
+2016-04-07T15:00:26 * PaliwalSparsh has quit
+2016-04-07T15:00:54 * PaliwalSparsh joined the channel
+2016-04-07T15:01:46 <Bosmon> wale - yes - compatible with anything would be a start :)
+2016-04-07T15:02:28 <wale> yup
+2016-04-07T15:08:35 <Katy> Thanks Bosmon.
+2016-04-07T15:18:20 * simonjb joined the channel
+2016-04-07T15:19:54 * jhung joined the channel
+2016-04-07T15:24:52 * clown joined the channel
+2016-04-07T16:12:11 * kasparnet joined the channel
+2016-04-07T16:12:14 * kasparne_ has quit
+2016-04-07T16:13:54 * colinclark joined the channel
+2016-04-07T16:24:04 * sepidehshahi joined the channel
+2016-04-07T16:24:55 * the-t-in-rtf has quit
+2016-04-07T16:34:38 * jhung joined the channel
+2016-04-07T16:36:24 * clown joined the channel
+2016-04-07T16:43:41 * Bosmon8 has quit
+2016-04-07T16:44:27 * cindyli joined the channel
+2016-04-07T16:46:44 * colinclark joined the channel
+2016-04-07T16:48:16 * PaliwalSparsh has quit
+2016-04-07T17:01:00 <gtirloni> are we having a security meeting now or was that rescheduled? got lost with the invites
+2016-04-07T17:03:18 <amatas> gtirloni, it has been rescheduled. Sandra has sent an invitation with the new date.
+2016-04-07T17:03:26 <gtirloni> thanks
+2016-04-07T17:03:52 <amatas> I\'m also a bit lost with the invites.
+2016-04-07T17:11:15 * jhung joined the channel
+2016-04-07T17:11:22 * yzen_ joined the channel
+2016-04-07T17:11:31 * jhung joined the channel
+2016-04-07T17:11:41 <michelled> gtirloni, amatas: sandra has also been putting the meetings on the GPII calendar
+2016-04-07T17:11:44 <michelled> I find that easier :)
+2016-04-07T17:12:15 <gtirloni> that\'s great, i\'ve been migrating them from outlook to google manually. i\'ll check the gpii calendar from now on, thx :)
+2016-04-07T17:12:51 * jhung joined the channel
+2016-04-07T17:13:02 * jhung joined the channel
+2016-04-07T17:15:07 * yzen has quit
+2016-04-07T17:31:26 * sepidehshahi joined the channel
+2016-04-07T17:45:07 * danayo joined the channel
+2016-04-07T17:49:30 * sepidehshahi joined the channel
+2016-04-07T17:55:41 * kasparne_ joined the channel
+2016-04-07T17:56:32 * kasparnet has quit
+2016-04-07T18:00:32 * gloob has quit
+2016-04-07T18:01:01 * gloob joined the channel
+2016-04-07T18:01:08 * gloob has quit
+2016-04-07T18:03:20 <simonjb> colinclark: I think I have a simple tremolo working (added mul: { ugen: "flock.ugen.sinOsc" ... }) to synthDef
+2016-04-07T18:03:37 <simonjb> but not sure how to hook up sinOsc freq to model changes
+2016-04-07T18:04:10 <simonjb> is there an example I could follow?
+'
+

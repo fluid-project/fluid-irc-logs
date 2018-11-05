@@ -1,0 +1,219 @@
+b'2017-07-11T19:59:18 <colinclark> I guess we could go back to our notes and see what we discussed
+2017-07-11T19:59:20 <cindyli> i guess jhernandez is gone for today to talk about PCP API
+2017-07-11T19:59:31 <colinclark> It\'s definitely true that the PCP will be part of the Electron runtime
+2017-07-11T20:00:09 <colinclark> and it certainly will be co-located with a Flow Manager there, so we will have a message channel to communicate back and forth
+2017-07-11T20:02:05 <cindyli> colinclark: a message channel between LFM and PCP? or between PCP and cloud?
+2017-07-11T20:02:27 <colinclark> I meant Electron\'s IPC
+2017-07-11T20:02:29 <colinclark> as you were referring to
+2017-07-11T20:02:30 <cindyli> ok
+2017-07-11T20:02:35 <colinclark> I believe they call them "channels"
+2017-07-11T20:08:36 <cindyli> ah ok. i\'m going thru the notes from the face to face last Dec: https://pad.gpii.net/p/201612-washingtonf2f-ih1b4nns, didn\'t find the notes of IPC channel for PCP
+2017-07-11T20:09:04 <cindyli> the topic of PCP is from line 426 onwards :(
+2017-07-11T20:12:05 <cindyli> the pad for "PCP API" also doesn\'t talk about how PCP is going to communicate with GPII cloud, via local flow manager or not
+2017-07-11T20:12:10 <cindyli> https://pad.gpii.net/p/pcp-api-7g124ngs
+2017-07-11T20:14:29 <cindyli> colinclark: if it turns out PCP needs to talk to the cloud directly instead of via LFM, we\'ll need to draw up the workflow and determine which authorization method should be used, then find out if it can fit into an existing client type (with different capabilities if needed) or a new client type should be created for it
+2017-07-11T20:18:16 <colinclark> I guess it\'s something we should think through
+2017-07-11T20:18:36 <colinclark> The so-called "Sticky PCP" has capabilities that the Flow Manager, proper, doesn\'t have
+2017-07-11T20:18:52 <colinclark> which is the ability to save settings changes to a preference set
+2017-07-11T20:19:25 <colinclark> so the only question is if we are opening up some kind of risk by giving the Flow Manager vs. the Sticky PCP this privilege
+2017-07-11T20:19:39 <colinclark> and if it even makes any difference, considering they\'re all there, installed on the local machine
+2017-07-11T20:20:49 * simonjb has quit
+2017-07-11T20:24:27 * danayo joined the channel
+2017-07-11T20:33:28 <cindyli> colinclark: the answer to your question depends on how secure IPC channels are
+2017-07-11T20:33:43 <cindyli> need some research on that
+2017-07-11T20:36:24 <colinclark> I believe that Electron IPC is implemented using the operating system\'s IPC facilities
+2017-07-11T20:36:46 <colinclark> so on Mac OS X it uses Mach\'s (the kernel) messaging
+2017-07-11T20:37:35 <colinclark> I guess it\'s called macOS now :P
+2017-07-11T20:38:19 <colinclark> I guess on Windows it probably uses pipes of some sort
+2017-07-11T20:39:31 <cindyli> if so, we should take a look on how secure those facilities are
+2017-07-11T20:40:21 <colinclark> I guess stegru has looked a lot at this in other contexts, hasn\'t he?
+2017-07-11T20:43:24 <cindyli> ya, i think so, he may already have some insights :)
+2017-07-11T20:45:48 <stegru> not really
+2017-07-11T20:46:00 <cindyli> lol
+2017-07-11T20:46:38 <stegru> ok..
+2017-07-11T20:47:59 <stegru> i\'ve began working on something that\'s basically a wrapper around node\'s build-in IPC, which just uses the OS\'s native pipes
+2017-07-11T20:48:21 <stegru> and it does the "passing it to another process" thing
+2017-07-11T20:52:16 <cindyli> stegru: if PCP needs to send a message to LFM asking it to save a modified prefs set to the cloud, do you think it\'s possible that a bad process can act as PCP to send the same message?
+2017-07-11T20:55:29 <stegru> well, it depends on how the PCP and LFM processes are started.. but it\'s possible to secure it
+2017-07-11T20:55:58 <stegru> my research on this is in GPII-2399 - the answer is in the last 2 comments
+2017-07-11T20:57:25 * gtirloni_ is now known as gtirloni
+2017-07-11T20:57:53 <stegru> it can be cross-platform (windows and linux at least)
+2017-07-11T20:59:56 <cindyli> cool, thanks, stegru
+2017-07-11T21:03:45 * clown has quit
+2017-07-11T21:10:02 * jhung has quit
+2017-07-11T21:20:55 * the-t-in-rtf has quit
+2017-07-11T21:32:19 <michelled> alanharn_: I will reply to JT\'s message about the P4A charts demo as soon as avtar is able to restart the container for it.
+2017-07-11T21:32:40 * gtirloni has quit
+2017-07-11T21:32:42 <michelled> alanharn_: did the line graph functionality get into the chart authoring repo?
+2017-07-11T21:36:42 <alanharn_> michelled: yeah, that\'s been in there for over a year
+2017-07-11T21:37:19 <michelled> alanharn_: what new things have we added to charts since last July?
+2017-07-11T21:38:32 <alanharn_> michelled: I don\'t believe anything user-visible has been added
+2017-07-11T21:38:51 <michelled> ah ok
+2017-07-11T21:39:01 <michelled> fair to say we\'ve made them more stable?
+2017-07-11T21:41:36 <alanharn_> michelled: yup, there\'ve been a number of bug fixes and similar
+2017-07-11T21:46:22 <michelled> thx
+2017-07-11T21:53:34 * amatas has quit
+2017-07-11T22:06:27 * michelled has quit
+2017-07-11T22:15:58 * mrtyler joined the channel
+2017-07-11T22:34:09 * stegru has quit
+2017-07-11T22:41:04 * Justin_o has quit
+2017-07-11T22:53:59 * pratik_r joined the channel
+2017-07-11T22:58:09 * pratik_r has quit
+2017-07-11T23:09:04 * pratik_r joined the channel
+2017-07-11T23:09:30 * pratik_r has left the channel
+2017-07-11T23:31:53 * avtar has quit
+2017-07-11T23:46:08 * colinclark has quit
+'
+
+b'2017-07-11T00:32:37 * danayo has quit
+2017-07-11T02:11:30 * colinclark joined the channel
+2017-07-11T02:44:25 * colinclark has quit
+2017-07-11T02:45:07 * colinclark joined the channel
+2017-07-11T02:52:29 * colinclark has quit
+2017-07-11T03:28:02 * colinclark joined the channel
+2017-07-11T03:32:07 * colinclark has quit
+2017-07-11T03:45:29 * mrtyler has quit
+2017-07-11T04:08:50 * colinclark joined the channel
+2017-07-11T04:17:08 * danayo joined the channel
+2017-07-11T04:17:09 * danayo has quit
+2017-07-11T05:05:03 * colinclark has quit
+2017-07-11T07:09:20 * alanharnum has quit
+2017-07-11T07:09:48 * alanharnum joined the channel
+2017-07-11T07:18:34 * amatas joined the channel
+2017-07-11T07:38:23 * the-t-in-rtf joined the channel
+2017-07-11T08:12:56 * stegru joined the channel
+2017-07-11T08:26:35 <the-t-in-rtf> What\'s the current preferred version of virtualbox to run the standard Vagrant images?
+2017-07-11T08:27:40 <the-t-in-rtf> I have 5.1.14 at the moment.
+2017-07-11T09:57:30 * stegru has quit
+2017-07-11T10:02:54 * Bosmon joined the channel
+2017-07-11T10:04:16 * stegru joined the channel
+2017-07-11T10:17:09 <stegru> the-t-in-rtf: I\'m on 5.1.22 (latest), and had no problems with it
+2017-07-11T10:57:40 * gtirloni joined the channel
+2017-07-11T11:13:11 * the-t-in-rtf has quit
+2017-07-11T11:25:02 * michelled joined the channel
+2017-07-11T11:29:45 * the-t-in-rtf joined the channel
+2017-07-11T12:16:19 * simonjb joined the channel
+2017-07-11T12:22:18 * Justin_o joined the channel
+2017-07-11T12:34:02 * alanharn_ joined the channel
+2017-07-11T12:56:22 * cindyli joined the channel
+2017-07-11T12:58:50 * pratik_r joined the channel
+2017-07-11T13:02:29 * jhung joined the channel
+2017-07-11T13:10:26 * clown joined the channel
+2017-07-11T13:34:06 * simonjb joined the channel
+2017-07-11T13:53:01 * michelled joined the channel
+2017-07-11T13:56:47 * clown joined the channel
+2017-07-11T13:57:12 <jhung> fluid-everyone: The design crit will be starting in 5 minutes. Today\'s topic is the Social Justice Repair Kit site.
+2017-07-11T13:58:36 * Bosmon7 joined the channel
+2017-07-11T13:59:32 * danayo joined the channel
+2017-07-11T14:05:35 * the-t-in-rtf has quit
+2017-07-11T14:08:03 * the-t-in-rtf joined the channel
+2017-07-11T14:08:45 * colinclark joined the channel
+2017-07-11T14:18:37 * pratik_r has quit
+2017-07-11T14:18:44 * pratik_r joined the channel
+2017-07-11T14:22:57 * pratik_r has quit
+2017-07-11T14:41:06 * pratik_r joined the channel
+2017-07-11T14:59:15 <michelled> fluid-everyone: IDRC planning will start in a couple minutes
+2017-07-11T15:01:07 * clown joined the channel
+2017-07-11T15:03:52 * the-t-in-rtf has quit
+2017-07-11T15:10:44 * avtar joined the channel
+2017-07-11T15:21:00 * pratik_r has quit
+2017-07-11T15:26:27 <simonjb> jhung: is this the repo for the FLOE project site? https://github.com/fluid-project/floeproject.org
+2017-07-11T15:30:17 <gtirloni> simonjb: that\'s it
+2017-07-11T15:30:45 <simonjb> great, thanks gtirloni
+2017-07-11T15:34:36 * Bosmon joined the channel
+2017-07-11T15:39:43 * clown has quit
+2017-07-11T15:40:08 * clown joined the channel
+2017-07-11T15:46:45 * michelled joined the channel
+2017-07-11T15:48:45 * gtirloni joined the channel
+2017-07-11T16:00:38 * michelled has quit
+2017-07-11T16:08:14 * pratik_r joined the channel
+2017-07-11T16:37:47 * mrtyler joined the channel
+2017-07-11T16:46:19 <cindyli> Bosmon, Bosmon7, would you have time later today to chat with simonjb and I to figure out a document structure issue for saving data for different GPII use cases?
+2017-07-11T16:51:35 <Bosmon> cindyli - sure
+2017-07-11T16:52:33 <cindyli> Bosmon: what time is good for u?
+2017-07-11T16:52:44 <Bosmon> Well, I could do nowish ?
+2017-07-11T16:53:38 <cindyli> simonjb: is it good to meet now again? if you guys don\'t mind i\'m eating
+2017-07-11T16:53:53 <Bosmon> I could do a bit later
+2017-07-11T16:54:18 <simonjb> I\'m good any time
+2017-07-11T16:54:48 <cindyli> Bosmon: that\'s ok, you don\'t see me eating anyway
+2017-07-11T16:54:59 <cindyli> Bosmon, simonjb: in my vidyo roo?
+2017-07-11T16:55:08 * danayo joined the channel
+2017-07-11T16:55:56 <simonjb> cindyli: I see it as locked
+2017-07-11T16:56:17 <cindyli> right, unlocked, simonjb
+2017-07-11T16:57:43 <cindyli> Bosmon: https://pad.gpii.net/p/discussion-on-auth-documents-kl34nur
+2017-07-11T17:02:58 <jhung> ping Justin_o.
+2017-07-11T17:16:53 * avtar joined the channel
+2017-07-11T17:18:32 * michelled joined the channel
+2017-07-11T17:32:09 <Justin_o> jhung: hello
+2017-07-11T17:35:33 <jhung> nevermind Justin_o. I figured it out. :)
+2017-07-11T17:53:29 * Justin_o jhung: okay, that\'s good
+2017-07-11T17:53:37 <Justin_o> don\'t know what i just did there
+2017-07-11T17:57:44 <jhung> Justin_o: lol You added some emphasis. It\'s not just okay, it\'s good. :)
+2017-07-11T17:57:58 <Justin_o> lol
+2017-07-11T18:14:06 * the-t-in-rtf joined the channel
+2017-07-11T18:15:43 * gtirloni_ joined the channel
+2017-07-11T18:18:54 * gtirloni has quit
+2017-07-11T18:20:03 <the-t-in-rtf> @alanharn_ and others, a friend just shared this with me: https://www.linkedin.com/pulse/tactile-atlas-switzerland-anna-vetter
+2017-07-11T18:21:16 <Justin_o> the-t-in-rtf: that\'s cool, we had a community meeting a month or so ago with something similar for the iOS interface
+2017-07-11T18:22:08 <the-t-in-rtf> This is paper, do you mean one of the tactile overlays?
+2017-07-11T18:22:27 <the-t-in-rtf> Like the tactus offerring?
+2017-07-11T18:22:57 <Justin_o> the-t-in-rtf: it was also paper based
+2017-07-11T18:23:21 <the-t-in-rtf> interesting.
+2017-07-11T18:23:28 <the-t-in-rtf> What was the feedback like?
+2017-07-11T18:23:52 <Justin_o> the-t-in-rtf: here\'s a link http://www.ihabilitation.com/product/feelnsee-screenshots/
+2017-07-11T18:25:11 <Justin_o> the-t-in-rtf: seemed that people were learning well with it. Part of it was to improve their ability to find things specially and by touch, instead of relying on swiping through the interface elements
+2017-07-11T18:26:32 <the-t-in-rtf> "HTTP Error 403.6 - Forbidden
+2017-07-11T18:26:32 <the-t-in-rtf> The IP address from which you are browsing is not permitted to access the requested Web site.
+2017-07-11T18:26:32 <the-t-in-rtf> "
+2017-07-11T18:26:41 <the-t-in-rtf> Terrible.
+2017-07-11T18:27:04 <the-t-in-rtf> (that behavior, not your project)
+2017-07-11T18:27:32 <Justin_o> that\'s strange, i wonder if it was cached for me
+2017-07-11T18:27:45 <Justin_o> are you able to access this page http://www.ihabilitation.com
+2017-07-11T18:28:57 <the-t-in-rtf> nope.
+2017-07-11T18:29:04 <Justin_o> :( that\'s too bad
+2017-07-11T18:29:20 <Justin_o> not sure what\'s wrong, hopefully they have that back up soon.
+2017-07-11T18:29:46 <the-t-in-rtf> I\'d contact them, but even their contact details are geoblocked.
+2017-07-11T18:30:59 <the-t-in-rtf> Apparently I can do it if I set Opera\'s VPN to use a Canadian server.
+2017-07-11T18:31:15 <Justin_o> the-t-in-rtf: funny, the site won\'t open for me now
+2017-07-11T18:32:58 <the-t-in-rtf> It did eventually load for me with the VPN, although it\'s not the fastest.
+2017-07-11T18:33:06 <the-t-in-rtf> Maybe they can only handle one customer at a time.
+2017-07-11T18:33:40 <the-t-in-rtf> It does seem like an interesting idea.  I understand why someone might only sell in a particular market, but it seems a bit heavy-handed not even to show the information to anyone else.
+2017-07-11T18:35:12 <the-t-in-rtf> Oh, it\'s down for me now as well.
+2017-07-11T18:35:50 <the-t-in-rtf> up again.
+2017-07-11T18:42:49 * mrtyler has quit
+2017-07-11T18:57:35 * stegru has quit
+2017-07-11T19:01:37 <Justin_o> the-t-in-rtf: i wonder if they are having problems with the host, it didn\'t seem like they wanted to limit it by region. or at least they didn\'t indicate that at all
+2017-07-11T19:04:46 * colinclark joined the channel
+2017-07-11T19:07:54 <the-t-in-rtf> could be.
+2017-07-11T19:19:43 <the-t-in-rtf> But I saw two errors, one a cloudflare one (load or the like?) the other specifically about my IP address.
+2017-07-11T19:19:53 <the-t-in-rtf> You probably didn\'t see the IP address specific one.
+2017-07-11T19:20:08 <the-t-in-rtf> I only get the other error if I use a VPN from Canada.
+2017-07-11T19:20:33 <the-t-in-rtf> The IP address one is an IIS error message and not anything from an upstream provider.
+2017-07-11T19:30:03 * stegru joined the channel
+2017-07-11T19:36:48 <Justin_o> the-t-in-rtf: ah i see.. maybe it\'s related to fulfilment then, but i\'d still want people to be able to view my site,  even if they couldn\'t ship to me
+2017-07-11T19:37:05 <the-t-in-rtf> yeah, right?
+2017-07-11T19:37:19 <the-t-in-rtf> I mean, I routinely buy stuff from overseas for people who live in Canada and the U.S.
+2017-07-11T19:37:34 <the-t-in-rtf> guess it\'s a small market, but it\'s free marketing for them if they do decide to expand.
+2017-07-11T19:43:55 <cindyli> colinclark, michelled: simonjb, Bosmon and I talked about the unique type values to identify each GPII use case in couchDB documents. We\'d like to run those values with you to see if you are happy with them or have better names. These values are at line 177-186 at https://pad.gpii.net/p/discussion-on-auth-documents-kl34nur
+2017-07-11T19:45:03 <Justin_o> the-t-in-rtf: yes, exactly
+2017-07-11T19:45:10 <Justin_o> cindyli: do you have time to look at this PR https://github.com/fluid-project/infusion/pull/835
+2017-07-11T19:45:20 <Justin_o> i found some areas where I missed updating the class names
+2017-07-11T19:45:29 <Justin_o> and it\'s causing a bug
+2017-07-11T19:46:10 <cindyli> sure, Justin_o
+2017-07-11T19:46:24 <Justin_o> thanks, it should be a quick one
+2017-07-11T19:49:57 <colinclark> cindyli: Those names seem pretty sensible to me
+2017-07-11T19:50:15 <colinclark> Which of this will the "Sticky PCP" be?
+2017-07-11T19:50:20 <colinclark> Which of these, sorry
+2017-07-11T19:51:00 <cindyli> colinclark: we thought PCP is going to talk to the local flow manager via electron IPC
+2017-07-11T19:51:20 <cindyli> so it would still be local flow managers communicating with GPII cloud
+2017-07-11T19:51:28 <colinclark> What\'s the rationale?
+2017-07-11T19:52:29 <cindyli> colinclark: isn\'t that what we talked last Dec at washington face to face?
+2017-07-11T19:52:42 <colinclark> We might have :)
+2017-07-11T19:52:50 <colinclark> Remind me of the reasoning :)
+2017-07-11T19:53:13 * pratik_r has quit
+2017-07-11T19:53:20 * pratik_r joined the channel
+2017-07-11T19:57:28 * pratik_r has quit
+2017-07-11T19:58:25 <cindyli> colinclark: well, i would expect someone who told me that to explain the reasoning. ;) the only reason i can think of is PCP will be a part of the electron app installation with which the local flow manager would be the one to talk to the cloud.
+2017-07-11T19:58:42 <cindyli> this reason apparently is not supportive enough
+'
+

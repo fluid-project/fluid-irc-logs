@@ -1,0 +1,285 @@
+b'2016-08-24T15:45:21 <Bosmon> But I imagine this can\'t always be achieved
+2016-08-24T15:46:45 <Bosmon> Justin_o - given the prefs framework is sufficiently schematised, my suggestion is that you shift this work into Builder.js
+2016-08-24T15:46:53 <Bosmon> Even though this is already quite a mess
+2016-08-24T15:47:21 <Bosmon> It\'s not really clear that we have a way, from within the implementation of a panel, to discover information about its primary and aux schema?
+2016-08-24T15:48:24 <Bosmon> Justin_o - do you know why this namespace is "fluid.prefs.constructed"?
+2016-08-24T15:48:25 <Bosmon> https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/SelfVoicingSchemas.js#L28
+2016-08-24T15:49:27 * sepidehshahi joined the channel
+2016-08-24T15:51:41 <Justin_o> Bosmon: so the example i sent is used by the grade version of the prefs framework
+2016-08-24T15:51:52 <Bosmon> Yes
+2016-08-24T15:52:24 <Bosmon> I think we need to rethink this so-called "grade version" since the implementation really needs the schematic information available
+2016-08-24T15:53:31 <Bosmon> Is it really not available?
+2016-08-24T15:53:40 <Bosmon> I\'ve somewhat forgotten what the workflow of AuxBuilder.js really is
+2016-08-24T16:00:46 <the-t-in-rtf> The meeting is in room 3 tonight, right?
+2016-08-24T16:01:07 <cindyli> yes, the-t-in-rtf
+2016-08-24T16:01:27 * scott_gonzalez_ is now known as scott_gonzalez
+2016-08-24T16:01:38 <the-t-in-rtf> ah, there we go.
+2016-08-24T16:04:23 <gloob> colinclark: ok, maybe I can do it :)
+2016-08-24T16:04:33 <gloob> I just talked with Javi and it seems its not so much
+2016-08-24T16:04:38 <gloob> BUT
+2016-08-24T16:04:46 <gloob> I know that not so much is not always not so much
+2016-08-24T16:09:29 <colinclark> hahaha
+2016-08-24T16:09:34 <colinclark> What else are you busy with?
+2016-08-24T16:10:50 <gloob> Finished all my windows PRs (And they are integrated!, thanks Antranig)
+2016-08-24T16:10:50 <gloob> Creating new job positions for helping us with AT Onboarding Team
+2016-08-24T16:10:50 <gloob> Starting inception phase of new potential project AT Install On Demand (IoD)
+2016-08-24T16:10:51 <gloob> Meetings and lot of stuff
+2016-08-24T16:11:00 <gloob> onboardin and IoD is going to start to demand a lot
+2016-08-24T16:11:05 <gloob> onboarding
+2016-08-24T16:11:46 <gloob> avtar: muted
+2016-08-24T16:11:46 <gloob> xD
+2016-08-24T16:12:19 <gloob> IoD, Internet of Demand
+2016-08-24T16:23:18 * stegru has quit
+2016-08-24T16:23:51 * kavya joined the channel
+2016-08-24T16:44:42 <Bosmon> Hi gloob, etc - I can\'t make the 2pm slot tomorrow for "windows long path name"
+2016-08-24T16:52:18 * sepidehshahi has quit
+2016-08-24T16:54:55 <Justin_o> Bosmon: regarding the grade version of the prefs framework, it does have better performance as you can skip all of the schema parsing
+2016-08-24T16:55:14 <Bosmon> Justin_o - have you evaluated the performance increase? : P
+2016-08-24T16:55:26 <Justin_o> Bosmon: yes, actually ;)
+2016-08-24T16:55:34 <Bosmon> How much is it?
+2016-08-24T16:55:39 <Justin_o> Bosmon: https://cdn.rawgit.com/jobara/prefsFramework-optimization-examples/466d6cd726fd7bfb7d703574841e0e55634e4599/index.html
+2016-08-24T16:56:01 <Justin_o> sorry, that\'s an old one
+2016-08-24T16:56:01 <Justin_o> let me find you a more updated link
+2016-08-24T16:56:34 * sepidehshahi joined the channel
+2016-08-24T16:57:19 <Justin_o> Bosmon: https://cdn.rawgit.com/jobara/prefsFramework-optimization-examples/master/index.html
+2016-08-24T16:58:11 * kasparnet has quit
+2016-08-24T16:58:25 * nitkul joined the channel
+2016-08-24T16:58:32 <Bosmon> Justin_o - that\'s interesting
+2016-08-24T16:58:32 <Justin_o> Bosmon: well that was specifically with the page enhancer, so doesn\'t include the prefs editor
+2016-08-24T16:58:47 <Justin_o> which you might be more interested in
+2016-08-24T16:59:24 <Bosmon> Looks like about 80ms extra time in "scripting"
+2016-08-24T17:00:02 <Bosmon> I think your "fastest out of 10 runs" methodology might lead to more noise in the measurements
+2016-08-24T17:00:30 <Bosmon> A median approach is more standard in these cases - for example, discard the fastest 1 or 2 fastest and slowest measurements and average the rest
+2016-08-24T17:00:42 <Justin_o> Bosmon: why so?
+2016-08-24T17:00:48 <Justin_o> i guess i\'d have liked to have run it 1000 times or more but it took too long for each run and was manual
+2016-08-24T17:01:07 <gloob> Bosmon: ok, I don\'t know if we are going to need the meeting anyway
+2016-08-24T17:01:18 <gloob> Bosmon: need to check the full case
+2016-08-24T17:01:25 <Justin_o> Bosmon: i use the fastest to try to remove the times my computer was doing something that slowed it down
+2016-08-24T17:01:26 <gloob> Bosmon: so probably is ok
+2016-08-24T17:02:42 * gtirloni_ joined the channel
+2016-08-24T17:03:16 <Bosmon> 1000 is rather overkill
+2016-08-24T17:03:23 <Bosmon> Justin_o - here is a "best practices" guide :)
+2016-08-24T17:03:23 <Bosmon> http://apmblog.dynatrace.com/2012/11/14/why-averages-suck-and-percentiles-are-great/
+2016-08-24T17:03:32 * gtirloni_ has quit
+2016-08-24T17:03:35 <Bosmon> You are trying to maximise the value of your data collection
+2016-08-24T17:03:47 <Bosmon> So throwing away 90% of the data is inefficient
+2016-08-24T17:03:51 * gtirloni_ joined the channel
+2016-08-24T17:04:14 <Bosmon> Some kind of median or percentile-based scheme maximises the value of the data whilst being resistant to outliers
+2016-08-24T17:04:42 <Bosmon> The idea of "it was doing something that slowed it down" only captures some of the potential variability in the process you are trying to measure
+2016-08-24T17:05:07 * gtirloni__ joined the channel
+2016-08-24T17:05:33 * gtirloni has quit
+2016-08-24T17:08:03 * gtirloni_ has quit
+2016-08-24T17:12:34 * gtirloni_ joined the channel
+2016-08-24T17:13:29 * yzen has quit
+2016-08-24T17:16:11 * PaliwalSparsh joined the channel
+2016-08-24T17:20:28 * simonjb has quit
+2016-08-24T17:24:28 * cindyli has quit
+2016-08-24T17:48:39 * kasparnet joined the channel
+2016-08-24T17:49:42 * bens____ joined the channel
+2016-08-24T17:50:10 * bens____ is now known as bens___
+2016-08-24T17:53:14 * nitkul has quit
+2016-08-24T17:54:22 * kasparnet has quit
+2016-08-24T17:54:42 * kasparnet joined the channel
+2016-08-24T18:04:39 * yzen joined the channel
+2016-08-24T18:12:41 * cindyli joined the channel
+2016-08-24T18:31:33 <Justin_o> fluid-everyone: we\'ll be starting the community meeting in the fluid_standup room. The topic is computer studies in high school
+2016-08-24T18:34:23 * colinclark_ joined the channel
+2016-08-24T18:35:05 * simonjb joined the channel
+2016-08-24T18:36:30 * colinclark has quit
+2016-08-24T18:36:30 * colinclark_ is now known as colinclark
+2016-08-24T18:42:07 * sepidehshahi has quit
+2016-08-24T18:51:03 * simonjb has quit
+2016-08-24T19:08:45 * gtirloni_ is now known as gtirloni
+2016-08-24T19:16:51 * alanharnum joined the channel
+2016-08-24T19:21:45 * simonjb joined the channel
+2016-08-24T19:33:02 * the-t-in-rtf has quit
+2016-08-24T19:34:57 * simonjb has quit
+2016-08-24T19:41:06 * alanharnum joined the channel
+2016-08-24T19:45:37 * simonjb joined the channel
+2016-08-24T19:50:15 * cindyli has quit
+2016-08-24T19:52:29 * cindyli joined the channel
+2016-08-24T19:56:15 * simonjb has quit
+2016-08-24T19:56:33 * colinclark has quit
+2016-08-24T20:00:52 * bens___ has quit
+2016-08-24T20:02:18 * bens___ joined the channel
+2016-08-24T20:04:26 * simonjb joined the channel
+2016-08-24T20:19:06 * Yan_Hu has quit
+2016-08-24T20:22:04 * sepidehshahi joined the channel
+2016-08-24T20:22:50 * cindyli has quit
+2016-08-24T20:41:12 * sepidehshahi has quit
+2016-08-24T20:41:38 * PaliwalSparsh has quit
+2016-08-24T20:41:41 * sepidehshahi joined the channel
+2016-08-24T20:42:26 * godfrey_ has quit
+2016-08-24T20:43:23 * TPark has quit
+2016-08-24T20:43:41 * colinclark joined the channel
+2016-08-24T20:48:12 * the-t-in-rtf joined the channel
+2016-08-24T20:48:23 * the-t-in-rtf has left the channel
+2016-08-24T20:48:29 * the-t-in-rtf joined the channel
+2016-08-24T20:52:47 * sepidehshahi has quit
+2016-08-24T20:59:38 * simonjb joined the channel
+2016-08-24T21:04:36 * gtirloni has quit
+2016-08-24T21:06:28 * kasparnet has quit
+2016-08-24T21:06:54 * bens___ has quit
+2016-08-24T21:20:33 * bens___ joined the channel
+2016-08-24T21:49:35 * simonjb has quit
+2016-08-24T22:10:08 * yzen is now known as yzen_
+2016-08-24T22:10:15 * the-t-in-rtf has quit
+2016-08-24T22:17:20 * danayo joined the channel
+2016-08-24T22:20:56 * colinclark has quit
+2016-08-24T22:41:28 * danayo has quit
+2016-08-24T23:42:35 * alanharnum joined the channel
+2016-08-24T23:47:04 * alanharnum has quit
+'
+
+b'2016-08-24T00:02:54 * Bosmon joined the channel
+2016-08-24T00:10:32 * bens__ has quit
+2016-08-24T00:17:24 * Bosmon has quit
+2016-08-24T00:20:35 * Bosmon joined the channel
+2016-08-24T00:27:02 * Bosmon has quit
+2016-08-24T00:31:08 * Bosmon joined the channel
+2016-08-24T00:51:29 * danayo has quit
+2016-08-24T02:32:58 * yzen joined the channel
+2016-08-24T02:36:06 * yzen is now known as yzen_
+2016-08-24T02:40:56 * yzen_ has quit
+2016-08-24T03:33:56 * alanharnum joined the channel
+2016-08-24T03:38:50 * alanharnum has quit
+2016-08-24T05:12:38 * Bosmon has quit
+2016-08-24T05:27:30 * the-t-in-rtf joined the channel
+2016-08-24T05:47:55 * amatas joined the channel
+2016-08-24T06:03:14 * kasparnet joined the channel
+2016-08-24T06:05:02 * kasparnet has quit
+2016-08-24T06:38:14 * the-t-in-rtf has quit
+2016-08-24T06:46:22 * kasparnet joined the channel
+2016-08-24T07:05:55 * the-t-in-rtf joined the channel
+2016-08-24T07:25:07 * kasparnet has quit
+2016-08-24T07:33:31 * kasparnet joined the channel
+2016-08-24T07:35:42 * alanharnum joined the channel
+2016-08-24T07:40:42 * alanharnum has quit
+2016-08-24T08:22:37 * the-t-in-rtf has quit
+2016-08-24T08:22:55 * the-t-in-rtf joined the channel
+2016-08-24T08:37:36 * stegru joined the channel
+2016-08-24T10:43:06 * gtirloni joined the channel
+2016-08-24T11:06:10 * the-t-in-rtf has quit
+2016-08-24T11:37:23 * alanharnum joined the channel
+2016-08-24T11:42:16 * alanharnum has quit
+2016-08-24T11:44:05 * kasparnet has quit
+2016-08-24T12:05:47 * kasparnet joined the channel
+2016-08-24T12:28:56 * the-t-in-rtf joined the channel
+2016-08-24T12:31:58 * godfrey_ joined the channel
+2016-08-24T12:37:55 * cindyli joined the channel
+2016-08-24T12:38:11 <avtar> hey cindyli
+2016-08-24T12:38:19 * nitkul joined the channel
+2016-08-24T12:38:19 <cindyli> hi avtar
+2016-08-24T12:38:40 <avtar> do you have time to go through the issues we talked about yesterday before the crit?
+2016-08-24T12:39:39 <cindyli> avtar: starting on it now, only have 15 mins
+2016-08-24T12:40:05 <avtar> ok
+2016-08-24T12:48:30 * TPark joined the channel
+2016-08-24T12:48:36 <nitkul> how does a fluid namespace map to html?
+2016-08-24T12:53:12 <cindyli> avtar: same issue with "vagrant up" not starting node instances. started with a fresh new clone of my own branch
+2016-08-24T12:53:35 <avtar> what\'s the branch name again?
+2016-08-24T12:53:57 <cindyli> avtar: GPII-1821 https://github.com/cindyli/universal/tree/GPII-1821
+2016-08-24T12:54:20 <cindyli> nitkul: what fluid namespaces do you refer to? those used in the js code?
+2016-08-24T12:54:50 <cindyli> nitkul: infusion has different but connected naming conventions for namespaces used in the code and in html
+2016-08-24T12:55:15 * Justin_o joined the channel
+2016-08-24T12:55:56 <nitkul> cindyli: yeah, ones i am registering in my js code
+2016-08-24T12:57:41 * danayo joined the channel
+2016-08-24T12:57:45 <cindyli> for instance, if your code is using namespace such as "fluid.myProject", the css namespaces used in the html has 2 forms. one would use "flc-" namespaces which are for js code to identify html elements. the other would be "fl-" which is for styling selectors
+2016-08-24T12:57:50 <cindyli> nitkul: ^
+2016-08-24T12:58:41 <Justin_o> nitkul: https://wiki.fluidproject.org/display/docs/Class+Name+Conventions
+2016-08-24T12:58:51 <nitkul> cindyli: i am creating a custom namespace
+2016-08-24T12:59:44 <the-t-in-rtf> Hey, @Justin_o, which room?
+2016-08-24T12:59:45 * alanharnum joined the channel
+2016-08-24T12:59:58 <Justin_o> nitkul: that\'s for infusion specifically but you could use your own namespace if you like.. perhaps we\'re not understanding the question though
+2016-08-24T13:00:02 <Justin_o> the-t-in-rtf: fluid-standup
+2016-08-24T13:00:18 <Justin_o> fluid-everyone: the design crit for the fluid sandbox will be starting soon in the fluid-standup room
+2016-08-24T13:00:29 <the-t-in-rtf> fluid_standup
+2016-08-24T13:00:45 * simonjb joined the channel
+2016-08-24T13:03:27 <nitkul> Justin_o: following this -> http://docs.fluidproject.org/infusion/development/tutorial-gettingStartedWithInfusion/DefineANamespaceAndCreateAClosure.html
+2016-08-24T13:06:12 * kasparnet has quit
+2016-08-24T13:16:18 <avtar> cindyli: we\'ll need to check in after the crit. i just tried your branch and i can see both services running https://www.pastery.net/arxphj/
+2016-08-24T13:16:23 <avtar> destroying the vm and trying again now
+2016-08-24T13:24:38 * cindyli has quit
+2016-08-24T13:31:42 * yzen joined the channel
+2016-08-24T13:32:09 * Bosmon joined the channel
+2016-08-24T13:34:53 * -- BotBot disconnected, possible missing messages --
+2016-08-24T13:36:59 * [o__o] joined the channel
+2016-08-24T13:45:49 * kasparnet joined the channel
+2016-08-24T14:02:02 * kasparne_ joined the channel
+2016-08-24T14:02:29 * cindyli joined the channel
+2016-08-24T14:04:43 <Justin_o> nitkul: sorry, was in a meeting
+2016-08-24T14:04:55 <Justin_o> nitkul: did you want suggestions on what namespace to use?
+2016-08-24T14:05:04 * kasparnet has quit
+2016-08-24T14:05:21 * jessm joined the channel
+2016-08-24T14:05:29 <avtar> cindyli: https://botbot.me/freenode/fluid-work/2016-08-24/?msg=71857061&page=1
+2016-08-24T14:06:11 <kasparne_> ping Bosmon
+2016-08-24T14:07:33 * sepidehshahi joined the channel
+2016-08-24T14:07:45 <cindyli> avtar: anytime when you are ready
+2016-08-24T14:07:45 * Yan_Hu joined the channel
+2016-08-24T14:09:41 <Bosmon> kasparne_ - DE LA ***NITT***!
+2016-08-24T14:10:06 <kasparne_> ANTWARRNNING!
+2016-08-24T14:10:28 <kasparne_> So I managed to overwrite the defaults of the prefs editor
+2016-08-24T14:10:42 <kasparne_> but I got a different problem now
+2016-08-24T14:11:06 <kasparne_> .. the preferences I want to use, are requested from the preferences server
+2016-08-24T14:11:18 <kasparne_> which is asynchronous
+2016-08-24T14:11:37 <kasparne_> the way I had implemented things were like so (in my new grade):
+2016-08-24T14:11:49 <kasparne_> distributeOptions: {
+2016-08-24T14:11:52 <kasparne_> record: {
+2016-08-24T14:11:52 <kasparne_> expander: {
+2016-08-24T14:11:52 <kasparne_> func: "{that}.loadTokenPreferences",
+2016-08-24T14:11:52 <kasparne_> args: []
+2016-08-24T14:11:54 <kasparne_> }
+2016-08-24T14:11:57 <kasparne_> },
+2016-08-24T14:11:58 <kasparne_> target: "{that}.options.members.initialModel.preferences"
+2016-08-24T14:12:00 <kasparne_> },
+2016-08-24T14:12:12 <kasparne_> but in loadTokenPreferences, I\'m doing an ajax call to the prefs server, which is asynchronous
+2016-08-24T14:12:40 <kasparne_> ... is there a simple/clever way to get values from promises/async functions in default/distributeOptions blocks?
+2016-08-24T14:12:42 <kasparne_> ^ Bosmon
+2016-08-24T14:13:46 * alanharnum has quit
+2016-08-24T14:14:28 <Bosmon> kasparne_ - of course not
+2016-08-24T14:15:19 <Justin_o> Bosmon: would you like to take a look at this PR to fix an issue with fluid-grunt-eslint https://github.com/fluid-project/fluid-grunt-eslint/pull/1
+2016-08-24T14:15:28 <Bosmon> Justin_o - yes, I will look at it
+2016-08-24T14:15:41 <Justin_o> Bosmon: thanks, it\'s pretty small so hopefully won\'t take long
+2016-08-24T14:16:08 <Bosmon> kasparne_ - you\'ll have to stick your fetch up here
+2016-08-24T14:16:17 <Bosmon> Which is where we stuff all asynchronous stuff in the prefs framework
+2016-08-24T14:16:40 <Bosmon> And then override the giant BOILING BLOCK at https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L79 to wait on one more thing
+2016-08-24T14:17:09 <Bosmon> There is now one more thing in the world preventing me from rewriting the framework but perhaps I will still get to it someday
+2016-08-24T14:20:31 <kasparne_> Bosmon: awesome - thanks Bosmon
+2016-08-24T14:25:34 <godfrey_> hi danayo and sepidehshahi: we took a look through the comments and made some changes. If you have time could you please take another look through the edits.
+2016-08-24T14:25:58 <sepidehshahi> for sure godfrey_
+2016-08-24T14:26:02 <godfrey_> danayo sepidehshahi: https://drive.google.com/open?id=1g6qwko2ROQacZJ1MWu8vG7Z-3h4Zv-D6--M67s_ellQ https://drive.google.com/open?id=1n4ugPjb7K5syCxfIAoQdrDkVUD6oPyU5ULHWHhB0A70
+2016-08-24T14:27:04 <danayo> thanks godfrey_ \\
+2016-08-24T14:32:23 * gtirloni has quit
+2016-08-24T14:37:55 * gtirloni joined the channel
+2016-08-24T14:47:24 * gtirloni joined the channel
+2016-08-24T14:57:26 * nitkul has quit
+2016-08-24T15:02:18 * simonjb joined the channel
+2016-08-24T15:12:35 <Justin_o> Bosmon: could you take a look at this PR for fluid-publish https://github.com/fluid-project/fluid-publish/pull/5
+2016-08-24T15:12:49 <Justin_o> we\'ll likely use fluid-publish for releasing infusion 2.0
+2016-08-24T15:14:27 * kasparnet joined the channel
+2016-08-24T15:17:19 * kasparne_ has quit
+2016-08-24T15:19:23 <Bosmon> Justin_o - sure
+2016-08-24T15:19:30 <Justin_o> Bosmon: thanks
+2016-08-24T15:20:56 * colinclark joined the channel
+2016-08-24T15:28:12 <cindyli> avtar: problems resolved. "vagrant up" now starts all node instances. also the additional data loading works perfectly. thanks for the fix
+2016-08-24T15:29:20 <avtar> awesome :)
+2016-08-24T15:30:06 <Justin_o> Bosmon: i have a listener namespace question
+2016-08-24T15:30:21 <Justin_o> so if i declare a listener like this
+2016-08-24T15:30:32 <Justin_o> https://www.irccloud.com/pastebin/TTOB8xKh/
+2016-08-24T15:30:38 <Bosmon> Hey, avtar, colinclark - how completely awesome is it - that we have a COMPLETELY UPDATED WINDOWS 10 box, that runs and passes all our architecture tests?
+2016-08-24T15:30:54 <colinclark> it is very awesome
+2016-08-24T15:30:57 <avtar> Bosmon: really awesome :D
+2016-08-24T15:31:04 <Justin_o> Bosmon: i assume that this actually creates a listener on the component on the left side with the specified namespace
+2016-08-24T15:31:05 <Bosmon> Yes, I think that\'s right
+2016-08-24T15:31:09 <Bosmon> Justin_o - that\'s correct, yes
+2016-08-24T15:31:11 <colinclark> avtar: you know you rock, right?
+2016-08-24T15:31:35 <avtar> one is glad to be of service
+2016-08-24T15:31:47 <Justin_o> Bosmon: so i have a case where it\'s in a grade that gets added to lots of subcomponents.. so i can\'t namespace it because they all just override each other instead of adding new ones
+2016-08-24T15:32:49 <Justin_o> Bosmon: i take it that in that specific case it doesn\'t make sense to use a namespace, but i suppose it\'s not always obvious how grades may be used and could cause an issue with this form of listener definition
+2016-08-24T15:33:47 <Bosmon> Justin_o - well, this is actually a pretty interesting issue
+2016-08-24T15:39:35 * alanharnum joined the channel
+2016-08-24T15:42:35 * sepidehshahi has quit
+2016-08-24T15:44:19 * alanharnum has quit
+2016-08-24T15:44:44 <Bosmon> Justin_o - it\'s sufficiently interesting I\'ve written it up as https://issues.fluidproject.org/browse/FLUID-5948
+2016-08-24T15:45:15 <Bosmon> My first suggestion is to achieve all of this via model listeners binding to local bits of model
+'
+

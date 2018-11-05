@@ -1,0 +1,503 @@
+b'2014-08-29T22:48:12 <Bosmon> It seems quite likely that "two listeners in a row", as well as being generally ill-defined, actually isn\'t supported by the framework at all
+2014-08-29T22:48:53 <Bosmon> Yes
+2014-08-29T22:48:58 <Bosmon> In fact, we have no test cases for it
+2014-08-29T22:49:24 <Bosmon> Every test case for the IoC testing framework itself always has an "exec" type in between any two "bind" types
+2014-08-29T22:49:27 <cindyli> perhaps i should switch to the old code. at least that is well supported by our framework ;)
+2014-08-29T22:49:39 <Bosmon> cindyli - only by accident : P
+2014-08-29T22:49:51 <Bosmon> Really what you should do is to combine your sequences points 2 and 3 into a single sequence point
+2014-08-29T22:50:03 <Bosmon> Since you aren\'t actually sure in which order they occur
+2014-08-29T22:50:16 <cindyli> ok. let me try that
+2014-08-29T22:50:18 <Bosmon> In the future I can improve the framework so that it does something more sensible in this case
+2014-08-29T22:50:33 <Bosmon> What it should really do is glob together ANY number of consecutive "bind" sequence points
+2014-08-29T22:50:38 <Bosmon> And make out of them a single giant boiled event
+2014-08-29T22:50:52 <Bosmon> That is, for as many "bind" types it should start to wait for ALL of them to occur, in any sequence
+2014-08-29T22:50:58 <Bosmon> But this would be a significant rewrite
+2014-08-29T22:51:41 <Bosmon> I\'ll write up a JIRA now....
+2014-08-29T22:52:38 <Bosmon> We have this related issue reported by Justin_o
+2014-08-29T22:52:39 <Bosmon> http://issues.fluidproject.org/browse/FLUID-5345
+2014-08-29T22:52:55 <Bosmon> And I think then, as now, I asked him to rewrite his test fixture, because it was in theory "invalid"
+2014-08-29T22:56:22 <cindyli> Bosmon: i combine those two steps. the test passes in safari and firefox but not chrome. sigh...
+2014-08-29T22:56:30 <Bosmon> ok
+2014-08-29T22:56:34 <Bosmon> What happens in Chrome?
+2014-08-29T22:56:40 <Bosmon> Still a hang, or a failure?
+2014-08-29T22:56:56 <Bosmon> It may just be that Chrome has cached the old version
+2014-08-29T22:57:03 <Bosmon> It seems very unlikely that there is a nonportability in thie case
+2014-08-29T22:57:09 <cindyli> false alarm, cached data. restart and it\'s now ok
+2014-08-29T22:57:13 <Bosmon> great
+2014-08-29T22:57:26 <Bosmon> Chrome\'s cache has always been much more aggressive than the other browsers
+2014-08-29T22:59:00 <cindyli> all tests pass in all three browsers!!! YAY!!!!
+2014-08-29T22:59:04 <cindyli> finally!
+2014-08-29T23:00:14 <cindyli> pushed up, Bosmon. the pull is ready again. thanks for staying till the midnight
+2014-08-29T23:00:24 <cindyli> right at midnight, you tackled this!!
+2014-08-29T23:00:30 <cindyli> thanks. see you on Tuesday!
+2014-08-29T23:00:46 <Bosmon> cindyli - thanks
+2014-08-29T23:00:49 <Bosmon> I have written up http://issues.fluidproject.org/browse/FLUID-5502
+2014-08-29T23:01:13 <cindyli> "mishandles any case", any?
+2014-08-29T23:01:39 <Bosmon> Well, perhaps not quite "any"
+2014-08-29T23:01:58 <Bosmon> But I guess I meant to mean that this represents a more general problem than the existing JIRA we had
+2014-08-29T23:02:10 <Bosmon> In FLUID-5345
+2014-08-29T23:02:19 <cindyli> ok
+2014-08-29T23:02:28 <Bosmon> FLUID-5345 only described a problem where the two listeners in a row occurred at the end of the sequence
+2014-08-29T23:02:37 <Bosmon> In which case the framework would actually throw, rather than merely hanging
+2014-08-29T23:03:52 <cindyli> ok. now you better go to sleep. i feel much relieved going away over the weekend.
+2014-08-29T23:04:21 * cindyli has quit
+2014-08-29T23:37:40 * yzen joined the channel
+2014-08-29T23:42:47 * yzen has quit
+'
+
+b'2014-08-29T21:15:40 * yzen has quit
+2014-08-29T21:16:05 * cindyli has quit
+2014-08-29T21:16:13 * cindyli joined the channel
+2014-08-29T21:21:57 * cindyli1 joined the channel
+2014-08-29T21:21:58 * cindyli has quit
+2014-08-29T21:27:56 <cindyli1> Bosmon: the pull request for FLOE-195, https://github.com/fluid-project/metadata/pull/38, is ready for another look
+2014-08-29T21:28:27 <Bosmon> Hi cindyli1
+2014-08-29T21:28:30 <Bosmon> You\'re working late :)
+2014-08-29T21:28:50 <cindyli1> ha, feeling the pressure ;)
+2014-08-29T21:29:06 <cindyli1> just wanna finish this work before I gone for the long weekend
+2014-08-29T21:29:15 <Bosmon> ok
+2014-08-29T21:29:24 <Bosmon> It doesn\'t include tooltips?
+2014-08-29T21:29:46 <cindyli1> no, it doesn\'t unfortunately. and doesn\'t include the model relay
+2014-08-29T21:30:06 <cindyli1> refactoring feedback and feedbackLoader taking longer than I expected
+2014-08-29T21:30:15 <Bosmon> ok
+2014-08-29T21:30:19 <Bosmon> It\'s looking good though
+2014-08-29T21:30:23 <Bosmon> All the events are in the right place : P
+2014-08-29T21:30:30 <cindyli1> yay!
+2014-08-29T21:31:01 <Bosmon> Although you still need to move feedback\'s definitions into its own grade
+2014-08-29T21:31:43 <Bosmon> Ah
+2014-08-29T21:31:46 <Bosmon> I see most of it is there
+2014-08-29T21:32:32 <Bosmon> It\'s a surprising amount of stuff that needs to be configured in place
+2014-08-29T21:32:36 <Bosmon> Some of it is templates
+2014-08-29T21:32:59 <Bosmon> Well, 3/4 of it is templates
+2014-08-29T21:33:02 <Bosmon> And there is one event
+2014-08-29T21:33:13 <cindyli1> which part of definitions that you think need to be moved?
+2014-08-29T21:33:21 <Bosmon> I\'m puzzled that feedbackLoader is not the same as templateLoader
+2014-08-29T21:33:54 <Bosmon> I think you could simplify a lot if this was the case
+2014-08-29T21:34:05 <Bosmon> And I believe the idea was that the parent component would be purely responsible for I/O
+2014-08-29T21:34:24 <Bosmon> You could then avoid the annoying injection up and down of the events
+2014-08-29T21:34:31 <Bosmon> onTemplatesLoaded etc.
+2014-08-29T21:35:47 <Bosmon> Well
+2014-08-29T21:35:52 <cindyli1> yes, why didn\'t I think of that. let me try that
+2014-08-29T21:36:06 <Bosmon> I think you should still go home before the long weekend : P
+2014-08-29T21:36:58 <cindyli1> i\'m working from home today. ha, smart :)
+2014-08-29T21:43:26 * the-t-in-rtf1 joined the channel
+2014-08-29T21:52:54 * the-t-in-rtf has quit
+2014-08-29T22:01:58 <cindyli1> Bosmon: what time is it over there?
+2014-08-29T22:02:12 <Bosmon> About 11pm
+2014-08-29T22:02:29 <cindyli1> ok. i don\'t wanna bug u if it\'s too late
+2014-08-29T22:02:59 <Bosmon> no, it\'s fine
+2014-08-29T22:03:01 <cindyli1> i move some logic out of bindButton into a model listener for "isActive", then a unit test for bindDialog fails
+2014-08-29T22:03:06 <Bosmon> If you can work late, I can : P
+2014-08-29T22:03:18 <Bosmon> ok
+2014-08-29T22:03:21 <cindyli1> so nice of you ;)
+2014-08-29T22:03:33 <cindyli1> the modelChange event is not received in the testing framework
+2014-08-29T22:03:39 <Bosmon> Did you deal with recombining templateLoader and feedbackLoader already?
+2014-08-29T22:03:47 <cindyli1> yes, and pushed up already
+2014-08-29T22:03:53 <Bosmon> wow, so quick
+2014-08-29T22:04:00 <cindyli1> that part seems working fine
+2014-08-29T22:04:05 <cindyli1> it\'s a simple change
+2014-08-29T22:04:19 <Bosmon> Oh yes
+2014-08-29T22:04:20 <cindyli1> the weird thing is with bindDialogTests.js
+2014-08-29T22:04:23 <Bosmon> Looks much simplified now, great
+2014-08-29T22:04:38 <Bosmon> And the only bindings are on to things one would expect
+2014-08-29T22:04:42 <Bosmon> That is, the templates
+2014-08-29T22:04:42 <cindyli1> it fails and i don\'t know why my change would cause that failure
+2014-08-29T22:04:45 <Bosmon> ok
+2014-08-29T22:05:20 <cindyli1> i mean the change in the bindButton() in bindDialog.js
+2014-08-29T22:06:03 * Justin_o has quit
+2014-08-29T22:07:10 <Bosmon> ok, let me check out and look
+2014-08-29T22:07:46 <cindyli1> thanks, i keep looking too
+2014-08-29T22:08:59 <Bosmon> ok cindyli1
+2014-08-29T22:09:01 <Bosmon> So I see the test hang
+2014-08-29T22:09:07 <Bosmon> I also see my new diagnostic in the console :)
+2014-08-29T22:09:08 <cindyli1> yes
+2014-08-29T22:09:21 <Bosmon> Very satisfying....
+2014-08-29T22:09:23 <Bosmon> "23:09:17.597:
+2014-08-29T22:09:23 <Bosmon> Test case listener has not responded after 5000ms - at sequence pos 3 of 10 sequence element Object { listenerMaker="gpii.tests.bindDialog.makeChangeChecker", makerArgs=[3], spec={...}, more...} of fixture Mouse Interaction"
+2014-08-29T22:09:29 <cindyli1> exactly :)
+2014-08-29T22:09:44 <cindyli1> very helpful
+2014-08-29T22:12:06 <Bosmon> Oh, I see
+2014-08-29T22:14:11 <Bosmon> cindyli1 - what was the change you made?
+2014-08-29T22:14:39 <cindyli1> i added one more model listener for isActive - controlDialogState
+2014-08-29T22:15:10 <cindyli1> the logic in controlDialogState() was in bindButton before
+2014-08-29T22:15:42 <cindyli1> https://github.com/cindyli/metadata/commit/cb82ec2ab71e2ec3f35c6cc79e3fafd8560c87a6
+2014-08-29T22:23:30 <Bosmon> ok
+2014-08-29T22:23:42 <Bosmon> So, for some reason, only the implementation\'s own change listeners are registered
+2014-08-29T22:23:53 <Bosmon> And the IoC framework\'s one isn\'t
+2014-08-29T22:24:18 <Bosmon> For reference, a very helpful point for breakpoints in the new ChangeApplier is fluid.model.notifyExternal
+2014-08-29T22:24:28 <Bosmon> Which in your build is at line 23063
+2014-08-29T22:25:09 <Bosmon> You can then also step back one step to "concludeTransaction"
+2014-08-29T22:25:19 <Bosmon> In which you can see the complete set of listeners inside the applier
+2014-08-29T22:25:28 <Bosmon> at applier.changeListeners.transListeners
+2014-08-29T22:25:37 <Bosmon> And it seems that the IoC framework\'s one simply doesn\'t appear
+2014-08-29T22:25:43 <Bosmon> So this is starting to look like a framework bug
+2014-08-29T22:27:18 * cindyli joined the channel
+2014-08-29T22:27:18 * cindyli1 has quit
+2014-08-29T22:27:25 <cindyli> a useful break point
+2014-08-29T22:28:37 <Bosmon> ok
+2014-08-29T22:28:51 <Bosmon> So actually I am thinking that the "helpful diagnostic" was not so helpful this time
+2014-08-29T22:29:02 <Bosmon> Since I believe that the framework is actually blocked on sequence point 2 rather than 3
+2014-08-29T22:29:15 <Bosmon> Unfortunately in the case of "two listeners in a row" it gets 1 step ahead of itself
+2014-08-29T22:29:50 <cindyli> ha
+2014-08-29T22:30:38 <Bosmon> No, this doesn\'t seem to be correct...
+2014-08-29T22:30:45 <Bosmon> Sequence point 2 has indeed been passed
+2014-08-29T22:30:59 <Bosmon> So back to the idea that there is a framework bug, which I guess we can now better characterise
+2014-08-29T22:31:29 <Bosmon> I remember that the "two listeners in a row" case has often been problematic
+2014-08-29T22:31:53 <Bosmon> The way that the IoC testing framework is implemented, is in terms of looking at the type of pairs of adjacent fixtures
+2014-08-29T22:31:55 <cindyli> the step 2 seems fine, it passes
+2014-08-29T22:31:58 <Bosmon> So there are 4 different kinds of cases
+2014-08-29T22:32:10 <Bosmon> Which means that bugs can possibly afflict each kind of pair separately
+2014-08-29T22:32:39 <Bosmon> That is, there are two kinds of sequence points, "exec" and "bind", corresponding to active and passive fixtures
+2014-08-29T22:32:48 <Bosmon> That is, ones that trigger some action, and those that wait for some action
+2014-08-29T22:33:11 <Bosmon> It seems possible that the framework is mishandling pairs that look like "bind, bind"
+2014-08-29T22:33:27 <cindyli> ah.
+2014-08-29T22:33:58 <Bosmon> Although it must be something subtle since we have quite a lot of these around the place
+2014-08-29T22:34:05 <cindyli> the step 2 has problem too. replacing listenerMaker with listener helps
+2014-08-29T22:34:32 <cindyli> maybe first of all i should get rid of listenerMakers for events
+2014-08-29T22:35:56 <cindyli> no, i was wrong, listenerMaker was ok at step 2.
+2014-08-29T22:37:02 <Bosmon> It shouldn\'t make a difference
+2014-08-29T22:37:07 <Bosmon> Other than increasing the clarity of the code
+2014-08-29T22:37:16 <cindyli> u r right
+2014-08-29T22:37:18 <Bosmon> I wish I had not written this implementation "in a functional style"
+2014-08-29T22:37:27 <Bosmon> It shows how appalling hard to debug functional code is
+2014-08-29T22:38:13 <cindyli> let me replace as many listenerMaker with listener to make ur debug work easier
+2014-08-29T22:39:41 <cindyli> but cannot do much for changeEvent
+2014-08-29T22:39:54 <Bosmon> It\'s ok
+2014-08-29T22:40:01 <Bosmon> I think it is relatively clear that this is my bug rather than yours
+2014-08-29T22:40:14 <Bosmon> The crucial line is line 500 of IoCTestUtils.js
+2014-08-29T22:40:25 <Bosmon> Which is responsible for coordinating this case
+2014-08-29T22:40:50 <Bosmon> I can\'t say I can particularly understand what is wrong with it
+2014-08-29T22:41:04 <Bosmon> But it might be something to do with the fact that the 2nd listener now resolves asynchronously
+2014-08-29T22:41:26 <Bosmon> You can probably go home safely, and I will have a pull request waiting for you when you come in on Tuesday : P
+2014-08-29T22:42:32 <Bosmon> oh
+2014-08-29T22:42:47 <Bosmon> I think I am dimly starting to have an idea what the issue is
+2014-08-29T22:42:59 <cindyli> super!
+2014-08-29T22:43:11 <Bosmon> I guess it is actually a little unusual to have "two listeners in a row" in any case
+2014-08-29T22:43:25 <Bosmon> Normally this is actually a bug
+2014-08-29T22:43:33 <Bosmon> Because you couldn\'t be sure which would be notified first
+2014-08-29T22:43:51 <Bosmon> Well, it\'s not "normally" a bug
+2014-08-29T22:43:54 <cindyli> btw, Bosmon, i also replaced listenerMaker with listener in that file and pushed up, but it may not help much because most listenerMakers are for change event. those still stay there
+2014-08-29T22:44:05 <Bosmon> But it often was when Justin_o did it, since he often did it to different listeners to the same event
+2014-08-29T22:44:22 <Bosmon> But I think your case is sound since there is a definite sequence to the events
+2014-08-29T22:44:49 <Bosmon> oh wait
+2014-08-29T22:44:52 <Bosmon> Perhaps there isn\'t
+2014-08-29T22:45:19 <Bosmon> So why, in fact, should the change event resolve AFTER the dialog rendering?
+2014-08-29T22:45:25 <Bosmon> it seems that it should actually be the other way round
+2014-08-29T22:45:33 <Bosmon> And in general, the sequence isn\'t really well-defined
+2014-08-29T22:45:56 <Bosmon> All you could say is that these fixtures should occur "at roughly the same time"
+2014-08-29T22:46:02 <cindyli> right
+2014-08-29T22:46:54 <Bosmon> ok
+2014-08-29T22:47:00 <Bosmon> Well, I reversed the order, and it still fails
+2014-08-29T22:47:06 <cindyli> i tried that too
+2014-08-29T22:47:09 <Bosmon> But I think this suggests what has always happened in this case
+2014-08-29T22:47:12 <cindyli> they all chained together
+2014-08-29T22:47:20 <Bosmon> In that, someone has come to me, and said, "this sequence doesn\'t work"
+2014-08-29T22:47:30 <Bosmon> And usually I have said, "actually it is invalid, since the sequence isn\'t well-defined"
+2014-08-29T22:47:34 <Bosmon> And so they have just rewritten it
+2014-08-29T22:47:45 <Bosmon> But this I think has always obscured the fact that the framework actually mishandles this case
+'
+
+b'2014-08-29T15:50:47 <Bosmon> Justin_o - cool!
+2014-08-29T15:51:05 <anastasiac> jhung, I think this is good to go for now. I think we should get it into the epub and make sure it works there, then focus on the write-up
+2014-08-29T15:51:08 <jhung> anastasiac: which repo did you update - just the simulation?
+2014-08-29T15:51:21 <jhung> Sounds good anastasiac.
+2014-08-29T15:51:21 <anastasiac> jhung, just the forces-and-motion one
+2014-08-29T15:51:26 <jhung> ok
+2014-08-29T15:51:42 <anastasiac> jhung, do you want me to update the script in the epub?
+2014-08-29T15:52:03 <jhung> Yes anastasiac if you can.
+2014-08-29T15:52:11 <anastasiac> ok, I\xe2\x80\x99ll give it a try...
+2014-08-29T15:53:08 <anastasiac> michelled: phet sim working via keyboard! ^
+2014-08-29T15:53:24 <jhung> anastasiac: I just tried the simulation - it looks good.
+2014-08-29T15:53:29 <anastasiac> indeed
+2014-08-29T15:53:38 <jhung> anastasiac: however, before we update the script in the epub...
+2014-08-29T15:54:01 <jhung> we should get the simulation to load directly into the tug-of-war, and to enable accessibility by default.
+2014-08-29T15:54:30 <anastasiac> right, since there won\xe2\x80\x99t be a command line to put parameters on. good memory, jhung
+2014-08-29T15:54:56 <jhung> :)
+2014-08-29T15:56:41 * kasparnet joined the channel
+2014-08-29T15:56:54 <michelled> anastasiac: awesome!
+2014-08-29T15:56:57 <michelled> this is wonderful
+2014-08-29T16:04:22 <Bosmon> cindyli - I think we need to get rid of this "partner" business : P
+2014-08-29T16:04:45 <Bosmon> What does it mean, in fact?
+2014-08-29T16:06:08 <cindyli> Bosmon: if someone click mismatch button and input some feedback, the mismatch dialog model will look like {isActive: true, [and user feedback]}
+2014-08-29T16:06:52 <cindyli> this guy then click match button, we need: 1. set match dialog model isActive to true
+2014-08-29T16:07:06 <cindyli> 2. reset mismatch dialog isActive to false
+2014-08-29T16:07:22 <cindyli> 3. reset all the user feedback to falsy values
+2014-08-29T16:08:06 <cindyli> 4. update the top collection {feedback}.model.userData to {match: true, mismatch: false, [and all falsy values for user feedback]}
+2014-08-29T16:08:18 <cindyli> right now, step 4 is done via model relay
+2014-08-29T16:08:47 <cindyli> when all 4 steps are done, a save call should be made to the database
+2014-08-29T16:09:15 <Bosmon> cindyli - it appears that we can manage the isActive flags via modelRelay too
+2014-08-29T16:09:18 <Bosmon> And we should
+2014-08-29T16:09:51 <jhung> anastasiac: I re-opened FLOE-217 http://issues.fluidproject.org/browse/FLOE-217
+2014-08-29T16:09:55 <cindyli> can we have model relay listening to multiple source models?
+2014-08-29T16:09:56 <jhung> For the scripting work.
+2014-08-29T16:10:08 <Bosmon> cindyli - we can write as many relay rules as we like
+2014-08-29T16:10:15 <Bosmon> As long as they don\'t try to bring about contradictory results : P
+2014-08-29T16:10:19 <anastasiac> jhung, thanks, I was just about to check which JIRA it was. Great minds think alike...
+2014-08-29T16:11:33 <cindyli> Bosmon: do you mean using model relay in btw two isActives?
+2014-08-29T16:11:42 <Bosmon> cindyli - yes
+2014-08-29T16:11:46 <cindyli> ok
+2014-08-29T16:11:48 <Bosmon> But not between them
+2014-08-29T16:11:59 <Bosmon> Just onto all the other flags that we have that duplicate their state
+2014-08-29T16:12:27 <jhung> anastasiac: as long as we don\'t start completing each other\'s sentences, I think we\'ll be okay. :D
+2014-08-29T16:19:58 <Bosmon> cindyli - what did you find about the preventDefault effect?
+2014-08-29T16:20:52 <cindyli> Bosmon: we still need it happen before invokeLater to prevent the url redirection to its href which is "#"
+2014-08-29T16:20:59 <Bosmon> cindyli - so there was a bug before?
+2014-08-29T16:21:09 <cindyli> yes, you found it, Bosmon!
+2014-08-29T16:21:13 <Bosmon> ok cool
+2014-08-29T16:21:55 * cindyli1 joined the channel
+2014-08-29T16:21:55 * cindyli has quit
+2014-08-29T16:22:29 * kasparnet has quit
+2014-08-29T16:26:14 <Bosmon> cindyli1 - so what actually is "partner"?
+2014-08-29T16:26:51 <cindyli1> Bosmon: the partner of the match dialog is the mismatch dialog, vice versus
+2014-08-29T16:27:09 <Bosmon> cindyli1 - I think they need to be named explictly
+2014-08-29T16:27:23 <Bosmon> What will you name them when there are 3 participants in the system :)
+2014-08-29T16:27:44 <Bosmon> But yes, all of this should be mediated by the model
+2014-08-29T16:27:53 <Bosmon> You shouldn\'t be passing instances of one dialog to functions processing the other
+2014-08-29T16:30:28 <cindyli1> ok. need to think about how to do this relay
+2014-08-29T16:34:55 <cindyli1> Bosmon: i have a question regarding this comment - https://github.com/fluid-project/metadata/pull/38/files#r16867695
+2014-08-29T16:35:23 <cindyli1> do you mean to move those events from feedbackLoader to its subcomponent feedback?
+2014-08-29T16:35:53 <cindyli1> how can we listener to those events in the IoC testing framework when we test feedbackLoader
+2014-08-29T16:36:22 <cindyli1> or we only test feedbackLoader on template loading and test those events with "feedback" component?
+2014-08-29T16:38:59 <Justin_o> Bosmon: how do i use the object syntax for message keys with the renderer
+2014-08-29T16:39:19 <Justin_o> i want "something %token" as the string template instead of "something {0}"
+2014-08-29T17:34:27 <Bosmon> cindyli1 - yes, the events should be moved down to the implementation component
+2014-08-29T17:34:30 <Bosmon> The loader is just a loader
+2014-08-29T17:35:27 <cindyli1> ok
+2014-08-29T17:35:56 * anastasiac has quit
+2014-08-29T17:36:07 <Bosmon> Justin_o - you can control rendering messages using the "messageResolver"
+2014-08-29T17:36:40 <Bosmon> In particular there\'s a function argument messageResolverFunction to the renderer
+2014-08-29T17:36:45 <Justin_o> Bosmon: sorry.. i forgot to mention i got it working.. i had the args as [{token: value}] but needed just {token: value}
+2014-08-29T17:36:49 <Bosmon> ok
+2014-08-29T17:37:45 <Justin_o> Bosmon: have we come up with a way of converting the page language to the full name.. e.g. en to English?
+2014-08-29T17:38:19 <Justin_o> Bosmon: i can find the page language with document.documentElement.lang
+2014-08-29T17:39:02 <Bosmon> Justin_o - I didn\'t know about that property
+2014-08-29T17:39:12 <Bosmon> I imagine we would have to have our own lookup table
+2014-08-29T17:39:19 <Justin_o> it returns en if the page was in english
+2014-08-29T17:39:26 <Justin_o> Bosmon: okay.. that\'s what i though
+2014-08-29T17:39:27 <Justin_o> thought
+2014-08-29T17:55:00 <Bosmon> Hi cindyli1 - michelled and I are talking about features for the demo
+2014-08-29T17:55:32 <Bosmon> I was thinking that if you think it is slowing you down getting new features implemented, you could skip dealing with this code review for now if it meant you could turn to other things
+2014-08-29T17:55:44 <Bosmon> For example, the model relay for the dialog flags could be pushed out until after the demo
+2014-08-29T17:56:05 <Bosmon> I think you should be able to deal with moving the events onto the implementation component relatively easily
+2014-08-29T17:56:07 <Bosmon> What do you think?
+2014-08-29T17:56:16 <cindyli1> ok, i see. yes, i\'m working on the model relay right now
+2014-08-29T17:56:20 <Bosmon> ok
+2014-08-29T17:56:25 <Bosmon> Well, see what you think
+2014-08-29T17:56:25 <cindyli1> ok, will do that first
+2014-08-29T17:56:37 <cindyli1> i mean "moving events"
+2014-08-29T17:56:51 <Bosmon> What features would you work on next?
+2014-08-29T17:56:55 <Bosmon> If there weren\'t this review
+2014-08-29T17:57:16 <cindyli1> this is the next - http://issues.fluidproject.org/browse/FLOE-226
+2014-08-29T17:57:32 <Bosmon> Oh, I see
+2014-08-29T17:57:35 <Bosmon> That isn\'t a feature JIRA either
+2014-08-29T17:57:56 <Bosmon> Is there something we might do to make the demo more featureful if we weren\'t improving the implementation?
+2014-08-29T17:57:59 <Bosmon> michelled?
+2014-08-29T17:58:35 <cindyli1> no, but 226 will fix the issue that two tooltips, or one dialog plus one tooltip, sometimes show at the same time
+2014-08-29T17:58:41 <Bosmon> oh ok
+2014-08-29T17:59:08 <michelled> FLOE-195, FLOE-196 and FLOE-223 are the feature ones
+2014-08-29T17:59:30 <michelled> that should come before FLOE-226 and FLOE-227
+2014-08-29T17:59:40 <Bosmon> ok
+2014-08-29T17:59:52 <michelled> this listing on this page is in order of priority: http://wiki.fluidproject.org/display/fluid/Floe+Iteration+Plan
+2014-08-29T18:00:25 <Bosmon> ok
+2014-08-29T18:00:36 <Bosmon> Will FLOE-226 enable support for FLOE-223?
+2014-08-29T18:00:48 <Bosmon> Do we have some tooltips already, although buggy?
+2014-08-29T18:01:04 <cindyli1> 195 is under review, Justin_o is working on 196. yesterday, Justin_o and I were talking about which one we should work on first, 223 or 226, we thought it\'s better to work on 226 first to fix that bug. we are open to switch to work on 223 first :)
+2014-08-29T18:01:10 <Justin_o> Bosmon: i think we should do FLOE-226 before 223
+2014-08-29T18:01:15 <Bosmon> ok
+2014-08-29T18:01:24 <Bosmon> Which day is the demo itself?
+2014-08-29T18:01:30 <Justin_o> Friday
+2014-08-29T18:01:50 <Justin_o> but we are planning on stopping work by the community meeting on wednesday and monday is a holiday
+2014-08-29T18:01:54 <Bosmon> yes
+2014-08-29T18:02:13 <Bosmon> It sounds like FLOE-226 could be split into the dialog work and the tooltip work
+2014-08-29T18:02:19 <Bosmon> Only the latter of which is crucial for new functionality
+2014-08-29T18:02:24 <Bosmon> That might speed things up a bit
+2014-08-29T18:02:46 <Bosmon> And I already put support for "multi-homing" tooltips into our tooltip wrapper, so in theory that would be relatively easy
+2014-08-29T18:03:30 <Bosmon> So we would at least then solve the issue of two tooltips displaying at the same time
+2014-08-29T18:03:48 <Bosmon> And it sounds like, as written, 226 wouldn\'t necessarily solve the issue of a tooltip and a dialog appearing at the same time in any case
+2014-08-29T18:03:58 <cindyli1> agree
+2014-08-29T18:04:07 <Justin_o> cindyli1, michelled, Bosmon: what do you think about not supporting the language part of the requests dialog right now.. from the current first pass designs it is supposed to come from the page... since the demo will only be in english anyways, I\'m not sure it\'s worth developing the code for
+2014-08-29T18:04:30 <Justin_o> http://wiki.fluidproject.org/download/attachments/37855787/metadata-feedback.pdf
+2014-08-29T18:04:36 <Bosmon> Justin_o - sounds reasonable, especially if it conforms to the designs we currently have
+2014-08-29T18:05:00 <Bosmon> So let us push out i) model relay for dialog flags, and ii) one dialog component work until after the demo
+2014-08-29T18:05:09 <Bosmon> And before then we can concentrate on tooltips for 223 and 226
+2014-08-29T18:05:12 <Bosmon> How does that sound?
+2014-08-29T18:05:14 <Justin_o> Bosmon: the first pass designs say English and it\'s supposed to pick up the pages language... the future designs will be user driven for the language
+2014-08-29T18:05:39 <Justin_o> Bosmon: that sounds good
+2014-08-29T18:05:52 <cindyli1> +1
+2014-08-29T18:06:06 <Bosmon> I\'m trying to find the API page for our tooltip component
+2014-08-29T18:06:13 <Bosmon> But I\'m beginning to suspect I didn\'t write one :(
+2014-08-29T18:06:57 <Bosmon> oh yes
+2014-08-29T18:06:59 <Bosmon> Just a broken link
+2014-08-29T18:07:01 <Bosmon> I\'m sorry :(
+2014-08-29T18:09:27 <Bosmon> cindyli1 - you\'ll have to consult the test cases
+2014-08-29T18:09:33 <Bosmon> The relevant one is the "tooltip delegate tests"
+2014-08-29T18:09:33 <Bosmon> https://github.com/fluid-project/infusion/blob/master/tests/component-tests/tooltip/js/TooltipTests.js#L89
+2014-08-29T18:10:05 <Bosmon> All you need to do is supply a structure like this which maps the id of the relevant DOM element onto the content which should be displayed when the tooltip shows for that element
+2014-08-29T18:10:28 <cindyli1> ok. sounds easy. thanks.
+2014-08-29T18:11:35 <Bosmon> Even this file includes one of the blasted "listenerMakers" : P
+2014-08-29T19:06:04 * slim has quit
+2014-08-29T19:06:17 * slim joined the channel
+2014-08-29T19:06:25 * slim has quit
+2014-08-29T19:22:39 * cindyli1 has quit
+2014-08-29T19:22:55 * kasparnet joined the channel
+2014-08-29T19:27:25 * kasparnet has quit
+2014-08-29T19:48:18 * anvk has quit
+2014-08-29T19:59:13 * michelled has quit
+2014-08-29T20:12:04 * jhung has quit
+2014-08-29T20:18:29 * cindyli joined the channel
+2014-08-29T20:28:51 * simonjb has quit
+2014-08-29T20:46:03 * clown has left the channel
+'
+
+b'2014-08-29T00:12:33 * jhung joined the channel
+2014-08-29T00:26:51 * jhung has quit
+2014-08-29T01:05:31 * jhung joined the channel
+2014-08-29T01:44:03 * jhernandez has quit
+2014-08-29T02:00:53 * jhung has quit
+2014-08-29T03:21:08 * jhung joined the channel
+2014-08-29T04:01:00 * jhung has quit
+2014-08-29T05:35:35 * yzen joined the channel
+2014-08-29T05:45:37 * yzen has quit
+2014-08-29T07:15:59 * kasparnet joined the channel
+2014-08-29T08:40:05 * amilchev joined the channel
+2014-08-29T08:45:03 * slim joined the channel
+2014-08-29T09:11:26 * jhernandez joined the channel
+2014-08-29T09:16:52 * amilchev has quit
+2014-08-29T09:17:05 * amilchev joined the channel
+2014-08-29T09:17:15 * the-t-in-rtf has quit
+2014-08-29T09:27:30 * the-t-in-rtf joined the channel
+2014-08-29T09:28:05 * kasparnet has quit
+2014-08-29T09:28:32 * kasparnet joined the channel
+2014-08-29T09:32:33 * kasparnet has quit
+2014-08-29T09:41:20 * kasparnet joined the channel
+2014-08-29T09:55:27 * sgithens_ joined the channel
+2014-08-29T09:58:06 * sgithens has quit
+2014-08-29T09:58:07 * sgithens_ is now known as sgithens
+2014-08-29T10:14:08 * -- BotBot disconnected, possible missing messages --
+2014-08-29T10:16:18 * [o__o] joined the channel
+2014-08-29T10:42:55 * kasparnet has quit
+2014-08-29T10:52:23 * jhernand1z joined the channel
+2014-08-29T10:55:54 * jhernandez has quit
+2014-08-29T11:11:40 * Justin_o joined the channel
+2014-08-29T11:16:24 * kasparnet joined the channel
+2014-08-29T11:19:43 * Bosmon2 joined the channel
+2014-08-29T11:22:21 * Bosmon has quit
+2014-08-29T11:25:29 * kasparne_ joined the channel
+2014-08-29T11:27:16 * jhernand1z has quit
+2014-08-29T11:28:41 * kasparnet has quit
+2014-08-29T11:30:21 * scott_gonzalez has quit
+2014-08-29T11:34:29 * scott_gonzalez joined the channel
+2014-08-29T11:38:09 * jhung joined the channel
+2014-08-29T12:15:16 * cindyli joined the channel
+2014-08-29T12:21:31 <cindyli> hi Bosmon2
+2014-08-29T12:25:41 <Justin_o> cindyli: i merged your FLOE-229 pull request
+2014-08-29T12:25:52 <cindyli> thanks, Justin_o
+2014-08-29T12:37:22 * yzen joined the channel
+2014-08-29T12:40:37 * yzen has quit
+2014-08-29T12:40:43 * yzen_ joined the channel
+2014-08-29T12:45:25 * kasparne_ has quit
+2014-08-29T12:48:41 * kasparnet joined the channel
+2014-08-29T12:49:25 * yzen_ has quit
+2014-08-29T13:14:29 * amilchev has left the channel
+2014-08-29T13:26:04 <Justin_o> cindyli: are the best docs for model transformations still on the gpii wiki?
+2014-08-29T13:27:14 <cindyli> Justin_o: yes, i think so, but don\'t rmb why we stopped converting it to fluid project wiki
+2014-08-29T13:27:31 <Justin_o> cindyli: okay... one more question
+2014-08-29T13:28:33 <Justin_o> cindyli: from the pouchDB datasource we get the results of the view for collecting the requests and votes like [{key="transcripts", value=1}, {key="text", value=2}]
+2014-08-29T13:28:53 <Justin_o> but we probably want this more like {transcripts: 1, text: 2}
+2014-08-29T13:29:07 <Justin_o> should i do this change with a model transform or just loop over the array
+2014-08-29T13:29:14 <Justin_o> we don\'t need to convert back every
+2014-08-29T13:29:16 <Justin_o> ever
+2014-08-29T13:32:00 <cindyli> Justin_o: i think we should use model transformation if the array loop is already built in there.
+2014-08-29T13:32:36 <cindyli> feels like fluid.transforms.arrayToObject can handle it
+2014-08-29T13:34:05 * yzen joined the channel
+2014-08-29T13:37:51 * simonjb joined the channel
+2014-08-29T13:40:12 * anastasiac joined the channel
+2014-08-29T13:40:37 * jhung is now known as jhung_away
+2014-08-29T13:45:36 * clown joined the channel
+2014-08-29T13:45:38 * michelled joined the channel
+2014-08-29T13:46:05 <Justin_o> cindyli: thanks, trying that.. it looks like it should work
+2014-08-29T13:46:13 <cindyli> nice
+2014-08-29T13:49:58 <Justin_o> cindyli: i haven\'t been able to get it to work :( maybe you can see what I\'m doing wrong. I even just took the example
+2014-08-29T13:49:59 <Justin_o> https://www.irccloud.com/pastebin/3nxqguHR
+2014-08-29T13:50:19 * anvk joined the channel
+2014-08-29T13:50:27 <cindyli> sure
+2014-08-29T13:50:28 <Justin_o> the transform there should be transformation. I forgot to change that
+2014-08-29T13:50:46 <Justin_o> in the call to fluid.model.transform
+2014-08-29T13:51:09 <cindyli> man, your variable is transformation, and the last line u r using **transform** as the 2nd arg
+2014-08-29T13:52:11 <cindyli> still returning empty object tho. more ..
+2014-08-29T13:53:31 <Justin_o> cindyli: yes i just get an empty object
+2014-08-29T13:55:13 <cindyli> Justin_o: now it works - http://pastebin.com/eg00eVkP
+2014-08-29T13:56:06 <cindyli> the difference is to add line 2
+2014-08-29T13:57:20 <Justin_o> cindyli: thanks.. i don\'t want "value" to show up in the result though, but i can play around with it and see what i can do
+2014-08-29T13:58:15 <Justin_o> cindyli: used an outputPath option instead of the value key and it worked
+2014-08-29T13:58:18 <Justin_o> cindyli: thanks for the help
+2014-08-29T13:58:43 <cindyli> np. good you figured out
+2014-08-29T14:15:39 <anastasiac> Justin_o, michelled: I\xe2\x80\x99m fixing some broken links on the fluidproject.org site (http://fluidproject.org/products/infusion/). I guess I should also update it to reference 1.5 instead of 1.4, no? And the links to demos: Where should that point? build.fluidproject.org is not 1.5, it\xe2\x80\x99s master, right?
+2014-08-29T14:16:49 <michelled> yes, master
+2014-08-29T14:17:58 <anastasiac> do we have a place to send people to see 1.5 demos? or do we want to do that?
+2014-08-29T14:18:12 <anastasiac> and for \xe2\x80\x9cdownload infusion!\xe2\x80\x9d I guess point to the github releases page?
+2014-08-29T14:18:44 <Justin_o> anastasiac: that won\'t contain the infusion-all file though
+2014-08-29T14:19:06 <anastasiac> no, but it contains instructions for building it, right?
+2014-08-29T14:19:18 <anastasiac> do we have something people can download to get the infusion-all file?
+2014-08-29T14:19:52 <anastasiac> are we still using the builder?
+2014-08-29T14:20:05 <anastasiac> the builder doesn\xe2\x80\x99t seem to be up
+2014-08-29T14:26:09 <Justin_o> anastasiac: no builder anymore, only the grunt task
+2014-08-29T14:26:48 <anastasiac> so if there\xe2\x80\x99s no way to get the infusion-all file except to download the code from github and build it yourself, then any download links should point to github, no?
+2014-08-29T14:41:44 * clown1 joined the channel
+2014-08-29T14:42:53 * clown has quit
+2014-08-29T14:43:04 * clown1 is now known as clown
+2014-08-29T14:50:29 <Justin_o> anastasiac: or we could build something and put it up somewhere
+2014-08-29T14:50:54 <Justin_o> if we just use the github links we should make sure that we mention that a build step is required
+2014-08-29T14:51:04 <Justin_o> Bosmon2: are you available for a renderer question?
+2014-08-29T14:51:11 <anastasiac> well, I\xe2\x80\x99m going to point it at github for now, with instructions; that\xe2\x80\x99s better than pointing at the 1.4 release bundle!
+2014-08-29T14:51:23 <Justin_o> anastasiac: that\'s true
+2014-08-29T14:52:23 * Bosmon2 is now known as Bosmon
+2014-08-29T14:52:26 <Bosmon> Justin_o - sure
+2014-08-29T14:52:28 * jhung_away is now known as jhung
+2014-08-29T14:55:21 <Justin_o> Bosmon: thanks
+2014-08-29T14:55:59 <Justin_o> so i have a model that looks like {user: {}, requests: {text: 1, transcript: 2, audioDesc: 1}}
+2014-08-29T14:56:18 <Justin_o> i want to render the requests, the user portion will be needed to render votes later but I haven\'t gotten that far yet
+2014-08-29T14:56:38 <Justin_o> Bosmon:  you can see the designs here http://wiki.fluidproject.org/download/attachments/37855787/metadata-feedback.pdf
+2014-08-29T14:56:49 <Justin_o> the requests will render something like
+2014-08-29T14:57:04 <Justin_o> Transcripts: English     1  +1
+2014-08-29T14:57:10 <Justin_o> where +1 is a vote button
+2014-08-29T14:57:17 <Justin_o> so you can see i have to do some translation to get the name
+2014-08-29T14:57:42 <Justin_o> I\'m trying to use a the repeat renderer expander
+2014-08-29T14:57:59 <Justin_o> but all i can seem to get is the value, which in this case is the number of requests for each request
+2014-08-29T14:58:21 <Justin_o> i also want to get the request key to use as a look up into something
+2014-08-29T14:58:48 <Justin_o> and it will probably also be needed for the voting as well later
+2014-08-29T14:58:52 <Justin_o> Bosmon: any thoughts
+2014-08-29T14:58:55 <Justin_o> ?
+2014-08-29T14:58:56 * cindyli has quit
+2014-08-29T14:59:43 <Bosmon> Justin_o - the expander does export the key as part of the "pathAs" variable
+2014-08-29T14:59:52 <Bosmon> But this doesn\'t look like it is in a form which is very helpful to you
+2014-08-29T15:00:05 <Bosmon> Justin_o - it might be better in this case to write your own produceTree function
+2014-08-29T15:00:25 <Justin_o> Bosmon: okay thanks.. i thought that might be the case but wanted to check first
+2014-08-29T15:00:32 <Bosmon> cool
+2014-08-29T15:03:17 * cindyli joined the channel
+2014-08-29T15:13:52 * kasparnet has quit
+2014-08-29T15:28:51 * kasparnet joined the channel
+2014-08-29T15:28:52 * kasparnet has quit
+2014-08-29T15:32:31 <anastasiac> fluid-everyone: stand-up?
+2014-08-29T15:32:37 <cindyli> right
+2014-08-29T15:43:42 <Justin_o> Bosmon: i\'m having some problems with my produceTree function
+2014-08-29T15:43:56 <Justin_o> so far it\'s simple and just creates and returns this tree
+2014-08-29T15:43:58 <Justin_o> https://www.irccloud.com/pastebin/CGCnsVWM
+2014-08-29T15:44:23 <Justin_o> Bosmon: however i keep gettings this error
+2014-08-29T15:44:23 <Justin_o> ASSERTION FAILED: Illegal cond->cond transition
+2014-08-29T15:44:43 <Justin_o> header is a valid selector
+2014-08-29T15:44:57 <Justin_o> i also tried using messagekey instead of value, which is what I\'d really prefer to do here
+2014-08-29T15:45:22 <Bosmon> Justin_o - you\'ve probably forgotten to disable the expander
+2014-08-29T15:45:38 <Bosmon> Since you have written a "full tree" here
+2014-08-29T15:45:56 <Bosmon> And by default the output of the produceTree function is expected to be a protocomponent tree
+2014-08-29T15:47:40 <anastasiac> jhung, the change that Sam pushed to the forces and motions simulation last night works! yay! You can set up and activate the simulation by keyboard!
+2014-08-29T15:48:22 <Bosmon> anastasiac - cool - can I see the diff?
+2014-08-29T15:48:38 <Justin_o> Bosmon: ah right i have forgotten about that
+2014-08-29T15:49:14 <anastasiac> jhung, if you pull down the forces and motion repo from master now, it works - when you tab through, enter will move pullers to the rope, and continuing to tab will land you on the go button, and you can hit enter to start/pause the pulling!
+2014-08-29T15:49:21 <anastasiac> the reset button doesn\xe2\x80\x99t seem to be in the tab order
+2014-08-29T15:49:27 <anastasiac> but this is a big improvement!
+2014-08-29T15:49:39 <anastasiac> this is good to go!
+2014-08-29T15:50:03 <jhung> that\'s great news anastasiac. I\'ll take a look but it sounds like it\'s almost ready to go
+2014-08-29T15:50:34 <Justin_o> Bosmon: adding noExpand: true in the rendererFnOptions fixed it, thanks
+'
+

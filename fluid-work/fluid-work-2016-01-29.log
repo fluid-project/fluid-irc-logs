@@ -1,0 +1,243 @@
+b'2016-01-29T14:42:58 <Justin_o> brendan_d: thanks, i\'ll take a look
+2016-01-29T14:43:48 * zamcnema joined the channel
+2016-01-29T14:44:25 <Justin_o> brendan_d: there\'s a problem here https://github.com/bjderzin/first-discovery/blob/tooltips/src/js/panels.js#L1252
+2016-01-29T14:44:46 <Justin_o> you have a reference to an id but you\'ve set this as a class in the template https://github.com/bjderzin/first-discovery/blob/tooltips/src/html/saveTemplate.html#L4
+2016-01-29T14:45:08 <Justin_o> brendan_d: what you probably want is testButton: ".gpiic-fd-save-testButton"
+2016-01-29T14:46:43 <brendan_d> Justin_o: making that changes causes the button to dissapear off the page.
+2016-01-29T14:47:04 <Justin_o> ah right okay.. you need to add another options
+2016-01-29T14:47:39 <Justin_o> selectorsToIgnore: ["testButton"]
+2016-01-29T14:48:54 <Justin_o> It was being removed because the renderer wasn\'t given any instructions in the protoTree for that selector.. the selectorsToIgnore option tells the renderer to ignore those selectors when rendering
+2016-01-29T14:49:11 <brendan_d> Justin_o: wow its finally working
+2016-01-29T14:49:17 <Justin_o> :)
+2016-01-29T14:49:19 <Justin_o> excellent
+2016-01-29T14:50:05 <brendan_d> Justin_o: ive been banging my head against a wall about this for hours
+2016-01-29T14:51:33 <Justin_o> brendan_d: sorry to hear that, but i know the feeling
+2016-01-29T14:55:32 * anastasiac joined the channel
+2016-01-29T14:55:52 * alanharnum joined the channel
+2016-01-29T14:57:00 * simonjb joined the channel
+2016-01-29T15:12:14 * gtirloni joined the channel
+2016-01-29T15:17:21 * clown joined the channel
+2016-01-29T15:19:05 <alanharnum> in recent sonification / library news: https://www.miskatonic.org/2016/01/11/staplr/
+2016-01-29T15:29:28 <gtirloni> alanharnum: that\'s cool, does it let you skip forward?
+2016-01-29T15:29:54 <alanharnum> gtirloni: I believe it\'s a live feed based on their reference stats database
+2016-01-29T15:30:15 <gtirloni> got it. maybe things are quiet there
+2016-01-29T15:30:56 <alanharnum> things are mostly quiet at reference desks these days, which is the basic predicament of reference librarians as a specialized group within the library world
+2016-01-29T15:52:32 <jhung> @alanharnum a Bitcoin transaction sonification / visualizer. http://www.bitlisten.com/
+2016-01-29T16:18:24 <alanharnum> jhung: neat!
+2016-01-29T16:26:09 * the-t-in-rtf has quit
+2016-01-29T16:40:44 * michelled has quit
+2016-01-29T16:43:10 * gtirloni joined the channel
+2016-01-29T17:05:54 * the-t-in-rtf joined the channel
+2016-01-29T17:08:05 * the-t-in-rtf has quit
+2016-01-29T17:19:31 <Bosmon> Hi there Justin_o - I\'ve issued an update to my FLUID-5821 branch at https://github.com/fluid-project/infusion/pull/657
+2016-01-29T17:19:42 <Bosmon> As I suspected, this is a race condition that has always been there in these tests
+2016-01-29T17:20:00 <Bosmon> The issue is that the very first test fixture consists of a refreshView which races against the AJAX fetch of the component\'s template
+2016-01-29T17:20:26 <Bosmon> "normally" we win this race, but on some slower setups it is more likely that we lose
+2016-01-29T17:20:58 <Bosmon> avtar had mentioned recently that he was able to receive this test failure on trunk in his new QI continuous build server VM
+2016-01-29T17:21:30 <Bosmon> What is awkward is that, through some incredible oversight from the original developer, there was no way to actually check whether the resources had arrived.....
+2016-01-29T17:21:48 <Bosmon> So I have added a new event "onResourcesFetched" to fluid.rendererComponent which now fires once the resources have arrived
+2016-01-29T17:22:25 <Bosmon> And I have adjusted the SelfVoicingPanel tests to wait for this event using our slightly peculiar but now well-established pattern for registering listeners to components before they are constructed....
+2016-01-29T17:22:39 <Bosmon> Could you retest and see if it now looks good to you?
+2016-01-29T17:22:47 <Bosmon> Perhaps avtar could take a look too
+2016-01-29T17:23:39 <Bosmon> Also I want to ping cindyli to read the above since she is a kind of "renderer and prefs panels supremo" so should be aware of this new event.... I\'ll add it to our docs once the pull gets in
+2016-01-29T17:24:01 <avtar> Bosmon: that\'s awesome :)
+2016-01-29T17:24:19 <avtar> i\'ll confirm today
+2016-01-29T17:24:37 <Bosmon> avtar - cheers
+2016-01-29T17:24:57 <Bosmon> The other issue that you get, the "incorrect test count near enactors tests" is something that I receive on my machine quite a lot too :(
+2016-01-29T17:25:05 <Bosmon> But I\'m not sure there\'ll be cycles to fix it for a while
+2016-01-29T17:25:21 <Bosmon> I only see it on Chrome and only sometimes
+2016-01-29T17:25:40 <Bosmon> And it appears to be some deep and dark issue related to the way QUnit and the QUnit composite plugin schedule tests between frames
+2016-01-29T17:41:00 * cindyli has quit
+2016-01-29T18:37:46 <Justin_o> Bosmon: we\'re potlucking with anastasiac, and i\'ll be heading out afterwards, can you remind me to do that testing stuff tomorrow
+2016-01-29T18:38:06 * cindyli joined the channel
+2016-01-29T18:38:13 * jhung joined the channel
+2016-01-29T18:38:25 * jessm joined the channel
+2016-01-29T18:43:51 * alanharnum joined the channel
+2016-01-29T18:45:03 * jhung joined the channel
+2016-01-29T18:45:08 <Bosmon> Justin_o - sure
+2016-01-29T18:45:33 <Bosmon> Pass on my congrats to anastasiac in passing on to this next stage in her life :)
+2016-01-29T18:49:10 * colinclark joined the channel
+2016-01-29T18:49:20 * sepidehshahi joined the channel
+2016-01-29T18:58:29 * jhung joined the channel
+2016-01-29T18:58:32 * jhung has quit
+2016-01-29T18:58:36 * michelled joined the channel
+2016-01-29T18:58:51 * jhung joined the channel
+2016-01-29T19:32:07 * colinclark has quit
+2016-01-29T19:33:06 * colinclark joined the channel
+2016-01-29T19:48:16 * simonjb joined the channel
+2016-01-29T20:02:13 * jhung joined the channel
+2016-01-29T20:05:39 * jhung joined the channel
+2016-01-29T20:21:59 * yzen_ joined the channel
+2016-01-29T20:25:13 * jhung has quit
+2016-01-29T20:47:38 * Justin_o has quit
+2016-01-29T20:57:54 * brendan_d has quit
+2016-01-29T21:00:53 <simonjb> gtirloni, avtar, alanharnum and anyone else who might be interested in Unix history: https://github.com/dspinellis/unix-history-repo
+2016-01-29T21:01:10 <alanharnum> whoah
+2016-01-29T21:01:13 <alanharnum> that\'s awesome
+2016-01-29T21:04:19 <gtirloni> very nice, i\'m very interested in unix history.. i\'ll be checking this more closely :)
+2016-01-29T21:04:38 <gtirloni> simonjb: thanks
+2016-01-29T21:35:06 * sepidehshahi joined the channel
+2016-01-29T21:36:08 <avtar> simonjb: thanks, saving it for tomorrow :)
+2016-01-29T21:41:53 * sepidehshahi joined the channel
+2016-01-29T21:43:37 * anvk has quit
+2016-01-29T21:44:34 * sepidehshahi joined the channel
+2016-01-29T21:53:51 * colinclark has quit
+2016-01-29T22:04:14 * sepidehshahi has left the channel
+2016-01-29T22:12:43 * Jess_ joined the channel
+2016-01-29T22:17:29 * jhung joined the channel
+2016-01-29T22:17:41 * jhung has quit
+2016-01-29T23:59:56 * jhernandez has quit
+'
+
+b"2016-01-29T00:02:52 * danayo_ joined the channel
+2016-01-29T00:03:20 * danayo has quit
+2016-01-29T00:33:55 * danayo joined the channel
+2016-01-29T01:49:09 * danayo joined the channel
+2016-01-29T02:04:27 * yzen joined the channel
+2016-01-29T02:15:19 * jhung joined the channel
+2016-01-29T02:29:04 * yzen is now known as yzen_
+2016-01-29T02:33:47 * yzen_ has quit
+2016-01-29T02:36:22 * yzen joined the channel
+2016-01-29T02:39:56 * yzen is now known as yzen_
+2016-01-29T02:44:57 * yzen_ has quit
+2016-01-29T03:37:18 * michelled joined the channel
+2016-01-29T04:07:18 * yzen joined the channel
+2016-01-29T04:08:37 * jhung joined the channel
+2016-01-29T05:36:36 * yzen is now known as yzen_
+2016-01-29T05:40:55 * yzen_ has quit
+2016-01-29T05:45:59 * yzen joined the channel
+2016-01-29T05:53:08 * yzen is now known as yzen_
+2016-01-29T05:57:30 * yzen_ has quit
+2016-01-29T07:00:31 * alanharnum joined the channel
+2016-01-29T07:02:37 * alanharn_ joined the channel
+2016-01-29T07:04:14 * alanharnum joined the channel
+2016-01-29T07:06:14 * alanharn_ joined the channel
+2016-01-29T07:07:53 * alanharnum joined the channel
+2016-01-29T07:09:43 * alanharn_ joined the channel
+2016-01-29T07:11:42 * alanharnum joined the channel
+2016-01-29T07:13:26 * alanharn_ joined the channel
+2016-01-29T07:15:26 * alanharnum joined the channel
+2016-01-29T07:17:09 * alanharn_ joined the channel
+2016-01-29T07:19:10 * alanharnum joined the channel
+2016-01-29T07:20:49 * alanharn_ joined the channel
+2016-01-29T07:22:50 * alanharnum joined the channel
+2016-01-29T07:24:29 * alanharn_ joined the channel
+2016-01-29T07:26:35 * alanharnum joined the channel
+2016-01-29T07:28:13 * alanharn_ joined the channel
+2016-01-29T07:30:03 * alanharn_ has quit
+2016-01-29T07:30:15 * alanharnum joined the channel
+2016-01-29T07:31:57 * alanharn_ joined the channel
+2016-01-29T07:31:57 * alanharnum has quit
+2016-01-29T07:34:02 * alanharnum joined the channel
+2016-01-29T07:34:03 * alanharn_ has quit
+2016-01-29T07:35:45 * alanharn_ joined the channel
+2016-01-29T07:37:35 * alanharnum joined the channel
+2016-01-29T07:39:29 * alanharn_ joined the channel
+2016-01-29T07:39:30 * alanharnum has quit
+2016-01-29T07:41:30 * alanharnum joined the channel
+2016-01-29T07:43:13 * alanharn_ joined the channel
+2016-01-29T07:43:14 * alanharnum has quit
+2016-01-29T07:45:03 * alanharnum joined the channel
+2016-01-29T07:46:35 * alanharnum has quit
+2016-01-29T07:47:09 * alanharnum joined the channel
+2016-01-29T07:48:59 * alanharn_ joined the channel
+2016-01-29T07:50:52 * alanharnum joined the channel
+2016-01-29T07:50:52 * alanharn_ has quit
+2016-01-29T07:52:32 * alanharn_ joined the channel
+2016-01-29T07:54:33 * alanharnum joined the channel
+2016-01-29T07:56:12 * alanharn_ joined the channel
+2016-01-29T07:56:12 * alanharnum has quit
+2016-01-29T07:58:13 * alanharnum joined the channel
+2016-01-29T07:59:56 * alanharn_ joined the channel
+2016-01-29T08:01:48 * alanharnum joined the channel
+2016-01-29T08:03:36 * alanharn_ joined the channel
+2016-01-29T08:05:38 * alanharnum joined the channel
+2016-01-29T08:07:20 * alanharn_ joined the channel
+2016-01-29T08:09:20 * alanharnum joined the channel
+2016-01-29T08:10:59 * alanharn_ joined the channel
+2016-01-29T08:13:04 * alanharnum joined the channel
+2016-01-29T08:14:43 * alanharn_ joined the channel
+2016-01-29T08:16:48 * alanharnum joined the channel
+2016-01-29T08:18:37 * alanharn_ joined the channel
+2016-01-29T08:20:21 * alanharnum joined the channel
+2016-01-29T08:22:21 * alanharn_ joined the channel
+2016-01-29T08:24:04 * alanharnum joined the channel
+2016-01-29T08:26:06 * alanharn_ joined the channel
+2016-01-29T08:26:06 * alanharnum has quit
+2016-01-29T08:27:44 * alanharnum joined the channel
+2016-01-29T08:29:49 * alanharnum joined the channel
+2016-01-29T08:31:32 * alanharnum joined the channel
+2016-01-29T08:33:32 * alanharnum joined the channel
+2016-01-29T08:35:15 * alanharnum joined the channel
+2016-01-29T08:37:16 * alanharn_ joined the channel
+2016-01-29T08:38:59 * alanharnum joined the channel
+2016-01-29T08:40:49 * alanharn_ joined the channel
+2016-01-29T08:42:50 * alanharnum joined the channel
+2016-01-29T08:44:11 * alanharnum has quit
+2016-01-29T08:44:40 * alanharnum joined the channel
+2016-01-29T08:46:19 * alanharn_ joined the channel
+2016-01-29T08:46:20 * alanharnum has quit
+2016-01-29T08:48:25 * alanharnum joined the channel
+2016-01-29T08:50:08 * alanharn_ joined the channel
+2016-01-29T08:52:08 * alanharnum joined the channel
+2016-01-29T08:53:47 * alanharn_ joined the channel
+2016-01-29T08:53:47 * alanharnum has quit
+2016-01-29T08:55:47 * alanharnum joined the channel
+2016-01-29T08:57:28 * alanharn_ joined the channel
+2016-01-29T08:59:18 * alanharnum joined the channel
+2016-01-29T09:01:11 * alanharnum joined the channel
+2016-01-29T09:02:58 * alanharnum joined the channel
+2016-01-29T09:04:49 * alanharn_ joined the channel
+2016-01-29T09:06:49 * alanharnum joined the channel
+2016-01-29T09:08:27 * alanharn_ joined the channel
+2016-01-29T09:10:31 * alanharnum joined the channel
+2016-01-29T09:12:14 * alanharn_ joined the channel
+2016-01-29T09:14:08 * alanharnum joined the channel
+2016-01-29T09:16:08 * alanharn_ joined the channel
+2016-01-29T09:17:59 * alanharnum joined the channel
+2016-01-29T09:19:42 * alanharn_ joined the channel
+2016-01-29T09:19:42 * alanharnum has quit
+2016-01-29T09:21:43 * alanharnum joined the channel
+2016-01-29T09:23:21 * alanharn_ joined the channel
+2016-01-29T09:25:27 * alanharnum joined the channel
+2016-01-29T09:27:05 * alanharnum joined the channel
+2016-01-29T09:28:30 * alanharnum has quit
+2016-01-29T09:29:07 * alanharnum joined the channel
+2016-01-29T09:30:14 * amatas joined the channel
+2016-01-29T09:30:49 * alanharnum joined the channel
+2016-01-29T09:35:28 * alanharnum has quit
+2016-01-29T09:45:29 * gtirloni joined the channel
+2016-01-29T09:54:39 * jhernandez joined the channel
+2016-01-29T11:07:06 * amatas_ joined the channel
+2016-01-29T13:03:51 * jhung joined the channel
+2016-01-29T13:23:56 * Justin_o joined the channel
+2016-01-29T13:31:59 * the-t-in-rtf joined the channel
+2016-01-29T13:37:17 * yzen joined the channel
+2016-01-29T13:48:00 * brendan_d joined the channel
+2016-01-29T13:51:01 * yzen_ joined the channel
+2016-01-29T13:53:30 * michelled joined the channel
+2016-01-29T13:54:15 * yzen joined the channel
+2016-01-29T13:54:44 <brendan_d> Morning everyone. I have some questions about the tooltip feature, if anyone could help id appriciate it. Currently tryint to understand how to implment them on a button on a panel which does not already implement tooltips.
+2016-01-29T13:54:48 * simonjb joined the channel
+2016-01-29T13:58:30 * michelled joined the channel
+2016-01-29T14:00:43 * michelled has quit
+2016-01-29T14:06:24 * cindyli joined the channel
+2016-01-29T14:12:10 * michelled joined the channel
+2016-01-29T14:14:17 * alanharnum joined the channel
+2016-01-29T14:17:52 <Justin_o> brendan_d: did you add the attachTooltip grade?
+2016-01-29T14:19:08 <brendan_d> justin_o: yes, i used gpii.firstDiscovery.attachToolip.renderer
+2016-01-29T14:19:40 <brendan_d> Justin_o: and included the tooltipContentmap and the selectors
+2016-01-29T14:20:18 <brendan_d> Justin_o: i think the issue might be with connecting it to the template
+2016-01-29T14:21:31 <Justin_o> brendan_d: do you have some code we could look at and are you getting any errors?
+2016-01-29T14:23:03 * anastasiac joined the channel
+2016-01-29T14:25:38 <brendan_d> Justin_o: it doesn not return any errors. Basicaly what i did was create a new 'test button' in the panel and am trying to connect a tooltip to it. Im using the 'save' panel which is a new panel that we created in the last demo. i can send code, im just not sure what the best way to do that would be
+2016-01-29T14:28:58 <Justin_o> brendan_d: do you have something up in github? or a running demo that we could access remotely?
+2016-01-29T14:29:11 <Justin_o> if neither of those you could use something like http://pastebin.com to pass your code along
+2016-01-29T14:29:17 * simonjb has quit
+2016-01-29T14:30:07 <brendan_d> Justin_o: i havent pushed reciently since ive been working on this. let me get it up in a branch and ill send you the links so you can see what i have
+2016-01-29T14:30:21 <Justin_o> brendan_d: great thanks
+2016-01-29T14:33:36 * yzen joined the channel
+2016-01-29T14:39:15 * alanharnum has quit
+2016-01-29T14:42:27 <brendan_d> Justin-o: this is the save panel setup in panels.js https://github.com/bjderzin/first-discovery/blob/tooltips/src/js/panels.js#L1242-L1259
+"
+

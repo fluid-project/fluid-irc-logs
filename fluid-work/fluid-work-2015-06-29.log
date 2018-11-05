@@ -1,0 +1,239 @@
+b'2015-06-29T20:17:27 <colinclark> zomg alanharnum
+2015-06-29T20:17:49 <alanharnum> = 8) = 8) = 8)
+2015-06-29T20:18:08 <colinclark> :)
+2015-06-29T20:18:13 <alanharnum> glad to be here
+2015-06-29T20:18:22 <colinclark> everyone\'s smileys have sunglasses on today
+2015-06-29T20:18:34 <colinclark> what a cool irc channel
+2015-06-29T20:18:42 <simonjb> Bosmon7: https://gist.github.com/simonbates/b745cfb7ecf9f35b1a2e
+2015-06-29T20:19:05 <Bosmon7> Thanks simonjb
+2015-06-29T20:19:11 <Bosmon7> They are running fine for me on Windows here
+2015-06-29T20:19:26 <simonjb> Bosmon7: you are getting 145/145 ?
+2015-06-29T20:19:47 <Bosmon7> simonjb - yes
+2015-06-29T20:20:08 <simonjb> Bosmon7: ok, I will continue to debug, what version of node?
+2015-06-29T20:20:09 <Bosmon7> Although I have seen these ECONNREFUSED errors occasionally in longer test runs
+2015-06-29T20:20:14 <Bosmon7> Never on that particular fixture though
+2015-06-29T20:20:48 <simonjb> I\'m running v0.10.38
+2015-06-29T20:20:51 <Bosmon7> I have node version 0.10.34
+2015-06-29T20:21:32 <Bosmon7> simonjb - your test failure seems more peculiar though since it seems as if the server really has been stopped
+2015-06-29T20:21:33 <simonjb> do you think the version might be significant? I could try downgrading
+2015-06-29T20:21:47 <Bosmon7> The variety of that failure I have got has always been immediately after the server was started
+2015-06-29T20:21:50 <simonjb> I know
+2015-06-29T20:22:10 <simonjb> if I comment out the last test, I seem to always get a pass
+2015-06-29T20:22:17 <Bosmon7> simonjb - is the failure absolutely consistent?
+2015-06-29T20:23:15 <simonjb> Bosmon7: well, it\'s interesting -- if I run node AcceptanceTests_chrome_oauth2.js in a terminal, I always get the failure 143/145
+2015-06-29T20:23:27 <Bosmon7> urgh
+2015-06-29T20:23:28 <Bosmon7> One of these
+2015-06-29T20:23:33 <simonjb> however, before narrowing the issue to AcceptanceTests_chrome_oauth2.js
+2015-06-29T20:23:37 <Bosmon7> I had assumed this kind of thing could only happen on Windows :)
+2015-06-29T20:23:42 <simonjb> I was running all-tests.js
+2015-06-29T20:24:30 <simonjb> and in terminal I got 479/481, but redirecting output to a file, I got 479/479
+2015-06-29T20:25:18 <simonjb> so something fishy is going on
+2015-06-29T20:25:19 * anvk has quit
+2015-06-29T20:26:07 <Bosmon7> simonjb - in fact I get 143/143 on Windows
+2015-06-29T20:26:14 <simonjb> ah
+2015-06-29T20:26:25 <Bosmon7> The end sequence is identical, only the server closes AFTER the get requests and not before
+2015-06-29T20:28:56 <Bosmon7> simonjb - the fact that there are two requests to /settings is very suspicious
+2015-06-29T20:29:38 <Bosmon7> The request objects are actually one-shot only
+2015-06-29T20:29:49 <simonjb> node AcceptanceTests_chrome_oauth2.js > oauth2.out 2>&1 -- still 143/145
+2015-06-29T20:30:44 <simonjb> Bosmon7: maybe I\'ll try changing my node version and see if that makes a difference
+2015-06-29T20:31:10 <Bosmon7> simonjb - I think it won\'t
+2015-06-29T20:31:17 <Bosmon7> This looks like a real implementation fault
+2015-06-29T20:31:42 <simonjb> is there anyone else there who could run the tests on MacOS or another Linux install?
+2015-06-29T20:32:01 <Bosmon7> There is, but I think it will have to be tomorrow
+2015-06-29T20:32:13 <simonjb> the fact that it\'s working on Windows is a little worrying
+2015-06-29T20:32:28 <simonjb> ok
+2015-06-29T20:32:30 * colinclark has quit
+2015-06-29T20:32:56 <Bosmon7> simonjb - well, I think this might just be in the class of "implementation fault tickles undefined behaviour"
+2015-06-29T20:33:14 <Bosmon7> The first thing we should try is to get the last test fixture to print out the sequence configuration before running it
+2015-06-29T20:33:15 <simonjb> Bosmon7: that\'s plausible, yes
+2015-06-29T20:33:40 <Bosmon7> It\'s possible that the "truncateAt" directive isn\'t correctly chopping off the final elements
+2015-06-29T20:33:51 <simonjb> Bosmon7: ok, I
+2015-06-29T20:33:57 <simonjb> will try that now
+2015-06-29T20:34:02 <Bosmon7> simonjb - there\'s only one request object that can target /settings
+2015-06-29T20:34:17 <Bosmon7> The "securedSettingsRequest"
+2015-06-29T20:34:28 <Bosmon7> So we really shouldn\'t be seeing the request fired twice
+2015-06-29T20:34:45 <Bosmon7> And those request objects are quite likely to become corrupted if reused
+2015-06-29T20:35:18 * jhernandez has quit
+2015-06-29T20:48:02 * alanharnum has quit
+2015-06-29T20:49:20 * waharnum joined the channel
+2015-06-29T20:51:41 <simonjb> Bosmon7: I\'m still digging, but here\'s what I see: https://gist.github.com/simonbates/0b60811a4e5614c3dc0c
+2015-06-29T21:00:15 * gtirloni has quit
+2015-06-29T21:14:19 <simonjb> Bosmon7: I\'m wondering if https://github.com/GPII/universal/blob/master/tests/platform/cloud/AcceptanceTests_chrome_oauth2.js#L171 shouldn\'t simply be truncateAt: 14
+2015-06-29T21:16:29 * michelled has quit
+2015-06-29T21:17:22 * waharnum has quit
+2015-06-29T21:19:25 * jhung has quit
+2015-06-29T21:22:53 * the-t-in-rtf has quit
+2015-06-29T21:24:11 <Bosmon7> simonjb - that\'s entirely possible
+2015-06-29T21:24:20 * jhernandez joined the channel
+2015-06-29T21:25:37 <simonjb> Bosmon7: because using truncateAt: 15 chops off the last entry in the sequence (it\'s 16 long) and then leaves sendSecuredSettingsRequest as the 15th, final entry
+2015-06-29T21:26:14 <simonjb> we then insert our additional entries at 14, before this last sendSecuredSettingsRequest
+2015-06-29T21:26:28 <simonjb> leaving the sendSecuredSettingsRequest as the last entry
+2015-06-29T21:27:31 <simonjb> Bosmon7: if I change to truncateAt: 14 I get 143/143 and for all-tests 479/479
+2015-06-29T21:27:36 <simonjb> all passing
+2015-06-29T21:27:56 * avtar joined the channel
+2015-06-29T21:28:10 * avtar has quit
+2015-06-29T21:28:16 * avtar joined the channel
+2015-06-29T21:30:32 * Bosmon7 has quit
+2015-06-29T21:32:48 * jhernandez has quit
+2015-06-29T21:37:07 * kasparnet joined the channel
+2015-06-29T21:37:25 * jhernandez joined the channel
+2015-06-29T21:45:17 * simonjb has quit
+2015-06-29T21:55:01 * jhung joined the channel
+2015-06-29T22:17:43 * jhung has quit
+2015-06-29T22:43:47 * jhernandez has quit
+2015-06-29T22:49:03 * kasparnet has quit
+2015-06-29T23:01:47 * jhernandez joined the channel
+'
+
+b'2015-06-29T07:32:13 * the-t-in-rtf joined the channel
+2015-06-29T07:34:49 * jhernandez joined the channel
+2015-06-29T09:45:24 * Bosmon7 joined the channel
+2015-06-29T09:48:22 * kasparnet joined the channel
+2015-06-29T09:49:33 * colinclark joined the channel
+2015-06-29T09:55:49 * jhernandez has quit
+2015-06-29T10:31:32 <kasparnet> Bosmon: http://piratepad.net/ep/pad/view/c4a-arch-29-10-2014/UK4CwimNsN
+2015-06-29T10:32:12 <kasparnet> and sgithens______ ^
+2015-06-29T10:34:42 <kasparnet> https://code.stypi.com/kaspermarkus/Solution%20registry%20format.json
+2015-06-29T10:34:48 <kasparnet> sgithens______ Bosmon ^
+2015-06-29T11:16:27 <kasparnet> sgithens______: https://docs.google.com/document/d/1y4_BA0vj6LZ8L1DkjFquonr__EKHyGcZrBw6C6Z1ZLs/edit#heading=h.cabchfuf294o
+2015-06-29T11:28:12 * the-t-in-rtf has quit
+2015-06-29T11:34:15 * jhung joined the channel
+2015-06-29T12:16:54 * Justin_o joined the channel
+2015-06-29T12:34:47 * gtirloni joined the channel
+2015-06-29T12:41:23 * kasparnet has quit
+2015-06-29T12:45:17 * gtirloni has quit
+2015-06-29T12:52:50 * anvk joined the channel
+2015-06-29T12:59:24 * gtirloni joined the channel
+2015-06-29T13:02:06 * jessm joined the channel
+2015-06-29T13:02:54 * simonjb joined the channel
+2015-06-29T13:04:08 * michelled joined the channel
+2015-06-29T13:08:41 * kasparnet joined the channel
+2015-06-29T13:12:05 <simonjb> http://piratepad.net/mIPptndULV
+2015-06-29T13:19:43 * gtirloni has quit
+2015-06-29T13:20:42 * clown joined the channel
+2015-06-29T13:34:11 * gtirloni joined the channel
+2015-06-29T14:01:35 * simonjb has quit
+2015-06-29T14:02:07 * simonjb joined the channel
+2015-06-29T14:03:46 * murilocrivellari joined the channel
+2015-06-29T14:16:59 <simonjb> https://wiki.gpii.net/w/Security_meeting_2015-04-08
+2015-06-29T14:17:28 <simonjb> https://wiki.gpii.net/w/Security_meeting_2015-02-25
+2015-06-29T14:17:41 <simonjb> https://wiki.gpii.net/w/Security_meeting_2015-03-03
+2015-06-29T14:21:38 <michelled> https://docs.google.com/document/d/1BN3j2N00QB4kvFoRLHaUYSAxn7sUYeMCWL6vaH70KUQ/edit#
+2015-06-29T14:22:01 <simonjb> https://wiki.gpii.net/w/Security_meeting_2015-05-12
+2015-06-29T15:01:03 * michelled1 joined the channel
+2015-06-29T15:02:28 <michelled1> jhung, Justin_o, murilocrivellari: let\'s have our floe planning meeting
+2015-06-29T15:02:42 <jhung> ok michelled1.
+2015-06-29T15:10:17 * avtar joined the channel
+2015-06-29T16:10:09 <kasparnet> simonjb: https://docs.google.com/document/d/1y4_BA0vj6LZ8L1DkjFquonr__EKHyGcZrBw6C6Z1ZLs/edit#
+2015-06-29T16:10:21 * slim_ joined the channel
+2015-06-29T16:16:24 * slim_ has quit
+2015-06-29T16:18:12 * slim_ joined the channel
+2015-06-29T16:27:53 * michelled1 has quit
+2015-06-29T16:29:12 * michelled joined the channel
+2015-06-29T16:30:04 * the-t-in-rtf joined the channel
+2015-06-29T17:21:40 * clown has quit
+2015-06-29T17:33:28 <gtirloni> i\'ve got a weird problem and i\'m not sure i\'m trying to use the prefs server in the right way
+2015-06-29T17:33:29 * michelled joined the channel
+2015-06-29T17:33:48 <gtirloni> a "GET /user/elaine" is returning 404.. but it doesn\'t even attempt to connect to the couchdb server
+2015-06-29T17:34:11 <gtirloni> any ideas? i confirmed the configs/production.json has the right server address for couchdb
+2015-06-29T17:46:55 * jhernandez joined the channel
+2015-06-29T17:55:16 <colinclark> hey kasparnet ^
+2015-06-29T17:56:04 <kasparnet> gtirloni: hmm... not sure -- I\'m not that well versed in the couchdb stuf.. Generally, when getting preferences, I do it via the prefs server
+2015-06-29T17:56:13 <kasparnet> which would be "GET /preferences/elaine"
+2015-06-29T17:56:26 <colinclark> that URL changed a while ago, didn\'t it kasparnet?
+2015-06-29T17:56:29 <kasparnet> or "GET /rawPreferences/elaine" which is the more direct/unmodified route
+2015-06-29T17:56:33 <kasparnet> yeah, it did indeed
+2015-06-29T17:56:34 <colinclark> didn\'t it use to be /user/<token> ?
+2015-06-29T17:56:35 <colinclark> aha
+2015-06-29T17:56:38 <kasparnet> yeah
+2015-06-29T17:56:44 <colinclark> gtirloni probably has old tests
+2015-06-29T17:56:49 <kasparnet> oh yeah
+2015-06-29T17:56:53 <colinclark> gtirloni: just for the record, kasparnet changed the API ;)
+2015-06-29T17:56:57 <colinclark> :P
+2015-06-29T17:57:07 <kasparnet> it\'s well documented
+2015-06-29T17:57:29 <kasparnet> https://github.com/GPII/universal/blob/master/documentation/PreferencesServerFramework.md
+2015-06-29T17:57:42 <kasparnet> "colinclark": what? documentation? what is that?
+2015-06-29T17:57:45 <colinclark> "rtfm," says\x1c kasparnet
+2015-06-29T18:01:01 <gtirloni> ah, /prefereces/elaine worked, connecting to the prefs server.. cool :)
+2015-06-29T18:01:13 <gtirloni> the tests are connecting to \'rbmm-java\' components and trying \'get /user/elaine\'
+2015-06-29T18:01:21 <colinclark> how odd
+2015-06-29T18:01:31 <colinclark> they are old and strangely named, i guess
+2015-06-29T18:02:29 <gtirloni> i think i\'m using the one from a gist avtar posted here.. not sure it\'s the latest https://gist.github.com/avtar/4a13f34346f9b54a49b4
+2015-06-29T18:06:56 <colinclark> gtirloni: I think the preference set in this gist will also need to be updated
+2015-06-29T18:07:03 <colinclark> kasparnet: is that your impression as well?
+2015-06-29T18:08:49 <kasparnet> yes, definitely! It\'ll need to be updated
+2015-06-29T18:08:59 * kasparnet is digging up preferences sets examples
+2015-06-29T18:09:22 <kasparnet> gtirloni: here are examples of preferences sets
+2015-06-29T18:09:24 <kasparnet> https://github.com/GPII/universal/tree/master/testData/preferences
+2015-06-29T18:09:40 <gtirloni> yeah, i seeded the database with those
+2015-06-29T18:10:12 <kasparnet> so, if you get them directly from couch or via the "rawPreferences/*" URL, they should stay keyed by the "flat", etc
+2015-06-29T18:12:44 <kasparnet> whereas if you\'re getting them from the /preferences/* URL
+2015-06-29T18:12:51 <kasparnet> they\'d loose the "flat" part
+2015-06-29T18:13:13 <kasparnet> (some of them would be modified a bit if they contain things in a "iso24751" key
+2015-06-29T18:13:18 <kasparnet> )*
+2015-06-29T18:13:23 <gtirloni> got it, that seems to be how it\'s working
+2015-06-29T18:13:34 <gtirloni> i\'ll adjust the tests
+2015-06-29T18:13:40 <gtirloni> thanks!
+2015-06-29T18:14:25 <kasparnet> gtirloni: no problem
+2015-06-29T18:15:01 <kasparnet> btw - dont know whether that\'s supposed to be part of the testing, but to excersize the ontologizer, you can add a parameter, like: http://preferences.gpii.net/preferences/sammy?view=ISO24751 ... which would give you the prefs in a different ontology
+2015-06-29T18:15:12 <kasparnet> I\'ll let you and colinclark decide whether that\'s relevant
+2015-06-29T18:15:37 <colinclark> kasparnet: Is there some form of ontologization that happens by default?
+2015-06-29T18:15:57 <colinclark> you may actually be the best person to advise us on what\'s most relevant to test
+2015-06-29T18:16:18 <colinclark> goal wise, gtirloni is trying to run performance benchmarks on the current version of "the preferences server"
+2015-06-29T18:16:18 <kasparnet> colinclark: well - by default we always ontologize into the "flat" format
+2015-06-29T18:16:22 <colinclark> ok
+2015-06-29T18:16:48 <murilocrivellari> hey, michelled: the sonification wiki page is fully updated. What\'s the best way to share it with the community?
+2015-06-29T18:16:49 <kasparnet> but since all the prefs are in this format, the ontologization is not really used in the prefs server
+2015-06-29T18:17:09 <kasparnet> ... we ARE doing some ontologization more often, but that\'s locally, not on the prefs server
+2015-06-29T18:18:18 <colinclark> ok
+2015-06-29T18:18:27 <colinclark> probably it\'s best to test "current practice"
+2015-06-29T18:18:38 <colinclark> so if the majority of our preferences are flat, we should test those
+2015-06-29T18:18:46 <colinclark> and we\'ll see the performance of the ontologizer in the base case
+2015-06-29T18:18:53 <michelled> murilocrivellari: great! Maybe send a message for fluid-work asking for some feedback
+2015-06-29T18:19:52 <gtirloni> i think i was confused because the old tests seem to be using an architecture that had matchmaker, flow-manager, etc.. but now i see the report mentions only the preferences server. so i guess i was trying to make something much bigger work
+2015-06-29T18:19:53 <murilocrivellari> michelled: awesome, will do. Thanks!
+2015-06-29T18:20:36 <colinclark> gtirloni: The phase two goal will be to test against the larger architecture
+2015-06-29T18:20:50 <colinclark> i.e. to simonjb\'s version of the "secure cloud-based flow manager"
+2015-06-29T18:21:13 <colinclark> but for now it\'d be good to get numbers that can directly compare to what michelled had in the document most recently
+2015-06-29T18:21:25 <gtirloni> right, yeah.. the playbook i got also includes the secure flow manager..
+2015-06-29T18:21:26 <gtirloni> ok got it
+2015-06-29T18:21:37 <gtirloni> testing only prefs server
+2015-06-29T18:25:05 <colinclark> cool
+2015-06-29T18:25:51 <colinclark> sgithens______: https://github.com/fluid-project/infusion-docs/
+2015-06-29T18:26:26 * slim_ has quit
+2015-06-29T18:29:19 <simonjb> hi michelled, I\'m going to start looking at the hybrid flow manager for demo 5.2 -- I see we have the general https://issues.gpii.net/browse/GPII-1218 -- is there a jira filed for 5.2 yet?
+2015-06-29T18:29:44 <michelled> I don\'t think so simonjb
+2015-06-29T18:29:55 <simonjb> ok, thanks, I\'ll make one
+2015-06-29T18:30:10 <michelled> thanks! can you also drop the JIRA number into the year 4 plan?
+2015-06-29T18:30:25 <simonjb> michelled: yes, for sure
+2015-06-29T18:30:51 <michelled> thx
+2015-06-29T18:36:15 * jhung has quit
+2015-06-29T18:44:06 <simonjb> michelled: https://issues.gpii.net/browse/GPII-1224 and added to year 4 demo script
+2015-06-29T18:47:34 * the-t-in-rtf has quit
+2015-06-29T18:56:17 * jhernandez has quit
+2015-06-29T18:56:47 * waharnum joined the channel
+2015-06-29T18:57:16 * avtar has quit
+2015-06-29T18:57:26 * kasparnet has quit
+2015-06-29T18:59:22 <alanharnum> good day all
+2015-06-29T19:00:01 <alanharnum> i am very happy to join the IDRC!
+2015-06-29T19:01:52 <murilocrivellari> alanharnum: welcome! :)
+2015-06-29T19:02:30 <alanharnum> 8)
+2015-06-29T19:03:20 * alanharnum has left the channel
+2015-06-29T19:03:29 * alanharnum joined the channel
+2015-06-29T19:11:04 * albertop_ joined the channel
+2015-06-29T19:12:58 * jhung joined the channel
+2015-06-29T19:13:10 <albertop_> heyhey
+2015-06-29T19:14:16 <albertop_> glad to be here 8)
+2015-06-29T19:17:29 <Justin_o> albertop_, alanharnum: welcome :)
+2015-06-29T19:18:05 <alanharnum> i\xe2\x80\x99ve missed talking on IRC with people i\xe2\x80\x99m sitting next to / across from :D
+2015-06-29T19:18:44 <michelled> :)
+2015-06-29T19:21:41 <albertop_> lol... ok I will repeat it on chat "thanks" :-D
+2015-06-29T19:36:22 * albertop_ has quit
+2015-06-29T19:56:50 <simonjb> Bosmon, Bosmon7: are you still working?
+2015-06-29T20:10:48 * the-t-in-rtf joined the channel
+2015-06-29T20:13:37 * jhernandez joined the channel
+2015-06-29T20:14:27 <Bosmon7> Hi there simonjb
+2015-06-29T20:16:14 <simonjb> Bosmon7: I\'m getting a failure in AcceptanceTests_chrome_oauth2.js (on Linux) and was wondering if it was running ok for you?
+2015-06-29T20:17:00 <simonjb> the last test "Test ability to revoke an authorization decision" is failing
+'
+

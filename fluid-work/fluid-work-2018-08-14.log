@@ -1,0 +1,184 @@
+b"2018-08-14T18:58:49 * simonjb has quit
+2018-08-14T19:00:13 <sgithens> Bosmon, cindyli : Are there built-in timeout features in the URL and/or CouchDB datasources?
+2018-08-14T19:00:25 <sgithens> such that they'd return an error of some sort
+2018-08-14T19:00:32 <Bosmon> sgithens - no
+2018-08-14T19:00:45 <sgithens> I think we'll probably need to bake some of that in
+2018-08-14T19:00:51 <Bosmon> sgithens - yes
+2018-08-14T19:01:24 <sgithens> are the couch db datasources based directly off the URL datasources or do they do special stuff from scratch
+2018-08-14T19:02:13 <Bosmon> They are just listeners: https://github.com/fluid-project/kettle/blob/master/lib/dataSource-core.js#L307
+2018-08-14T19:03:40 <sgithens> huh
+2018-08-14T19:03:52 <Bosmon> sgithens - also note https://issues.fluidproject.org/browse/KETTLE-68
+2018-08-14T19:04:58 * alanharnum2 joined the channel
+2018-08-14T19:05:07 <sgithens> Bosmon cool thx
+2018-08-14T19:06:03 <sgithens> so you would make a datasource that has both the datasource.URL and datasource.couch grades
+2018-08-14T19:06:18 <sgithens> or theoretically something else if it wasn't a URL
+2018-08-14T19:06:29 <sgithens> maybe an in process call to pouchdb
+2018-08-14T19:07:12 <Bosmon> sgithens - yes, this is why dataSource.CouchDB is a mixin
+2018-08-14T19:08:20 * alanharnum1 has quit
+2018-08-14T19:19:19 <gmoss> Justin_o: ping
+2018-08-14T19:19:24 <Justin_o> hello
+2018-08-14T20:03:35 * gtirloni joined the channel
+2018-08-14T20:07:27 * gtirloni_ joined the channel
+2018-08-14T20:10:27 * gtirloni has quit
+2018-08-14T20:35:10 * gtirloni__ joined the channel
+2018-08-14T20:39:15 * gtirloni__ is now known as gtirloni
+2018-08-14T21:18:43 * gtirloni has quit
+2018-08-14T22:46:08 * Justin_o has quit
+2018-08-14T22:59:33 * colinclark has quit
+2018-08-14T22:59:57 * colinclark joined the channel
+2018-08-14T23:09:03 * colinclark joined the channel
+2018-08-14T23:21:56 * colinclark has quit
+"
+
+b'2018-08-14T02:43:22 * danayo joined the channel
+2018-08-14T02:55:40 * sepidehshahi joined the channel
+2018-08-14T03:02:39 * danayo has quit
+2018-08-14T07:37:30 * georgitodorov joined the channel
+2018-08-14T09:44:11 <georgitodorov> Bosmon, jhernandez: We took a look at the highContrastTheme not being in sync between the PSP and the QSS
+2018-08-14T09:45:17 <georgitodorov> Indeed, as Bosmon has suggested, this is the current behavior because as per the call yesterday I think we agreed that the main focus of the demo today will be the QSS.
+2018-08-14T09:45:49 <georgitodorov> The setting in the QSS has a different path that the two corresponding settings in the PSP
+2018-08-14T09:47:07 <georgitodorov> Also, we noticed that if a user keys in and changes the high contrast theme from the QSS, an error occurs in the PSP panel (cannot ready property ... of undefined). This happens because the Core returns the "common/highContrastTheme" setting back without a schema property and the PSP does not know how to visualize it.
+2018-08-14T09:47:45 <georgitodorov> We created a small fix which strips settings that do not have a schema and does not display them in the PSP. However, as the demo is today, I am not sure whether this should go in.
+2018-08-14T09:49:05 <georgitodorov> We should definitely send a mail to Gregg to notify him about this scenario in case we do not create a new build.
+2018-08-14T09:49:08 <georgitodorov> Any thoughts?
+2018-08-14T09:56:02 * dandimitrov joined the channel
+2018-08-14T10:11:17 <jhernandez> georgitodorov: hmm, how did you key-in? maybe using the "login" endpoint?
+2018-08-14T10:12:08 <georgitodorov> jhernandez: Using the context menu of the PSP tray icon
+2018-08-14T10:12:18 <jhernandez> and that uses .... ?
+2018-08-14T10:13:05 <jhernandez> okay, "proximityTriggered" as I can see
+2018-08-14T10:13:35 <jhernandez> not sure, have you tried saving any of these np sets? which user it was with? Not seeing the problem here
+2018-08-14T10:14:41 <jhernandez> for the record, you shouldn\'t click on "Save" while keyed in as one of the snapsets (snapset_1a, 2b, etc)
+2018-08-14T10:14:46 <jhernandez> georgitodorov: ^
+2018-08-14T10:16:08 <georgitodorov> jhernandez: No, I haven\'t saved anything (as a matter of fact I am using the gpii.config.untrusted.development.all.local.json5 in case to avoid any accidental saves)
+2018-08-14T10:16:18 * yuriy__ joined the channel
+2018-08-14T10:16:26 <georgitodorov> The issue occurs even without saving
+2018-08-14T10:17:06 <georgitodorov> If you change the High contrast setting when there is a keyed in user, you will see a blue strip in the PSP with an exclamation mark
+2018-08-14T10:39:32 <jhernandez> georgitodorov: ok, I can see it now
+2018-08-14T10:39:57 <jhernandez> and, bonus points for using all.local config
+2018-08-14T10:39:59 <jhernandez> :)
+2018-08-14T10:40:19 <jhernandez> okay
+2018-08-14T10:40:41 <jhernandez> well, as long as Gregg doesn\'t try changing the prefs on the PSP we should be "just fine"
+2018-08-14T10:41:26 <jhernandez> in any case, yes, we should warn them about this issue
+2018-08-14T10:45:41 <georgitodorov> jhernandez: Not only that. If a user keys in and the change originated from the QSS, the PSP will be messed up
+2018-08-14T10:46:16 <georgitodorov> So, no "High Contrast" theme changes should be made when there is a keyed in user
+2018-08-14T10:46:38 <jhernandez> okay
+2018-08-14T10:46:52 <jhernandez> I assume all the rest is working fine and the problem is only with the highContrast
+2018-08-14T10:49:33 * dandimitrov has quit
+2018-08-14T10:50:06 <georgitodorov> jhernandez: that\'s right
+2018-08-14T10:50:32 <georgitodorov> I will reply in your email thread from last night and will describe the problem in detail
+2018-08-14T10:52:08 <jhernandez> just did that
+2018-08-14T10:52:25 <jhernandez> feel free to add further clarifications if any
+2018-08-14T10:52:28 <jhernandez> ;)
+2018-08-14T10:52:45 <jhernandez> georgitodorov: ^
+2018-08-14T10:53:26 * dandimitrov joined the channel
+2018-08-14T10:56:37 <georgitodorov> jhernandez: thanks, Javi! I don\'t have anything to add there :)
+2018-08-14T11:03:38 <jhernandez> great
+2018-08-14T11:03:40 <jhernandez> :)
+2018-08-14T11:03:44 <jhernandez> now I gotta leave
+2018-08-14T11:04:24 <jhernandez> but will be around in an hour or so
+2018-08-14T11:04:26 <jhernandez> cheers
+2018-08-14T11:08:51 * jhernandez has quit
+2018-08-14T11:10:08 * dandimitrov has quit
+2018-08-14T11:19:04 * dandimitrov joined the channel
+2018-08-14T11:28:53 <georgitodorov> jhernandez: I pushed our small fix to this branch in case it is needed: https://github.com/danailbd/gpii-app/tree/feature/noSchemaSettingFix
+2018-08-14T11:28:59 <the-t-in-rtf> @Bosmon and @sgithens, I will jump into my room for our meeting shortly.
+2018-08-14T11:31:36 <sgithens> cool
+2018-08-14T11:33:08 <the-t-in-rtf> Or is Vidyo still a problem, @Bosmon?
+2018-08-14T11:40:52 <Bosmon> the-t-in-rtf - yes, I still haven\'t got it working
+2018-08-14T11:41:07 <the-t-in-rtf> It\'s fine, we\'re switching to Skype now.
+2018-08-14T12:04:48 * alanharnum joined the channel
+2018-08-14T12:19:16 * georgitodorov has quit
+2018-08-14T12:20:51 * Justin_o joined the channel
+2018-08-14T12:21:44 * georgitodorov joined the channel
+2018-08-14T12:23:54 <the-t-in-rtf> @stegru, is your work on the new INI file handler part of GPII-2212?
+2018-08-14T12:24:05 <the-t-in-rtf> I noticed a reference to that branch in universal master when I updated.
+2018-08-14T12:24:12 <stegru> no..
+2018-08-14T12:24:26 <the-t-in-rtf> so, the new INI file handler is master already?
+2018-08-14T12:24:38 <the-t-in-rtf> in master
+2018-08-14T12:24:49 <stegru> yes.. GPII-2365, it\'s in master
+2018-08-14T12:24:54 <the-t-in-rtf> great, thanks.
+2018-08-14T12:24:58 <stegru> https://github.com/GPII/universal/pull/635
+2018-08-14T12:25:08 <the-t-in-rtf> My next question is, do I need to merge in GPII-2212 with my own work for all tests to pass?
+2018-08-14T12:25:23 <the-t-in-rtf> I mean, master uses it, are there tests in windows master that need changes from that universal branch?
+2018-08-14T12:25:39 <stegru> why do you need 2212?
+2018-08-14T12:25:43 <the-t-in-rtf> dude.
+2018-08-14T12:25:49 <the-t-in-rtf> master of windows uses it.
+2018-08-14T12:26:03 <the-t-in-rtf> I just want to know if I can use master of universal instead, basically.
+2018-08-14T12:26:09 <the-t-in-rtf> i.e. why is master of windows using that branch.
+2018-08-14T12:26:27 <stegru> oh! 2212 is in master, on both repos
+2018-08-14T12:26:42 <the-t-in-rtf> https://github.com/GPII/windows/blob/master/package.json#L20
+2018-08-14T12:26:59 <stegru> ok, that shouldn\'t be like that
+2018-08-14T12:26:59 <the-t-in-rtf> Yes, I want to know if I need to update my UNIVERSAL pull
+2018-08-14T12:27:12 <the-t-in-rtf> Ah, OK, so, no reason I have to use that.
+2018-08-14T12:27:13 <the-t-in-rtf> great.
+2018-08-14T12:27:15 <the-t-in-rtf> that\'s why I asked.
+2018-08-14T12:27:23 <stegru> yes, sorry, didn\'t realise it was like that
+2018-08-14T12:27:34 <the-t-in-rtf> it\'s fine, many eyes make shallow bugs, etc etc
+2018-08-14T12:27:53 <the-t-in-rtf> I\'m never all that upset to find something that needs fixing as long as I can find someone who cares that it doesn\'t work.
+2018-08-14T12:27:57 <stegru> Bosmon: https://github.com/GPII/windows/blob/master/package.json#L20
+2018-08-14T12:48:09 <Bosmon> stegru - oh dear, sorry
+2018-08-14T13:03:55 * simonjb joined the channel
+2018-08-14T13:08:50 * gtirloni joined the channel
+2018-08-14T13:10:06 * cindyli joined the channel
+2018-08-14T13:10:38 * dandimitrov has quit
+2018-08-14T13:13:08 * sepidehshahi joined the channel
+2018-08-14T13:18:45 * georgitodorov has quit
+2018-08-14T13:24:07 * dandimitrov joined the channel
+2018-08-14T13:24:21 * simonjb has quit
+2018-08-14T13:33:43 * dandimitrov has quit
+2018-08-14T13:37:51 * colinclark joined the channel
+2018-08-14T13:42:07 * colinclark has quit
+2018-08-14T13:43:40 * colinclark joined the channel
+2018-08-14T14:04:05 * cindyli has quit
+2018-08-14T14:04:19 * cindyli joined the channel
+2018-08-14T14:27:50 * jhernandez joined the channel
+2018-08-14T14:29:30 * jhernandez has quit
+2018-08-14T14:29:40 * jhernandez joined the channel
+2018-08-14T14:31:13 * jhernandez has quit
+2018-08-14T14:31:24 * jhernandez joined the channel
+2018-08-14T14:35:58 * yuriy joined the channel
+2018-08-14T14:39:10 * yuriy__ has quit
+2018-08-14T14:40:52 * dandimitrov joined the channel
+2018-08-14T14:42:20 * yuriy has quit
+2018-08-14T14:42:27 * yuriy joined the channel
+2018-08-14T14:46:05 * alanharnum joined the channel
+2018-08-14T14:50:51 * alanharnum joined the channel
+2018-08-14T15:00:31 <alanharnum> shire
+2018-08-14T15:00:36 <Justin_o> fluid-everyone: should we do a planning meeting today? not sure how many people are available
+2018-08-14T15:01:16 <gmoss> Justin_o: I was wondering the same thing. I\'m remote at the moment, but I could make myself available
+2018-08-14T15:01:55 * Kavya joined the channel
+2018-08-14T15:01:58 * danayo joined the channel
+2018-08-14T15:02:07 <Justin_o> gmoss: thanks.. if it\'s just the two of us we\'ll probably cancel though..
+2018-08-14T15:02:28 <alanharnum> I\'m available as well, we could check in quickly
+2018-08-14T15:05:26 <gmoss> Justin_o alanharnum: I\'m ready whenever!
+2018-08-14T15:07:09 * yuriy__ joined the channel
+2018-08-14T15:09:50 * dandimitrov has quit
+2018-08-14T15:10:10 * yuriy has quit
+2018-08-14T15:20:35 <gmoss> perhaps we could just give little updates at standup
+2018-08-14T15:20:50 <Justin_o> gmoss: sorry.. yes.. that sounds better
+2018-08-14T15:20:52 * dandimitrov joined the channel
+2018-08-14T15:42:29 * yuriy joined the channel
+2018-08-14T15:45:37 * yuriy__ has quit
+2018-08-14T16:28:11 * yuriy__ joined the channel
+2018-08-14T16:28:36 * dandimitrov has quit
+2018-08-14T16:31:49 * yuriy has quit
+2018-08-14T16:56:25 * g2szeto joined the channel
+2018-08-14T16:58:49 * alanharnum2 joined the channel
+2018-08-14T17:08:03 * alanharnum2 is now known as alanharnum
+2018-08-14T17:37:50 * colinclark has quit
+2018-08-14T17:38:57 * yuriy__ has quit
+2018-08-14T17:41:27 * g2szeto has quit
+2018-08-14T17:52:47 * danayo has quit
+2018-08-14T17:59:54 * Kavya has quit
+2018-08-14T18:08:05 * alanharnum joined the channel
+2018-08-14T18:19:54 * gtirloni has quit
+2018-08-14T18:23:52 * alanharnum1 joined the channel
+2018-08-14T18:24:43 <alanharnum1> hangin\' out at 100 McCaul for a bit to make sure we don\'t need to activate robo-Gio again, back to the IDRC for 3:00 or so
+2018-08-14T18:28:24 * gtirloni joined the channel
+2018-08-14T18:47:09 <Justin_o> gmoss: let me know when you\'d like to pair up.. I should be able to make time whenever
+2018-08-14T18:47:34 <gmoss> Justin_o: thanks! I\'m just about to eat lunch quickly and I\'m good after that
+2018-08-14T18:47:51 <Justin_o> gmoss: sounds good.. ping me when you\'re ready
+2018-08-14T18:49:58 * colinclark joined the channel
+2018-08-14T18:58:14 * simonjb joined the channel
+'
+

@@ -1,0 +1,348 @@
+b"2017-10-31T17:56:53 * amatas has quit
+2017-10-31T18:03:52 <Bosmon> Justin_o - why is there a queue if we expect only one request to be in flight?
+2017-10-31T18:04:01 <Bosmon> Also, storing a promise in the model area isn't really advisable
+2017-10-31T18:04:19 <Bosmon> I assume on line 37 you meant that.model.requests
+2017-10-31T18:05:51 <Bosmon> Well, sometimes it is in the model and sometimes on the component...
+2017-10-31T18:06:05 <Bosmon> But in general the model is the wrong place for such a request queue
+2017-10-31T18:06:14 * danayo joined the channel
+2017-10-31T18:06:28 <Bosmon> Also the component fails to distinguish between reads and writes which in the initial impl have a fundamentally different meaning
+2017-10-31T18:06:37 * alanharnum joined the channel
+2017-10-31T18:09:02 <Bosmon> Any fetch request can substitute for any other - however many times the user requests a fetch whilst a request is in progress, there will be only one issued
+2017-10-31T18:09:15 <Bosmon> I guess the same is try for a write in the initial impl as well
+2017-10-31T18:09:20 <Bosmon> try -> true
+2017-10-31T18:12:24 * michelled joined the channel
+2017-10-31T18:14:13 * alanharnum joined the channel
+2017-10-31T18:26:37 * sepidehshahi joined the channel
+2017-10-31T18:29:30 <Justin_o> Bosmon: but wouldn't that suggest that we debounce them?
+2017-10-31T18:29:44 <Justin_o> the purpose for having a queue is so that none of the requests are lost
+2017-10-31T18:49:26 <cindyli> Justin_o: i left a comment on https://github.com/fluid-project/infusion-docs/pull/127
+2017-10-31T18:50:21 <Justin_o> cindyli: thanks
+2017-10-31T18:50:28 <cindyli> np
+2017-10-31T18:51:05 <Justin_o> cindyli: have a minute for me to drop by and chat?
+2017-10-31T18:51:13 <cindyli> sure
+2017-10-31T18:51:19 <Justin_o> thanks
+2017-10-31T18:56:50 <Justin_o> cindyli: the PR is updated again
+2017-10-31T18:57:07 <cindyli> ok
+2017-10-31T19:24:41 * sepidehshahi joined the channel
+2017-10-31T19:32:45 * alanharnum joined the channel
+2017-10-31T19:51:15 * kavya has quit
+2017-10-31T20:03:39 * danayo joined the channel
+2017-10-31T20:24:44 * sepidehshahi joined the channel
+2017-10-31T20:24:58 * avtar joined the channel
+2017-10-31T20:29:14 * clown joined the channel
+2017-10-31T20:39:03 * alanharnum joined the channel
+2017-10-31T20:40:27 * danayo_ joined the channel
+2017-10-31T20:58:19 * mrtyler joined the channel
+2017-10-31T21:06:55 * danayo_ joined the channel
+2017-10-31T21:17:08 * alanharnum2 joined the channel
+2017-10-31T21:43:30 * alanharnum joined the channel
+2017-10-31T21:57:13 * mrtyler joined the channel
+2017-10-31T22:46:13 * alanharnum joined the channel
+2017-10-31T23:06:51 * stegru has quit
+2017-10-31T23:07:23 * mrtyler joined the channel
+"
+
+b'2017-10-31T14:22:52 <mrtyler> i accept your canadian greeting :p
+2017-10-31T14:22:56 <colinclark> hahaha
+2017-10-31T14:23:01 * georgit has quit
+2017-10-31T14:24:31 <amatas> reading...
+2017-10-31T14:28:15 <colinclark> Did you look at all at Kuberetes Operators when you were designing your CouchDB clustering solution, amatas?
+2017-10-31T14:28:34 <colinclark> it seems like one of the ways to implement "application domain logic" for Kube if necessary
+2017-10-31T14:33:42 <amatas> colinclark: that is the way to go, but I didn\'t find any implementation of that operator enough mature
+2017-10-31T14:34:35 <amatas> the reason why we use goss instead of the kubernetes internal checks, is that goss also can check the response of the request instead only the status number: https://github.com/amatas/gpii-infra/blob/GPII-2544/modules/deploy/24-couchdb-healthz.erb#L16
+2017-10-31T14:34:42 <colinclark> is a home-rolled solution more mature, though? :)
+2017-10-31T14:36:24 <amatas> operators seem more complex to implement, the "home-rolled" only implies the sidekick container. Also I didn\'t start from 0, I used a group of manifests and containers that work
+2017-10-31T14:37:12 <amatas> I found this operator: https://github.com/nicolai86/couchdb-operator
+2017-10-31T14:37:41 <colinclark> What status does CouchDB\'s _up endpoint return prior to it being ready?
+2017-10-31T14:37:44 * sepidehshahi joined the channel
+2017-10-31T14:37:48 <colinclark> yes, that one looked like it still needed some work
+2017-10-31T14:38:04 <amatas> and this repository that also creates a CouchDB cluster: https://github.com/joeblackwaslike/docker-couchdb
+2017-10-31T14:38:16 <amatas> my work is based on the last repository
+2017-10-31T14:47:15 * michelled has quit
+2017-10-31T14:48:14 * kavya joined the channel
+2017-10-31T14:49:43 * jhung joined the channel
+2017-10-31T14:49:59 * michelled joined the channel
+2017-10-31T14:50:23 <michelled> fluid-everyone: IDRC planning will be at 11:00 today
+2017-10-31T14:52:25 * sepidehshahi joined the channel
+2017-10-31T14:57:09 * sepidehshahi joined the channel
+2017-10-31T15:00:19 <michelled> fluid-everyone: planning is starting now
+2017-10-31T15:00:42 <danayo> michelled: alanharnum and I are just wrapping up our SJRK meeting
+2017-10-31T15:02:59 * jhernandez joined the channel
+2017-10-31T15:05:47 * alanharnum joined the channel
+2017-10-31T15:09:51 * alanharnum has quit
+2017-10-31T15:48:14 * dandimitrov has quit
+2017-10-31T15:49:30 * clown has quit
+2017-10-31T15:53:09 * jhung has quit
+2017-10-31T15:54:57 * jhung joined the channel
+2017-10-31T15:56:33 * sepidehshahi joined the channel
+2017-10-31T15:58:19 * sepidehshahi has quit
+2017-10-31T15:58:34 * sepidehshahi joined the channel
+2017-10-31T16:00:16 * alanharnum joined the channel
+2017-10-31T16:02:58 <Bosmon> Hi there jhernandez - are you available for our "surveys and dialogs" chat?
+2017-10-31T16:03:05 <jhernandez> yes
+2017-10-31T16:03:35 <jhernandez> is already happening, I saw Sandra added me to a chat but didn\'t calle
+2017-10-31T16:03:41 <jhernandez> *call
+2017-10-31T16:03:46 <jhernandez> ?
+2017-10-31T16:04:21 * alanharnum has quit
+2017-10-31T16:04:32 * jhung joined the channel
+2017-10-31T16:04:47 * alanharnum joined the channel
+2017-10-31T16:04:51 * jhung joined the channel
+2017-10-31T16:09:03 * alanharnum has quit
+2017-10-31T16:10:14 * clown joined the channel
+2017-10-31T16:10:21 * avtar joined the channel
+2017-10-31T16:19:42 * kasparnet has quit
+2017-10-31T16:19:46 * danayo has quit
+2017-10-31T16:32:47 * alanharnum joined the channel
+2017-10-31T16:36:32 * simonjb has quit
+2017-10-31T16:38:24 <Justin_o> cindyli: https://github.com/fluid-project/infusion-docs/pull/127 is ready for more review
+2017-10-31T16:41:13 <cindyli> thanks, Justin_o
+2017-10-31T16:43:56 <mrtyler> cindyli: i have a question that i hope is quick. if it\'s not, please feel free to defer
+2017-10-31T16:44:14 <mrtyler> context: we just had a meeting about going to production
+2017-10-31T16:44:17 <mrtyler> https://pad.gpii.net/p/deployment-of-production-servers-c7q4nlj
+2017-10-31T16:44:40 <mrtyler> see line 85, and especially lines 91-93
+2017-10-31T16:45:28 <mrtyler> basically, can you tell me more about the grant database? will it be entirely static (iow, is it easy to delete it and recreate it without affecting users)?
+2017-10-31T16:45:51 <mrtyler> i\'m happy to do a quick call or discuss in tomorrow\' arch meeting if that\'s easier than typing :)
+2017-10-31T16:46:40 <cindyli> mrtyler: not a difficult question, we can chat here.
+2017-10-31T16:47:23 <cindyli> the auth database does have some initial data and views at the moment to start with, but it\'s mainly for saving ppl\'s time for development
+2017-10-31T16:48:02 <cindyli> in the production, the auth database should only have views, but none actual user data to start with
+2017-10-31T16:48:31 <cindyli> finding links to views and sample dev data
+2017-10-31T16:49:02 <cindyli> views: https://github.com/GPII/universal/blob/master/gpii/node_modules/gpii-oauth2/gpii-oauth2-datastore/dbViews/views.json
+2017-10-31T16:49:24 <cindyli> dev data: https://github.com/GPII/universal/blob/master/testData/security/TestOAuth2DataStore.json
+2017-10-31T16:49:39 <mrtyler> so it sounds like this data is just important as, say, users\' preferences?
+2017-10-31T16:49:54 <mrtyler> i.e. if we had a failure and the data was lost, users would be impacted until we can restore the data from backup?
+2017-10-31T16:49:55 <cindyli> yes, they are
+2017-10-31T16:50:13 <cindyli> yes, to ur 2nd question too
+2017-10-31T16:50:16 <mrtyler> actually to drill a little more: what happens if we lose this table in production? no one can log in?
+2017-10-31T16:50:59 <cindyli> requests sent to GPII cloud for requesting/updating user settings will be rejected
+2017-10-31T16:51:28 <mrtyler> when/how are grants created?
+2017-10-31T16:51:34 <mrtyler> i\'m asking because
+2017-10-31T16:51:54 <mrtyler> let\'s say we have a failure and have to recover from a backup. the backup is going to be at least a few minutes old
+2017-10-31T16:52:02 <mrtyler> so we\'ll lose any changes in the last 5 minutes (or whatever)
+2017-10-31T16:52:07 <mrtyler> how would we recover from something like that?
+2017-10-31T16:52:33 <cindyli> authorizations are created when a user logs in, and then a GPII app installation requests settings of this user from the cloud
+2017-10-31T16:53:38 <cindyli> during this 5 minutes, users won\'t be able to use GPII app installations
+2017-10-31T16:54:14 <cindyli> but for users who have logged in, i believe they can continue to use GPII app and log out, but they won\'t be able to update their settings via PSP
+2017-10-31T16:55:04 <mrtyler> thanks, this is helpful
+2017-10-31T16:55:10 <mrtyler> but i\'m still a little lost, sorry
+2017-10-31T16:55:40 <cindyli> what makes you feel lost? how to prevent this kind of situation?
+2017-10-31T16:55:58 <mrtyler> just the whole workflow :) sorry i\'m trying to organize my questions
+2017-10-31T16:56:16 <mrtyler> first, username/password stuff is separate from this grants table, right?
+2017-10-31T16:56:27 <mrtyler> the grants table is for storing a token that is the by-product of OAuth
+2017-10-31T16:57:57 <cindyli> there currently are username password for a web login UI, but i\'m right now removing them from the database. once that is done, no more username/password for web login in GPII databases
+2017-10-31T16:58:37 <mrtyler> ok so basically username/password storage, validation, etc. is all disconnected from couchdb and gpii-in-the-cloud?
+2017-10-31T16:58:51 <cindyli> yes, it would be. soon...
+2017-10-31T16:59:02 <mrtyler> right, i mean that\'s the plan for production
+2017-10-31T16:59:11 <mrtyler> the *short-term* plan for production :)
+2017-10-31T16:59:30 <cindyli> what do you mean *short-term* plan for production
+2017-10-31T16:59:44 <mrtyler> sorry that was confusing
+2017-10-31T16:59:55 <mrtyler> i just mean: within a couple weeks, that\'s how we expect production to look
+2017-10-31T17:01:10 <cindyli> ah ok, if you meant a couple of weeks from now, the production would continue to have username, password
+2017-10-31T17:01:47 <cindyli> what I mean is the static data for username, password who we want them to login the web UI
+2017-10-31T17:02:01 <cindyli> more for demonstration purpose
+2017-10-31T17:02:08 <mrtyler> where does that user/pass data live today? in couchdb or elsewhere?
+2017-10-31T17:02:20 <cindyli> yes, in the couchdb -> auth database
+2017-10-31T17:02:25 <mrtyler> aha ok
+2017-10-31T17:02:33 <mrtyler> and it sounds like we need to worry about this for the time being then?
+2017-10-31T17:02:35 <cindyli> it\'s in the sample dev file i sent earlier
+2017-10-31T17:02:43 <cindyli> for the time being, yes
+2017-10-31T17:02:49 <mrtyler> the reason i say "in a couple weeks" is because that\'s about when i expect us to have (internal) users of the production gpii-in-the-cloud
+2017-10-31T17:03:03 <mrtyler> hence, it\'s when some of this safety stuff needs to be ready
+2017-10-31T17:04:00 <mrtyler> ok cool. next thing :)
+2017-10-31T17:04:03 <cindyli> ok, i see. then those username, password info are not as important as preferences data because we are not going to expose the web UI to any real GPII users
+2017-10-31T17:04:15 <mrtyler> ah
+2017-10-31T17:04:55 <mrtyler> aside: in practice, we treat each couchdb instance as a big chunk and back it up all together. the specific questions are just me trying to understand the current architecture
+2017-10-31T17:05:07 <mrtyler> iow, it\'s not like we\'ll choose to back up preferences but not auth, or whatever
+2017-10-31T17:05:15 * simonjb joined the channel
+2017-10-31T17:05:29 <cindyli> understand
+2017-10-31T17:06:29 <mrtyler> scenario 1: Alice logged in an hour ago. couchdb crashes. (obviously while couchdb is down, everything is broken :)). we restore from a backup from 5 minutes ago. what happens to alice?
+2017-10-31T17:06:44 <mrtyler> my guess: nothing. as soon as couchdb comes back, she is back to normal operation
+2017-10-31T17:09:17 <cindyli> i think yes, if all data before the crash gets restored
+2017-10-31T17:09:42 <mrtyler> ok cool
+2017-10-31T17:10:03 <mrtyler> scenario 2: Bob logged in 1 minute ago. couchdb crashes. (everything is broken while it\'s down :)). we restore from a backup from 5 minutes ago. what happens to Bob?
+2017-10-31T17:10:29 <mrtyler> my guess: it sounds like bob is going to have a bad time, but his situation is fixed by logging out and logging back in (which creates a new entry in the auth table for him)
+2017-10-31T17:11:02 <cindyli> yes
+2017-10-31T17:11:14 <mrtyler> ok cool
+2017-10-31T17:11:23 <mrtyler> sounds like we might need some UX around this specific case
+2017-10-31T17:11:33 <mrtyler> "something has gone wrong. please log out and log back in." or similar
+2017-10-31T17:11:50 <mrtyler> depending on how confusing the errors are that Bob would otherwise receive
+2017-10-31T17:12:26 * kasparnet joined the channel
+2017-10-31T17:14:11 <cindyli> ya, sounds reasonable
+2017-10-31T17:14:19 <mrtyler> ok great
+2017-10-31T17:14:22 <mrtyler> i think that\'s it
+2017-10-31T17:14:28 <mrtyler> thanks cindy, this has been very informative :)
+2017-10-31T17:14:40 <cindyli> cool
+2017-10-31T17:15:51 <Bosmon> jhernandez - yes, this diff view indeed seems to be corrupt somehow
+2017-10-31T17:15:53 <Bosmon> https://github.com/GPII/gpii-app/compare/hst-2017
+2017-10-31T17:16:03 <Bosmon> In that the diff in package.json is forwards, and the diff in Installer.ps1 is backwards
+2017-10-31T17:16:06 <Bosmon> I can\'t see how this is possible
+2017-10-31T17:16:11 <jhernandez> yeah, github does that sometimes
+2017-10-31T17:16:16 <Bosmon> !!"(*\xc2\xa3"Y*$(&Y*&!"!!!!
+2017-10-31T17:16:16 * michelled has quit
+2017-10-31T17:16:20 <jhernandez> xDDD
+2017-10-31T17:17:55 <jhernandez> I think that the fact that those changes have been introduced in different commits in the different branches makes github mess the diff up
+2017-10-31T17:18:20 * kasparnet has quit
+2017-10-31T17:18:46 <colinclark> informative for me too, cindyli and mrtyler :)
+2017-10-31T17:18:50 <colinclark> thanks for hashing it out
+2017-10-31T17:18:56 <mrtyler> :)
+2017-10-31T17:25:32 <Justin_o> Bosmon: is there a way for a promise to do a certain action regardless of whether it is resolved or rejected
+2017-10-31T17:29:39 * javjarfer_ joined the channel
+2017-10-31T17:32:34 * alanharnum joined the channel
+2017-10-31T17:33:21 * javjarfer has quit
+2017-10-31T17:35:03 * javjarfer_ has quit
+2017-10-31T17:36:16 * kasparnet joined the channel
+2017-10-31T17:52:21 <Justin_o> Bosmon: could you provide me with some feedback on this for FLUID-6209
+2017-10-31T17:52:33 <Justin_o> https://www.irccloud.com/pastebin/9fDXjKoD/
+'
+
+b'2017-10-31T00:05:49 * javjarfer joined the channel
+2017-10-31T00:07:41 * alanharnum joined the channel
+2017-10-31T00:11:10 * danayo has quit
+2017-10-31T00:32:01 * javjarfer has quit
+2017-10-31T01:08:12 * alanharnum joined the channel
+2017-10-31T01:13:05 * alanharnum has quit
+2017-10-31T01:29:10 * alanharnum joined the channel
+2017-10-31T01:29:16 * alanharnum has quit
+2017-10-31T02:46:25 * yuriy__ joined the channel
+2017-10-31T02:46:25 * yuriy has quit
+2017-10-31T02:46:26 * yuriy__ has quit
+2017-10-31T02:47:44 * yuriy joined the channel
+2017-10-31T02:50:38 * yuriy has quit
+2017-10-31T03:35:57 * danayo joined the channel
+2017-10-31T04:22:47 * scott_gonzalez has quit
+2017-10-31T04:25:10 * scott_gonzalez joined the channel
+2017-10-31T04:49:27 * yuriy joined the channel
+2017-10-31T05:08:07 * mrtyler has quit
+2017-10-31T08:11:18 * georgitodorov joined the channel
+2017-10-31T08:25:18 * georgitodorov has quit
+2017-10-31T08:26:45 * georgitodorov joined the channel
+2017-10-31T08:30:02 * georgitodorov has quit
+2017-10-31T08:36:55 * javjarfer joined the channel
+2017-10-31T08:50:33 * georgitodorov joined the channel
+2017-10-31T08:50:35 * kasparnet joined the channel
+2017-10-31T09:00:31 * stegru joined the channel
+2017-10-31T09:23:45 * javjarfer has quit
+2017-10-31T10:20:37 * javjarfer joined the channel
+2017-10-31T10:36:32 * amatas joined the channel
+2017-10-31T10:42:09 * amatas has quit
+2017-10-31T10:43:01 * amatas joined the channel
+2017-10-31T11:24:18 * dandimitrov joined the channel
+2017-10-31T11:26:30 <dandimitrov> Hi Bosmon, we\'ve been having trouble with the **manual expansion** of `attrs` trick property for the widget components. Here you can take a look at our current approach (https://github.com/danailbd/gpii-app/blob/GPII-2636/src/pcp/js/widgets.js#L41).
+2017-10-31T11:26:37 <dandimitrov> It expands properly (in the component where this grade is used), but overrides `attrs` coming from other grades of the widget. When merging of options is taking place, the `attrs` coming from the `attrsExpander` grade isn\xe2\x80\x99t yet expanded. See here (https://github.com/danailbd/gpii-app/blob/GPII-2636/src/pcp/js/widgets.js#L133).
+2017-10-31T11:26:47 <dandimitrov> With my current knowledge I see no other way to accomplish proper merging of `attrs` but to use a custom `mergePolicy` function for the property which would manually expand any item that can be expanded (i.e. the `option` expression in `attrsExpander`) and merge it into the result object.
+2017-10-31T11:28:55 <dandimitrov> Could you share your thoughts on this approach and how to properly accomplish it (if applicable)?
+2017-10-31T11:46:08 <Bosmon> Hi dandimitrov - what you\'ve written looks as if it ought to work
+2017-10-31T11:46:18 <Bosmon> Could you write a small test case so that I could see the behaviour in isolation?
+2017-10-31T11:47:39 <dandimitrov> Bosmon, how would you suggest I share a code snippet?
+2017-10-31T11:48:00 <Bosmon> dandimitrov - perhaps just add a little test case into your branch and then push it up?
+2017-10-31T11:48:13 <Bosmon> little test cases can never do any harm anyway :)
+2017-10-31T11:51:15 <dandimitrov> Ok I\'ll write one and get back to you
+2017-10-31T12:18:15 * jhung joined the channel
+2017-10-31T12:30:02 * Justin_o joined the channel
+2017-10-31T12:43:18 <Bosmon> kasparnet - won\'t function in a test or when?
+2017-10-31T12:43:21 <Bosmon> How can I see it not going?
+2017-10-31T12:43:31 * Caren joined the channel
+2017-10-31T12:44:21 <kasparnet> if you run the PCPChannelTests.js inside the flowmanager/tests folder
+2017-10-31T12:45:10 <kasparnet> you\'ll see that the last event of the gpii.tests.pcpChannel.preferenceTestDef is not triggered
+2017-10-31T12:45:31 <kasparnet> (i.e. event: "{pcpClient}.events.onReceiveMessage")
+2017-10-31T12:46:09 <kasparnet> in the console output, it should say "## on modelChangeListener, sources are []" immediately after the preferences have been updated
+2017-10-31T12:46:29 <kasparnet> (which should be announced in the console output as well)
+2017-10-31T12:51:54 <Bosmon> kasparnet - it\'s actually the earlier event which is not triggered
+2017-10-31T12:51:57 <Justin_o> Bosmon: for FLUID-6209 are we still concerned with having only one in flight request, whether debouncing or not, and if so, I guess that means we\'ll have to maintain a queue of requests
+2017-10-31T12:52:10 <Bosmon> If you look at the hang message in detail it says it is at position 9 of 11
+2017-10-31T12:52:26 <Bosmon> Justin_o - we should have just one request in flight, yes
+2017-10-31T12:52:59 <Bosmon> kasparnet - oh wait of course the sequence includes the extra teardown
+2017-10-31T12:54:06 <kasparnet> Bosmon, I tried stepping through it
+2017-10-31T12:54:42 <Bosmon> kasparnet - ok, so the relay is triggering at least
+2017-10-31T12:54:44 <kasparnet> and as far as I can tell, the new setting change in the session triggers the sessionToPCP and results in an outModel with the new settings
+2017-10-31T12:57:33 <Bosmon> kasparnet - yes, I just got that far
+2017-10-31T12:57:40 <Bosmon> And now I see that updatePreferences is called as well
+2017-10-31T12:58:08 <Justin_o> Bosmon: thanks
+2017-10-31T12:58:39 <Bosmon> kasparnet - ok, so, wait.... why are you expecting a further message from pcpClient?
+2017-10-31T12:58:46 <kasparnet> yeah
+2017-10-31T12:58:50 <kasparnet> like with the context changes
+2017-10-31T12:59:10 <kasparnet> oh - drop the "yeah", misread your message
+2017-10-31T12:59:16 <Bosmon> Ah right, sorry
+2017-10-31T12:59:51 <kasparnet> I\'ll make a proper integration test as well
+2017-10-31T13:00:41 * simonjb joined the channel
+2017-10-31T13:03:13 * sepidehshahi joined the channel
+2017-10-31T13:03:58 <kasparnet> Bosmon, I might have completely misunderstood something fundamental about the flow - but not sure where, if that\'s the case
+2017-10-31T13:04:22 <Bosmon> kasparnet - yes, trying to understand myself...
+2017-10-31T13:04:49 <Bosmon> kasparnet - I mean in practice we DON\'T want the PCP to get a message in this case
+2017-10-31T13:04:56 <Bosmon> But we should at least see the listener triggering
+2017-10-31T13:07:46 * Caren joined the channel
+2017-10-31T13:08:14 <Bosmon> Ah ok, I see
+2017-10-31T13:08:26 <Bosmon> Yes, the workflow is quite messed up here
+2017-10-31T13:08:37 <Bosmon> In that our relay rule operates before the session actually updates
+2017-10-31T13:10:18 * cindyli joined the channel
+2017-10-31T13:12:07 <kasparnet> Bosmon ahh
+2017-10-31T13:12:17 <Bosmon> kasparnet - so, there\'s a lot mixed up here
+2017-10-31T13:12:25 <Bosmon> So, the modelListener does indeed trigger
+2017-10-31T13:12:30 <Bosmon> And as the source is the PCP, it does nothing
+2017-10-31T13:12:32 <Bosmon> And that\'s the end of it
+2017-10-31T13:12:42 <Bosmon> All further processing of the model leaves it unchanged
+2017-10-31T13:12:53 <Bosmon> Since all that happens when the relay rule triggers is that exactly the same data comes back
+2017-10-31T13:12:56 <kasparnet> ok, that makes sense
+2017-10-31T13:14:50 <kasparnet> Bosmon, just trying out moving the applier.change statement to after the processing of them model
+2017-10-31T13:15:11 <Bosmon> kasparnet - well, it won\'t make a difference
+2017-10-31T13:15:33 <Bosmon> kasparnet - I mean, it won\'t result in a client message
+2017-10-31T13:15:48 <kasparnet> Bosmon, indeed it wont
+2017-10-31T13:16:01 <kasparnet> I\'m a bit confused right now
+2017-10-31T13:17:35 <Bosmon> kasparnet - well, right now there\'s no room in our API to supply a notification back to the PCP that it has succeeded in applying a change
+2017-10-31T13:17:49 <Bosmon> Although we should really reorganise the API a bit
+2017-10-31T13:17:58 <kasparnet> but how is the preference change usecase different from the context one?
+2017-10-31T13:18:22 <Bosmon> kasparnet - the difference is that the context one triggers side-effects in changing other parts of the model
+2017-10-31T13:18:27 <Bosmon> Whereas the preference change doesn\'t
+2017-10-31T13:18:40 * colinclark joined the channel
+2017-10-31T13:18:49 <Bosmon> The PCP UI doesn\'t need to process any update resulting from its own change
+2017-10-31T13:18:59 <Bosmon> And so, currently, it is not sent one
+2017-10-31T13:19:02 <kasparnet> ah, yes ok - so when changing the context, that\'ll affect the preferences shown
+2017-10-31T13:19:39 <Bosmon> So I imagine right now your test fixture will have to instrument the framework directly
+2017-10-31T13:20:36 <kasparnet> yeah, I think perhaps I should move my new test to the top level (i.e. tests/ folder of the root), since it\'s more of an integration test then
+2017-10-31T13:20:48 <kasparnet> i.e. if I\'m checking that things are actually applied to the system, etc
+2017-10-31T13:21:09 <kasparnet> I\'ll add an integration test for the context change stuff as well
+2017-10-31T13:21:16 * clown joined the channel
+2017-10-31T13:23:26 <kasparnet> thanks, Bosmon! I\'ve been stuck on trying to figure out what the hell was going on for a while
+2017-10-31T13:36:21 * jessm joined the channel
+2017-10-31T13:37:54 <Justin_o> Bosmon: I\'ve updated FLUID-6180. It\'s not ready for more review https://github.com/fluid-project/infusion/pull/853
+2017-10-31T13:37:59 <dandimitrov> Bosmon, hi again, here\'s the test sample (https://github.com/danailbd/gpii-app/blob/GPII-2636/src/pcp/tests/js/PcpSettingsPanelTests.js#L660)
+2017-10-31T13:38:52 <Bosmon> dandimitrov - that\'s great, thanks!
+2017-10-31T13:39:05 <Bosmon> For simple, synchronous tests we tend to just use the literal jqUnit.test() style, but this is clear enough
+2017-10-31T13:39:08 <Bosmon> I\'ll take a look
+2017-10-31T13:39:57 <dandimitrov> Probably this part will be of most interest to you (https://github.com/danailbd/gpii-app/blob/GPII-2636/src/pcp/tests/js/PcpSettingsPanelTests.js#L668) :)
+2017-10-31T13:40:55 * clown joined the channel
+2017-10-31T13:43:41 * alanharnum joined the channel
+2017-10-31T13:44:07 * gtirloni joined the channel
+2017-10-31T13:46:26 * danayo joined the channel
+2017-10-31T13:49:25 * grrrero joined the channel
+2017-10-31T13:51:33 <jhung> fluid-everyone: Design crit starts in 10 minutes. Today we\'re talking about inclusive design of civic engagement tools.
+2017-10-31T13:58:36 * jhung1 joined the channel
+2017-10-31T13:58:57 * jhung has quit
+2017-10-31T14:02:11 * clown joined the channel
+2017-10-31T14:06:40 * mrtyler joined the channel
+2017-10-31T14:06:42 * michelled joined the channel
+2017-10-31T14:10:27 * cindyli has quit
+2017-10-31T14:11:03 * sepidehshahi joined the channel
+2017-10-31T14:13:05 * sepidehshahi has quit
+2017-10-31T14:14:48 * cindyli joined the channel
+2017-10-31T14:15:01 <colinclark> hiya amatas
+2017-10-31T14:15:06 <colinclark> how\'s it going?
+2017-10-31T14:18:18 <amatas> hi colinclark, it\'s going well
+2017-10-31T14:18:24 <colinclark> cool
+2017-10-31T14:18:46 <colinclark> do you have a JIRA, by chance, that summarizes all the main issues you\'re currently investigating regarding CouchDB clustering?
+2017-10-31T14:18:53 <colinclark> I\'ve read some stuff, but I\'m not sure I\'ve got the whole picture
+2017-10-31T14:19:17 <colinclark> also, I noticed that yor client doesn\'t seem to have you in #fluid-tech any more
+2017-10-31T14:20:01 <amatas> I can update the jira assigned to this task
+2017-10-31T14:20:16 <colinclark> cool, that\'d be great
+2017-10-31T14:20:48 <amatas> anyway, this issues are related to the "destructive testing that we did the last week"
+2017-10-31T14:20:53 <colinclark> right
+2017-10-31T14:21:05 * georgit joined the channel
+2017-10-31T14:21:18 <colinclark> I\'ve been reading a lot about Kubernetes load balancing, health checks, and also Couch DB clustering recently
+2017-10-31T14:21:20 <colinclark> it\'s very interesting
+2017-10-31T14:21:20 * georgitodorov has quit
+2017-10-31T14:21:40 <amatas> once the CouchDB cluster was set in the cloud we started to break things, to see how the cluster behaves in some scenarios
+2017-10-31T14:21:41 <colinclark> mrtyler and I had a nice talk in #fluid-tech last night about it: https://botbot.me/freenode/fluid-tech/2017-10-30/?msg=92914870&page=1
+2017-10-31T14:22:29 <mrtyler> no fair colinclark *i* was gonna link alfredo to that discussion :p
+2017-10-31T14:22:34 <colinclark> hahaha
+2017-10-31T14:22:38 <colinclark> sorry mrtyler
+'
+

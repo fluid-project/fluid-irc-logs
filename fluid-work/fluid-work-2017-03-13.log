@@ -1,0 +1,620 @@
+b'2017-03-13T20:32:23 <jhung> simonjb: great! What was the trick to make it work?
+2017-03-13T20:32:42 <simonjb> jhung: height: 100vh on the flex container
+2017-03-13T20:33:33 <jhung> Awesome. Glad it works simonjb
+2017-03-13T20:34:18 <simonjb> thanks jhung and alanharnum for your help!
+2017-03-13T20:34:47 <alanharnum> ah yes my eternal foe in vertical centering: getting the vertical centering directive right, but not having any excess container height to center within
+2017-03-13T20:43:35 <simonjb> jhung, alanharnum: https://github.com/simonbates/nexus-demos/blob/master/science-lab/table/css/NexusScienceLabTable.css
+2017-03-13T20:59:44 * alanharnum has quit
+2017-03-13T21:21:51 * the-t-in-rtf has quit
+2017-03-13T21:59:52 * colinclark has quit
+2017-03-13T22:31:51 * gtirloni has quit
+'
+
+b'2017-03-13T17:57:28 * the-t-in-rtf joined the channel
+2017-03-13T18:09:49 <simonjb> hi Bosmon, just caught up on the conversation about construction transactions and dependencies (sorry took me so long to get to)
+2017-03-13T18:10:54 <simonjb> I\'m thinking about the 3rd party code situation
+2017-03-13T18:13:19 <simonjb> there\'s something that appeals to me about Go\'s structural typing system -- if a type implements the functions of an interface, it implements the interface without needing to explicitly state that it does
+2017-03-13T18:14:00 <simonjb> so interfaces can be introduced and 3rd party code can be considered to implement them without modification of the code
+2017-03-13T18:15:16 <simonjb> I\'m wondering if we could tackle dependencies in such a way -- some sort of description that is used for matching against -- rather than explicit declaration
+2017-03-13T18:17:26 <simonjb> that is, as an alternative to the Spring-style \'explicit "depends-on" annotation\' above
+2017-03-13T18:23:22 <Bosmon> simonjb - yes
+2017-03-13T18:23:25 <simonjb> in a similar way to our envisioned Nexus recipe reactant specification
+2017-03-13T18:23:42 <simonjb> some description to match against
+2017-03-13T18:23:53 <Bosmon> Yes
+2017-03-13T18:24:07 <Bosmon> You mean these descriptions to be held in a 3rd place, separate from the reactants?
+2017-03-13T18:24:12 <simonjb> yes
+2017-03-13T18:24:23 <Bosmon> The more I thought today, the more I considered that my "semaphoric transaction model" is nuts
+2017-03-13T18:24:49 <Bosmon> And that the particular use case I was thinking of really should be handled by considering that "the DOM being ready" is signalled by the creation of a component
+2017-03-13T18:25:34 <Bosmon> And I guess this leaves the question/issue - following your observation, that we might like to have alternative ways of expressing the time dependency between these components rather than necessarily having to move each ViewComponent to be a child of this "DOM peering component"
+2017-03-13T18:26:01 <simonjb> yes, that\'s what I was thinking
+2017-03-13T18:26:10 <Bosmon> But your solution still leaves the same basic problem behind - that the population of "recipes" itself creates a further sequencing problem
+2017-03-13T18:26:41 <Bosmon> If there is a rule in a 3rd place that determines that viewComponents need to wait for the DOM, that place itself needs to be fully populated before we start to "consider" the problem of when to instantiate ViewComponents
+2017-03-13T18:27:31 <simonjb> yes, agreed
+2017-03-13T18:27:56 <Bosmon> So I think we can\'t do away with the need for some kind of top-level, explicit "transaction" primitive
+2017-03-13T18:28:27 <simonjb> yes, that seems reasonable, but we can maybe augment it with other options
+2017-03-13T18:30:46 <Bosmon> Yes
+2017-03-13T18:30:49 <Bosmon> I think that sounds right
+2017-03-13T18:31:49 <Bosmon> So one of the other issues I filed whilst drawing up FLUID-6148 is https://issues.fluidproject.org/browse/FLUID-6146 which is something colinclark ran into a few times
+2017-03-13T18:32:10 * lliskovoi joined the channel
+2017-03-13T18:32:15 <Bosmon> Which independently suggests that we need to widen our current notion of a "transactional unit"
+2017-03-13T18:32:51 <Bosmon> Right now the only thing resembling a transactional unit in the system is "the tree of components descended from a single component which is in creation"
+2017-03-13T18:33:00 <Bosmon> But this use case suggests at least one more case
+2017-03-13T18:33:31 <Bosmon> "The set of subcomponents of a particular component which have all been marked createOnEvent for the same event"
+2017-03-13T18:33:37 <simonjb> yes, interesting
+2017-03-13T18:33:54 <Bosmon> Although I guess this could be widened to a set of components scattered around the tree which are similarly waiting for "the same event" or a boiled variant thereof
+2017-03-13T18:34:07 <Bosmon> Which sort of creates exactly the same setup in miniature that we were considering before
+2017-03-13T18:34:31 <Bosmon> Only in this case it is somewhat easier to determine when the set of such things is complete, since it is derived from a framework primitive
+2017-03-13T18:34:46 <Bosmon> But only somewhat easier, it still doesn\'t seem completely easy : P
+2017-03-13T18:37:31 <simonjb> I\'m tempted here to say the unit is the graph of components with dependencies on one another -- but I think that is just restating the issue from much earlier in the conversation
+2017-03-13T18:37:44 <Bosmon> Yes
+2017-03-13T18:38:03 <Bosmon> The trouble is with createOnEvent components it can be hard to determine what this graph really is
+2017-03-13T18:38:24 <Bosmon> I guess it\'s still easier than with modelRelay components
+2017-03-13T18:38:52 <Bosmon> But still - you can\'t actually know what the dependencies of a component are until you have gone someway through the process of constructing it
+2017-03-13T18:39:06 <Bosmon> And for FLUID-6146 I\'m still proposing at the end of the day a pretty conservative framework rewrite
+2017-03-13T18:39:23 <Bosmon> That is, I\'m not proposing to rewrite the whole of the options merging and expansion pipeline in this unit of work
+2017-03-13T18:39:49 <Bosmon> Which implies that we can\'t know that a component has a dependency on another component until it has actually started to instantiate - which in terms of the proposed implementation model will be too late
+2017-03-13T18:40:06 <Bosmon> If you\'ve already started to instantiate it, it\'s too late to make decisions about what transactional unit it\'s enrolled in
+2017-03-13T18:40:20 <simonjb> am I correct in saying that we can\'t know all the details of the dependency graph statically (by inspecting the grades), we only know at runtime?
+2017-03-13T18:40:56 <Bosmon> simonjb - yes, that distinction makes sense with respect to the current framework
+2017-03-13T18:41:11 <Bosmon> But the more distant goal, after FLUID-6146, is to create a framework in which that distinction no longer makes sense : P
+2017-03-13T18:41:18 <simonjb> :)
+2017-03-13T18:41:51 <Bosmon> So my current plan was to, when encountering a createOnEvent component, to immediately open a transactional unit which will enroll all components which are triggered by "the same event", everywhere, whether they have mutual dependencies or not
+2017-03-13T18:42:05 <Bosmon> And then to contribute something like a priority: "last:something" listener which closes the transaction
+2017-03-13T18:43:16 <Bosmon> Under the FLUID-6146 model, what we will create in the "official" listeners to the event will just be "component shells plus potentia record"
+2017-03-13T18:44:00 * cindyli joined the channel
+2017-03-13T18:44:05 <Bosmon> That is, a thing in the right place in the component tree which just has the correct member name, an id and a few other things, and a lifecycleStatus of "constructing" or so
+2017-03-13T18:44:18 <Bosmon> These all then get pushed into the "potentia queue" for the current transaction
+2017-03-13T18:45:23 <Bosmon> I guess it\'s possible we could run the workflow as far as this now time-honoured comment in Fluid.js: https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/Fluid.js#L2643
+2017-03-13T18:46:33 <simonjb> the approach that you describe seems reasonable to me, still thinking...
+2017-03-13T18:46:49 <Bosmon> Thanks, simonjb - all thought greatly appreciated :)
+2017-03-13T18:47:22 <Bosmon> I\'m just looking for *some* part of the work I can hack off that can be done in some kind of isolation - without destabilising everything in the framework for a very long time
+2017-03-13T18:47:42 <Bosmon> In theory, at the end of FLUID-6146 we have a framework which for almost all observers behaves just like the current one, only with a bunch of serious JIRAs fixed
+2017-03-13T18:48:44 <Bosmon> Although in practice we would have replumbed several things significantly - including allowing for the possibility that a component\'s creator function does not actually return a completely constructed component, which has so far been an axiom of the framework since day 1
+2017-03-13T18:48:59 <Bosmon> But whilst component construction will be *somewhat* asynchronous, it will not yet be *very* asynchronous
+2017-03-13T18:49:12 <Bosmon> SInce in practice there would just be a choice of exactly one point in its workflow where it might be suspended
+2017-03-13T18:49:24 <Bosmon> Probably the point identified by this line in Fluid.js
+2017-03-13T18:49:58 <Bosmon> Then after we had stabilised the framework at that point, the ground would be prepared for the more ambitious work of implementing the "framework compiler" and truly fine-grained asynchronous construction
+2017-03-13T18:50:02 <simonjb> Bosmon: what will happen if you call an invoker on a component that is still in the processed of being constructed?
+2017-03-13T18:50:39 <Bosmon> simonjb - well, it would be somewhat like now - if you tried to make a "bare call" to the invoker by dereferencing it too early on the component, you would get nothing - but that you could force its construction by depending on it via an IoC reference
+2017-03-13T18:51:02 <simonjb> ok
+2017-03-13T18:51:03 <Bosmon> It\'s a pretty clumsy system but it\'s pretty much all we can do before we ditch IE11 support which prevents us from making use of JavaScript proxies
+2017-03-13T18:51:33 <Bosmon> Proxies
+2017-03-13T18:51:57 <Bosmon> I imagine that point is coming before the time we\'ve got the capability to take advantage of it anyway
+2017-03-13T18:52:27 <Bosmon> The other big stumbling block I noticed in my rendering work for the Visible Nexus is that this get-out is not available for *events*, only invokers
+2017-03-13T18:53:00 <Bosmon> Because the construction of events still lives in "orthogonal time" back in Fluid.js here: https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/Fluid.js#L2651 we can\'t make any dependence on these before the component is fully constructed
+2017-03-13T18:53:09 <Bosmon> This is something I think I could fix with FLUID-6146
+2017-03-13T18:53:32 <Bosmon> It\'s just we were clinging onto the last remnants of the possibility of instantiating something resembling "a Fluid component" without being forced to depend on FluidIoC.js
+2017-03-13T18:53:47 <Bosmon> But this is in practice something which offers very little value to anyone and which noone has taken up
+2017-03-13T18:54:01 <Bosmon> I think once we have "the framework compiler" this is something that could come back again, but in a much more powerful form
+2017-03-13T18:54:20 <Bosmon> In that you would be able to write against "a minimal framework" which expects that the work of "compilation" has been done elsewhere
+2017-03-13T18:56:22 <simonjb> in the proposed model for FLUID-6146, how would be communicate asynchronous component creation failures?
+2017-03-13T18:57:07 <Bosmon> Yes, this is another important requirement of the work
+2017-03-13T18:57:19 <Bosmon> Which is intended to support all the pretty realistic Nexus use cases which are coming up
+2017-03-13T18:57:39 <simonjb> a state on the component shell maybe?
+2017-03-13T18:57:51 <Bosmon> Right now, since we wouldn\'t have *very much* asynchrony, the failure could be reported synchronously at the point of the transaction commit
+2017-03-13T18:58:17 <simonjb> ok
+2017-03-13T18:58:18 <Bosmon> Whilst we will be able to defer the time point of component construction a little bit, we can\'t defer it beyond this point
+2017-03-13T18:58:29 <Bosmon> In future, I imagine you\'d receive a promise from the transaction commit action
+2017-03-13T18:59:05 <Bosmon> Yes, we could also have a state on the shell named "error"
+2017-03-13T18:59:15 <Bosmon> Although it might be cleaner to just leave this as "destroyed"
+2017-03-13T18:59:25 <Bosmon> I don\'t know if there\'s be a useful difference to people inspecting it
+2017-03-13T18:59:41 <Bosmon> Of course right now such errors leave the component sitting there in its existing lifecycle state, probably largely corrupt
+2017-03-13T18:59:50 <simonjb> in the case of someone using a constructor function, the transaction commit would exist outside of their control flow, is that correct?
+2017-03-13T19:00:11 <Bosmon> But a big requirement from the FLUID-6148 work would be to support the Nexus cleanly backing out the results of a bad request
+2017-03-13T19:00:30 <Bosmon> simonjb - no, I think in this case we\'d write the transaction commit within the body of the newly rebased "constructor function"
+2017-03-13T19:00:41 <simonjb> ah, ok
+2017-03-13T19:01:06 <Bosmon> This was what I was referring to earlier when I was saying that we\'d reorganise the framework\'s workflow internally to treat the fluid.construct entry point as the primary one, rather than the constructor functions
+2017-03-13T19:01:23 <Bosmon> Right now the former calls the latter, and after FLUID-6148 it would be the other way round
+2017-03-13T19:01:31 <simonjb> I see, yes, this makes sense
+2017-03-13T19:01:41 <Bosmon> But hopefully to any users of the component constructor functions, they would seem to have the same semantics they did
+2017-03-13T19:01:55 <Bosmon> Unless they or someone had previously called the strange incantation to "open a transaction"
+2017-03-13T19:02:21 <Bosmon> After the next big rewrite, call it Infusion 4.0, we would kick this over as well
+2017-03-13T19:02:35 <Bosmon> And simply say that noone who calls a component constructor function should expect to get back anything other than a shell
+2017-03-13T19:03:08 <Bosmon> I dunno, I guess we would still be responsible for addressing colinclark\'s "primary constituency"
+2017-03-13T19:03:39 <Bosmon> Perhaps the framework would always have some kind of "compatibility mode" that could produce a fully constructed component if there happened to be no asynchronous dataflow drawn up in its grade definition
+2017-03-13T19:04:01 <Bosmon> But one would hope this would eventually become a tiny niche use
+2017-03-13T19:04:21 <Bosmon> As we wrote truly effective authoring "playgrounds" like the-t-in-rtf that prevented people from having to sling function calls around
+2017-03-13T19:10:28 * stegru has quit
+2017-03-13T19:26:42 <Justin_o> simonjb, alanharnum: Would you be okay if I moved the mar 29 or Apr 12 community meeting
+2017-03-13T19:26:56 <alanharnum> Justin_o: sure
+2017-03-13T19:27:18 <Justin_o> simonjb, alanharnum: it\'ll likely mean that you\'d replace the moved one with Apr 19
+2017-03-13T19:27:25 <alanharnum> just let me (& Bosmon?) know if you move the Mar 29 one
+2017-03-13T19:27:47 <Justin_o> alanharnum: okay
+2017-03-13T19:29:07 * stegru joined the channel
+2017-03-13T19:29:34 <Bosmon> Moving Apr 12 to Apr 19 looks good to me
+2017-03-13T19:40:58 <simonjb> Justin_o: http://shop.oreilly.com/product/9781565925373.do
+2017-03-13T20:05:14 <simonjb> hey jhung, I have a CSS question that I was hoping that you could help me with -- what\'s the best approach to use if I want to centre something on a page, both horizontally and vertically? thanks!
+2017-03-13T20:06:02 <jhung> simonjb: The easiest method is to use display: flex. Let me get you a resource.
+2017-03-13T20:06:12 <simonjb> thanks jhung
+2017-03-13T20:06:13 <jhung> http://howtocenterincss.com/
+2017-03-13T20:06:17 <jhung> ^simonjb
+2017-03-13T20:07:20 <simonjb> cool site jhung
+2017-03-13T20:08:04 <jhung> simonjb: yeah. It\'s very useful.
+2017-03-13T20:12:15 <simonjb> jhung: I\'m only getting horizontal centering with flex, will debug -- do you have any ideas of obvious things I could be missing?
+2017-03-13T20:12:56 <simonjb> (in both FF and Chrome)
+2017-03-13T20:14:00 <jhung> simonjb: I think flex direction matters. Check to see it\'s set to column.
+2017-03-13T20:15:24 <jhung> i\'m going to try something in JS fiddle.
+2017-03-13T20:15:30 <alanharnum> simonjb jhung: if you\'re looking for a simple grid solution using flex, I found http://gridlex.devlint.fr/ really useful
+2017-03-13T20:15:54 <alanharnum> rather than messing about in raw flexbox - it\'s a very small set of CSS.
+2017-03-13T20:16:03 <simonjb> thanks jhung and alanharnum, I have a table of values that I\'d like to centre
+2017-03-13T20:16:55 <simonjb> alanharnum: I\'d like to centre vertically as well as horizontally
+2017-03-13T20:18:14 <alanharnum> jhung may have the easiest solution for that case
+2017-03-13T20:18:31 <simonjb> alanharnum: gridlex looks very cool though
+2017-03-13T20:18:38 <alanharnum> I was pretty impressed with it
+2017-03-13T20:19:02 <alanharnum> I will be more impressed when css grid layout is supported in all browsers :(
+2017-03-13T20:22:26 <jhung> simonjb: if you have your code somewhere maybe I can take a look. It may very well depend on the context you\'re trying this.
+2017-03-13T20:24:17 <alanharnum> simonjb jhung: quick JSfiddle using Gridlex https://jsfiddle.net/v9w69z6t/2/
+2017-03-13T20:26:05 <alanharnum> I\'m assuming what simonjb means is "I want to stick the table in a container of arbitrary height / width, and have it automatically centre horizontally and vertically within that container"
+2017-03-13T20:26:25 <simonjb> alanharnum: where container == web page
+2017-03-13T20:26:36 <simonjb> sorry, web browser window
+2017-03-13T20:27:59 <alanharnum> if you don\'t mind adding Gridlex (it\'s pure CSS, no JS) I think something like that fiddle should work - you basically use a 1-column grid set to both center (horizontal center) and middle (vertical center)
+2017-03-13T20:28:41 <simonjb> alanharnum: but I need to set an absolute height for the container? (20em in your example)
+2017-03-13T20:29:28 <alanharnum> simonjb: in a web page context, you should be able to do something with VW measurements, like this: https://jsfiddle.net/v9w69z6t/3/
+2017-03-13T20:29:39 <alanharnum> Sorry, this: https://jsfiddle.net/v9w69z6t/4/
+2017-03-13T20:30:23 <alanharnum> Using vw/vh lets you scale a container to the viewport height/width: https://jsfiddle.net/v9w69z6t/5/
+2017-03-13T20:30:53 <simonjb> alanharnum, jhung: got it working with flexbox
+2017-03-13T20:31:01 <simonjb> didn\'t know about vw/vh!!!
+2017-03-13T20:31:06 <alanharnum> they\'re SUPER useful
+2017-03-13T20:31:13 <simonjb> my css knowledge is so 2005
+2017-03-13T20:31:37 <alanharnum> absolutely my preferred way of implementing things like
+2017-03-13T20:31:45 <alanharnum> "fill entire visible area"
+2017-03-13T20:32:07 <alanharnum> yay flexbox!
+2017-03-13T20:32:18 <alanharnum> flexbox is our layout saviour until CSS grid layout actually arrives
+'
+
+b'2017-03-13T16:47:43 <cindyli> gloob, stegru: https://wiki.gpii.net/w/Continued_Researches_on_Possible_Approaches_for_Protecting_Communication_btw_LFM_and_CBFM#Dedicated_Process.2FService_Running_on_a_Different_Account_for_Storing_the_GPII_Client_Secret
+2017-03-13T16:47:52 <stegru> nice one cindyli
+2017-03-13T16:47:53 <cindyli> about "launching a split-privilege system"
+2017-03-13T16:48:03 <gloob> cindyli: thank you very much, mylady
+2017-03-13T16:48:15 <cindyli> my pleasure :)
+2017-03-13T16:48:51 * sirdancealot has quit
+2017-03-13T16:48:59 <stegru> i\'ve been meaning to write-up what i\'ve found, but i\'ve paused it in favour of more urgent things
+2017-03-13T16:49:12 <gloob> javjarfer: but I think we don\'t need this
+2017-03-13T16:49:37 <stegru> nice to see the pictures, cindyli
+2017-03-13T16:49:51 <gloob> javjarfer: I mean, we need just the service part, it\'s a good example anyhow
+2017-03-13T16:50:29 <javjarfer> gloob, yes, I would keep it simply, and for us, we just need a simple service using the native API
+2017-03-13T16:50:52 <stegru> well, we where thinking of having a service which looks after the gpii process - when a user logs in, it starts gpii
+2017-03-13T16:51:02 <gloob> cindyli: the idea is to use anonymous pipes as solely IPC mechanism?
+2017-03-13T16:51:24 <Bosmon> I think we have a piratePad from that meeting, right?
+2017-03-13T16:52:21 <stegru> https://pad.gpii.net/p/protect-btw-lfm-and-cloud-feb-16-2017-8z74n89
+2017-03-13T16:52:21 <cindyli> https://pad.gpii.net/p/protect-btw-lfm-and-cloud-feb-16-2017-8z74n89
+2017-03-13T16:52:29 <gloob> stegru: ok, great. I would be amazing to check it and use it as base for our services weaponry
+2017-03-13T16:52:40 <Bosmon> Excellent
+2017-03-13T16:52:41 <Bosmon> Thanks guys
+2017-03-13T16:53:00 <gloob> Bosmon: perfect, thanks for the induction ;)
+2017-03-13T16:53:56 <stegru> here\'s what I have so far: https://gist.github.com/stegru/7f95c02cc12ca64842ae85ff987fa6f0
+2017-03-13T16:54:34 <stegru> ignore the stuff after line 60, it\'s not related to what you want and it doesn\'t work
+2017-03-13T16:55:01 <gloob> stegru: it was exactly what I was reading
+2017-03-13T16:55:54 <javjarfer> it will be great to have that, we could take it as gloob said as the entry point for all our services
+2017-03-13T16:56:09 <gloob> stegru: looks good, thanks
+2017-03-13T16:56:16 <stegru> what do you need a service for, anyway?
+2017-03-13T16:56:20 <javjarfer> maybe the next step will be to decide how to integrate that one, and into the installation process
+2017-03-13T16:56:28 <javjarfer> UI Automation
+2017-03-13T16:57:08 <stegru> line 19 performs the installation
+2017-03-13T16:57:11 <javjarfer> I need to use the UI Automation interface as a event source, and for that I need a running service since startup
+2017-03-13T16:57:22 <stegru> no you don\'t
+2017-03-13T16:58:03 <stegru> anything can create an event source, you just need to add a registry key
+2017-03-13T16:58:18 <stegru> anything run as administrator, that is
+2017-03-13T16:59:07 <stegru> if you\'re talking about events in the "event viewer"
+2017-03-13T17:00:08 <javjarfer> but you can\'t create event sources for something that doesn\'t have any registry entry (afaik), and for knowing the current state of a program, I need to track it state since the beginning, since it was started
+2017-03-13T17:00:54 <javjarfer> Can I sink events for the startup of any particular program?
+2017-03-13T17:01:58 <stegru> oh i see what you mean
+2017-03-13T17:03:20 <stegru> so, you\'re using ui automation to monitor process starts?
+2017-03-13T17:03:34 * sirdancealot joined the channel
+2017-03-13T17:04:35 <javjarfer> stegru, yes xD, and try to see any changes that users makes in UI, that doesn\'t impact any other visible settings
+2017-03-13T17:05:29 <javjarfer> stegru, maybe it wasn\'t an intended use for this API, but I think it could be useful... At least until we have another kind of mixed approach
+2017-03-13T17:05:33 <javjarfer> approaches**
+2017-03-13T17:06:42 <stegru> ah, ok
+2017-03-13T17:07:14 <stegru> i\'ve monitored process starts in .NET, never used ui automation
+2017-03-13T17:10:14 <javjarfer> stegru, yes, that is the reason I got interested in how worked that event source, and if was doing polling or event driven
+2017-03-13T17:10:50 <javjarfer> stegru, I think we have talked in the past about this, and that you explained to me, how that was being done right now
+2017-03-13T17:11:04 <stegru> javjarfer: the interface i used was event driven (not sure if it used polling behind the scenes)
+2017-03-13T17:12:18 <javjarfer> in the meeting that Bosmon organized, in which we discussed about the UI Automation integration and in which we decided to learn from the first implementation
+2017-03-13T17:12:42 <javjarfer> stegru, so... now I\'m confused. I thought that was polling behind the scenes
+2017-03-13T17:13:00 <stegru> wait, what are we talking about?
+2017-03-13T17:13:02 <Bosmon> Such proliferating confusion :)
+2017-03-13T17:13:26 <stegru> in gpii, to monitor a process, polling is used
+2017-03-13T17:14:34 <stegru> a few years ago, i used an event driven technology to monitor processes (which isn\'t readily available to node/gpii)
+2017-03-13T17:16:30 <stegru> (a few years ago I wasn\'t working on gpii)
+2017-03-13T17:16:42 <Bosmon> Yes, it must feel like forever now :)
+2017-03-13T17:17:05 <stegru> oh it does. time flies when you have fun
+2017-03-13T17:17:20 <javjarfer> Bosmon, haha so true, confusion leads to interesting results!
+2017-03-13T17:17:54 <javjarfer> stegru, ooh okay okay, so now is polling. I was thinking right, that is the reason to try to make this an event source
+2017-03-13T17:18:09 * kavya has quit
+2017-03-13T17:18:19 <javjarfer> maybe that last procedure you were using (before gpii) was using a system driver?
+2017-03-13T17:18:52 <stegru> ok ok, i was thinking "event source" was the "event source" you have for logging events in windows
+2017-03-13T17:19:07 <stegru> no, WMI in .NET
+2017-03-13T17:19:42 <stegru> something like this: http://stackoverflow.com/questions/967646/monitor-when-an-exe-is-launched
+2017-03-13T17:20:19 <Bosmon> Wow
+2017-03-13T17:20:20 <Bosmon> WQL!
+2017-03-13T17:22:36 <javjarfer> stegru, that is great, looks like a very simple way to access to kernel space!
+2017-03-13T17:23:24 <javjarfer> okay okay, this needs to be taken into account when doing this
+2017-03-13T17:24:20 <stegru> well, sure.. but wouldn\'t it create a million other problems getting this type of code into gpii?
+2017-03-13T17:24:32 <stegru> or is it separate?
+2017-03-13T17:24:59 <Bosmon> What is "this", javjarfer
+2017-03-13T17:25:18 <Bosmon> stegru, no more than the existing million problems getting any other arbitrary C# code into the GPII : P
+2017-03-13T17:25:43 <stegru> haha
+2017-03-13T17:26:34 <Bosmon> What\'s your application, javjarfer?
+2017-03-13T17:26:47 <stegru> do you have a jira or something?
+2017-03-13T17:26:57 <javjarfer> stegru, right now it pretends to be separated from it, I think it will need to get a lot of discussion before trying to bring this inside GPII
+2017-03-13T17:27:24 <javjarfer> because as Bosmon said previously all this kind of things make a lot of sense for NEXUS
+2017-03-13T17:28:03 <javjarfer> Bosmon, "this" is "WqlEventQuery"
+2017-03-13T17:28:12 * lliskovoi joined the channel
+2017-03-13T17:28:37 <Bosmon> <javjarfer> okay okay, this needs to be taken into account when doing this
+2017-03-13T17:28:40 <Bosmon> I meant the 2nd "this"
+2017-03-13T17:28:43 <Bosmon> Not the first "this" : P
+2017-03-13T17:28:48 <gloob> javjarfer: I think it will clarify to explain your use case
+2017-03-13T17:29:20 <gloob> that is the second this
+2017-03-13T17:29:33 <Bosmon> If only we spoke https://en.wikipedia.org/wiki/Loglan , this kind of ambiguity could not arise
+2017-03-13T17:29:48 <stegru> what is "it"?
+2017-03-13T17:30:19 <gloob> e bilti cmalo ge nirli ckela
+2017-03-13T17:30:23 <gloob> impressive
+2017-03-13T17:30:50 <stegru> what\'s impressive? the languange or the statement?
+2017-03-13T17:30:59 <Bosmon> \'I know what "it" means well enough, when I find a thing,\' said the Duck: \'it\'s generally a frog or a worm. The question is, what did the archbishop find?\'
+2017-03-13T17:31:02 <gloob> da, de, di
+2017-03-13T17:31:27 <javjarfer> Bosmon, the second this, was the actual implementation of the service tracking the process state
+2017-03-13T17:31:33 <Bosmon> Yes
+2017-03-13T17:31:41 <Bosmon> What process do you want to track the state of, javjarfer ?
+2017-03-13T17:31:57 <javjarfer> At this moment just Microsoft Word
+2017-03-13T17:32:03 <Bosmon> ok
+2017-03-13T17:32:12 <Bosmon> What will you do with the process once it starts
+2017-03-13T17:32:21 <Bosmon> Don\'t you already need to interact with it via UIA?
+2017-03-13T17:32:28 <stegru> stop tracking it ;)
+2017-03-13T17:33:09 <javjarfer> Yes! But I need to know when the process starts, in order to trigger the settings for the user
+2017-03-13T17:33:29 <Bosmon> javjarfer - right - but given you\'re interacting with it via UIA, wouldn\'t it be easier to track it via UIA too?
+2017-03-13T17:34:33 <javjarfer> Bosmon, right, that could be true, and maybe will be a good PoC to try to do it all with UIA, in order to see all it can offer
+2017-03-13T17:35:57 <Bosmon> Certainly it is useful to know that WQL exists
+2017-03-13T17:36:04 <javjarfer> but the way stegru described, gives us another possibility that look also simple and maybe gives us another features that UIA doesn\'t
+2017-03-13T17:36:28 <javjarfer> Bosmon, yes! For example UIA, left us blind if we talk about services
+2017-03-13T17:36:29 <Bosmon> As your ancestors once remarked, "forsan et haec olim meminisse juvabit"
+2017-03-13T17:36:47 <stegru> "described", not suggested ;)
+2017-03-13T17:38:33 <gloob> stegru: we will blame on you anyway
+2017-03-13T17:38:48 <stegru> are you writing .net code, or node?
+2017-03-13T17:38:55 <javjarfer> stegru, hahaha
+2017-03-13T17:39:00 <javjarfer> .net code right now
+2017-03-13T17:39:06 <stegru> ohh right
+2017-03-13T17:39:14 <Bosmon> He is writing whatever he likes, in order to get something working
+2017-03-13T17:39:21 <stegru> well, that\'s not fair!
+2017-03-13T17:39:26 <Bosmon> And then we will try to come along later and pick up the pieces, and perhaps Nexify everything
+2017-03-13T17:39:49 <gloob> stegru: if you want we have tons of stuff to do in the onboarding team
+2017-03-13T17:39:53 <javjarfer> Bosmon, (I don\'t know anything of Latin xD)
+2017-03-13T17:39:54 <gloob> stegru: come with us
+2017-03-13T17:40:14 <javjarfer> Bosmon, (but yes xD)
+2017-03-13T17:40:48 <stegru> does that mean working with you? no thanks
+2017-03-13T17:40:52 <Bosmon> hahahaha
+2017-03-13T17:41:10 <gloob> stegru: well, you know, it will be with javjarfer is the one who actually works
+2017-03-13T17:41:21 <Bosmon> stegru prefers a world where a task can be signed off by means of portable test cases :)
+2017-03-13T17:41:26 <gloob> Bosmon: it\'s not funny, it\'s sad
+2017-03-13T17:41:36 <Bosmon> gloob - we will make it funny in the end :)
+2017-03-13T17:41:55 * sirdancealot has quit
+2017-03-13T17:41:57 * gloob is smiling anyhow
+2017-03-13T17:42:24 <Bosmon> Certainly a world in which Latin turned into Spanish is somewhat sad : P
+2017-03-13T17:43:59 <stegru> javjarfer: when you\'re waiting for word to start, are you waiting for word.exe (or whatever it is) to be in the task list.. or are you waiting for the window to be open, ready to write a letter?
+2017-03-13T17:44:11 <gloob> Bosmon: \xcb\x9c450 million of people cannot be wrong
+2017-03-13T17:44:47 <Bosmon> I imagine he\'s waiting for the latter
+2017-03-13T17:44:56 <Bosmon> Since he needs a functioning window to address via UIA
+2017-03-13T17:45:37 <stegru> making wql/waitforprocess useless
+2017-03-13T17:45:55 <Bosmon> Yes, much like a Classical education : P
+2017-03-13T17:45:57 <gloob> :(
+2017-03-13T17:49:12 <javjarfer> stegru, I\'m waiting as Bosmon has intuited for the second, the window to be open and ready
+2017-03-13T17:49:33 <javjarfer> the ideal will be to remove the control of the user from the windows, prepare it, and give him back the control
+2017-03-13T17:50:36 <javjarfer> Bosmon, sometimes evolution just change things! Doesn\'t make it better
+2017-03-13T17:50:42 <stegru> so, when wmi/wql/whatever-magic triggers the "word.exe has started" event it would be too soon to perform whatever it is you need to do?
+2017-03-13T17:51:41 <javjarfer> stegru, well I think that the right answer is that "it will be uncertain"
+2017-03-13T17:51:48 <stegru> does UIA have a "get me the Word window" function?
+2017-03-13T17:51:58 <gloob> javjarfer: no
+2017-03-13T17:52:07 <gloob> javjarfer: we need to wait for learning tools to boot up
+2017-03-13T17:52:56 <gloob> safer is wait for the cursor or whatever assure that the system loaded the internal components
+2017-03-13T17:53:00 * the-t-in-rtf has quit
+2017-03-13T17:53:53 <javjarfer> gloob, true, that is other part of the problem, we also need the introspection that tells us well the runtime has loaded the learning tools addin (OneNote)
+2017-03-13T17:54:14 <javjarfer> gloob, but that information is given by our \'manager addin\'
+2017-03-13T17:54:20 <stegru> how do you, as a user, know it\'s ready?
+2017-03-13T17:54:29 * sirdancealot joined the channel
+2017-03-13T17:54:38 <gloob> javjarfer: another service? :)
+2017-03-13T17:55:25 <javjarfer> gloob, hahaha this one is loaded when MS OneNote is. But it means that needs to be installed, yes
+'
+
+b'2017-03-13T14:47:00 <Bosmon> The other lot one could broadly describe as "grownups" : P
+2017-03-13T14:47:05 <colinclark> hahaha
+2017-03-13T14:47:15 <colinclark> or "non-musicians" :P
+2017-03-13T14:47:34 <Bosmon> I\'ve been pondering exactly this issue in the shower - to what extent we can preserve a "natural experience"
+2017-03-13T14:47:46 <Bosmon> And as far as I could see, the issue would have to involve creating a variant set of driver files
+2017-03-13T14:47:58 <Bosmon> I think we simply can\'t do it with exactly the same set of includes
+2017-03-13T14:48:00 <colinclark> I\'m open to shifting the nature of the "natural experience"
+2017-03-13T14:48:09 <Bosmon> The author\'s intention simply has to be encoded *somewhere*
+2017-03-13T14:48:20 <Bosmon> That "I want a flock.enviro that works NOW and makes audio NOW"
+2017-03-13T14:48:20 <colinclark> users of Flocking have often had problems with Flocking\'s initialization life cycle and understanding how it all works
+2017-03-13T14:48:27 <colinclark> yes
+2017-03-13T14:48:47 <Bosmon> As opposed to "I want a flock.enviro of an appropriate variety that is ready at the appropriate time"
+2017-03-13T14:48:57 <colinclark> yes
+2017-03-13T14:48:58 <alanharnum> i suppose this gets back to the earlier conversation about users who do and don\'t "know" what Infusion is
+2017-03-13T14:49:21 <Bosmon> I think there\'s no sane way of accommodating these two very different kinds of intentions by expressing exactly the same code
+2017-03-13T14:49:30 <Bosmon> Because of this issue of when "the appropriate time" is
+2017-03-13T14:49:38 <colinclark> yes, that\'s the key
+2017-03-13T14:49:43 <alanharnum> i\'m not sure i\'d count myself in the group that does know, but it\'s partly a philosophical question about how much end users should have to understand Infusion\'s idioms to use things built with Infusion
+2017-03-13T14:49:57 <Bosmon> Yes, it\'s true
+2017-03-13T14:50:06 <Bosmon> But I think we can\'t deny the reality of colinclark\'s first constituency
+2017-03-13T14:50:10 <colinclark> yeah
+2017-03-13T14:50:27 <Bosmon> Going back to michelled\'s original observation way back in 2009 that "people will always want to call functions" : P
+2017-03-13T14:50:34 <colinclark> ha!
+2017-03-13T14:50:38 <Bosmon> The question is just what our interface with this constituency looks like
+2017-03-13T14:50:44 <Bosmon> And how much trouble we allow them to cause us
+2017-03-13T14:50:59 <colinclark> I\'m actually quite in support of reducing the situation in which people will "just call functions"
+2017-03-13T14:51:08 <Bosmon> I think I am pretty much prepared to bite the bullet and "globally asyncify" the framework
+2017-03-13T14:51:09 <colinclark> but to be fair to my users, I need to reduce the amount of...
+2017-03-13T14:51:12 <colinclark> I\'m lacking the words here
+2017-03-13T14:51:12 <alanharnum> and what the moral responsibility (for lack of a better word) towards different constituencies we have as people using Infusion to implement tools intended for specialized purposes
+2017-03-13T14:51:20 <colinclark> "non-domain concepts"
+2017-03-13T14:51:23 <Bosmon> Since I think that some variety of this work needs to be done right now
+2017-03-13T14:51:41 <Bosmon> And I think what will happen is that we will probably create some kind of "compatibility view" for such people
+2017-03-13T14:51:45 <colinclark> and also to shield Flocking\'s users from a certain degree of change that Infusion rightfully experiences over time
+2017-03-13T14:51:55 <Bosmon> By issuing a particular global directive to the framework, you can instruct it to treat global function calls "in the old way"
+2017-03-13T14:52:08 <Bosmon> But as a result missing out on any dynamism or potential for interaction that these things might have
+2017-03-13T14:52:25 <Bosmon> For some people, I think, this will always be a choice they want
+2017-03-13T14:52:58 <Bosmon> But by default, in the new framework, every call to fluid.someComponentConstructor() will give you "a shell of a component" rather than a component which is ready to run RIGHT NOW
+2017-03-13T14:53:07 <colinclark> right
+2017-03-13T14:53:31 <Bosmon> And then people will then also have the burden of providing some "transactional packaging" to the framework
+2017-03-13T14:53:43 <Bosmon> Which I\'m imagining will also be done via some variety of global function calls
+2017-03-13T14:53:57 <Bosmon> It\'s sort of a "sad pass of maturity"
+2017-03-13T14:54:17 <Bosmon> Since it looks like *both* constituencies, in practice, will have to take on board some extra framing junk in order to carry on working with each other
+2017-03-13T14:54:44 <Bosmon> But there\'s no alternative, I think, to being required to inform the framework at an explicit lifecycle point, "I have now finished telling you about everything I will (ever) tell you about"
+2017-03-13T14:55:02 <Bosmon> Where "ever" is interpreted as "for this constructional transaction"
+2017-03-13T14:55:05 <colinclark> so, Bosmon
+2017-03-13T14:55:22 * michelled joined the channel
+2017-03-13T14:55:26 <colinclark> I\'m not particularly worried about Flocking users, in the long run, not being able to just call some random functions
+2017-03-13T14:55:30 <Bosmon> Here is michelled herself :)
+2017-03-13T14:56:05 <colinclark> I am mostly worried about it being clearly documented what they need to do
+2017-03-13T14:56:17 <colinclark> and, my earlier point, a kind of reduction of "non-domain concepts"
+2017-03-13T14:56:17 <Bosmon> Yes
+2017-03-13T14:56:21 <colinclark> especially those that will change over time
+2017-03-13T14:56:30 <Bosmon> colinclark - I was imagining that this set of users would be supplied with their own set of drivers
+2017-03-13T14:56:44 <Bosmon> The "instant flocking kit"
+2017-03-13T14:56:47 <colinclark> I have written pretty clearly that the whole point fo Flocking was to change the whole authorial dynamic of audio synthesis
+2017-03-13T14:57:23 <colinclark> so I think it\'s mostly a matter of, in the long run, Flocking maintaining some abstraction on top of Infusion so that I can manage the change over time, instead of forcing them to
+2017-03-13T14:57:35 <colinclark> and given that Flocking is on the verge of a massive architectural shift anyway
+2017-03-13T14:57:52 <Bosmon> Yes
+2017-03-13T14:58:13 <colinclark> now is the time for change on both sides\xe2\x80\x94us here and "that other guy with the sonification framework"
+2017-03-13T14:58:17 <Bosmon> My current "bathtime thoughts" is that we would have a kind of "transactional semaphore locking system"
+2017-03-13T14:58:37 <colinclark> wow
+2017-03-13T14:58:40 <Bosmon> That is there would be some directive like "fluid.beginTreeTransaction()" and one "fluid.endTreeTransaction()"
+2017-03-13T14:59:09 <Bosmon> The framework would only begin to actually construct stuff once its count of unbalanced begun transactions hit zero
+2017-03-13T14:59:23 <Bosmon> In this way it would always be possible to "enlaten" the construction of some code you\'d inherited from someone else
+2017-03-13T14:59:32 <Bosmon> By wrapping it in a further framing block
+2017-03-13T15:00:21 <Bosmon> I can\'t think of any other way of accommodating the completely disorderly and freeform nature of the kinds of things people might want to wait for
+2017-03-13T15:00:41 <Bosmon> For example some people might want to just automatically say, "Only ever start to constuct any viewComponents once the DOM has fully loaded"
+2017-03-13T15:01:09 <Bosmon> But there\'s no way to express such a thing declaratively, since the DOM loading event is simply a blasted native event fired at "some point in time"
+2017-03-13T15:01:53 <Bosmon> This implies that such a person would simply write a handler for this event which contained the "fluid.endTreeTransaction" which matched the one they had previously opened somewhere in a <head> include
+2017-03-13T15:02:14 <Bosmon> And then only at that point would the bottle be uncorked and EVERYTHING START TO CONSTRUCT, WHATEVER IT IS
+2017-03-13T15:02:30 <Bosmon> Unless, of course, someone had opened an even bigger one that was waiting for something yet later
+2017-03-13T15:05:12 <Bosmon> This is just a "bathtime sketch"
+2017-03-13T15:05:27 <Bosmon> There seem to be two ways of delaying construction of something
+2017-03-13T15:06:01 <Bosmon> i) by it having a dependency on some other thing which must be constructed first, ii) by explicitly framing its construction to be "bulked up" into some larger unit
+2017-03-13T15:06:59 <Bosmon> Now i) always seems attractive from the design point of view, but it\'s not always possible for there to be such a dependency, and introducing explicit dependencies into 3rd party code just to "enlaten" things seems unpleasant
+2017-03-13T15:07:21 <Bosmon> I remember getting into this kind of mess in the Spring days by having to write some kind of explicit "depends-on" annotation just to enforce some kind of sequencing
+2017-03-13T15:07:31 <Bosmon> But we really are talking *not just* about sequencing here
+2017-03-13T15:07:46 * the-t-in-rtf joined the channel
+2017-03-13T15:08:00 <Bosmon> But really about "transactional units of authorial expression" - the idea is that there is a huge "melting pot of expressions" that things are being thrown into, each of which might have the potential to interact with any of the others
+2017-03-13T15:08:21 <Bosmon> And so there has to be a natural and explicit concept of "when the melting pot is ready to start to cook"
+2017-03-13T15:09:37 <Bosmon> But that this concept of "being ready to cook" must itself be somehow rendered democratic
+2017-03-13T15:09:53 <Bosmon> Anyone should be able to come along at any "point" and say - "wait, I have one more thing"
+2017-03-13T15:10:00 <Bosmon> We will be COOKING ON CRIPP TIME : P
+2017-03-13T15:11:20 <Bosmon> Well - I guess we once dreamed this would be possible by reframing someone\'s component tree as a child of yours
+2017-03-13T15:11:28 <Bosmon> Perhaps this is still actually possible and desirable
+2017-03-13T15:12:22 <Bosmon> I know that simonjb and I have already reframed our Nexus trees one level deeper from the root, just for general orderliness
+2017-03-13T15:12:48 <Bosmon> But we have historically had a model that "the unit of transactional construction is a single component root somewhere in the tree"
+2017-03-13T15:12:53 <Bosmon> And perhaps we could somehow keep this model
+2017-03-13T15:13:14 <Bosmon> For example, components which need to wait for the DOM could be implicitly reframed so that they are mounted as children of a "DOM component"
+2017-03-13T15:13:54 <Bosmon> I\'ve always historically resisted making more components, and deeper component trees - because the framework is just so damnably inefficient
+2017-03-13T15:14:18 <Bosmon> But I still can\'t begin the rewrite to make the "compiler" until we\'ve sorted out this family of issues
+2017-03-13T15:14:41 <Bosmon> At least this is what I convinced myself over the weekend
+2017-03-13T15:14:58 <Bosmon> So perhaps "fluid.beginTreeTransaction" is really in fact "fluid.pushTreePrefix"
+2017-03-13T15:15:10 <Bosmon> Which means that any components constructed after that will be rebased to start at a particular location in the tree
+2017-03-13T15:15:20 <Bosmon> hmm..................
+2017-03-13T15:16:05 <Bosmon> simonjb, will be interested in your thoughts on this if you have a chance to read back sometime
+2017-03-13T15:17:57 * clown joined the channel
+2017-03-13T15:22:03 * mrtyler joined the channel
+2017-03-13T15:26:00 <simonjb> will take a look Bosmon
+2017-03-13T15:31:52 * kavya has quit
+2017-03-13T15:39:58 <Bosmon> I guess this has implications for the special grades fluid.resolveRoot and fluid.resolveRootSingle
+2017-03-13T15:40:17 <Bosmon> At the very least these might come to be unhelpful names
+2017-03-13T15:41:16 <Bosmon> But this model seems to appeal to the need for equivalents for these, which mean "make this component normally resolvable with respect to wherever it currently is in the tree"
+2017-03-13T15:42:06 <Bosmon> Since this "prefixing for free components" model now means that this special rule saying "Components at this level of containment are not normally resolvable via IoC" could now apply anywhere
+2017-03-13T15:42:44 <Bosmon> But this idea of "free components" only makes sense with respect to people locally creating components via function calls
+2017-03-13T15:43:05 <Bosmon> Which we\'d imagine they\'d only really want to carry on doing in browsers
+2017-03-13T15:43:41 <Bosmon> Perhaps the answer is to introduce exactly the opposite, a special grade named "fluid.unresolvable" which is silently added to component\'s gradeNames which are created via a function call
+2017-03-13T15:44:51 <Bosmon> Either way, we are going to reduce the primacy of the component creation route via raw function calls, and make this subject to a heavy degree of interception and introspection
+2017-03-13T15:45:24 <Bosmon> It used to be that the raw function call *was* the component creation point - in the new model, the raw function calls will just be wrappers for particular calls to fluid.construct()
+2017-03-13T15:58:48 * kavya joined the channel
+2017-03-13T16:35:53 * javjarfer joined the channel
+2017-03-13T16:37:16 <javjarfer> stegru, Hi!! Are you free for a question about the recent loggings issue?
+2017-03-13T16:37:31 <Bosmon> javjarfer - which is the recent loggings issue?
+2017-03-13T16:37:34 <stegru> javjarfer: yes, i\'m freee!
+2017-03-13T16:39:02 <javjarfer> The service Sandra just described in the call, the one she was going to lookup for an open issue, and see if there was any related tickets
+2017-03-13T16:40:09 <javjarfer> Bosmon, the service that was going to be used to retrieve the logs
+2017-03-13T16:40:51 <stegru> this? " Running GPII as a service so that it will be automatically started on reboot and restarted automatically if it crashes"
+2017-03-13T16:40:57 <Bosmon> Ok
+2017-03-13T16:41:06 <Bosmon> We should make sure that cindyli is involved with this
+2017-03-13T16:41:07 <javjarfer> stegru, yes exactly that
+2017-03-13T16:41:32 <Bosmon> Oh, I see
+2017-03-13T16:41:39 <Bosmon> That doesn\'t sound like a logging issue
+2017-03-13T16:41:47 <Bosmon> There seems to be some confusion!
+2017-03-13T16:42:11 <javjarfer> Bosmon, haha sure I\'m the confused
+2017-03-13T16:42:23 <javjarfer> which is that then?
+2017-03-13T16:42:24 <stegru> and it\'s contagious
+2017-03-13T16:42:39 <javjarfer> what is that then?**
+2017-03-13T16:42:45 <javjarfer> stegru, hahaha
+2017-03-13T16:43:14 <stegru> so, you\'re talking about "error handling", not "error logging"?
+2017-03-13T16:43:28 <gloob> I think, in fact in any of them
+2017-03-13T16:43:50 <gloob> javjarfer want to know how we are going to approach the "turn into service" thing
+2017-03-13T16:44:04 <gloob> because we have the same requirements for some of our utilities from onboarding
+2017-03-13T16:44:09 <javjarfer> stegru, gloob, yes maybe I focused the question in the wrong direction
+2017-03-13T16:44:35 <gloob> some of that utilities needs to run as a service so it would be great to use the same "machinery"
+2017-03-13T16:44:40 <javjarfer> as gloob said, I was going to ask you how you are going to address the service installation with the gpii-app, and if you are planning to create a "windows service" using the windows native API.
+2017-03-13T16:44:41 <gloob> is that javjarfer?
+2017-03-13T16:44:48 <javjarfer> gloob, totally
+2017-03-13T16:44:48 <stegru> there\'s already been a discussion about this, in relation to keeping "secrets" on the computer
+2017-03-13T16:45:10 * michelled has quit
+2017-03-13T16:45:41 <Bosmon> Right
+2017-03-13T16:45:57 <Bosmon> stegru was "spiking" a system for launching a split-privilege system
+2017-03-13T16:46:02 <Bosmon> Which I seem to remember had been looking good
+2017-03-13T16:46:47 <gloob> do we have that in any PR or repo or notes?
+2017-03-13T16:47:00 <stegru> well... we might do by the end of the day
+2017-03-13T16:47:08 <gloob> FRANTASHTIC
+2017-03-13T16:47:12 <stegru> i\'ll find the notes
+2017-03-13T16:47:16 <gloob> the end of the day, spanish way or?
+2017-03-13T16:47:32 <javjarfer> great!
+2017-03-13T16:47:38 <stegru> yes, a spanish day.. good idea
+'
+
+b'2017-03-13T00:34:18 * noveens joined the channel
+2017-03-13T01:56:34 * stegru has quit
+2017-03-13T07:35:14 * sirdancealot joined the channel
+2017-03-13T08:00:42 * the-t-in-rtf joined the channel
+2017-03-13T09:45:22 * jhernandez joined the channel
+2017-03-13T09:52:19 * stegru joined the channel
+2017-03-13T09:58:55 <gloob> morning
+2017-03-13T10:03:56 <stegru> gloob: :*
+2017-03-13T10:43:05 <gloob> stegru: o/
+2017-03-13T10:44:35 <stegru> welcome back, ale
+2017-03-13T10:44:47 * the-t-in-rtf1 joined the channel
+2017-03-13T11:05:28 <gloob> stegru: thank you!
+2017-03-13T11:18:25 * gtirloni joined the channel
+2017-03-13T11:43:59 * amatas joined the channel
+2017-03-13T12:26:54 * Justin_o joined the channel
+2017-03-13T12:45:30 * cindyli joined the channel
+2017-03-13T12:53:46 * Jess__ joined the channel
+2017-03-13T13:02:59 * alanharnum joined the channel
+2017-03-13T13:05:48 * colinclark joined the channel
+2017-03-13T13:14:08 * jhung joined the channel
+2017-03-13T13:51:11 <Justin_o> Bosmon: did you have any more thoughts about the URLs for the SVG icons in HTML templates?
+2017-03-13T13:55:26 * michelled joined the channel
+2017-03-13T13:56:32 * gtirloni_ joined the channel
+2017-03-13T13:58:34 * kavya joined the channel
+2017-03-13T13:59:58 * gtirloni has quit
+2017-03-13T14:00:08 * simonjb joined the channel
+2017-03-13T14:05:24 <simonjb> hi there Bosmon, on Friday I got some code working to do the model updating based on incoming Nexus websocket messages: https://github.com/simonbates/nexus-client/blob/master/src/NexusWebSocketBoundComponent.js#L134-L183
+2017-03-13T14:07:45 <Bosmon> Hey there simonjb
+2017-03-13T14:07:55 <Bosmon> Yes I saw your message on Friday just after you\'d left
+2017-03-13T14:08:00 <Bosmon> And what you\'ve done there looks exactly right
+2017-03-13T14:08:07 <simonjb> awesome
+2017-03-13T14:08:31 <Bosmon> Hey there alanharnum, colinclark
+2017-03-13T14:08:38 <Bosmon> I am just starting work on "the new framework"
+2017-03-13T14:08:40 <alanharnum> howdy Bosmon
+2017-03-13T14:08:42 <colinclark> hiya boz
+2017-03-13T14:08:55 <Bosmon> For which the "Head JIRA" is pretty much this one: https://issues.fluidproject.org/browse/FLUID-6148
+2017-03-13T14:09:12 <Bosmon> And we\'re talking about "strange issues we encountered when writing Flocking-aware unit tests for the chart authoring tool"
+2017-03-13T14:09:27 <Bosmon> For a start I\'m wondering if we ever wrote up a JIRA about this
+2017-03-13T14:09:38 <Bosmon> And secondly I\'m getting colinclark to nudge my memory about what we actually did about this
+2017-03-13T14:09:51 <colinclark> we ended up doing this: https://github.com/fluid-project/chartAuthoring/blob/master/src/js/flockInit.js
+2017-03-13T14:10:04 <Bosmon> (14:07:38) AntranigBasman@googlemail.com/Gaim: My shower has lodged loose a memory that we decided to address this by having you make two versions of your flocking JS file
+2017-03-13T14:10:05 <Bosmon> (14:07:45) AntranigBasman@googlemail.com/Gaim: One which constructs the enviro, and one which doesn\'t
+2017-03-13T14:10:05 <Bosmon> (14:07:49) AntranigBasman@googlemail.com/Gaim: Did you ever do anything like this?
+2017-03-13T14:10:05 <Bosmon> (14:07:53) Clark Kent: it wasn\'t quite that
+2017-03-13T14:10:05 <Bosmon> (14:08:02) Clark Kent: it was a kind of "bootstrap file"
+2017-03-13T14:10:05 <Bosmon> (14:08:10) Clark Kent: which Alan did indeed implement
+2017-03-13T14:10:05 <Bosmon> (14:08:19) Clark Kent: one which manually initializes Flocking, another which does not
+2017-03-13T14:10:06 <Bosmon> (14:08:25) AntranigBasman@googlemail.com/Gaim: Right, excellent
+2017-03-13T14:10:06 <Bosmon> (14:08:33) Clark Kent: just digging it up
+2017-03-13T14:10:08 <Bosmon> This is how far we\'d got
+2017-03-13T14:10:16 <Bosmon> ok great
+2017-03-13T14:10:41 <Bosmon> Very interesting
+2017-03-13T14:10:48 <Bosmon> So talk me through what the idea is behind this file :)
+2017-03-13T14:10:55 <Bosmon> And why, in particular, a flock.environment might exist already
+2017-03-13T14:11:33 <alanharnum> IIRC, the situation was as follows:
+2017-03-13T14:12:01 <alanharnum> 1) A flock.environment object must exist before Flocking is put to any use
+2017-03-13T14:12:21 <alanharnum> 2) flock.environment is created by calling flock.init
+2017-03-13T14:13:09 * mrtyler joined the channel
+2017-03-13T14:13:10 <alanharnum> 3) flock.init() is not idempotent and will throw an error if called a second time when flock.environment already exists, hence the check for existence
+2017-03-13T14:13:56 <colinclark> to say it\'s "not idempotent" is not quite correct
+2017-03-13T14:14:35 <colinclark> The implementation is very, very simple
+2017-03-13T14:14:44 <colinclark> It just calls the Flocking environment\'s creator function :)
+2017-03-13T14:14:49 <alanharnum> Sorry, that is indeed incorrect - lookng at code to jog my memory...
+2017-03-13T14:15:29 <Bosmon> colinclark - Why is it not quite correct to say it is not idempotent?
+2017-03-13T14:16:52 <colinclark> well, ok
+2017-03-13T14:17:02 <colinclark> it\'s not idempotent as any creator function is not idempotent
+2017-03-13T14:17:19 <colinclark> but it doesn\'t, itself, throw an error if called a second time
+2017-03-13T14:17:27 <colinclark> it just constructs a new environment :P
+2017-03-13T14:17:32 <alanharnum> I believe the specific issue we encountered with the tests was Flocking and the IoC testing framework (loose verbiage here) in competition to destroy the environment object at the conclusion of the tests when the sonifier component had previously taken responsibility for creating and starting the environment
+2017-03-13T14:17:34 <Bosmon> I see it has this global side-effect: https://github.com/colinbdclark/Flocking/blob/master/src/core.js#L1309
+2017-03-13T14:17:54 <colinclark> yes, it does indeed
+2017-03-13T14:18:16 <colinclark> Sadly most Flocking users don\'t know what Infusion is :)
+2017-03-13T14:18:16 <Bosmon> What an interesting situation
+2017-03-13T14:18:29 <Bosmon> Well, naturally we\'d like to keep it that way
+2017-03-13T14:18:32 <alanharnum> Flocking would "win", the IoC testing framework would try to call destroy() after Flocking had already cleaned things up, an error would be thrown
+2017-03-13T14:18:37 <colinclark> I believe that Flocking itself has been purged of any dependency on this \'old-fashioned\' singleton
+2017-03-13T14:18:55 <Bosmon> But I guess we need to go one level deeper into the issue
+2017-03-13T14:19:13 <Bosmon> I imagine the situation was that alanharnum\'s tests needed to construct some "special" variety of a flock.enviro?
+2017-03-13T14:19:16 <colinclark> yes
+2017-03-13T14:19:18 <Bosmon> Some kind of mock or so?
+2017-03-13T14:19:20 <colinclark> the "silent environment"
+2017-03-13T14:19:23 <alanharnum> moving environment initialization into the "bootstrap" file resolved these issues
+2017-03-13T14:19:25 <Bosmon> THE SILENT ENVIORNMENT!
+2017-03-13T14:19:31 <colinclark> This: https://github.com/colinbdclark/Flocking/blob/master/src/core.js#L1397-L1405
+2017-03-13T14:19:42 <Bosmon> Right
+2017-03-13T14:19:44 <Bosmon> Great
+2017-03-13T14:20:03 <Bosmon> I guess the reason that no JIRA was filed was that it was abundantly unclear what this was an issue *with* :)
+2017-03-13T14:20:35 <Bosmon> "I ran into some awkward situation when trying to write tests using Infusion and some other guy\'s sound synthesis engine" : P
+2017-03-13T14:20:41 <colinclark> hahaha
+2017-03-13T14:20:45 <colinclark> yeah, some other guy
+2017-03-13T14:21:19 <colinclark> The only thing I can\'t remember
+2017-03-13T14:21:31 <Bosmon> I guess we "can get away with it" here because the relationship is asymmetric
+2017-03-13T14:21:39 <colinclark> is why alanharnum wasn\'t simply able to construct an environment via standard IoC
+2017-03-13T14:21:47 <colinclark> there was some reason
+2017-03-13T14:21:49 <Bosmon> Everything needs to know about the flock.enviro, but thankfully the flock.enviro doesn\'t need to know about anyone else
+2017-03-13T14:21:52 <colinclark> but it was probably due to an issue in Flocking
+2017-03-13T14:22:00 <colinclark> that\'s not entirely correct :)
+2017-03-13T14:22:10 <Bosmon> colinclark - presumably the destruction issue he referred to aboe
+2017-03-13T14:22:12 <Bosmon> above
+2017-03-13T14:22:16 <alanharnum> colinclark: I believe it may have been the same issue in reverse
+2017-03-13T14:22:24 <colinclark> now I\'m confused :)
+2017-03-13T14:22:28 <alanharnum> the IoC environment would "beat" Flocking at cleaning up, Flocking would become sad
+2017-03-13T14:22:29 <Bosmon> If he constructs the environment via IoC as part of his fixture, it will get torn down when the fixture ends
+2017-03-13T14:22:49 <colinclark> yes, isn\'t that exactly what one would want?
+2017-03-13T14:22:59 <alanharnum> "code would become sad" -> you only get this level of precise descriptive metaphor when you let English majors become progammers
+2017-03-13T14:23:16 <colinclark> I know there was a reason for htis
+2017-03-13T14:23:18 <colinclark> but I\'m missing it now
+2017-03-13T14:23:32 <colinclark> I mean, presumably you WANT the Flocking environment torn down and recreated every time a test runs
+2017-03-13T14:23:52 <alanharnum> it might have been a limitation in the sonifier implementation
+2017-03-13T14:23:56 <alanharnum> which we needed to work around quickly
+2017-03-13T14:24:01 <colinclark> no, I\'m pretty sure it was a Flocking issue entirely
+2017-03-13T14:24:03 <alanharnum> with the bootstrap file being the best solution
+2017-03-13T14:24:07 <colinclark> but I just can\'t remember the specifics
+2017-03-13T14:24:10 <colinclark> I probably have logs somewhere
+2017-03-13T14:25:50 <Bosmon> ok
+2017-03-13T14:26:12 <Bosmon> knowing what happpened on destruction would be helpful
+2017-03-13T14:28:24 <colinclark> I mean, this should indeed be possible: https://gist.github.com/colinbdclark/6c0e74f198f83b808502bae710db0f11
+2017-03-13T14:28:38 <colinclark> but there may be some terrible reason in Flocking why this isn\'t the case
+2017-03-13T14:28:57 <colinclark> I have certainly cleaned up the confusion I had previously in Flocking regarding Infusion\'s destruction semantics
+2017-03-13T14:29:12 <colinclark> a diagnostic was added towards 2.0.0 that reminded me that I was overly-destroying thing
+2017-03-13T14:29:14 <colinclark> things
+2017-03-13T14:29:27 <alanharnum> is it worth my writing a quick spike in the current version of chartAuthoring to see if this issue is still around in the IoC testing context?
+2017-03-13T14:29:39 <alanharnum> I don\'t think that would consume much time.
+2017-03-13T14:29:40 <colinclark> I wouldn\'t distract yourself with it, alanharnum
+2017-03-13T14:29:42 <colinclark> I can do it
+2017-03-13T14:29:51 <colinclark> After these meetings I can take a look at the Chart Authoring Tool and remind myself of the issues
+2017-03-13T14:31:58 <alanharnum> OK
+2017-03-13T14:41:34 <Bosmon> So it seems that the contents of flockInit.js are equivalent just to a call to flock.authoEnviro.initEnvironment
+2017-03-13T14:41:38 <Bosmon> autoEnviro
+2017-03-13T14:43:47 <Bosmon> So what had you been planning here, colinclark: https://github.com/colinbdclark/Flocking/blob/master/src/core.js#L1385
+2017-03-13T14:43:57 <Bosmon> When you planned to "Remove reference to shared environment"?
+2017-03-13T14:44:05 <colinclark> ah, there it is
+2017-03-13T14:44:13 <colinclark> I don\'t know
+2017-03-13T14:44:28 <colinclark> Hadn\'t thought much about it yet
+2017-03-13T14:44:59 <colinclark> I suppose I may just remove the functionality
+2017-03-13T14:45:20 <Bosmon> Well it clearly does something highly desirable - given you and alanharnum just reinvented it : P
+2017-03-13T14:45:25 <colinclark> ha
+2017-03-13T14:45:27 <colinclark> well, I\'m not sure
+2017-03-13T14:45:29 <colinclark> This was originally implemented as a SuperCollider-like feature
+2017-03-13T14:45:42 <colinclark> which allows users to simply create a synth and send it a play() message
+2017-03-13T14:45:46 <colinclark> and expect sound to come out
+2017-03-13T14:45:55 <Bosmon> I\'m trying to get to the bottom of this "contradiction of idioms" - because I think this is one of the most clear exemplifications of it
+2017-03-13T14:45:57 <colinclark> but in practice, I\'m not sure it\'s something Flocking should support
+2017-03-13T14:46:03 <Bosmon> You are serving two constituencies of users
+2017-03-13T14:46:07 <Bosmon> At least two
+2017-03-13T14:46:09 <colinclark> yes, at least two
+2017-03-13T14:46:15 <Bosmon> Each of whom you want to give a "natural experience" to
+2017-03-13T14:46:21 <colinclark> "me and alan" and people who just want to call functions :P
+2017-03-13T14:46:33 <Bosmon> One lot of them wants to just include a bunch of .js files, and start making sound by calling functions
+2017-03-13T14:46:37 <colinclark> yeah, exactly
+'
+

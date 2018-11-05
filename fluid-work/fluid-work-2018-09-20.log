@@ -1,0 +1,373 @@
+b'2018-09-20T18:36:10 <Justin_o> stegru: the issue at all, or that it won\'t reset a zoomed page
+2018-09-20T18:36:33 <stegru> it won\'t reset
+2018-09-20T18:40:19 * cindyli joined the channel
+2018-09-20T18:45:11 * alanharnum joined the channel
+2018-09-20T18:47:08 * fluid-logger joined the channel
+2018-09-20T18:48:04 * danayo_ joined the channel
+2018-09-20T18:56:04 <Justin_o> stegru: okay.. i left my comment on the PR, at least for historical records.
+2018-09-20T18:56:23 <stegru> nice one, thanks
+2018-09-20T18:59:52 * fluid-logger joined the channel
+2018-09-20T19:00:18 <Bosmon> OK, down to 19 failing tests
+2018-09-20T19:00:27 <Bosmon> This last fix was a classic "this can never have worked"
+2018-09-20T19:00:32 <Bosmon> I\'m genuinely bamboozled
+2018-09-20T19:00:34 <Bosmon> https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/DataBinding.js#L448
+2018-09-20T19:00:49 <Bosmon> In general, folks, be aware that Math.Infinity is not anything!
+2018-09-20T19:00:52 <Bosmon> In fact, it is undefined
+2018-09-20T19:01:19 <jhung> alanharnum: I have merged the PR with changes to the infusion-docs deploy. You might have to change things on your end to use it. see https://github.com/fluid-project/infusion-docs/pull/134
+2018-09-20T19:01:35 <alanharnum> jhung: thanks, I\'ll update the CI branch
+2018-09-20T19:01:43 <jhung> np
+2018-09-20T19:02:03 <Justin_o> Bosmon: another one of those JS quirks?
+2018-09-20T19:02:15 <Bosmon> Well, I can\'t understand how this could ever have worked
+2018-09-20T19:02:30 <Justin_o> Bosmon: Is there a truthy check on recel.initPriority somewhere else?
+2018-09-20T19:02:44 <Bosmon> No, the very next thing sends it to a sort
+2018-09-20T19:02:59 <Bosmon> And so the positioning of this element will be essentially undetermined since every comparison will return NaN
+2018-09-20T19:03:27 <Bosmon> It\'s conceivable that we always depended on some random quirk of the ordering which miraculously always ended up the way we wanted
+2018-09-20T19:05:10 <Justin_o> Did you mean to use just Infinity instead of Math.Infinity
+2018-09-20T19:05:17 <gmoss> Justin_o: sorry I was in discussions for a bit there. I\'m glad you were able to reproduce the issue! I\'m stuck for the time being... trying to think of a way to get the templateLoader to work without firing onLazyLoad again. The firing of that event after calling reloadUioMessages was what produced the duplicate call to loadResources, I think
+2018-09-20T19:05:30 <Justin_o> was that condition ever hit? or maybe it was only hit when it would have ended up in the position it did?
+2018-09-20T19:06:28 <stegru> 1 > Infinity == 1 > undefined
+2018-09-20T19:06:33 <stegru> does the same job ;)
+2018-09-20T19:07:14 <Justin_o> so you\'re both telling me that when Buzz Lightyear goes to Infinity and Beyond, he\'s not really going anywhere
+2018-09-20T19:07:45 <stegru> no, it\'s just failing with style
+2018-09-20T19:07:54 <Justin_o> haha
+2018-09-20T19:12:22 * fluid-logger joined the channel
+2018-09-20T19:13:18 * fluid-logger joined the channel
+2018-09-20T19:14:50 * fluid-logger joined the channel
+2018-09-20T19:16:20 <Justin_o> alanharnum: i wasn\'t sure from your e-mail. Is everything changed on the back end and we can just push to the deploy branch?
+2018-09-20T19:16:32 <alanharnum> Justin_o: yes, that should work, let me know if it doesn\'t
+2018-09-20T19:17:31 <alanharnum> just keep in mind the "deploy" branch still needs to contain the actual generated static site, same as the gh-pages branch does currently
+2018-09-20T19:17:52 * fluid-logger joined the channel
+2018-09-20T19:18:26 * fluid-logger joined the channel
+2018-09-20T19:18:41 * fluid-logger joined the channel
+2018-09-20T19:19:07 <Justin_o> alanharnum: okay thanks.. i think the deploy task should handle all of that generation.. but will try it now
+2018-09-20T19:21:20 * fluid-logger joined the channel
+2018-09-20T19:22:23 * fluid-logger joined the channel
+2018-09-20T19:23:29 <Justin_o> alanharnum: a deploy branch has been created. https://github.com/fluid-project/infusion-docs/tree/deploy
+2018-09-20T19:23:42 <Justin_o> not sure how to verify that it has actually update the deployed version though
+2018-09-20T19:24:21 <alanharnum> Justin_o: we may need to update the hooks in the infusion-docs repo
+2018-09-20T19:24:48 <alanharnum> although they\'re currently doing callbacks, so may just take a moment to hit Jenkins
+2018-09-20T19:25:10 <Justin_o> alanharnum: okay
+2018-09-20T19:25:46 <Justin_o> jhung: i\'m looking at the FLUID-6333 infusion docs pull. Did you export the character-spacing-condensed.svg file in a different way. The other files are all minified.
+2018-09-20T19:28:04 <jhung> Justin_o: ah. I can fix that. Give me a moment - dealing with another issue at the moment.
+2018-09-20T19:35:41 <Justin_o> okay thanks
+2018-09-20T20:12:28 * fluid-logger joined the channel
+2018-09-20T21:33:55 <Bosmon> stegru great yes, half of the same job : P
+2018-09-20T22:05:49 * michelled joined the channel
+2018-09-20T22:17:00 * cindyli joined the channel
+2018-09-20T22:21:44 <cindyli> Bosmon: there\'s a problem with flat matchmaker. it does pick all exact matched solutions, which results in a similar problem as the fix of "depth >= canopy[j]". when there are multiple matched solutions, it will set all of them to be "active" in matchMakerOutput.inferredConfiguration. this will make windows to start all these solutions again
+2018-09-20T22:22:14 <cindyli> for example, in win32.json, there are multiple matched solutions for "http://registry\\\\.gpii\\\\.net/common/screenReaderTTS/enabled"
+2018-09-20T22:22:30 <Bosmon> cindyli - yes
+2018-09-20T22:22:36 <Bosmon> I imagine we need flat matchmaker + apptology
+2018-09-20T22:22:47 <cindyli> i see
+2018-09-20T22:45:22 <cindyli> Bosmon: when there are multiple solutions having the same type, such as "screen reader", canopy match maker selects the one that has the top priority. with flat match maker, there\'s no priority calculation. shall the first matched solution be picked?
+2018-09-20T22:45:50 <Bosmon> cindyli - Yes, we can ignore priorities for the time being
+2018-09-20T22:45:59 <Bosmon> They won\'t be deployed for the near-term pilots
+2018-09-20T22:46:06 <cindyli> ok
+2018-09-20T23:34:51 * stegru has quit
+2018-09-20T23:39:33 * stegru joined the channel
+'
+
+b'2018-09-20T15:56:37 <Bosmon> I\'m trying to fight my way through "fluid.prefs.expandCompositePanels" .........
+2018-09-20T15:56:59 <Justin_o> Bosmon: hello.. taking a look and trying to remember
+2018-09-20T15:57:21 <Bosmon> Justin_o - cheers
+2018-09-20T15:57:48 <Justin_o> Bosmon: can you point me at the tests you are looking at?
+2018-09-20T15:58:47 <Bosmon> Yup, it\'s this rendering test: https://github.com/fluid-project/infusion/blob/master/tests/framework-tests/preferences/js/BuilderTests.js#L694
+2018-09-20T15:59:19 <Bosmon> I\'ve got the issue that the composite panel, called "increasing", has a subComponent of type "fluid.tests.cmpPanel.lineSpace"
+2018-09-20T15:59:30 <Justin_o> Bosmon: I think it\'s related to this https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Panels.js#L405-L407
+2018-09-20T15:59:33 <Bosmon> All this tree is trying to construct at once, and the nested panel is looking for its container in the DOM
+2018-09-20T16:00:43 <Bosmon> Which should have a selector ".fluid-tests-composite-increasing-lineSpace"
+2018-09-20T16:01:36 <Bosmon> But the issue is that the composite panel hasn\'t fired onCreate yet and so hasn\'t appended its markup via this listener: https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Panels.js#L229
+2018-09-20T16:01:47 <Justin_o> Bosmon: which is then added via distribute options https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Panels.js#L430-L433
+2018-09-20T16:02:00 <Justin_o> so that createOnEvent is added programmatically.
+2018-09-20T16:02:03 <Bosmon> Also I\'m rather worried that these listeners don\'t seem to be sequenced in any way
+2018-09-20T16:02:03 * sepidehshahi joined the channel
+2018-09-20T16:02:06 <Bosmon> Aha!
+2018-09-20T16:02:46 <Justin_o> Bosmon: this is all pretty old, i\'m often amazed that it even works ;) It could definitely use some cleanup
+2018-09-20T16:02:55 <Bosmon> Justin_o - great, this is just what I wanted
+2018-09-20T16:03:14 <Bosmon> And explains perfectly why it has stopped working
+2018-09-20T16:03:27 <Bosmon> Since we can\'t distributed to nested component paths like that any more
+2018-09-20T16:03:28 <Justin_o> i hope the fix is easy :)
+2018-09-20T16:03:33 <Justin_o> ah
+2018-09-20T16:03:41 <Bosmon> That is, you can\'t distribute to "{that}.options.components.*"
+2018-09-20T16:03:52 <Justin_o> i\'m guessing you need to use IoCSS now?
+2018-09-20T16:04:07 <Bosmon> Well, you could say that you were already using IoCSS
+2018-09-20T16:04:16 <Bosmon> But yes, you need to hit the component directly with IoCSS
+2018-09-20T16:05:14 <Bosmon> You can\'t hit the one above and expect to navigate down via options.components.* - in order to fix FLUID-5614 we\'ve had to break up the linkage between the exact contents of options.component.x (which is now an array) and the form that you write it in "deep component trees"
+2018-09-20T16:10:35 <Justin_o> Bosmon: does that mean that you can\'t do that.subcomponent.method() in side of a function anymore or is this just an IoC change?
+2018-09-20T16:12:38 <Bosmon> Justin_o oh oh oh I see
+2018-09-20T16:12:41 <Bosmon> There is more happening here
+2018-09-20T16:12:47 <Bosmon> This thing is actually introspecting on its own component options
+2018-09-20T16:12:55 <Bosmon> Which has, independently, also stopped working for the same reason
+2018-09-20T16:16:46 <cindyli> Bosmon: i found the cause of https://issues.gpii.net/browse/GPII-3388, we should talk about how to solve it. the issue was rooted from this change - https://github.com/GPII/universal/pull/659/files#diff-a095eea627fbc50a2d57ca0e493f3b42R113. The matchmaker output for the failing windows test used to return two matched solutions: "windows.cursors" and "windows.magnifier". now it returns 14 solutions including stickyKeys, narrator, wind
+2018-09-20T16:16:47 <cindyli> ows.highContrast, screenDPI etc. windows tries to apply them all and results in failures.
+2018-09-20T16:41:37 <cindyli> i\'m thinking if this could be solved by having a way to define grouped solutions. for example, if "windows.highContrast" and UIO+ are defined as group solutions, when one is picked by the matchmaker as the best fit, the other should be included in the matchmaker output too. with this, matchmaker continues to pick one best fit, rather than many. one extra step can be added after the pick to include grouped solutions. what do you think
+2018-09-20T16:41:37 <cindyli> , Bosmon
+2018-09-20T16:43:58 <Bosmon> cindyli - well all the other 14 solutions are presumably really terrible matches and should be discarded
+2018-09-20T16:44:03 <Bosmon> Why does it think they match at all?
+2018-09-20T16:46:12 <stegru> \'\'\'\'\'\'\'\'\'\'\'\'\'\'\'##
+2018-09-20T16:48:08 <cindyli> Bosmon: canopy matchmaker performs a ranking calculation before checking depths. for each solution, the raking generates an fitness array like [-2, -2, -3\xe2\x80\xa6]
+2018-09-20T16:48:44 <cindyli> some of 14 solutions are for matching "magnification". they all have the same ranking (fitness array value)
+2018-09-20T16:49:14 <cindyli> the others for matching "cursorSize" and have the same ranking too
+2018-09-20T16:50:18 <cindyli> those 14 probably are not terrible, but it doesn\'t make sense to start a number of solutions for satisfying a magnifier preference
+2018-09-20T16:50:27 <cindyli> or any preference
+2018-09-20T16:52:41 <Bosmon> cindyli - OK, so you are suggesting to stick them into the apptology?
+2018-09-20T16:52:49 <Bosmon> Why does stickyKeys match anything?
+2018-09-20T16:57:51 <cindyli> stickyKeys has the same fitness array value after the ranking calculation. but the prefs set didn\'t ask for "http://registry.gpii.net/common/stickyKeys". maybe the ranking doesn\'t look at the prefs? weird
+2018-09-20T16:57:55 * alanharnum2 joined the channel
+2018-09-20T16:57:56 * fluid-logger joined the channel
+2018-09-20T16:57:59 <cindyli> looking into the ranking\xe2\x80\xa6
+2018-09-20T16:58:21 <Bosmon> cindyli - it might well be time to just axe the whole canopyMatchmaker
+2018-09-20T16:58:35 <Bosmon> We have only promised essentially "exact match" matchmaking for the upcoming releases anyway
+2018-09-20T17:01:27 <cindyli> Bosmon: if you look at win32.json, some common terms are associated with multiple solutions
+2018-09-20T17:01:54 <cindyli> for example, http://registry\\\\.gpii\\\\.net/common/selfVoicing/enabled matches "net.gpii.uioPlus" and "net.opendirective.maavis"
+2018-09-20T17:02:08 <Bosmon> cindyli - that\'s understandable
+2018-09-20T17:02:12 <Bosmon> But what about stickyKeys?
+2018-09-20T17:02:23 <Bosmon> It only matches its own common term
+2018-09-20T17:04:48 <cindyli> exactly, that\'s what makes me think canopy match maker does not filter prefs before ranking calculation
+2018-09-20T17:04:59 <Bosmon> cindyli - well, of course it doesnt\'
+2018-09-20T17:05:24 <cindyli> oh why
+2018-09-20T17:05:30 <Bosmon> But the point is, the ranking calculation must be busted if it can possibly consider stickyKeys
+2018-09-20T17:05:32 <cindyli> isn\'t matching prefs the first thing to do
+2018-09-20T17:05:43 <cindyli> agree
+2018-09-20T17:05:44 <Bosmon> cindyli - this *is* the process of matching prefs
+2018-09-20T17:06:26 <Bosmon> This ranking that it is doing now, this is the filtering process
+2018-09-20T17:06:39 <cindyli> ok
+2018-09-20T17:09:00 <cindyli> Bosmon: ideas on how to solve this? create a exactMatchMaker module? ;)
+2018-09-20T17:11:05 <Justin_o> stegru: could you please test out https://github.com/jobara/gpii-chrome-extension/tree/GPII-3386 and see if it fixes the issue
+2018-09-20T17:13:03 <Bosmon> cindyli - there always was one
+2018-09-20T17:13:12 <cindyli> flatMatchMaker
+2018-09-20T17:13:17 <Bosmon> cindyli - exactly
+2018-09-20T17:13:51 <cindyli> trying how it looks like...
+2018-09-20T17:14:18 <Bosmon> cindyli - it might need a touch of dusting off, but I think with just minor tweaking it will do what we want
+2018-09-20T17:14:30 <Bosmon> Perhaps it has the fault that currently it only returns a single solution, I can\'t quite remember
+2018-09-20T17:14:42 <Bosmon> But it is certainly much closer to being what we want than the canopyMatchMaker
+2018-09-20T17:14:59 <Bosmon> And part of your pull can then delete the canopyMatchMaker and its tests
+2018-09-20T17:15:03 <Bosmon> Very sad, but I think it is time
+2018-09-20T17:15:26 <Bosmon> I remember the bus ride to Denver Airport where I thought of that, in 2012 : P
+2018-09-20T17:15:30 <Bosmon> It was a happy, sunny afternoon
+2018-09-20T17:18:27 <cindyli> delete the canopyMatchMaker???!!! are you sure
+2018-09-20T17:19:13 <cindyli> crying...
+2018-09-20T17:19:21 <Bosmon> cindyli - absolutely, it does nothing useful that we will depend on for this grant
+2018-09-20T17:19:39 <Bosmon> I cried when your OAuth stuff was deleted too : P
+2018-09-20T17:23:08 <Bosmon> OK, new framework is very close..... 35 failing tests out of 7393
+2018-09-20T17:23:43 <Bosmon> I\'m sure most of them have the same cause as well
+2018-09-20T17:23:49 <cindyli> cool
+2018-09-20T17:24:11 <Bosmon> Some more funky introspection on options.components.* ......
+2018-09-20T17:24:48 <Justin_o> Bosmon:  is that in prefsFramework too?
+2018-09-20T17:25:02 <Justin_o> Bosmon: also is this new framework building ontop of Potenia II?
+2018-09-20T17:25:06 <Bosmon> Justin_o - all the remaining test failures are somewhere in the prefs framework yes
+2018-09-20T17:25:13 <Justin_o> Bosmon: sorry :(
+2018-09-20T17:25:35 <Bosmon> Justin_o - well, one can\'t anticipate everything : P
+2018-09-20T17:25:56 <Bosmon> The existing Potentia II branch supported the prefs framework ok, but I broke a lot more things fixing FLUID-5614
+2018-09-20T17:26:35 <Justin_o> Bosmon: how close is the new framework and will it make testing things that are asynchronous easier. I\'m wondering if it might address the issues that gmoss is running into with writing some tests for the prefs framework. where we\'re updating the rendering after changing the language.
+2018-09-20T17:26:45 <Bosmon> Which in the scheme of things was a bug people didn\'t encounter very often but I thought it was time to deal with it properly
+2018-09-20T17:27:08 <Bosmon> Justin_o - it will help, but only after we have written the new renderer and eliminated the prefs framework : P
+2018-09-20T17:27:14 <Justin_o> lol
+2018-09-20T17:27:18 <Bosmon> There\'s still a lot of thickets to fight through
+2018-09-20T17:27:27 <Justin_o> okay so not any  time soon.. really looking forward to those two realities though
+2018-09-20T17:27:30 <gmoss> Justin_o: I was wondering when I would be mentioned in this discussion haha..
+2018-09-20T17:27:30 <gmoss> Bosmon do you think you could have that ready for tomorrow? :P
+2018-09-20T17:27:39 <Bosmon> hahaha
+2018-09-20T17:28:02 <Bosmon> not really
+2018-09-20T17:28:08 <Justin_o> gmoss: sometimes Bosmon works miracles, so you never know.
+2018-09-20T17:28:10 <Bosmon> But hopefully I can finally start on it on Monday
+2018-09-20T17:28:15 <Bosmon> This has only taken 10 years to get to this point
+2018-09-20T17:29:24 <gmoss> I will patiently await the day
+2018-09-20T17:31:05 <Bosmon> I guess it\'s great that we have the prefs framework, given it represents a good kind of benchmark
+2018-09-20T17:31:14 <Bosmon> The aim of the new renderer will be to make it go away completely
+2018-09-20T17:32:19 <Justin_o> gmoss: i have some time to take a look at the UIO test problem we were working on yesterday. However, they\'re fixing something at my apartment right now and its very loud because of the construction outside too. Do you have your work pushed up and I can try to look at it here, and then pair up when things quiet down on my end.
+2018-09-20T17:33:00 <gmoss> Justin_o: let me see if what I have up currently is sufficient. I think the answer is yes
+2018-09-20T17:33:01 <Justin_o> Bosmon: that\'s great.. i hope it\'s sufficiently complex to exercise the new renderer.
+2018-09-20T17:33:24 <Bosmon> Justin_o - well it\'s really more complex than I would like, but at least it is real :)
+2018-09-20T17:34:36 <gmoss> Justin_o: https://github.com/blueslug/infusion/tree/FLUID-6300 is up to date less the logging we added yesterday and a couple light bits of refactoring I did yesterday evening which I may undo
+2018-09-20T17:34:58 <Justin_o> haha. well we don\'t find much use for some of the complexities anymore.. but they may come back. I think the only cases of composite panels and sub panels right now are in the examples directory. But we may see more as we expand on UIO+ and other prefs editors.
+2018-09-20T17:35:04 <Justin_o> Bosmon: ^
+2018-09-20T17:35:23 <Justin_o> gmoss: thanks, i\'ll pull that down
+2018-09-20T17:38:14 <Justin_o> gmoss: by the way, if you haven\'t already, you should update from master. I merged in the-t-in-rtf linting changes. The linting is quite fast now.
+2018-09-20T17:38:23 * avtar joined the channel
+2018-09-20T17:38:43 <gmoss> Justin_o: I did this morning, but i\'ll pull again. Thanks!
+2018-09-20T17:39:01 <gmoss> looks like i got it already
+2018-09-20T17:39:16 <Justin_o> I think i merged it pretty early this morning
+2018-09-20T17:41:30 <Justin_o> gmoss: which tests were failing again, was it the UI Options tests or one of the prefs framework ones?
+2018-09-20T17:41:39 * jhung joined the channel
+2018-09-20T17:41:41 <gmoss> UI Options tests, test #3
+2018-09-20T17:41:49 <gmoss> tests/component-tests/uiOptions/html/UIOptions-test.html?testNumber=3
+2018-09-20T17:42:04 <Justin_o> all passing on FF for me. I\'ll see if i can find a way to throttle the CPU
+2018-09-20T17:42:11 <gmoss> cpukiller is what I used
+2018-09-20T17:42:25 <Justin_o> gmoss: also, have you run it through the linux vm with vagrant
+2018-09-20T17:42:39 <gmoss> I have not, just running tests on my browsers locally
+2018-09-20T17:42:56 <gmoss> Justin_o ^^
+2018-09-20T17:50:54 * michelled joined the channel
+2018-09-20T18:08:38 <stegru> ok thanks Justin_o, I\'ll have a look at it
+2018-09-20T18:08:48 <Justin_o> stegru: thanks
+2018-09-20T18:19:51 <stegru> Justin_o: try this... zoom a tab, then open a new one - it causes it to fight between 100% and whatever the UIO+ setting is
+2018-09-20T18:20:22 <stegru> I got that, too - that\'s why I gave up ;)
+2018-09-20T18:21:06 <stegru> the new tabs always sends onZoomChange, with both new and old == 1
+2018-09-20T18:26:06 <Justin_o> stegru: on macOS i don\'t get a fight, but it does always reset to 100% :(
+2018-09-20T18:26:41 <stegru> oh, then I wonder if windows is different..
+2018-09-20T18:27:16 <Justin_o> i think it might be a bit different. i think i had issues like that just for setting it at all before.. but either way it\'s a problem to always reset when a new tab or window re-open :(
+2018-09-20T18:27:47 <stegru> same on windows
+2018-09-20T18:29:19 <stegru> I get the feeling it\'s going to be one of those fixes that are a pain to solve - unless it will give you sleepless nights, defer it until another time
+2018-09-20T18:29:40 <stegru> I\'ll just get jhernandez to look at the work-around for the pilot
+2018-09-20T18:31:31 <jhernandez> stegru: which one?
+2018-09-20T18:31:46 <Justin_o> stegru: okay, let me know. In terms of the PR you sent me earlier, the thing i\'m worried about there is that if the user\'s preference is 1, it will not reset any zoomed instances.
+2018-09-20T18:32:37 <stegru> yes you\'re right, Justin_o
+2018-09-20T18:32:42 <stegru> nothing now, jhernandez
+2018-09-20T18:34:06 * danayo joined the channel
+2018-09-20T18:35:06 <Justin_o> gmoss: I found something that will work on mac http://www.willnolan.com/cputhrottle/cputhrottle.html
+2018-09-20T18:35:08 <stegru> Justin_o, thinking about it.. for the pilots, I don\'t think that will be a problem
+2018-09-20T18:35:20 <Justin_o> gmoss: and able to reproduce your issue.. will look into it more now
+'
+
+b'2018-09-20T00:59:39 * stegru has quit
+2018-09-20T01:06:35 * stegru joined the channel
+2018-09-20T01:49:36 * stegru has quit
+2018-09-20T01:50:01 * stegru joined the channel
+2018-09-20T07:35:21 * georgitodorov joined the channel
+2018-09-20T09:01:44 <the-t-in-rtf> @Bosmon, nothing now, just needed to cut the release and update the infusion pull.
+2018-09-20T09:02:08 <the-t-in-rtf> I sent a note so that @sgithens and others who aren\'t necessarily online will have something to remind them to upgrade.
+2018-09-20T09:02:33 <the-t-in-rtf> Is anyone already working to add schema data to any of the existing settings in win32.json in universal?
+2018-09-20T09:02:41 <the-t-in-rtf> I want to write up a ticket and submit a pull for those.
+2018-09-20T09:21:55 <the-t-in-rtf> @bosmon, do you know of anyone working to add schema data to our "legacy" settings?
+2018-09-20T09:22:15 <the-t-in-rtf> I mean all of the various products in win32.json in universal.
+2018-09-20T09:23:40 <the-t-in-rtf> I don\'t see any open tickets against universal that are related, just checking before I create one.
+2018-09-20T09:25:23 <the-t-in-rtf> ugh, no one is using the universal component, looking more widely now.
+2018-09-20T09:28:24 <the-t-in-rtf> OK, this seems like a good candidate for me to take over: https://issues.gpii.net/browse/GPII-3095
+2018-09-20T09:28:28 <the-t-in-rtf> @Bosmon
+2018-09-20T09:28:49 <the-t-in-rtf> in order to internationalise we would also obviously need schema data for the rest of the settings.
+2018-09-20T10:00:26 <Bosmon> the-t-in-rtf - great
+2018-09-20T10:01:03 <the-t-in-rtf> I\'m expanding the remit a bit to cover most of what we talked about last night.
+2018-09-20T10:01:08 <the-t-in-rtf> I updated the ticket.
+2018-09-20T10:59:18 * Justin_o joined the channel
+2018-09-20T11:24:22 * cindyli joined the channel
+2018-09-20T11:30:29 <sgithens> the-t-in-rtf:  mornin\'
+2018-09-20T11:30:44 <sgithens> I don\'t think anyone besides us is filling in old schema data
+2018-09-20T11:30:49 <the-t-in-rtf> morning, just seeing where we\'re meeting.
+2018-09-20T11:31:18 <the-t-in-rtf> Yes, I\'m planning to take it on.  Ideally, once I\'ve done this, anyone else onboarding will see test failures unless they include schema data.
+2018-09-20T11:31:30 <the-t-in-rtf> @Bosmon, do you have Vidyo yet?
+2018-09-20T11:34:11 <the-t-in-rtf> OK, let\'s start on Skype, I\'ll call whomever is online shortly.
+2018-09-20T11:34:30 <sgithens> k
+2018-09-20T12:15:08 <georgitodorov> Bosmon, jhernandez: We have stumbled upon a very peculiar issue for which we filed a JIRA ticket: https://issues.gpii.net/browse/GPII-3390
+2018-09-20T12:16:52 <georgitodorov> It is not a critical one but the behavior is a little surprising. Please take a look at it and let us know if you can reproduce it and whether you think it\'s worth fixing it :)
+2018-09-20T12:23:44 * alanharnum joined the channel
+2018-09-20T12:34:00 * michelled joined the channel
+2018-09-20T12:35:45 <Justin_o> the-t-in-rtf: thanks for improving gpii-grunt-lint-all. It really does run much faster. I\'ve merged the https://github.com/fluid-project/infusion/pull/930 PR into Infusion.
+2018-09-20T12:35:55 <the-t-in-rtf> great!
+2018-09-20T12:43:57 * cindyli joined the channel
+2018-09-20T12:49:37 <the-t-in-rtf> @stegru or anyone, is there a rational reason that one of these themes appears twice?
+2018-09-20T12:49:38 <the-t-in-rtf> https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L4819
+2018-09-20T12:50:00 <the-t-in-rtf> is it just so that it can be "gray-white" and "grey-white"?
+2018-09-20T12:50:17 <stegru> yes
+2018-09-20T12:50:22 <the-t-in-rtf> but that makes no sense.
+2018-09-20T12:50:30 <the-t-in-rtf> I mean, it\'s not meaningful.
+2018-09-20T12:50:46 <stegru> feel free to remove one of them
+2018-09-20T12:50:47 <the-t-in-rtf> you could safely remove the entry there, it\'s only the one in the transform that should matter.
+2018-09-20T12:50:50 <the-t-in-rtf> I will do so.
+2018-09-20T12:51:04 <stegru> I can\'t remember exactly why i did it
+2018-09-20T12:51:16 <the-t-in-rtf> watching "GoodFellas" too many times.
+2018-09-20T12:51:39 <stegru> I think it was referenced using the two different spellings in different places
+2018-09-20T12:51:55 <the-t-in-rtf> yes, but the enum is spelled the same.
+2018-09-20T12:51:57 <the-t-in-rtf> https://www.youtube.com/watch?v=AKrPUVngxuQ
+2018-09-20T12:52:02 <the-t-in-rtf> Stevey Two Times
+2018-09-20T12:52:04 <the-t-in-rtf> :P
+2018-09-20T12:52:47 <stegru> haha
+2018-09-20T13:02:11 * jhung joined the channel
+2018-09-20T13:06:02 <stegru> haha
+2018-09-20T13:06:07 <stegru> oops
+2018-09-20T13:17:12 * clown joined the channel
+2018-09-20T13:26:28 <cindyli> stegru: after i reproduced the acceptance test failure that Bosmon reported in the windows VM, one applied setting was not reset back (not surprising due to the test failure). it is, there\'s always a blue box around the focused area. how can i remove it manually? running "npm run test:refreshenv" or restarting windows doesn\'t help
+2018-09-20T13:27:47 <stegru> oh not that blue box thing again
+2018-09-20T13:29:29 * fluid-logger joined the channel
+2018-09-20T13:29:43 <stegru> I tihnk it was the narrator, cindyli.. it might be there on the task tray
+2018-09-20T13:30:18 <alanharnum> fluid-everyone: don\'t be alarmed by fluid-logger, this is me testing potential things for when we lose BotBot.me in November
+2018-09-20T13:32:49 <cindyli> stegru: it IS the narrator. thanks
+2018-09-20T13:43:54 * georgitodorov has quit
+2018-09-20T13:51:00 * colinclark joined the channel
+2018-09-20T14:13:58 * cindyli1 joined the channel
+2018-09-20T14:21:27 <Bosmon> cindyli, stegru - thanks for investigating
+2018-09-20T14:31:03 <Justin_o> stegru: thanks for sending the PR https://github.com/GPII/gpii-chrome-extension/pull/16 I\'m looking at it now. Is that all that you needed fixed or would you prefer the fix you were talking about yesterday. I started looking at that and may have a fix for it.
+2018-09-20T14:31:38 <stegru> Bosmon, I did nothing
+2018-09-20T14:32:24 <stegru> Justin_o, the PR is all I need for the pilots, but do whatever makes you happy.
+2018-09-20T14:34:27 <stegru> I mean, the PR is the bare minimum - anything beyond that is better
+2018-09-20T14:34:37 * alanharnum joined the channel
+2018-09-20T14:36:18 <Justin_o> stegru: okay thanks.. i\'ll double check where I got to with it yesterday and if it\'s close I\'ll send you something to test out to see if it solves your problem. Just need to get to a couple things before that though.
+2018-09-20T14:37:17 <stegru> that\'s fine, Justin_o. It\'s not a showstopper, just nice-to-have
+2018-09-20T14:38:15 <Justin_o> stegru: okay.. question for you.. is there something wrong with running "vagrant up" in the windows repo. I\'m trying to test out another PR there but it keeps failing to provision the VM.
+2018-09-20T14:38:47 <stegru> not that I\'m aware of, what does the failure look like?
+2018-09-20T14:39:38 <Justin_o> https://www.irccloud.com/pastebin/qvyNdNl2/
+2018-09-20T14:41:48 <Justin_o> I\'m not sure where that hash ( c9bd31120845921892623e85091ad2d97bb51a89 ) is coming from.
+2018-09-20T14:42:37 * fluid-logger joined the channel
+2018-09-20T14:42:37 <stegru> no, something that npm install is doing. does it keep happening?
+2018-09-20T14:43:20 <Justin_o> i\'ve tried 3 times now and had the same issue. I removed my changes too, so it should have just been running from master
+2018-09-20T14:47:45 <stegru> I think something like this had happened before... it was a network issue. are you at the IDRC?
+2018-09-20T14:47:53 <stegru> it just worked fine for me
+2018-09-20T14:50:08 <Justin_o> I\'m working from home today.. i\'m trying again now. I deleted the node_modules repo in case there was something in there that was causing a problem
+2018-09-20T14:50:45 <Justin_o> but if it is a network issue that would explain why things worked when i used it yesterday.
+2018-09-20T14:51:06 <Justin_o> but i can\'t remember if i had updated from master or not yesterday.
+2018-09-20T14:51:52 <stegru> well, Justin_o, I\'ve just cloned a clean master and did vagrant up, and it worked
+2018-09-20T14:52:51 <Justin_o> stegru: thanks.. so probably something on my end then
+2018-09-20T14:53:53 * danayo_ joined the channel
+2018-09-20T14:54:29 <Justin_o> stegru: it failed again for me, so probably not something to do with node_modules.. i guess it\'s a network issue.
+2018-09-20T14:57:31 <jhernandez> Bosmon, cindyli: hey, I\'ve got a quick question here regarding highContrast - for feds-audit we added a new contrast theme, "regular-contrast" - do we still need this to be in place?
+2018-09-20T14:59:14 <Justin_o> Bosmon: I\'ve recreated the GPII-3319 Universal PR. https://github.com/GPII/universal/pull/666
+2018-09-20T14:59:23 <Bosmon> jhernandez - no idea!
+2018-09-20T14:59:25 <Bosmon> Why did we add it?
+2018-09-20T15:00:06 <Justin_o> Bosmon: it\'s ready for review. I haven\'t been able to fully test it with UIO+ because my vagrant vm from the windows repo won\'t build for me right now.
+2018-09-20T15:00:16 <jhernandez> IIRC this "regular-contrast" was to workaround the problems and sync issues (between QSS and OS) when having a pref set with highContrastEnabled but without a Theme on it
+2018-09-20T15:00:20 <jhernandez> Bosmon: ^
+2018-09-20T15:00:56 <Bosmon> jhernandez - I assume it is not necessary given cindyli and stegru\'s recent improvements to the solutions registry
+2018-09-20T15:01:01 <Bosmon> But I guess we would need to try it out
+2018-09-20T15:01:13 <jhernandez> yeah, that was my guess
+2018-09-20T15:01:15 <cindyli> the new condition block in win32.json is verifying "regular-contrast" - https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L4782
+2018-09-20T15:02:02 <stegru> I think it\'s for the QSS, where it selects from a list
+2018-09-20T15:02:02 <cindyli> this line is for windows high contrast. the same condition at line 6213 is for UIO+
+2018-09-20T15:02:25 * danayo has left the channel
+2018-09-20T15:02:25 * jhernandez has quit
+2018-09-20T15:02:43 * jhernandez joined the channel
+2018-09-20T15:03:07 <jhernandez> cindyli: okay, that got in, but wasn\'t included in here (https://github.com/GPII/universal/blob/master/testData/ontologies/flat.json5#L131)
+2018-09-20T15:03:26 <jhernandez> then, I\'d say we still need this in place, right?
+2018-09-20T15:04:15 <stegru> yes, it makes things easier for the QSS... so the high-contrast enabled state and the theme can be set using a single preference
+2018-09-20T15:04:37 <stegru> I didn\'t add it, but I agree with its use
+2018-09-20T15:07:51 <cindyli> the "highContrastEnabled" term can be potentially removed ;)
+2018-09-20T15:09:26 <stegru> maybe, cindyli. when setting highContrastEnabled without a theme, the last used theme is used
+2018-09-20T15:10:01 <stegru> in Windows, not sure about UIO+
+2018-09-20T15:10:04 <jhernandez> from our perspective, right now, that\'s true, we can remove it, but not entirely sure about the implications under the hood (MM ?)
+2018-09-20T15:10:53 <jhernandez> and not only in MM but the implications in the solutions\' end, dunno
+2018-09-20T15:11:51 <stegru> com.microsoft.windows.highContrast doesn\'t require it, but it does honour it
+2018-09-20T15:12:31 <jhernandez> okay, will add the "regular-contrast" to the list of hc themes, I don\'t think we have to decide now on removing the highContrastEnabled term
+2018-09-20T15:13:39 <cindyli> i was joking on removing highContrastEnabled term. i totally believe removing it will trigger a chain reaction ;)
+2018-09-20T15:13:52 <jhernandez> hahaha
+2018-09-20T15:14:23 <stegru> please keep humour out of here
+2018-09-20T15:15:52 <jhernandez> heh, I\'m sure that removing highContrastEnabled would trigger some of those kasparnet\'s evil easter eggs
+2018-09-20T15:15:56 <jhernandez> xDDD
+2018-09-20T15:16:15 <stegru> haha
+2018-09-20T15:17:05 <stegru> we need to add an easter egg
+2018-09-20T15:25:25 <jhernandez> stegru: ok, and what do we do with the grey/gray discrepancies?
+2018-09-20T15:25:34 <jhernandez> who\'s right?
+2018-09-20T15:26:13 <stegru> grey
+2018-09-20T15:27:02 <jhernandez> but you named the windows theme as "grayOnDark"
+2018-09-20T15:27:12 <stegru> gray
+2018-09-20T15:27:13 * colinclark joined the channel
+2018-09-20T15:27:18 <jhernandez> gris
+2018-09-20T15:27:52 <stegru> I don\'t know
+2018-09-20T15:28:24 <stegru> the-t-in-rtf just looked at this
+2018-09-20T15:29:19 <jhernandez> the-t-in-rtf: (or anybody) any previous experiences on dealing with naming conventions? like grey vs gray, color vs colour and the like?
+2018-09-20T15:30:12 <stegru> colour
+2018-09-20T15:30:20 <stegru> cantre
+2018-09-20T15:30:22 <stegru> centre
+2018-09-20T15:30:24 <gmoss> jhernandez: the contrast themes in UIO use the canadian/british spellings of Grey and Colour
+2018-09-20T15:30:32 <gmoss> (brb - standup meeting)
+2018-09-20T15:32:28 <stegru> lift, aeroplane, spring onion
+2018-09-20T15:34:35 <jhernandez> stegru: courgette!
+2018-09-20T15:36:40 <stegru> marrow ;)
+2018-09-20T15:51:09 <Bosmon> Hi there Justin_o
+2018-09-20T15:51:17 <Bosmon> I\'m just trying to get everything working with the new framework again
+2018-09-20T15:51:26 <Bosmon> And I\'m running into some timing issues with the prefs framework
+2018-09-20T15:51:36 <Bosmon> I wonder if you remember how the compositePanels are meant to work: https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Panels.js#L225
+2018-09-20T15:51:51 <Bosmon> I\'m noticing that there is this event here called "initSubPanels"
+2018-09-20T15:52:17 <Bosmon> Which I\'m imagining is what should be used to time the construction of any panels nested in the composite
+2018-09-20T15:52:24 <Bosmon> But I see that sometimes it is used, and sometimes it isn\'t
+2018-09-20T15:52:54 <Bosmon> In particular the component tree constructed in BuilderTests.js for rendering doesn\'t seem to supply createOnEvent: "initSubPanels" for the nested panels
+2018-09-20T15:54:02 <Bosmon> Do you think it should?
+'
+

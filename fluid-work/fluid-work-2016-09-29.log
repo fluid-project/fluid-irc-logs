@@ -1,0 +1,290 @@
+b'2016-09-29T14:57:25 <Justin_o> and "speechSynthesis.resume()" followed by "speechSynthesis.pasued" returns false
+2016-09-29T14:58:21 <alanharnum> simonjb: http://eeejay.github.io/webspeechdemos/
+2016-09-29T15:06:42 <gtirloni> i\'m going out for lunch but some food for thought
+2016-09-29T15:06:54 <gtirloni> my host is fedora 24 (exact same OS as in the VM), i have an audio device
+2016-09-29T15:07:02 <gtirloni> and the tests pass with FF49
+2016-09-29T15:07:15 <gtirloni> i can try the pause/resume commands when i get back okay
+2016-09-29T15:07:16 <gtirloni> brb.
+2016-09-29T15:07:41 <gtirloni> simonjb: you got native linux right? does it work for you?
+2016-09-29T15:09:08 <simonjb> gtirloni: yes, native linux, and for me the all-tests.html get stuck in TextToSpeech (FF49)
+2016-09-29T15:10:30 <simonjb> TextToSpeech-test.html by itself gets stuck at the same point: 3/4
+2016-09-29T15:13:59 <Justin_o> gtirloni: i\'m not getting it to pass at all in the vm, but i don\'t have the audio devices setup
+2016-09-29T15:14:21 <alanharnum> simonjb Justin_o: https://jsfiddle.net/5fewtbpv/7/
+2016-09-29T15:14:25 <alanharnum> very bare-bones fiddle
+2016-09-29T15:14:34 <alanharnum> speaks a short phrase, pauses and resumes twice, logs to console
+2016-09-29T15:20:10 <simonjb> alanharnum: Chrome 53.0.2785.116 (64-bit)
+2016-09-29T15:20:25 <simonjb> FF 49.0
+2016-09-29T15:20:30 <alanharnum> gtirloni: is your Chrome version the same as simonjb\'s?
+2016-09-29T15:23:08 <simonjb> I\'m wondering if it\'s a difference between underlying speech engine on openSUSE vs Fedora
+2016-09-29T15:23:54 <simonjb> I\'m getting stuck at the same place on both FF and Chrome
+2016-09-29T15:31:48 * alanharnum has quit
+2016-09-29T15:32:08 * jessm has quit
+2016-09-29T15:48:37 <gtirloni> alanharnum: yes, exact same
+2016-09-29T15:49:17 <gtirloni> Justin_o: in the VM window -> Machine -> Settings -> Audio, you should see "Audio Controller: ICH AC97"
+2016-09-29T15:49:32 <gtirloni> that\'s what the Vagrantfile defines for the VM
+2016-09-29T15:50:03 <gtirloni> simonjb: does openSUSE use pulseaudio too?
+2016-09-29T15:50:40 <gtirloni> Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:49.0) Gecko/20100101 Firefox/49.0 // Tests completed in 78296 milliseconds. // 6330 assertions of 6330 passed, 0 failed.
+2016-09-29T15:53:41 * alanharnum joined the channel
+2016-09-29T15:53:45 <gtirloni> the VM is using FF47 though...
+2016-09-29T16:00:03 * jhung has quit
+2016-09-29T16:08:36 <gtirloni> ah, nevermind. it\'s FF49. my last test was on the wrong VM. just confirmed FF49 exhibits the issue all the same here. sorry.
+2016-09-29T16:12:11 <alanharnum> gtirloni: thanks, writing a JIRA now
+2016-09-29T16:12:53 <alanharnum> gtirloni: so I\'m clear, it works for you in Chrome on Fedora 24?
+2016-09-29T16:16:46 <gtirloni> alanharnum: yes, eeejay works for me on Chrome 53 on Fedora 24
+2016-09-29T16:16:57 <gtirloni> alanharnum: on firefox 49 it doesn\'t show the list of voices
+2016-09-29T16:17:27 <alanharnum> gtirloni: Does the Infusion test at http://build.fluidproject.org/infusion/tests/component-tests/textToSpeech/html/TextToSpeech-test.html all pass for you on Chrome 53?
+2016-09-29T16:17:53 <alanharnum> Justin_o simonjb gtirloni: https://issues.fluidproject.org/browse/FLUID-5973
+2016-09-29T16:17:58 * jhung joined the channel
+2016-09-29T16:19:56 * Jess_ joined the channel
+2016-09-29T16:21:14 <gtirloni> alanharnum: on chrome 53 nativo on fedora 24 it failed now at "Confirming if TTS is available" while runnign all-tests.html locally (through a local web server)
+2016-09-29T16:21:27 <gtirloni> alanharnum: running the version at the build site, it failed at resume/pause
+2016-09-29T16:21:39 <gtirloni> alanharnum: (while running it standalone)
+2016-09-29T16:22:36 <alanharnum> gtirloni: ok thanks
+2016-09-29T16:24:37 <gtirloni> previous it seemed to work while running it locally on chrome 53 though. it\'s weird
+2016-09-29T16:24:45 <gtirloni> this is the error now (locally, chrome 53, fedora 24): https://www.pastery.net/fpkfuu/raw/
+2016-09-29T16:24:53 <alanharnum> weirder and weirder
+2016-09-29T16:24:59 <alanharnum> ahh
+2016-09-29T16:25:02 <alanharnum> try reloading it
+2016-09-29T16:25:05 <alanharnum> we\'ve seen that issue before
+2016-09-29T16:25:24 <alanharnum> it seems to be an issue with jqUnit and promises
+2016-09-29T16:25:30 <gtirloni> hmm that worked, thanks
+2016-09-29T16:25:42 <gtirloni> it progressed to pause/resume and stopped, so it\'s consistent now
+2016-09-29T16:35:57 * alanharnum has quit
+2016-09-29T16:48:40 * the-t-in-rtf has quit
+2016-09-29T16:55:27 * colinclark has quit
+2016-09-29T16:57:53 * jhung has quit
+2016-09-29T17:13:23 * alanharnum joined the channel
+2016-09-29T17:34:39 * gtirloni joined the channel
+2016-09-29T17:34:40 * gtirloni has quit
+2016-09-29T17:37:08 * gtirloni joined the channel
+2016-09-29T17:44:17 * kasparnet has quit
+2016-09-29T17:45:33 * the-t-in-rtf joined the channel
+2016-09-29T17:56:54 * colinclark joined the channel
+2016-09-29T17:59:55 * lliskovoi joined the channel
+2016-09-29T18:00:20 <colinclark> ewbjr, lliskovoi: Shall we meet in my vidyo room?
+2016-09-29T18:00:23 * jhung joined the channel
+2016-09-29T18:00:23 * Bosmon7 joined the channel
+2016-09-29T18:00:25 * yzen is now known as yzen_
+2016-09-29T18:00:28 <lliskovoi> sounds good!
+2016-09-29T18:00:34 * jhung has quit
+2016-09-29T18:01:34 * kasparnet joined the channel
+2016-09-29T18:01:48 <ewbjr> be right there :)
+2016-09-29T18:02:24 * kasparne_ joined the channel
+2016-09-29T18:03:02 * jhung joined the channel
+2016-09-29T18:03:11 * jhung has quit
+2016-09-29T18:03:20 * jhung joined the channel
+2016-09-29T18:04:03 * michelled has quit
+2016-09-29T18:04:28 * jhung has quit
+2016-09-29T18:05:39 * jhung joined the channel
+2016-09-29T18:06:37 * kasparnet has quit
+2016-09-29T18:08:29 * kasparne_ has quit
+2016-09-29T18:13:50 * Jess_ has quit
+2016-09-29T18:20:19 * the-t-in-rtf has quit
+2016-09-29T18:26:56 <Bosmon7> alanharnum - this Cantata has to take the biscuit for extended CATTLYRICS : P
+2016-09-29T18:26:58 <Bosmon7> https://www.youtube.com/watch?v=_hOcLkaw-iA
+2016-09-29T18:27:33 <Bosmon7> It receives...... "AND YOU ARE SUCH A LOVE-LEE CATT // AND YOU ARE CA-AT-TING EE-VVERY-WHERE"
+2016-09-29T18:27:45 <Bosmon7> The extended melismas do help in fitting in a few extra syllables :)
+2016-09-29T18:28:25 <Bosmon7> The main chorale starts about 40 seconds in ....
+2016-09-29T18:28:30 * the-t-in-rtf joined the channel
+2016-09-29T18:31:40 <Bosmon7> http://www.emmanuelmusic.org/notes_translations/translations_cantata/t_bwv128.htm
+2016-09-29T18:32:51 * yzen_ is now known as yzen
+2016-09-29T18:34:49 * michelled joined the channel
+2016-09-29T18:41:29 <Kobi> Justin_o, jessm: here is the link for the OER  document - https://docs.google.com/document/d/1K5Kilfum734-xt5lpdnHxS9OvuiM7cTixCJlowxsb7I/edit?usp=sharing
+2016-09-29T18:41:52 <Kobi> David123: i already sent it to you via email
+2016-09-29T18:42:00 * jhung has quit
+2016-09-29T18:42:17 * gtirloni has quit
+2016-09-29T18:45:16 <Justin_o> Kobi, David123: thanks for setting that up and sending it out
+2016-09-29T18:48:03 * alanharnum has quit
+2016-09-29T18:49:05 <Kobi> Justin_o: no problem, Since Jess logged out, will she be able to access it?
+2016-09-29T18:52:20 <Justin_o> Kobi: she probably won\'t know that you left the link here, maybe send her an e-mail about it.
+2016-09-29T18:52:33 <Justin_o> cindyli: when you get a chance, could you please review https://github.com/fluid-project/infusion/pull/756
+2016-09-29T18:53:07 <cindyli> sure, Justin_o
+2016-09-29T18:54:22 <Justin_o> cindyli: thanks
+2016-09-29T18:54:26 <cindyli> np
+2016-09-29T18:58:06 * stegru has quit
+2016-09-29T19:05:14 * gtirloni joined the channel
+2016-09-29T19:08:05 * alanharnum joined the channel
+2016-09-29T19:16:20 * danayo joined the channel
+2016-09-29T19:18:51 * Yan_Hu has quit
+2016-09-29T19:25:52 * Jess_ joined the channel
+2016-09-29T19:41:53 * kasparnet joined the channel
+2016-09-29T19:44:19 * alanharnum has quit
+2016-09-29T19:49:07 * alanharnum joined the channel
+2016-09-29T20:10:15 * yzen has quit
+2016-09-29T20:37:46 * cindyli has quit
+2016-09-29T20:39:08 * cindyli joined the channel
+2016-09-29T20:41:11 * cindyli has quit
+2016-09-29T20:41:49 * gtirloni has quit
+2016-09-29T21:02:47 * clown has quit
+2016-09-29T21:21:49 * simonjb has quit
+2016-09-29T22:05:31 * michelled has quit
+2016-09-29T22:05:48 * kasparnet has quit
+2016-09-29T22:05:50 * colinclark_ joined the channel
+2016-09-29T22:06:36 * colinclark_ has quit
+2016-09-29T22:11:52 * Justin_o has quit
+2016-09-29T22:39:16 * alanharnum joined the channel
+2016-09-29T22:44:18 * alanharnum has quit
+2016-09-29T22:45:17 * amatas has quit
+2016-09-29T22:45:28 * danayo has quit
+2016-09-29T23:00:46 * Jess_ has quit
+2016-09-29T23:20:42 * kavya has quit
+2016-09-29T23:34:05 * Jess_ joined the channel
+2016-09-29T23:34:06 * Jess_ has quit
+2016-09-29T23:35:38 * jhung joined the channel
+2016-09-29T23:35:53 * Jess_ joined the channel
+2016-09-29T23:35:58 * Jess_ has quit
+2016-09-29T23:56:04 * jhung has quit
+'
+
+b'2016-09-29T00:00:54 * colinclark joined the channel
+2016-09-29T00:03:51 * kasparnet has quit
+2016-09-29T00:06:48 * colinclark has quit
+2016-09-29T01:33:30 * gtirloni has quit
+2016-09-29T05:14:46 * kasparnet joined the channel
+2016-09-29T05:19:39 * kasparnet has quit
+2016-09-29T06:45:31 * kasparnet joined the channel
+2016-09-29T06:53:06 * alanharnum joined the channel
+2016-09-29T07:34:42 * stegru joined the channel
+2016-09-29T08:37:55 * amatas joined the channel
+2016-09-29T10:34:41 * Bosmon has quit
+2016-09-29T10:38:44 * Bosmon joined the channel
+2016-09-29T10:43:00 * gtirloni joined the channel
+2016-09-29T11:45:03 * stegru has quit
+2016-09-29T11:52:43 * stegru joined the channel
+2016-09-29T12:04:24 * jhung joined the channel
+2016-09-29T12:22:23 * cindyli joined the channel
+2016-09-29T12:35:53 * kasparnet has quit
+2016-09-29T12:44:28 * kasparnet joined the channel
+2016-09-29T12:47:22 * michelled joined the channel
+2016-09-29T12:52:38 * kasparne_ joined the channel
+2016-09-29T12:55:24 * kasparnet has quit
+2016-09-29T13:02:03 <jhung> alanharnum\xe2\x80\xa6
+2016-09-29T13:02:06 <jhung> "Hi, I\'d like to hear a TCP joke."
+2016-09-29T13:02:07 <jhung> "Hello, would you like to hear a TCP joke?"
+2016-09-29T13:02:07 <jhung> "Yes, I\'d like to hear a TCP joke."
+2016-09-29T13:02:07 <jhung> "OK, I\'ll tell you a TCP joke."
+2016-09-29T13:02:07 <jhung> "Ok, I will hear a TCP joke."
+2016-09-29T13:02:07 <jhung> "Are you ready to hear a TCP joke?"
+2016-09-29T13:02:07 <jhung> "Yes, I am ready to hear a TCP joke."
+2016-09-29T13:02:08 <jhung> "Ok, I am about to send the TCP joke. It will last 10 seconds, it has two characters, it does not have a setting, it ends with a punchline."
+2016-09-29T13:02:08 <jhung> "Ok, I am ready to get your TCP joke that will last 10 seconds, has two characters, does not have an explicit setting, and ends with a punchline."
+2016-09-29T13:02:10 <jhung> "I\'m sorry, your connection has timed out. Hello, would you like to hear a TCP joke?"
+2016-09-29T13:02:18 <alanharnum> jhung: https://en.wikipedia.org/wiki/IP_over_Avian_Carriers
+2016-09-29T13:02:28 <alanharnum> late-week network humour1
+2016-09-29T13:04:10 <gtirloni> LOL
+2016-09-29T13:05:59 <jhung> alanharnum: also appears that Avian Carriers were quite fault tolerant, despite having some terrible lag and fragmentation issues. https://en.wikipedia.org/wiki/Cher_Ami
+2016-09-29T13:06:39 * Justin_o joined the channel
+2016-09-29T13:19:48 * colinclark joined the channel
+2016-09-29T13:21:33 <Justin_o> the-t-in-rtf: you might find this interesting https://github.com/jquery/jquery-ui/pull/1698
+2016-09-29T13:22:44 <the-t-in-rtf> Thanks @Justin_o
+2016-09-29T13:23:16 <the-t-in-rtf> I\'ll follow that issue and we\'ll see if the timing works out.
+2016-09-29T13:23:35 <Justin_o> the-t-in-rtf: no problem, looks like it was just merged
+2016-09-29T13:23:42 <Justin_o> alanharnum: this came up in the community meeting yesterday. https://vega.github.io/vega/
+2016-09-29T13:23:45 <the-t-in-rtf> hmm, or maybe I need to follow the "cut the next release" ticket.
+2016-09-29T13:24:04 <alanharnum> Justin_o: interesting
+2016-09-29T13:24:57 <Justin_o> alanharnum: it was looked at for the data visualization project, but in the end not used because it was hard to hook into the generated bits.
+2016-09-29T13:24:58 <the-t-in-rtf> oh, god.  They use their issue tracker and not GH
+2016-09-29T13:25:46 <Justin_o> the-t-in-rtf: i can\'t really say anything against that ;)
+2016-09-29T13:26:03 <Justin_o> although we did start using milestones to mark some of our PRs for our upcoming release
+2016-09-29T13:26:53 <Justin_o> alanharnum: seems like Bosmon and his student are also working on ways to integrate D3 with infusion, and had used the chart authoring work as inspiration. It may be useful to you to sync up with them at some point to see if there is anything that can be shared
+2016-09-29T13:27:22 <the-t-in-rtf> Anyway, they claim November 1st for the next release:  https://bugs.jqueryui.com/milestone/1.12.2
+2016-09-29T13:29:27 <alanharnum> Justin_o: it would be superb to have a declarative approach (eventually) for D3/Infusion
+2016-09-29T13:32:32 * kasparne_ has quit
+2016-09-29T13:33:38 <Bosmon> alanharnum - ONE DAY, we will have it : P
+2016-09-29T13:33:39 <Bosmon> gpii/node_modules/settingsHandlers/test/settingsHandlerUtilitiesTests.js
+2016-09-29T13:33:41 <Bosmon> oops
+2016-09-29T13:33:50 <Bosmon> I meant
+2016-09-29T13:33:51 <Bosmon> https://issues.fluidproject.org/browse/FLUID-4260
+2016-09-29T13:34:11 <Bosmon> the-t-in-rtf ADKINS where is our meting
+2016-09-29T13:34:33 <the-t-in-rtf> I just sent a note.  I am entertaining my father today.
+2016-09-29T13:34:48 <Bosmon> the-t-in-rtf ok cool
+2016-09-29T13:34:53 <Bosmon> It will give more time for the yoghurt to set
+2016-09-29T13:34:59 <the-t-in-rtf> I have snuck away briefly to look at chats and mails, but am likely to step away at any moment
+2016-09-29T13:35:11 <the-t-in-rtf> Is that metaphorical yoghurt?
+2016-09-29T13:35:42 <Bosmon> No, perfectly concrete yoghurt
+2016-09-29T13:38:02 * yzen joined the channel
+2016-09-29T13:41:13 * kasparnet joined the channel
+2016-09-29T13:43:46 <colinclark> Concrete yoghurt!
+2016-09-29T13:43:51 <colinclark> be careful with that stuff, Bosmon!
+2016-09-29T13:45:35 * clown joined the channel
+2016-09-29T13:46:34 * kavya joined the channel
+2016-09-29T13:47:15 <michelled> Justin_o: did SpagoBI end up integrating UIO?
+2016-09-29T13:49:09 * alanharnum has quit
+2016-09-29T13:49:49 * simonjb joined the channel
+2016-09-29T13:53:51 * danayo joined the channel
+2016-09-29T13:54:09 * jessm joined the channel
+2016-09-29T13:54:30 * alanharnum joined the channel
+2016-09-29T14:04:10 * kasparne_ joined the channel
+2016-09-29T14:06:54 * kasparnet has quit
+2016-09-29T14:11:17 <colinclark> hey simonjb and alanharnum, I have a quick question for you
+2016-09-29T14:11:28 <alanharnum> colinclark: ?
+2016-09-29T14:11:47 <colinclark> I\'m trying to dig up references to the sensors and devices we researched back in July
+2016-09-29T14:11:55 <colinclark> But my email is failing me
+2016-09-29T14:12:07 <colinclark> I\'ve found reference to the Smart Citizen project and the Air Quality Egg
+2016-09-29T14:12:15 <colinclark> but are there others we found or discussed that you can remember?
+2016-09-29T14:13:04 <simonjb> colinclark: http://www.citizensense.net/
+2016-09-29T14:13:39 <colinclark> awesome
+2016-09-29T14:13:46 <alanharnum> colinclark: http://www.inhaleproject.ca/
+2016-09-29T14:13:54 <simonjb> colinclark: http://www.greencitystreets.com/analyse/environmental-and-air-quality-sensors/
+2016-09-29T14:23:15 <colinclark> thank you!
+2016-09-29T14:24:14 * danayo joined the channel
+2016-09-29T14:26:01 <Justin_o> gtirloni: hello, picking up on the unit test failures
+2016-09-29T14:26:38 <gtirloni> cindyli: i tried creating a simpler situation with a cyclic dependency and npm3 worked fine.. i guess it needs a more complex case. there are lot of stack exceeded issues opened for npm, very few with any reply
+2016-09-29T14:26:40 <gtirloni> Justin_o: hi
+2016-09-29T14:27:14 <Justin_o> gtirloni: that are breaking the Infusion builds. I think the tests are halting at the TextToSpeech tests. Do you know if there is an audio driver installed on the vm there? Also is there a timeout, i think the timeout for the the feature detection is 5 seconds for TextToSpeech, so perhaps something else is timing out before that
+2016-09-29T14:27:27 <Justin_o> alanharnum: did you have any other ideas about what might be causing it?
+2016-09-29T14:28:06 <gtirloni> Justin_o: yes, there is an audio device in the VM. the jobs are timing out at 17min mark.
+2016-09-29T14:28:52 <alanharnum> Justin_o: nope - is this a Linux VM?
+2016-09-29T14:28:56 <Justin_o> gtirloni: do you know what the timeout limit for it is, that is.. does it timeout if nothing happens for 1 second?
+2016-09-29T14:29:09 <Justin_o> gtirloni: also where did you see the issue when you were running it?
+2016-09-29T14:29:18 <gtirloni> Justin_o: the timeout is for the whole job duration, i don\'t think it checks for output
+2016-09-29T14:29:20 <alanharnum> i\'d check first of all if the TTS tests run and pass individually outside the all-tests context on Linux
+2016-09-29T14:29:34 <gtirloni> Justin_o: i saw it on my own machine yesterday too. i\'m re-running the tests again now
+2016-09-29T14:29:41 <Justin_o> gtirloni: thanks
+2016-09-29T14:30:11 <Justin_o> gtirloni: i\'m trying with testem again too, i destroyed and re-upped the vm yesterday
+2016-09-29T14:30:44 <cindyli> gtirloni: thanks for the investigation. I\'m also playing with package.json to find out what exactly causing the stack exceeded issue. as one reply in this thread - https://github.com/npm/npm/issues/10776. one relatively easy thing we could try with VM is to use "npm i --no-bin-links || npm i --no-bin-links" instead of a straight "npm install"
+2016-09-29T14:30:50 <Justin_o> alanharnum: it\'s definitely an issue on the build site, but i haven\'t been able to reproduce it myself. gtirloni did yesterday though
+2016-09-29T14:32:07 <gtirloni> cindyli: we\'ve no-bin-links in ~/.npmrc
+2016-09-29T14:32:26 <cindyli> we already have?
+2016-09-29T14:33:38 * kasparnet joined the channel
+2016-09-29T14:33:44 <gtirloni> cindyli: yep https://github.com/idi-ops/ansible-nodejs/blob/master/tasks/configure.yml#L43-L50
+2016-09-29T14:33:57 <gtirloni> cindyli: https://github.com/idi-ops/ansible-nodejs/blob/master/files/npmrc
+2016-09-29T14:34:36 <Justin_o> alanharnum: running through testem now and it looks like it\'s halting on the Pause and Resume test
+2016-09-29T14:34:50 <alanharnum> Justin_o: which OS / browser?
+2016-09-29T14:35:11 <Justin_o> alanharnum: Fedora 24 and Firefox 49
+2016-09-29T14:36:53 <alanharnum> Justin_o: they pass on OSX FF 48.0.1 with the TTS option turned on - let me upgrade FF & see if I see same issue
+2016-09-29T14:36:59 * kasparne_ has quit
+2016-09-29T14:37:04 <cindyli> gtirloni: the thread says, depending on the sub-dependency depth, "npm install" need to be run multiple times, well, at least twice (in the case of one sub dependency i think). that\'s why the command looks like "npm i --no-bin-links || npm i --no-bin-links"
+2016-09-29T14:37:34 <Bosmon> That is absolutely ridiculous
+2016-09-29T14:37:42 <Bosmon> But if it works .......
+2016-09-29T14:38:48 <Justin_o> gtirloni, alanharnum: i think it didn\'t fail for me before because my vm was using FF 48
+2016-09-29T14:39:06 <alanharnum> Justin_o: I wonder if this is connected: https://bugzilla.mozilla.org/show_bug.cgi?id=1238538
+2016-09-29T14:39:35 <Justin_o> alanharnum: could be, also the tests probably didn\'t run at all in FF before 49
+2016-09-29T14:40:51 <alanharnum> Justin_o: yes, they wouldn\'t have
+2016-09-29T14:40:57 <alanharnum> unless you manually turned on TTS
+2016-09-29T14:41:26 <alanharnum> Justin_o: can you see if Pause/Resume work in the demo at http://eeejay.github.io/webspeechdemos/?
+2016-09-29T14:41:50 * Yan_Hu joined the channel
+2016-09-29T14:46:55 * alanharnum has quit
+2016-09-29T14:48:35 <Justin_o> gtirloni: are you running a native linux
+2016-09-29T14:48:51 <Justin_o> could you try that link that alanharnum mentioned above?
+2016-09-29T14:49:03 <Justin_o> i can\'t seem to hear the audio through my vm
+2016-09-29T14:50:17 <gtirloni> Justin_o: it looks like something changed in the host audio.. at least here this worked:
+2016-09-29T14:50:20 <gtirloni> edit Vagrantfile
+2016-09-29T14:50:31 * alanharnum joined the channel
+2016-09-29T14:50:47 <gtirloni> change this line:
+2016-09-29T14:50:50 <gtirloni> vm.customize ["modifyvm", :id, "--audio", "pulse", "--audiocontroller", "ac97"]
+2016-09-29T14:51:17 <gtirloni> from "null" to "pulse" .. the thing is, PulseAudio is a Linux thing.. and it\'s what I needed to change to hear idea from my local VM
+2016-09-29T14:51:41 <gtirloni> that being said, even with audio coming out of the VM (browsed youtube to confirm), the Pause/Resume test still fails
+2016-09-29T14:52:08 <gtirloni> so I guess audio=null is just so your speaks aren\'t going crazy when running tests (we don\'t have speakers on servers so that\'s okay)
+2016-09-29T14:52:23 <Justin_o> gtirloni: could be, alanharnum pointed to a bug report from firefox that seems to suggest that they don\'t support pause/resume in linux
+2016-09-29T14:52:27 <gtirloni> but the audio device exists and is able to accept commands and spill out virtual noise.. it\'s just doesn\'t make its way to the host
+2016-09-29T14:52:38 <gtirloni> cool, that makes sense
+2016-09-29T14:52:54 <gtirloni> alanharnum Justin_o: the eejay URL didn\'t work for me on native Linux with Firefox 49.. it worked with Chrome though
+2016-09-29T14:53:06 <Justin_o> gtirloni: cool thanks for verifying that
+2016-09-29T14:55:37 <gtirloni> yw
+2016-09-29T14:55:55 <Justin_o> alanharnum: so in FF 49 on linux, using the developer console i did "speechSynthesis.paused" it returned false
+2016-09-29T14:56:09 <Justin_o> then "speechSynthesis.pause()"
+2016-09-29T14:56:23 <Justin_o> then "speechSynthesis.paused", returned true
+2016-09-29T14:56:38 <alanharnum> interesting
+'
+

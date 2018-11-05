@@ -1,0 +1,131 @@
+b'2018-10-08T07:48:58 * georgitodorov joined the channel
+2018-10-08T08:40:04 * dandimitrov joined the channel
+2018-10-08T08:48:51 <georgitodorov> Hey, stegru. Any updates on your https://github.com/GPII/universal/pull/680 PR?
+2018-10-08T08:49:30 <stegru> not yet, georgitodorov - i forgot about it
+2018-10-08T08:52:52 <georgitodorov> stegru: No problem
+2018-10-08T11:12:28 * dandimitrov has quit
+2018-10-08T11:24:11 * dandimitrov joined the channel
+2018-10-08T11:41:11 <Bosmon> Hi there georgitodorov - is there now a version of gpii-app which at least runs your own internal tests ok?
+2018-10-08T11:41:41 <Bosmon> If so, is it in fix/qssTests or elsewhere?
+2018-10-08T11:45:37 <georgitodorov> Bosmon: Yes, our tests pass in the fix/qssTests branch (you will need to comment out gpii-windows and gpii-universal tests)
+2018-10-08T11:45:48 <georgitodorov> I was thinking of merging that branch into feature/QSS1.1
+2018-10-08T11:51:37 * dandimitrov has quit
+2018-10-08T12:04:47 <Bosmon> georgitodorov - that would be great, yes
+2018-10-08T12:05:09 <Bosmon> Since my next question was whether you had any more recent/wider work on the app that was not incorporate in that branch
+2018-10-08T12:05:48 <georgitodorov> Bosmon: Everything is in that branch
+2018-10-08T12:09:02 <georgitodorov> Bosmon: What is your idea of proceeding with running all of the tests?
+2018-10-08T12:33:28 <Bosmon> georgitodorov - you mean the eventLog tests?
+2018-10-08T12:33:37 <Bosmon> I assumed we were waiting for stegru\'s ideas on that
+2018-10-08T12:33:57 <Bosmon> I tried running all of the internal fix/qssTests with coverage and got what looks like a race condition:
+2018-10-08T12:34:34 <Bosmon> https://gist.github.com/amb26/84a059ba1d1e844b290cd14590bc14ba
+2018-10-08T12:34:37 <Bosmon> Have you seen such a one?
+2018-10-08T12:35:05 <stegru> well,
+2018-10-08T12:35:32 <stegru> this is causing problems with the tests:
+2018-10-08T12:35:34 <stegru> fluid.require("%gpii-universal/tests/all-tests.js");
+2018-10-08T12:35:34 <stegru> fluid.require("%gpii-windows/tests/UnitTests.js");
+2018-10-08T12:35:56 <stegru> it makes some of my universal tests load windows related things
+2018-10-08T12:38:43 <Bosmon> And what goes wrong if they do?
+2018-10-08T12:38:52 * dandimitrov joined the channel
+2018-10-08T12:40:09 <stegru> they fail :)
+2018-10-08T12:40:36 <Bosmon> Doesn\'t sound like a winner : P
+2018-10-08T12:40:57 <georgitodorov> Bosmon: I have not seen such an error before
+2018-10-08T12:41:10 <Bosmon> georgitodorov - have you tried running with coverage?
+2018-10-08T12:41:14 <georgitodorov> But tests seem to fail differently on different machine
+2018-10-08T12:41:32 <georgitodorov> Bosmon: Yes - both on my native machine and on a VM it succeeds
+2018-10-08T12:41:58 <georgitodorov> Actually, it is getting pretty frustrating now that tests behave differently on different machines
+2018-10-08T12:42:53 <georgitodorov> Bosmon: The other thing is that when I run `gpii-windows` tests together with the GPII app\'s, I get an "address in use" error
+2018-10-08T12:43:07 <georgitodorov> Whereas if they are run separately, they pass
+2018-10-08T12:43:10 <georgitodorov> Any ideas?
+2018-10-08T12:46:46 <Bosmon> georgitodorov - nothing specific, other than imagining that somehow one test environment is not fully shut down before another one starts up
+2018-10-08T12:46:53 <Bosmon> georgitodorov - at what point in the test run does the failure occur?
+2018-10-08T12:46:59 <Bosmon> Perhaps you can write that one up as a separate JIRA
+2018-10-08T12:48:47 * yuriy joined the channel
+2018-10-08T12:50:29 <georgitodorov> Bosmon: Sure, I can do that. Can you please try it on your machine? Comment out only `gpii-universal` tests from tests.js and execute `npm run test:noCoverage`
+2018-10-08T12:50:49 <georgitodorov> Perhaps these tests will execute successfully on your machine :)
+2018-10-08T12:52:12 <georgitodorov> Bosmon: This is the error I get: https://pastebin.com/rV6YtWs1
+2018-10-08T12:52:47 <georgitodorov> It appears halfway through the tests\' execution - first, the `gpii-windows` tests begin executing, I see that some of them pass, then this error appears
+2018-10-08T12:52:55 <georgitodorov> But no PSP/QSS tests are run
+2018-10-08T12:52:59 <Bosmon> georgitodorov - on my second try at the internal tests I actually got a successful run, which is encouraging
+2018-10-08T12:53:34 <Bosmon> I am expecting that the dialog closing race condition will be a relatively straightforward one, perhaps along the lines of the "noUser" failure that cindyli and I are currently hunting in the core tests
+2018-10-08T12:56:31 <Bosmon> In the meantime please do merge this with your main branch - is this the one for which the pull is https://github.com/GPII/gpii-app/pull/48 ?
+2018-10-08T12:57:08 <georgitodorov> Bosmon: No, I am afraid this PR is outdated
+2018-10-08T12:57:27 <georgitodorov> It is about feature/QSS whereas we are now actively working in feature/QSS1.1
+2018-10-08T12:58:00 <Bosmon> georgitodorov - ok, can you please open a fresh pull against your current work once you have done this
+2018-10-08T12:58:04 <georgitodorov> Bosmon: I guess we can proceed in the same way as for the PSP3 and QSS - open another PR from feature/QSS1.1?
+2018-10-08T12:58:14 <georgitodorov> Bosmon: Sure
+2018-10-08T12:58:24 <Bosmon> Yes, I think it is now OK for the PSP3 pull to be closed since as far as I can see all the feedback on that pull has now been addressed
+2018-10-08T12:58:28 <Bosmon> But I will just check through it again
+2018-10-08T12:59:16 <georgitodorov> Bosmon: So, you want for us to create an internal PR in our repo?
+2018-10-08T12:59:27 <Bosmon> georgitodorov no, a full PR against master please
+2018-10-08T12:59:38 <georgitodorov> Bosmon: Okay, thanks for the clarification
+2018-10-08T12:59:55 <Bosmon> It is time for the BIG ONE, we are aiming to get all of this into master in one go : P
+2018-10-08T13:00:10 <georgitodorov> Bosmon: As for the race condition, I am not sure how to reproduce it
+2018-10-08T13:00:21 <Bosmon> Just as soon as we can get the tests passing and perhaps a couple of coverage nitpicks
+2018-10-08T13:00:35 <Bosmon> georgitodorov - it may not be easy to reproduce it, but we should be able to understand the possibilities "by eye"
+2018-10-08T13:00:37 <georgitodorov> We have never seen that particular error (and we have seen a lot of them)
+2018-10-08T13:00:45 <Bosmon> Unfortunately this is the way with such race conditions
+2018-10-08T13:01:05 <Bosmon> Interestingly my machine seems to be able to provoke them with some higher probability than other people\'s : P
+2018-10-08T13:01:28 <Bosmon> cindyli can\'t reproduce the race condition that I can see in trunk either
+2018-10-08T13:01:34 <Bosmon> But I think we can see how it can happen
+2018-10-08T13:02:10 <georgitodorov> Bosmon: For the dialog manager, I suppose that the dialog may not be shown when we try to close it
+2018-10-08T13:02:14 <georgitodorov> This is my best guess
+2018-10-08T13:02:26 <georgitodorov> I can make some changes to that particular test
+2018-10-08T13:02:31 <Bosmon> georgitodorov, yes, exactly
+2018-10-08T13:02:51 <Bosmon> So we can create a wait on a "promise fixture" perhaps which delays until the dialog actually shows, if it is not showing already
+2018-10-08T13:40:51 <stegru> georgitodorov, I\'ve pushed another fix to https://github.com/GPII/universal/pull/680
+2018-10-08T13:41:20 <georgitodorov> stegru: Thanks, I will try it out
+2018-10-08T14:07:55 <georgitodorov> stegru: How much time does it take for the gpii-universal tests to complete?
+2018-10-08T14:08:17 <georgitodorov> I started them roughly 10 minutes ago and they are still running
+2018-10-08T14:08:26 <stegru> about 20 minutes, in CI
+2018-10-08T14:08:30 <georgitodorov> There is a lot of logging going on in the console
+2018-10-08T14:08:56 <georgitodorov> stegru: It\'s expected then, I see
+2018-10-08T14:09:12 <georgitodorov> Well, it seems that your fix works. I have never got up to that point before
+2018-10-08T14:09:22 <stegru> oh good
+2018-10-08T14:09:26 <georgitodorov> But I will let you know what happens once the tests finish
+2018-10-08T14:23:01 <georgitodorov> stegru: Good news! All the `gpii-universal` tests are passing together with our PSP/QSS tests
+2018-10-08T14:23:04 <georgitodorov> Horray!
+2018-10-08T14:23:32 <georgitodorov> Hooray!*
+2018-10-08T14:24:48 <stegru> yipee!
+2018-10-08T14:25:51 <georgitodorov> Bosmon: Did you observe the "address in use" error when running PSP tests together with gpii-windows tests?
+2018-10-08T14:27:04 <georgitodorov> Bosmon: I will be creating a JIRA shortly but I am just curious whether this happens on your machine
+2018-10-08T14:27:05 <Bosmon> georgitodorov - I have not yet had time to make this run
+2018-10-08T14:27:11 <georgitodorov> Okay
+2018-10-08T14:27:16 <Bosmon> I\'ll do it now
+2018-10-08T14:45:31 * dandimitrov has quit
+2018-10-08T15:08:47 <georgitodorov> Bosmon: I have made some changes that I hope will fix the race condition for the user error
+2018-10-08T15:08:52 <georgitodorov> I created this PR: https://github.com/GPII/gpii-app/pull/62
+2018-10-08T15:09:18 <georgitodorov> It is for all our QSS v1.1 work and includes the fixes for the tests and the "Reset All to Standard" functionality
+2018-10-08T15:09:21 <Bosmon> georgitodorov - awesome, that\'s great
+2018-10-08T15:09:28 <Bosmon> And for my part I have reproduced the EADDRINUSE :::8081 error
+2018-10-08T15:09:55 <georgitodorov> Bosmon: Great :)
+2018-10-08T15:10:14 <georgitodorov> Bosmon: I am now running into some new errors regarding the "Reset All"
+2018-10-08T15:10:49 <georgitodorov> When keying out (which is actually a key in of the "reset" user), I am often getting an "Oops, something went wrong" error
+2018-10-08T15:11:44 <georgitodorov> Bosmon: Should we be first performing a key out of the current user and then a key in of the reset user?
+2018-10-08T15:11:58 <Bosmon> georgitodorov - no, you shouldn\'t need to
+2018-10-08T15:12:01 <georgitodorov> Or can we just send a request for keying in the "reset" user
+2018-10-08T15:12:04 <georgitodorov> Okay
+2018-10-08T15:15:08 <georgitodorov> Bosmon: I need to test a bit further what happens so perhaps tomorrow I can provide more details
+2018-10-08T15:16:39 <georgitodorov> Bosmon: But as far as I can tell, the "Oops, something went wrong" started appearing when I added the "high contrast" setting to the current profile
+2018-10-08T15:16:55 <Bosmon> georgitodorov - actually I get lots of EADDRINUSE failures before this one
+2018-10-08T15:16:57 <georgitodorov> When keying out, this setting gets reverted and then I see the error.
+2018-10-08T15:17:11 <Bosmon> The first one is very early, and looks like an attempt to run the Windows unit tests concurrently with the app integration ones
+2018-10-08T15:17:21 <Bosmon> 08:14:39.772:  Successfully queued test GPII application integration tests
+2018-10-08T15:17:21 <Bosmon> 08:14:39.772:  FATAL ERROR: Uncaught exception: listen EADDRINUSE :::8060
+2018-10-08T15:18:28 <georgitodorov> Bosmon: I am not familiar with windows tests. I see that they are incorporated in our code using `fluid.require` instead of `require` but this shouldn\'t be an issue, right?
+2018-10-08T15:18:38 <Bosmon> No, that\'s not an issue
+2018-10-08T15:21:27 <Bosmon> georgitodorov - I notice that even gpii-windows itself doesn\'t actually try to run its own Unit tests in the same process as it has run its acceptance tests
+2018-10-08T15:22:07 <Bosmon> I think there is generally an issue with serialising these tests with others, and we should just use the same approach that is used in its package.json: https://github.com/GPII/windows/blob/master/package.json#L13
+2018-10-08T15:22:25 <Bosmon> And farm out these units tests to a separate npm script which is then serialised at the process level
+2018-10-08T15:24:21 <georgitodorov> Bosmon: I see. But in this case we should hardcode the path to gpii-windows and gpii-universal in our package.json?
+2018-10-08T15:28:19 * dandimitrov joined the channel
+2018-10-08T15:28:21 <georgitodorov> Bosmon: I need to go now but I will try out this idea tomorrow
+2018-10-08T15:28:47 <georgitodorov> And I will also continue looking into the "Reset All to Standard" error I observed
+2018-10-08T15:29:14 * georgitodorov has quit
+2018-10-08T16:10:03 * dandimitrov has quit
+2018-10-08T18:09:05 * jhernandez joined the channel
+2018-10-08T18:10:06 * jhernandez has quit
+2018-10-08T18:10:17 * jhernandez joined the channel
+2018-10-08T20:12:32 * nrdubin joined the channel
+2018-10-08T20:22:36 * nrdubin has quit
+'
+

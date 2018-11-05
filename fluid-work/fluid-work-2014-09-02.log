@@ -1,0 +1,239 @@
+b'2014-09-02T18:44:28 <Justin_o> cindyli: i think my FLOE-196 branch is ready to update the unit tests.. should i pull in from your FLOE-195 first?
+2014-09-02T18:45:16 <cindyli> yes, that would be good. thanks, Justin_o
+2014-09-02T18:46:20 <Justin_o> cindyli: are all your current changes pushed up?
+2014-09-02T18:47:35 <cindyli> Justin_o: i\'m adding a comment and cleaning up the code, will do another push soon. can you wait a few minutes?
+2014-09-02T18:48:53 <Justin_o> sure, let me know when you\'re ready
+2014-09-02T18:50:15 * clown is now known as clown_mtg
+2014-09-02T18:53:07 <cindyli> Bosmon and Justin_o, the latest for FLOE-195 has been pushed up. ready for another look
+2014-09-02T18:53:24 <Bosmon> so fast!
+2014-09-02T18:54:05 <Bosmon> cindyli - I don\'t think I see the push
+2014-09-02T18:54:35 <Bosmon> latest commit is from 21 minutes ago
+2014-09-02T18:55:16 <Justin_o> cindyli: it doesn\'t look like github updated the pull request either
+2014-09-02T18:56:42 <cindyli> sorry, Bosmon and Justin_o, i guess i committed but not pushed. now should be there.
+2014-09-02T18:58:27 <Justin_o> cindyli: thanks
+2014-09-02T18:58:30 <Bosmon> Hi cindyli - can you answer the question about line 174?
+2014-09-02T18:59:47 <cindyli> Bosmon: sorry, missed that comment. replying..
+2014-09-02T19:01:27 <Bosmon> Also for line 204 - there was another piece of "direct view binding"
+2014-09-02T19:35:54 * jhung1 joined the channel
+2014-09-02T19:36:20 <Bosmon> cindyli ^
+2014-09-02T19:38:59 * jhung has quit
+2014-09-02T19:39:18 <cindyli> yes, working on it, Bosmon, i finally realized the checkbox states are already tracked in the renderer component model. seems i\'ve successfully removed the new model path "isOtherChecked". but we probably still need the text area keyup binding because the model value for the text area is not updated at every key stroke. experimenting...
+2014-09-02T19:39:34 <Bosmon> cindyli - hi, the keyup binding is fine as long as it is explained
+2014-09-02T19:39:40 <cindyli> sorry about my slowness
+2014-09-02T19:39:41 <Justin_o> cindyli: is there no longer a feedback loader?
+2014-09-02T19:39:55 <Bosmon> It\'s just the other bindings that need to proceed in two stages - i) binding DOM to model, ii) processing model changes into other model changes
+2014-09-02T19:40:00 <cindyli> Justin_o: there is. no more templateLoader
+2014-09-02T19:40:18 <cindyli> ok, Bosmon
+2014-09-02T19:40:25 <Bosmon> There should never be a case where a piece of model processing directly triggers a DOM change or vice versa
+2014-09-02T19:40:45 <Bosmon> Otherwise we would, as Martin Fowler would have it, "violate model-view separation"
+2014-09-02T19:41:39 <cindyli> ya, realizing that\xe2\x80\xa6 slowly\xe2\x80\xa6 ;)
+2014-09-02T19:43:11 <Bosmon> Well it\'s odd.... I\'m sure I\'ve seen you doing this for 2-3 years now : P
+2014-09-02T19:43:18 <Bosmon> But perhaps the reasons for what you were doing weren\'t always clear
+2014-09-02T19:49:42 <colinclark> Don\'t apologize for your slowness, cindyli. You\'re awesome. :)
+2014-09-02T19:52:27 <Bosmon> cindyli - you are indeed awesome
+2014-09-02T19:54:15 <cindyli> you guys are always being so encouraging. hope I would be more awesome ;)
+2014-09-02T19:55:51 <Justin_o> cindyli: how are the templates loaded now?
+2014-09-02T19:56:20 <cindyli> Justin_o: feedbackLoader itself is an instance of the template loader
+2014-09-02T19:56:59 <cindyli> Justin_o: feedbackLoader.js, line 22, the 2nd grade
+2014-09-02T19:57:04 <Justin_o> oh separate file
+2014-09-02T19:57:11 <Justin_o> okay thanks
+2014-09-02T19:57:13 <cindyli> oh, right. yes
+2014-09-02T20:07:17 <cindyli> Bosmon: when there\'s input in the text are, a model change call is used to turn on the corresponding check box. is calling refreshView() the only way to update UI with the new checkbox state? is there a way to only update the checkbox state without touching other fields on UI?
+2014-09-02T20:08:07 <Bosmon> cindyli - there should be no "refreshView" - there should be a model listener whose only purpose is to listen to the model state and update the checkbox constantly
+2014-09-02T20:08:14 * jhung1 has quit
+2014-09-02T20:08:23 <cindyli> oh
+2014-09-02T20:08:30 <Bosmon> This is how our renderer "should always have worked" but of course it was always deficient
+2014-09-02T20:08:39 <cindyli> ok
+2014-09-02T20:08:41 <Bosmon> I believe we have a JIRA open against it for the last 5 years : P
+2014-09-02T20:08:48 <colinclark> Does that JIRA involve fire?
+2014-09-02T20:08:53 <Bosmon> !!
+2014-09-02T20:08:56 <Bosmon> Fitted nasally?
+2014-09-02T20:08:57 <Bosmon> Or otherwise
+2014-09-02T20:09:00 * jhung joined the channel
+2014-09-02T20:09:20 <Bosmon> cindyli - here it is
+2014-09-02T20:09:21 <Bosmon> http://issues.fluidproject.org/browse/FLUID-3387
+2014-09-02T20:09:30 <Bosmon> Filed by anastasiac, indeed very nearly 5 years ago
+2014-09-02T20:09:40 <Bosmon> Now you can REDEEM THE FUTURE via DIRECT BINDING : P
+2014-09-02T20:09:55 <cindyli> ha, good memory
+2014-09-02T20:09:55 * clown_mtg has quit
+2014-09-02T20:12:51 <Bosmon> But you\'ll notice that it links on to FLUID-4928 which you\'ve also had some input on
+2014-09-02T20:13:07 * kasparnet joined the channel
+2014-09-02T20:26:01 <cindyli> Bosmon: done and pushed
+2014-09-02T20:28:30 * clown joined the channel
+2014-09-02T20:32:05 * anvk has quit
+2014-09-02T20:32:21 <Justin_o> cindyli: i have things merged but am having some trouble getting my request dialog to open after having tried to switch somethings to the new style. I\'m heading out now, but will probably need your help to get it working tomorrow morning
+2014-09-02T20:32:41 <cindyli> sure, anytime, Justin_o
+2014-09-02T20:32:45 <Justin_o> cindyli: thanks
+2014-09-02T20:32:49 <cindyli> np
+2014-09-02T20:34:57 * cindyli has quit
+2014-09-02T20:49:08 * anastasiac has quit
+2014-09-02T20:55:19 * clown has quit
+2014-09-02T20:57:36 * simonjb has quit
+2014-09-02T20:57:59 * jhung has quit
+2014-09-02T21:01:33 * kasparne_ joined the channel
+2014-09-02T21:04:22 * kasparnet has quit
+2014-09-02T21:15:49 * yzen has quit
+2014-09-02T21:17:19 * colinclark has quit
+2014-09-02T21:23:18 * danaayotte_ has quit
+2014-09-02T21:24:07 * kasparne_ has quit
+2014-09-02T21:46:58 * yzen joined the channel
+2014-09-02T22:05:21 * yzen has quit
+2014-09-02T22:36:04 * Justin_o has quit
+2014-09-02T23:13:22 * colinclark joined the channel
+2014-09-02T23:43:43 * colinclark has quit
+2014-09-02T23:47:39 * Bosmon has quit
+2014-09-02T23:52:06 * Bosmon joined the channel
+'
+
+b'2014-09-02T02:04:08 * kasparnet joined the channel
+2014-09-02T02:08:40 * kasparnet has quit
+2014-09-02T02:57:33 * yzen joined the channel
+2014-09-02T03:31:44 * yzen has quit
+2014-09-02T03:36:32 * yzen joined the channel
+2014-09-02T05:48:32 * yzen has quit
+2014-09-02T08:02:20 * kasparnet joined the channel
+2014-09-02T08:12:51 * amilchev joined the channel
+2014-09-02T09:19:12 * slim joined the channel
+2014-09-02T09:20:23 <slim> sgithens: Howdy - Did you see I got a working RFID listener out?
+2014-09-02T09:58:07 * slim has quit
+2014-09-02T11:36:12 * Justin_o joined the channel
+2014-09-02T11:44:13 * jhung joined the channel
+2014-09-02T11:57:49 * yzen joined the channel
+2014-09-02T12:06:45 * yzen has quit
+2014-09-02T12:37:53 * cindyli joined the channel
+2014-09-02T12:51:37 <Justin_o> cindyli: good morning
+2014-09-02T12:51:47 <cindyli> good morning, Justin_o
+2014-09-02T12:53:12 <Justin_o> I\'m working through FLOE-196. I\'ve almost got the functionality all in place. Just need to get the vote buttons to update the models correctly and save.
+2014-09-02T12:53:25 <cindyli> that\'s great
+2014-09-02T12:53:40 <Justin_o> then i\'ll fix up the styling, clean up the code, and try to update/create unit tests
+2014-09-02T12:53:53 <cindyli> sounds good
+2014-09-02T12:54:05 <Justin_o> i\'ve been making a bunch of changes to binddialog and feedback so i\'ll probably have conflicts from your changes :(
+2014-09-02T12:54:12 <Justin_o> but hopefully it won\'t be too bad
+2014-09-02T12:55:07 <cindyli> ha, very possible. i\'m making more changes into bindDialog to implement one tooltip for all
+2014-09-02T12:55:43 <Justin_o> cindyli: okay.. did you finish up with FLOE-195 pull request comments already?
+2014-09-02T12:58:12 <cindyli> yes except the model relay, Justin_o, as we discussed last friday, that part will come later outside of 195
+2014-09-02T13:00:22 * simonjb joined the channel
+2014-09-02T13:06:05 * yzen joined the channel
+2014-09-02T13:06:54 * anastasiac joined the channel
+2014-09-02T13:11:53 * yzen has quit
+2014-09-02T13:14:04 * yzen joined the channel
+2014-09-02T13:24:02 * yzen has quit
+2014-09-02T13:36:27 * yzen joined the channel
+2014-09-02T13:43:45 * colinclark joined the channel
+2014-09-02T13:52:56 <jhung> anastasiac: I have figured the necessary changes to make the phet simulation default to accessible mode and load the tug-of-war simulation directly. However I\'m now trying to figure out how to link to the javascript rather than embedding a minified version within the html content.
+2014-09-02T13:54:02 <anastasiac> oh, jhung, I\xe2\x80\x99m ahead of you. I\xe2\x80\x99ve got it loading directly, and the build script builds the fully standalone, embedded version. I\xe2\x80\x99m about to test adding it to the epub to make sure it works there.
+2014-09-02T13:55:57 <anastasiac> ok, jhung, the built file doesn\xe2\x80\x99t seem to validate, so it\xe2\x80\x99ll need some cleaning up, I guess
+2014-09-02T14:03:48 * kasparnet has quit
+2014-09-02T14:04:25 * amilchev has left the channel
+2014-09-02T14:09:06 <jhung> anastasiac: ah perfect. I\'ve pushed up some new text into my FLOE-217 branch. You may want merge that before pushing your changes.
+2014-09-02T14:09:14 <anastasiac> ok, thanks jhung
+2014-09-02T14:09:52 <anastasiac> this is painful, jhung. The lines in this file are soo long, Aptana is overwhelmed. And I\xe2\x80\x99m supposed to find a missing semicolon??
+2014-09-02T14:10:44 <jhung> Try something like text-wrangler anastasiac. I found that it was slightly less painful.
+2014-09-02T14:31:19 * anvk joined the channel
+2014-09-02T14:32:49 * Bosmon joined the channel
+2014-09-02T14:33:50 <cindyli> hi Bosmon
+2014-09-02T14:34:31 <Bosmon> hi there cindyli!
+2014-09-02T14:34:38 <cindyli> how\'s it going with reviewing the pull request for FLOE-195 - https://github.com/fluid-project/metadata/pull/38
+2014-09-02T14:39:13 <Bosmon> cindyli - I\'ll look at it very shortly
+2014-09-02T14:39:19 <Bosmon> Just settling in my new guests : P
+2014-09-02T14:39:20 <cindyli> thanks, Bosmon
+2014-09-02T14:41:13 * slim joined the channel
+2014-09-02T14:42:06 <anastasiac> jhung, can you remind me of what your findings were wrt epubs and CDATA?
+2014-09-02T14:43:02 * slim_ joined the channel
+2014-09-02T14:46:06 * slim has quit
+2014-09-02T14:46:33 <jhung> Without the CDATA container, scripts won\'t work in some (all?) ereaders. Did not work with iBooks and Readium until it was included anastasiac.
+2014-09-02T14:47:12 <jhung> For what it\'s worth, all of IDPF\'s examples have this container anastasiac.
+2014-09-02T14:49:57 * slim_ has quit
+2014-09-02T14:50:23 * slim joined the channel
+2014-09-02T15:02:50 <anastasiac> jhung: I\xe2\x80\x99ve managed to get the keyboard accessible sim to validate in the epub and work in Chrome \xe2\x80\x93 finally! yay!
+2014-09-02T15:02:58 <anastasiac> it doesn\xe2\x80\x99t even show up in iBooks
+2014-09-02T15:03:03 <anastasiac> the sim, that is
+2014-09-02T15:04:05 <jhung> anastasiac: without the CDATA container, you would get an error and the book would render properly up until the simulation.
+2014-09-02T15:04:28 <anastasiac> jhung, I\xe2\x80\x99ve moved all the scripts into separate .js files entirely
+2014-09-02T15:04:50 <jhung> Have you tested an EPUB anastasiac? Does it work?
+2014-09-02T15:05:03 <anastasiac> jhung, it works in Chrome, not iBooks
+2014-09-02T15:05:10 <anastasiac> well, it works in iBooks, but the sim just doesn\xe2\x80\x99t appear
+2014-09-02T15:05:18 <anastasiac> the file doesn\xe2\x80\x99t show up
+2014-09-02T15:06:34 <jhung> ah, I\'m following now (was a bit confused). Do we need to declare the javascript in the manifest? Also does it work if we embed a minified version?
+2014-09-02T15:06:39 <jhung> ^anastasiac
+2014-09-02T15:06:57 <anastasiac> I updated the manifest, and it\xe2\x80\x99s working great in Chrome
+2014-09-02T15:09:14 <anastasiac> jhung, I just tried merging your branch with the intro text. I think we\xe2\x80\x99re going to need a different approach :-) The text appears briefly, then the sim takes over the entire screen. I\xe2\x80\x99ll play with putting the two in separate files.
+2014-09-02T15:10:22 * clown joined the channel
+2014-09-02T15:11:14 <jhung> anastasiac: that\'s interesting. Do you think it\'s worth pushing up your changes so I can work with it too? Otherwise I\'m going to start writing instructions for the simulation (for keyboard and mouse usage).
+2014-09-02T15:11:34 <anastasiac> jhung, I think the instructions would be more helpful
+2014-09-02T15:11:47 <jhung> alright anastasiac\'
+2014-09-02T15:11:54 <cindyli> Bosmon: regarding ur comment of "we can\'t do direct "markup to markup" binding - this component needs a model". why is it better to do via a model? why cannot we directly bind an click or keyup event handler to manipulate the state of another dom element?
+2014-09-02T15:14:42 * danaayotte_ joined the channel
+2014-09-02T15:24:16 <Bosmon> cindyli - it seems that the team is "reverting to the wild" :)
+2014-09-02T15:24:25 <Bosmon> I was just mentioning this to michelled : P
+2014-09-02T15:26:02 <cindyli> haha
+2014-09-02T15:26:17 <Bosmon> Thankfully colinclark is back now to explain to me how I can handle this situation :)
+2014-09-02T15:27:45 <Bosmon> Rather than running around in a blind panic at discovering that the members of the core team who are responsible for mentoring others have forgotten why it is that we have recommended that applications with a UI should be expressed with respect to a model rather than making direct bindings in the view layer : P
+2014-09-02T15:28:26 <colinclark> oh hi
+2014-09-02T15:29:17 <colinclark> Well, I know you hate repeating yourself, Bosmon
+2014-09-02T15:29:29 <Bosmon> Here\'s a useful article by Martin Fowler: http://martinfowler.com/eaaDev/uiArchs.html
+2014-09-02T15:29:57 * slim has quit
+2014-09-02T15:30:05 <colinclark> But it\'s always useful to be reminded about critical issues
+2014-09-02T15:30:41 <colinclark> That article is a good one
+2014-09-02T15:31:49 <Bosmon> We generally have recommended against "using the DOM as a model" for many years - although we did do this in our very earliest stages (2007-2008)
+2014-09-02T15:32:14 <Bosmon> Applications which don\'t have a public model are hard for other developers to understand, customise, and add decorated behaviour to
+2014-09-02T15:32:41 <Bosmon> Using the DOM as a model makes it hard to transform the UI layer of an application into another form, or adapt it easily
+2014-09-02T15:33:32 <colinclark> One the main use cases that a model-based approach supports, cindyli, is multiple "views" or presentations
+2014-09-02T15:34:03 <colinclark> which, being involved in accessibility, we know how important it is to be able to provide alternative modes of control and presentation
+2014-09-02T15:34:21 * slim joined the channel
+2014-09-02T15:34:59 <colinclark> Having that model/view separation that the Martin Fowler article discusses makes it much easier to do this
+2014-09-02T15:35:39 <colinclark> And perhaps more practically, it tends to make your code easier to refactor and change
+2014-09-02T15:36:18 <colinclark> When, for example, the DOM changes in a redesign
+2014-09-02T15:36:26 <colinclark> or when new features are added and so on
+2014-09-02T15:41:40 * jhung is now known as jhung_away
+2014-09-02T15:44:47 <cindyli> thanks for the explanation, Bosmon and colinclark. i think now i understand it better :)
+2014-09-02T15:48:19 <colinclark> Cool
+2014-09-02T15:48:26 <colinclark> I\'m happy to talk more about it if you ever want
+2014-09-02T15:56:19 * colinclark has quit
+2014-09-02T16:04:13 <anastasiac> jhung, I got the sim working with the intro text, and I\xe2\x80\x99ve issued a pull request for you to review: https://github.com/fluid-project/EPUB/pull/5
+2014-09-02T16:04:19 <anastasiac> I know you\xe2\x80\x99re still working on the text
+2014-09-02T16:04:39 <anastasiac> but I imagine you\xe2\x80\x99ll suggest improvements to my branch :-)
+2014-09-02T16:07:30 * danaayotte_ has quit
+2014-09-02T16:19:09 * danaayotte_ joined the channel
+2014-09-02T16:29:44 * danaayotte_ has quit
+2014-09-02T16:36:01 <Justin_o> cindyli: hello.. i\'m having some trouble with model sharing.. i wonder if you might have some time to help me with it
+2014-09-02T16:53:52 * cindyli has quit
+2014-09-02T16:56:56 * anastasiac has quit
+2014-09-02T16:58:39 * jhung_away is now known as jhung
+2014-09-02T17:04:13 * kasparnet joined the channel
+2014-09-02T17:08:32 * kasparnet has quit
+2014-09-02T17:26:07 * the-t-in-rtf has quit
+2014-09-02T17:34:46 * clown has quit
+2014-09-02T17:38:25 * anastasiac joined the channel
+2014-09-02T17:40:12 <jhung> anastasiac: I took a look at your pull request. It looks good enough to merge although I will have further changes to the text soon.
+2014-09-02T17:40:38 <anastasiac> sounds good, jhung
+2014-09-02T17:40:42 <anastasiac> thanks
+2014-09-02T17:40:56 * clown joined the channel
+2014-09-02T17:41:31 * danaayotte_ joined the channel
+2014-09-02T17:42:51 * slim has quit
+2014-09-02T17:45:48 * slim joined the channel
+2014-09-02T17:50:40 * slim has quit
+2014-09-02T17:50:55 * cindyli joined the channel
+2014-09-02T17:51:43 * colinclark joined the channel
+2014-09-02T17:51:50 <cindyli> sure, Justin_o
+2014-09-02T17:52:06 <Justin_o> cindyli: no worries, i figured it out.. thanks though
+2014-09-02T17:52:50 <cindyli> cool
+2014-09-02T18:23:30 * jhung has quit
+2014-09-02T18:23:49 * jhung joined the channel
+2014-09-02T18:33:44 <cindyli> Bosmon: the pull request for FLOE-195 is ready for another look
+2014-09-02T18:33:52 <Bosmon> Thanks, cindyli
+2014-09-02T18:33:54 <Bosmon> looking now
+2014-09-02T18:34:00 <cindyli> thanks!
+2014-09-02T18:36:23 <Bosmon> Hi cindyli - can you still explain the "bindTextareaKeyup" binder?
+2014-09-02T18:36:27 <Bosmon> What interaction does this provide?
+2014-09-02T18:36:56 <cindyli> Bosmon: it detects if there\'s input in the feedback text area
+2014-09-02T18:37:35 <cindyli> if the input is detected, the corresponding checkbox, which is called "other", should be checked
+2014-09-02T18:37:57 <Bosmon> cindyli - what if the user presses a key that produces no input?
+2014-09-02T18:38:52 <cindyli> bindTextareaKeyup checks the length of the value in the text area. so, if there\'s no input, the model change won\'t happen
+2014-09-02T18:42:58 <Bosmon> cindyli - ok - could you explain this intention in an implementation comment above the function?
+2014-09-02T18:43:48 <cindyli> Bosmon: what is "an implementation comment above the function" that you refer to?
+2014-09-02T18:43:58 <cindyli> i see, add a comment
+2014-09-02T18:44:03 <cindyli> no problem
+2014-09-02T18:44:07 <Bosmon> cheers!
+'
+

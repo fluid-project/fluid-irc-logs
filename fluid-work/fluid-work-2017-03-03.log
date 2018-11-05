@@ -1,0 +1,110 @@
+b'2017-03-03T00:09:35 * lliskovoi_ joined the channel
+2017-03-03T00:13:16 * lliskovoi has quit
+2017-03-03T09:57:31 * stegru joined the channel
+2017-03-03T10:19:22 * javjarfer joined the channel
+2017-03-03T10:20:02 <javjarfer> Hi all, good morning. stegru, do you have a moment?
+2017-03-03T11:10:28 * stegru has quit
+2017-03-03T12:20:50 * the-t-in-rtf joined the channel
+2017-03-03T12:38:57 * Justin_o joined the channel
+2017-03-03T13:01:55 * stegru joined the channel
+2017-03-03T13:06:18 <stegru> javjarfer: yes?
+2017-03-03T13:07:46 <javjarfer> stegru, hi! I wanted to ask you something about the mocking messages to windows
+2017-03-03T13:07:56 <stegru> ok
+2017-03-03T13:08:00 <stegru> hi
+2017-03-03T13:09:47 <javjarfer> the LParam when you are sending a WM_SETTINGCHANGE, is the pointer to the string describing what changed, how do you normally use that parameter?
+2017-03-03T13:10:22 <stegru> you can leave it out
+2017-03-03T13:10:47 <stegru> make it 0
+2017-03-03T13:11:13 <stegru> it can be a string of "Environment" or some other terms, but that\'s only used for certain cases
+2017-03-03T13:11:21 <javjarfer> stegru, but if the message consumption, is up to implementation, they could filter the WM_SETTINGCHANGE that doesn\'t have that field, and that could be the reason why we don\'t see any changes in the taskbar
+2017-03-03T13:11:32 <javjarfer> true?
+2017-03-03T13:11:42 <stegru> yes, it\'s up to the implementation
+2017-03-03T13:11:57 <stegru> they might not even be listening to that message
+2017-03-03T13:12:50 <stegru> I think that\'s the case.. they assume the only way the preferences will be changes is via the menu or options dialog
+2017-03-03T13:13:46 <stegru> this message is normally sent by the system when global settings have changed (for example, see SystemParametersInfo)
+2017-03-03T13:14:23 <javjarfer> stegru, so there is no way, to see all the "events" that window is receiving true? The fact of something being clicked send messages, but also triggers the normal GUI framework hooks that don\'t offer any introspection mechanism, am I right with this?
+2017-03-03T13:14:33 <javjarfer> okay, good to know
+2017-03-03T13:15:01 <stegru> for who to see the events? us, or our code?
+2017-03-03T13:15:14 <javjarfer> yes, an external viewer
+2017-03-03T13:15:29 <stegru> spy++, comes with visual studio
+2017-03-03T13:17:31 * cindyli joined the channel
+2017-03-03T13:17:45 <javjarfer> yes yes, and it shows us all the messages the windows is receiving, I think I\'m going to reformulate the question. "Clicking" doesn\'t offer any homologous message, that when send trigger the same action it does.
+2017-03-03T13:17:50 <javjarfer> true?
+2017-03-03T13:19:07 <stegru> i\'m not fully sure what you mean by that
+2017-03-03T13:19:30 <javjarfer> ok
+2017-03-03T13:20:15 <stegru> in most cases, if I sent the WM_CLICK (or WM_LMOUSEDOWN/UP) message, then it\'s usually the same as clicking with your mouse
+2017-03-03T13:20:39 <javjarfer> okay, that was the question
+2017-03-03T13:20:56 <javjarfer> even in menus that currently are not shown?
+2017-03-03T13:21:03 <stegru> that\'s the way it used to be.. with newer Windows 8/10 applications, I\'m not sure if that\'s accurate
+2017-03-03T13:21:35 <javjarfer> that could be very good news, but... I\'m also not sure
+2017-03-03T13:21:41 <stegru> no, for menus you don\'t send a mouse event.. you sent WM_NOTIFY with the menu id (or position)
+2017-03-03T13:22:20 <stegru> but, that\'s only for normal windows menus.. I have the feeling for the taskbar they\'ve made their own menu because it "feels" different
+2017-03-03T13:23:20 <stegru> I do have another trick for things like this..
+2017-03-03T13:24:01 <javjarfer> yes... It could be, but I didn\'t know that approach, so I\'m going to try to confirm if we could use it in other sceneries
+2017-03-03T13:24:04 <javjarfer> which one?
+2017-03-03T13:24:09 <stegru> using Process Monitor (procmon), I would find where the registry key is being written, and look at the call stack
+2017-03-03T13:24:58 <javjarfer> ahh yes... I haven\'t consider that possibility yet, I have used it simply to see which settings the program trigger
+2017-03-03T13:25:07 <javjarfer> but not to fake the call stack
+2017-03-03T13:25:12 <stegru> i\'d then just use a combination of luck and intuition to identify some sort of api call that was used
+2017-03-03T13:26:24 <stegru> well, if i found a function called "EnableSearchButton" in the stack, then I would try calling that myself
+2017-03-03T13:26:54 <stegru> I know I\'m dreaming, but that\'s the type of thing I\'d do
+2017-03-03T13:27:41 <javjarfer> yes, it\'s one more technique for a concrete one... But that is the kind of approximation which I want to leave idle for now, because it makes the onboarding process special and unique for every item
+2017-03-03T13:27:59 <stegru> yeh, that;s right
+2017-03-03T13:28:03 <javjarfer> and... getting a more standard procedure will be nice
+2017-03-03T13:28:05 <javjarfer> yeh
+2017-03-03T13:28:06 <stegru> it\'s painful
+2017-03-03T13:28:29 <javjarfer> yes...
+2017-03-03T13:29:37 <javjarfer> stegru, thanks you! I think I have all I need to continue with this research
+2017-03-03T13:29:50 * jhung joined the channel
+2017-03-03T13:30:18 <stegru> you\'re welcome, javjarfer
+2017-03-03T13:32:52 <jhung> ping cindyli
+2017-03-03T13:32:59 <cindyli> pong jhung
+2017-03-03T13:33:19 <jhung> do you have a minute to help me with a php issue?
+2017-03-03T13:33:22 <jhung> ^cindyli
+2017-03-03T13:33:41 <cindyli> sure, jhung
+2017-03-03T13:43:06 <cindyli> jhung: http://php.net/manual/en/function.ob-get-contents.php
+2017-03-03T13:43:41 <cindyli> http://stackoverflow.com/questions/9325067/store-print-r-result-into-a-variable-as-a-string-or-text
+2017-03-03T13:49:04 * simonjb joined the channel
+2017-03-03T13:55:09 * alanharnum joined the channel
+2017-03-03T14:00:48 * jessm joined the channel
+2017-03-03T14:29:04 * clown joined the channel
+2017-03-03T14:48:41 * kavya joined the channel
+2017-03-03T14:54:44 * gtirloni joined the channel
+2017-03-03T15:07:25 * danayo joined the channel
+2017-03-03T15:17:01 * lliskovoi joined the channel
+2017-03-03T15:22:08 * danayo joined the channel
+2017-03-03T15:23:08 * avtar joined the channel
+2017-03-03T15:26:46 * colinclark joined the channel
+2017-03-03T15:38:42 * michelled joined the channel
+2017-03-03T15:52:56 * aashay joined the channel
+2017-03-03T15:59:08 * mrtyler_ joined the channel
+2017-03-03T16:05:39 * kavya has quit
+2017-03-03T16:19:38 * colinclark joined the channel
+2017-03-03T17:05:13 * colinclark joined the channel
+2017-03-03T17:33:57 * javjarfer has quit
+2017-03-03T17:37:35 * colinclark has quit
+2017-03-03T17:39:15 * colinclark joined the channel
+2017-03-03T17:46:29 * colinclark has quit
+2017-03-03T18:07:51 * kavya joined the channel
+2017-03-03T18:31:06 * michelled joined the channel
+2017-03-03T19:08:13 * danayo joined the channel
+2017-03-03T19:18:44 * kavya has quit
+2017-03-03T19:25:32 * cindyli has quit
+2017-03-03T19:39:20 * cindyli joined the channel
+2017-03-03T19:45:45 <cindyli> hi avtar, most values in the returned data from https://qi-backend.gpii.net/a/p4a-test/nuts-and-bolts/ci are in the range of 1-10, but there are a few large numbers like 28, 31. so the y axis ended up ranging btw 0-35 and the graph is small
+2017-03-03T19:46:49 <cindyli> i\'m thinking the graph would look better if you can modify the mocked returned json to get rid of those big values. what do you think?
+2017-03-03T19:48:41 * javjarfer joined the channel
+2017-03-03T19:48:50 * javjarfer has quit
+2017-03-03T19:51:27 <avtar> cindyli: hmm
+2017-03-03T19:52:46 <avtar> trying to think about what the impact will be
+2017-03-03T19:54:57 * the-t-in-rtf joined the channel
+2017-03-03T19:55:07 <avtar> ah i see those values now
+2017-03-03T19:56:17 <avtar> i can make them single digits
+2017-03-03T20:01:08 <cindyli> cool. thanks, avtar
+2017-03-03T20:24:15 * danayo joined the channel
+2017-03-03T20:41:14 * aashay joined the channel
+2017-03-03T20:43:04 * the-t-in-rtf joined the channel
+2017-03-03T21:41:37 * the-t-in-rtf1 joined the channel
+2017-03-03T21:51:09 * sgithens joined the channel
+2017-03-03T22:31:50 * sgithens has quit
+'
+

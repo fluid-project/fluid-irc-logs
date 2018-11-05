@@ -1,0 +1,479 @@
+b"2017-01-27T19:36:55 <gtirloni> mrtyler: `ansible -m setup i-0028.*` should give you a fairly complete hardware/software picture of the VM.. you could play with the debug module and write very long CSV-formatted lines with that info and feed into the spreadsheet
+2017-01-27T19:37:20 <gtirloni> mrtyler: yeah, that's fair. it doesn't show up because there is no mounted filesystem on it
+2017-01-27T19:38:01 <gtirloni> mrtyler: `lvs -a` should so what docker is using
+2017-01-27T19:38:34 * alanharnum joined the channel
+2017-01-27T19:38:35 <gtirloni> i've also removed the definition that caused this extra disk to be deployed.. if/when these machines (or new ones) get redeployed, the won't have it (https://github.com/inclusive-design/ops/commit/65ab6ba7ee72f857b9b5687f04682cbe95772433)
+2017-01-27T19:41:40 <mrtyler> ok thx
+2017-01-27T19:48:49 * javjarfer has quit
+2017-01-27T20:02:10 * stegru_ has quit
+2017-01-27T20:02:28 * stegru_ joined the channel
+2017-01-27T20:07:26 * alanharnum joined the channel
+2017-01-27T20:09:09 * javjarfer joined the channel
+2017-01-27T20:39:44 * cindyli joined the channel
+2017-01-27T20:52:06 * Jess__ joined the channel
+2017-01-27T21:26:39 * the-t-in-rtf joined the channel
+2017-01-27T21:29:10 * Tabs16 has quit
+2017-01-27T21:30:51 * code_master5 has quit
+2017-01-27T21:39:00 * mrtyler joined the channel
+2017-01-27T22:13:18 * Jess_ joined the channel
+2017-01-27T23:04:13 * javjarfer has quit
+2017-01-27T23:08:45 * simonjb has quit
+2017-01-27T23:21:11 * Jess_ joined the channel
+"
+
+b'2017-01-27T18:37:45 <mrtyler> colinclark: what do you think of gio\'s formulation of the different environments?
+2017-01-27T18:37:50 <gtirloni> yeah, sorry
+2017-01-27T18:37:54 <colinclark> well, I guess it\'s interesting
+2017-01-27T18:37:56 <mrtyler> do you agree re: dev being not-really-an-environment?
+2017-01-27T18:38:00 <colinclark> since it broaches the question...
+2017-01-27T18:38:23 <colinclark> do we ultimately need all three environments, despite our pleasant Dante-esque description of them
+2017-01-27T18:38:26 <colinclark> question mark
+2017-01-27T18:38:33 <mrtyler> i\'m not ready to talk about that
+2017-01-27T18:38:37 <colinclark> hahaha
+2017-01-27T18:38:38 <mrtyler> until we know what envs we actually have
+2017-01-27T18:38:52 <mrtyler> and what they\'re actually used for
+2017-01-27T18:38:55 <colinclark> I can\'t answer that question in any meaningful way
+2017-01-27T18:39:09 <mrtyler> you can\'t answer "what envs we actually have"?
+2017-01-27T18:39:14 <colinclark> yes
+2017-01-27T18:39:16 <colinclark> correct
+2017-01-27T18:39:17 <alanharnum> the "staging" and "production" verbiage is specific to the context of the Review 3 / Review 4 demos; "staging" (i-0028) being where things were autodeployed as developers made changes, with deployment to "production" (i-0029) once it was verified things were functional on the staging environment.
+2017-01-27T18:39:17 <mrtyler> because i\'m pretty sure you just did?
+2017-01-27T18:39:26 <colinclark> I know that developers develop stuff locally, but what they develop and test with doesn\'t yet reflect the topology of our server environment
+2017-01-27T18:39:40 <gtirloni> we know the definitions for dev/stg/prod, also what\'s running where.. we just need to brain-transfer that knowledge :)
+2017-01-27T18:39:44 <colinclark> and I know that, ultimately, there\'s stuff at "x.gpii.net" that represents, to me, staging infrastructure
+2017-01-27T18:39:54 <amatas> clown, the image is stored in CacheFly (our CDN) and sometimes it doesn\'t work as fast as expected :( sorry.
+2017-01-27T18:39:55 <colinclark> thus staging and productive have been folded into the same thing for now
+2017-01-27T18:40:05 <colinclark> gtirloni: yup, exactly
+2017-01-27T18:40:16 <colinclark> you\'ve got the key insights, I think
+2017-01-27T18:40:20 <mrtyler> gtirloni: ok great. please transfer that knowledge to me
+2017-01-27T18:40:33 <colinclark> hahaha
+2017-01-27T18:40:42 <gtirloni> you sounded like an agent from the matrix
+2017-01-27T18:40:43 <gtirloni> ;)
+2017-01-27T18:40:54 <gtirloni> now i must found the next pay phone exit
+2017-01-27T18:40:57 <mrtyler> who says i\'m not??
+2017-01-27T18:40:58 <gtirloni> s/found/find
+2017-01-27T18:41:24 <gtirloni> i\'m not prepared for existentialist talks here, it\'s friday!
+2017-01-27T18:41:32 <mrtyler> gtirloni: i don\'t agree with your premise that we know these definitions, nor that we know what\'s running where
+2017-01-27T18:41:53 <colinclark> GET /all/infrastructure/knowledge HTTP/1.0
+2017-01-27T18:42:06 <mrtyler> colinclark: please elaborate on "staging and productive have been folded into the same thing for now"
+2017-01-27T18:42:15 <colinclark> ok
+2017-01-27T18:42:29 <colinclark> so, we don\'t really a release process
+2017-01-27T18:42:45 <colinclark> certainly not one that involves the full cycle from finishing developing, testing, tagging, releasing, and deployment
+2017-01-27T18:42:46 <gtirloni> maybe we aren\'t sure about the definitions and how they related to other companies, but we certainly know where things are running.. it\'s not that messy around here :)
+2017-01-27T18:42:55 <colinclark> yes
+2017-01-27T18:43:11 <colinclark> gtirloni is a very diligent developer and admin
+2017-01-27T18:43:33 <mrtyler> gtirloni: i see three copies of gpii flow manager running on three different machines, one of which you have said is not an environment for anything (i-0033)
+2017-01-27T18:44:13 <clown> thanks amatas.  I guess I\'ll just wait (and eat lunch while I wait :-) )
+2017-01-27T18:44:14 <mrtyler> so i am not part of the "we" that understands how everything fits together
+2017-01-27T18:44:14 <alanharnum> I think flow manager running on i-0033 was inadvertently left running there from our attempts to migrate the FDS stack from i-0020
+2017-01-27T18:44:23 <gtirloni> we\'re not a business, so the \'trunk-based\' development, single product, getting pushed to production every few hours.. that could happen (it\'d be awesome for dev-purposes, not *current* end-user purposes). and we also have these demo/legacy/please-dont-modify-me environments branching off
+2017-01-27T18:44:38 <colinclark> well said, gtirloni
+2017-01-27T18:44:42 <alanharnum> i believed i\'d shut down the containers running on there to avoid exactly this kind of confusion
+2017-01-27T18:44:48 <alanharnum> but apparently i hadn\'t :/
+2017-01-27T18:45:13 <gtirloni> mrtyler: what alan said
+2017-01-27T18:45:23 <colinclark> I\'m have to leave the keyboard for about 10 minutes
+2017-01-27T18:45:29 <colinclark> but can I answer anything before I run for a few?
+2017-01-27T18:45:29 <alanharnum> i\'m gonna shut them down now, in fact
+2017-01-27T18:46:01 <gtirloni> when we go from our stitched-together container management system (don\'t vomit on your hands here) to a proper container orchestration system... whatever is in source code will reflect what is deployed. the reality of managing container manually is sad
+2017-01-27T18:46:36 <mrtyler> i disagree that this is a container orchestration problem. i think this is an organizational problem
+2017-01-27T18:46:55 <mrtyler> specifically: i don\'t think any two of us have a shared vision of what the current setup looks like
+2017-01-27T18:47:23 <mrtyler> an orchestration tool might have forced conversations that would address the organizational problem, namely shared understanding written down in code
+2017-01-27T18:47:29 <colinclark> well, mrtyler, perhaps it\'s as much a question of having this conversation to clarify
+2017-01-27T18:47:34 <colinclark> rather than assuming the "vision" is missing
+2017-01-27T18:47:38 <colinclark> it may be slightly distributed
+2017-01-27T18:48:34 <alanharnum> i think my understanding and gtirloni\'s understanding is pretty much aligned as far is 0028/0029.
+2017-01-27T18:48:34 <colinclark> but remember that our key goal here is to a) recognize what we\'ve got\xe2\x80\x94and it is what its and then b) to sort out a shared vision for whatever we want to do to build a new infrastructure for the GPII
+2017-01-27T18:49:11 <gtirloni> mrtyler: when you say organizational problem, what do you mean in more detail?
+2017-01-27T18:49:45 <alanharnum> the self-contained FDS stack on 0020 is something I\'d deployed (from my understanding) in a testing sense, which should have had further action taken upon it given its importance as articulated by colinclark, which didn\'t happen for a number of reasons.
+2017-01-27T18:50:34 <colinclark> right, and this happened, alanharnum, precisely because of some of the dysfunctional pragmatics of the project you were deploying it for at the time\xe2\x80\x94long gone history for us at this point
+2017-01-27T18:51:24 <mrtyler> gtirloni: i mean the lack (or my perception of a lack) of shared understanding of what we have and what it\'s for
+2017-01-27T18:51:34 <mrtyler> i just mean that it\'s a social problem, not a technological problem
+2017-01-27T18:51:55 <alanharnum> i\'d agree with mrtyler somewhat on the shared understanding issue.
+2017-01-27T18:52:33 <alanharnum> my perception as someone who\'s done a certain amount of container development here for projects I don\'t otherwise work on is that we have issues with functional "throw it over the wall to ops", among other things.
+2017-01-27T18:52:34 <mrtyler> alanharnum: i think colin and i just agreed that FDS should move to i-0028 rather than i-0033
+2017-01-27T18:52:46 <mrtyler> how do you feel about that?
+2017-01-27T18:52:51 <mrtyler> gtirloni: also you
+2017-01-27T18:53:07 <alanharnum> and that containerization doesn\'t have an owner, for lack of a better way to put it.
+2017-01-27T18:53:34 <gtirloni> i-0028 is fine and makes sense, since the project was donated to the GPII.. +1
+2017-01-27T18:53:42 <alanharnum> the lack of ownership is contributed to by the fact that the containerization and containerized infrastructure have not, to date, been important for the day-to-day development workflows.
+2017-01-27T18:54:31 <alanharnum> and that what we\'ve done to date for containers and the GPII has been to deploy them tactically, as the best means we had available of putting up infrastructure that needed to be highly available and reliable for relatively brief periods of time.
+2017-01-27T18:54:56 <alanharnum> mrtyler: that sounds fine to me
+2017-01-27T18:55:05 <gtirloni> alanharnum: yep, fully agree. i think we are/were always aiming to satisfy future needs with that.. and it\'s so, just take i-0028/29 down and wait for complaints (it\'ll take a while), but we built that stuff and it should be useful for the next phase in the infra
+2017-01-27T18:56:06 <mrtyler> is it the case that effectively NO DEVELOPERS use containers for testing?
+2017-01-27T18:56:13 <gtirloni> so i guess flowmanager, preferences server, unified listing, FDS, what else? those should be considered for a cloud deployment
+2017-01-27T18:56:29 <alanharnum> mrtyler: that\'s correct
+2017-01-27T18:56:33 <colinclark> mrtyler: yes, that is essentially correct
+2017-01-27T18:56:39 <colinclark> which is part of why I keep mentioning the need to have a "symmetrical topology" in development, for which we crucially need new CI tools
+2017-01-27T18:56:42 <alanharnum> developers use locally-running services or VMs
+2017-01-27T18:56:43 <gtirloni> steve seemed to be using them for his LGS work?
+2017-01-27T18:56:57 <colinclark> it seems unlikely to me, gtirloni, but I could be mistaken
+2017-01-27T18:57:16 <colinclark> I believe he deploys a configuration of the GPII autopersonalization system that is all-local for LGS
+2017-01-27T18:57:27 <mrtyler> using VMs?
+2017-01-27T18:57:31 <colinclark> Flow Manager, Preferences Server, etc. are all configured to run right on the user\'s computer
+2017-01-27T18:57:42 <gtirloni> i think when we enabled TLS on them, people complained.. and then steve seemed excited about using them and not having to spin up stuff on his computer (when working on other things, not flow/prefs servers)
+2017-01-27T18:57:44 <mrtyler> oh so using bare metal?
+2017-01-27T18:58:14 <colinclark> so LGS is an "end user demo"\xe2\x80\x94a think we send to friends at libraries and museums to test out on their computers
+2017-01-27T18:58:17 <gtirloni> mrtyler: there\'s a deployment scenario where flowmanager and prefs run on the user\'s machine, if i\'m not mistaken
+2017-01-27T18:58:18 <alanharnum> i\'ve shut down the misbegotten FDS stack on i0033, sorry for the confusion it caused.
+2017-01-27T18:58:22 <colinclark> in some cases, we even give them suitable computers to run it on
+2017-01-27T18:58:31 <gtirloni> alanharnum: thx, no harm done
+2017-01-27T18:58:36 <colinclark> so in that sense, "bare metal," yes\xe2\x80\x94but not in the server sense, mrtyler
+2017-01-27T18:58:45 <mrtyler> that\'s what i meant, yeah
+2017-01-27T18:58:48 <colinclark> LGS is like Pilots 1 will be\xe2\x80\x94there will be no servers involved at all
+2017-01-27T18:59:15 <mrtyler> alanharnum: until 10 minutes ago, i-0033 was the chosen destination so any confusion was definitely not your fault
+2017-01-27T18:59:21 <mrtyler> it was an organizational problem! :)
+2017-01-27T18:59:29 <colinclark> let\'s call it something else :P
+2017-01-27T18:59:35 <colinclark> I\'m really starting to sound like Gregg here
+2017-01-27T18:59:54 <colinclark> but I\'m less interested in this kind of attribution of problems, and more interested in the mechanism by which they get resolved
+2017-01-27T18:59:57 <mrtyler> organizational opportunity
+2017-01-27T19:00:13 <colinclark> this is simply some conversations that we needed to have
+2017-01-27T19:00:17 <alanharnum> mrtyler: well, I am reasonably sure you and I had a conversation like the following: "I\'m going to shut down those containers on i-0033, since they aren\'t working".
+2017-01-27T19:00:19 <mrtyler> i don\'t think you can resolve problems unless you understand what they are
+2017-01-27T19:00:24 <alanharnum> I then proceeded to apparently not do so.
+2017-01-27T19:00:34 <alanharnum> despite a clear memory of doing so.
+2017-01-27T19:00:55 <mrtyler> alanharnum: it\'s possible the infrastructure "helped" you by restarting those containers
+2017-01-27T19:01:06 <alanharnum> although looking at their uptime, i suspect the real answer is that i stopped them but didn\'t remove them... yes, exactly that.
+2017-01-27T19:01:10 <mrtyler> idk how they are scheduled, how you shut them down, etc. but it seems plausible
+2017-01-27T19:02:03 <alanharnum> what I\'ll say, which is very "OPS 101", is that if something doesn\'t have a clear owner, it will become neglected and sad.
+2017-01-27T19:02:19 <alanharnum> To the extent the GPII containers had an owner, it was me.
+2017-01-27T19:02:55 <alanharnum> thus, they became neglected and sad as I moved on to other work outside of the GPII context
+2017-01-27T19:03:13 <mrtyler> alanharnum: i agree with all of that
+2017-01-27T19:03:46 <clown> amatas, FYI:  after half an hour, the update progress is at 1%.  This is going to take a looooong time.
+2017-01-27T19:03:55 <alanharnum> this is why I think some of this is the functional "throw it over the wall" issue of how the GPII is developed, how it gets moved into operations, etc; as mrtyler has properly said, I don\'t think anyone needs to feel bad about this, it\'s a recognizable pattern of software organizations.
+2017-01-27T19:04:20 <mrtyler> right i\'m not trying to assign blame to anyone or disparage the current situation
+2017-01-27T19:04:26 <mrtyler> i\'m trying to understand it and share my thoughts about it
+2017-01-27T19:04:32 <mrtyler> i probably should divorce those two goals
+2017-01-27T19:04:41 <mrtyler> as it just creates confusion and potential for bad feelings
+2017-01-27T19:04:42 <mrtyler> i apologize
+2017-01-27T19:05:02 <mrtyler> anyway this has been helpful, if not perfectly clear
+2017-01-27T19:05:02 <alanharnum> And also the reality of the operations context of the GPII, which is that we have simply not had a business requirement to have high-uptime, latest-code-deployed CI/CD.
+2017-01-27T19:05:16 <mrtyler> i *think* i have enough information to proceed with my task
+2017-01-27T19:05:21 <mrtyler> thanks colinclark gtirloni alanharnum for your thoughts
+2017-01-27T19:07:46 <alanharnum> mrtyler: I think your take on the situation as someone new to it is valuable; I don\'t feel great about the container situation, but I also recognize that it originates in what our business drivers have actually been to date.
+2017-01-27T19:08:39 <alanharnum> i\'m excited that it sounds like we have real drivers now for high-uptime deployment of the latest code.
+2017-01-27T19:08:52 <gtirloni> mrtyler: thank you for prompting these discussions
+2017-01-27T19:09:32 <gtirloni> alanharnum: exactly!
+2017-01-27T19:10:13 <gtirloni> it\'s exciting
+2017-01-27T19:13:27 <colinclark> mrtyler: it\'s good we\'re talking about it
+2017-01-27T19:13:31 <colinclark> and that\'s what i\'d like to emphasize
+2017-01-27T19:13:48 <colinclark> being new, you have an uncanny ability to notice things that we might not
+2017-01-27T19:14:04 <colinclark> similarly, being new, we have an uncanny ability to recognize some things you don\'t yet have the perspective on
+2017-01-27T19:14:40 <colinclark> that was my point about not sweating trying to attribute the source of problems being perhaps a difficult thing to do right now
+2017-01-27T19:30:19 * the-t-in-rtf joined the channel
+2017-01-27T19:30:51 <mrtyler> gtirloni: i\'m trying to fill in vm contents for i-002[89] since they\'re not filled in. i see cpus and memory in virsh dumpxml but am having trouble sorting out disks
+2017-01-27T19:31:26 <mrtyler> two disk images are mentioned: i-0029.tor1.inclusivedesign.ca.qcow2 and i-0029.tor1.inclusivedesign.ca-data.qcow2
+2017-01-27T19:31:36 <mrtyler> however, i only see one real disk mounted inside the vm via df
+2017-01-27T19:31:39 <mrtyler> (or mount)
+2017-01-27T19:32:30 <gtirloni> let me check
+2017-01-27T19:33:20 <mrtyler> i mean, i guess i know which one it is because only one volume is 40G
+2017-01-27T19:33:32 <mrtyler> so maybe my question is: why are there two? should there be two or should we nuke one of them?
+2017-01-27T19:34:33 <gtirloni> one if for the docker container area.. there is a long existing issue with layered filesystems, and one alternative is to give Docker a LVM pool instead. that\'s what we wanted to do (and did) with this extra disk
+2017-01-27T19:35:37 <gtirloni> but at our scale, it\'s a marginal improvement in container deployment time.. i\'d argue the maintenance cost is higher thant he benefits
+2017-01-27T19:36:48 <mrtyler> i\'m surprised the lvm volume doesn\'t show up in mount
+2017-01-27T19:36:54 <mrtyler> i thought it did, but i haven\'t used lvm much
+'
+
+b'2017-01-27T18:05:35 <colinclark> the First Discovery Server, on the other hand, is a crucial demo of the output of the PGA project
+2017-01-27T18:05:43 <colinclark> and will very soon be a key part of the GPII itself
+2017-01-27T18:06:38 <colinclark> but I\'m trying to parse your conversation about "a GPII demo" and the various repositories you list as necessary
+2017-01-27T18:06:43 <colinclark> I wonder what this actually means :)
+2017-01-27T18:07:21 <mrtyler> my fault for asking too many questions, i guess
+2017-01-27T18:07:28 <mrtyler> here is what i need:
+2017-01-27T18:07:29 <mrtyler> i\'m evaluating what resources we need to run that demo today in idrc so i can spec out running an identical demo in aws
+2017-01-27T18:07:29 <colinclark> hahaha
+2017-01-27T18:07:32 <colinclark> never a bad thing
+2017-01-27T18:07:39 <colinclark> which demo?
+2017-01-27T18:07:48 <mrtyler> i had no idea there were so many demos
+2017-01-27T18:07:50 <colinclark> demo of what?
+2017-01-27T18:07:52 <mrtyler> i guess "the gpii demo"
+2017-01-27T18:08:00 <colinclark> well, I guess let\'s parse that a bit
+2017-01-27T18:08:25 <mrtyler> if i want to tell my boss and her boss "i have a gpii demo up and running in aws"
+2017-01-27T18:08:35 <mrtyler> what would that actually mean?
+2017-01-27T18:08:41 <colinclark> yes, let\'s figure that out first
+2017-01-27T18:08:48 <colinclark> first, let\'s ditch the term "demo"
+2017-01-27T18:08:58 <colinclark> not because it may not be apt
+2017-01-27T18:09:02 <colinclark> but because i\'m confused :)
+2017-01-27T18:09:25 <colinclark> So let\'s just assume, for fun, that we\'re talking about something along the lines of either Development Instances or Staging
+2017-01-27T18:09:38 <mrtyler> i don\'t know what either of those things means
+2017-01-27T18:09:42 <colinclark> hahaha
+2017-01-27T18:09:48 <colinclark> at least we\'re in the same position
+2017-01-27T18:10:02 <colinclark> int hat I don\'t know what "demo" means
+2017-01-27T18:10:08 <colinclark> ok, so let\'s start from scratch here
+2017-01-27T18:10:15 <mrtyler> i\'m just using terms given to me by other people, including you
+2017-01-27T18:10:20 <mrtyler> i agree with starting from scratch
+2017-01-27T18:10:25 <mrtyler> i\'m just trying to understand requirements
+2017-01-27T18:10:29 <colinclark> well, I\'ve been pretty careful to use the term "staging" I think
+2017-01-27T18:10:35 <colinclark> mrtyler: totally, no problem there
+2017-01-27T18:10:37 <colinclark> anyway
+2017-01-27T18:10:44 <mrtyler> literally the first time i\'ve heard you say "staging" fwiw
+2017-01-27T18:10:49 <colinclark> hahaha
+2017-01-27T18:10:50 <colinclark> so not true
+2017-01-27T18:11:05 <colinclark> I guarantee I used the term the last time we talked
+2017-01-27T18:11:12 <colinclark> in the context that you\'ve described, "the GPII" probably means "the GPII autopersonalization system"
+2017-01-27T18:11:23 <colinclark> we use these two terms interchangeably a lot
+2017-01-27T18:11:36 <colinclark> although Gregg can show you a really funny complicated diagram with lots of boxes and lots of arrows
+2017-01-27T18:12:12 <colinclark> that include things such as FLOE, various components of Cloud4All that are no longer supported, the-t-in-rtf\'s work on the Unified Listing and Preferences Terms Dictionary, etc.
+2017-01-27T18:12:30 <colinclark> but I think what we\'re talking about here is probably "the stuff needed to make the GPII autopersonalization system work"
+2017-01-27T18:12:42 <colinclark> does that seem about right, Tyler?
+2017-01-27T18:12:47 <mrtyler> i\'m with you so far
+2017-01-27T18:13:15 <colinclark> ok cool
+2017-01-27T18:13:16 <gtirloni> colinclark: quick question hopefully without distracting much, are end users going to use the UL? or only creators?
+2017-01-27T18:13:33 <colinclark> hmm
+2017-01-27T18:13:43 <colinclark> I believe end users will use the Unified Listing, yes
+2017-01-27T18:13:47 <gtirloni> ok
+2017-01-27T18:13:51 <colinclark> to search for and find different types of assistive technology products
+2017-01-27T18:13:58 <gtirloni> oh right, yeah. ok thanks
+2017-01-27T18:14:16 <colinclark> I don\'t fully understand how Denis\' work on the Shopping Aid (or whatever it\'s called now) fits in with the end-user interface for the UL
+2017-01-27T18:14:35 <colinclark> but the-t-in-rtf might be able to elucidate sometime (though it\'s late on a Friday night for him, he\'s probably having fun instead of working now)
+2017-01-27T18:15:00 <colinclark> So, I guess the way that the term "demo" emerged is that we\'ve done a lot of demonstrations of the GPII autopersonalization system over the past couple of years
+2017-01-27T18:15:11 <colinclark> Most notably for the last three Cloud4All reviews
+2017-01-27T18:16:22 <colinclark> but I guess my desire to avoid the term demo is to be clear that what we\'ve got is some infrastructure that is not quite "production"\xe2\x80\x94in that end users don\'t yet use it\xe2\x80\x94but that isn\'t simply a "demo." Ostensibly, this is where we stage stable versions of the infrastructure required for the GPII autopersonalization system
+2017-01-27T18:16:38 <mrtyler> i have no attachment to the word "demo"
+2017-01-27T18:16:43 <mrtyler> i\'m just using terms i\'ve heard from other people
+2017-01-27T18:16:48 <colinclark> yes, totally
+2017-01-27T18:16:50 <mrtyler> i am happy to call it whatever you want
+2017-01-27T18:16:56 <colinclark> i\'m not trying to smash your use of words :)
+2017-01-27T18:17:05 <colinclark> just trying to peel apart our various confusions
+2017-01-27T18:17:09 <colinclark> hopefully in interesting ways :)
+2017-01-27T18:17:11 <mrtyler> yes, very good, keep going
+2017-01-27T18:17:43 <colinclark> so if the term "production" means the place where stable, released versions of the GPII components are deployed in order to be used by end users (e.g. in the context of the APCP Pilots)
+2017-01-27T18:18:21 <colinclark> and if "development" means "all the the GPII components, rebuilt and deployed contininuously and available for developers to test with"
+2017-01-27T18:18:27 <colinclark> then there\'s this funny in between space
+2017-01-27T18:18:34 <colinclark> which is indeed where demos happen :)
+2017-01-27T18:18:45 <mrtyler> hang on
+2017-01-27T18:18:53 <mrtyler> "Ostensibly, this is where we stage stable versions of the infrastructure required
+2017-01-27T18:18:57 <mrtyler> for the GPII autopersonalization system"
+2017-01-27T18:19:03 <mrtyler> where you say "stage" i guess you just mean "deploy"?
+2017-01-27T18:19:11 <colinclark> well, I guess I mean more
+2017-01-27T18:19:13 <mrtyler> i want to be careful with "stage" since it\'s going to mean something else
+2017-01-27T18:19:17 <colinclark> I could be very confused here :)
+2017-01-27T18:19:30 <colinclark> but when I say "stage" I mean, this is semi-stable, evaluation and testing infrasturcture
+2017-01-27T18:19:32 <mrtyler> well let\'s start with your understanding and then i\'ll break it with gio and alans\' understandings
+2017-01-27T18:19:43 <mrtyler> but you used stage as a verb
+2017-01-27T18:19:46 <colinclark> the purgatory between the hell of development and the glory of production usage
+2017-01-27T18:19:48 <colinclark> yes, true
+2017-01-27T18:19:53 <colinclark> that was confusing :)
+2017-01-27T18:20:22 <mrtyler> so let\'s differentiate between verbs, like "deploy", and nominative names for environemtns, like "staging" and "development"
+2017-01-27T18:20:33 <colinclark> As a verb, I mean "stage" to mean "to deploy some code to this semi-stable testing place"
+2017-01-27T18:20:35 <mrtyler> you\'re just saying there\'s a staging environment to which semi-stable things are deployed
+2017-01-27T18:20:39 <mrtyler> ok great
+2017-01-27T18:20:42 <colinclark> yep
+2017-01-27T18:20:56 <mrtyler> that is a "staging" environment by most people\'s definitions
+2017-01-27T18:21:12 <colinclark> my impression is that what we have currently deployed for "demos" is really something along the lines of a oft-neglected staging environment
+2017-01-27T18:21:18 <colinclark> this may be an incorrect assumption
+2017-01-27T18:21:20 <gtirloni> my understanding is that the demo dependencies indeed stay in a purgatory situation.. maybe they need to continue as-is for a long time because someone is going to review those results, want to reproduce the tests, etc... and that\'s not the staging in dev->stg->prod we usually talk about
+2017-01-27T18:21:22 <mrtyler> and then we have environments called "development" and "production" whcih also match their common-use meanings
+2017-01-27T18:21:30 <colinclark> gtirloni: right, exactly
+2017-01-27T18:21:34 <mrtyler> except that our "production" isn\'t actulaly used by users today, only for various kinds of demonstrations
+2017-01-27T18:21:40 <colinclark> so enumerating environments:
+2017-01-27T18:22:03 <colinclark> "development" -> built and deployed upon commit to the master branches of a defined set of repositories
+2017-01-27T18:22:07 <colinclark> seem reasonable there?
+2017-01-27T18:22:10 <mrtyler> yes
+2017-01-27T18:22:12 <colinclark> wicked
+2017-01-27T18:22:16 <alanharnum> I would agree that "oft-neglected staging environment" is an accurate portrayal
+2017-01-27T18:22:24 <colinclark> alanharnum: I threw that one in for you :)
+2017-01-27T18:22:42 <gtirloni> it\'s very specific of the academic world, in my experience. maybe in the business world we\'d label them "legacy" of some sort
+2017-01-27T18:22:56 <mrtyler> it sounds to me like unnecessary extra complexity
+2017-01-27T18:23:03 <gtirloni> how so?
+2017-01-27T18:23:11 <mrtyler> let\'s get the enumeration first please
+2017-01-27T18:23:13 <colinclark> "staging" -> an environment in which we can periodically build and deploy particular tags/hashes/branches for testing, demonstration, and evaluation
+2017-01-27T18:23:34 <colinclark> and presumably where this can be done, in the fullness of time, by a developer directly\xe2\x80\x94or even by someone like Sandra
+2017-01-27T18:23:56 <colinclark> but in the interim, might be done by someone saying "hey, let\'s update staging to tag x.y.z"
+2017-01-27T18:24:02 <colinclark> so far so good?
+2017-01-27T18:24:12 <mrtyler> understood yes. antipattern count steadily increasing :3
+2017-01-27T18:24:17 <colinclark> hahaha
+2017-01-27T18:25:45 <colinclark> "production" -> an environment that real end users depend upon in order to make use of the GPII autopersonalization system, and which deployment to is managed by a [as yet somewhat undefined] release process
+2017-01-27T18:26:08 <colinclark> am i anywhere near a sane description of these three environments?
+2017-01-27T18:26:22 <mrtyler> i cannot answer that, but i understand your descriptions
+2017-01-27T18:26:24 <colinclark> and if so, i guess my next question is, "do we want these three things, really?"
+2017-01-27T18:26:26 <colinclark> ha
+2017-01-27T18:26:28 <mrtyler> i have no idea how accurate your beliefs are
+2017-01-27T18:26:32 <colinclark> hahaha
+2017-01-27T18:26:51 <colinclark> I\'m not sure these are beliefs so much as speculative views on reality :P
+2017-01-27T18:27:03 <mrtyler> gtirloni: alanharnum do you agree with colin\'s assessment of the existing environments?
+2017-01-27T18:27:30 <alanharnum> mrtyler: yup, it sounds correct to me
+2017-01-27T18:28:25 <gtirloni> sounds good
+2017-01-27T18:28:29 <mrtyler> do these three environemnts (dev, "staging", "prod") map to these three machines: i-0033, i-0028, i-0029?
+2017-01-27T18:29:36 <alanharnum> the one thing I will say is that I\'m not sure we have a running "development" environment that matches what colinclark describes; something that does CD when the master branch is pushed. it\'s possible we do and I don\'t know about it.
+2017-01-27T18:30:07 <gtirloni> i-0028 is where jenkins deploys (or not) new containers based on new commits. i-0029 is where it doesn\'t (we have to run a job manually, sort of a "push to production). check the (staging-){flowmanager,preferences}.gpii.net addresses for that
+2017-01-27T18:30:23 <gtirloni> i-0033 until FDS gets moved there, is IDRC-only
+2017-01-27T18:30:35 <gtirloni> and so my question about FDS being in the "demo" or not
+2017-01-27T18:30:43 <colinclark> yeah, and that\'s where things get interesting
+2017-01-27T18:30:51 <colinclark> it\'s a demo of a deliverable from another project
+2017-01-27T18:30:56 <colinclark> which will soon become crucial to this project
+2017-01-27T18:31:20 <colinclark> From the IDRC perspective, it\'s crucial that it stays up and available for me to demonstrate to our funders, community, stakeholders, etc.
+2017-01-27T18:31:26 <mrtyler> gtirloni: it sounds like you\'re saying i-0028 is development then?
+2017-01-27T18:31:47 <colinclark> from the APCP perspective, it represents some stuff that will eventually be crucial, but is currently not used in the autopersonalization system
+2017-01-27T18:32:00 <colinclark> however it\'s cindyli\'s one main client for the authentication server currently
+2017-01-27T18:33:16 <mrtyler> colinclark: in that case, it sounds to me like FDS should be built, tested, and deployed just like other gpii components
+2017-01-27T18:33:25 <colinclark> I think so, yes, mrtyler
+2017-01-27T18:33:43 <mrtyler> unless someone is advocating for a "gpii production" and a "floe/c4a/idrc/whatever other project production:
+2017-01-27T18:33:56 <mrtyler> .*
+2017-01-27T18:33:59 <colinclark> my sense is that it might as well be considered part of the "core autopersonalization system" from a technical perspective, if not yet from a UX perspective
+2017-01-27T18:34:27 <mrtyler> i agree, because FDS and GPII have the same business requirements, basically
+2017-01-27T18:34:37 <colinclark> yup
+2017-01-27T18:34:52 <mrtyler> so if FDS goes in prod, that means it goes in staging and dev too (whatever those are)
+2017-01-27T18:35:01 <mrtyler> and then we just treat it like the other components
+2017-01-27T18:35:12 <mrtyler> instead of handling it specially, which does not appear to provide any benefit that i can see
+2017-01-27T18:35:49 <mrtyler> gtirloni: let me try this a different way. what machines make up the dev, staging, and prod environemnts IYO?
+2017-01-27T18:36:01 <clown> amatas, I\'m updating my windows virtual box to "inclusivedesign/windows10-eval (v0.4.7)", using \'vagrant box update\'.  But I\'m seeing this:  "default: Progress: 0% (Rate: 71739/s, Estimated time remaining: 57:06:17)".
+2017-01-27T18:36:07 <clown> It\'s been running for about half an hour.  Should that be expected?
+2017-01-27T18:36:48 <mrtyler> gtirloni: or maybe even: what are the various environments that you see (and where do they run)?
+2017-01-27T18:36:58 <gtirloni> mrtyler: i think we could call it dev (i-0028).. but stuff, today, really gets developed/tested on developer\'s machines for a while (shared with others, etc), before it hits \'master\' and then goes to appear on i-0028... so we\'ve been calling it \'staging\' at that point
+2017-01-27T18:37:14 <colinclark> that seems like the most interesting question, mrtyler\xe2\x80\x94your last phrasing of it
+2017-01-27T18:37:20 <gtirloni> mrtyler: i-0028 has the complete picture, same for i-0028... same containers should be running on both
+2017-01-27T18:37:32 <mrtyler> gtirloni: you mean i28 and i29?
+'
+
+b'2017-01-27T06:32:27 * kasparne_ joined the channel
+2017-01-27T06:32:35 * kasparne_ has quit
+2017-01-27T08:20:19 * amatas joined the channel
+2017-01-27T08:42:35 * stegru joined the channel
+2017-01-27T10:06:12 * gtirloni joined the channel
+2017-01-27T10:32:42 * gtirloni_ joined the channel
+2017-01-27T12:08:32 * gtirloni joined the channel
+2017-01-27T12:11:58 <gtirloni> amatas: hi! happy friday. do you use gnome3? and if so, do you use networkmanager to connect to openvpn?
+2017-01-27T12:23:14 <amatas> gtirloni, yup
+2017-01-27T12:23:31 <amatas> happy friday as well! haha
+2017-01-27T12:27:17 <amatas> gtirloni, do you know https://mosh.org/ ? it could be useful in those ssh sessions with low latency
+2017-01-27T12:27:29 <amatas> *high latency , sorry
+2017-01-27T12:36:12 <gtirloni> ah mohs, yeah, i read about it a while ago.. i don\'t remember if i tested it, but i\'ll give it a try. thanks
+2017-01-27T12:56:19 <gtirloni> amatas: funny fact... i was testing changing the gateway from .1 to .10 on a new vm, trying to find if it would cause any issues... everything seemed fine except yum was resolving ipv6 instead of ipv4 by default now... looks like it\'s going to be fun to investigate
+2017-01-27T12:59:52 <amatas> mmm gtirloni I\'m on i-0040 trying to update some domain certs for Avtar, and seems that this VM doesn\'t have connection to internet
+2017-01-27T13:00:02 <amatas> it has .10 as default gw
+2017-01-27T13:00:16 <gloob> I use mosh everyday
+2017-01-27T13:00:29 <gloob> specially with this irc client
+2017-01-27T13:00:36 <gtirloni> amatas: it has a connection, but it might be the ipv6 error i\'m talking about
+2017-01-27T13:00:37 <gloob> it\'s a satellite machine somewhere in france
+2017-01-27T13:00:54 <gtirloni> amatas: i\'ve reverted the gateway change on i-0040 (it was the first server tyler and I tested).. try again please
+2017-01-27T13:01:01 <gloob> mosh (tunneling ssh) -> tmux -> irssi
+2017-01-27T13:01:06 <gloob> guys guys guys
+2017-01-27T13:01:14 <gloob> network manager and openvpn, nahhhhh
+2017-01-27T13:01:17 <gloob> be old school
+2017-01-27T13:01:18 <amatas> ok
+2017-01-27T13:01:29 <gloob> you don\'t want a click
+2017-01-27T13:01:37 <gloob> you want system wide mandanga
+2017-01-27T13:01:41 <amatas> gloob, nm + openvpn is the quiteness, the life, the peace
+2017-01-27T13:01:54 <gloob> lazy sysadmins
+2017-01-27T13:02:03 <gloob> although to be honest
+2017-01-27T13:02:09 <gloob> I use tunnelblick on macOs
+2017-01-27T13:02:09 <gloob> so
+2017-01-27T13:02:12 <gloob> fair
+2017-01-27T13:02:20 <gloob> but in the linux cliente is system level
+2017-01-27T13:02:20 <gtirloni> i\'m old school :) i still run openvpn .. but i thought getting NM to automatically do that for me would be "modern" :)
+2017-01-27T13:02:40 <gtirloni> then i found this bug: https://bugzilla.redhat.com/show_bug.cgi?id=1417169
+2017-01-27T13:02:49 <gloob> some system.d service scripts turn it on
+2017-01-27T13:03:06 <gtirloni> are you talking about being old school and using systemd ?!!!!!!
+2017-01-27T13:03:12 <gloob> well man
+2017-01-27T13:03:17 <gtirloni> :P
+2017-01-27T13:03:30 <gloob> the problem of using rolling-releases linux distros
+2017-01-27T13:04:15 <gloob> I also want to wear my hipster shirts and that
+2017-01-27T13:04:16 <gtirloni> indeed
+2017-01-27T13:04:17 <gloob> BUT
+2017-01-27T13:04:24 <gloob> in one moment in the future, that will be modern
+2017-01-27T13:04:27 <gloob> so, stay there
+2017-01-27T13:04:32 <gloob> openvpn system wide, system level
+2017-01-27T13:04:36 <gloob> peace of mind
+2017-01-27T13:04:36 <gloob> :D
+2017-01-27T13:04:58 <gloob> and, I\'m gnome fan, BUT
+2017-01-27T13:05:01 <gloob> NetworkManager is
+2017-01-27T13:05:02 <gtirloni> i was configuring dnsmasq to be a local caching server on my laptop.. then it conflicted with another dnsmasq that was running. so i discovered i could edit /etc/NetworkManager/NetworkManager.conf and add "dns=dnsmasq" and it would create the caching server for me..... living and learning
+2017-01-27T13:05:06 <gloob> how I can express it
+2017-01-27T13:05:21 <gloob> a mess
+2017-01-27T13:05:22 <gtirloni> we disable NM on all our servers.. i know the feeling :)
+2017-01-27T13:05:24 <gloob> it\'s a mess
+2017-01-27T13:05:39 <gloob> hate it
+2017-01-27T13:05:41 <gloob> like pulseaudio
+2017-01-27T13:06:16 <gloob> ok, enough ranting for today, use whatever you want to use
+2017-01-27T13:06:36 <gloob> tunnelblick works really well for me, in linux I always ended launching openvpn in my terminal
+2017-01-27T13:06:41 <gloob> bad experiences with NM
+2017-01-27T13:06:46 <gloob> personal tastes
+2017-01-27T13:09:37 * gloob hides
+2017-01-27T13:21:46 * cindyli joined the channel
+2017-01-27T13:22:14 <gtirloni> sorry, was afk (electrician was here at my new place saying the building is too old and doesn\'t have proper electrical ground) yay!
+2017-01-27T13:22:41 <gtirloni> gloob: NM has been a major PITA, i agree...
+2017-01-27T13:23:07 <gtirloni> for my desktop i decided to stop going "against the current", trying to have less headaches, etc.. but so far it seems like the same amount of headaches :)
+2017-01-27T13:25:44 <gtirloni> now let me find why everything works in ipv4 with OCAD\'s gateway but with our firewall, stuff turn to IPv6... mistery friday
+2017-01-27T13:31:16 <gloob> gtirloni: good luck, mate
+2017-01-27T13:33:59 * cindyli joined the channel
+2017-01-27T13:42:40 * stegru has quit
+2017-01-27T13:56:15 * stegru joined the channel
+2017-01-27T13:56:18 * alanharnum joined the channel
+2017-01-27T14:05:25 <stegru> gloob: ?
+2017-01-27T14:08:59 * michelled joined the channel
+2017-01-27T14:10:35 * code_master5 joined the channel
+2017-01-27T14:55:50 * javjarfer joined the channel
+2017-01-27T14:56:18 * clown joined the channel
+2017-01-27T15:00:30 * mrtyler joined the channel
+2017-01-27T15:04:18 * simonjb joined the channel
+2017-01-27T15:13:32 * amatas joined the channel
+2017-01-27T15:16:15 * colinclark joined the channel
+2017-01-27T15:46:58 * alanharnum joined the channel
+2017-01-27T16:15:18 <gloob> stegru: hi
+2017-01-27T16:15:27 <stegru> hi gloob
+2017-01-27T16:15:37 <stegru> oh, i just pinged you about the meeting
+2017-01-27T16:15:41 <gloob> ahhhhhhhh
+2017-01-27T16:15:43 <gloob> stegru: thanks
+2017-01-27T16:24:49 * michelled joined the channel
+2017-01-27T16:48:00 <cindyli> simonjb: https://wiki.gpii.net/w/Continued_Researches_on_Possible_Approaches_for_Protecting_Communication_btw_LFM_and_CBFM#Dedicated_process_running_as_a_different_user_for_storing.2Fretrieving_client_id.2Fsecret
+2017-01-27T16:48:18 <simonjb> thanks cindyli I will take a look
+2017-01-27T16:48:53 <cindyli> thanks, simonjb. i also read about windows service but decided not to go down that path because:
+2017-01-27T16:49:11 <cindyli> 1. aggressive to have a service running at the backend even when gpii is not used
+2017-01-27T16:49:47 * Tabs16 joined the channel
+2017-01-27T16:49:59 <cindyli> 2. windows services on the newer windows platform have limitations on dealing with desktop, GUI etc
+2017-01-27T16:50:52 <cindyli> 3. it\'s hard to restrict the access on services to only allow authorized processes
+2017-01-27T16:51:52 <simonjb> cindyli: yes, this makes sense; something that might be interesting to read is how the Mozilla update service works https://wiki.mozilla.org/Windows_Service_Silent_Update though I think you are right about its non-applicability in our case
+2017-01-27T16:56:35 <cindyli> this is cool, a service that gets started only when it\'s needed
+2017-01-27T16:56:39 <simonjb> yes
+2017-01-27T16:57:07 <simonjb> but what I\'m not sure about is if any process can start it or if you can limit
+2017-01-27T16:57:38 <simonjb> "Since the service is only started when needed, we pass the information to the service via command line on service start. The service security is modified with a special ACE which allows non elevated processes to start and stop it."
+2017-01-27T16:59:07 <cindyli> ya, wonder if the service security can be modified to only allow a particular process to access it ;)
+2017-01-27T16:59:29 <simonjb> that\'s what I don\'t know
+2017-01-27T17:06:31 <code_master5> Hi everyone! I\'m new here! I want to contribute to this project. Please can anyone guide me for getting started??
+2017-01-27T17:35:14 * Jess__ joined the channel
+2017-01-27T17:37:00 <Jess__> gtirloni: so, Mike has left ET Group?
+2017-01-27T17:39:01 <gtirloni> Jess__: yeah, i think my mail client didn\'t send the message i wanted
+2017-01-27T17:39:16 <Jess__> yeah, it looked truncated
+2017-01-27T17:58:01 <mrtyler> gtirloni: question about gpii demo infrastructure
+2017-01-27T17:58:19 <mrtyler> is it true that absolutely everything needed for the cloud portion of the gpii is running in docker containers on i-0033
+2017-01-27T17:58:48 <gtirloni> no, that\'s actually the most idrc-y docker host we have
+2017-01-27T17:58:55 <gtirloni> we want to check i-0028 / 29
+2017-01-27T17:59:07 <gtirloni> that\'s where jenkins manages those deployments
+2017-01-27T17:59:24 <gtirloni> i\'m assuming "cloud portion" means the preferences server and the flow manager
+2017-01-27T17:59:34 <mrtyler> i mean everything we need for a gpii demo
+2017-01-27T17:59:52 <mrtyler> i\'m evaluating what resources we need to run that demo today in idrc so i can spec out running an identical demo in aws
+2017-01-27T18:00:15 <gtirloni> i don\'t know what we use in a demo (never seen it myself), maybe alanharnum can help here
+2017-01-27T18:00:40 <gtirloni> if the FDS is included, then that\'s those containers in i-0020 that you guys tried to migrate
+2017-01-27T18:00:52 <mrtyler> here\'s what\'s running on i33. i don\'t see anything other than gpii components so please enlighten me?
+2017-01-27T18:00:52 <alanharnum> mrtyler: the typical demo use pref server and flow manager
+2017-01-27T18:00:55 <mrtyler> aharnum/first-discovery-server
+2017-01-27T18:00:58 <mrtyler> gpii/flow-manager
+2017-01-27T18:01:00 <mrtyler> gpii/preferences-server
+2017-01-27T18:01:03 <mrtyler> inclusivedesign/couchdb
+2017-01-27T18:01:05 <mrtyler> owncloud
+2017-01-27T18:01:08 <mrtyler> inclusivedesign/tts
+2017-01-27T18:01:16 <mrtyler> i couldn\'t figure out what tts is but it runs supervisord
+2017-01-27T18:01:26 <alanharnum> timely conversation, as I\'ve just finally got all the container / Ansible role issues sorted out for the non-FDS components
+2017-01-27T18:01:30 <mrtyler> owncloud looks like some kind of apache frontend
+2017-01-27T18:01:31 <gtirloni> ah so the containers from i-0020 did get migrated over to i-0033
+2017-01-27T18:01:44 <mrtyler> gtirloni: i assume that\'s WIP until alan is finished
+2017-01-27T18:01:50 <alanharnum> yeah, that\'s WIP
+2017-01-27T18:01:52 <mrtyler> re FDS
+2017-01-27T18:01:57 <alanharnum> I actually thought I\'d removed them from i-0033
+2017-01-27T18:02:09 <alanharnum> tts is, I believe, a text to speech service that may no longer be in use
+2017-01-27T18:02:22 <gtirloni> tts.idrc.ocadu.ca , it still works :)
+2017-01-27T18:02:33 <mrtyler> let me look at i28 and i29
+2017-01-27T18:02:48 <alanharnum> from when (predating my time) we were running an instance of Festival to do in-browser TTS, before the in-browser TTS had become relatively stable
+2017-01-27T18:03:01 <gtirloni> alanharnum: does the demo include FDS?
+2017-01-27T18:03:23 <mrtyler> yes (is what i\'ve been told so far)
+2017-01-27T18:03:24 <gtirloni> alanharnum: last time i checked, tts still got some random hits every other hour
+2017-01-27T18:03:30 <alanharnum> gtirloni: the typical demo as were done for Review 3/Review 4 did not
+2017-01-27T18:03:45 <alanharnum> colinclark may be able to articulate better were FDS fits into the demo spectrum
+2017-01-27T18:04:04 <mrtyler> if FDS is not part of the demo, why was it such a big deal that i not touch h-0004 until it was moved?
+2017-01-27T18:04:17 <colinclark> hi
+2017-01-27T18:04:51 <colinclark> alanharnum, gtirloni: The Festival TTS server is indeed still in use
+2017-01-27T18:05:07 <colinclark> would be great to update that demo to your client-side TTS library, alanharnum, but I doubt it will happen soon
+2017-01-27T18:05:07 <alanharnum> but i think we may be using two different versions of "demo" in this conversation - by "demo" I\'m referring to what was done for the EU for Review 3 / Review 4.
+2017-01-27T18:05:13 <colinclark> so in the meantime, it\'s a FLOE demo that we should keep going
+'
+

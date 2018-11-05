@@ -1,0 +1,111 @@
+b'2018-01-03T00:01:13 * the-t-in-rtf has quit
+2018-01-03T00:01:31 * the-t-in-rtf joined the channel
+2018-01-03T00:55:57 * mrtyler joined the channel
+2018-01-03T06:44:25 * mrtyler joined the channel
+2018-01-03T08:24:10 * amatas joined the channel
+2018-01-03T08:43:56 * kasper joined the channel
+2018-01-03T09:08:51 * kasper has quit
+2018-01-03T09:09:47 * kasper joined the channel
+2018-01-03T09:27:11 * kasper has quit
+2018-01-03T10:20:14 * kasper joined the channel
+2018-01-03T10:38:21 <the-t-in-rtf> No worries, @kasper, that\'s good to know.
+2018-01-03T10:38:46 <the-t-in-rtf> I don\'t see Dr. Boz, is anyone around who is familiar with dynamic components defined using an array of sources?
+2018-01-03T10:38:55 <the-t-in-rtf> I had a couple of questions.
+2018-01-03T10:39:24 <the-t-in-rtf> 1) Can you use an object rather than an array for the sources? (I suspect so.)
+2018-01-03T10:40:29 <the-t-in-rtf> 2) If so, does the mechanism that iterates through the sources implicitly support namespaces and priorities? (I suspect not, and that I\'ll need to use an expander to handle this bit).
+2018-01-03T10:44:49 <kasper> the-t-in-rtf, i\'m not really sure about either of the questions
+2018-01-03T10:45:29 <the-t-in-rtf> So, to give more context, I\'m using an array of paths to tell an express instance "look up each of these and host their content at a particular path".
+2018-01-03T10:45:57 <the-t-in-rtf> I\'d like to know if I can use objects (which better support merging with and overriding inherited definitions).
+2018-01-03T10:46:24 <the-t-in-rtf> I\'d also like to know if priorities are supported so that I can (for example) mount a replacement path earlier in the chain than an inherited definition.
+2018-01-03T10:47:40 <the-t-in-rtf> arrays are awesome for expressing the order of items, but merging them best case clobbers the existing material.
+2018-01-03T10:47:58 <the-t-in-rtf> objects are better for merging, but keys are not guaranteed to stay in a particular order, which is why we have namespaces and priorities.
+2018-01-03T10:48:43 <the-t-in-rtf> This is the functionality I\'m using:  https://docs.fluidproject.org/infusion/development/SubcomponentDeclaration.html#dynamic-subcomponents-with-a-source-array
+2018-01-03T10:49:09 <the-t-in-rtf> All of the tests and examples use arrays.
+2018-01-03T10:49:37 <the-t-in-rtf> But, looking at the underlying use of `fluid.each`, it seems like objects should be supported as well.
+2018-01-03T10:49:52 <the-t-in-rtf> https://github.com/fluid-project/infusion/blob/17fbd6f293180320c083295a08e9727f4a2c3e3f/src/framework/core/js/FluidIoC.js#L679
+2018-01-03T10:50:39 <the-t-in-rtf> This explains to me why we get subComponent-0, subComponent-1 when using dynamic components, as the key for an array is 0, 1, etc.
+2018-01-03T11:10:04 * stegru joined the channel
+2018-01-03T12:06:58 * Justin_o joined the channel
+2018-01-03T12:14:59 * kasper has quit
+2018-01-03T12:41:49 * kasparnet joined the channel
+2018-01-03T12:48:31 * stegru has quit
+2018-01-03T12:49:31 * stegru joined the channel
+2018-01-03T13:03:54 * grrrero joined the channel
+2018-01-03T13:13:12 * kasparnet_ joined the channel
+2018-01-03T13:15:52 * kasparnet has quit
+2018-01-03T13:19:11 * gtirloni joined the channel
+2018-01-03T13:19:18 * gtirloni has quit
+2018-01-03T13:19:18 * gtirloni joined the channel
+2018-01-03T13:19:18 * gtirloni joined the channel
+2018-01-03T13:44:23 * stegru_ joined the channel
+2018-01-03T13:47:40 * stegru has quit
+2018-01-03T13:56:54 * stegru_ is now known as stegru
+2018-01-03T13:57:15 * cindyli joined the channel
+2018-01-03T13:57:55 * gtirloni joined the channel
+2018-01-03T14:02:07 * stegru has quit
+2018-01-03T14:03:03 * stegru joined the channel
+2018-01-03T14:10:02 * clown joined the channel
+2018-01-03T14:10:45 * Guest41862 has quit
+2018-01-03T14:12:39 * clown_afk joined the channel
+2018-01-03T14:13:53 * clown_afk is now known as clown1
+2018-01-03T14:16:13 * michelled joined the channel
+2018-01-03T14:27:32 * the-t-in-rtf joined the channel
+2018-01-03T14:28:27 * mrtyler joined the channel
+2018-01-03T14:30:03 * the-t-in-rtf joined the channel
+2018-01-03T14:33:09 * colinclark joined the channel
+2018-01-03T15:16:07 * Bosmon3 joined the channel
+2018-01-03T15:45:14 * colinclark joined the channel
+2018-01-03T15:48:16 <Bosmon3> the-t-in-rtf - yes, you are right on both counts
+2018-01-03T15:48:33 <Bosmon3> The "source" can be an object but you will be stuck with natural iteration order
+2018-01-03T15:48:42 <the-t-in-rtf> thanks.
+2018-01-03T15:49:35 <the-t-in-rtf> Assuming I\'m not hit by some variation on the expansion/merging issue, I\'ll just use an expander that does the ordering.
+2018-01-03T15:49:38 <Bosmon3> I suggest you construct the corresponding array yourself using the fluid.parsePriority/fluid.sortByPriority sequence that we have used before, from an expander
+2018-01-03T15:49:40 <Bosmon3> Yes, exactly
+2018-01-03T15:49:59 <Bosmon3> It might well be time to package up this sequence as a self-standing utility
+2018-01-03T15:51:29 <Bosmon3> Oh wait it is already here
+2018-01-03T15:51:33 <Bosmon3> fluid.parsePriorityRecords
+2018-01-03T15:53:28 <the-t-in-rtf> yes, that\'s perfect for my purposes, as the keys are only meaningful as namespaces to be used with priorities.
+2018-01-03T15:58:30 <Bosmon3> the-t-in-rtf - what are your purposes, exactly? : P
+2018-01-03T15:59:48 <the-t-in-rtf> to go from a list of source directories ("%package/src", "%package/gpii/node_modules/some_module/src") to a series of dynamically generated gpii-express static routers that host the associated content at an appropriate (URL) path.
+2018-01-03T16:00:13 <Bosmon3> Very interesting
+2018-01-03T16:00:15 <the-t-in-rtf> this is to finally break out of the Testem-ism where all content must be hosted relative to cwd.
+2018-01-03T16:00:36 <the-t-in-rtf> I have already succeeded in liberating the instrumented code and coverage data from their tyranny.
+2018-01-03T16:00:54 <the-t-in-rtf> No more "coverage" and "instrumented" directories in the root of our repos unless we want them to be there.
+2018-01-03T16:01:42 <the-t-in-rtf> Previously, the coverage server\'s only role was to host the coverage reporting client and to collect the data via a piece of middleware.
+2018-01-03T16:02:00 <the-t-in-rtf> I expanded its role to host the content as well, as it gave us much better options than Testem itself.
+2018-01-03T16:02:29 <the-t-in-rtf> I generate proxy options for Testem to tell it that all references to /src, /node_modules, etc should point to the coverage server instead.
+2018-01-03T16:03:30 <the-t-in-rtf> Testem will become very dumb with regards to hosting our code, and will just be used to launch browsers with particular options.
+2018-01-03T16:05:15 <the-t-in-rtf> This is all part of the spike to make something that can better handle projects like universal.  Late last year, I ended up pulling out the reporting and instrumentation bits of nyc/Istanbul and making our own smaller wrapper, which will not be confused by the gpii/node_modules construct, and which also copies non source to the same location.
+2018-01-03T16:06:05 <the-t-in-rtf> That bit means that we can also run browser tests that can ordinarily be run directly from within the instrumented directory, which should help with troubleshooting.
+2018-01-03T16:19:35 <the-t-in-rtf> sorry, I mean, tests which can ordinarily be run directly (i.e. as files opened within a browser) should be able to be run from the instrumented directory.
+2018-01-03T16:19:41 <the-t-in-rtf> as files.
+2018-01-03T16:57:16 * michelled1 joined the channel
+2018-01-03T16:57:16 * michelled has quit
+2018-01-03T18:11:56 * michelled joined the channel
+2018-01-03T18:44:48 * Jess_ joined the channel
+2018-01-03T18:47:53 * Jess__ joined the channel
+2018-01-03T18:49:35 * Jess_ has quit
+2018-01-03T18:51:16 * Jess_ joined the channel
+2018-01-03T18:51:29 * Jess_ has quit
+2018-01-03T18:52:49 * Jess__ has quit
+2018-01-03T18:57:51 * kasparnet_ has quit
+2018-01-03T19:39:11 * stegru has quit
+2018-01-03T19:39:13 * gtirloni has quit
+2018-01-03T20:14:29 * gtirloni joined the channel
+2018-01-03T20:37:54 * stegru joined the channel
+2018-01-03T20:43:14 * the-t-in-rtf joined the channel
+2018-01-03T20:58:18 * colinclark has quit
+2018-01-03T21:04:23 * kasparnet_ joined the channel
+2018-01-03T21:42:40 * mrtyler has quit
+2018-01-03T22:01:29 * clown has quit
+2018-01-03T22:04:25 * michelled has quit
+2018-01-03T22:35:20 * mrtyler joined the channel
+2018-01-03T22:50:06 * michelled joined the channel
+2018-01-03T22:51:07 * michelled1 joined the channel
+2018-01-03T22:53:07 * amatas has quit
+2018-01-03T22:57:40 * kasparnet_ has quit
+2018-01-03T23:00:35 * michelled1 has quit
+2018-01-03T23:23:29 * grrrero has quit
+2018-01-03T23:52:40 * kasparnet joined the channel
+'
+

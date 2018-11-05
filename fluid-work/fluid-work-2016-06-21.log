@@ -1,0 +1,242 @@
+b'2016-06-21T21:25:53 <Bosmon> Within a "stub"
+2016-06-21T21:26:41 <simonjb> sure, yeah, that makes sense, for overriding
+2016-06-21T21:26:43 <simonjb> agreed
+2016-06-21T21:27:56 <simonjb> I think we\'d need to introduce a key for the hash that only existed to make it a hash
+2016-06-21T21:28:10 <simonjb> meaning that it wouldn\'t serve any other purpose
+2016-06-21T21:28:17 <simonjb> purely for overriding
+2016-06-21T21:28:19 <simonjb> (I think)
+2016-06-21T21:28:20 <Bosmon> simonjb that\'s right, yes
+2016-06-21T21:28:25 <simonjb> cool
+2016-06-21T21:28:38 <Bosmon> Actually I feel this "withargs" business is a little suspicious
+2016-06-21T21:28:49 <Bosmon> I guess this is a builtin pattern with sinon
+2016-06-21T21:29:03 <Bosmon> But it seems to limit us to only simulating things which are pure functions
+2016-06-21T21:29:50 <simonjb> and this point, I\'m using the sinon naming and semantics but yes something more general might be worthwhile
+2016-06-21T21:30:17 <simonjb> each stub means -- when this function is called with there args, return this value
+2016-06-21T21:30:27 <Bosmon> What I had been expecting was some kind of IoC Testing framework fixture type, which would set up a "single-shot" mock
+2016-06-21T21:30:28 <simonjb> there = these
+2016-06-21T21:30:41 <Bosmon> And would simply hold the return value
+2016-06-21T21:30:59 <Bosmon> Of course I guess this defeats a lot of the need for using a framework like sinon at all
+2016-06-21T21:31:13 <Bosmon> It must devote a lot of effort to its advanced mattern matching algorithm : P
+2016-06-21T21:32:02 <Bosmon> What *does* sinon, recommend, for mocking impure functions?
+2016-06-21T21:32:28 <simonjb> impure, meaning modifying state?
+2016-06-21T21:32:56 <Bosmon> Yes, or more generally, capable of making a different return given the same arguments
+2016-06-21T21:34:05 <simonjb> they have "onCall(n)" where n is the number of times the function has been called
+2016-06-21T21:34:44 <Bosmon> I see
+2016-06-21T21:34:49 <Bosmon> Hilarious : P
+2016-06-21T21:35:18 <simonjb> stub.withArgs(42).onCall(3).returns("foo")
+2016-06-21T21:35:33 <Bosmon> Hilarious and appalling
+2016-06-21T21:35:41 <Bosmon> Have these never people heard that code is considered harmful? : P
+2016-06-21T21:36:52 <simonjb> so, maybe we should have a chat about what direction we want to go in for \'mocking\' in Infusion?
+2016-06-21T21:37:13 <Bosmon> Yes
+2016-06-21T21:37:21 <Bosmon> I guess there is a need for a kind of "travelling mock" component
+2016-06-21T21:37:28 <simonjb> my experiments today are maybe a useful initial spike with sinon
+2016-06-21T21:37:33 <Bosmon> Yes
+2016-06-21T21:37:49 <simonjb> at least I understand it more that I did this morning!
+2016-06-21T21:38:01 <Bosmon> A kind of component, perhaps one which can even consume the entire grade of another component, in order to know what "shape" of mock to produce
+2016-06-21T21:38:14 <simonjb> yes
+2016-06-21T21:38:39 <Bosmon> But all of whose invokers are mocks, and which perhaps has a separate "model-like" area which can be used to write the return to be used by a particular invoker on its next invocation
+2016-06-21T21:39:30 <Bosmon> It\'s a shame that the recent rewrite abandoned support for model areas which are not nested inside the member named "model"
+2016-06-21T21:39:57 <Bosmon> But I guess this stuff is in practice not very model-like in that it can consist of arbitrary material
+2016-06-21T21:40:14 <Bosmon> So perhaps all we need is a dedicated invoker named something like "setInvokerReturn(invokerName, material)"
+2016-06-21T21:40:25 * Dinuka_ joined the channel
+2016-06-21T21:41:13 <Bosmon> Can we see an upcoming need or idiom for mocking anything other than invokers?
+2016-06-21T21:41:47 <simonjb> I can\'t think of one right now
+2016-06-21T21:42:18 <Bosmon> Cool
+2016-06-21T21:42:23 <Bosmon> Well, that should be simple enough
+2016-06-21T21:42:35 <Bosmon> I allude to this problem in section 4.4.7 of our recently submitted **PPIGE** paper
+2016-06-21T21:42:37 <Bosmon> https://github.com/amb26/papers/blob/master/ppig-2016a/ppig2016a.pdf
+2016-06-21T21:43:21 <simonjb> cool
+2016-06-21T21:45:29 <Bosmon> This is actually a "classically bad" kind of component
+2016-06-21T21:45:36 <Bosmon> In that it mixes together storage and computation
+2016-06-21T21:45:53 <Bosmon> But I guess this is the kind of thing which people will frequently need to create
+2016-06-21T21:46:21 <Bosmon> The whole point of this impl is that it couldn\'t not be straightforwardly replaced by a combination of the InMemoryDataStore that was remote, and a layer which did its computations
+2016-06-21T21:47:02 <Bosmon> But in theory one day our "taxonomy of state and computation" will be good enough that it could be - although it would be pretty ambitious to imagine that our Couch views could be synthesized automatically given the designation, in our dialect, of what computation they do
+2016-06-21T21:48:30 <simonjb> yeah, that\'s interesting
+2016-06-21T21:49:30 <Bosmon> Couch is one of the few environments we could even dream of this theoretically
+2016-06-21T21:49:39 <Bosmon> I imagine that some upcoming work with the-t-in-rtf will start to nibble on the edges of this
+2016-06-21T21:50:40 <Bosmon> Given a dialect of "suitably simple, pure functions stuck in the global namespace" we could imagine a scheme which orchestrates them together and then pushes them into Couch views synthesized by recovering their code
+2016-06-21T21:50:49 <simonjb> it certainly seems like to should be possible, at least for an interesting subset of what couch can do
+2016-06-21T21:51:21 <Bosmon> But there will be lots of funny stuff going on with respect to Couch\'s "composite keys" model which is so essential to most of the particularly interesting things that it can do
+2016-06-21T21:51:54 <Bosmon> This component will be a brilliant test case for that future work :)
+2016-06-21T21:52:09 <simonjb> :)
+2016-06-21T21:52:16 <Bosmon> It\'s good at least we\'ll be able to recover the InMemoryDataStore from git history....
+2016-06-21T21:52:30 <simonjb> Bosmon: I going to run now but let\'s chat more about mocking and how/if we see something like sinon fitting
+2016-06-21T21:52:36 <Bosmon> simonjb - awesome
+2016-06-21T21:52:41 <Bosmon> Thanks for this super-interesting spike!
+2016-06-21T21:53:01 <simonjb> and thanks for chatting about it!
+2016-06-21T21:53:19 <Bosmon> Likewise!
+2016-06-21T22:19:24 * wannabeCitizen joined the channel
+2016-06-21T22:19:38 <wannabeCitizen> Anyone have suggestions for best practices in fluid for reactive dom rendering? That is, if i want a certain HTML template injected when the component is in state X, but a different HTML template when in state Y?
+2016-06-21T22:20:08 <wannabeCitizen> (this is for a client-side app so server-side manipulations can\xe2\x80\x99t be used)
+2016-06-21T22:25:10 * wale joined the channel
+2016-06-21T22:35:51 <Bosmon> Here there wannabeCitizen
+2016-06-21T22:37:32 <Bosmon> I suggest you put the state into the component\'s model, listen to the model state with a listener that then calls $.html - http://api.jquery.com/html/ - with the correct template\'s contents
+2016-06-21T22:38:13 <Bosmon> Then depending on which data binding framework you are using, fire the relevant event that tells it to update its binding state
+2016-06-21T22:41:03 <wannabeCitizen> :) That\xe2\x80\x99s precisely what I had come up with \xe2\x80\x94 using jQuery.html() or .append() in certain cases
+2016-06-21T22:41:14 <wannabeCitizen> tq for checking in on it Bosmon
+2016-06-21T22:42:24 <wannabeCitizen> Bosmon: so in the component\xe2\x80\x99s model, this means I\xe2\x80\x99ll just have strings filled with HTML syntax in them, right? Or is there a better way to store HTML in a component\xe2\x80\x99s model
+2016-06-21T22:42:54 <Bosmon> wannabeCitizen - the model should just contain JSON-equivalent material
+2016-06-21T22:43:03 <Bosmon> The HTML templates should be stored elsewhere
+2016-06-21T22:43:16 <Bosmon> Typically we just store such "bulky, mutable state" at top-level on the component
+2016-06-21T22:43:27 <Bosmon> For example in the resourceLoader component you saw, this stuff just ends up in resourceSpecs
+2016-06-21T22:43:37 <Bosmon> This reminds me to review those changes
+2016-06-21T22:44:14 <wannabeCitizen> OK cool so use the model just to trigger changes
+2016-06-21T22:44:40 <Bosmon> yes
+2016-06-21T22:44:47 <Bosmon> Or to be "observable" in other ways
+2016-06-21T22:45:08 <Bosmon> We tend to use the term "model" in a similar sense to the MVC community
+2016-06-21T23:04:26 * wale has quit
+2016-06-21T23:19:13 * alanharnum joined the channel
+'
+
+b'2016-06-21T02:34:31 * yzen joined the channel
+2016-06-21T02:39:08 * yzen has quit
+2016-06-21T04:00:21 * yzen joined the channel
+2016-06-21T05:36:02 * yzen is now known as yzen_
+2016-06-21T05:40:11 * yzen_ has quit
+2016-06-21T06:00:42 * wannabeCitizen has quit
+2016-06-21T06:03:53 * wannabeCitizen joined the channel
+2016-06-21T06:29:18 * wannabeCitizen has quit
+2016-06-21T07:14:40 * amatas joined the channel
+2016-06-21T11:29:48 * danayo joined the channel
+2016-06-21T12:12:06 * Justin_o joined the channel
+2016-06-21T12:28:10 * jhung joined the channel
+2016-06-21T12:28:43 * cindyli joined the channel
+2016-06-21T12:41:59 * PaliwalSparsh joined the channel
+2016-06-21T13:01:39 * gtirloni joined the channel
+2016-06-21T13:10:34 * anvk joined the channel
+2016-06-21T13:19:32 * jessm joined the channel
+2016-06-21T13:22:13 * yzen joined the channel
+2016-06-21T13:35:05 * sepidehshahi joined the channel
+2016-06-21T13:35:30 * alanharnum joined the channel
+2016-06-21T13:45:19 * bens__ joined the channel
+2016-06-21T13:47:09 * clown joined the channel
+2016-06-21T13:48:42 * michelled joined the channel
+2016-06-21T13:58:57 * wale joined the channel
+2016-06-21T14:03:44 * amatas joined the channel
+2016-06-21T14:04:36 * michelled1 joined the channel
+2016-06-21T14:06:57 * the-t-in-rtf joined the channel
+2016-06-21T14:14:22 * simonjb joined the channel
+2016-06-21T14:30:24 * Yan_Hu joined the channel
+2016-06-21T14:35:42 * wale has quit
+2016-06-21T14:50:51 <simonjb> Justin_o, cindyli, Bosmon: I vaguely remember some discussions in the past about mocking Infusion components and was wondering if we had any recommended strategies?
+2016-06-21T14:52:15 <Bosmon> simonjb - nothing special, no
+2016-06-21T14:52:20 <Bosmon> It\'s an important strategic issue
+2016-06-21T14:52:24 <Bosmon> What problem are you dealing with?
+2016-06-21T14:53:16 <Justin_o> simonjb: i\'ve used http://sinonjs.org in the past for creating mocks, but i don\'t recall if that was for an infusion component.. it may have been for a native api or some other third party lib.
+2016-06-21T14:54:09 <simonjb> Bosmon: I\'d like to update a unit test for a component that depends on the oauth2 data store. The unit test currently uses the inMemoryDataStore, which we are going to remove once we have the *ouchdb implementation.
+2016-06-21T14:56:28 <simonjb> The new data store API differs from the inMemoryDataStore -- returning promises
+2016-06-21T14:57:28 <simonjb> I could update the inMemoryDataStore but was thinking a simpler mocking might be better -- so that we don\'t need to maintain the full inMemoryDataStore going forward
+2016-06-21T14:57:46 <Bosmon> simonjb - what could be simpler than the inMemoryDataStore, but still functioned as a mock?
+2016-06-21T14:59:02 <simonjb> Bosmon: I\'m thinking explicitly configuring expected calls and specifying responses
+2016-06-21T14:59:13 <Bosmon> Ah, I see
+2016-06-21T14:59:35 <simonjb> the inMemoryDataStore still has quite a bit of logic -- joins and such
+2016-06-21T14:59:39 <Bosmon> ok
+2016-06-21T14:59:51 <Bosmon> Wrapping sinon in a component seems like a reasonable idea
+2016-06-21T15:00:01 <Bosmon> And creating a declarative form for encoding mock data
+2016-06-21T15:01:59 <simonjb> Cool, I\'ll take a look at sinon, thanks Bosmon and Justin_o
+2016-06-21T15:04:23 <Justin_o> simonjb, Bosmon: i wonder if we should consider adding sinon to infusions testing framework
+2016-06-21T15:06:41 * colinclark joined the channel
+2016-06-21T15:07:20 * alanharn_ joined the channel
+2016-06-21T15:14:23 * wale joined the channel
+2016-06-21T15:33:01 * alanharn_ has quit
+2016-06-21T15:47:11 * Yan_Hu has left the channel
+2016-06-21T15:51:47 * sepidehshahi joined the channel
+2016-06-21T15:52:20 * alanharn_ joined the channel
+2016-06-21T15:52:37 * clown joined the channel
+2016-06-21T15:56:38 * michelled joined the channel
+2016-06-21T16:02:41 <danayo> Justin_o, PaliwalSparsh, let\'s meet in the fluid standup room https://conf.inclusivedesign.ca/flex.html?roomdirect.html&key=xemU59x8DtnO41eCMtCpCioWaRI
+2016-06-21T16:02:51 <PaliwalSparsh> sure danayo
+2016-06-21T16:10:09 * alanharn_ is now known as alanharnum
+2016-06-21T16:22:17 * michelled joined the channel
+2016-06-21T16:24:58 * Yan_Hu joined the channel
+2016-06-21T16:35:17 * simonjb joined the channel
+2016-06-21T16:44:19 * michelled joined the channel
+2016-06-21T16:46:07 * colinclark joined the channel
+2016-06-21T16:49:18 * yzen is now known as yzen_
+2016-06-21T16:51:29 <Justin_o> Bosmon: just a reminder, could you make sure to fill out the GSoC mid-term evaluation this week
+2016-06-21T16:51:39 <Bosmon> Justin_o - ok
+2016-06-21T16:52:03 <Justin_o> thanks
+2016-06-21T16:54:54 * yzen_ is now known as yzen
+2016-06-21T16:56:06 * wale has quit
+2016-06-21T16:56:51 * gtirloni_ joined the channel
+2016-06-21T16:59:51 * gtirloni has quit
+2016-06-21T17:14:18 * gtirloni_ is now known as gtirloni
+2016-06-21T17:21:50 <danayo> PaliwalSparsh, Justin_o: found this article that lists some web-based music-making platforms http://www.musicradar.com/news/tech/10-of-the-best-ways-to-make-music-in-your-web-browser-490608
+2016-06-21T17:22:54 * simonjb joined the channel
+2016-06-21T17:25:41 <PaliwalSparsh> thanks danayo I will go through them
+2016-06-21T17:38:16 * colinclark joined the channel
+2016-06-21T17:42:38 * jhung joined the channel
+2016-06-21T17:43:34 * michelled joined the channel
+2016-06-21T17:44:02 * gtirloni has quit
+2016-06-21T17:52:12 * the-t-in-rtf has quit
+2016-06-21T17:52:49 <colinclark> github is very funny today
+2016-06-21T17:53:10 <colinclark> "function calls with arguments (an accepted means of parameterising functionality since 1951)"
+2016-06-21T17:53:37 <colinclark> and "fix this one weird little convention with this simple trick."
+2016-06-21T18:03:21 * anvk has quit
+2016-06-21T18:03:23 * the-t-in-rtf joined the channel
+2016-06-21T18:04:43 * anvk joined the channel
+2016-06-21T18:08:25 <PaliwalSparsh> Justin_o https://github.com/PaliwalSparsh/Discovery-Cat/tree/midterm
+2016-06-21T18:08:46 <PaliwalSparsh> This is the link to the refactored code
+2016-06-21T18:09:15 <Justin_o> PaliwalSparsh: thanks i\'ll try to take a look at that today
+2016-06-21T18:09:25 <PaliwalSparsh> thanks Justin_o
+2016-06-21T18:20:39 * clown joined the channel
+2016-06-21T18:31:12 * michelled joined the channel
+2016-06-21T18:35:22 * Dinuka joined the channel
+2016-06-21T18:36:36 * alanharnum has quit
+2016-06-21T19:10:50 * yzen_ joined the channel
+2016-06-21T19:14:00 * yzen has quit
+2016-06-21T19:14:50 * wale joined the channel
+2016-06-21T19:16:55 * michelled joined the channel
+2016-06-21T19:19:31 * alanharnum joined the channel
+2016-06-21T19:20:28 * sepidehshahi joined the channel
+2016-06-21T19:29:56 * wale has quit
+2016-06-21T19:33:02 <alanharnum> colinclark: can confirm that calling flock.init() as an onCreate handler in the sonifier stops the IoC test from throwing errors.
+2016-06-21T19:33:13 <colinclark> alanharnum: Okay
+2016-06-21T19:33:21 <alanharnum> i don\'t even have to change any other code
+2016-06-21T19:33:23 <colinclark> so it seems like you can arrange to create and destroy the environment suitably
+2016-06-21T19:33:31 <colinclark> Bosmon reminded me of the afterDestroy event
+2016-06-21T19:34:25 <alanharnum> does it make sense to call something from the sonifier on afterDestroy to clean up?
+2016-06-21T19:35:01 <colinclark> I\'m just thinking it through
+2016-06-21T19:35:21 <colinclark> Destroying the environment is one of these "portal-like" issues
+2016-06-21T19:35:43 <colinclark> I mean, obviously you need to create one if there isn\'t already one
+2016-06-21T19:35:58 <colinclark> but if there were already one, destroying it might be quite mean :)
+2016-06-21T19:36:39 <colinclark> Can you confirm for me that you\'re able to destroy the environment in afterDestroy for your sonifier? And that all your tests pass?
+2016-06-21T19:40:29 * jhung has quit
+2016-06-21T19:42:24 * jhung joined the channel
+2016-06-21T19:49:46 <avtar> alanharnum, Justin_o: https://github.com/idi-ops/ansible-nginx-common/pull/8
+2016-06-21T19:51:28 <alanharnum> avtar: reviewed and merged
+2016-06-21T19:51:58 <Justin_o> alanharnum, avtar: thanks
+2016-06-21T19:52:13 <Justin_o> how do i use that.. is it enough to just destroy the vm and  and call vagrant up?
+2016-06-21T19:52:20 <avtar> alanharnum: thanks
+2016-06-21T19:52:27 <avtar> Justin_o: yup, that should be enough
+2016-06-21T19:52:37 <Justin_o> avtar: thanks, i\'ll try that now
+2016-06-21T19:57:06 <Justin_o> avtar: i got this error "ERROR! the role \'facts\' was not found in /srv/provisioning/roles:/srv/provisioning:/etc/ansible/roles"
+2016-06-21T20:20:18 * bens__ has quit
+2016-06-21T20:31:59 <Justin_o> Bosmon, michelled: I\'ve filed a new PR for FLUID-5832 https://github.com/fluid-project/infusion/pull/723
+2016-06-21T20:32:20 <Justin_o> Bosmon: this builds on top of michelled\'s earlier PR. I wonder if you\'d be able to do a code review for it
+2016-06-21T20:34:15 * Dinuka_ joined the channel
+2016-06-21T20:35:01 <Bosmon> Justin_o - cool, thanks!
+2016-06-21T20:35:05 <Bosmon> I\'ll take a look at it
+2016-06-21T20:35:14 <Justin_o> Bosmon: thanks :)
+2016-06-21T20:35:14 * wale joined the channel
+2016-06-21T20:36:11 * Dinuka has quit
+2016-06-21T20:43:01 * PaliwalSparsh has quit
+2016-06-21T20:53:26 * anvk has quit
+2016-06-21T20:56:51 * michelled has quit
+2016-06-21T21:10:02 * wale has quit
+2016-06-21T21:14:07 * sepidehshahi has left the channel
+2016-06-21T21:23:20 <simonjb> Bosmon: I\'ve managed to get something reasonable declarative working with sinon https://github.com/simonbates/universal/blob/GPII-1841/gpii/node_modules/gpii-oauth2/gpii-oauth2-authz-server/test/js/AuthorizationServiceTests.js#L71-L164
+2016-06-21T21:23:23 * yzen_ has quit
+2016-06-21T21:23:50 <simonjb> I\'m not finished and there are some rough edges but I think it looks promising
+2016-06-21T21:23:55 <Bosmon> Hey simonjb - that looks nice, yes
+2016-06-21T21:24:08 <Bosmon> Why is the argument an array?
+2016-06-21T21:24:20 <Bosmon> Ah
+2016-06-21T21:24:25 <Bosmon> It is a pattern matching, I guess?
+2016-06-21T21:24:45 <simonjb> the "withArgs"?
+2016-06-21T21:24:56 <simonjb> it\'s pattern matching the calls
+2016-06-21T21:25:09 <Bosmon> I guess in practice it might be nicer to make it a hash, even if it is always annoying to make these things more verbose
+2016-06-21T21:25:18 <Bosmon> Time and again we pay for it later when we want to override things
+2016-06-21T21:25:40 <simonjb> which one?
+2016-06-21T21:25:47 <Bosmon> The entire structure
+'
+

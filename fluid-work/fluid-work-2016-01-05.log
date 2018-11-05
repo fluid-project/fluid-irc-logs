@@ -1,0 +1,298 @@
+b'2016-01-05T17:12:30 <michelled> thx jhung
+2016-01-05T17:17:18 <Justin_o> zamcnema: hope i\'m getting the right person here, this is the link to an example of a prefs editor with preview http://build.fluidproject.org/infusion/tests/manual-tests/framework/preferences/fullPage-schema/
+2016-01-05T17:18:03 <Justin_o> and the component for it is here https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/FullPreviewPrefsEditor.js
+2016-01-05T17:18:43 <Justin_o> and the preview component itself https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L478
+2016-01-05T17:21:51 <alanharnum> michelled: after a quick chat with colinclark and gtirloni i\'m going to spend a little time this afternoon looking at the functioning of https://github.com/GPII/gpii-wix-installer in a Windows VM
+2016-01-05T17:22:19 <alanharnum> want to check i\'m not overlapping work with you by doing this - this will just be short exploration, nothing substantial
+2016-01-05T17:24:22 <michelled> nope - you aren\'t alanharnum
+2016-01-05T17:24:34 <alanharnum> okay cool - thanks michelled
+2016-01-05T17:26:47 <brendan_d> cindyli: hi cindy im back if you are able to continue that would be great
+2016-01-05T17:30:34 <cindyli> sure, brendan_d
+2016-01-05T17:30:46 <brendan_d> great
+2016-01-05T17:31:32 <brendan_d> so the las thing i did was add gpii.firstDiscovery.panel.confirm in panels.js
+2016-01-05T17:32:12 <cindyli> ok. what\'s the next? to customize the template?
+2016-01-05T17:32:22 <brendan_d> yea
+2016-01-05T17:32:57 <brendan_d> right now, im still using the yesNo.html code inside of confirmTemplate.heml
+2016-01-05T17:33:56 <cindyli> brendan_d: finding docs about the renderer component
+2016-01-05T17:34:26 <cindyli> brendan_d: http://docs.fluidproject.org/infusion/development/Renderer.html
+2016-01-05T17:36:04 <cindyli> panels use renderer component "fluid.rendererComponent" to render templates. i didn\'t see the confirm page but i think it probably lists all user selected preferences
+2016-01-05T17:36:45 <cindyli> in that case, you probably need one selector being repeatedly rendered for each preference
+2016-01-05T17:36:56 * michelled has quit
+2016-01-05T17:37:44 <brendan_d> cindyli: yes thats the goal. presenting the preferences back to them, and links to take them back to the previous panels where chages can be made
+2016-01-05T17:38:37 <cindyli> ok. let me see if i can find a code example. in the meantime, you can read about the renderer component
+2016-01-05T17:38:47 <brendan_d> ok
+2016-01-05T17:41:25 * kasparnet has quit
+2016-01-05T17:47:14 * clown has quit
+2016-01-05T17:47:31 <cindyli> brendan_d: what kind of html elements do you plan to render those prefs? checkboxes, radio buttons or static html?
+2016-01-05T17:48:11 <cindyli> or links?
+2016-01-05T17:49:06 <brendan_d> its going to have links.
+2016-01-05T17:49:30 * clown joined the channel
+2016-01-05T17:49:43 <brendan_d> it will have the preference and then the selection, where the preference is a link to a previous panel where they can change it
+2016-01-05T17:50:01 <cindyli> ok
+2016-01-05T17:50:10 <brendan_d> i.e. Language: English, where \'language\' is a link
+2016-01-05T17:51:14 * michelled joined the channel
+2016-01-05T17:51:29 * kasparnet joined the channel
+2016-01-05T17:54:01 * michelled has quit
+2016-01-05T17:54:08 * anastasiac has quit
+2016-01-05T17:59:41 <cindyli> brendan_d: all perfs selection can be found at "{prefsEditor}.model.preferences" that would be an object like {"gpii_firstDiscovery_speak": true, \xe2\x80\xa6}
+2016-01-05T18:01:14 <cindyli> in ur template, you can have a div for the preference row
+2016-01-05T18:02:40 <cindyli> in the panel component, an event handler can be added for the "afterRender" event. It loops thru the object, clone the div, and fill up the preference and the selection
+2016-01-05T18:03:46 <cindyli> the hard part is to figure out which pref is associated with which panel
+2016-01-05T18:06:01 <brendan_d> where exactly are the prefrence selections?
+2016-01-05T18:06:32 <brendan_d> im confused how to get tehre
+2016-01-05T18:07:18 <cindyli> https://github.com/GPII/first-discovery/blob/master/src/js/firstDiscoveryEditor.js#L71
+2016-01-05T18:08:01 <cindyli> brendan_d: "prefsEditor" is a subcomponent of the tool
+2016-01-05T18:08:26 <brendan_d> ok
+2016-01-05T18:08:28 <cindyli> the selections are reflected and saved into prefsEditor.model.preferences
+2016-01-05T18:08:48 <cindyli> the way to access it on the component tree is "{prefsEditor}.model.preferences"
+2016-01-05T18:13:17 <brendan_d> oki think im following. so i need to create an event handler that loops though the object by using "{prefsEditor}.model.preferences"?
+2016-01-05T18:17:25 <cindyli> brendan_d: i was talking to Justin_o just now, actually instead of using the event handler, you can use the renderer expander to repeatedly render each pref. the doc - http://docs.fluidproject.org/infusion/development/RendererComponentTreeExpanders.html
+2016-01-05T18:24:17 <brendan_d> cindyli: im a bit confused by this, why is it necessary to repeatedly render each preference?
+2016-01-05T18:26:34 <Justin_o> brendan_d: cindyli means that you can use the renderers repeat expander... it will allow you to render out all the "repeated" elements for example, this might be a list of preferences and their values. so each list item would be the repeated part with each preference represented.
+2016-01-05T18:26:38 <Justin_o> did that make sense?
+2016-01-05T18:28:11 <Justin_o> brendan_d: here\'s the direct link to the repetition expander http://docs.fluidproject.org/infusion/development/RendererComponentTreeExpanders.html#repetition-expander
+2016-01-05T18:28:20 * jtworkme joined the channel
+2016-01-05T18:28:50 <brendan_d> ok i think i understand
+2016-01-05T18:29:11 * kasparnet has quit
+2016-01-05T18:29:45 <brendan_d> so when would each repeat take place?
+2016-01-05T18:33:15 * anastasiac joined the channel
+2016-01-05T18:33:30 <cindyli> brendan_d: the repeat is handled automatically by the renderer component at component instantiation
+2016-01-05T18:34:22 <brendan_d> so would this be when a preference is selected?
+2016-01-05T18:34:47 <cindyli> in cases where you\'d like to manually trigger a re-rendering, your can call a component method refreshView()
+2016-01-05T18:35:15 <cindyli> brendan_d: the first discovery tool is set up in the way that all panels are re-rendered when any preference is changed
+2016-01-05T18:36:38 <cindyli> so that the selected pref can be applied to the entire tool. such as when the contrast is modified, the entire tool and all panels will pick up that change
+2016-01-05T18:36:40 <brendan_d> cindyli: yes i understand that. but this page would not be changing any of the preferences. it is only a list of the preference values at that point
+2016-01-05T18:37:05 <cindyli> that\'s true, but you still want the changed pref to be reflected on the panel
+2016-01-05T18:38:08 <cindyli> on the confirm panel i meant
+2016-01-05T18:38:09 <cindyli> brendan_d: Justin_o and i will be back in 20 mins
+2016-01-05T18:38:28 <brendan_d> ok
+2016-01-05T18:40:10 * jtworkme has quit
+2016-01-05T18:46:10 * danayo joined the channel
+2016-01-05T18:46:42 * jtworkme joined the channel
+2016-01-05T18:54:38 * michelled joined the channel
+2016-01-05T19:04:08 * cindyli has quit
+2016-01-05T19:06:15 * cindyli joined the channel
+2016-01-05T19:06:43 <cindyli> brendan_d: we are back.
+2016-01-05T19:08:30 <brendan_d> ok great
+2016-01-05T19:12:29 * sepidehshahi joined the channel
+2016-01-05T19:27:11 <brendan_d> cindyli: so when we left off we were talking about the repetition expander, and using that update the preferences on the confirm panel
+2016-01-05T19:29:40 * kasparnet joined the channel
+2016-01-05T19:34:38 * kasparnet has quit
+2016-01-05T19:40:00 <cindyli> brendan_d: sorry, was away for a while.
+2016-01-05T19:40:05 <cindyli> yes, do you have questions about that?
+2016-01-05T19:42:42 <brendan_d> well since this is about rendering, im not sure how it will help to display the values of the preferences in a string like on, off, or numeric value
+2016-01-05T19:53:06 * Jess_ joined the channel
+2016-01-05T19:57:46 <cindyli> brendan_d: the displayed values can be customized with the repetition expander: http://docs.fluidproject.org/infusion/development/RendererComponentTreeExpanders.html#example
+2016-01-05T20:00:52 <brendan_d> oh ok i see
+2016-01-05T20:05:33 * anvk has left the channel
+2016-01-05T20:06:48 * Yan_Hu has quit
+2016-01-05T20:11:58 * yzen_ joined the channel
+2016-01-05T20:21:35 * danayo has quit
+2016-01-05T20:24:32 * danayo joined the channel
+2016-01-05T20:26:58 * anastasiac has quit
+2016-01-05T20:43:23 <jhung> hey colinclark. I\'m wondering if there are any wicked presentations you have given in the past that I can leverage in my meetings with EdReady later this month?
+2016-01-05T20:43:44 <colinclark> I have some stuff, yes
+2016-01-05T20:43:51 <colinclark> I don\'t know whether they\'re wicked-worthy or not
+2016-01-05T20:43:58 <colinclark> but I can share some ideas and some old presentation
+2016-01-05T20:43:59 <colinclark> s
+2016-01-05T20:44:20 <colinclark> the one challenge is that I often just use pictures or quotes or other "mental triggers" in my slides
+2016-01-05T20:44:25 <colinclark> so that they\'re not super descriptive
+2016-01-05T20:44:28 <jhung> I\'d settle for mildly wicked, or chaotic neutral colinclark.
+2016-01-05T20:44:33 <colinclark> hahaha
+2016-01-05T20:45:02 <colinclark> I have a few older ones on web accessibility and ARIA that are pretty much useful as-is
+2016-01-05T20:45:06 <colinclark> though they\'d need to be updated a bit
+2016-01-05T20:45:10 <jhung> colinclark: they\'re all on the wiki?
+2016-01-05T20:45:16 <colinclark> I\'ll have to check
+2016-01-05T20:45:28 <colinclark> is it ok if I send you some stuff later in the day?
+2016-01-05T20:45:50 <colinclark> I also have some stuff on inclusive design methods and on Infusion and the Fluid community that may be helpful
+2016-01-05T20:46:10 <jhung> Awesome. Later is fine colinclark.
+2016-01-05T20:46:16 <colinclark> what kinds of topics do you think you want to cover with the EdReady team, jhung?
+2016-01-05T20:47:14 <jhung> colinclark: aria is a good one. I know they have some interactive content, but they\'re in Flash I think.
+2016-01-05T20:47:59 <colinclark> Justin_o and I gave a talk about ARIA and HTML5 a few years ago
+2016-01-05T20:48:13 <colinclark> it\'s, again, dated, but probably has useful stuff in it that you could adapt and expand upon
+2016-01-05T20:48:38 <colinclark> even older is a full-day accessibility workshop that we gave to the Jasig/uPortal community
+2016-01-05T20:48:43 <jhung> ok. What I\'m hoping to do is see what topics you\'ve covered and the tailor something specifically for EdReady once we\'ve had a chat w them later this week.
+2016-01-05T20:48:59 <colinclark> but I think it covered everything from models of accessibility to labelling and markup-based accessibility techniques to ARIA
+2016-01-05T20:49:04 <colinclark> cool
+2016-01-05T20:49:14 <colinclark> I\'m happy to talk through it if you want, too
+2016-01-05T20:49:37 <colinclark> though I will be quite scarce for the next few weeks, but I can pop up next week after you\'ve talked to EdReady
+2016-01-05T20:49:57 <colinclark> or i can just give you the raw material and you can rock it from there
+2016-01-05T20:50:14 <colinclark> Justin_o is really good at this stuff, too, so he\'ll probably have lots of ideas for what to cover
+2016-01-05T20:50:47 <jhung> colinclark: that would be generous. How about you give me the raw stuff and I\'ll shoot you an email if I need anything?
+2016-01-05T20:50:57 <jhung> and yes, Justin_o is available too.
+2016-01-05T20:50:58 * brendan_d has quit
+2016-01-05T20:51:27 * anvk joined the channel
+2016-01-05T20:51:53 <colinclark> sounds good, jhung
+2016-01-05T20:51:58 * anvk has left the channel
+2016-01-05T20:52:02 <jhung> cool thanks colinclark.
+2016-01-05T20:53:09 * jhung has quit
+2016-01-05T20:53:48 * jhung joined the channel
+2016-01-05T21:18:25 * kasparnet joined the channel
+2016-01-05T21:22:56 * kasparnet has quit
+2016-01-05T21:24:11 * jhernandez has quit
+2016-01-05T21:25:45 * cindyli has quit
+2016-01-05T21:55:04 * michelled has quit
+2016-01-05T22:00:30 * simonjb has quit
+2016-01-05T22:01:26 * colinclark has quit
+2016-01-05T22:04:44 * colinclark joined the channel
+2016-01-05T22:05:10 * alanharnum has quit
+2016-01-05T22:13:39 * simonjb joined the channel
+2016-01-05T22:27:34 * jhernandez joined the channel
+2016-01-05T22:41:37 * jhernandez has quit
+2016-01-05T23:08:58 * yzen joined the channel
+2016-01-05T23:53:20 * jhernandez joined the channel
+2016-01-05T23:58:58 * jhernandez has quit
+'
+
+b'2016-01-05T00:00:15 * yzen is now known as yzen_
+2016-01-05T00:04:59 * yzen_ has quit
+2016-01-05T00:33:02 * jhernand1z joined the channel
+2016-01-05T00:37:34 * jhernand1z has quit
+2016-01-05T00:50:58 * yzen joined the channel
+2016-01-05T01:01:52 * jhernandez has quit
+2016-01-05T01:19:38 * jhernandez joined the channel
+2016-01-05T01:28:20 * yzen is now known as yzen_
+2016-01-05T01:29:34 * jhernandez has quit
+2016-01-05T01:30:23 * jhernandez joined the channel
+2016-01-05T01:33:09 * yzen_ has quit
+2016-01-05T01:35:05 * jhernandez has quit
+2016-01-05T01:52:24 * danayo joined the channel
+2016-01-05T02:15:48 * yzen joined the channel
+2016-01-05T02:51:36 * danayo has quit
+2016-01-05T02:54:58 * danayo joined the channel
+2016-01-05T03:26:42 * colinclark joined the channel
+2016-01-05T04:18:48 * yzen joined the channel
+2016-01-05T04:22:58 * yzen has quit
+2016-01-05T04:26:20 * danayo has quit
+2016-01-05T09:36:21 * the-t-in-rtf has quit
+2016-01-05T10:07:34 * the-t-in-rtf joined the channel
+2016-01-05T10:10:25 * jhernandez joined the channel
+2016-01-05T10:54:19 * kasparnet joined the channel
+2016-01-05T12:58:25 * jhung joined the channel
+2016-01-05T13:23:18 * brendan_d joined the channel
+2016-01-05T13:24:42 * Justin_o joined the channel
+2016-01-05T13:32:37 * anastasiac joined the channel
+2016-01-05T13:37:01 * anastasiac_ joined the channel
+2016-01-05T13:37:15 * anastasiac_ is now known as anastasiac
+2016-01-05T13:38:34 * zamcnema joined the channel
+2016-01-05T13:49:46 * sepidehshahi joined the channel
+2016-01-05T13:53:50 * cindyli joined the channel
+2016-01-05T13:57:08 * sepidehshahi joined the channel
+2016-01-05T14:00:10 * Jess_ joined the channel
+2016-01-05T14:10:39 * kasparnet has quit
+2016-01-05T14:14:53 * michelled joined the channel
+2016-01-05T14:16:23 * kasparnet joined the channel
+2016-01-05T14:25:02 * alanharnum joined the channel
+2016-01-05T14:28:02 * Yan_Hu joined the channel
+2016-01-05T14:48:29 * anvk joined the channel
+2016-01-05T14:50:09 * colinclark joined the channel
+2016-01-05T14:52:21 <jhung> Justin_o: https://msdn.microsoft.com/en-us/library/gg701971%28v=vs.85%29.aspx
+2016-01-05T15:00:31 <anastasiac> michelled, colinclark, Justin_o: Are we scheduled to have a PGA check-in now?
+2016-01-05T15:00:57 <colinclark> let\'s do it, anastasiac
+2016-01-05T15:01:03 <colinclark> i just need to find my headset
+2016-01-05T15:01:06 <michelled> where are we meeting?
+2016-01-05T15:01:09 <colinclark> everything got put away for the holidays :)
+2016-01-05T15:01:29 <anastasiac> fluid_standup vidyo room?
+2016-01-05T15:01:33 <anastasiac> I don\xe2\x80\x99t see dana online...
+2016-01-05T15:03:43 * danayo joined the channel
+2016-01-05T15:07:35 <brendan_d> if anyone is available to help, I\'m currently working to create a confirm panel and am looking for information about templates, and possibly creating a custom template for this panel
+2016-01-05T15:08:26 * clown joined the channel
+2016-01-05T15:09:19 <Justin_o> brendan_d: hello, i could probably help in a bit,  just in a meeting at the moment. Maybe cindyli might be able to give you a bit of help in the meantime
+2016-01-05T15:10:27 <brendan_d> ok thanks
+2016-01-05T15:11:48 <cindyli> brendan_d: if you look into schema.js, all templates are sitting in src/html/ directory - https://github.com/GPII/first-discovery/blob/master/src/schemas/schemas.js#L28
+2016-01-05T15:12:52 <cindyli> brendan_d: finding some docs for you for adding a new panel \xe2\x80\xa6
+2016-01-05T15:13:21 <brendan_d> i created a new panel alread y using this tutorial http://acheetham.github.io/docs-first-discovery/adding.html
+2016-01-05T15:13:34 <brendan_d> currently i have a panel with a yesNo template
+2016-01-05T15:14:00 <cindyli> cool
+2016-01-05T15:15:04 <cindyli> brendan_d: so are you looking for ways to replace the yesNo template with your own template?
+2016-01-05T15:15:53 <cindyli> btw, brendan_d, here\'s the formal site for the first discovery docs - http://gpii.github.io/docs-first-discovery/
+2016-01-05T15:16:09 <brendan_d> yes. the yesNo template doesnt fit what i need this panel to do, which is display the previously selected preferences in list
+2016-01-05T15:17:53 <brendan_d> im looking to try to either change the template for this panel to an already existing one that could accomidate this, or to make a custom one
+2016-01-05T15:19:12 <cindyli> brendan_d: this would depend on the design of the confirmation page, i think very likely you need to make a custom one
+2016-01-05T15:19:50 <cindyli> brendan_d: do you have a link to the design of the confirmation page?
+2016-01-05T15:20:08 <brendan_d> cindyli: yea i figured that would be the more likely option
+2016-01-05T15:21:15 <cindyli> ok, brendan_d, to replace yesNo template with your own custom one, two steps:
+2016-01-05T15:21:49 <cindyli> 1. place your own template in src/html directory
+2016-01-05T15:22:21 <cindyli> 2. modify the corresponding panel definition in schema.js to point to your own template.
+2016-01-05T15:23:06 <cindyli> given the example of swapping out the template for the congrats panel, modify this line in schema.js - https://github.com/GPII/first-discovery/blob/master/src/schemas/schemas.js#L153
+2016-01-05T15:23:17 <cindyli> the new line looks like:
+2016-01-05T15:23:30 <cindyli> "template": "%templatePrefix/confirmationTemplate.html",
+2016-01-05T15:23:49 <cindyli> does this make sense, brendan_d?
+2016-01-05T15:25:01 <brendan_d> cindyli: yes it does, this was brought up in the tutorial i did previously when adding the yesNo template to the panel
+2016-01-05T15:25:35 <cindyli> ok
+2016-01-05T15:26:41 <brendan_d> cindyli: then after the template is created, i need to structure the message json file to fit it right?
+2016-01-05T15:27:11 <cindyli> exactly, brendan_d. also, you need to create your own panel component to work with your custom template, then change schema.js to hook up that component
+2016-01-05T15:27:28 <cindyli> it will be this line for the congrats panel - https://github.com/GPII/first-discovery/blob/master/src/schemas/schemas.js#L151
+2016-01-05T15:28:45 <brendan_d> cindyli: so something like "gpii.firstDiscovery.panel.confirm"
+2016-01-05T15:28:50 * simonjb joined the channel
+2016-01-05T15:28:52 <cindyli> that\'s right
+2016-01-05T15:32:27 <brendan_d> cindyli: alright im going to start by creating a template html file and linking the panel to it
+2016-01-05T15:32:50 <cindyli> cool. let us know if you have questions, brendan_d
+2016-01-05T15:36:09 <brendan_d> cindyli: what about the panel container? we changed the type to "gpii.firstDiscovery.panel.confirm" but do i need to change the container option?
+2016-01-05T15:36:26 <cindyli> yes, you do, brendan_d
+2016-01-05T15:36:47 <cindyli> that\'s the container for rendering ur new template
+2016-01-05T15:37:40 <brendan_d> cindyli: ok so something like ".gpiic-fd-prefsEditor-panel-confirm"
+2016-01-05T15:38:13 <cindyli> yes, brendan_d, i think you will need to add a new line in this file https://github.com/GPII/first-discovery/blob/master/src/html/firstDiscovery.html with the new selector
+2016-01-05T15:40:24 <brendan_d> cindyli: right, i have this when i origianlly added the panel <section class="gpiic-fd-prefsEditor-panel-confirm gpiic-fd-prefsEditor-panel gpii-fd-prefsEditor-panel-confirm gpii-fd-main"></section>
+2016-01-05T15:40:40 <cindyli> awesome
+2016-01-05T15:42:49 <brendan_d> i have a template html file called confirmTemplate.html which the panel points to. i used the same code from the yesNo template to temp fill it
+2016-01-05T15:43:39 <brendan_d> cindyli: so i have the panel pointing to this new template file, so i can go in here and chage the format/
+2016-01-05T15:48:23 <brendan_d> cindyli: do you know of any documentation or help for actually coding this html file? for example there are paragraph classes and div classes like in the yesNo.html template that im not sure how to work with
+2016-01-05T15:51:35 <brendan_d> like this code here: <p class="gpiic-fd-yesNo-instructions gpiic-fd-instructions gpii-fd-instructions"></p>
+2016-01-05T15:53:02 <brendan_d> i realize that it is pointing to the "instructions" section in the message.json file, but simply changing the yesNo to confirmTemplate breaks the code
+2016-01-05T15:55:29 * the-t-in-rtf has quit
+2016-01-05T16:07:05 <Justin_o> brendan_d: when you say breaks the code, what sort of error are you getting?
+2016-01-05T16:08:26 <brendan_d> when i change yesNo to confirmTemplate in that line of code, the instrusctions do not appear in the panel
+2016-01-05T16:09:13 <cindyli> brendan_d: did you change the name of the panel component in schema.js?
+2016-01-05T16:09:41 <cindyli> brendan_d: the classes defined in the template are mapped and used by the corresponding panel component, such as, the component gpii.firstDiscovery.panel.yesNo deals with yesNo template
+2016-01-05T16:10:27 * alanharnum has quit
+2016-01-05T16:10:54 * alanharnum joined the channel
+2016-01-05T16:10:58 <brendan_d> yea i changed the template option to confirmTemplate
+2016-01-05T16:11:33 * alanharn_ joined the channel
+2016-01-05T16:11:33 * alanharnum has quit
+2016-01-05T16:11:54 <brendan_d> which is why im confused its still reading from yesNo
+2016-01-05T16:14:00 <brendan_d> "type": "gpii.firstDiscovery.panel.confirm", "container": ".gpiic-fd-prefsEditor-panel-confirm", "template": "%templatePrefix/confirmTemplate.html",
+2016-01-05T16:14:00 <brendan_d> "message": "%messagePrefix/confirm.json"
+2016-01-05T16:14:51 * alanharn_ is now known as alanharnum
+2016-01-05T16:15:22 <cindyli> brendan_d: is the confirmTemplate a copy of yesNo, or it has new content?
+2016-01-05T16:16:05 <cindyli> also, have you created "gpii.firstDiscovery.panel.confirm"?
+2016-01-05T16:16:54 * jhernand1z joined the channel
+2016-01-05T16:17:14 <brendan_d> when i originally made the new doc, i copied the yesNo.html code to just fill it before i started making changes
+2016-01-05T16:18:01 <cindyli> ok, is "gpii.firstDiscovery.panel.confirm" a copy of "gpii.firstDiscovery.panel.yesNo"?
+2016-01-05T16:18:14 <clown> Justin_o: where or how did you find the AXLevelIndicator?
+2016-01-05T16:19:36 * sepidehshahi has quit
+2016-01-05T16:19:45 * simonjb joined the channel
+2016-01-05T16:19:49 <brendan_d> are you talkig about the html files?
+2016-01-05T16:20:40 * clown joined the channel
+2016-01-05T16:20:47 * sepidehshahi joined the channel
+2016-01-05T16:21:52 <cindyli> brendan_d: the panel components are defined in panels.js
+2016-01-05T16:22:23 <cindyli> brendan_d: u need to create "gpii.firstDiscovery.panel.confirm" in there too
+2016-01-05T16:22:59 <brendan_d> ok hold on let me take a look
+2016-01-05T16:23:05 <cindyli> "add" is more appropriate than "create"
+2016-01-05T16:24:19 <cindyli> for now, you can make a copy of "gpii.firstDiscovery.panel.yesNo" and renamed it to "gpii.firstDiscovery.panel.confirm"
+2016-01-05T16:26:49 <cindyli> brendan_d: sorry, "gpii.firstDiscovery.panel.yesNo" is used as a base component for all yes no panels, you should actually copy a component that uses "gpii.firstDiscovery.panel.yesNo" as a base grade, such as "gpii.firstDiscovery.panel.speakText"
+2016-01-05T16:26:58 * colinclark joined the channel
+2016-01-05T16:27:02 <clown> Justin_o:  where or how did you find the AXLevelIndicator?
+2016-01-05T16:27:12 <brendan_d> ok ill do that
+2016-01-05T16:27:46 <Justin_o> clown: hello, i used accessibility inspector and tried the password strength indicator on a native app i have in mac os
+2016-01-05T16:27:48 * jhernand1z has quit
+2016-01-05T16:28:32 <clown> Oh, that\'s what I just tried, Justin_o, but it showed me nothing.  Hmm.  I\'m still running Yosemite.
+2016-01-05T16:28:45 <Justin_o> clown: i am on el capitan
+2016-01-05T16:29:14 <clown> when you have a spare moment, could you set it up so I can see it on your machine, Justin_o ?
+2016-01-05T16:29:37 <Justin_o> clown:  you can come by now, but i have to run to standup in a minute
+2016-01-05T16:29:50 <clown> I\'ll wait until that\'s over.
+2016-01-05T16:29:56 <Justin_o> clown: okay
+2016-01-05T16:29:58 <clown> thanks!
+2016-01-05T16:30:36 <brendan_d> cindyli: ok i\'ve created it as a copy of speaktext
+2016-01-05T16:31:11 <cindyli> brendan_d: does the code work?
+2016-01-05T16:32:15 <cindyli> i need to go to a quick meeting, will be back in 10 mins
+2016-01-05T16:32:29 * sepidehshahi has quit
+2016-01-05T16:35:48 <brendan_d> yea the code works.
+2016-01-05T16:38:09 <brendan_d> i have a meeeting 12-12:20 ill be back on after
+2016-01-05T16:52:57 * sepidehshahi joined the channel
+2016-01-05T16:55:07 * michelled joined the channel
+2016-01-05T17:01:17 <cindyli> kasparnet: all the necessary changes for GPII-1245 are made in my branch https://github.com/cindyli/universal/tree/GPII-1245. i issued a pull request for it yesterday. as you know, this branch will be used for the review4 demo for the security server. when you have time, could you try that demo again to make sure it still works well?
+2016-01-05T17:01:56 <cindyli> i\'ve tried it and it\'s ok
+2016-01-05T17:12:08 <jhung> michelled: let me know when you want to talk about EdReady. I\'ve put tasks into the Iteration Plan page.
+'
+

@@ -1,0 +1,273 @@
+b'2013-10-17T18:06:32 <Justin_o> if i do something similar to this, but in the strings block.. i get an error that the messageResolver is undefined.. in my object that handles the path resolution.
+2013-10-17T18:09:11 <Justin_o> Bosmon: here\'s the example of the string block case http://pastie.org/8409907
+2013-10-17T18:09:15 <Bosmon> Justin_o - I don\'t believe we have support in the renderer for expressing the arrays within a UISelect as an array of references
+2013-10-17T18:09:29 <Bosmon> Can\'t you fix your pathSegmentResolver so it is able to resolve an entire array at a time?
+2013-10-17T18:11:01 <Justin_o> Bosmon: i don\'t know how.. the strings in the message bundles are only identified by a namespace in the key... So I would have two issues. 1) how do i find the values since the lookup function on the messageResolver requires the entire key name for its searches 2) I need the strings back in a particular order and have no way of passing that in as an
+2013-10-17T18:11:01 <Justin_o> arguments when using resolvePathSegments
+2013-10-17T18:12:32 <Bosmon> You could set up some special configuration in the component\'s "options" holding the index, which your resolver then resolves
+2013-10-17T18:14:11 <Justin_o> not sure i follow that
+2013-10-17T18:14:32 <Justin_o> Bosmon: ^
+2013-10-17T18:18:44 <Bosmon> Justin_o - an index like this
+2013-10-17T18:18:47 <Bosmon> textFont: ["textFont-default", "textFont-times", "textFont-comic", "textFont-arial", "textFont-verdana"]
+2013-10-17T18:23:20 <Justin_o> Bosmon: so something like stringIndex: { textFont: [...], other: []} and then a search for {that}.stringBundle.textFont, which would return an array of strings.
+2013-10-17T18:23:30 <Bosmon> Justin_o - yes
+2013-10-17T18:23:42 <Justin_o> okay.. how do you like the name stringIndex?
+2013-10-17T18:24:03 <Bosmon> It\'s fine... perhaps stringArrayIndex would be more descriptive
+2013-10-17T18:24:13 <Justin_o> okay..
+2013-10-17T18:24:40 <Justin_o> Bosmon: i\'ll give that a try
+2013-10-17T18:27:50 * yzen has quit
+2013-10-17T18:29:00 * yzen joined the channel
+2013-10-17T18:34:42 * greggy has quit
+2013-10-17T18:37:15 * greggy joined the channel
+2013-10-17T18:37:43 * mrvisser has quit
+2013-10-17T18:39:57 * yzen has quit
+2013-10-17T18:44:19 * michelled joined the channel
+2013-10-17T18:48:00 * jhung has quit
+2013-10-17T18:49:44 * mrvisser joined the channel
+2013-10-17T18:54:03 <Bosmon> Hi there cindyli - how are you doing these days?
+2013-10-17T18:54:07 <Bosmon> Haven\'t heard from you for a while : P
+2013-10-17T18:55:03 <cindyli> Bosmon: I guess you might be glad that I don\'t bug you much these days :)
+2013-10-17T18:55:16 <cindyli> working on aux builder again for composite panel
+2013-10-17T18:55:38 <Bosmon> cindyli - cool - how is it going?
+2013-10-17T18:58:14 <cindyli> coming along well. i\'ve finished off the part to construct grades for the composite panel. working on the last test case to make sure the parsing on the full schema, which contains both regular single level panels and composite panels, works fine
+2013-10-17T19:03:15 <Justin_o> Bosmon: still getting the messageResolver is undefined
+2013-10-17T19:03:24 <Bosmon> Justin_o - well, is it undefined? : P
+2013-10-17T19:03:35 <Justin_o> only when i try to use it :)
+2013-10-17T19:03:45 <Bosmon> Perhaps you are trying to use it the wrong way :)
+2013-10-17T19:04:08 <Justin_o> Bosmon: i have a test on an onCreate event that works, but using it in the prototree throughs the error
+2013-10-17T19:04:25 * kasparnet has quit
+2013-10-17T19:04:30 <Bosmon> Justin_o - when does it throw the error?
+2013-10-17T19:06:26 <Justin_o> i take back my previous statement, i forgot to remove one of the old uses in the strings block
+2013-10-17T19:06:36 <Justin_o> now it\'s just the parser complaining.. so looking into that now
+2013-10-17T19:06:42 <Bosmon> ok
+2013-10-17T19:06:59 <Bosmon> For reference, if you plan to resolve members of the component "early", you should do so via an IoC reference
+2013-10-17T19:07:12 <Bosmon> Perhaps I should have you write the documentation page for the "ginger process and why it is useful" : P
+2013-10-17T19:11:21 <Justin_o> Bosmon: :) i\'m not sure that would turn out useful if i write it
+2013-10-17T19:11:44 <Justin_o> Bosmon: by the way, it works.. thanks for your help with this.. i\'ll clean up our implementations to use this style now and submit a pull request
+2013-10-17T19:13:01 <Justin_o> Bosmon: looks like slidingPanel also uses a lookup in the resolver.. but this is a separate component.. and it\'s not a renderer component :(
+2013-10-17T19:30:05 <Bosmon> Justin_o - is it a problem?
+2013-10-17T19:37:38 <anastasiac> Justin_o, cindyli: I\'ve filed a JIRA for that template path issue with the UI Options component: http://issues.fluidproject.org/browse/FLUID-5181
+2013-10-17T19:37:45 <anastasiac> I\'ll add it to the iteration page
+2013-10-17T19:38:25 <cindyli> thanks, anastasiac
+2013-10-17T19:52:55 * yzen joined the channel
+2013-10-17T19:55:37 * thealphanerd has quit
+2013-10-17T20:01:37 <anastasiac> cindyli, Justin_o: Do you think that the integrators of the uiOptions component might want access to an afterRender event?
+2013-10-17T20:03:22 <cindyli> anastasiac: which "afterRender"? actual panels or the top UIO?
+2013-10-17T20:04:35 <anastasiac> cindyli, I guess that\'s the question. Why might an integrator want to know about an afterRender? I\'d guess it would be so that they could be confident that what they think of as "ui options" has been rendered, so whatever afterRender event would signify that "everything is ready"
+2013-10-17T20:07:03 <Bosmon> Hi avtar - I\'ve been looking at static publishing solutions and "punch" struck my eye
+2013-10-17T20:07:05 <Bosmon> http://laktek.github.io/punch/
+2013-10-17T20:07:15 <Bosmon> It seems less offensive than many of these things typically are :)
+2013-10-17T20:08:09 <cindyli> anastasiac: integrators should listener to prefEditor -> onReady event. a good news is, options for prefEditor have already been surfaced up with distribute options.
+2013-10-17T20:09:01 <anastasiac> cindyli, by "already", do you mean in master now?
+2013-10-17T20:09:09 <cindyli> yes, anastasiac
+2013-10-17T20:09:46 <anastasiac> but I can\'t add a listener to onReady right in the fluid.uiOptions.prefsEditor() options block, cindyli
+2013-10-17T20:10:08 <cindyli> anastasiac: i\'m coming over
+2013-10-17T20:14:17 * greggy has quit
+2013-10-17T20:15:03 * mrvisser_ joined the channel
+2013-10-17T20:15:06 * mrvisser has quit
+2013-10-17T20:28:38 <Justin_o> Bosmon: it is a bit of a problem.. first the slidingPanel is outside the scope of panels.. so if we want to use the functionality that I have just written, we will need to move it out somewhere more general. Perhaps it could be part of a new grade that the rendererComponent uses as a base grade 2) the sliding panel has an expectation of having a
+2013-10-17T20:28:38 <Justin_o> messageResolver, but it doesn\'t have one by default. I don\'t think.
+2013-10-17T20:28:55 * thealphanerd joined the channel
+2013-10-17T20:29:15 <Bosmon> Justin_o - this can just be an additional dynamic grade supplied to the slidingPanel
+2013-10-17T20:30:20 <Bosmon> All it requires is 2 strings named "showText" and "hideText" in any case
+2013-10-17T20:30:33 <Bosmon> So this isn\'t going to break the abstraction bank : P
+2013-10-17T20:30:40 <Justin_o> Bosmon: i\'m worried about this https://github.com/fluid-project/infusion/blob/master/src/components/slidingPanel/js/SlidingPanel.js#L32-L45
+2013-10-17T20:30:48 <Bosmon> Justin_o
+2013-10-17T20:30:51 <Bosmon> You can just override it!
+2013-10-17T20:30:55 <Bosmon> This is how configuration works : P
+2013-10-17T20:31:25 <Justin_o> that by default it expects a msgBundle.. but when it is out of the context of the preference framework it doesn\'t actually have one
+2013-10-17T20:31:46 <Bosmon> Justin_o ^
+2013-10-17T20:31:56 <Justin_o> Bosmon: ^ :)
+2013-10-17T20:32:03 <Bosmon> Justin_o ^ : P
+2013-10-17T20:32:06 <Bosmon> Configuration!
+2013-10-17T20:32:08 <Bosmon> Override!
+2013-10-17T20:32:23 <Justin_o> i can override, sure i just think the default configuration is broken as it stands
+2013-10-17T20:32:43 <Justin_o> that by default it should have plain strings and not expect the message bundle
+2013-10-17T20:32:49 <Bosmon> Oh yes, it may well be
+2013-10-17T20:32:58 <Bosmon> We should have sorted that out when we broke it out as a new component
+2013-10-17T20:33:26 <Justin_o> Bosmon: yes, very true.. okay... i\'ll take care of this with my changes for FLUID-5180 as well
+2013-10-17T20:33:41 <Bosmon> As well as its dreadful use of the hard-coded constant "400" etc.
+2013-10-17T20:34:06 <Bosmon> And its awful old-fashioned "finalInit" function etc.
+2013-10-17T20:34:12 <Bosmon> This one received very little attention during the upgrade
+2013-10-17T20:35:14 * cindyli has quit
+2013-10-17T20:35:18 <Justin_o> Bosmon: yes.. it\'s a bit on the ancient side.. could use dome attention
+2013-10-17T20:35:21 <Justin_o> some
+2013-10-17T21:01:19 * michelled has quit
+2013-10-17T21:07:53 * thealphanerd has quit
+2013-10-17T21:07:58 * thealphanerd_ joined the channel
+2013-10-17T21:14:05 * clown has left the channel
+2013-10-17T21:23:01 * kasparnet joined the channel
+2013-10-17T21:23:49 * vjoanna has quit
+2013-10-17T21:28:50 * vjoanna joined the channel
+2013-10-17T21:32:24 * mrvisser_ has quit
+2013-10-17T21:32:34 * mrvisser joined the channel
+2013-10-17T21:37:51 * yzen has quit
+2013-10-17T21:40:22 * vjoanna has quit
+2013-10-17T21:40:50 * vjoanna joined the channel
+2013-10-17T21:44:20 * anastasiac has quit
+2013-10-17T21:56:31 * vjoanna has quit
+2013-10-17T22:01:15 * yzen joined the channel
+2013-10-17T22:06:38 * jessm has quit
+2013-10-17T22:07:51 * mrvisser has quit
+2013-10-17T22:08:10 * yzen has quit
+2013-10-17T22:33:25 * vjoanna joined the channel
+2013-10-17T22:51:41 * mrvisser joined the channel
+2013-10-17T23:00:11 * mrvisser has quit
+2013-10-17T23:03:28 * kasparnet has quit
+2013-10-17T23:24:03 * vjoanna has quit
+2013-10-17T23:26:34 * mrvisser joined the channel
+2013-10-17T23:35:35 * mrvisser has quit
+'
+
+b'2013-10-17T00:27:38 * jhernandez has quit
+2013-10-17T00:37:10 * mrvisser joined the channel
+2013-10-17T00:57:55 * mrvisser has quit
+2013-10-17T01:01:09 * kasparnet joined the channel
+2013-10-17T01:06:10 * kasparnet has quit
+2013-10-17T02:08:40 * mrvisser joined the channel
+2013-10-17T02:13:47 * mrvisser has quit
+2013-10-17T02:29:41 * thealphanerd has quit
+2013-10-17T03:19:37 * thealphanerd joined the channel
+2013-10-17T03:44:28 * yzen joined the channel
+2013-10-17T04:00:30 * thealphanerd has quit
+2013-10-17T04:11:44 * thealphanerd joined the channel
+2013-10-17T04:11:47 * thealphanerd has quit
+2013-10-17T05:43:05 * yzen has quit
+2013-10-17T06:11:56 * colinclark has quit
+2013-10-17T07:32:01 * SonicX joined the channel
+2013-10-17T07:34:37 * SonicX has quit
+2013-10-17T07:43:06 * kasparnet joined the channel
+2013-10-17T08:31:47 * jhernandez joined the channel
+2013-10-17T10:30:52 * jhernand1z joined the channel
+2013-10-17T10:30:52 * jhernandez has quit
+2013-10-17T10:33:47 * jhernand1z is now known as jhernandez
+2013-10-17T10:35:58 * mrvisser joined the channel
+2013-10-17T11:04:00 * amilchev joined the channel
+2013-10-17T11:21:12 * mrvisser has quit
+2013-10-17T11:21:39 * mrvisser joined the channel
+2013-10-17T11:39:20 * jhung joined the channel
+2013-10-17T12:11:30 * michelled joined the channel
+2013-10-17T12:12:28 <amilchev> hi Justin_o, tell me when you\'re here..
+2013-10-17T12:22:20 <Justin_o> amilchev: hello
+2013-10-17T12:23:10 <amilchev> Justin_o: I fixed some of the comments on the pull request https://github.com/GPII/prefsEditors/pull/6, but some of them I couldn\'t
+2013-10-17T12:24:18 <amilchev> Justin_o: how do you suggest handling the breaking of the UI when "save/reset/cancel" button is pressed, I guess reloading the page isn\'t an option..
+2013-10-17T12:25:55 * mrvisser has quit
+2013-10-17T12:25:59 <amilchev> I know chris had the same problem but didn\'t understand how it was fixed
+2013-10-17T12:26:09 * mrvisser joined the channel
+2013-10-17T12:27:26 <Justin_o> amilchev: have you determined what is causing the breakage?
+2013-10-17T12:32:59 <amilchev> Justin_o: well the animation listeners "onReady...." and "onSomeEvent...." are still there inside the component, but I don\'t know what exactly the save/reset/cancel buttons do - so no
+2013-10-17T12:36:11 <Justin_o> amilchev: just trying to run your code.. i\'m getting 404 errors on MyInfusion.js and speakTextPanel.js
+2013-10-17T12:36:44 <amilchev> Justin_o: hm that\'s weird.. let me see..
+2013-10-17T12:40:36 <amilchev> Justin_o: I see no problem on my side
+2013-10-17T12:41:27 <Justin_o> it\'s strange because it\'s working but i\'m getting 404 errors on those two.. they are at different paths than what you have in the head though..
+2013-10-17T12:41:33 <Justin_o> you are not getting any 404 errors?
+2013-10-17T12:43:19 <Justin_o> amilchev: okay.. i think i\'ve found the problem.. it\'s coming from the template "newestSpeakText.html"
+2013-10-17T12:44:04 <Justin_o> amilchev: templates should be DOM fragments..
+2013-10-17T12:45:28 <amilchev> Justin_o: I don\'t see any 404 errors, do you mean these paths are incorrect? https://github.com/radmanovi4/prefsEditors/blob/divide-and-conquer/demos/speakTextAdjusterGroup/index.html#L20-L22
+2013-10-17T12:47:54 <amilchev> Justin_o: do you mean that instead of this single container https://github.com/radmanovi4/prefsEditors/blob/divide-and-conquer/src/shared/adjusters/html/newestSpeakText.html#L4 there should be one similar to this for each adjuster?
+2013-10-17T12:47:55 <Justin_o> amilchev: sorry.. i was looking at an old version of your code
+2013-10-17T12:48:54 <amilchev> Justin_o: oh, sorry I didn\'t mention it in the first place..
+2013-10-17T12:49:40 <Justin_o> amilchev: nope, my fault.. i mistyped a command in git and thought it had changed things, but it didn\'t.. i have it sorted out now and no more 404 errors :)
+2013-10-17T12:49:48 <Justin_o> i\'ll take a look at the save/reset thing now
+2013-10-17T12:49:58 <amilchev> Justin_o: thank you!
+2013-10-17T12:50:31 <Justin_o> amilchev: i\'m going to guess there is an issue reading from the storage though as the UI remains broken after saving until i do a reset and then refresh.
+2013-10-17T12:51:53 * cindyli joined the channel
+2013-10-17T12:55:35 * mrvisser has quit
+2013-10-17T13:03:18 <amilchev> Justin_o: I noticed one more thing - the very first click on the header does nothing - at this moment the that.model.extraAdjustersVisibility is true (for some reason)
+2013-10-17T13:06:08 * jhernandez has quit
+2013-10-17T13:07:20 * mrvisser joined the channel
+2013-10-17T13:09:58 <Justin_o> amilchev: interesting.. by the way.. i think those events should be part of the panel as opposed to the preference editor
+2013-10-17T13:10:22 <Justin_o> and model for that matter
+2013-10-17T13:11:37 * vjoanna joined the channel
+2013-10-17T13:13:25 * jhernandez joined the channel
+2013-10-17T13:16:56 <Justin_o> amilchev: your model paths seem to be undefined for partialAdjustersVisibility
+2013-10-17T13:21:02 <amilchev> Justin_o: which line is that?
+2013-10-17T13:21:28 <Justin_o> amilchev: when you hit save and apply it seems to to close the panel without going through your logic which sets the model state.. also these values from the model are persisted in the cookie
+2013-10-17T13:22:09 <Justin_o> amilchev: line 234 and 235 of speakText.js
+2013-10-17T13:28:21 * yzen joined the channel
+2013-10-17T13:28:32 <amilchev> Justin_o: about 234 & 235 that.OPTIONS.model doesn\'t make any difference, does it..
+2013-10-17T13:29:47 * jessm joined the channel
+2013-10-17T13:32:11 <amilchev> Justin_o: I guess Chris and I have been extra annoying recently but these pull requests are EXTREMELY important, since merging our code can only happen after they\'re approved..
+2013-10-17T13:35:46 * greggy joined the channel
+2013-10-17T13:52:27 <Justin_o> amilchev: it shouldn\'t and it would be the wrong place to look.
+2013-10-17T13:52:57 <Justin_o> amilchev: no worries.. i\'m happy to help where i can... and you are right, the pull requests are important
+2013-10-17T13:53:21 <amilchev> Justin_o: any progress?
+2013-10-17T13:54:07 <Justin_o> amilchev: yes.. so i think the issue here is stemming around the state being held in uiOptions model instead of the panel
+2013-10-17T13:54:30 <Justin_o> because it\'s there, the values are being persisted to the store as well...
+2013-10-17T13:54:50 <Justin_o> i think changing this will be the first step to solving the issue
+2013-10-17T13:58:40 <amilchev> ok si I moved this inside the speakTextCollectivePanel ...
+2013-10-17T13:58:41 <amilchev> model: {
+2013-10-17T13:58:41 <amilchev> partialAdjustersVisibility: false,
+2013-10-17T13:58:41 <amilchev> extraAdjustersVisibility: false
+2013-10-17T13:58:41 <amilchev> }
+2013-10-17T13:59:41 <amilchev> no obvious changes followed..
+2013-10-17T14:01:51 <Justin_o> did you move the events and everything else into there as well?
+2013-10-17T14:01:59 <Justin_o> amilchev: ^
+2013-10-17T14:03:43 <Justin_o> amilchev: also do you have this pushed up somewhere?
+2013-10-17T14:05:11 * clown joined the channel
+2013-10-17T14:05:18 * clown is now known as clown_mtg
+2013-10-17T14:05:37 <amilchev> Justin_o: no, wait a sec..
+2013-10-17T14:05:51 <Justin_o> amilchev: sure, let me know
+2013-10-17T14:15:21 * anastasiac joined the channel
+2013-10-17T14:45:54 * colinclark joined the channel
+2013-10-17T14:56:27 <amilchev> Justin_o: I moved practically all the content of speakText.js into the CollectivePanel and the result was visually the same as after hitting "save" - no errors, nothing moves, no "speak text" text ...
+2013-10-17T15:03:30 <colinclark> Hey jessm, have you had a chance to look closely at the latest Pilots scenario document for Cloud4all?
+2013-10-17T15:03:37 <colinclark> I know you\'ve been busy with the PGA doc
+2013-10-17T15:03:46 <colinclark> michelled was just pointing something interesting about it out to me
+2013-10-17T15:06:34 <jessm> colinclark: i have been glancing, but haven\'t had a good, long read. what interesting thing did michelled see?
+2013-10-17T15:06:43 <colinclark> Task 1.2 is curious
+2013-10-17T15:07:00 <colinclark> It involves proposing a new solution or assistive technology to the user
+2013-10-17T15:07:23 <colinclark> The scenario, I think, is pretty problematic from several perspectives
+2013-10-17T15:07:34 <colinclark> both in terms of pragmatics and our design vision
+2013-10-17T15:08:03 <colinclark> The idea is that, if a preferred AT isn\'t present, a Matchmaker "recommends" something else to the user
+2013-10-17T15:08:24 <jessm> yes
+2013-10-17T15:08:48 <colinclark> We don\'t have any designs for this sort of a "messages" UI, do we?
+2013-10-17T15:08:58 <colinclark> And presumably we want stuff to just happen
+2013-10-17T15:09:03 <colinclark> and seamlessly
+2013-10-17T15:09:19 <colinclark> rather than involving any kind of explicit "yes, Matchmaker, do that" step
+2013-10-17T15:13:16 <jessm> we do not have any messages yet
+2013-10-17T15:13:59 <jessm> yet we\'ve said pretty consistently I think (and hope!) that we won\'t make changes without giving the user the opportunity to confirm them.
+2013-10-17T15:17:23 <jessm> colinclark: i think i should sit down with Fish today and inch through these tables. Eleni said they weren\'t quite updated - ugh.
+2013-10-17T15:22:37 <colinclark> I guess the issue is partially "getting in the door"
+2013-10-17T15:22:58 <colinclark> For a user who needs a screenreader, how do you even send them messages and allow them to confirm if you don\'t launch a screenreader?
+2013-10-17T15:24:12 <michelled> I suppose it might mean a self voicing message. but I feel like it\'s extra steps that might be annoying
+2013-10-17T15:24:36 <michelled> on the other hand, if the user gets an AT launched that they have no idea how to interact with, that will stop them in their tracks
+2013-10-17T15:25:51 <colinclark> yes, that\'s very true
+2013-10-17T15:28:21 <kasparnet> colinclark, michelled, jessm: apparently the first of the matchmaker interaction scenario was something that was discussed with claudia and not needing to be implemented
+2013-10-17T15:28:36 <kasparnet> ie. the one with webanywhere and the question of which matchmaker to launch
+2013-10-17T15:32:58 <colinclark> kasparnet: Can you clarify?
+2013-10-17T15:33:14 <colinclark> Are you saying Eleni and Claudia decided that this Task 1.2 won\'t be tested in the Pilots?
+2013-10-17T15:38:05 <kasparnet> colinclark: yeah - so 1.2.1 was something that Claudia suggested, but that we dont _need_ to implement it
+2013-10-17T15:38:05 * amilchev has left the channel
+2013-10-17T15:38:57 <colinclark> ok
+2013-10-17T15:39:13 <colinclark> Are the Matchmakers capable of making these kinds of recommendations?
+2013-10-17T15:39:24 <colinclark> What\'s the format that a Matchmaker users to communicate messages to the rest of the framework?
+2013-10-17T15:42:32 <kasparnet> colinclark: I guess they are.. the format is still undecided, but probably part of their return payload (JSON)
+2013-10-17T15:43:08 <colinclark> In the current Matchmakers, does it involve a two-way conversation, or simply a message?
+2013-10-17T15:50:18 * jhung has quit
+2013-10-17T15:51:03 * jhung joined the channel
+2013-10-17T16:59:57 * cindyli has quit
+2013-10-17T17:12:39 * cindyli joined the channel
+2013-10-17T17:13:40 * [o__o] has left the channel
+2013-10-17T17:15:38 * [o__o] joined the channel
+2013-10-17T17:25:36 * clown_mtg is now known as clown
+2013-10-17T17:31:17 * thealphanerd joined the channel
+2013-10-17T17:55:03 * michelled has quit
+2013-10-17T18:00:14 <Bosmon> Hi Justin_o - could you give more details on your problems with resolving the message bundles?
+2013-10-17T18:00:24 <Justin_o> Bosmon: hello sure..
+2013-10-17T18:01:25 <Justin_o> Bosmon: so part of the base issue is that i need an array of strings to pass into the optionnames property of a input protoTree.
+2013-10-17T18:02:07 <Justin_o> Bosmon: in the messge bundle there are no arrays, instead they are grouped with a namespaced key.
+2013-10-17T18:03:12 <Justin_o> Bosmon: so when trying to use my new strings bundle there is no direct way to get at the group directly. So i\'m trying to construct the array manually using IoC references like {that}.stringBundle.contrast-bw.
+2013-10-17T18:03:35 <Justin_o> if i do this in the prototree, it just outputs the IoC refernces as an unexpanded string..
+2013-10-17T18:03:56 <Bosmon> Where have you written them in the prototree
+2013-10-17T18:03:57 <Justin_o> so i\'ll actually get {that}.stringBundle.contrast-bw written out to the UI.
+2013-10-17T18:04:01 <Bosmon> Remember that we have a special syntax for this
+2013-10-17T18:04:05 <Bosmon> Do you recall the changes that yzen made?
+2013-10-17T18:04:24 <Bosmon> IoC references in the prototree are required to appear in the form ${{that}.stringBundle.contrast-bw}
+2013-10-17T18:04:30 <Justin_o> Bosmon: yes.. i\'ve reverted all of it, but will write you up an example
+2013-10-17T18:04:43 <Bosmon> At least in certain places where a "valuebinding" is required
+2013-10-17T18:04:59 <Bosmon> The standard syntax may be used in "light" material such as decorators etc.
+2013-10-17T18:05:39 <Justin_o> http://pastie.org/private/hudscqyg1vl5zp59smlw
+2013-10-17T18:05:45 <Justin_o> that\'s what i tried to do in the prototree
+'
+

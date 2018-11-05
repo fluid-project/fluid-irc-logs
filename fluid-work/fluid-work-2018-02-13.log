@@ -1,0 +1,238 @@
+b'2018-02-13T18:28:13 <kasparnet> OR the fact that a solution is a "magnification" solution would have to be listed somewhere
+2018-02-13T18:28:51 <kasparnet> or perhaps I\'m misunderstanding something very basic about this
+2018-02-13T18:29:17 <Bosmon> Oh I see, you\'re referring to the general capability of being able to enable magnification
+2018-02-13T18:29:24 <Bosmon> But isn\'t that already listed in the capabilities block?
+2018-02-13T18:29:42 <Bosmon> WHY are the capabilities blocks settingsHandler specific?
+2018-02-13T18:29:50 <Bosmon> Given they don\'t correspond to anything which is sent to a settingsHandler?
+2018-02-13T18:30:44 <kasparnet> well, I think they were introduced to allow explicitly stating those common terms that the model transformation framework wasn\'t able to infer from the model transformations
+2018-02-13T18:30:51 <kasparnet> via collectInputPaths
+2018-02-13T18:32:20 <kasparnet> I\'m not sure if it\'s actually necessary anymore
+2018-02-13T18:34:46 <Bosmon> Yes, what actually happens with them
+2018-02-13T18:34:50 * kavya has quit
+2018-02-13T18:34:51 <Bosmon> Isn\'t it that they are just used by the matchmaker?
+2018-02-13T18:34:58 <Bosmon> In which case, why are they scoped to settingsHandler blocks?
+2018-02-13T18:35:49 <kasparnet> yeah, they\'re just used by the matchmaker
+2018-02-13T18:35:54 <Bosmon> OK
+2018-02-13T18:35:57 * kasparnet is checking why they are scoped
+2018-02-13T18:35:58 <Bosmon> I suggest we move them to top  level then
+2018-02-13T18:40:22 * vedularaghu__ joined the channel
+2018-02-13T18:40:30 * vedularaghu_ has quit
+2018-02-13T18:42:48 <kasparnet> well, so one place we do use them on a settingshandler specific basis is when finding the liveness of individual terms
+2018-02-13T18:43:04 <kasparnet> so when a setting is displayed in the PSP and needs some indication of liveness
+2018-02-13T18:43:54 <kasparnet> I look at each settingshandler to see where a term belong and return the liveness of the settingshandler that supports the term
+2018-02-13T18:44:40 <kasparnet> again, the collectInputPaths of the model transformation framework might be smart enough to actually collect all input paths (even nested), in which case I agree that we should move it to top level
+2018-02-13T18:44:56 <kasparnet> I\'m just looking through the solution registries now
+2018-02-13T18:47:31 <kasparnet> Bosmon, ^
+2018-02-13T18:47:44 <Bosmon> Ah, I see
+2018-02-13T18:48:05 <Bosmon> So doesn\'t the need to map liveness mean that it shouldn\'t be top level, or what?
+2018-02-13T18:48:07 <kasparnet> but that would mean that we assume that the collectInputPaths will be able to continue to find all the input paths
+2018-02-13T18:49:20 <kasparnet> well... The capabilitiesTransformations would obviously have to stay settingshandler specific
+2018-02-13T18:49:52 <kasparnet> but if we assume that collectInputPaths does and will continue to find all intput paths, we could move it top level
+2018-02-13T18:51:08 <kasparnet> alternatively, we could allow a "capabilities" at the top level where one can put non-settingshandler specific terms, such as the */enabled terms
+2018-02-13T18:51:08 * the-t-in-rtf joined the channel
+2018-02-13T18:53:08 <Bosmon> kasparnet - not sure about how that links together
+2018-02-13T18:53:38 <Bosmon> Isn\'t the point that collectInputPaths finds all the paths meaning that it would find them even if it wasn\'t at top level
+2018-02-13T18:55:23 <kasparnet> yeah
+2018-02-13T18:56:00 <kasparnet> (for a given modeltransformation object, such as capabilitiesTransformations)
+2018-02-13T18:56:26 <kasparnet> but I seem to remember that at one point it had problems doing so
+2018-02-13T18:57:10 <kasparnet> but I guess if that\'s the case, then it\'s an issue with the modelTransformation framework and not something we should base our solutions registry structure on
+2018-02-13T18:57:39 <Bosmon> Well, I\'m still lost about why we could put them at top level, if we require the capabilities to map the liveness status of terms
+2018-02-13T19:02:08 <kasparnet> yeah, sorry, I dont think I\'m being very clear either :)
+2018-02-13T19:02:32 <kasparnet> so (1) the capabilitiesTransformations will need to stay settingshandler specific
+2018-02-13T19:04:11 <kasparnet> (2) IFF our collectInputPaths function works properly and is able to collect all input paths, there is no need for the current "capabilities" blocks
+2018-02-13T19:05:14 <kasparnet> (3) After removing all the current capabilities blocks, we could introduce a top level block with the sole purpose of supporting general solution capabilities such as "magnification/enabled"
+2018-02-13T19:07:31 <Bosmon> But how then do we map the liveness status?
+2018-02-13T19:10:22 <kasparnet> liveness is currently based on the info gathered from "collectInputPaths" and "capabilities", but if we per (2) can gather all the supported terms from collectInputPaths, that should be sufficient
+2018-02-13T19:10:39 <kasparnet> the only "liveness" we wouldn\'t be able to get is that of the top level "capabilities"
+2018-02-13T19:11:00 <kasparnet> but if these are things like */enabled terms, "liveness" doesn\'t really apply anyway
+2018-02-13T19:11:08 <Bosmon> Right, ok
+2018-02-13T19:15:48 <vedularaghu__> Hi, I\'m an undergraduate student from College of Engineering and Technology, Bhubaneswar. I\'m a full stack web developer. I would like to work on "Build a service for adaptive content and learning supports" for GSoC as it seems to be interesting to work on such project.
+2018-02-13T19:16:36 * danayo joined the channel
+2018-02-13T19:17:54 <kasparnet> Bosmon, so does it sound sensible for me to go with that plan: (1) ensure that collectInputPaths works properly and destroy all capabilities blocks (2) Introduce a new top level capabilities block that only holds the */enabled terms
+2018-02-13T19:18:27 <Bosmon> kasparnet - yes, it does sound sensible
+2018-02-13T19:18:37 <alanharnum> welcome, vedularaghu__
+2018-02-13T19:18:43 <Bosmon> But with the brainpower I\'ve been able to successfully devote to the issue, I can\'t guarantee that it isn\'t totally mad as well : P
+2018-02-13T19:20:11 <kasparnet> Bosmon, haha, fair enough - I\'ll work on it and then you can yell on me in the pull request review :)
+2018-02-13T19:33:32 * amatas_ has quit
+2018-02-13T19:39:45 * vedularaghu__ has quit
+2018-02-13T19:40:04 * vedularaghu__ joined the channel
+2018-02-13T19:40:41 * stegru has quit
+2018-02-13T19:53:22 * asd joined the channel
+2018-02-13T19:56:32 * asd has quit
+2018-02-13T20:07:09 <grrrero> alanharnum: Is "Unfortunately this week\'s community meeting has been cancelled due to a scheduling conflict. We plan to reschedule with @v_into_action at a later date." ok?
+2018-02-13T20:07:19 <grrrero> Or more info alanharnum
+2018-02-13T20:07:23 <alanharnum> grrrero: sounds good
+2018-02-13T20:07:28 <grrrero> Ok cool thanks alanharnum
+2018-02-13T20:08:34 <grrrero> I like how there\'s a checkbox "Ready to tweet" before you actually Tweet on Tweetdeck
+2018-02-13T20:09:44 <alanharnum> grrrero: yeah, a lot of Tweetdeck\'s UI is around avoiding posting to the wrong account when managing multiple ones
+2018-02-13T20:09:50 <alanharnum> though I still manage to do it anyway sometimes :p
+2018-02-13T20:36:09 * vedularaghu__ has quit
+2018-02-13T20:40:47 * danayo_ joined the channel
+2018-02-13T21:02:58 * michelled has left the channel
+2018-02-13T21:03:26 * michelled joined the channel
+2018-02-13T21:27:46 * vedularaghu_ joined the channel
+2018-02-13T21:30:52 * stegru joined the channel
+2018-02-13T21:38:59 * vedularaghu_ has quit
+2018-02-13T22:00:28 * amatas has quit
+2018-02-13T22:04:36 * clown has quit
+2018-02-13T22:24:16 * danayo has quit
+2018-02-13T22:24:16 * danayo_ is now known as danayo
+2018-02-13T22:41:35 * stegru has quit
+2018-02-13T22:53:24 * avtar has quit
+2018-02-13T23:14:12 * alanharnum has quit
+2018-02-13T23:17:17 * chaitanya has quit
+2018-02-13T23:22:47 * kasparnet has quit
+'
+
+b'2018-02-13T03:04:46 * grrrero has quit
+2018-02-13T06:33:52 * mritunjay joined the channel
+2018-02-13T06:34:13 * mritunjay has quit
+2018-02-13T08:01:01 * amatas joined the channel
+2018-02-13T08:46:34 * georgitodorov joined the channel
+2018-02-13T09:09:19 * stegru joined the channel
+2018-02-13T10:32:58 * amatas has quit
+2018-02-13T10:37:46 * amatas joined the channel
+2018-02-13T11:36:01 <the-t-in-rtf> @Bosmon, if you have a moment, it would be helpful to get a dev release of fluid-eslint-config.
+2018-02-13T11:53:52 <the-t-in-rtf> eslint-config-fluid, I mean.
+2018-02-13T12:13:54 <Bosmon> Hi the-t-in-rtf - here it is: 1.2.0-dev.20180213T103306Z.2429280
+2018-02-13T12:14:19 <the-t-in-rtf> Cheers!
+2018-02-13T12:23:00 * yuriy__ joined the channel
+2018-02-13T12:30:22 <yuriy__> Bosmon: Hi, Antranig! Will you have some time to catch up today? (We will be available until about 3 PM today)
+2018-02-13T12:30:38 <Bosmon> yuriy__, sure
+2018-02-13T12:30:52 <Bosmon> Shall we meet in about 30 minutes?
+2018-02-13T12:31:09 <yuriy__> yes, sounds good
+2018-02-13T12:55:55 <stegru> javjarfer[m]: anything good happened with the explore restart?
+2018-02-13T13:12:57 * alanharnum joined the channel
+2018-02-13T13:19:05 * cindyli joined the channel
+2018-02-13T13:23:02 * Justin_o joined the channel
+2018-02-13T13:32:58 <the-t-in-rtf> @Bosmon, looks like our previous discussion re: using @param paramName {Type} led us in the wrong direction.
+2018-02-13T13:33:00 <the-t-in-rtf> http://usejsdoc.org/tags-param.html
+2018-02-13T13:33:15 <the-t-in-rtf> Only @param {Type} paramName actually follows the standard.
+2018-02-13T13:34:34 <the-t-in-rtf> Anyway, really glad as usual to have done this, although it looks like I\'ll have to kill a lion and clean out some stables to get Infusion to pass.
+2018-02-13T13:40:43 <the-t-in-rtf> So, a lot of the examples unfortunately use JSDoc style comments instead of block comments.
+2018-02-13T13:41:18 <the-t-in-rtf> If you\'re OK with my changing those into block comments I can avoid fleshing out things that don\'t seem to have been intended to be JSDocs.
+2018-02-13T13:41:34 <the-t-in-rtf> i.e. they lack every other characteristic that one associates with JSDocs.
+2018-02-13T13:41:39 * Justin_o joined the channel
+2018-02-13T13:41:41 <the-t-in-rtf> @Bosmon ^^^
+2018-02-13T13:42:09 <Bosmon> the-t-in-rtf - sure - can you point me at a representative example?
+2018-02-13T13:42:26 <the-t-in-rtf> I can point you at several hundred, but let me find a link to one.
+2018-02-13T13:43:17 <the-t-in-rtf> This is a great example:
+2018-02-13T13:43:18 <the-t-in-rtf> https://github.com/fluid-project/infusion/blob/master/demos/renderer/js/rendererDemo.js#L105
+2018-02-13T13:43:30 <the-t-in-rtf> If you remove a single asterisk from the first line, it\'s fine.
+2018-02-13T13:43:49 <the-t-in-rtf> as it stands, it looks enough like a JSDoc to trip the validation.
+2018-02-13T13:46:16 <Bosmon> Justin_o - I\'m just on a call with dandimitrov_, georgitodorov etc
+2018-02-13T13:46:37 <Bosmon> And we are thinking about the issue of whether we really still need to protect code written for browsers with a file-scope closure
+2018-02-13T13:47:44 <Bosmon> If everything in the closure consists of i) properly namespaced definitions ii) defaults blocks, it seems somewhat unnecessary
+2018-02-13T13:48:43 <Justin_o> Bosmon: i guess we use it for the passing in parameters as well.. for example jQuery to $ and the versioned fluid namespace
+2018-02-13T13:48:43 * jhernandez joined the channel
+2018-02-13T13:49:37 <Bosmon> Yes, but the latter is only meaningful for code which forms part of fluid\'s implementation
+2018-02-13T13:50:16 <Bosmon> And if the code doesn\'t bind to jQuery...... ?
+2018-02-13T13:51:42 <Justin_o> Bosmon: i can\'t think of any other reason.. the eslint config might need to be adjusted
+2018-02-13T13:51:48 <Justin_o> or maybe it already works with both
+2018-02-13T13:51:54 <Bosmon> Yes, I wonder
+2018-02-13T13:52:10 <Bosmon> I think it can sometimes complain if use strict; is misplaced
+2018-02-13T13:52:41 <the-t-in-rtf> https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/FluidIoC.js#L1481
+2018-02-13T13:52:50 <the-t-in-rtf> That\'s another pattern that is problematic.
+2018-02-13T13:52:52 <Justin_o> Bosmon: so i think when we don\'t have the closure we have this declaration at the top /* eslint-env node */
+2018-02-13T13:53:19 <Bosmon> the-t-in-rtf - sure, feel free to axe. Would it complain if it started with 3 stars?
+2018-02-13T13:53:20 <the-t-in-rtf> A block comment posing as a header, that blows up the validator.
+2018-02-13T13:53:25 <the-t-in-rtf> Not sure, I will try.
+2018-02-13T13:57:09 <the-t-in-rtf> It seems to accept /* * SOMETHING * */ with spaces between the asterisks.
+2018-02-13T13:57:14 <Bosmon> arg
+2018-02-13T13:57:16 <javjarfer[m]> hi stegru , not yet really I needed to do something else yesterday
+2018-02-13T13:57:37 <javjarfer[m]> I\'m back with that, I will ping you this afternoon
+2018-02-13T13:57:39 <the-t-in-rtf> or maybe not, I\'ll have to keep looking at it.
+2018-02-13T13:57:42 <stegru> ok javjarfer[m] just curious
+2018-02-13T13:57:43 <the-t-in-rtf> Gotta pack up now.
+2018-02-13T13:57:59 <Justin_o> Bosmon: here are the options for use strict for eslint https://eslint.org/docs/rules/strict#options
+2018-02-13T13:58:06 <javjarfer[m]> stegru: great, hope have news soon
+2018-02-13T13:59:31 <Justin_o> Bosmon: it looks like we\'re already using the "safe" option https://github.com/fluid-project/eslint-config-fluid/blob/master/.eslintrc.json#L79
+2018-02-13T14:00:43 <Justin_o> So I\'d assume we\'d have to set it to either the node or commonjs environment for it not to fail the strict check.. not sure if either of those is correct though
+2018-02-13T14:01:11 <Justin_o> alternatively we could just disable the strict check on those files, but that seems undesirable.
+2018-02-13T14:06:54 <Justin_o> Bosmon: also, when you have time can we talk about the FLUID-6209 PR
+2018-02-13T14:07:11 <Bosmon> Justin_o - sure - I should have some time later on
+2018-02-13T14:07:36 <Bosmon> Still trying to get this co-occurrence paper out of the door
+2018-02-13T14:11:41 <Justin_o> Bosmon:  okay.. thanks... I\'m hoping to get it ready for more review today because I\'ll be away for the rest of the week. However, if you are unavailable, I\'ll try to sync up with you again next week.
+2018-02-13T14:38:13 * grrrero joined the channel
+2018-02-13T14:40:18 * clown joined the channel
+2018-02-13T14:49:59 * grrrero joined the channel
+2018-02-13T14:52:28 * avtar joined the channel
+2018-02-13T14:57:29 * amatas_ joined the channel
+2018-02-13T15:02:07 * colinclark joined the channel
+2018-02-13T15:02:42 * mrtyler joined the channel
+2018-02-13T15:08:11 * simonjb joined the channel
+2018-02-13T15:10:06 <simonjb> good morning alanharnum, I\'d like to set up for the visit tomorrow and wanted to use your latest science lab presentations, could you point me to your latest code please?
+2018-02-13T15:11:18 <alanharnum> hi simonjb, I\'d look at https://github.com/waharnum/nexus-demos/tree/GPII-2189
+2018-02-13T15:11:29 <Bosmon> alanharnum - just to continue bombarding you - I wonder if we have any writings about any plans for hooking up things like the science lab demo to accessible charts etc?
+2018-02-13T15:13:13 <alanharnum> Bosmon: I wish I had something better than https://issues.fluidproject.org/browse/FLOE-509, but that\'s probably the best articulation in writing of what simonjb and I have talked about in the past with colinclark
+2018-02-13T15:13:25 <simonjb> thanks alanharnum! I will merge it into my nexus-demos master
+2018-02-13T15:16:47 <Bosmon> alanharnum - that\'s great, thanks
+2018-02-13T15:18:07 <alanharnum> Bosmon: I think the "materialization" concept (as named by colinclark) is fundamental to what we eventually hope to achieve
+2018-02-13T15:18:38 <Bosmon> alanharnum - awesome, yes
+2018-02-13T15:18:46 <Bosmon> Although I believe this term actually dates back to Clayton : P
+2018-02-13T15:18:47 * chaitanya joined the channel
+2018-02-13T15:25:16 <colinclark> indeed it todes
+2018-02-13T15:25:22 <colinclark> does
+2018-02-13T15:25:29 <colinclark> wow, i really can\'t type
+2018-02-13T15:25:36 <colinclark> "Indeed it does," said colinclark
+2018-02-13T15:28:25 * danayo joined the channel
+2018-02-13T15:29:22 <simonjb> alanharnum: I see that https://issues.gpii.net/browse/GPII-2189 is still open but that we haven\'t made any updates since last June
+2018-02-13T15:29:43 <simonjb> is it reasonable, do you think, to just consider the code done at this point?
+2018-02-13T15:29:52 <simonjb> and merge what we have and close the issue?
+2018-02-13T15:30:01 * michelled joined the channel
+2018-02-13T15:30:12 <alanharnum> simonjb: I think so - I\'d like to integrate the heat sensor sonification at some point, but reasonably speaking that should be a separate JIRA
+2018-02-13T15:30:25 <alanharnum> because i clearly haven\'t made time to do so in nearly a year :p
+2018-02-13T15:30:44 <simonjb> alanharnum: cool, I\'ll make a PR and merge today
+2018-02-13T15:31:16 <Justin_o> cindyli: are you able to review my PR to add a letter-spacing adjuster? https://github.com/fluid-project/infusion/pull/869
+2018-02-13T15:31:37 <cindyli> sure, Justin_o
+2018-02-13T15:32:31 <Justin_o> cindyli: thanks
+2018-02-13T15:32:50 <simonjb> alanharnum: https://github.com/simonbates/nexus-demos/pull/5
+2018-02-13T15:33:16 <cindyli> np, Justin_o, is the icon in this branch finalized and updated?
+2018-02-13T15:34:31 <colinclark> alanharnum: oh, i forgot about the heat sensor sonification
+2018-02-13T15:34:42 <colinclark> i can\'t even remember what it sounds like
+2018-02-13T15:34:55 <colinclark> but it\'s a bit less interesting than the pH one, isn\'t it?
+2018-02-13T15:37:08 * georgitodorov has quit
+2018-02-13T15:39:02 <michelled> fluid-everyone: IDRC planning will be at 11:00 today
+2018-02-13T16:00:03 * michelled joined the channel
+2018-02-13T16:00:53 * alanharnum joined the channel
+2018-02-13T16:01:55 <michelled> fluid-everyone: IDRC planning is starting
+2018-02-13T16:02:01 * cindyli1 joined the channel
+2018-02-13T16:02:20 * kasparnet joined the channel
+2018-02-13T16:02:40 * clown joined the channel
+2018-02-13T16:06:07 * simonjb joined the channel
+2018-02-13T16:12:08 * dandimitrov_ has quit
+2018-02-13T16:15:15 * dandimitrov joined the channel
+2018-02-13T16:15:47 * dandimitrov has quit
+2018-02-13T16:36:14 * kavya joined the channel
+2018-02-13T16:37:27 * simonjb joined the channel
+2018-02-13T16:38:17 * clown joined the channel
+2018-02-13T16:46:42 * michelled joined the channel
+2018-02-13T17:43:45 * michelled joined the channel
+2018-02-13T18:05:36 <grrrero> alanharnum: Should we post on Twitter that our community meeting is postponed this week?
+2018-02-13T18:14:52 * vedularaghu_ joined the channel
+2018-02-13T18:15:57 * chaitanya joined the channel
+2018-02-13T18:18:00 <alanharnum> grrrero: yes, i\'d go ahead and do that
+2018-02-13T18:18:09 <grrrero> Ok I\'ll draft it up
+2018-02-13T18:18:13 <grrrero> ^ alanharnum
+2018-02-13T18:21:59 <kasparnet> Bosmon, heya Bossman
+2018-02-13T18:22:07 <Bosmon> kasparnet
+2018-02-13T18:22:27 <kasparnet> Booooom!!! < 20 secs pong
+2018-02-13T18:22:38 <kasparnet> never seen before
+2018-02-13T18:24:08 <kasparnet> I\'m currently working on the /enabled stuff that we talked about with colinclark, sgithens and the_r_in_rtf
+2018-02-13T18:24:22 <kasparnet> but have a (hopefully quick) question
+2018-02-13T18:24:27 <Bosmon> Oh yes, great
+2018-02-13T18:24:34 <kasparnet> so the enabled term has to be somewhere in the solutions registry entry
+2018-02-13T18:24:41 <kasparnet> under "capabilities" usually, I figured
+2018-02-13T18:25:24 <kasparnet> so eg. the windows mangifier would have a "magnification/enabled" term listed as its capabilities
+2018-02-13T18:25:36 <kasparnet> (and not in a capabilitiestransformations block)
+2018-02-13T18:26:07 <kasparnet> the problem is that the capabilities blocks are settingshandler specific
+2018-02-13T18:26:16 <Bosmon> It\'s such a bizarre name
+2018-02-13T18:26:19 <Bosmon> This "capabilities"
+2018-02-13T18:26:24 <Bosmon> It means nothing :)
+2018-02-13T18:26:40 <kasparnet> whereas the *enabled terms are application specific (i.e. NOT settingshandler specific)
+2018-02-13T18:26:54 <Bosmon> I think the whole point of the /enabled convention is that it is exactly that
+2018-02-13T18:27:11 <Bosmon> That is, when you see something which has the name of a solution followed by /enabled, you know exactly what it is
+2018-02-13T18:27:18 <Bosmon> I don\'t think we actually plan to list these things anywhere
+2018-02-13T18:27:53 <kasparnet> well, they would have to be listed somewhere in a solutions registry entry, wouldn\'t they?
+'
+

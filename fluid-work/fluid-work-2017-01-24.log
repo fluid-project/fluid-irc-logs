@@ -1,0 +1,286 @@
+b'2017-01-24T16:58:57 <colinclark> using only command line flags or environment variables?
+2017-01-24T16:59:28 <Bosmon> colinclark - You don\'t, really
+2017-01-24T16:59:55 <colinclark> ok, we have to fix this :)
+2017-01-24T16:59:55 <Bosmon> the-t-in-rtf is working on this pull: https://github.com/GPII/gpii-launcher/pull/1
+2017-01-24T17:00:07 <colinclark> ok, great
+2017-01-24T17:00:46 <Bosmon> But I think it will take us a bit further to work through
+2017-01-24T17:00:51 <colinclark> will the launcher eventually be adopted by Kettle?
+2017-01-24T17:00:53 <Bosmon> It would be very helpful for you to contribute your use case
+2017-01-24T17:01:03 <Bosmon> colinclark - part or all of it will, yes
+2017-01-24T17:01:04 <colinclark> Well, my use case isn\'t quite mine
+2017-01-24T17:01:08 <Bosmon> Depending on what its dependency impact is
+2017-01-24T17:01:25 <colinclark> but our infrastructure team finds it really inconvenient to configure the GPII for deployment
+2017-01-24T17:01:26 <Bosmon> I\'m keen to keep "yargs" away from being a core dependency of the entire Kettle config system
+2017-01-24T17:01:29 <Bosmon> colinclark - yes, they do
+2017-01-24T17:01:36 <colinclark> and it has caused breakage
+2017-01-24T17:01:41 <colinclark> since sometimes the configuration format has changed over time
+2017-01-24T17:01:47 <Bosmon> Perhaps you/they recall the conversation we had with Justin_o about this perhaps a year back
+2017-01-24T17:01:54 <colinclark> Only partially
+2017-01-24T17:05:22 <colinclark> was that perhaps in relation to the First Discovery Server?
+2017-01-24T17:05:27 <Bosmon> Here\'s the part of Justin_o\'s original implementation: https://github.com/GPII/first-discovery-server/blob/master/src/js/configUtils.js#L21
+2017-01-24T17:05:28 <Bosmon> Yes
+2017-01-24T17:05:48 <Bosmon> Despite the fact I know I\'ve written this up multiple times, I\'m struggling to find the paper trail
+2017-01-24T17:06:14 <colinclark> ok, no problem
+2017-01-24T17:06:19 <Bosmon> Here it is
+2017-01-24T17:06:19 <colinclark> interestingly, this was the Docker container that failed
+2017-01-24T17:06:20 <Bosmon> http://lists.gpii.net/pipermail/architecture/2016-August/004248.html
+2017-01-24T17:06:49 <Bosmon> http://lists.gpii.net/pipermail/architecture/2016-August/004251.html
+2017-01-24T17:07:23 <Bosmon> So the-t-in-rtf went some way towards refactoring his impl to incorporate this
+2017-01-24T17:07:47 <Bosmon> But if possible I\'d like to see the "yargs" resolver as some kind of plugin, which his recent comments on the pull suggest he is planning to do
+2017-01-24T17:09:16 * the-t-in-rtf joined the channel
+2017-01-24T17:10:09 <colinclark> ok
+2017-01-24T17:10:11 <colinclark> why as a plugin?
+2017-01-24T17:14:00 * michelled joined the channel
+2017-01-24T17:14:29 <Justin_o> Bosmon: I\'ve pushed up the changes to https://github.com/fluid-project/fluid-publish/pull/5
+2017-01-24T17:15:05 * Tabs16 joined the channel
+2017-01-24T17:15:21 <Bosmon> colinclark - because I don\'t want the particular encoding of arguments and semantic of yargs to be passed on to every possible user of Kettle configs
+2017-01-24T17:15:30 <Bosmon> Or, indeed, the dependency
+2017-01-24T17:15:41 <colinclark> why is that?
+2017-01-24T17:16:13 <Bosmon> colinclark - perhaps, for example, because we don\'t want to support yargs on the client
+2017-01-24T17:16:32 <Bosmon> "Kettle configs" as a system, is intended to be universal
+2017-01-24T17:16:35 <colinclark> ah, yes
+2017-01-24T17:16:36 <colinclark> fair enough
+2017-01-24T17:16:43 <Bosmon> It just happens to be contingently fused into a module that is dependent on node
+2017-01-24T17:16:51 <Bosmon> But if we can do our job properly, that will not always be the case
+2017-01-24T17:24:27 * Khushil joined the channel
+2017-01-24T17:28:40 * danayo joined the channel
+2017-01-24T17:30:58 * javjarfer has quit
+2017-01-24T17:31:27 * David123__ joined the channel
+2017-01-24T17:32:04 * Kobi joined the channel
+2017-01-24T17:32:29 * simonjb joined the channel
+2017-01-24T17:37:03 * clown joined the channel
+2017-01-24T17:37:56 * javjarfer joined the channel
+2017-01-24T17:52:45 * gtirloni joined the channel
+2017-01-24T17:57:11 * yzen is now known as yzen_
+2017-01-24T18:01:49 * yzen_ has quit
+2017-01-24T18:12:23 * michelled joined the channel
+2017-01-24T18:19:02 * yzen joined the channel
+2017-01-24T18:26:33 <Bosmon> colinclark - can you tell me some more about the breakages?
+2017-01-24T18:29:25 <michelled> avtar, clown, colinclark, danayo: we are going to start the meeting now
+2017-01-24T18:32:20 <colinclark> Bosmon: I\'m not sure I entirely can
+2017-01-24T18:32:22 <colinclark> but I bet other could
+2017-01-24T18:33:34 <colinclark> others
+2017-01-24T18:33:38 <michelled> simonjb: planning meeting
+2017-01-24T18:33:43 <colinclark> But I have this impression that perhaps we have an ansible script that modifies or generates a Kettle configuration file for the FD Server
+2017-01-24T18:33:50 <colinclark> and that perhaps the config file format changed
+2017-01-24T18:34:02 * clown1 joined the channel
+2017-01-24T18:34:18 <colinclark> I do know that alanharnum was pretty bummed that he felt he couldn\'t sufficiently control which port "the GPII" binds to, as an administrator
+2017-01-24T18:35:31 * simonjb joined the channel
+2017-01-24T18:51:57 <Bosmon> colinclark - sure, yes
+2017-01-24T18:52:03 <Bosmon> Part of this is a documentation burden
+2017-01-24T18:52:14 <colinclark> yes, I thought it migh tbe
+2017-01-24T18:52:21 <Bosmon> Since this could be achieved by writing a further driver config
+2017-01-24T18:52:35 <Bosmon> This is why I encouraged cindyli to revive what had been our one working sample of this
+2017-01-24T18:52:43 <Bosmon> Unfortunately it got buried with the bodies
+2017-01-24T18:52:51 <Bosmon> As we axed our "in-memory OAuth DataStore"
+2017-01-24T18:53:25 <colinclark> Right
+2017-01-24T18:53:32 <colinclark> but I think we also have an "audience mismatch"
+2017-01-24T18:53:35 * stegru_ joined the channel
+2017-01-24T18:53:35 * stegru_ has quit
+2017-01-24T18:53:56 <colinclark> a lot of tooling and assumptions in the ops world are based around configuring applications via command line flags or environment variables
+2017-01-24T18:54:42 <Bosmon> Justin_o - cheers for the updates to fluid-publish - I\'ve merged the pull and published this in npm as version 2.0.0
+2017-01-24T18:56:03 * stegru_ joined the channel
+2017-01-24T19:05:54 * jhung joined the channel
+2017-01-24T19:06:05 * jhung1 joined the channel
+2017-01-24T19:08:23 * stegru_ has quit
+2017-01-24T19:16:56 * avtar joined the channel
+2017-01-24T19:17:11 * michelled joined the channel
+2017-01-24T19:20:12 * cindyli joined the channel
+2017-01-24T19:21:48 <Justin_o> Bosmon: excellent :) thanks
+2017-01-24T19:22:14 <Justin_o> Bosmon: by the way, i\'m in contact with the NPM support team regarding deprecating those dev releases for Infusion. They are still looking into the problem
+2017-01-24T19:24:46 * Yan_Hu joined the channel
+2017-01-24T19:27:18 * javjarfer has quit
+2017-01-24T19:30:56 <Khushil> Hey Khushil here..I am  working with infusion app I have created. https://cdn.rawgit.com/KhushilMistry/Experiment_with_Infusion/7a52893a/demos/inlineEdit/WeightConverter/weightConverter.html
+2017-01-24T19:30:56 <Khushil> I want to add more features now. I am thinking about adding Preference Framework functionalities to it. Also try to add some Gallery or image Reorderer component. What else can I do with it ?
+2017-01-24T19:30:57 * simonjb joined the channel
+2017-01-24T19:34:41 * kasparnet joined the channel
+2017-01-24T19:35:01 <kasparnet> hey bosmon
+2017-01-24T19:35:06 <kasparnet> would you happen to be around/
+2017-01-24T19:35:07 <kasparnet> ?*
+2017-01-24T19:37:49 <Justin_o> Khushil: the rawgit link you sent isn\'t opening for me
+2017-01-24T19:39:41 * clown joined the channel
+2017-01-24T19:40:28 * stegru_ joined the channel
+2017-01-24T19:42:32 <Khushil> Okay. This is the github link. https://rawgit.com/KhushilMistry/Experiment_with_Infusion/master/demos/inlineEdit/WeightConverter/weightConverter.html Can you look at this ?
+2017-01-24T19:44:02 <Khushil> Link is rawgit opening now.
+2017-01-24T19:44:16 <Khushil> rawgit link*
+2017-01-24T19:48:28 <Justin_o> Khushil: thanks i got it working now. Rather than adding more features to your example, maybe you could explore more the user experience and accessibility of it. That might include adding the preferences framework. You could also write up some unit tests too, if you don\'t have those already.
+2017-01-24T19:51:20 <Khushil> Sure. I will now try to add the preferences framework. Then after, I will add some unit tests.
+2017-01-24T19:51:20 <Khushil> I am also working on few bugs. I have figured out few bugs. Can you review yesterday\'s PR so that I can understand how debugging and PRs are handled in the community
+2017-01-24T20:00:49 * kasparnet has quit
+2017-01-24T20:08:39 * mrtyler joined the channel
+2017-01-24T20:18:12 * the-t-in-rtf joined the channel
+2017-01-24T20:19:24 * kasparnet joined the channel
+2017-01-24T20:19:49 * jhung1 has quit
+2017-01-24T20:23:07 * kasparnet has quit
+2017-01-24T20:33:04 * Tabs16 has quit
+2017-01-24T20:41:48 * mrtyler joined the channel
+2017-01-24T20:53:17 <Justin_o> Khushil: sorry, i\'ve been busy. I don\'t think i\'ll have time to get to your PR again today, but i\'ll try to look tomorrow. Please ping me again if you haven\'t heard anything about it
+2017-01-24T20:53:53 <Khushil> Okay. No problem.
+2017-01-24T20:56:27 * javjarfer joined the channel
+2017-01-24T21:00:50 * _javjarfer joined the channel
+2017-01-24T21:01:32 * _javjarfer has quit
+2017-01-24T21:01:48 * yzen has quit
+2017-01-24T21:01:54 * _javjarfer joined the channel
+2017-01-24T21:02:24 * _javjarfer has quit
+2017-01-24T21:03:22 * javjarfer has quit
+2017-01-24T21:07:53 * cindyli joined the channel
+2017-01-24T21:26:57 * clown joined the channel
+2017-01-24T21:54:13 * sirdancealot has quit
+2017-01-24T21:54:22 * stegru has left the channel
+2017-01-24T22:12:10 * colinclark joined the channel
+2017-01-24T22:28:30 * danayo_ joined the channel
+2017-01-24T22:52:55 * stegru_ has quit
+'
+
+b'2017-01-24T00:22:54 * yzen is now known as yzen_
+2017-01-24T00:59:09 * Tabs16 has quit
+2017-01-24T01:20:40 * javjarfer has quit
+2017-01-24T02:53:21 * yzen_ is now known as yzen
+2017-01-24T03:51:09 * mrtyler joined the channel
+2017-01-24T04:02:03 * mrtyler joined the channel
+2017-01-24T05:27:16 * yzen is now known as yzen_
+2017-01-24T05:31:40 * yzen_ has quit
+2017-01-24T06:14:16 * the-t-in-rtf joined the channel
+2017-01-24T08:12:20 * sirdancealot joined the channel
+2017-01-24T08:29:26 * javjarfer joined the channel
+2017-01-24T08:54:43 * the-t-in-rtf joined the channel
+2017-01-24T09:30:19 * yzen joined the channel
+2017-01-24T09:35:10 * yzen has quit
+2017-01-24T09:59:29 * amatas joined the channel
+2017-01-24T10:56:48 * stegru joined the channel
+2017-01-24T11:16:07 * javjarfer has quit
+2017-01-24T11:20:05 * javjarfer joined the channel
+2017-01-24T12:00:34 * javjarfer has quit
+2017-01-24T12:05:21 * javjarfer joined the channel
+2017-01-24T12:34:48 * gtirloni joined the channel
+2017-01-24T13:26:02 * Justin_o joined the channel
+2017-01-24T13:41:43 * Khushil joined the channel
+2017-01-24T13:43:02 * jhung joined the channel
+2017-01-24T13:45:37 * yzen joined the channel
+2017-01-24T13:55:54 * cindyli joined the channel
+2017-01-24T14:10:52 * colinclark joined the channel
+2017-01-24T14:17:43 * javjarfer has quit
+2017-01-24T14:18:16 * javjarfer joined the channel
+2017-01-24T14:46:12 * clown joined the channel
+2017-01-24T14:52:12 * _javjarfer joined the channel
+2017-01-24T14:53:23 * michelled joined the channel
+2017-01-24T14:53:46 * simonjb joined the channel
+2017-01-24T14:53:47 * javjarfer has quit
+2017-01-24T15:01:02 <colinclark> Thanks for catching typos in my wiki page, gloob
+2017-01-24T15:01:08 <colinclark> I appreciate that
+2017-01-24T15:01:25 <colinclark> gtirloni: Which room do we traditionally meet in for the infrastructure meeting?
+2017-01-24T15:01:44 <gtirloni> colinclark: hi! mine
+2017-01-24T15:01:48 <colinclark> ok
+2017-01-24T15:02:26 <Justin_o> Bosmon: did you still want to talk about the fluid-publish PR
+2017-01-24T15:02:42 * michelled joined the channel
+2017-01-24T15:03:57 <gtirloni> amatas colinclark gloob mrtyler: https://pad.gpii.net/p/2017-01-23-kwp4n39
+2017-01-24T15:05:11 <colinclark> gtirloni: It\'s so lonely in here
+2017-01-24T15:05:20 <colinclark> I wonder where amatas alanharnum gloob and mrtyler are
+2017-01-24T15:05:57 <gtirloni> sarah said 11am.. i wonder if she meant US Central Time
+2017-01-24T15:06:22 <colinclark> sandra, you mean?
+2017-01-24T15:06:38 <gtirloni> oops, yeah
+2017-01-24T15:06:47 <colinclark> it seems to be in the calendar for this time, but i dunno if she moved it or someone else did
+2017-01-24T15:09:27 <Bosmon> Justin_o - yes, I think we just need to improve the wording on that message a little
+2017-01-24T15:09:45 <Justin_o> Bosmon: sure thing, how would you like to work on that?
+2017-01-24T15:09:58 <Justin_o> discussion here, call, something else?
+2017-01-24T15:11:30 <Bosmon> I guess we can just discuss it here
+2017-01-24T15:11:42 <Bosmon> So the unclarity starts with the words "if the tag already exists"
+2017-01-24T15:11:45 * simonjb joined the channel
+2017-01-24T15:11:47 <Bosmon> I think the user will have no idea what is meant here
+2017-01-24T15:12:07 <amatas> oh, sorry, I have the meeting scheduled in one hour
+2017-01-24T15:12:41 <Justin_o> Bosmon: i\'m not entirely sure how important that part is, it may not be necessary at all
+2017-01-24T15:12:49 <Bosmon> Yes, you could just axe it
+2017-01-24T15:13:04 <Bosmon> If you want to keep it, you could expand it with something like "If the npm tag specified with --tag exists"
+2017-01-24T15:13:45 * danayo joined the channel
+2017-01-24T15:14:01 <amatas> gtirloni, colinclark are you still in the vidyo room?
+2017-01-24T15:14:11 <colinclark> apparently we could the time wrong, amatas
+2017-01-24T15:14:18 <colinclark> yes, it\'s in one hour according to Sandra
+2017-01-24T15:14:19 * simonjb joined the channel
+2017-01-24T15:14:27 <amatas> ok
+2017-01-24T15:15:04 * javjarfer joined the channel
+2017-01-24T15:16:52 * _javjarfer has quit
+2017-01-24T15:18:33 * clown joined the channel
+2017-01-24T15:18:50 <Justin_o> Bosmon: i was reading through the documentation again https://docs.npmjs.com/cli/publish and https://docs.npmjs.com/cli/dist-tag. I think adding a duplicate tag will just move it, which is basically what happens with dev and latest right now
+2017-01-24T15:18:58 <Justin_o> so i think we are okay to just axe that part
+2017-01-24T15:19:01 <Bosmon> Yup, ok
+2017-01-24T15:19:18 <Bosmon> That just leaves the wording on permissible tags
+2017-01-24T15:19:44 * javjarfer has quit
+2017-01-24T15:20:15 * gtirloni joined the channel
+2017-01-24T15:21:30 * javjarfer joined the channel
+2017-01-24T15:22:37 * lliskovoi joined the channel
+2017-01-24T15:22:43 <Justin_o> for that part, how about something like "If the NPM tag specified by --tag is recognizable as a valid semver version number it will be rejected by npm. This is because version numbers and tags share a common namespace for npm packages."
+2017-01-24T15:22:47 <Justin_o> Bosmon: ^
+2017-01-24T15:23:57 * lliskovoi joined the channel
+2017-01-24T15:24:07 * kavya joined the channel
+2017-01-24T15:27:12 * jessm joined the channel
+2017-01-24T15:31:21 <gloob> colinclark: 11am ET
+2017-01-24T15:31:26 <colinclark> yes
+2017-01-24T15:31:30 <colinclark> correct
+2017-01-24T15:31:43 <colinclark> we were confused, half an hour ago :)
+2017-01-24T15:32:04 <gloob> colinclark: I edited a typo in your awesome soundGUAUfication document
+2017-01-24T15:32:08 <gloob> I hope you don\'t mind
+2017-01-24T15:32:10 <colinclark> yes, thank you
+2017-01-24T15:32:15 <colinclark> I don\'t mind in the least!
+2017-01-24T15:32:18 <colinclark> I really appreciate it
+2017-01-24T15:32:22 <gloob> (bow)
+2017-01-24T15:32:38 <gloob> I was looking the pull request button but didn\'t find it
+2017-01-24T15:32:45 <colinclark> ha :)
+2017-01-24T15:32:48 <gloob> :D
+2017-01-24T15:32:52 <colinclark> I think those examples all need to go into a Github repository
+2017-01-24T15:33:02 <gloob> +1
+2017-01-24T15:33:03 <colinclark> editing code in Confluences is aaaawwwwwful
+2017-01-24T15:33:21 <colinclark> there\'s still a lot to write, too
+2017-01-24T15:33:22 <gloob> static code places are... weird
+2017-01-24T15:33:24 <colinclark> yes
+2017-01-24T15:33:31 <gloob> because you know what happens
+2017-01-24T15:33:36 <colinclark> I guess I can probably embed little Gist widgets or something in Confluence?
+2017-01-24T15:33:39 <colinclark> has anyone done that before?
+2017-01-24T15:33:46 <gloob> I think there\'s a plugin for that
+2017-01-24T15:33:50 <gloob> (tm)
+2017-01-24T15:34:12 <gloob> https://marketplace.atlassian.com/plugins/me.davidsimpson.confluence.addon.gister/cloud/overview
+2017-01-24T15:36:01 * gtirloni has quit
+2017-01-24T15:37:31 * gtirloni joined the channel
+2017-01-24T15:40:28 <colinclark> the curse of plugins :)
+2017-01-24T15:42:52 <gloob> if not, I *think* that you could relax the allowd html tags in the post-processor
+2017-01-24T15:44:26 * mrtyler joined the channel
+2017-01-24T15:45:35 <Bosmon> Justin_o - that sounds great
+2017-01-24T15:46:07 * the-t-in-rtf joined the channel
+2017-01-24T15:50:43 * avtar joined the channel
+2017-01-24T15:59:01 * simonjb has quit
+2017-01-24T16:12:45 * simonjb joined the channel
+2017-01-24T16:33:17 * simonjb joined the channel
+2017-01-24T16:43:30 <stegru> Bosmon: ?
+2017-01-24T16:46:19 <Bosmon> Hey there stegru
+2017-01-24T16:46:26 <stegru> hello!
+2017-01-24T16:46:47 <stegru> will there be a hst branch for universal?
+2017-01-24T16:47:52 <stegru> i mean.. i have code that\'s suitable for universal, but it\'s for the HST (the instance checking)
+2017-01-24T16:48:51 <Bosmon> I think that part of it can go into universal
+2017-01-24T16:48:55 <Bosmon> The part that does the checking
+2017-01-24T16:48:58 <stegru> if it\'s not in universal, then the electron app will need to access gpii.windows
+2017-01-24T16:49:00 <Bosmon> I think we decided we would split it into two
+2017-01-24T16:49:14 <Bosmon> But yes, the electron app does access gpii.windows
+2017-01-24T16:49:34 <Bosmon> The part that operates the logic for detecting if there is a running or crashed process should go into universal
+2017-01-24T16:49:47 <Bosmon> And then the part that actually invokes it and takes action on it should go into the electron app
+2017-01-24T16:50:26 <stegru> yes, that\'s what i thought - just wondering if there\'s a universal branch
+2017-01-24T16:50:40 <Bosmon> ah no, I think we\'ll just put that into universal trunk
+2017-01-24T16:51:08 <Bosmon> Anything that we consider reviewable quality and has no specific dependencies on HST itself should just get merged
+2017-01-24T16:51:28 <Bosmon> The logging stuff I thought we should just chat about since it may or may not be something that we want running on every startup ....
+2017-01-24T16:51:31 <Bosmon> I dunno
+2017-01-24T16:51:34 <Bosmon> We can air this tomorrow
+2017-01-24T16:51:42 <stegru> yeh that\'s what i thought too
+2017-01-24T16:52:02 <stegru> also, separate (but similar) issue.. would you cry if you saw "gpii.windows && gpii.windows.hello()" in universal?
+2017-01-24T16:54:03 <stegru> oh wait, forget i asked that.. it was to present a message to the user if port 8081 was in use, but i can do that in the electon app
+2017-01-24T16:56:18 <Bosmon> stegru - yes, I would cry
+2017-01-24T16:56:25 <Bosmon> But didn\'t you say you were going to use the process.pid route?
+2017-01-24T16:56:48 <colinclark> Bosmon: I think this is a different case\xe2\x80\x94where 8081 is already bound on the user\'s computer
+2017-01-24T16:56:58 <colinclark> by something other than us
+2017-01-24T16:57:00 <stegru> yes i am, the instance checking this is cross platform (infact, i\'ve been developing/testing it on linux first)
+2017-01-24T16:57:21 <stegru> yes, different work items
+2017-01-24T16:58:16 <Bosmon> OH yes sorry, the port 8081 thing
+2017-01-24T16:58:23 <colinclark> Speaking of port numbers, though, I have a question for you, Bosmon if you have a sec
+2017-01-24T16:58:40 <Bosmon> Ok, well whilst they are different issues they are sort of isomorphic
+2017-01-24T16:58:41 * stegru releases Bosmon
+2017-01-24T16:58:50 <colinclark> How does one specify a different port number to bind to for, say, the Cloud-Based Flow Manager...
+2017-01-24T16:58:51 <Bosmon> Since they both consist of a "detection" and "action" tasks
+'
+

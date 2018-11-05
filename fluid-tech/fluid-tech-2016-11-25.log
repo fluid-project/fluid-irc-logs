@@ -1,0 +1,329 @@
+b'2016-11-25T22:12:37 <colinclark> indeed
+2016-11-25T22:12:40 <Bosmon5> That is, that the "state of nature" could become such that no particular individual actually wanted
+2016-11-25T22:13:14 <colinclark> well, I guess that\'s one of the limits of representationalism
+2016-11-25T22:13:24 <Bosmon5> So the stream could look like 1: (ind1, on), 2: (ind2, on), 3: (ind2, off), 4: (ind1, off)
+2016-11-25T22:13:24 <colinclark> might as well call it the "state of culture" now :)
+2016-11-25T22:13:39 <Bosmon5> The result, I imagine, with any reasonable MIDI implementation, is that the node sounds between time 1 and 3
+2016-11-25T22:13:46 * alanharnum has quit
+2016-11-25T22:13:59 <Bosmon5> Whereas ind1 wanted it between 1 and 4, and ind2 wanted it between 2 and 3
+2016-11-25T22:14:36 <colinclark> yes
+2016-11-25T22:14:57 <colinclark> What else can I do to make this implementation much better?
+2016-11-25T22:17:04 <Bosmon5> modelizePorts should be broken out as an invoker
+2016-11-25T22:17:37 <colinclark> ok
+2016-11-25T22:18:57 <Bosmon5> You\'ve misused the priority specification here - even if the other listener still existed: https://github.com/colinbdclark/flocking-midi/blob/gh-1/packages/node_modules/flocking-midi-node/src/node-midi-system.js#L53
+2016-11-25T22:19:18 <Bosmon5> The namespace doesn\'t include the event name itself
+2016-11-25T22:19:34 <Bosmon5> So it would just be "after:clearModel" if there still was a clearModel
+2016-11-25T22:31:01 * kasparnet has quit
+2016-11-25T22:38:07 <colinclark> Ah!
+2016-11-25T22:38:10 <colinclark> good to know, thank you
+2016-11-25T22:41:10 * colinclark has quit
+2016-11-25T23:03:46 * kasparne_ joined the channel
+2016-11-25T23:06:04 * David123_ has quit
+2016-11-25T23:14:10 * alanharnum joined the channel
+2016-11-25T23:21:25 * alanharnum has quit
+'
+
+b'2016-11-25T21:18:44 * Bosmon5 joined the channel
+2016-11-25T21:28:43 <colinclark> Bosmon5: This is the file that I feel somewhat uncomfortable with: https://github.com/colinbdclark/flocking-midi/blob/gh-1/packages/node_modules/flocking-midi-node/src/node-midi-system.js
+2016-11-25T21:29:28 <colinclark> I guess a lot of its weirdness stems from RtMidi, ultimately
+2016-11-25T21:30:09 <colinclark> but I\'m sure it can be improved nonetheless
+2016-11-25T21:30:25 <colinclark> there\'s a lot of this funny doubling of logic for input and output ports
+2016-11-25T21:31:34 * michelled joined the channel
+2016-11-25T21:34:18 <Bosmon5> Cheers, colinclark
+2016-11-25T21:35:16 <Bosmon5> Aren\'t simonjb and clown already collaborating on just such an implementation?
+2016-11-25T21:35:26 <colinclark> an implementation of what?
+2016-11-25T21:35:27 <Bosmon5> A "poll to signal" system?
+2016-11-25T21:35:39 <colinclark> I certainly haven\'t heard anything about it
+2016-11-25T21:38:02 <Bosmon5> Your "disconnectedPorts" method is very odd
+2016-11-25T21:38:04 <clown> colinclark:  Bosmon5 noted a similarity between something I did in the GPII process reporter work and something simonjb had.
+2016-11-25T21:38:12 <Bosmon5> Why are there these two transactions back to back?
+2016-11-25T21:38:36 <colinclark> Which two?
+2016-11-25T21:38:57 <clown> There might be a way to abstract over the two and produce a poll-to-signal system, but we have not devoted any time to it yet.
+2016-11-25T21:38:59 <Bosmon5> Oh sorry, it\'s the same one
+2016-11-25T21:39:14 <Bosmon5> I need to get a bigger font :)
+2016-11-25T21:39:16 <colinclark> hahaha
+2016-11-25T21:39:33 <colinclark> are you using your eclipse font?
+2016-11-25T21:39:37 <colinclark> or just reading on the web?
+2016-11-25T21:39:52 <Bosmon5> So why is "updatePorts" not implemented as a modelListener?
+2016-11-25T21:41:23 * cindyli has quit
+2016-11-25T21:41:31 <colinclark> It\'s the function that updates the system\'s model
+2016-11-25T21:41:44 <colinclark> given nothing more than a thing wrapping RtMidi :P
+2016-11-25T21:42:25 <colinclark> But I suppose, with some thinking, I could implement something that modelized the number of RtMidi ports that are connected
+2016-11-25T21:42:37 <Bosmon5> Ok, starting to become a bit clearer now
+2016-11-25T21:42:42 <colinclark> and via a refactoring of this machinery, lensing it into a real model
+2016-11-25T21:42:49 <Bosmon5> I imagine clearAllDisconnected could just be replaced by a delete of ""
+2016-11-25T21:43:01 <colinclark> I don\'t think it can
+2016-11-25T21:43:02 <Bosmon5> Which is all the new ChangeApplier would do anyway
+2016-11-25T21:43:22 <colinclark> Let me try to explain what I think I\'ve observed in practice
+2016-11-25T21:43:40 <colinclark> So this logic all runs on a Bergson clock
+2016-11-25T21:43:43 <colinclark> every second, by default
+2016-11-25T21:44:11 <colinclark> when attempted to do a DELETE of "" followed by an update, I found that changes were constantly detected
+2016-11-25T21:44:15 <colinclark> even when there were none
+2016-11-25T21:44:23 <colinclark> by virtue of the transition from no model to a model again
+2016-11-25T21:44:31 <colinclark> but perhaps I just needed a transaction?
+2016-11-25T21:44:57 <Bosmon5> Ah right
+2016-11-25T21:45:03 <Bosmon5> I was thinking about just this issue on the drive down : P
+2016-11-25T21:45:17 <Bosmon5> And I had somehow convinced myself that this behaviour would be acceptable
+2016-11-25T21:45:19 <Bosmon5> But it clearly isn\'t : P
+2016-11-25T21:45:23 <colinclark> I would see, in my console, the transition from old model to undefined to new model
+2016-11-25T21:45:31 <Bosmon5> Well, you would have a transaction, yes
+2016-11-25T21:45:39 <colinclark> and then my "view" was constantly printing the same thing to the console :)
+2016-11-25T21:45:51 <colinclark> With a transaction, you think I\'d be ok/
+2016-11-25T21:46:01 <colinclark> I only resorted to a transaction later on, for other reasons :)
+2016-11-25T21:46:02 <Bosmon5> But I\'m not sure that the current implementation is smart enough to detect that a deletion of everything followed by a replacement of the original counts as no change
+2016-11-25T21:46:10 <Bosmon5> Yes, you would always have needed a transaction
+2016-11-25T21:47:00 <Bosmon5> I had wanted to avoid the expense of a full diff within the ChangeApplier
+2016-11-25T21:47:16 <Bosmon5> But it is starting to seem unavoidable
+2016-11-25T21:47:23 <Bosmon5> I wonder what react does about this situation
+2016-11-25T21:47:32 <Bosmon5> Presumably, it has no concept of semantics for a "deletion" : P
+2016-11-25T21:48:01 <colinclark> it does seem to sort of work if simply replace the call to clearAllDisconnected with: trans.fireChangeRequest({path: "", type: "DELETE"})
+2016-11-25T21:48:08 <Bosmon5> Oh right
+2016-11-25T21:48:14 <Bosmon5> But only sort of?
+2016-11-25T21:48:15 <colinclark> Although I seem to regress in another way
+2016-11-25T21:48:25 <colinclark> I think this is best explained with a Narrated Gist
+2016-11-25T21:48:26 <colinclark> one second
+2016-11-25T21:48:30 <Bosmon5> :)
+2016-11-25T21:48:34 <colinclark> or if I was sgithens, I\'d make a cool screencast
+2016-11-25T21:48:44 <colinclark> because this all requires me to sit here and plug and unplug things
+2016-11-25T21:48:53 <colinclark> SAYS THE MAN WITHOUT UNIT TESTS
+2016-11-25T21:49:53 <colinclark> well, ok
+2016-11-25T21:50:14 <colinclark> I can\'t quite account for it, other than to guess that I have a race condition
+2016-11-25T21:51:44 <colinclark> https://gist.github.com/colinbdclark/24dc10a2559ca7553efd440ede64cec0
+2016-11-25T21:52:26 <colinclark> You can see that sometimes I seem to log a change that is sort of vaguely plausible, intellectually, but physically impossible
+2016-11-25T21:52:40 <colinclark> This cannot happen: https://gist.github.com/colinbdclark/24dc10a2559ca7553efd440ede64cec0#file-gistfile1-txt-L30-L38
+2016-11-25T21:52:54 <colinclark> but perhaps these are just totally unrelated issues
+2016-11-25T21:53:18 <colinclark> either in my code, or in RtMidi itself
+2016-11-25T21:53:39 <colinclark> but I thought my transaction should guard against any causes where inputs and outputs aren\'t updated simultaneously
+2016-11-25T21:53:54 <colinclark> though I know that RtMidi does nothing to prevent race conditions of its own :P
+2016-11-25T21:55:37 * alanharnum has quit
+2016-11-25T21:57:10 <Bosmon5> Well, you might discover what the reason is
+2016-11-25T21:57:22 <Bosmon5> But, independently of that, I imagine you might want to do away with this "inputs/outputs" model split
+2016-11-25T21:57:38 <Bosmon5> Since it\'s just complexifying your core implementation
+2016-11-25T21:58:52 * clown has quit
+2016-11-25T21:59:08 <colinclark> it is indeed
+2016-11-25T21:59:23 <colinclark> you\'re thinking just a single hash of "ports"?
+2016-11-25T21:59:23 <Bosmon5> input/output should just be two boolean flags on each device
+2016-11-25T21:59:26 <Bosmon5> yes
+2016-11-25T21:59:46 <colinclark> I guess it\'s important to note that we are not modelling devices here
+2016-11-25T22:00:02 <colinclark> we are\xe2\x80\x94and I think this is crucial\xe2\x80\x94modelling ports
+2016-11-25T22:00:04 <colinclark> I THINK
+2016-11-25T22:00:10 <colinclark> since devices may well have quite a number of ports
+2016-11-25T22:00:19 <Bosmon5> Well ok
+2016-11-25T22:00:21 * alanharnum joined the channel
+2016-11-25T22:00:27 <Bosmon5> But I think that the advice still stands : P
+2016-11-25T22:00:30 <colinclark> sure :)
+2016-11-25T22:00:33 <colinclark> I agree
+2016-11-25T22:00:38 <Bosmon5> Whatever we call the "thing that is at the end of a port"
+2016-11-25T22:00:47 <colinclark> ok
+2016-11-25T22:00:51 <colinclark> well, again
+2016-11-25T22:00:57 <colinclark> these are ports :P
+2016-11-25T22:01:06 <Bosmon5> I think it will be of vital interest to a user to determine that a thing which does input is THE VERY SAME THING which does output
+2016-11-25T22:01:09 <Bosmon5> If it is, or if it is not
+2016-11-25T22:01:11 <colinclark> determining what\'s on the other end of a port is a signifcant issue in itself
+2016-11-25T22:01:20 <colinclark> ok, yes
+2016-11-25T22:01:32 <colinclark> that will certainly MASSIVELY improve my logic
+2016-11-25T22:01:38 <Bosmon5> And this may as well be made manifest in the core model
+2016-11-25T22:01:55 <Bosmon5> If you then want to aggregate or filter these things in some way, that can be done via a relay rule externally
+2016-11-25T22:02:03 <colinclark> ah, ok
+2016-11-25T22:02:16 <Bosmon5> But the core model should be as directly as possible a representation of the "state of nature"
+2016-11-25T22:02:21 <Bosmon5> Not to get all Claytonic on us here :)
+2016-11-25T22:02:25 <colinclark> hahaha
+2016-11-25T22:02:28 <colinclark> dangerous territory
+2016-11-25T22:02:58 <colinclark> When it comes to, say, a MIDI merger, one wants to define a "selector" matching a set of input ports and one that matches a set of output ports
+2016-11-25T22:03:02 <Bosmon5> Still, it would be worthwhile discovering what your race condition is
+2016-11-25T22:03:07 <colinclark> and then relay the input ports to the output ports
+2016-11-25T22:03:11 <colinclark> yes, I think it would :P
+2016-11-25T22:03:38 <Bosmon5> Yes well, the selector could do that equally well in either representation
+2016-11-25T22:03:43 <Bosmon5> Not that we have written such selectors yet : P
+2016-11-25T22:03:51 <Bosmon5> I imagine that simonjb will come up with a load
+2016-11-25T22:04:03 <Bosmon5> It\'s a shame that they will invariably look extremely ugly
+2016-11-25T22:04:10 <Bosmon5> As all such "regexps in disguise" do
+2016-11-25T22:04:16 <colinclark> ah, yes
+2016-11-25T22:04:46 <Bosmon5> Although a kind of "query by example" scheme can make these a bit more pleasant in simple cases
+2016-11-25T22:04:56 <Bosmon5> But in the end one invariably wants logical combinators, and then the rot sets in
+2016-11-25T22:05:26 <colinclark> So I guess when I get to that point, I will have a model relay rule that takes the "selector" as its argument, and which relays the whole space of available ports into anther component\'s "selected ports" model?
+2016-11-25T22:05:29 <colinclark> is that correct?
+2016-11-25T22:05:38 <colinclark> whatever the syntax of these selectors
+2016-11-25T22:06:25 <Bosmon5> Yes, I expect so
+2016-11-25T22:06:31 <Bosmon5> But you said ports plural
+2016-11-25T22:06:42 <Bosmon5> Would the relay work by taking the union of all the MIDI messages incoming on any of them?
+2016-11-25T22:06:59 <Bosmon5> And then relaying that to each of the outputs?
+2016-11-25T22:07:12 <colinclark> Remember at the hackathon in Toronto this spring?
+2016-11-25T22:07:21 <Bosmon5> It\'s interesting to reflect that this union wouldn\'t necessarily modelise consistently... which is a bit horrifying
+2016-11-25T22:07:24 <colinclark> At the time I was sheepishly buying a new piece of MIDI hardware
+2016-11-25T22:07:31 <colinclark> it was a thing that does precisely what you describe
+2016-11-25T22:07:34 <Bosmon5> Imagine if one input turned a note on, and then another one turned it off : P
+2016-11-25T22:07:40 <colinclark> ha
+2016-11-25T22:07:43 <colinclark> well, there\'s something to that
+2016-11-25T22:07:55 <colinclark> I\'m somewhat convinced that the concept of a "Device" is actually pretty blurry
+2016-11-25T22:08:04 <colinclark> and is often expressed in aggregate, at least from the input perspective
+2016-11-25T22:08:10 <Bosmon5> Well
+2016-11-25T22:08:14 <colinclark> People have a set of controllers that they want to merge together
+2016-11-25T22:08:24 <Bosmon5> If we imagine that signals can be "integrated", they must necessarily refer to a kind of "musical space"
+2016-11-25T22:08:35 <Bosmon5> Which, at any instant in time, determines what notes are sounding
+2016-11-25T22:08:47 <colinclark> yes
+2016-11-25T22:09:02 <Bosmon5> I guess the whole point of MIDI is to fudge such issues alarmingly, as we mentioned before
+2016-11-25T22:09:17 <Bosmon5> Given that a device could always be plugged in or unplugged in the middle of a conversation
+2016-11-25T22:09:44 <Bosmon5> And I guess every practical MIDI device does not throw a fit when given a "note off" message for which it has never received a "note on"
+2016-11-25T22:10:54 <colinclark> no it won\'t
+2016-11-25T22:10:57 <colinclark> at least none that I\'ve ever met
+2016-11-25T22:11:02 <Bosmon5> :)
+2016-11-25T22:11:39 <colinclark> if you\'d like me to do some research on the subject...
+2016-11-25T22:11:44 <colinclark> ;)
+2016-11-25T22:12:03 <Bosmon5> Well, only in the role of "thought experiments"
+2016-11-25T22:12:11 <colinclark> ha
+2016-11-25T22:12:27 <Bosmon5> I guess much with any democracy, the results of integrating multiple individuals has the potential to lead to inconsistent results
+'
+
+b'2016-11-25T00:04:24 * alanharnum has quit
+2016-11-25T00:47:01 * stegru has quit
+2016-11-25T01:01:51 * alanharnum joined the channel
+2016-11-25T01:07:13 * alanharnum has quit
+2016-11-25T03:04:26 * alanharnum joined the channel
+2016-11-25T03:09:00 * alanharnum has quit
+2016-11-25T03:55:08 * colinclark has quit
+2016-11-25T04:06:24 * alanharnum joined the channel
+2016-11-25T04:10:45 * alanharnum has quit
+2016-11-25T04:22:13 * colinclark joined the channel
+2016-11-25T04:22:13 * colinclark has quit
+2016-11-25T05:08:05 * alanharnum joined the channel
+2016-11-25T05:14:39 * alanharnum has quit
+2016-11-25T06:12:05 * alanharnum joined the channel
+2016-11-25T06:34:00 * the-t-in-rtf joined the channel
+2016-11-25T06:57:18 * the-t-in-rtf1 joined the channel
+2016-11-25T06:57:20 * the-t-in-rtf has quit
+2016-11-25T08:14:01 * alanharnum joined the channel
+2016-11-25T08:19:08 * alanharnum has quit
+2016-11-25T08:53:05 * amatas joined the channel
+2016-11-25T08:55:26 * stegru joined the channel
+2016-11-25T09:16:05 * kasparnet joined the channel
+2016-11-25T09:16:05 * kasparnet has quit
+2016-11-25T09:16:42 * kasparnet joined the channel
+2016-11-25T10:05:19 * stegru has quit
+2016-11-25T10:13:36 * amatas has quit
+2016-11-25T10:16:49 * alanharnum joined the channel
+2016-11-25T10:21:25 * alanharnum has quit
+2016-11-25T10:25:08 * stegru joined the channel
+2016-11-25T11:18:31 * alanharnum joined the channel
+2016-11-25T11:22:56 * alanharnum has quit
+2016-11-25T12:04:34 * Justin_o joined the channel
+2016-11-25T12:15:27 * gtirloni joined the channel
+2016-11-25T12:16:59 * Bosmon has quit
+2016-11-25T12:20:46 * Bosmon joined the channel
+2016-11-25T13:15:45 * jessm joined the channel
+2016-11-25T13:17:58 * jessm has quit
+2016-11-25T13:20:45 * alanharnum joined the channel
+2016-11-25T13:22:50 * kasparnet has quit
+2016-11-25T13:24:32 * jessm joined the channel
+2016-11-25T13:25:53 * alanharnum has quit
+2016-11-25T13:29:28 * kasparnet joined the channel
+2016-11-25T13:35:28 * cindyli joined the channel
+2016-11-25T13:35:35 * michelled joined the channel
+2016-11-25T13:56:59 * alanharnum joined the channel
+2016-11-25T14:13:25 * simonjb joined the channel
+2016-11-25T14:21:30 * kasparnet has quit
+2016-11-25T14:26:50 * kasparnet joined the channel
+2016-11-25T14:28:50 * kasparnet has quit
+2016-11-25T14:48:27 * colinclark joined the channel
+2016-11-25T14:54:28 * alanharnum has quit
+2016-11-25T14:54:39 * alanharnum joined the channel
+2016-11-25T14:54:39 * alanharnum has quit
+2016-11-25T15:19:23 <michelled> colinclark: as I started to write some tests for the app, I decided I needed a better directory structure in there. I noticed that sgithens had created a \'web\' directory for icons - he suspects he saw you do that? do you know if it\'s a convention I should be following? I was thinking of a \'src\' and a \'tests\' directory. and I was going to stick the icons into the src dir.
+2016-11-25T15:23:55 * alanharnum joined the channel
+2016-11-25T15:29:16 * alanharnum has quit
+2016-11-25T15:32:47 <colinclark> michelled: I\'ve always found it helpful to separate "source code" from non-text assets like icons
+2016-11-25T15:33:03 <colinclark> but I don\'t think I really mind, in particular
+2016-11-25T15:33:25 <colinclark> I believe the "web" distinction that sgithens observed in my own Electron apps was for a different purpose
+2016-11-25T15:33:29 * alanharnum joined the channel
+2016-11-25T15:33:47 <colinclark> i.e. to clearly distinguish between the "main process" and "web process" portions of an Electron app
+2016-11-25T15:33:57 <michelled> ah, interesting
+2016-11-25T15:34:19 <colinclark> for which you currently have none of the latter\xe2\x80\x94but I suspect that won\'t be the case for long
+2016-11-25T15:35:08 <michelled> ok, I\'m glad I asked :) I\'ll make a structure that makes me happy and then we\'ll see what code review brings :)
+2016-11-25T15:35:39 <colinclark> Infusion seems to use a structure of src/<asset type>
+2016-11-25T15:36:02 <colinclark> so in src/, we have js/, html/, css/, and images/
+2016-11-25T15:37:14 <colinclark> the-t-in-rtf1: We were talking off-channel about monorepos and Lerna and stuff
+2016-11-25T15:38:00 <colinclark> With this being, I think, one of our first experiments in monorepos, based on what we\'ve learned from the GPII:
+2016-11-25T15:38:02 <colinclark> https://github.com/colinbdclark/flocking-midi/tree/gh-1
+2016-11-25T15:38:43 <colinclark> you\'ll notice that because each of the individual modules are inside a directory named node_modules, they can resolve each other without anything more than a require() statement
+2016-11-25T15:38:50 <colinclark> but we\'re still missing a bit of tooling
+2016-11-25T15:39:12 <colinclark> In the GPII, none of the child modules are really ever intended to be used on their own
+2016-11-25T15:39:42 <colinclark> whereas you can see with flocking-midi, these modules will need to be published as distinct modules and used by people as if they were separate
+2016-11-25T15:40:04 <colinclark> so, for example, simonjb will use flocking-midi-node in his Nexus work, and perhaps never even bother with flocking-midi-web
+2016-11-25T15:40:39 <colinclark> so in its current form, you\'ll see that these modules have implict dependencies on each other
+2016-11-25T15:41:16 <colinclark> So, specifically, flocking-midi-node depends on flocking-midi-core
+2016-11-25T15:41:18 <colinclark> and yet: https://github.com/colinbdclark/flocking-midi/blob/gh-1/packages/node_modules/flocking-midi-node/package.json#L26-L30
+2016-11-25T15:41:50 <colinclark> Obviously, while developing in the monorepo, I really don\'t want npm (or yarn) to source these in-repo sibling dependencies
+2016-11-25T15:41:56 <colinclark> which is why I didn\'t declare them
+2016-11-25T15:41:59 <colinclark> BUT
+2016-11-25T15:42:12 <colinclark> of course this means that the modules are all useless once they\'re published
+2016-11-25T15:42:37 <colinclark> So, the-t-in-rtf1, we need some tooling to support the synthesis of "dependencies" blocks in package.json
+2016-11-25T15:42:52 <colinclark> and fluid-publish already specializes in modifying package.json on the fly at publish time, so it seems like a good candidate
+2016-11-25T15:43:04 <colinclark> I\'m thinking something like this...
+2016-11-25T15:43:29 <colinclark> we introduce a new "monorepoDependencies" block, which will be ignored by npm
+2016-11-25T15:43:53 <colinclark> but which fluid-publish can, when the module is published, merge with "dependencies"
+2016-11-25T15:44:05 <the-t-in-rtf1> I guess two blocks, then
+2016-11-25T15:44:13 <the-t-in-rtf1> monorepoDevDependencies
+2016-11-25T15:44:45 <colinclark> Well, aren\'t dev dependencies always specific to "when I\'m developing this module?"
+2016-11-25T15:44:59 <colinclark> Do they have more scope than I think?
+2016-11-25T15:45:04 <the-t-in-rtf1> also to "when I\'m running the tests against this module"
+2016-11-25T15:45:16 <colinclark> yes, this is an interesting issue
+2016-11-25T15:45:33 <colinclark> do you advocate for the test suite being distributed alongside a published npm module?
+2016-11-25T15:45:37 <colinclark> so that users can self-test it?
+2016-11-25T15:45:43 <colinclark> I assume it\'s a very good idea
+2016-11-25T15:45:57 <colinclark> Does anyone do this in practice?
+2016-11-25T15:46:30 <the-t-in-rtf1> you can navigate into most modules in your node_modules directory, run npm install, and run their tests
+2016-11-25T15:46:58 <colinclark> and when you do that, devDependencies are installed as well?
+2016-11-25T15:47:02 <the-t-in-rtf1> yes
+2016-11-25T15:47:34 <colinclark> in that case, yes, that\'s an issue fluid-publish would have to address
+2016-11-25T15:47:40 <colinclark> assuming it\'s a common use case
+2016-11-25T15:48:06 <the-t-in-rtf1> I\'m not sure of that at all, but it feels a little wrong to have a tested form of the code and not to be able to run the same tests on the results of the publishing process.
+2016-11-25T15:48:17 <the-t-in-rtf1> via some means.
+2016-11-25T15:48:21 <colinclark> yeah
+2016-11-25T16:02:14 * kasparnet joined the channel
+2016-11-25T16:30:23 * clown joined the channel
+2016-11-25T16:41:26 * michelled has quit
+2016-11-25T16:47:43 * alanharnum joined the channel
+2016-11-25T17:33:54 * Bosmon has quit
+2016-11-25T17:36:23 * kasparnet has quit
+2016-11-25T17:51:37 * David123_ joined the channel
+2016-11-25T18:06:27 * kasparnet joined the channel
+2016-11-25T18:09:40 * michelled joined the channel
+2016-11-25T18:33:15 * alanharnum has quit
+2016-11-25T18:35:41 * stegru has quit
+2016-11-25T18:39:33 * alanharnum joined the channel
+2016-11-25T18:39:50 * colinclark has quit
+2016-11-25T18:40:56 * colinclark joined the channel
+2016-11-25T18:43:50 * kasparnet has quit
+2016-11-25T18:49:43 * simonjb has quit
+2016-11-25T18:50:28 * alanharnum has quit
+2016-11-25T18:56:22 * kasparnet joined the channel
+2016-11-25T18:56:43 * kasparnet has quit
+2016-11-25T18:56:59 * kasparnet joined the channel
+2016-11-25T18:58:04 * alanharn_ joined the channel
+2016-11-25T19:01:08 * kasparne_ joined the channel
+2016-11-25T19:03:53 * gtirloni has quit
+2016-11-25T19:04:07 * gtirloni joined the channel
+2016-11-25T19:04:38 * kasparnet has quit
+2016-11-25T19:06:49 * cindyli has quit
+2016-11-25T19:29:08 * simonjb joined the channel
+2016-11-25T19:40:11 * Justin_o has quit
+2016-11-25T19:58:46 * alanharn_ is now known as alanharnum
+2016-11-25T20:00:47 <simonjb> colinclark: I was taking a look at your hhromic-pr-67-with-simonbates-release-rtmidi node-midi branch and I saw that you removed the Nan::HandleScope scope; line from the NodeMidiInput New method https://github.com/colinbdclark/node-midi/blob/hhromic-pr-67-with-simonbates-release-rtmidi/src/node-midi.cpp#L277
+2016-11-25T20:02:14 <simonjb> If I\'m reading https://github.com/nodejs/nan/blob/master/doc/scopes.md#api_nan_handle_scope correctly, then I think it isn\'t needed (and isn\'t needed for any of the NAN_METHODs but in the existing code, the others have it
+2016-11-25T20:02:36 <colinclark> uh oh
+2016-11-25T20:02:45 <colinclark> if I removed it, it was probably accidental
+2016-11-25T20:02:56 <colinclark> since I went to the trouble of updating it elsewhere, as you say
+2016-11-25T20:03:04 <colinclark> so you thin it\'s not necessary anywhere?
+2016-11-25T20:03:04 * cindyli joined the channel
+2016-11-25T20:03:05 <simonjb> [I missed ")" above]
+2016-11-25T20:04:53 <simonjb> My knowledge of V8 and Nan is limited so I\'m hesitant to say for sure but it looks to me from reading the docs that an implicit HandleScope is automatically created for NAN_METHODs
+2016-11-25T20:05:13 <colinclark> ah
+2016-11-25T20:05:22 <colinclark> I guess there\'s one way to find out :)
+2016-11-25T20:05:38 <simonjb> https://github.com/nodejs/nan/blob/master/doc/scopes.md
+2016-11-25T20:17:03 * jessm has quit
+2016-11-25T20:18:58 * kasparne_ has quit
+2016-11-25T20:19:32 * kasparnet joined the channel
+2016-11-25T20:34:21 * gtirloni has quit
+2016-11-25T21:16:07 * michelled has quit
+'
+

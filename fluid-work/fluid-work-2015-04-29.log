@@ -1,0 +1,275 @@
+b'2015-04-29T17:19:41 <anastasiac> my eyes are playing tricks on me
+2015-04-29T17:20:37 <jhung> anastasiac: :) Cool
+2015-04-29T17:20:59 * michelled has quit
+2015-04-29T17:21:25 * jhernandez has quit
+2015-04-29T17:21:25 * michelled joined the channel
+2015-04-29T17:22:10 * gtirloni_ joined the channel
+2015-04-29T17:23:39 * michelled joined the channel
+2015-04-29T17:25:15 * michelled has quit
+2015-04-29T17:25:42 * michelled joined the channel
+2015-04-29T17:25:46 <Justin_o> Bosmon:
+2015-04-29T17:26:17 <Justin_o> Bosmon, Bosmon7: I\'ve done some manual testing of cindyli1\'s FLOE-281 branch. Did you need to do more review?
+2015-04-29T17:26:26 <Justin_o> Things are looking good from the manual testing
+2015-04-29T17:26:27 <Bosmon> Justin_o - no, it\'s fine
+2015-04-29T17:26:34 <Bosmon> Feel free to merge it if you think it works according to spec
+2015-04-29T17:26:59 * michelled has quit
+2015-04-29T17:27:09 <cindyli1> yay!! thanks guys
+2015-04-29T17:27:28 * michelled joined the channel
+2015-04-29T17:27:35 <Justin_o> Bosmon: yes, other than it not actually setting the language :)
+2015-04-29T17:28:34 <Bosmon> Justin_o - for that, you can review and merge my FLUID-5599 pull :)
+2015-04-29T17:28:42 * michelled has quit
+2015-04-29T17:29:08 * michelled joined the channel
+2015-04-29T17:29:17 <Justin_o> Bosmon: thanks, cindyli1 was mentioning that to me today, but she said we\'d also have to make some changes to the prefsFramework
+2015-04-29T17:29:40 <Bosmon> Justin_o - yes, there is still a gap to fill in
+2015-04-29T17:30:25 * michelled has quit
+2015-04-29T17:30:53 * michelled joined the channel
+2015-04-29T17:30:54 * clown_mtg is now known as clown
+2015-04-29T17:32:04 <Justin_o> Bosmon: okay
+2015-04-29T17:32:25 * michelled has quit
+2015-04-29T17:32:51 * michelled joined the channel
+2015-04-29T17:33:16 <Bosmon> Justin_o - I think we had decided it was ok to implement the lang change by a total page refresh?
+2015-04-29T17:33:44 <Bosmon> Does this still seem like the scheme we will choose?
+2015-04-29T17:33:47 <Justin_o> Bosmon: we had been talking about that yes
+2015-04-29T17:34:07 <Justin_o> Bosmon: i think you have suggested there might be a way around it by just rerendering..
+2015-04-29T17:34:08 * michelled has quit
+2015-04-29T17:34:11 <Justin_o> is that still possible?
+2015-04-29T17:34:24 <Bosmon> Justin_o - I had suggested it yes, but I think that it\'s not actually workable
+2015-04-29T17:34:35 * michelled joined the channel
+2015-04-29T17:34:42 <Bosmon> Since we would still need to reload the changed message bundles, which with the current framework we would have to do asynchronously
+2015-04-29T17:34:44 <Justin_o> Bosmon: ah okay, then yes we should fall back to the page reload
+2015-04-29T17:34:55 <Bosmon> And only the top level resource loader is capable of that
+2015-04-29T17:34:59 <Justin_o> that will probably have some side effects unfortunately
+2015-04-29T17:35:25 <Justin_o> my last comment there was part of my previo0us
+2015-04-29T17:35:27 <Bosmon> So I think we should honour a language change by writing the changed language into the stored model and then triggering a refresh
+2015-04-29T17:35:37 <Justin_o> Bosmon: okay
+2015-04-29T17:35:40 <Bosmon> Yes - what side effects are you thinking of?
+2015-04-29T17:35:50 <Bosmon> I guess there are some in-memory structures that the app is keeping hold of
+2015-04-29T17:36:06 <Bosmon> I notice that the UI model that we have for this interface is very stateful
+2015-04-29T17:36:38 <Justin_o> Bosmon: yes, i\'m worried that some things might drop their state
+2015-04-29T17:37:29 <Bosmon> Justin_o - we will just have to make sure that that state is in the model too, and store it as well
+2015-04-29T17:37:38 <Bosmon> One of the advantages of model-based development :)
+2015-04-29T17:38:07 <Justin_o> Bosmon: true.. but we\'ll have to track more things like what\'s been changed and etc.
+2015-04-29T17:38:19 <Bosmon> Yes
+2015-04-29T17:38:45 <Bosmon> But it was unavoidable to track it anyway - and it will make our design more reliable to know exactly what it is
+2015-04-29T17:39:14 <Bosmon> But hopefully that\'s just a "quality of implementation" issue, we should be able to demonstrate basic language changing quite quickly
+2015-04-29T17:39:28 <Justin_o> Bosmon: yes... hopefully
+2015-04-29T17:46:55 <Justin_o> cindyli1: I\'ve merged the FLOE-281 pull request
+2015-04-29T17:47:04 <cindyli1> thanks, Justin_o
+2015-04-29T18:03:35 * danaayotte has quit
+2015-04-29T18:04:44 * sepideh has quit
+2015-04-29T18:06:19 * colinclark joined the channel
+2015-04-29T18:07:07 * michelled has quit
+2015-04-29T18:24:53 * cindyli1 has quit
+2015-04-29T18:29:51 * anastasiac has quit
+2015-04-29T18:30:44 * cindyli joined the channel
+2015-04-29T18:31:09 * anastasiac joined the channel
+2015-04-29T18:31:18 <Bosmon> cindyli - I have issued a fix for your model relay issue!
+2015-04-29T18:31:20 <Bosmon> https://github.com/fluid-project/infusion/pull/597
+2015-04-29T18:31:51 <cindyli> that\'s fast. thanks, Bosmon
+2015-04-29T18:32:29 <Bosmon> Hardly fast..... this has taken me more than a day : P
+2015-04-29T18:33:22 * danaayotte joined the channel
+2015-04-29T18:33:23 <cindyli> well, lots of time spent on tracing the cause
+2015-04-29T18:33:54 * colinclark has quit
+2015-04-29T18:35:17 * cindyli1 joined the channel
+2015-04-29T18:36:13 * anastasiac_ joined the channel
+2015-04-29T18:36:56 * cindyli2 joined the channel
+2015-04-29T18:37:11 * cindyli1 has quit
+2015-04-29T18:38:23 * colinclark joined the channel
+2015-04-29T18:38:50 * colinclark has quit
+2015-04-29T18:38:51 * anastasiac has quit
+2015-04-29T18:38:51 * anastasiac_ is now known as anastasiac
+2015-04-29T18:39:05 * jhung1 joined the channel
+2015-04-29T18:39:47 * jhung2 joined the channel
+2015-04-29T18:39:47 * jhung1 has quit
+2015-04-29T18:39:49 * jhung has quit
+2015-04-29T18:39:50 * cindyli has quit
+2015-04-29T18:41:55 * jhung2 has quit
+2015-04-29T18:53:24 * gtirloni__ joined the channel
+2015-04-29T18:55:57 * anastasiac has quit
+2015-04-29T19:23:59 * anastasiac joined the channel
+2015-04-29T19:28:14 * cindyli2 has quit
+2015-04-29T19:48:19 * anastasiac has quit
+2015-04-29T19:59:20 * anastasiac joined the channel
+2015-04-29T20:13:45 * kasparnet joined the channel
+2015-04-29T20:17:15 * kasparnet has quit
+2015-04-29T20:17:45 * cindyli joined the channel
+2015-04-29T20:18:39 * sepideh joined the channel
+2015-04-29T20:27:33 <cindyli> Bosmon, r u around tomorrow?
+2015-04-29T20:28:17 <cindyli> or Bosmon7
+2015-04-29T20:31:27 * kasparnet joined the channel
+2015-04-29T20:32:09 * kasparnet has left the channel
+2015-04-29T21:01:36 * danaayotte has quit
+2015-04-29T21:01:47 * simonjb has quit
+2015-04-29T21:10:57 * danaayotte joined the channel
+2015-04-29T21:14:29 * anvk has quit
+2015-04-29T21:16:24 * anastasiac has quit
+2015-04-29T21:16:36 * colinclark joined the channel
+2015-04-29T21:17:08 * avtar has quit
+2015-04-29T21:18:38 * avtar joined the channel
+2015-04-29T21:24:18 * danaayotte joined the channel
+2015-04-29T21:42:03 * danaayotte joined the channel
+2015-04-29T21:48:13 * jessm has quit
+2015-04-29T21:52:29 * danaayotte has quit
+2015-04-29T21:54:17 * danaayotte joined the channel
+2015-04-29T22:09:02 * danaayotte has quit
+2015-04-29T22:10:27 * yzen_ joined the channel
+2015-04-29T22:30:56 * danaayotte joined the channel
+2015-04-29T22:37:53 * avtar has quit
+2015-04-29T22:47:59 * danaayotte has quit
+2015-04-29T23:06:39 * Justin_o has quit
+2015-04-29T23:27:44 * colinclark has quit
+2015-04-29T23:29:31 * danaayotte joined the channel
+'
+
+b'2015-04-29T01:36:35 * michelled joined the channel
+2015-04-29T01:36:37 * michelled has quit
+2015-04-29T08:01:53 * kasparnet joined the channel
+2015-04-29T08:04:56 * slim_jim joined the channel
+2015-04-29T09:11:49 * slim_jim has quit
+2015-04-29T09:33:37 * slim_jim joined the channel
+2015-04-29T09:33:38 * slim_jim has quit
+2015-04-29T11:45:42 * kasparnet has quit
+2015-04-29T12:08:30 * michelled joined the channel
+2015-04-29T12:13:25 * michelled has quit
+2015-04-29T12:25:58 * jhung joined the channel
+2015-04-29T12:28:51 * Justin_o joined the channel
+2015-04-29T12:38:35 * michelled joined the channel
+2015-04-29T12:42:50 * anvk joined the channel
+2015-04-29T12:47:04 * kasparnet joined the channel
+2015-04-29T12:47:06 * cindyli joined the channel
+2015-04-29T12:47:17 * gtirloni joined the channel
+2015-04-29T12:52:27 * yzen joined the channel
+2015-04-29T12:55:52 <Bosmon> Hi there cindyli
+2015-04-29T12:55:56 <Bosmon> I found the bug : P
+2015-04-29T12:56:02 <cindyli> what\'s about
+2015-04-29T12:56:51 <Bosmon> The modelRelay bug
+2015-04-29T12:57:16 <cindyli> i know. what\'s the bug
+2015-04-29T12:57:21 <Bosmon> oh
+2015-04-29T12:57:27 <Bosmon> It is rather complicated to explain :(
+2015-04-29T12:57:34 <cindyli> haha
+2015-04-29T12:58:01 <Bosmon> It relates to a stupid "safety" feature I put in right at the beginning to prevent certain kinds of infinite relay
+2015-04-29T12:58:08 <Bosmon> I actually thought I had got rid of it completely
+2015-04-29T12:58:38 <cindyli> ah ha, probably now is a good time to get rid of ;)
+2015-04-29T12:58:44 <Bosmon> It prevents any relay from being operated MORE THAN TWO TIMES IN THE SAME DIRECTION in any transaction
+2015-04-29T12:58:51 <Bosmon> Which is fine, even in your case
+2015-04-29T12:59:00 <Bosmon> Except for a further really unpleasant implementation bug
+2015-04-29T12:59:25 <Bosmon> So, "for some reason", the counters which track relay invocation are shared across all transactions
+2015-04-29T12:59:41 <Bosmon> Which again, even in your case would still have been fine, even though it is already a bug
+2015-04-29T12:59:56 <Bosmon> But "it so happens" that you are firing a further transaction in a listener to the previous one
+2015-04-29T13:00:12 <Bosmon> So the test case fixture is entirely driven by the listener to the outgoing change event for the previous transaction
+2015-04-29T13:00:26 <Bosmon> And I think, even more, by the one before that as well
+2015-04-29T13:00:58 <cindyli> where did I fire "a further transaction in a listener to the previous one"
+2015-04-29T13:01:00 <Bosmon> Which implies that the transaction cleanup code for the previous transactions STILL has not run by the time you are making your change of "lang" back to "en" for the last time
+2015-04-29T13:01:59 * sepideh joined the channel
+2015-04-29T13:02:02 <Bosmon> cindyli - https://github.com/cindyli/first-discovery/blob/FLOE-281/tests/js/panelsTests.js#L110
+2015-04-29T13:02:09 <Bosmon> So each of these fixtures are listening to "modelChanged"
+2015-04-29T13:02:16 <Bosmon> And what in fact happens is that they all stack up synchronously
+2015-04-29T13:02:16 <cindyli> ok
+2015-04-29T13:02:26 <Bosmon> Since there is in fact no asynchrony in this test sequence at all
+2015-04-29T13:03:02 <Bosmon> So by the time you get to the final stage, you have THREE transactions queued up on the stack, all just ready to finish
+2015-04-29T13:03:27 <Bosmon> But none of them has executed their cleanup code yet, so this tips the "relayCount" for the relay rule to equal THREE, and the system then prevents it from operating again
+2015-04-29T13:03:38 <cindyli> ok
+2015-04-29T13:03:49 <Bosmon> Anyway, I will work on an isolated test case and fix now ......
+2015-04-29T13:03:55 <cindyli> thanks
+2015-04-29T13:04:12 <Bosmon> I was just too tired to think clearly yesterday
+2015-04-29T13:04:34 * simonjb joined the channel
+2015-04-29T13:04:38 * anvk has quit
+2015-04-29T13:04:41 <Bosmon> Also in the "old framework" it is hard to see that the transactions are stacking up
+2015-04-29T13:04:50 * danaayotte joined the channel
+2015-04-29T13:04:50 <Bosmon> Since you need to find the instantiator to look in it
+2015-04-29T13:05:42 <cindyli> got it.
+2015-04-29T13:05:46 <cindyli> btw, hope you had a good rest last night
+2015-04-29T13:06:08 <Bosmon> The implementation is still terrible, but it\'s still quicker to spend a day debugging and writing a test case than spending a week or two to rewrite it completely :(
+2015-04-29T13:06:14 <Bosmon> But we still need to rewrite it when we can
+2015-04-29T13:07:10 <Bosmon> Well, as you know, most of my sleeping is done in the mornings :)
+2015-04-29T13:08:05 <cindyli> so unhealthy...
+2015-04-29T13:15:47 * colinclark joined the channel
+2015-04-29T13:17:06 * anastasiac joined the channel
+2015-04-29T13:20:00 * yzen joined the channel
+2015-04-29T13:24:22 * slim_jim joined the channel
+2015-04-29T13:40:40 <jhung> anastasiac: I updated the IDI-133 pull request. https://github.com/inclusive-design/outside-in/pull/4
+2015-04-29T13:47:34 * anvk joined the channel
+2015-04-29T13:51:38 * clown joined the channel
+2015-04-29T13:52:36 <anastasiac> thanks, jhung, I\xe2\x80\x99ll have a look
+2015-04-29T14:10:49 <anastasiac> jhung, the oustide-in site is looking great. I\xe2\x80\x99ve left a couple of comments on your pull request
+2015-04-29T14:11:22 <jhung> thanks anastasiac
+2015-04-29T14:49:32 * Jess_ joined the channel
+2015-04-29T15:02:05 * sepideh joined the channel
+2015-04-29T15:07:45 * slim_jim joined the channel
+2015-04-29T15:07:46 * slim_jim has quit
+2015-04-29T15:15:17 <Justin_o> simonjb, cindyli: http://issues.fluidproject.org/browse/FLOE-313
+2015-04-29T15:19:01 <cindyli> thanks, Justin_o
+2015-04-29T15:26:16 <Justin_o> danaayotte: do you have a few minutes before or after standup to talk about the keyboard assessment panel
+2015-04-29T15:31:31 * yzen_ joined the channel
+2015-04-29T15:34:49 * anvk has quit
+2015-04-29T15:45:10 * sepideh joined the channel
+2015-04-29T15:49:01 * cindyli1 joined the channel
+2015-04-29T15:51:36 * cindyli has quit
+2015-04-29T15:53:11 * michelled joined the channel
+2015-04-29T15:56:32 * gtirloni_ joined the channel
+2015-04-29T15:58:29 * yzen joined the channel
+2015-04-29T15:59:18 * gtirloni has quit
+2015-04-29T16:02:15 <anastasiac> cindyli, have you started your work on FLUID-5599 yet?
+2015-04-29T16:02:50 <cindyli1> was thinking about it but don\'t have any code yet, anastasiac
+2015-04-29T16:03:03 <anastasiac> ok, cindyli
+2015-04-29T16:03:31 <danaayotte> Justin_o any time
+2015-04-29T16:05:10 <Justin_o> danaayotte: is now okay?
+2015-04-29T16:06:01 <danaayotte> yes Justin_o
+2015-04-29T16:06:46 * avtar joined the channel
+2015-04-29T16:08:00 * anvk joined the channel
+2015-04-29T16:08:38 * Jess_ has quit
+2015-04-29T16:23:24 <jhung> anastasiac:  I updated the Outside-In pull req.
+2015-04-29T16:23:31 <anastasiac> thanks, jhung
+2015-04-29T16:33:14 * sepideh has quit
+2015-04-29T16:40:55 <anastasiac> jhung, one final picky comment on the outside-in site \xe2\x80\x93\xc2\xa0sorry! :-)
+2015-04-29T16:41:09 <jhung> anastasiac: no worries! :) I\'ll take a look.
+2015-04-29T16:41:50 * jessm joined the channel
+2015-04-29T16:45:17 * sepideh joined the channel
+2015-04-29T16:47:20 * michelled has quit
+2015-04-29T16:47:51 * michelled joined the channel
+2015-04-29T16:51:59 * michelled has quit
+2015-04-29T16:52:25 * michelled joined the channel
+2015-04-29T16:53:42 * michelled has quit
+2015-04-29T16:54:09 * michelled joined the channel
+2015-04-29T16:55:47 * michelled has quit
+2015-04-29T16:56:13 * michelled joined the channel
+2015-04-29T16:57:23 * kasparnet has quit
+2015-04-29T16:58:23 * michelled has quit
+2015-04-29T16:58:50 * michelled joined the channel
+2015-04-29T17:00:07 * michelled has quit
+2015-04-29T17:00:33 * michelled joined the channel
+2015-04-29T17:01:06 <anastasiac> Justin_o, cindyli1: where would I find the latest and greatest copy of FLOE-299 \xe2\x80\x93\xc2\xa0which one of you is working on it right now?
+2015-04-29T17:02:06 <Justin_o> anastasiac: you can get it from my branch
+2015-04-29T17:02:29 <Justin_o> anastasiac: https://github.com/jobara/first-discovery/tree/FLOE-299
+2015-04-29T17:02:42 <anastasiac> ok, Justin_o, thanks. danaayotte has asked for a change to the sticky keys intructions. I can (hopefully) do that and just issue a pull request against your branch
+2015-04-29T17:02:47 * michelled joined the channel
+2015-04-29T17:02:56 <Justin_o> anastasiac: thanks
+2015-04-29T17:04:04 * michelled has quit
+2015-04-29T17:04:41 * michelled joined the channel
+2015-04-29T17:05:14 <jhung> anastasiac: updated the pull req. https://github.com/inclusive-design/outside-in/pull/4
+2015-04-29T17:05:22 <anastasiac> great, jhung, thanks
+2015-04-29T17:06:05 * michelled has quit
+2015-04-29T17:06:34 * michelled joined the channel
+2015-04-29T17:07:48 * michelled has quit
+2015-04-29T17:08:15 * michelled joined the channel
+2015-04-29T17:09:32 * michelled has quit
+2015-04-29T17:09:40 * colinclark has quit
+2015-04-29T17:09:48 <cindyli1> Justin_o: fixed the tts issue with selected elements in FLOE-281, ready for another look
+2015-04-29T17:09:59 <Justin_o> cindyli1: great thanks
+2015-04-29T17:10:10 * michelled joined the channel
+2015-04-29T17:10:20 <cindyli1> np
+2015-04-29T17:11:18 * michelled has quit
+2015-04-29T17:11:46 * michelled joined the channel
+2015-04-29T17:13:15 * michelled has quit
+2015-04-29T17:13:45 * michelled joined the channel
+2015-04-29T17:15:13 * michelled has quit
+2015-04-29T17:15:39 * michelled joined the channel
+2015-04-29T17:16:56 * michelled has quit
+2015-04-29T17:17:23 * michelled joined the channel
+2015-04-29T17:18:00 <anastasiac> jhung, thanks for fixing the line height issue on the outside-in site. Can we try to make the ToC font a bit smaller, more in line with the rest of the page?
+2015-04-29T17:18:39 * michelled has quit
+2015-04-29T17:19:05 * michelled joined the channel
+2015-04-29T17:19:09 <anastasiac> ah, jhung, actually, it\xe2\x80\x99s ok
+2015-04-29T17:19:10 <anastasiac> sorry
+'
+

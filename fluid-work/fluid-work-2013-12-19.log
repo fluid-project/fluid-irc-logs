@@ -1,0 +1,336 @@
+b'2013-12-19T21:47:52 <Justin_o> Bosmon: so the metadata work is pretty exclusive of the prefs framework.. except for the model relay :( i suppose we could try falling back to some other form of model sharing and see if that works
+2013-12-19T21:48:04 <Justin_o> any other recommendations on that front?
+2013-12-19T21:48:18 <Bosmon> Justin_o - there is a field "applierid" which is attached to every ChangeApplier
+2013-12-19T21:48:27 <Bosmon> Which may be useful for you debugging which applier you are actually connected to
+2013-12-19T21:48:55 <Justin_o> right.. i was trying to remember what i was debugging with before for the panels work..
+2013-12-19T21:48:59 <Bosmon> This may help you discover where the old values are coming from, or why the old listeners have not been unbound
+2013-12-19T21:48:59 <Justin_o> okay we can try to look at that
+2013-12-19T21:49:18 <Justin_o> Bosmon: that makes sense
+2013-12-19T21:49:45 <Bosmon> The "old ModelRelay" *does* have a branch which is meant to unbind it from a component on destroy
+2013-12-19T21:49:58 <Bosmon> So it\'s worth stepping through that to see if for some reason it is ineffective
+2013-12-19T21:50:26 <Justin_o> okay.. will do.. thanks for the help
+2013-12-19T21:50:54 <Bosmon> In particular you can see this implementation  - "fluid.prefs.modelRelay.removeListeners"
+2013-12-19T21:52:30 * jhung joined the channel
+2013-12-19T21:52:38 <Justin_o> Bosmon: thanks
+2013-12-19T21:53:31 * cindyli has quit
+2013-12-19T21:56:39 * jhung has quit
+2013-12-19T22:07:37 * clown has left the channel
+2013-12-19T22:37:11 * anastasiac has quit
+2013-12-19T22:45:20 * danaayotte__ has quit
+2013-12-19T22:48:40 * yzen has quit
+2013-12-19T22:48:56 * mrvisser has quit
+2013-12-19T23:02:49 * michelled has quit
+2013-12-19T23:08:14 * jessm has quit
+2013-12-19T23:09:11 * vjoanna1 has quit
+2013-12-19T23:14:13 * colinclark has quit
+2013-12-19T23:18:35 * sgithens joined the channel
+2013-12-19T23:41:27 * sgithens has quit
+2013-12-19T23:41:36 * yzen joined the channel
+2013-12-19T23:41:41 * sgithens joined the channel
+2013-12-19T23:45:03 * yzen has quit
+'
+
+b'2013-12-19T18:11:51 <colinclark> which will launch the PCP
+2013-12-19T18:14:46 <colinclark> and from the PCP, the user can click the "All Preferences" button to get to the PMT
+2013-12-19T18:14:49 <colinclark> is that correct, kasparnet?
+2013-12-19T18:15:44 <colinclark> yzen: While we\'re waiting for kasparnet, I have another question...
+2013-12-19T18:15:47 <colinclark> How will the PCP get the user\'s token and preference set?
+2013-12-19T18:15:58 <colinclark> When it starts up, will it make a request via web sockets to the local Flow Manager?
+2013-12-19T18:16:06 <colinclark> and if so, is that feature also part of GPII-75?
+2013-12-19T18:16:10 <yzen> not really
+2013-12-19T18:16:38 <yzen> so personally it\'s not 100% clear to me how PCP will have the token, that\'s what 290 is about imo
+2013-12-19T18:16:57 <yzen> PCP talks to the flow manager over web sockets only to make updates
+2013-12-19T18:17:56 <colinclark> So Boyan\'s email was suggesting that we don\'t need GPII-290
+2013-12-19T18:18:08 <colinclark> but you\'re thinking--as I am--that in fact it\'s critical for end-to-end integration?
+2013-12-19T18:22:20 <colinclark> It turns out I am somewhat incorrect
+2013-12-19T18:22:25 <colinclark> and vjoanna will set me straight :)
+2013-12-19T18:24:05 * danaayotte_ has quit
+2013-12-19T18:29:42 <vjoanna> kasparnet, colinclark: I think the design intention is that the user opens the PMT from a desktop shortcut. Here they could create an account. On closing the PMT, the PCP launches and persists. The PCP closes if the user opens the PMT or logs out. The PCP reopens if the user closes the PMT or logs back in.
+2013-12-19T18:30:05 <vjoanna> jessm, danaayotte: does this sound right ^
+2013-12-19T18:31:08 <kasparnet> colinclark: sorry, dinner was ready so jumped afk to eat
+2013-12-19T18:31:11 <kasparnet> yes, that\'s correct
+2013-12-19T18:32:40 <kasparnet> colinclark: ok - made it down to vjoanna\'s comment, and that might be more correct :)
+2013-12-19T18:33:13 * vjoanna has left the channel
+2013-12-19T18:33:44 * vjoanna joined the channel
+2013-12-19T18:34:46 <jessm> vjoanna: +1 that\'s what I\'ve understood
+2013-12-19T18:34:57 <jessm> kasparnet: i think folks have gone to get grub on this end too
+2013-12-19T18:35:25 <kasparnet> jessm: hehe cool
+2013-12-19T18:35:28 <kasparnet> thanks
+2013-12-19T18:59:28 * michelled joined the channel
+2013-12-19T19:01:25 * michelled has quit
+2013-12-19T19:12:26 * michelled joined the channel
+2013-12-19T19:14:59 * jhung has quit
+2013-12-19T19:16:31 * michelled has quit
+2013-12-19T19:17:56 * danaayotte_ joined the channel
+2013-12-19T19:21:28 * the-t-in-rtf has quit
+2013-12-19T19:29:23 <colinclark> Ok, so there\'s a bit more for us to think through
+2013-12-19T19:29:37 <colinclark> So in the case of a first-time launch of the PMT, we don\'t need to worry about the user\'s token
+2013-12-19T19:29:45 <colinclark> but if they subsequently launch the PMT, we do need to know it
+2013-12-19T19:30:00 <colinclark> similarly, we need some means to tell the PCP what the user\'s token is
+2013-12-19T19:30:37 <colinclark> if we\'re autolaunching the PCP, we can use our current Launch Handler to do this and to pass the user\'s token as a query parameter in the URL
+2013-12-19T19:31:00 <colinclark> but for the PMT, we need some means whereby it can request the user\'s token
+2013-12-19T19:31:07 <colinclark> kasparnet: Is this making sense to you? ^
+2013-12-19T19:34:55 <kasparnet> yeah, it does
+2013-12-19T19:36:00 <kasparnet> colinclark: I seem to remember us talking about some completely different use case where exposing the token would be helpful... though I forget what it was exactly
+2013-12-19T19:40:00 <colinclark> yzen: So what would it mean from a development perspective to add support for querying the user token via web sockets?
+2013-12-19T19:40:23 <colinclark> In other words, what would someone actually have to do?
+2013-12-19T19:41:17 * jhung joined the channel
+2013-12-19T19:41:44 <yzen> well on the server that would mean having the sockets io handler that would resolve such requests, on the client it would mean connecting to the specific url with web sockets and sending some sort of message ,
+2013-12-19T19:46:12 <kasparnet> yzen: is GPII-270 dependent on GPII-75 (pull request wise)?
+2013-12-19T19:46:26 <yzen> yes
+2013-12-19T19:46:29 <yzen> no tests
+2013-12-19T19:46:34 <kasparnet> yzen: also without the tests?
+2013-12-19T19:46:47 <yzen> yes tests will be added after 75
+2013-12-19T19:47:13 <kasparnet> yzen: ok, but if nick wants to try it out with the RB MM he wouldn\'t need to merge in GPII-75
+2013-12-19T19:47:15 <kasparnet> ?*
+2013-12-19T19:47:41 <yzen> np
+2013-12-19T19:47:42 <yzen> np
+2013-12-19T19:47:45 <yzen> urgh
+2013-12-19T19:47:46 <yzen> no
+2013-12-19T19:48:17 <kasparnet> ok, cool
+2013-12-19T19:48:28 <kasparnet> haha
+2013-12-19T19:49:57 * clown_mtg has quit
+2013-12-19T19:50:03 * clown joined the channel
+2013-12-19T19:50:49 <kasparnet> yzen: ok so I\'m getting lost in all the negatives here.. let me try again
+2013-12-19T19:50:58 <yzen> so
+2013-12-19T19:51:08 <yzen> 270 does not depend on 75
+2013-12-19T19:51:22 <kasparnet> ok cool!
+2013-12-19T19:51:24 <yzen> but it can\'t be merged until the 75 is in and i can write tests for 270
+2013-12-19T19:52:20 <kasparnet> thanks yzen :)
+2013-12-19T19:52:26 <yzen> np )
+2013-12-19T20:02:36 * yzen has quit
+2013-12-19T20:04:13 <jhung> Justin_o: for syntax highlighting for the markup viewer, are we using lib/highlight/styles/github.css
+2013-12-19T20:04:14 <jhung> ?
+2013-12-19T20:05:19 <jhung> Justin_o: I\'m looking at pull request 12 and noticed it was removed - I suspect this may be needed? https://github.com/fluid-project/metadata/pull/12/files
+2013-12-19T20:09:28 * jhung has quit
+2013-12-19T20:12:27 * michelled joined the channel
+2013-12-19T20:12:52 <colinclark> kasparnet: So what do you think we should do about the issue of passing the user token to the PCP/PMT?
+2013-12-19T20:14:04 * michelled has quit
+2013-12-19T20:14:39 * michelled joined the channel
+2013-12-19T20:14:49 * jhung joined the channel
+2013-12-19T20:15:00 * yzen joined the channel
+2013-12-19T20:19:24 <jessm> is Bosmon2 awake?
+2013-12-19T20:24:24 <jessm> cindyli: anastasiac: i\'m looking to get a comprehensive list of places the Vid. Player is -- so far i have IDI, WordPress, ATutor and SNOW. does either of you know of other places where it\'s been integrated?
+2013-12-19T20:24:32 <jessm> and cindyli did it ship in ATutor?
+2013-12-19T20:25:08 <cindyli> as far as i know, not in ATutor yet, jessm
+2013-12-19T20:26:05 <anastasiac> jessm, afaik, that list looks pretty good. I did have a few questions a week or two ago from an Astea developer about the video player; not sure where they\'re integrating it
+2013-12-19T20:29:08 <jessm> cindyli: anastasiac: thanks muchly
+2013-12-19T20:30:25 <jessm> anastasiac: do we know where david fourney was looking to integrate the vid. player? from the list thread?
+2013-12-19T20:33:45 <colinclark> jessm: he is now, yes. Bosmon2 ^
+2013-12-19T20:34:05 * jhung has quit
+2013-12-19T20:34:28 <jessm> Bosmon2: I\'m trying to track down links to work we\'ve done for a report to our funder on Floe. I wondered if you knew of any url for the PhET collaboration?
+2013-12-19T20:34:40 * jhung joined the channel
+2013-12-19T20:35:09 * jhung has quit
+2013-12-19T20:41:07 * jhung joined the channel
+2013-12-19T20:54:58 * jhung has quit
+2013-12-19T20:55:42 * jhung joined the channel
+2013-12-19T21:13:03 * jhung has quit
+2013-12-19T21:19:20 <Justin_o> Bosmon2: are you there?
+2013-12-19T21:34:21 * cindyli has quit
+2013-12-19T21:34:51 * michelled has quit
+2013-12-19T21:35:17 * anastasiac has quit
+2013-12-19T21:35:43 * vjoanna1 joined the channel
+2013-12-19T21:35:54 * clown1 joined the channel
+2013-12-19T21:36:11 * anastasiac joined the channel
+2013-12-19T21:37:12 * clown has quit
+2013-12-19T21:37:25 * cindyli joined the channel
+2013-12-19T21:37:27 * jessm_ joined the channel
+2013-12-19T21:37:47 * vjoanna has quit
+2013-12-19T21:37:47 * jessm has quit
+2013-12-19T21:37:48 * sgithens has quit
+2013-12-19T21:38:09 * jessm_ is now known as jessm
+2013-12-19T21:38:21 * michelled joined the channel
+2013-12-19T21:38:24 * danaayotte__ joined the channel
+2013-12-19T21:38:30 * clown1 is now known as clown
+2013-12-19T21:38:48 <Justin_o> Bosmon2: if you are around tomorrow morning Easter Time, I could use some help with debugging.. If you want to look it at another time, you can look at https://github.com/jobara/metadata/tree/FLOE-125.
+2013-12-19T21:38:48 * danaayotte_ has quit
+2013-12-19T21:38:53 * Bosmon2 is now known as Bosmon
+2013-12-19T21:39:01 <Bosmon> Hi jessm
+2013-12-19T21:39:10 <Bosmon> Easter Time? : P
+2013-12-19T21:39:20 <Bosmon> What kind of problem are you having, Justin_o?
+2013-12-19T21:39:29 <Justin_o> Bosmon2: the steps are 1) add a url for the video and press okay 2) change some of the values in the metadata
+2013-12-19T21:39:39 <Justin_o> 3) hit restart and add a new video url and press okay
+2013-12-19T21:39:47 <Justin_o> 4) notice that the old values are still there
+2013-12-19T21:40:01 * colinclark_ joined the channel
+2013-12-19T21:40:13 <Justin_o> what\'s weird is that we cleared the parent model that the sub  components are attached to, reset the markup, destroyed the sub components and recreated them
+2013-12-19T21:40:34 <Justin_o> Bosmon: Easter time sounds happier :) or hoppier maybe
+2013-12-19T21:41:49 * colinclark has quit
+2013-12-19T21:41:50 * colinclark_ is now known as colinclark
+2013-12-19T21:42:21 * jessm has quit
+2013-12-19T21:42:52 <Justin_o> Bosmon: i\'m going to be heading out for the day soon.. do you have any thoughts and what time do you think you\'ll be on tomorrow?
+2013-12-19T21:43:53 <Bosmon> Justin_o - my feeling is that it may be related to the bug that I am constantly bugging you about :)
+2013-12-19T21:44:06 <Justin_o> Bosmon: oh no ;(
+2013-12-19T21:44:07 <Bosmon> The one detected by FLUID-4890
+2013-12-19T21:44:20 <Justin_o> have you happened to figure out what\'s causing that?
+2013-12-19T21:44:34 * jessm joined the channel
+2013-12-19T21:44:35 <Bosmon> It is a kind of effect that is extremely likely, given that it seems that the whole preferences editing framework seems to be regularly making use of destroyed components
+2013-12-19T21:44:53 <Bosmon> Justin_o - I haven\'t, other than it being some kind of implementation error in the preferences framework : P
+2013-12-19T21:45:22 <Justin_o> Bosmon: :) okay..  the metadata demo doesn\'t use the prefs framework, save for the model relay
+2013-12-19T21:45:28 <Bosmon> For example, I suspect it is very likely that the ModelRelay or some other kind of model binding is continuing to bind onto your destroyed component
+2013-12-19T21:45:40 <Justin_o> Bosmon: well there we go
+2013-12-19T21:45:53 <Justin_o> Bosmon: is your model relay framework ready to go?
+2013-12-19T21:46:02 <Bosmon> Justin_o - yes
+2013-12-19T21:46:13 <Justin_o> are there any examples of use that we can follow?
+2013-12-19T21:46:19 <Bosmon> But it does need to go through a few hurdles yet
+2013-12-19T21:46:25 <Bosmon> For a start it needs to be reviewed
+2013-12-19T21:46:30 <Justin_o> :)
+2013-12-19T21:46:42 <Bosmon> And - I suspect it will cause major upheaval to move all of prefs editing over to it
+2013-12-19T21:46:44 <Justin_o> well we\'d need to have it by tomorrow morning unfortunately
+2013-12-19T21:46:57 <Bosmon> And - it won\'t actually remedy the core failure which is being detected by FLUID-4890
+2013-12-19T21:47:02 <Bosmon> Since your component lifecycle will stay the same
+2013-12-19T21:47:04 <Bosmon> Yes
+2013-12-19T21:47:12 <Bosmon> It will not be ready by tomorrow morning :)
+'
+
+b'2013-12-19T00:00:02 * danaayotte has quit
+2013-12-19T00:10:10 * jhung has quit
+2013-12-19T00:10:48 * jhung joined the channel
+2013-12-19T00:26:15 * colinclark has quit
+2013-12-19T00:39:40 * jhung has quit
+2013-12-19T00:54:43 * vjoanna has quit
+2013-12-19T01:45:40 * mrvisser has quit
+2013-12-19T01:48:21 * jhung joined the channel
+2013-12-19T01:57:35 * sgithens has quit
+2013-12-19T02:02:44 * kasparnet has quit
+2013-12-19T02:17:50 * jhung has quit
+2013-12-19T02:22:21 * Bosmon has quit
+2013-12-19T02:26:54 * Bosmon joined the channel
+2013-12-19T03:09:21 * jhung joined the channel
+2013-12-19T03:17:11 * jhung has quit
+2013-12-19T03:30:20 * jhung joined the channel
+2013-12-19T04:02:17 * yzen joined the channel
+2013-12-19T04:45:54 * jhung has quit
+2013-12-19T06:46:01 * yzen has quit
+2013-12-19T08:11:43 * the-t-in-rtf joined the channel
+2013-12-19T08:43:30 * the-t-in-rtf has quit
+2013-12-19T09:10:45 * the-t-in-rtf joined the channel
+2013-12-19T09:48:14 * kasparnet joined the channel
+2013-12-19T11:06:12 * kasparnet has quit
+2013-12-19T11:32:53 * kasparnet joined the channel
+2013-12-19T11:37:20 * kasparnet has quit
+2013-12-19T11:52:02 * mrvisser joined the channel
+2013-12-19T12:09:13 * amilchev joined the channel
+2013-12-19T13:14:47 * jhung joined the channel
+2013-12-19T13:31:41 * mrvisser has quit
+2013-12-19T13:32:17 * mrvisser joined the channel
+2013-12-19T13:32:46 <jhung> Good morning Justin_o - I pushed up changes for FLOE-128 last night. Please take a look. :)
+2013-12-19T13:37:40 * mrvisser has quit
+2013-12-19T13:38:25 <Justin_o> jhung: thanks.. i\'ll pull those down
+2013-12-19T13:39:25 <jhung> Justin_o, on the positive side, I think I understand Bootstrap\'s grid system better, oh vey!
+2013-12-19T13:40:29 <Justin_o> jhung: that\'s good :)
+2013-12-19T13:40:51 <Justin_o> you might need to document that, or teach it to us someday :)
+2013-12-19T13:42:47 <Justin_o> jhung: so the button doesn\'t stick out anymore, but it\'s still cut off..
+2013-12-19T13:42:53 <Justin_o> did you want to screen share and I can show you?
+2013-12-19T13:43:45 <jhung> sure Justin_o
+2013-12-19T13:46:48 * anvk joined the channel
+2013-12-19T13:55:05 * cindyli joined the channel
+2013-12-19T14:14:46 * michelled joined the channel
+2013-12-19T14:15:19 * jessm joined the channel
+2013-12-19T14:21:06 * colinclark joined the channel
+2013-12-19T14:21:50 * sgithens joined the channel
+2013-12-19T14:22:29 * mrvisser joined the channel
+2013-12-19T14:27:49 * clown joined the channel
+2013-12-19T14:34:54 <cindyli> michelled: the generalization of caption inputs components doesn\'t seem can be quickly done. I\'m going to add a todo comment in the code for it to be improved in the future.
+2013-12-19T14:35:30 * yzen joined the channel
+2013-12-19T14:35:52 <michelled> thx cindyli
+2013-12-19T14:37:38 <cindyli> michelled: the pull request for the captions panel is back ready - https://github.com/fluid-project/metadata/pull/7
+2013-12-19T14:38:16 * kasparnet joined the channel
+2013-12-19T14:38:20 <michelled> thx cindyli
+2013-12-19T14:38:29 <cindyli> np
+2013-12-19T14:42:26 * kasparnet has quit
+2013-12-19T14:47:20 <jhung> Justin_o: I\'ve updated FLOE-128. Hopefully this will be it. :)
+2013-12-19T14:47:44 * sgithens has quit
+2013-12-19T14:48:13 * danaayotte_ joined the channel
+2013-12-19T14:54:10 * michelled has quit
+2013-12-19T14:59:27 * vjoanna joined the channel
+2013-12-19T15:03:20 * kasparnet joined the channel
+2013-12-19T15:06:23 * anastasiac joined the channel
+2013-12-19T15:06:41 * amilchev has left the channel
+2013-12-19T15:06:53 * michelled joined the channel
+2013-12-19T15:07:58 <Justin_o> jhung: cool.. thanks.. i\'ll take a look at it again
+2013-12-19T15:08:06 * clown is now known as clown_mtg
+2013-12-19T15:15:15 <jhung> danaayotte_: let me know when you want to chat about FLOE-130. We\'ll probably do it over skype and do some screen sharing.
+2013-12-19T15:15:54 <danaayotte_> will do jhung, thanks.  I\'m in a meeting until about 11.  Will ping you after that.
+2013-12-19T15:16:48 <jhung> np danaayotte_
+2013-12-19T15:29:26 <Justin_o> jhung: the "OK" button wraps to a new line, is that what you wanted?
+2013-12-19T15:30:17 <jhung> Justin_o: you think it\'s okay? This way you can see more of the text area.
+2013-12-19T15:31:00 <Justin_o> jhung:  it\'s better than the button cutting off :) I think i\'d prefer it beside, but i\'m fine if you and danaayotte_ are happy with it
+2013-12-19T15:31:28 <jhung> Although having the OK button on the same line looks better Justin_o
+2013-12-19T15:31:50 <jhung> Let me do a quick modification and see how it looks...
+2013-12-19T15:31:56 <Justin_o> okay
+2013-12-19T15:37:37 <jhung> Justin_o: I pushed up a change. It looks better with the button on the same line.
+2013-12-19T15:37:48 <Justin_o> jhung: cool, thanks
+2013-12-19T15:40:18 <Justin_o> jhung: looks better.. if you have time for nitpicking.. if you could make the padding to the right of the "OK" button match that of the padding to the left of the editor controls
+2013-12-19T15:40:33 <Justin_o> jhung: that might help get some more room for the url bar
+2013-12-19T15:40:59 <Justin_o> although now that i look at it, that may already be true for the mobile size anyways
+2013-12-19T15:42:54 <jhung> Justin_o: So that\'s okay?
+2013-12-19T15:43:28 <Justin_o> jhung: i think so.. i can show danaayotte_ if you like
+2013-12-19T15:44:12 <danaayotte_> sure Justin_o
+2013-12-19T15:44:41 <Justin_o> danaayotte_: whenever works for you
+2013-12-19T15:45:36 * sgithens joined the channel
+2013-12-19T15:53:12 * amilchev joined the channel
+2013-12-19T15:54:29 <amilchev> hi, Justin_o
+2013-12-19T15:55:12 <amilchev> Justin_o: sorry for forgetting to remove some old (and not needed) code, it\'s been a rush these days
+2013-12-19T15:56:04 <amilchev> Justin_o: about the comment you referenced to cindy - the one with styling the radio buttons
+2013-12-19T15:56:57 <amilchev> Justin_o: cindy had prepared a solution here https://github.com/cindyli/prefsEditors/tree/alex-gpii-271, more specifically https://github.com/cindyli/prefsEditors/blob/alex-gpii-271/src/shared/adjusters/js/Panels.js#L280
+2013-12-19T15:58:02 <amilchev> Justin_o: but after saving, the styling breaks as you can see in her code
+2013-12-19T16:02:14 <Justin_o> amilchev: no worries, totally understand the rush.. as for this last part, can you file a new jira for this too then.. if things are working now, we\'ll get to this post pilot.. maybe add a the jira number to the comment you have in the code already
+2013-12-19T16:03:53 <amilchev> Justin_o: ok, I can do that - should I fire the other two jiras you suggested?
+2013-12-19T16:05:30 <amilchev> Justin_o: the other jira* (singular) - about moving the "enum" strings into the messageBundle
+2013-12-19T16:14:07 <Justin_o> amilchev: yes.. you can create a single jira for that and reference the two enums..
+2013-12-19T16:14:11 <Justin_o> amilchev: thanks
+2013-12-19T16:14:48 <Justin_o> amilchev: could you please let me know when you have pushed up all your changes?
+2013-12-19T16:16:19 * michelled has quit
+2013-12-19T16:17:38 <amilchev> Justin_o: just did, thanks
+2013-12-19T16:18:23 <Justin_o> amilchev: thanks
+2013-12-19T16:21:49 <amilchev> Justin_o: to whom should I assign the jiras for the enums and for the styling bug?
+2013-12-19T16:22:11 <amilchev> not exactly a styling bug but you know what i mean
+2013-12-19T16:24:28 <Justin_o> amilchev: hmm.. i guess that\'s a kasparnet question
+2013-12-19T16:24:46 <Justin_o> amilchev: if you can leave them unassigned, that might be the way to go for now
+2013-12-19T16:28:49 <amilchev> Justin_o: ok, I\'ll just try to explain best what exactly is needed
+2013-12-19T16:30:09 * colinclark has quit
+2013-12-19T16:32:35 <amilchev> Justin_o: I\'ll let you know when they\'re ready, I\'ll be leaving now, bye!
+2013-12-19T16:34:02 * amilchev has left the channel
+2013-12-19T16:55:45 * Bosmon2 joined the channel
+2013-12-19T16:59:36 <Justin_o> yzen: i\'m passing off the gpii pull requests to you.. https://github.com/GPII/prefsEditors/pulls I believe amilchev has addressed or filed jiras for the last comments I had. As for chris, I\'ve left one more, which will likely result in a  file being removed. Not sure if he will get to that today or tomorrow.
+2013-12-19T16:59:45 <yzen> Cool
+2013-12-19T17:01:23 * danaayotte_ has quit
+2013-12-19T17:01:23 * Bosmon has quit
+2013-12-19T17:05:09 * danaayotte_ joined the channel
+2013-12-19T17:08:06 * danaayotte_ has quit
+2013-12-19T17:10:25 <Justin_o> yzen: is there an easy way to set the value of something declaratively.. for example if i wanted to set a member value after an event has fired
+2013-12-19T17:10:26 * yzen has quit
+2013-12-19T17:11:42 * yzen joined the channel
+2013-12-19T17:14:15 * danaayotte_ joined the channel
+2013-12-19T17:18:34 * danaayotte_ has quit
+2013-12-19T17:24:24 * danaayotte_ joined the channel
+2013-12-19T17:25:39 * colinclark joined the channel
+2013-12-19T17:37:47 <Justin_o> cindyli: pushed up some more changes for FLOE-125.. not quite there yet, but getting closer
+2013-12-19T17:38:04 <cindyli> cool. thanks, Justin_o
+2013-12-19T17:48:11 <colinclark> hey yzen, do you have time for a few dumb questions from me?
+2013-12-19T17:48:41 <yzen> colinclark: fire away
+2013-12-19T17:50:45 <colinclark> sorry, my parents are singing
+2013-12-19T17:50:46 <colinclark> one sec
+2013-12-19T18:00:51 <colinclark> ok, sorry
+2013-12-19T18:01:27 <colinclark> yzen: Is http://issues.gpii.net/browse/GPII-269 part of your current work on GPII-75?
+2013-12-19T18:01:33 <yzen> yes
+2013-12-19T18:01:39 <colinclark> That\'s great
+2013-12-19T18:01:59 <colinclark> I\'m reading Boyan\'s email and wondering if there\'s another side to all of this
+2013-12-19T18:02:39 <colinclark> Some of the details are a bit fuzzy
+2013-12-19T18:02:50 <colinclark> But I\'m assuming we\'re going to need to launch the PCP for the user, perhaps automatically
+2013-12-19T18:03:02 <colinclark> Or will that happen via a desktop shortcut
+2013-12-19T18:03:09 <colinclark> kasparnet might know this more clearly than me
+2013-12-19T18:03:30 <yzen> colinclark: i think kasparnet was thinking the latter
+2013-12-19T18:03:52 <colinclark> So both the PCP and the PMT will be launched via different desktop shortcuts?
+2013-12-19T18:03:53 * jhung has quit
+2013-12-19T18:04:35 <yzen> i think so
+2013-12-19T18:04:41 * jhung joined the channel
+2013-12-19T18:05:02 <yzen> i think the main issue re GPII-290 is the external user listener , e.g. RFID etc
+2013-12-19T18:05:46 <kasparnet> colinclark, yzen: I believe the plan is to launch the PMT using a desktop shortcut, and then launch the PCP from the PMT
+2013-12-19T18:06:19 <kasparnet> at least that\'s the decision as I remember it from a PCP/PMT meeting a while back
+2013-12-19T18:06:52 <kasparnet> jessm: do you remember this ^?
+2013-12-19T18:09:02 <jessm> kasparnet: i think that\'s right
+2013-12-19T18:11:33 <colinclark> kasparnet: Okay, just so I\'m clear...
+2013-12-19T18:11:42 <colinclark> There will be one desktop shortcut
+'
+

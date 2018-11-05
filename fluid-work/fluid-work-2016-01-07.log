@@ -1,0 +1,264 @@
+b'2016-01-07T18:27:51 <michelled> cindyli: do you have a few minutes to chat?
+2016-01-07T18:28:47 * jessm joined the channel
+2016-01-07T18:35:33 <michelled> Justin_o: do you have a few minutes to chat?
+2016-01-07T18:37:42 <Justin_o> michelled: sure
+2016-01-07T18:37:54 <Justin_o> michelled: cindy is sitting beside me right now, did you need to chat with both of us?
+2016-01-07T18:38:13 <michelled> about different things
+2016-01-07T18:38:20 <michelled> maybe ping me when you are done
+2016-01-07T18:39:06 <Justin_o> michelled: we can talk now that\'s fine
+2016-01-07T18:39:33 <michelled> ok, but I don\'t really want to interrupt you guys
+2016-01-07T18:40:03 <Justin_o> michelled: that\'s fine
+2016-01-07T18:40:07 <Justin_o> not really interupting
+2016-01-07T18:40:11 <cindyli> michelled: if you can, we can chat after Justin_o and you finish talking
+2016-01-07T18:59:11 * brendan_d has quit
+2016-01-07T18:59:48 * brendan_d joined the channel
+2016-01-07T19:04:08 <Justin_o> zamcnema: should i be seeing an iframe somewhere in the fd tool?
+2016-01-07T19:04:46 <zamcnema> Justin_o: it should be to the right
+2016-01-07T19:05:18 <Justin_o> zamcnema: i wonder if your changes were overwritten by an npm install then... i\'ll try this again
+2016-01-07T19:05:30 <zamcnema> Justin_o: this
+2016-01-07T19:12:16 <zamcnema> Justin_o: We don\'t have a good set up atm, I had to include the node modules folder. you can could pull it, copy the nodemodules folder. do npm install etc. and then copy that back in there.
+2016-01-07T19:19:11 * sepidehshahi has quit
+2016-01-07T19:33:53 * cindyli has quit
+2016-01-07T19:40:40 * cindyli joined the channel
+2016-01-07T19:42:08 * sepidehshahi joined the channel
+2016-01-07T20:10:23 * Yan_Hu has quit
+2016-01-07T20:15:32 <bens__> hi Justin_o: i\'d like to run some IoC reference thoughts by you
+2016-01-07T20:15:59 <Justin_o> bens__: sure
+2016-01-07T20:16:34 <bens__> reference the successHandler invoker definition here: https://github.com/GPII/first-discovery-server/blob/master/src/js/preferencesRouter.js#L67-L69
+2016-01-07T20:17:53 <bens__> and how successHandler is the onResolve callback for the storePromise here: https://github.com/GPII/first-discovery-server/blob/master/src/js/preferencesRouter.js#L171
+2016-01-07T20:18:53 <bens__> when the promise is resolved, that.successHandler will receive the promise value as its only argument
+2016-01-07T20:20:21 <bens__> but.. successHandler is not really a function.. its an invoker (I think this is the infusion term).. and so it doesn\'t *really* receive the  promise value
+2016-01-07T20:21:36 <bens__> instead, infusion remaps the call to the sendResponse function from the gpii.express.handler grade, and the framework provides sendResponse with 200 and the promise value as arguments
+2016-01-07T20:23:58 <bens__> i notice that when I change the storePromise onResolve handler from that.successHandler to "function(value){ that.sendResponse(200, value); }" I get the same results from the browser\'s point of view
+2016-01-07T20:24:25 <Justin_o> bens__: yes, that should be the same
+2016-01-07T20:25:01 <Justin_o> successHandler is more of a convenience method
+2016-01-07T20:25:55 <bens__> yes, and i see why, to hold the http 200 code :)
+2016-01-07T20:26:12 <Justin_o> and i guess to provide some symmetry with the errorHandler method
+2016-01-07T20:26:16 <bens__> i\'m just picking this piece apart as an exercise to understand how the code is executed
+2016-01-07T20:27:03 <bens__> and so my question is... is what i described up above generally what infusion is doing?
+2016-01-07T20:27:30 <Justin_o> but yes, essentially all it does as a convenience is to abstract away the success code and remove the need for the added function in the promise
+2016-01-07T20:27:32 <Justin_o> so not much :)
+2016-01-07T20:29:35 <Justin_o> bens__: in terms of invokers you followed it along quite well yes.. the invokers are meant to provide some indirection to reduce coupling and provide added flexibility.
+2016-01-07T20:29:57 <Justin_o> you\'ve probably read this already, but the summary at the top is a pretty good explanation of what it\'s for http://docs.fluidproject.org/infusion/development/Invokers.html
+2016-01-07T20:31:22 <Justin_o> so in this case that you described, if you wanted to say swap in a different concrete function for handling the success you could just change up the configuration here https://github.com/GPII/first-discovery-server/blob/master/src/js/preferencesRouter.js#L67-L69 and not have to modify the external api
+2016-01-07T20:36:12 * kasparnet has quit
+2016-01-07T20:36:38 <Justin_o> bens__: did that help?
+2016-01-07T20:37:34 <bens__> Justin_o, yes, very much. i have read the invoker doc page, but just re-reading it now and with our discussion its clicking much better
+2016-01-07T20:40:10 <Justin_o> bens__: cool feel free to ping me with any questions...
+2016-01-07T20:40:28 <Justin_o> bens__: by the way do you know if zamcnema has gone home for the day?
+2016-01-07T20:41:16 <bens__> thank you! zamcnema is still online, i\'ll ask him to rejoin irc
+2016-01-07T20:41:30 <Justin_o> bens__: thanks
+2016-01-07T20:42:31 * zamcnema joined the channel
+2016-01-07T20:42:58 <zamcnema> Justin_o: Sorry I think the wifi went down and it logged me out
+2016-01-07T20:43:15 <zamcnema> Justin_o: I had it sitting here open
+2016-01-07T20:45:02 <Justin_o> zamcnema: no worries
+2016-01-07T20:45:48 <Justin_o> zamcnema: so i\'ve found a couple of issues that will prevent your implementation from working.
+2016-01-07T20:46:50 <Justin_o> zamcnema: so to start, this is the function that is called to initialize the first discovery tool https://github.com/zamcnema/first-discovery-previewpane/blob/master/node_modules/gpii-first-discovery/demos/index.html#L179
+2016-01-07T20:48:34 <Justin_o> the first argument there is a "#gpiic-fd" is the container. The container is for scoping the interactions in the DOM. Essentially the classes and etc you provide in a selectors block are all scoped (within) this container. https://github.com/zamcnema/first-discovery-previewpane/blob/master/node_modules/gpii-first-discovery/src/js/firstDiscoveryEditor.js#L163
+2016-01-07T20:49:04 <Justin_o> so there fist issue is that iframe is outside of this container\'s scoping https://github.com/zamcnema/first-discovery-previewpane/blob/master/node_modules/gpii-first-discovery/demos/index.html#L164-L176
+2016-01-07T20:50:34 <Justin_o> so you have to get the iframe inside of this container, either move it into the div above or pull the container up so it encompasses both.
+2016-01-07T20:51:13 * kasparnet joined the channel
+2016-01-07T20:51:54 <Justin_o> now the probable reason why you were getting any errors is because your preview subcomponent was never initialized.
+2016-01-07T20:52:31 <Justin_o> the reason of that, is that you have a circular reference in your events
+2016-01-07T20:53:25 <Justin_o> the preview subcomponent has a create on event.https://github.com/zamcnema/first-discovery-previewpane/blob/master/node_modules/gpii-first-discovery/src/js/firstDiscoveryEditor.js#L130 This says, initialize when this event has fired.
+2016-01-07T20:53:56 <Justin_o> However, the onReady event has been defined as an aggregate event. https://github.com/zamcnema/first-discovery-previewpane/blob/master/node_modules/gpii-first-discovery/src/js/firstDiscoveryEditor.js#L182-L186
+2016-01-07T20:55:56 <Justin_o> an aggregate event only fires when all of it\'s sub events have fired. This allows you to perform a single action after some set of events.
+2016-01-07T20:56:32 <Justin_o> so notice that the aggregate event is actually waiting for the previews own event https://github.com/zamcnema/first-discovery-previewpane/blob/master/node_modules/gpii-first-discovery/src/js/firstDiscoveryEditor.js#L185
+2016-01-07T20:56:45 <Justin_o> so this onReady can never fire
+2016-01-07T20:57:32 <Justin_o> for now you can try removing onReady altogether and changing the create on event to "onPrefsEditorReady" https://github.com/zamcnema/first-discovery-previewpane/blob/master/node_modules/gpii-first-discovery/src/js/firstDiscoveryEditor.js#L130
+2016-01-07T20:57:44 <danayo> hi bens__, thought I heard mention of a demo coming up for the FD tool - is that tomorrow?
+2016-01-07T20:58:39 * brendan_d has quit
+2016-01-07T20:59:48 <Justin_o> zamcnema: so following all that should get you a nice 404 page in your preview window
+2016-01-07T21:01:34 * kasparnet has quit
+2016-01-07T21:03:16 <Justin_o> the next step would be to pass in the correct value for the template url. You could add templateUrl: "../src/html/PrefsEditorPreview.html" to the preview sub components options. That\'ll get the page to show up. A better way would be to pass this in from the init function, but you\'ll have to expand it to accept an options object so you could have something
+2016-01-07T21:03:16 <Justin_o> more like this https://github.com/fluid-project/infusion/blob/master/tests/manual-tests/framework/preferences/fullPage-schema/index.html#L69-L74
+2016-01-07T21:04:12 <Justin_o> the init method is just a convenience that added for the demos to reduce the amount of config that showed up in the html file, you can see it here https://github.com/zamcnema/first-discovery-previewpane/blob/master/node_modules/gpii-first-discovery/demos/js/demos.js#L18
+2016-01-07T21:04:24 <bens__> danayo, no, next friday
+2016-01-07T21:04:36 <bens__> January 15
+2016-01-07T21:05:13 <Justin_o> zamcnema: also i notice the you are changing the main index.js file, rather than the prefsServerIntegration one https://github.com/zamcnema/first-discovery-previewpane/blob/master/node_modules/gpii-first-discovery/demos/prefsServerIntegration/index.html
+2016-01-07T21:05:17 <Justin_o> was that intentional?
+2016-01-07T21:05:26 <Justin_o> bens__: what time is that demo happening?
+2016-01-07T21:05:40 <bens__> danayo, we\'ll have an invite out to the global prefs mailing list
+2016-01-07T21:06:37 * simonjb has quit
+2016-01-07T21:07:08 <zamcnema> Justin_o: I\'ll make sure i start using that one.
+2016-01-07T21:07:27 <bens__> Justin_o, we haven\'t picked a time yet.. I was going to suggest 12:10 PM EST like last time (right after the stand up)
+2016-01-07T21:07:39 <zamcnema> I\'ve messed with the server integration demo a few times when I was wokring with the preferences server.
+2016-01-07T21:08:05 <Justin_o> zamcnema: ah okay, cool.. that should hopefully help you get past this first hurdle but you\'ll still need to wire up the enactors though.
+2016-01-07T21:08:46 <Justin_o> zamcnema: also i\'m sure you\'re modifying the files in the node_modules so that it\'s easier to work with the server at the same time, just don\'t forget to move it back over to the first-discovery tool itself.
+2016-01-07T21:09:02 <danayo> ok, thanks bens__
+2016-01-07T21:09:21 <Justin_o> bens__: thanks
+2016-01-07T21:09:49 <danayo> bens__: i\'m not usually around on Fridays, is there any chance you could do it another day?
+2016-01-07T21:11:07 <zamcnema> Justin_o: Yes, this was just while I was working locally. My plan was to get the fdt that we are wokring on up on git, change the config on the first discovery server so it pulls that one in. that wya we could just push that folder from the node modules. That way we could wokr locally and then also be able to make commits
+2016-01-07T21:12:20 <zamcnema> Justin_o: Thanks for the help! The more I work with it, the more I\'ll figure out.
+2016-01-07T21:14:06 <bens__> danayo: definitely a chance, maybe we can combine with the monday afternoon requirements meeting which usually has a bit of a forum on it. i\'ll float that on our stand up tomorrow
+2016-01-07T21:14:24 <danayo> great, thanks alot bens__
+2016-01-07T21:17:18 * anvk has quit
+2016-01-07T21:21:00 * kasparnet joined the channel
+2016-01-07T21:24:24 * zamcnema_ joined the channel
+2016-01-07T21:28:49 * zamcnema_ has quit
+2016-01-07T21:35:12 * cindyli has quit
+2016-01-07T21:36:31 * cindyli joined the channel
+2016-01-07T21:37:43 * jhung has quit
+2016-01-07T21:56:16 * bens__ has quit
+2016-01-07T21:56:33 * zamcnema has quit
+2016-01-07T22:20:50 * sepidehshahi has quit
+2016-01-07T22:38:58 * michelled has quit
+2016-01-07T23:19:38 * amatas has quit
+2016-01-07T23:21:13 * kasparnet has quit
+2016-01-07T23:39:22 * jhung joined the channel
+2016-01-07T23:39:34 * jhung has quit
+2016-01-07T23:46:27 * yzen joined the channel
+'
+
+b'2016-01-07T00:30:49 * anvk has quit
+2016-01-07T00:32:00 * anvk joined the channel
+2016-01-07T00:43:09 * alanharnum joined the channel
+2016-01-07T00:48:17 * alanharnum has quit
+2016-01-07T01:42:07 * michelled joined the channel
+2016-01-07T01:42:07 * michelled has quit
+2016-01-07T02:05:37 * danayo joined the channel
+2016-01-07T02:24:17 * danayo has quit
+2016-01-07T02:29:28 * kasparnet has quit
+2016-01-07T02:32:47 * kasparnet joined the channel
+2016-01-07T02:33:17 * danayo joined the channel
+2016-01-07T02:37:23 * kasparnet has quit
+2016-01-07T02:44:27 * alanharnum joined the channel
+2016-01-07T02:49:15 * danayo has quit
+2016-01-07T04:14:05 * danayo joined the channel
+2016-01-07T04:30:08 * danayo has quit
+2016-01-07T04:45:13 * alanharnum joined the channel
+2016-01-07T05:17:31 * yzen joined the channel
+2016-01-07T06:02:09 * alanharnum joined the channel
+2016-01-07T08:02:52 * alanharnum joined the channel
+2016-01-07T08:07:15 * alanharnum has quit
+2016-01-07T08:29:49 * the-t-in-rtf1 joined the channel
+2016-01-07T08:29:49 * the-t-in-rtf has quit
+2016-01-07T09:09:47 * amatas joined the channel
+2016-01-07T09:19:45 * yzen joined the channel
+2016-01-07T09:24:06 * yzen has quit
+2016-01-07T10:03:43 * alanharnum joined the channel
+2016-01-07T10:08:26 * alanharnum has quit
+2016-01-07T10:42:59 * kasparnet joined the channel
+2016-01-07T12:04:20 * alanharnum joined the channel
+2016-01-07T12:09:24 * alanharnum has quit
+2016-01-07T12:13:25 * the-t-in-rtf1 has quit
+2016-01-07T13:01:05 * jhernand1z joined the channel
+2016-01-07T13:06:16 * the-t-in-rtf joined the channel
+2016-01-07T13:10:09 * jhung joined the channel
+2016-01-07T13:17:17 * anvk has quit
+2016-01-07T13:18:44 * anvk joined the channel
+2016-01-07T13:21:04 * Justin_o joined the channel
+2016-01-07T13:21:49 * yzen joined the channel
+2016-01-07T13:26:20 * yzen has quit
+2016-01-07T13:26:55 * brendan_d joined the channel
+2016-01-07T13:30:11 * jhernand1z has quit
+2016-01-07T13:57:36 * cindyli joined the channel
+2016-01-07T14:01:35 <jhung> ping Justin_o have time to chat?
+2016-01-07T14:02:13 <Justin_o> sure
+2016-01-07T14:05:30 * sepidehshahi joined the channel
+2016-01-07T14:25:13 * Yan_Hu joined the channel
+2016-01-07T14:26:07 * yzen joined the channel
+2016-01-07T14:30:39 * jessm joined the channel
+2016-01-07T14:35:00 * yzen is now known as yzen_
+2016-01-07T14:39:43 * yzen_ has quit
+2016-01-07T14:43:00 * sepidehshahi has quit
+2016-01-07T14:45:09 * michelled joined the channel
+2016-01-07T14:48:38 * sepidehshahi joined the channel
+2016-01-07T14:54:41 <michelled> jhung: do you have a few minutes to chat?
+2016-01-07T14:55:22 <jhung> sure michelled
+2016-01-07T14:57:41 * yzen joined the channel
+2016-01-07T15:00:02 <Justin_o> jhung: just tried the change/input issue on iOS 9.2 same issue.. so without VoiceOver on you get change and input events firing more like a mouse drag. With VoiceOver on you just get change events.
+2016-01-07T15:02:27 * danayo joined the channel
+2016-01-07T15:02:34 <jhung> Justin_o: ok. I wonder if we can keep working, and file a bug until it\'s fixed?
+2016-01-07T15:07:01 <Justin_o> jhung: the problem is that it affects our descriptions, specifically for the hand movement as it will need to track the prior and current hand position. Because we have to handle both input and change events right now, we always get the message that the hand didn\'t move.
+2016-01-07T15:07:34 <jhung> yeah that\'s very problematic Justin_o. Makes it broken on iOS with VoiceOver on.
+2016-01-07T15:08:09 <Justin_o> its kind of broken everywhere right now
+2016-01-07T15:08:38 <Justin_o> but i could change things so that it is only broken in iOS with VoiceOver on
+2016-01-07T15:09:23 <jhung> that makes me sad Justin_o, but what choice do we have?
+2016-01-07T15:10:49 <michelled> jhung: please call when you get a chance
+2016-01-07T15:21:39 * kasparnet has quit
+2016-01-07T15:22:56 * danayo has quit
+2016-01-07T15:23:49 * simonjb joined the channel
+2016-01-07T15:24:02 <Justin_o> jhung: i\'m investigating other choices now, but no luck so far
+2016-01-07T15:30:18 * kasparnet joined the channel
+2016-01-07T15:33:51 * jhernand1z joined the channel
+2016-01-07T15:41:34 * danayo joined the channel
+2016-01-07T15:43:30 * sepidehshahi joined the channel
+2016-01-07T15:48:23 * jhernand1z has quit
+2016-01-07T15:55:29 * zamcnema joined the channel
+2016-01-07T15:57:20 <zamcnema> Justin_o: I\'m still trying to get this preview to work with the fdt. I tried it as a sibling and then also as a subcomponent under the prefsEditor. I feel like there are some naming conventions that I\'m not getting right on the low level and then maybe some connections that I may have missed on the high level.
+2016-01-07T15:59:39 <zamcnema> Justin_o: would i just inherit the preview from somewhere in gpii as a grade? Right now I have been placing the preview code in a separate js file from the firstDiscovery editor similarly to how the other aspects of the fdt tool are (nav, helpbutton, etc).
+2016-01-07T16:00:47 <Justin_o> zamcnema: i guess the answer may depend on how different it is from the existing preview compenent
+2016-01-07T16:01:22 <Justin_o> zamcnema: if the changes are just minor, some change small config change, you could just use the preview component directly as the subcomponent and make changes in its options.
+2016-01-07T16:02:16 <Justin_o> zamcnema: alternatively if there are more changes needed and it makes sense to create your own component, then you could add the preview as a gradeName in your component. This will merge in its options into your new component... this is kind of like inheritance but it isn\'t exactly.
+2016-01-07T16:03:00 <Justin_o> zamcnema: you might be interested in http://docs.fluidproject.org/infusion/development/ComponentGrades.html
+2016-01-07T16:03:27 <Justin_o> and http://docs.fluidproject.org/infusion/development/SubcomponentDeclaration.html
+2016-01-07T16:03:54 <Justin_o> zamcnema: also if you have some code you could share I could see if I can take a quick look at it
+2016-01-07T16:06:12 * alanharnum joined the channel
+2016-01-07T16:08:33 <zamcnema> Justin_o: Whats the best way to share code on the irc?
+2016-01-07T16:09:37 <Justin_o> zamcnema: pastebin or something like that.. or if you have it in a public repo you could just share the link
+2016-01-07T16:17:57 <zamcnema> Justin_o: Sorry, I had to go make an account. what would you like to see?
+2016-01-07T16:19:08 <Justin_o> zamcnema: i guess what you\'re working on now, so where your preview code is and where you\'re integrating it i guess.
+2016-01-07T16:20:56 <zamcnema> Justin_o: I\'m trying to use the code that you linked to me. I\'ve tried messing with the names, but I haven\'t had any luck. I\'ll get you some links
+2016-01-07T16:23:01 <Justin_o> zamcnema: thanks
+2016-01-07T16:25:00 <Justin_o> jhung: can you try this for me with firefox and some other browser https://jsfiddle.net/kw88vkLh/1/
+2016-01-07T16:25:18 <Justin_o> and tell me if you see anything different about how the input and change events are fired
+2016-01-07T16:26:52 <jhung> Seems okay Justin_o. Input and change events seem to be firing as expected.
+2016-01-07T16:27:58 <Justin_o> jhung: i\'m noticing in FF that if you use the keyboard it doesn\'t fire change events, only input
+2016-01-07T16:28:05 <Justin_o> but in other browsers i get both
+2016-01-07T16:28:57 <jhung> oh Justin_o I just tried mouse. :D I see now. Change doesn\'t apply in FF until focus moves.
+2016-01-07T16:29:18 <zamcnema> Justin_o: http://pastebin.com/UE71B0c8
+2016-01-07T16:29:39 <Justin_o> jhung: ah okay, i see that it is updated after focus moves now..
+2016-01-07T16:29:44 <Justin_o> zamcnema: thanks
+2016-01-07T16:31:40 <zamcnema> Justin_o: http://pastebin.com/AUcWtz1D
+2016-01-07T16:34:55 <zamcnema> Justin_o: http://pastebin.com/mrizY8Gs
+2016-01-07T16:38:16 <zamcnema> Justin_o: I noticed how the naming conventions werent the same as if n the other components (nav, helpbutton) so the first thing that I tried was changing that on the preview.js file and in the index.html markup. I wasn\'t getting the connectivity from the iframe to the html content stored in the PrefsEditorPreview.html file. I kept messing with it yesterday until i left. When I got here this morning I tried to reseting it back
+2016-01-07T16:40:20 * sepidehshahi has quit
+2016-01-07T16:41:49 <zamcnema> Justin_o: and attempted to see if I could get it to connect to the markup that i found in the fullpreviewprefseditor in the project example that you linked me.
+2016-01-07T16:45:09 <Justin_o> zamcnema: sorry had to run for my standup meeting here, just got back.. will look now.. by the way, are you getting any errors?
+2016-01-07T16:45:43 <zamcnema> Justin_o: after that I tried the same thing only through declaring it as a subcomponent of the prefsEditor in the firstDiscoveryEditor. At this point I get the feeling that I\'m missing something simple or something really big.
+2016-01-07T16:46:35 * bens__ joined the channel
+2016-01-07T16:47:16 <zamcnema> Justin_o: I\'m just getting the console errors that normally pop up for the fdt. I wish it would give me some. that would actually be helpful.
+2016-01-07T16:48:09 * sepidehshahi joined the channel
+2016-01-07T16:48:10 <Justin_o> zamcnema: so what you are seeing when you run this is that the iframe is populated but it doesn\'t update as you make changes?
+2016-01-07T16:49:20 <zamcnema> Justin: I\'m getting the html stuff
+2016-01-07T16:49:48 <zamcnema> Justin: but nothing from the iframes template
+2016-01-07T16:50:00 <zamcnema> so its just an empty box
+2016-01-07T16:51:36 <Justin_o> zamcnema: i think this is wrong "{prefsEditor}.dom.previewFrame"
+2016-01-07T16:51:46 <Justin_o> it should probably be "{that}.dom.previewFrame"
+2016-01-07T16:52:08 * bens__ has quit
+2016-01-07T16:52:34 * bens__ joined the channel
+2016-01-07T16:53:55 <zamcnema> Justin_o: I\'ve been checking the iframe with the dev tools too, all i\'m getting are a pair of html,head,body tags
+2016-01-07T16:55:38 <Justin_o> zamcnema: can you send the markup that has the previewFrame selector
+2016-01-07T16:57:55 <zamcnema> Justin_o: http://pastebin.com/mrizY8Gs
+2016-01-07T16:58:09 <zamcnema> Justin_o: I have to run to a stand up brb
+2016-01-07T17:02:00 <Justin_o> zamcnema: ah you sent me that, but i wasn\'t sure if it was the entire thing... it seems that it\'s separate from the rest of the tool though. So I\'m not sure how you are getting the frame.
+2016-01-07T17:05:38 <zamcnema> Justin_o: I\'ll get you the rest of the html for that page,
+2016-01-07T17:05:45 <Justin_o> zamcnema: thanks
+2016-01-07T17:14:01 <zamcnema> Justin_o: I\'m working out of a first discovery server clone, I\'ll see about getting that up on my github for you.
+2016-01-07T17:14:15 <Justin_o> zamcnema: cool thanks
+2016-01-07T17:29:38 * danayo has quit
+2016-01-07T17:35:40 * the-t-in-rtf1 joined the channel
+2016-01-07T17:35:56 * the-t-in-rtf has quit
+2016-01-07T17:48:00 <bens__> hi Justin_o: i\'m trying to run frist-discovery-server on my laptop here and had a question about the auth server. based on the vagrant config for development there should be a auth server at listening on your host machine at port 8081 that the first-discovery-server talks to. Can you point me towards what you were running there? Was it one of the OAuth 2 example servers referenced from here: https://github.com/GPII/universal/tree/master/gpii/node_modules/g
+2016-01-07T17:48:01 <bens__> pii-oauth2 ?
+2016-01-07T17:48:29 <bens__> unbroken link: https://github.com/GPII/universal/tree/master/gpii/node_modules/gpii-oauth2
+2016-01-07T17:49:41 <Justin_o> bens__: from the root of universal i ran the following:
+2016-01-07T17:49:44 <Justin_o> NODE_ENV=cloudBased.development.all.local node gpii.js
+2016-01-07T18:00:15 <Justin_o> bens__: did that work for you?
+2016-01-07T18:00:43 <bens__> I have not tried it yet but i think i just finished tracing through some of the config
+2016-01-07T18:00:59 <bens__> the flowManager dev config pulls in this file: https://github.com/GPII/universal/blob/master/testData/security/TestOAuth2DataStore.js
+2016-01-07T18:01:37 <bens__> so I could grab the client id and secret there for something or add my own and use the values in my FD-Server environment vars
+2016-01-07T18:02:36 <Justin_o> bens__: yes, that\'s correct.. this will be converted to a proper database at some point too, but till then you could make those changes in this file or use something that already exists there
+2016-01-07T18:04:38 * Bosmon7 joined the channel
+2016-01-07T18:05:47 * danayo joined the channel
+2016-01-07T18:06:53 * alanharnum joined the channel
+2016-01-07T18:12:04 * alanharnum has quit
+2016-01-07T18:20:20 <bens__> Justin_o: I am cooking with fire now, thank you for the pointers
+2016-01-07T18:20:51 <Justin_o> bens__: :)
+2016-01-07T18:23:03 <zamcnema> Justin_o: I\'ve got you a link to my clone of the fdserver that I was developing on. I had to remove the gitignore for the nodemodules or else it would have just overwritten the stuff I was working on with the fdt branch.
+2016-01-07T18:23:09 <zamcnema> Justin_o: https://github.com/zamcnema/first-discovery-previewpane.git
+2016-01-07T18:23:36 <Justin_o> zamcnema: thanks, i\'ll take a look at that
+2016-01-07T18:24:19 <zamcnema> Justin_o: nah, thank you, I appreciate the help.
+'
+

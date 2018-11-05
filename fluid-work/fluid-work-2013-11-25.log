@@ -1,0 +1,257 @@
+b'2013-11-25T20:22:10 <Bosmon> anastasiac - UIO already includes an infrastructure for this, the "onSignificantDOMChange" event which is operated by the "separated panel"
+2013-11-25T20:22:39 <Bosmon> As well as fixing the CSS for the scrollbars, we should adjust the panel rendering infrastructure to fire this event automatically
+2013-11-25T20:22:43 <Bosmon> Justin_o ^
+2013-11-25T20:22:47 <anastasiac> ah, Bosmon, I didn\'t know about that
+2013-11-25T20:23:06 <Bosmon> Unfortunately I can\'t commit the pull in its current form, since the interaction is sort of unusable : P
+2013-11-25T20:24:03 <Bosmon> It seems it is automatically fired by the updateView method
+2013-11-25T20:24:40 <Bosmon> Which is itself called by "afterPanelShow" and "onReset"
+2013-11-25T20:24:58 <Bosmon> Fixing the issue ought to be as simple as binding it to a further rendering event in the hierarchy
+2013-11-25T20:25:19 <anastasiac> Bosmon, you mean the onSignificantDOMChange is currently being fired?
+2013-11-25T20:25:22 <Bosmon> I think this would be a good opportunity to refactor the fluid.prefs.separatedPanel.bindEvents method which is very oldfashioned
+2013-11-25T20:25:30 <Bosmon> anastasiac - it is fired by the two methods I mentioned
+2013-11-25T20:25:40 <Bosmon> But clearly it needs to be fired on more occasions
+2013-11-25T20:25:57 <Bosmon> All of this implementation is in the SeparatedPanelPrefsEditor.js which seems in need of a good renovation :)
+2013-11-25T20:25:58 <anastasiac> so is this a fix that needs to be carried out in the framework? or is it the instructional demo that needs to listen for the event and do something?
+2013-11-25T20:26:09 <Bosmon> Of course it must be in the framework : P
+2013-11-25T20:26:16 <Bosmon> We\'re not going to expect panel authors to know about this obscure event....
+2013-11-25T20:26:33 <Justin_o> Bosmon, anastasiac: just on a call at the moment, but i\'ll check back in with you about the change in a little bit
+2013-11-25T20:26:33 <anastasiac> ok, that\'s what I thought, but I wasn\'t sure - just want to make sure my understanding is correct
+2013-11-25T20:26:33 <Bosmon> But I\'m surprised we haven\'t run into this issue more often
+2013-11-25T20:26:40 <anastasiac> you know what they say about "assume"\xe2\x80\xa6 :-)
+2013-11-25T20:37:45 * yzen joined the channel
+2013-11-25T20:37:50 <Bosmon> I don\'t think it\'s much of an assumption to assume we should deliver things that work : P
+2013-11-25T20:42:33 <Justin_o> Bosmon: i\'m back
+2013-11-25T20:42:45 <Justin_o> Bosmon:  just going to read over the conversation
+2013-11-25T20:42:53 <Bosmon> Justin_o - I\'ve entered a summary on the FLUID-5220 pull request
+2013-11-25T20:43:03 <Justin_o> Bosmon: thanks
+2013-11-25T20:43:08 <Justin_o> i\'ll read that instead
+2013-11-25T20:44:13 <Bosmon> When you make your fix, it\'s ok to just append it to the FLUID-5220 branch to save time
+2013-11-25T20:44:20 <Bosmon> We can treat this as a "giant integration branch"
+2013-11-25T20:45:05 <Justin_o> Bosmon: cool thanks.. that\'ll be easier
+2013-11-25T20:45:18 <Bosmon> It\'s actually not all that unrelated to the DOM binding issue in any case
+2013-11-25T20:46:34 <Justin_o> Bosmon:  i take it i just need to fire that event as a result of onDomBind in the case of conditional panel
+2013-11-25T20:46:48 <Bosmon> Justin_o - that\'s one possibility, yes
+2013-11-25T20:47:11 <Justin_o> Bosmon:  okay.. and as for the fluid.prefs.separatedPanel.bindEvents function.. you just want that made declarative?
+2013-11-25T20:47:16 <Bosmon> Justin_o - right
+2013-11-25T20:47:32 <Bosmon> It should make it easier to bind onto the "extra event" in any case
+2013-11-25T20:47:37 <Justin_o> okay.. on it.. i\'ll also try to look into the scrollbar issue.. but not really sure what\'s up with that
+2013-11-25T20:47:38 <Bosmon> Since otherwise it is just a dependency risk
+2013-11-25T20:47:48 <Justin_o> ah okay
+2013-11-25T20:48:23 <Bosmon> I guess it\'s reasonable to imagine that "onDomBind" corresponds to all of the remaining cases of a "significant DOM change"
+2013-11-25T20:48:32 <Bosmon> But that depends on your understanding of the arcthiecture
+2013-11-25T20:48:36 <Bosmon> architecture
+2013-11-25T20:49:12 <Justin_o> Bosmon: you mean that onSignificantDomChange would be switched to onDomBind?
+2013-11-25T20:49:22 <Bosmon> Justin_o - what does that mean?
+2013-11-25T20:50:47 <Justin_o> Bosmon: i guess i don\'t fully know what you mean :)
+2013-11-25T20:51:18 <Bosmon> Justin_o - well, the "significant DOM change" event was meant to be a reasonably coarse-grained signalling of some DOM change that would cause a major change in layout
+2013-11-25T20:51:31 <Bosmon> Which we imagine corresponds to an execution of the renderer
+2013-11-25T20:52:00 <Bosmon> If you\'re confident that "onDomBind" correlated with all of those, and won\'t fire unnecessarily too many times, then indeed you should just gear one event to the other
+2013-11-25T20:52:05 <Bosmon> Using a listener
+2013-11-25T20:54:00 <Justin_o> Bosmon: ah okay..
+2013-11-25T20:54:20 <Justin_o> not remove onSignificatnDOMChange and replace it with onDomBind
+2013-11-25T20:54:25 <Justin_o> both would still exist
+2013-11-25T20:54:31 <Bosmon> Certainly not
+2013-11-25T20:54:32 <Bosmon> Yes
+2013-11-25T20:54:45 <Justin_o> okay. i\'ll explore that
+2013-11-25T20:55:09 <Justin_o> i\'m going to try to modernize bindEvents first to make sure i don\'t break thins inadverently
+2013-11-25T20:55:29 <Bosmon> Justin_o - good plan!
+2013-11-25T20:56:32 <Justin_o> Bosmon:  And to recap from the other day.. in the ginger world.. if i use {subComponent} where the subComponent is created with a createOnEvent.. it won\'t try to create the subComponent ahead of time to resolve that IoC reference?
+2013-11-25T20:57:25 <Bosmon> Justin_o - that\'s correct, yes
+2013-11-25T20:57:39 <Bosmon> You can\'t force evaluation of a "createOnEvent" component - it is entirely invisible until the event occurs
+2013-11-25T20:58:00 <Justin_o> Bosmon: okay.. thanks.. so that will resolve to undefined or it won\'t resolve at all until it is created?
+2013-11-25T20:58:18 <Bosmon> If there is actually a path component, I believe the framework will even give you an error
+2013-11-25T20:58:26 <Bosmon> That is, {component}.path for a nonexistent component is an error
+2013-11-25T20:58:40 <Bosmon> Just {component} itself for a nonexistent component will give you a value or undefined, and no error
+2013-11-25T20:59:14 <Bosmon> Yes, {component}.path for no component will give you this:
+2013-11-25T20:59:15 <Justin_o> Bosmon: so how would i make use of it.. since i\'ll need to pass in subcomponents in as arguments to the listeners of others
+2013-11-25T20:59:15 <Bosmon> fluid.fail("Failed to resolve reference " + ref + " - could not match context with name "
+2013-11-25T20:59:15 <Bosmon> + context + " from component " + fluid.dumpThat(parentThat), parentThat);
+2013-11-25T20:59:25 <Justin_o> Bosmon: ah okay
+2013-11-25T20:59:30 <Justin_o> seen that error before..
+2013-11-25T20:59:39 <Justin_o> but what is the correct way around it?
+2013-11-25T20:59:55 <Bosmon> Justin_o - the correct way around it is to properly organise your dependencies :)
+2013-11-25T21:00:35 <Justin_o> :) okay.. so as long as the other component is created before. The resolution will happen at creation time
+2013-11-25T21:00:45 <Bosmon> Yes
+2013-11-25T21:01:01 <Justin_o> okay.. i\'ll just try to sort out the timing of these subcomopnents
+2013-11-25T21:01:07 <Bosmon> You shouldn\'t be issuing references to components which you aren\'t sure exist
+2013-11-25T21:01:13 <Bosmon> Justin_o - what timing issue are you thinking of in particular?
+2013-11-25T21:01:55 <Justin_o> Bosmon: looks like these subcomponents are all created at different times and listeners for one will need to call actions on another
+2013-11-25T21:02:29 <Bosmon> Justin_o - a great reason to sort out the mess in the "bindEvents" method : P
+2013-11-25T21:02:55 <Justin_o> Bosmon: yes.. it takes advantage of being called after everything is done
+2013-11-25T21:03:16 <Bosmon> Justin_o - it\'s acceptable to move all this material into a dedicated "event binding component" if the timing gets too complicated
+2013-11-25T21:03:26 <Bosmon> And have that component "createOnEvent" after the lastest thing that it refers to
+2013-11-25T21:03:44 <Bosmon> But it may be possible to factor out this material into parts which can be bound straightforwardly and declaratively
+2013-11-25T21:03:57 <Bosmon> That is, the contents of this method probably need to be sent out to a number of different locations
+2013-11-25T21:04:03 <Bosmon> So keeping it all together may not be the right answer
+2013-11-25T21:05:23 <Justin_o> Bosmon: yes.. trying to break it all out first
+2013-11-25T21:28:03 * yzen has quit
+2013-11-25T21:28:20 * yzen joined the channel
+2013-11-25T21:42:03 <Justin_o> Bosmon: i\'m heading out now.. i won\'t have this done tonight :( i\'ll keep looking into it tomorrow..
+2013-11-25T21:42:56 * cindyli has quit
+2013-11-25T21:44:57 <Bosmon> Justin_o - cool, good luck
+2013-11-25T21:58:39 * jhung has quit
+2013-11-25T21:59:10 * greggy has quit
+2013-11-25T21:59:33 * clown has left the channel
+2013-11-25T22:05:28 * anvk has quit
+2013-11-25T22:29:25 * sgithens has quit
+2013-11-25T22:36:28 * anastasiac has quit
+2013-11-25T22:36:47 * mrvisser has quit
+2013-11-25T22:44:05 * danaayotte has quit
+2013-11-25T22:46:47 * michelled has quit
+2013-11-25T23:18:47 * yzen has quit
+2013-11-25T23:27:12 * vjoanna has quit
+2013-11-25T23:58:49 * sgithens joined the channel
+'
+
+b'2013-11-25T00:03:28 * mrvisser joined the channel
+2013-11-25T00:08:04 * mrvisser has quit
+2013-11-25T00:26:13 * michelled joined the channel
+2013-11-25T00:32:07 * michelled has quit
+2013-11-25T01:34:32 * mrvisser joined the channel
+2013-11-25T01:38:54 * mrvisser has quit
+2013-11-25T02:05:20 * mrvisser joined the channel
+2013-11-25T02:10:35 * mrvisser has quit
+2013-11-25T02:36:11 * mrvisser joined the channel
+2013-11-25T02:40:43 * mrvisser has quit
+2013-11-25T03:06:55 * mrvisser joined the channel
+2013-11-25T03:11:09 * mrvisser has quit
+2013-11-25T03:37:37 * mrvisser joined the channel
+2013-11-25T03:42:25 * mrvisser has quit
+2013-11-25T04:08:25 * mrvisser joined the channel
+2013-11-25T04:13:05 * mrvisser has quit
+2013-11-25T04:39:10 * mrvisser joined the channel
+2013-11-25T04:43:47 * mrvisser has quit
+2013-11-25T05:09:59 * mrvisser joined the channel
+2013-11-25T05:14:03 * mrvisser has quit
+2013-11-25T05:40:41 * mrvisser joined the channel
+2013-11-25T05:45:09 * mrvisser has quit
+2013-11-25T06:11:23 * mrvisser joined the channel
+2013-11-25T06:16:35 * mrvisser has quit
+2013-11-25T06:42:10 * mrvisser joined the channel
+2013-11-25T06:46:45 * mrvisser has quit
+2013-11-25T07:12:53 * mrvisser joined the channel
+2013-11-25T07:17:23 * mrvisser has quit
+2013-11-25T07:43:40 * mrvisser joined the channel
+2013-11-25T07:48:09 * mrvisser has quit
+2013-11-25T08:14:26 * mrvisser joined the channel
+2013-11-25T08:17:23 * jhernandez joined the channel
+2013-11-25T08:19:28 * mrvisser has quit
+2013-11-25T08:31:52 * jhernand1z joined the channel
+2013-11-25T08:34:56 * jhernandez has quit
+2013-11-25T08:35:10 * jhernand1z is now known as jhernandez
+2013-11-25T08:45:20 * mrvisser joined the channel
+2013-11-25T08:49:40 * mrvisser has quit
+2013-11-25T09:16:01 * mrvisser joined the channel
+2013-11-25T09:20:26 * mrvisser has quit
+2013-11-25T09:46:44 * mrvisser joined the channel
+2013-11-25T09:51:00 * mrvisser has quit
+2013-11-25T10:17:32 * mrvisser joined the channel
+2013-11-25T10:22:10 * mrvisser has quit
+2013-11-25T10:48:17 * mrvisser joined the channel
+2013-11-25T10:52:46 * mrvisser has quit
+2013-11-25T11:19:02 * mrvisser joined the channel
+2013-11-25T11:23:54 * mrvisser has quit
+2013-11-25T11:46:56 * amilchev joined the channel
+2013-11-25T11:48:05 * mrvisser joined the channel
+2013-11-25T13:23:38 * yzen joined the channel
+2013-11-25T13:26:43 * yzen has quit
+2013-11-25T13:27:13 * jhung joined the channel
+2013-11-25T13:31:38 * jhung1 joined the channel
+2013-11-25T13:33:52 * yzen joined the channel
+2013-11-25T13:34:32 * jhung has quit
+2013-11-25T13:35:44 * jhung1 has quit
+2013-11-25T13:39:58 * jhung joined the channel
+2013-11-25T13:41:55 * yzen has quit
+2013-11-25T13:42:16 * anvk joined the channel
+2013-11-25T13:46:43 * mrvisser has quit
+2013-11-25T13:58:12 * mrvisser joined the channel
+2013-11-25T14:06:59 * cindyli joined the channel
+2013-11-25T14:16:21 * greggy joined the channel
+2013-11-25T14:18:20 * danaayotte joined the channel
+2013-11-25T14:20:18 * yzen joined the channel
+2013-11-25T14:20:43 * jhung1 joined the channel
+2013-11-25T14:24:56 * jhung1 has quit
+2013-11-25T14:29:18 * clown joined the channel
+2013-11-25T14:30:19 * greggy has quit
+2013-11-25T14:54:32 * greggy joined the channel
+2013-11-25T14:58:04 * anastasiac joined the channel
+2013-11-25T15:00:46 * jhung1 joined the channel
+2013-11-25T15:05:44 * Jess_ joined the channel
+2013-11-25T15:10:12 * jhung2 joined the channel
+2013-11-25T15:13:40 * jhung2 has quit
+2013-11-25T15:13:40 * jhung1 has quit
+2013-11-25T15:14:17 * jhung has quit
+2013-11-25T15:14:36 * jhung joined the channel
+2013-11-25T15:15:06 * jhung1 joined the channel
+2013-11-25T15:15:08 * jhung has left the channel
+2013-11-25T15:21:54 <jhung1> /nick jhung
+2013-11-25T15:22:01 * jhung1 is now known as jhung
+2013-11-25T15:24:14 * sgithens joined the channel
+2013-11-25T15:31:44 * vjoanna joined the channel
+2013-11-25T15:36:44 * Jess_ has quit
+2013-11-25T15:45:09 * michelled joined the channel
+2013-11-25T16:13:56 * amilchev is now known as baba
+2013-11-25T16:14:14 * baba is now known as Alexander
+2013-11-25T16:14:32 * Alexander is now known as Alexander_Milche
+2013-11-25T16:14:44 * Alexander_Milche is now known as AlexanderMilchev
+2013-11-25T16:24:12 * AlexanderMilchev has left the channel
+2013-11-25T16:26:06 * [o__o] has left the channel
+2013-11-25T16:28:18 * [o__o] joined the channel
+2013-11-25T16:40:13 * yzen_ joined the channel
+2013-11-25T16:41:13 * yzen has quit
+2013-11-25T16:41:13 * yzen_ is now known as yzen
+2013-11-25T16:52:17 <jhung> danaayotte, vjoanna: I sent you an email with a super rough snapshot of the design I\'m working on. Let me know when you have it and we can skype.
+2013-11-25T16:54:43 <vjoanna> jhung: got it, thanks
+2013-11-25T16:56:28 <danaayotte> jhung: ok
+2013-11-25T17:03:11 * michelled has quit
+2013-11-25T17:04:02 * michelled joined the channel
+2013-11-25T17:40:22 <michelled> anastasiac: with the prefs framework in the current state, is this still valid? http://issues.fluidproject.org/browse/FLUID-5016
+2013-11-25T17:43:47 <anastasiac> michelled, I don\'t know of anything that now addresses this issue, so I\'d say yes, it\'s still something that would be good to have
+2013-11-25T17:57:19 <michelled> cindyli: if you are looking for something to start on while Justin_o and I finish up planning, you can take a look at the top table of JIRA issues on this page: http://wiki.fluidproject.org/display/fluid/Floe+Iteration+Plan
+2013-11-25T17:59:41 <cindyli> ok, michelled
+2013-11-25T18:03:48 * greggy has quit
+2013-11-25T18:04:08 * greggy joined the channel
+2013-11-25T18:04:39 * jhung has quit
+2013-11-25T18:05:26 * greggy has quit
+2013-11-25T18:06:16 * greggy joined the channel
+2013-11-25T18:09:27 <anastasiac> michelled and Justin_o, since you\'re going through JIRAs, I\'ve created a new one for you :-)  http://issues.fluidproject.org/browse/FLUID-5223
+2013-11-25T18:16:51 <Justin_o> Bosmon: FLUID-5205 and FLUID-5220 have been updated are are ready for you to review again.
+2013-11-25T18:24:05 * jhung joined the channel
+2013-11-25T18:37:19 <Justin_o> jhung, cindyli, anastasiac: do you have time to chat with michelled  and I about FLOE
+2013-11-25T18:37:28 <anastasiac> sure
+2013-11-25T18:37:35 <jhung> sure
+2013-11-25T18:37:36 <cindyli> sure
+2013-11-25T18:38:10 <Justin_o> jhung: we\'ll Skype you in
+2013-11-25T18:38:14 <jhung> ok
+2013-11-25T18:40:48 * yzen has quit
+2013-11-25T18:41:20 * anastasiac_ joined the channel
+2013-11-25T18:42:46 * anastasiac has quit
+2013-11-25T18:42:46 * anastasiac_ is now known as anastasiac
+2013-11-25T18:49:34 <Bosmon> Justin_o - are they still separate?
+2013-11-25T18:50:49 * michelled has quit
+2013-11-25T19:02:34 * mrvisser has quit
+2013-11-25T19:22:21 * cindyli has quit
+2013-11-25T19:29:15 * mrvisser joined the channel
+2013-11-25T19:41:12 * anastasiac has quit
+2013-11-25T19:42:53 * cindyli joined the channel
+2013-11-25T20:10:01 * cindyli has quit
+2013-11-25T20:12:47 * cindyli joined the channel
+2013-11-25T20:13:24 * anastasiac joined the channel
+2013-11-25T20:14:01 <Justin_o> sorry.. i\'m back now
+2013-11-25T20:14:10 <Bosmon> Hi Justin_o, it\'s ok, I have worked it out
+2013-11-25T20:14:16 <Bosmon> How was the FLOE meeting?
+2013-11-25T20:15:32 <Justin_o> Bosmon: it was okay.. we still need to work out what the demo will actually be though..
+2013-11-25T20:15:41 <Justin_o> Bosmon: i think we\'ll need to do more talking on that
+2013-11-25T20:18:49 <Bosmon> Hi Justin_o
+2013-11-25T20:19:05 <Bosmon> I am testing out FLUID-5220 and there is a significant rendering problem with the instructional demos
+2013-11-25T20:19:08 <Bosmon> I guess this is an issue for anastasiac
+2013-11-25T20:19:11 * michelled joined the channel
+2013-11-25T20:19:33 <Justin_o> Bosmon: :( really
+2013-11-25T20:19:40 <Justin_o> is it the expansion of the panels?
+2013-11-25T20:19:42 <Bosmon> If I bring up the conditional preferences demo in its initial condition, and then turn the preference to "on", no scrollbar appears and the panel does not adjust its height
+2013-11-25T20:19:46 <Bosmon> Yes, it is the expansion of the panels
+2013-11-25T20:20:11 <Justin_o> Bosmon: yes.. i think anastasiac was going to talk to you and maybe vjoanna about that.. can\'t remember now
+2013-11-25T20:20:12 <Bosmon> As well as that, there is an unnecessary appearance of a disabed horizonal scrollbar in the panel
+2013-11-25T20:20:15 <anastasiac> Bosmon, yes, you\'re right, that\'s a problem with the instructional demos. I haven\'t yet figured out a solution for that
+'
+

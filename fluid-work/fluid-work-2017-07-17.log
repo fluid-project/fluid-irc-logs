@@ -1,0 +1,377 @@
+b'2017-07-17T20:56:04 <gtirloni> ah, it\'s already documented here in some form: https://github.com/gpii-ops/docker-preferences-dataloader
+2017-07-17T20:56:19 <gtirloni> spin up couchdb, load prefs data, start prefs server
+2017-07-17T20:56:35 <gtirloni> but that\'s using the pre-Alpine settings
+2017-07-17T20:56:47 <gtirloni> so not very useful, except for starting CouchDB and loading the data
+2017-07-17T20:57:32 <gtirloni> one sec
+2017-07-17T21:00:11 <colinclark> cool, as I say, I\'m just trying to slot in all the conceptual pieces I can
+2017-07-17T21:00:18 <colinclark> knowing of course that we\'re still in the midst of making it work
+2017-07-17T21:05:26 * eloisa has quit
+2017-07-17T21:07:57 <gtirloni> docker run -d --name couchdb -p 5984:5984 --name couchdb couchdb
+2017-07-17T21:07:57 <gtirloni> docker run --rm --link couchdb -e COUCHDB_URL=http://couchdb:5984/preferences gpii/preferences-dataloader
+2017-07-17T21:07:57 <gtirloni> docker run -d -p 9001:9001 --name prefserver --link couchdb -e GPII_PREFERENCES_DATASOURCE_URL=http://couchdb:5984/preferences/%userToken -e GPII_PREFERENCES_LISTEN_PORT=9001 -e NODE_ENV=gpii.config.preferencesServer.standalone.production universal
+2017-07-17T21:07:57 <gtirloni> docker run -d -p 9002:9002 --name flowmanager --link prefserver -e GPII_FLOWMANAGER_PREFERENCES_URL=http://prefserver:9001/preferences/%userToken -e GPII_FLOWMANAGER_LISTEN_PORT=9002 -e NODE_ENV=gpii.config.cloudBased.flowManager.production universal
+2017-07-17T21:08:01 <gtirloni> colinclark: ^
+2017-07-17T21:08:10 * jhung has quit
+2017-07-17T21:08:14 <gtirloni> that should give you prefs server on port 9001 and flow manager on port 9002
+2017-07-17T21:08:32 <gtirloni> and couchdb (loaded with test data) on 5984
+2017-07-17T21:09:01 <gtirloni> just adjust the image name (end of the docker command) from \'universal\' to the name you used, if different
+2017-07-17T21:12:53 <colinclark> that\'s great, gtirloni
+2017-07-17T21:12:57 <colinclark> we\'re making progress
+2017-07-17T21:12:59 <colinclark> i merged your PR
+2017-07-17T21:13:04 <colinclark> but you snuck in that extra commit
+2017-07-17T21:13:08 <colinclark> so github is confused
+2017-07-17T21:13:23 <colinclark> and me :)
+2017-07-17T21:14:07 <gtirloni> merged \'master\' ? wow, that was a while ago
+2017-07-17T21:14:21 <gtirloni> i see the PR as open
+2017-07-17T21:14:40 <gtirloni> (a while == 30min or so ago)
+2017-07-17T21:14:45 <colinclark> yes
+2017-07-17T21:15:01 <colinclark> to the best of my knowledge, that\'s because of the extra commit
+2017-07-17T21:15:07 <colinclark> the one you pushed recently
+2017-07-17T21:15:24 <colinclark> i assume it\'s because we both merged master into the branch
+2017-07-17T21:15:27 <colinclark> but at different commits
+2017-07-17T21:15:40 <colinclark> either that or I possibly screwed everything up :)
+2017-07-17T21:15:46 <gtirloni> ah, got it. ok, the unmerged commit shouldn\'t matter then
+2017-07-17T21:15:57 <colinclark> it shouldn\'t
+2017-07-17T21:15:59 <gtirloni> i think GH might be a bit slow..
+2017-07-17T21:16:07 <colinclark> sadly Github seemed not to have figured it out
+2017-07-17T21:16:12 <gtirloni> gpii-bot even tested the merge and commented there
+2017-07-17T21:16:14 <gtirloni> yeah
+2017-07-17T21:16:26 <gtirloni> cool, colinclark thanks!
+2017-07-17T21:17:03 <gtirloni> today i forked the \'ops\' repo, created a local branch, but that was still out of sync with the repo.. that was very weird
+2017-07-17T21:17:13 <gtirloni> maybe it\'s eventual consistency :)
+2017-07-17T21:18:26 <colinclark> ha!
+2017-07-17T21:18:39 <colinclark> well, let me know if I\'ve obliterated part of the universe
+2017-07-17T21:18:44 <colinclark> no pun intended
+2017-07-17T21:18:49 <gtirloni> lol
+2017-07-17T21:19:37 <avtar> too bad, it\'s a pretty good pun
+2017-07-17T21:19:53 * stegru has quit
+2017-07-17T21:19:59 <colinclark> i guess it\'s all about setting an intention
+2017-07-17T21:20:04 <colinclark> intention: pun
+2017-07-17T21:20:04 <avtar> ;)
+2017-07-17T21:37:17 * pratik_r has left the channel
+2017-07-17T21:38:02 <gtirloni> ok, CI is happy.. build times at 6min (from 13min previously) and "staging" and "production" containers redeployed, we\'re officially Alpine-powered
+2017-07-17T21:38:09 <gtirloni> such hipsters
+2017-07-17T21:39:35 <avtar> wow
+2017-07-17T21:41:58 <avtar> everything feels like it has more disk space now
+2017-07-17T21:42:12 <gtirloni> haha yeah, precious bits
+2017-07-17T21:42:42 <gtirloni> i guess i was most impressed by the dataloader image going from 750MB+ to 10MB.. i guess we may have missed something in .dockerignore
+2017-07-17T21:44:09 <avtar> https://ci.inclusivedesign.ca/view/GPII%20-%20Docker/job/docker-gpii-universal-master/48/
+2017-07-17T21:44:09 <avtar> https://ci.inclusivedesign.ca/view/GPII%20-%20Docker/job/docker-gpii-universal-master/47/
+2017-07-17T21:44:37 <avtar> shaving off ~14 mins is pretty decent
+2017-07-17T21:47:26 <gtirloni> yep, for CI i think we don\'t care a lot.. but now with GPII-2470 and spinning up local containers for (some form of) e2e tests, that helps
+2017-07-17T21:47:40 * amatas has quit
+2017-07-17T21:54:43 * avtar has quit
+2017-07-17T22:15:00 * jhernandez has quit
+2017-07-17T22:26:40 * danayo joined the channel
+2017-07-17T22:37:57 * colinclark has quit
+2017-07-17T22:44:41 * danayo has quit
+2017-07-17T22:45:44 * danayo joined the channel
+2017-07-17T22:45:44 * danayo has quit
+2017-07-17T23:04:19 * eloisa joined the channel
+2017-07-17T23:50:50 * eloisa joined the channel
+'
+
+b'2017-07-17T15:29:12 <stegru> heh
+2017-07-17T15:29:26 * alanharnum has quit
+2017-07-17T15:29:32 * alanharn_ joined the channel
+2017-07-17T15:30:39 * clown off to a meeting.  brb
+2017-07-17T15:31:56 * alanharn_ has quit
+2017-07-17T15:32:22 * alanharnum joined the channel
+2017-07-17T15:43:31 <amatas> clown: the "vagrant up" command in the master branch of gpii-windows with the latest VM works fine in my environment (Linux Host, Vagrant 1.9.7, Virtualbox 5.1.22)
+2017-07-17T15:43:56 <amatas> should I try it on a OSX host?
+2017-07-17T15:52:47 * alanharnum joined the channel
+2017-07-17T15:53:30 * colinclark joined the channel
+2017-07-17T15:58:33 <clown> amatas, I\'m back.  Catching up.
+2017-07-17T15:58:42 * michelled joined the channel
+2017-07-17T15:59:02 <clown> Yes, I use an OS X host.   macOS Sierra 10.12.5
+2017-07-17T15:59:20 <amatas> ok, I\'ll try later
+2017-07-17T15:59:33 <clown> sure no problem.  thanks!
+2017-07-17T16:00:18 * danayo has quit
+2017-07-17T16:00:19 * alanharnum has quit
+2017-07-17T16:00:29 <clown> amatas, if it matters:  Virtual Box 5.1.18 r114002 (Qt5.6.2); vagrant 1.9.2
+2017-07-17T16:00:45 * alanharnum joined the channel
+2017-07-17T16:01:52 <clown> Justin_o:  see above.  I\'ll keep you posted.
+2017-07-17T16:08:26 * kasparne_ joined the channel
+2017-07-17T16:10:11 * alanharnum has quit
+2017-07-17T16:10:17 * alanharnum joined the channel
+2017-07-17T16:10:19 <Justin_o> clown: thanks
+2017-07-17T16:26:55 * eloisa joined the channel
+2017-07-17T16:27:42 <stegru> jhernandez: Bosmon , windows now passes :D
+2017-07-17T16:27:52 <stegru> there\'s a small write-up here: https://issues.gpii.net/browse/GPII-2495
+2017-07-17T16:28:17 <Bosmon> stegru - you are magnificent
+2017-07-17T16:28:33 <Bosmon> I will insist so to your wife if she happens to visit :)
+2017-07-17T16:29:16 <jhernandez> stegru: sweet gru!
+2017-07-17T16:29:22 <jhernandez> :)
+2017-07-17T16:29:41 <stegru> great
+2017-07-17T16:30:14 <stegru> we\'ve had this problem before, with the SPI.. where the returned value isn\'t always the one that was set
+2017-07-17T16:30:16 * michelled has quit
+2017-07-17T16:46:41 * alanharnum has quit
+2017-07-17T16:47:07 * alanharnum joined the channel
+2017-07-17T16:57:00 * kasparne_ has quit
+2017-07-17T16:59:51 * alanharnum has quit
+2017-07-17T16:59:57 * alanharn_ joined the channel
+2017-07-17T17:00:16 * danayo joined the channel
+2017-07-17T17:05:14 * michelled joined the channel
+2017-07-17T17:07:08 * cindyli has quit
+2017-07-17T17:13:59 * cindyli joined the channel
+2017-07-17T17:41:29 * colinclark has quit
+2017-07-17T17:42:59 * kasparnet joined the channel
+2017-07-17T17:44:49 * alanharnum joined the channel
+2017-07-17T17:46:39 * simonjb has quit
+2017-07-17T17:47:46 * kasparnet has quit
+2017-07-17T17:49:21 * alanharnum has quit
+2017-07-17T17:49:27 * alanharnum joined the channel
+2017-07-17T17:56:54 * colinclark joined the channel
+2017-07-17T17:59:56 <alanharnum> eloisa, can you send me an email (aharnum@ocadu.ca) from your ocadu email now that it works? I\'ll set you up for a vidyo account.
+2017-07-17T18:06:55 * eloisa has quit
+2017-07-17T18:16:32 * alanharnum has quit
+2017-07-17T18:16:59 * alanharnum joined the channel
+2017-07-17T18:26:59 * alanharnum joined the channel
+2017-07-17T18:27:27 * danayo has quit
+2017-07-17T18:30:03 * colinclark has quit
+2017-07-17T18:35:03 * kasparnet joined the channel
+2017-07-17T18:38:19 * danayo joined the channel
+2017-07-17T18:41:38 * eloisa joined the channel
+2017-07-17T18:42:40 * clown joined the channel
+2017-07-17T18:43:38 * colinclark joined the channel
+2017-07-17T18:43:59 * eloisa has quit
+2017-07-17T18:44:16 * eloisa joined the channel
+2017-07-17T18:45:16 * alanharnum has quit
+2017-07-17T18:45:42 * danayo_ joined the channel
+2017-07-17T18:46:09 <avtar> alanharnum, gtirloni: what are your thoughts re: the use of docker containers for serving static content with nginx? Justin_o asked if there was a standard way of getting people set up to do that when working on frontend projects
+2017-07-17T18:53:10 <gtirloni> usually depends on the software stack that will be used to build it.. there could be a container with all dev tools
+2017-07-17T18:53:24 <gtirloni> or are you asking about how to actually deploy the website live?
+2017-07-17T18:57:03 <gtirloni> in that case, there is no standard way.. people can use "FROM scratch; COPY . /somewhere" and that can be used in combination with a nginx container... or "FROM nginx" and provide nginx with the code (we probably want to have control over which nginx is used, so this would be more of a convenience for developers, not a production image)
+2017-07-17T18:57:56 <gtirloni> for instance, that dev container idea -- https://github.com/idi-ops/docker-polymer
+2017-07-17T18:58:52 <avtar> gtirloni: i think it\'s more so to just serve static content and use whatever build tools already available on the host os
+2017-07-17T18:59:09 <gtirloni> ah got it
+2017-07-17T18:59:21 <gtirloni> there are some examples here: https://hub.docker.com/_/nginx/
+2017-07-17T18:59:56 <avtar> the alpine image might be a good start
+2017-07-17T19:00:00 <avtar> i\'ll check it out
+2017-07-17T19:00:09 <gtirloni> not sure you even need to create a new image
+2017-07-17T19:00:24 <gtirloni> if it\'s only for serving content that was already built using OS tools
+2017-07-17T19:00:41 * danayo has quit
+2017-07-17T19:00:42 * danayo_ is now known as danayo
+2017-07-17T19:01:43 * kasparne_ joined the channel
+2017-07-17T19:04:02 * kasparnet has quit
+2017-07-17T19:17:45 * kasparne_ has quit
+2017-07-17T19:22:01 * danayo has quit
+2017-07-17T19:22:24 * cindyli joined the channel
+2017-07-17T19:48:43 <gtirloni> I\'m suggesting we update the supported VBox/Vagrant versions here: https://github.com/GPII/qi-development-environments/pull/11
+2017-07-17T19:48:56 <gtirloni> I think these versions have been working fine, please correct me if someone is having issues with them
+2017-07-17T19:57:04 * jessm has quit
+2017-07-17T19:59:26 <avtar> gtirloni: looks good
+2017-07-17T19:59:36 <avtar> left a small comment regarding a small change
+2017-07-17T19:59:49 <gtirloni> thanks
+2017-07-17T20:01:02 * the-t-in-rtf has quit
+2017-07-17T20:05:20 * danayo joined the channel
+2017-07-17T20:17:18 <gtirloni> avtar: ah, i see we have another hanging in there from May.. sorry, didn\'t see that before
+2017-07-17T20:18:58 <gtirloni> i\'ve closed mine as yours is way more complete (and it\'d create a conflict)
+2017-07-17T20:21:49 <colinclark> gtirloni: Your instructions on https://github.com/GPII/universal/pull/521 were super helpful
+2017-07-17T20:22:06 <gtirloni> cool
+2017-07-17T20:22:16 <colinclark> I was momentarily confused when I kept getting a Fedora 24 box provisioned, but I just needed to update your branch to the latest master
+2017-07-17T20:22:35 <colinclark> and now the universal tests are streaming away in a Docker container running inside a Fedora 26 virtual machine
+2017-07-17T20:22:52 <colinclark> and I\'m frying an omelette on my MacBook
+2017-07-17T20:23:23 <gtirloni> ah sorry, i merged master and forgot to push
+2017-07-17T20:24:37 <colinclark> no problem at all
+2017-07-17T20:25:11 <colinclark> I still really love that F26 background image
+2017-07-17T20:25:13 <colinclark> so great
+2017-07-17T20:25:37 <gtirloni> yeah, i think it\'s relaxing
+2017-07-17T20:26:32 <colinclark> I\'m also impressed by the inline JSON tree view when I make a request to the Preferences Server in Firefox
+2017-07-17T20:27:21 <colinclark> gtirloni: I have a funny question for you
+2017-07-17T20:27:49 <colinclark> this "universal" Docker image that I have built
+2017-07-17T20:27:53 * kasparnet joined the channel
+2017-07-17T20:28:06 <colinclark> what exactly is it? :)
+2017-07-17T20:28:20 <colinclark> Does it correspond directly to anything we actually deploy somewhere?
+2017-07-17T20:28:28 * kasparne_ joined the channel
+2017-07-17T20:29:30 * kavya has quit
+2017-07-17T20:29:40 <gtirloni> yes, we used to manage it off tree (https://github.com/gpii-ops/docker-universal) but since GPII-1093 (https://github.com/GPII/universal/pull/327) it lives inside the universal repo
+2017-07-17T20:30:06 <gtirloni> it\'s published in the Docker Hub (http://hub.docker.com/u/gpii/universal) and used to spin up the Preferences Server and Flow Manager containers
+2017-07-17T20:31:08 <gtirloni> it\'s not the most efficient docker image we could have for production, because it contains dev dependencies and the layering is not optimal (http://lists.gpii.net/pipermail/architecture/2017-July/004592.html), but it\'s fine for our scale right now
+2017-07-17T20:31:41 * kasparne_ has quit
+2017-07-17T20:32:01 * kasparnet has quit
+2017-07-17T20:32:05 <gtirloni> it\'s following the mantra of having what\'s running on developer\'s laptop into staging into production, all the same image
+2017-07-17T20:32:35 <colinclark> yeah, makes sense
+2017-07-17T20:33:13 <colinclark> so is there a separate container for the Preferences Server?
+2017-07-17T20:33:17 <gtirloni> in the future we could have two dockerfiles in the repo, one for production and another for dev (the dev one can be improved with more tools for development then)... but what i described is what we have today
+2017-07-17T20:34:05 <gtirloni> there used to be a separate container (and Ansible role) for the preferences server and the flow manager but they are unnecessary now (at least not necessary any longer for the features they provide.. they are provided through env vars directly from universal config files)
+2017-07-17T20:34:13 <colinclark> ok
+2017-07-17T20:34:59 <colinclark> are there any other artifacts I can look at that show me how, when deploying a preference server, we make use of this container?
+2017-07-17T20:35:05 <colinclark> i\'m trying to fit all the pieces together
+2017-07-17T20:35:07 <gtirloni> https://github.com/gpii-ops/ -- i\'ve marked them as deprecated, the single gpii/universal image can be used now --- CI changed proposed here: https://github.com/inclusive-design/ops/pull/78
+2017-07-17T20:35:23 <gtirloni> *changes
+2017-07-17T20:36:14 <colinclark> ok, so I think I see how all this fits together
+2017-07-17T20:37:25 <colinclark> It looks like we\'ve got a kind generic driver now for "things deployed from the universal repo" which lets you specify a particular config to use
+2017-07-17T20:37:40 <gtirloni> yeah
+2017-07-17T20:37:57 <colinclark> ok
+2017-07-17T20:38:17 <colinclark> and in the case of having run this command: docker run --rm -ti -p 8081:8081 universal npm start
+2017-07-17T20:38:26 <gtirloni> right now only prefs server and flow manager are properly "instrumented" for production, but all other components could be started from this single image, provided we have config files with the appropriate features
+2017-07-17T20:38:27 <colinclark> I am starting the default development config of universal
+2017-07-17T20:38:32 <colinclark> right
+2017-07-17T20:38:35 <gtirloni> yes, exactly
+2017-07-17T20:38:38 <colinclark> those seem like the right two ones to start with
+2017-07-17T20:38:41 * cindyli has quit
+2017-07-17T20:38:56 <colinclark> ok, everything\'s making more sense
+2017-07-17T20:39:36 <gtirloni> :)
+2017-07-17T20:49:01 <colinclark> now if I wanted to test one of these production configs with my super hot VM here...
+2017-07-17T20:49:04 <colinclark> could I?
+2017-07-17T20:49:17 <colinclark> like if I wanted to start up a production PS?
+2017-07-17T20:52:58 <colinclark> gtirloni: ^
+2017-07-17T20:53:51 <gtirloni> one sec, let me get the steps
+2017-07-17T20:54:15 <colinclark> yup sorry
+2017-07-17T20:54:16 <colinclark> no rush!
+2017-07-17T20:54:32 <gtirloni> btw that\'s what GPII-2470 is about.. but that\'s still not ready, i had to work on many other dependencies (but they\'re now in place)
+'
+
+b'2017-07-17T00:28:48 * sgithens joined the channel
+2017-07-17T06:36:39 * the-t-in-rtf joined the channel
+2017-07-17T06:39:26 * amatas joined the channel
+2017-07-17T07:25:08 * the-t-in-rtf joined the channel
+2017-07-17T07:32:35 * stegru joined the channel
+2017-07-17T08:05:44 * the-t-in-rtf1 joined the channel
+2017-07-17T08:07:32 * sirdancealot joined the channel
+2017-07-17T08:45:59 * jhernandez has quit
+2017-07-17T08:47:41 * jhernandez joined the channel
+2017-07-17T08:49:29 * jhernandez has quit
+2017-07-17T08:55:10 * the-t-in-rtf joined the channel
+2017-07-17T09:39:08 * jhernandez joined the channel
+2017-07-17T09:50:12 * the-t-in-rtf1 joined the channel
+2017-07-17T10:32:25 <jhernandez> Bosmon: morning DOCTOR - thanks for making windows use universal:trunk! :)
+2017-07-17T10:32:42 <Bosmon> jhernandez - unfortunately as the-t-in-rtf1 has reported we have remaining problems
+2017-07-17T10:32:53 <Bosmon> Our libraries are still not good enough to run from a bare drive root such as V:
+2017-07-17T10:33:04 <jhernandez> oh
+2017-07-17T10:33:07 <jhernandez> :(
+2017-07-17T10:33:42 <jhernandez> well, then we should wait until this new vagrant box can be used in our trunks
+2017-07-17T10:36:52 * gtirloni joined the channel
+2017-07-17T10:52:31 <the-t-in-rtf1> The thing is, it doesn\'t cause any harm to upgrade the box by itself.
+2017-07-17T10:52:45 <the-t-in-rtf1> It\'s only a problem if you have things set up not to run in the default c:/vagrant
+2017-07-17T10:52:51 <the-t-in-rtf1> I might be the only person doing that.
+2017-07-17T10:53:24 <the-t-in-rtf1> I didn\'t configure any of the packages I submitted pulls against to use that convention either, or to use Windows.
+2017-07-17T10:53:37 <the-t-in-rtf1> (I mean other people\'s packages, not just the ones I maintain)
+2017-07-17T11:14:07 <jhernandez> I see
+2017-07-17T11:16:28 <jhernandez> well, AFAIK, windows or gpii-app always run things on c:\\vagrant, but I may be wrong - in any case, I\'ll submit pull requests in order to check whether the new box isn\'t a problem
+2017-07-17T11:29:47 * the-t-in-rtf joined the channel
+2017-07-17T11:29:47 * the-t-in-rtf1 has quit
+2017-07-17T11:46:00 * gtirloni has quit
+2017-07-17T11:48:06 <the-t-in-rtf> There are 5 failing unit tests at least for me, but the acceptance tests pass.
+2017-07-17T11:49:06 <the-t-in-rtf> There are no "require" failures from c:/vagrant
+2017-07-17T11:51:25 <the-t-in-rtf> Interestingly, the windows tests in master pass or fail in the same way when run from v:/
+2017-07-17T11:51:38 <the-t-in-rtf> v colon slash in case you got an emoticon there.
+2017-07-17T11:52:34 <the-t-in-rtf> Well, at least the unit tests have the same results.
+2017-07-17T11:54:10 <the-t-in-rtf> the acceptance tests also work.
+2017-07-17T11:56:02 <stegru> why can\'t c:\\vagrant be linked to v:\\ - so when something is run from \\vagrant, it would resolve to v:\\ instead of \\\\vbox..
+2017-07-17T12:07:56 * gtirloni joined the channel
+2017-07-17T12:09:28 <the-t-in-rtf> Is anyone else seeing 5 unit test failures when running the windows tests against master?
+2017-07-17T12:09:54 * cindyli joined the channel
+2017-07-17T12:12:34 <jhernandez> nope, everything went fine
+2017-07-17T12:12:58 <jhernandez> in fact I merged master into hst-2017 branch and it\'s still passing
+2017-07-17T12:13:13 <jhernandez> https://github.com/GPII/windows/pull/130
+2017-07-17T12:16:34 <the-t-in-rtf> Are you running the tests locally on a Windows machine, or in Vagrant?
+2017-07-17T12:19:00 * simonjb joined the channel
+2017-07-17T12:19:33 * Justin_o joined the channel
+2017-07-17T12:23:06 <jhernandez> vagrant
+2017-07-17T12:26:43 * kasparnet joined the channel
+2017-07-17T12:31:16 * sgithens has quit
+2017-07-17T12:35:38 * simonjb joined the channel
+2017-07-17T12:36:31 <the-t-in-rtf> That\'s really odd, as I consistently get failures in vagrant (newest box).
+2017-07-17T12:37:02 <the-t-in-rtf> Anyway, I noticed that we didn\'t have a) a standard `npm test` command for that package or b) code coverage reports, so I put in a PR here: https://github.com/GPII/windows/pull/131
+2017-07-17T12:37:24 <the-t-in-rtf> probably that\'ll need to be updated once @amatas work on a new Vagrant config for that package is available.
+2017-07-17T12:42:51 * kasparne_ joined the channel
+2017-07-17T12:45:53 * kasparnet has quit
+2017-07-17T12:47:03 <the-t-in-rtf> Mine is a much smaller set of changes against master, hopefully we can discuss the test oddities there.
+2017-07-17T12:50:42 <jhernandez> the-t-in-rtf: by any chance, are these the failures you\'re getting? https://ci.gpii.net/job/windows-unit-tests/174/console
+2017-07-17T12:50:47 * jessm joined the channel
+2017-07-17T12:51:00 <the-t-in-rtf> hyup.
+2017-07-17T12:51:28 <jhernandez> hmmm
+2017-07-17T12:52:58 <jhernandez> stegru: can you take a look at those failing tests?
+2017-07-17T12:53:40 <jhernandez> they are SPI-related
+2017-07-17T12:56:17 * gtirloni joined the channel
+2017-07-17T13:10:57 * pratik_r joined the channel
+2017-07-17T13:15:01 * the-t-in-rtf1 joined the channel
+2017-07-17T13:15:01 * the-t-in-rtf has quit
+2017-07-17T13:18:19 * stegru has quit
+2017-07-17T13:21:33 * kasparne_ has quit
+2017-07-17T13:23:21 <the-t-in-rtf1> @Bosmon and others who are curious, I put together a quick pull to generate code coverage reports for the windows repo.  Here\'s sample output: http://the-t-in-rtf.github.io/coverage-reports/windows/20170717/
+2017-07-17T13:23:37 <the-t-in-rtf1> Again, that PR is here: https://github.com/GPII/windows/pull/131
+2017-07-17T13:26:38 * jhung joined the channel
+2017-07-17T13:26:51 <the-t-in-rtf1> The test failures may account for the relatively low coverage of the spi code.
+2017-07-17T13:27:08 <the-t-in-rtf1> it actually looks better than any of our core repos did when we first started reporting, which is good.
+2017-07-17T13:33:32 <the-t-in-rtf1> @avtar, @gtirloni, @amatas, whomever is responsible for the windows pulls, this looks like a CI failure outside of my control: http://lists.gpii.net/pipermail/ci/2017-July/000701.html
+2017-07-17T13:33:34 * simonjb has quit
+2017-07-17T13:34:02 <the-t-in-rtf1> The same test commands should work, and I didn\'t change the Vagrantfile or provisioning.
+2017-07-17T13:34:20 <the-t-in-rtf1> sorry, by "windows pulls" I mean the CI integration with pulls against the windows repo.
+2017-07-17T13:34:46 <the-t-in-rtf1> never mind.
+2017-07-17T13:34:56 <the-t-in-rtf1> I see that that is a very old report, I thought it was reverse chronological order.
+2017-07-17T13:35:04 <the-t-in-rtf1> The actual failures are exactly as we\'ve been discussing.
+2017-07-17T13:35:08 <the-t-in-rtf1> http://lists.gpii.net/pipermail/ci/2017-July/000740.html
+2017-07-17T13:38:29 * simonjb joined the channel
+2017-07-17T13:39:39 * colinclark joined the channel
+2017-07-17T13:41:30 <simonjb> jhernandez: sorry, I wasn\'t able to help test your pull request on Friday -- here\'s why: http://lists.gpii.net/pipermail/architecture/2017-July/004612.html
+2017-07-17T13:46:22 <jhernandez> simonjb: don\'t worry, we already found the problem/solution
+2017-07-17T13:46:37 <simonjb> jhernandez: great
+2017-07-17T13:46:45 <jhernandez> weird problem the IPV6 one by the way
+2017-07-17T13:46:47 <jhernandez> :/
+2017-07-17T13:46:51 <simonjb> yeah
+2017-07-17T13:53:38 * the-t-in-rtf1 has quit
+2017-07-17T13:53:50 * the-t-in-rtf joined the channel
+2017-07-17T13:55:36 * the-t-in-rtf has quit
+2017-07-17T13:55:55 * the-t-in-rtf joined the channel
+2017-07-17T14:05:19 * michelled joined the channel
+2017-07-17T14:05:43 * the-t-in-rtf1 joined the channel
+2017-07-17T14:07:08 * the-t-in-rtf has quit
+2017-07-17T14:10:34 * cindyli has quit
+2017-07-17T14:11:09 * clown joined the channel
+2017-07-17T14:13:55 * cindyli joined the channel
+2017-07-17T14:15:25 * stegru joined the channel
+2017-07-17T14:17:57 <stegru> jhernandez: yes
+2017-07-17T14:19:56 <amatas> Hi, sorry, I had some appointments this morning
+2017-07-17T14:20:26 <amatas> the-t-in-rtf1: the issue of the CI of Jul 5 should be solved
+2017-07-17T14:21:40 <the-t-in-rtf1> Yes, I commented on that a while back.  The second link is the failure we\'re seeing now.
+2017-07-17T14:25:35 <Bosmon> stegru - do we know about the Windows Unit Test failures that the-t-in-rtf has mentioned?
+2017-07-17T14:25:37 <Bosmon> http://lists.gpii.net/pipermail/ci/2017-July/000740.html
+2017-07-17T14:25:48 <Bosmon> Ah, I see jhernandez already pinged you
+2017-07-17T14:25:50 <stegru> yes,
+2017-07-17T14:25:53 <stegru> yes
+2017-07-17T14:30:56 * clown stegru is so agreeable
+2017-07-17T14:31:16 <stegru> i agree, clown
+2017-07-17T14:31:22 <clown> lol
+2017-07-17T14:32:47 <stegru> jhernandez: the-t-in-rtf Bosmon : i suspect this has something to do with the new vagrant box amatas has just released (assuming CI pulls the latest one)
+2017-07-17T14:33:01 <stegru> only because that\'s the only change
+2017-07-17T14:34:04 <Bosmon> stegru - ok, interesting
+2017-07-17T14:34:09 <Bosmon> What are the changes in the vagrant box?
+2017-07-17T14:34:12 * alanharnum joined the channel
+2017-07-17T14:34:23 <stegru> the windows build
+2017-07-17T14:34:45 <stegru> and the drive mapping, but i don\'t beleive that has anything to do with it
+2017-07-17T14:34:57 * alanharnum has quit
+2017-07-17T14:35:43 * alanharnum joined the channel
+2017-07-17T14:36:18 * alanharnum has quit
+2017-07-17T14:36:24 * alanharnum joined the channel
+2017-07-17T14:44:07 * kavya joined the channel
+2017-07-17T14:52:04 <amatas> Bosmon: http://lists.gpii.net/pipermail/architecture/2017-July/004609.html
+2017-07-17T14:52:33 * colinclark has quit
+2017-07-17T14:52:50 <amatas> https://app.vagrantup.com/inclusivedesign/boxes/windows10-eval-x64-Apps/versions/2017.07.15
+2017-07-17T15:09:11 * eloisa joined the channel
+2017-07-17T15:13:14 <Justin_o> eloisa: hello, welcome to fluid
+2017-07-17T15:13:28 <eloisa> Hello!! Thanks for having me :)
+2017-07-17T15:14:14 * avtar joined the channel
+2017-07-17T15:15:27 * danayo joined the channel
+2017-07-17T15:19:10 * mrtyler joined the channel
+2017-07-17T15:21:27 <amatas> clown: just saw your email about the error with "npm prune", could you tell me how I can reproduce it at my local?
+2017-07-17T15:21:49 <stegru> Bosmon: jhernandez : if you just want a quick fix, then it would be acceptable to remove the failing test, because it tests an SPI setting that doesn\'t actually get used by gpii (SPI_GETMOUSE)
+2017-07-17T15:22:00 <amatas> stegru: yes, the CI is using the latest windows VM
+2017-07-17T15:22:37 <stegru> that does make sense, amatas
+2017-07-17T15:22:41 <amatas> :)
+2017-07-17T15:23:07 <clown> amatas, I followed the steps from your email.
+2017-07-17T15:23:08 <amatas> but it seems that a lot of problems raised since the update
+2017-07-17T15:23:31 <clown> what other information do you need?  VBox version, maybe?
+2017-07-17T15:23:37 <amatas> clown: but which repository are you testing, which command are you running?
+2017-07-17T15:23:49 <stegru> i\'ll leave you alone, then :)
+2017-07-17T15:24:13 <clown> I\'m launching the VM for the windows master branch
+2017-07-17T15:24:27 <clown> I was running "vagrant up" from the host machine.
+2017-07-17T15:24:40 <clown> I didn\'t get to the point of running any tests.
+2017-07-17T15:24:50 * alanharnum has quit
+2017-07-17T15:25:16 * alanharnum joined the channel
+2017-07-17T15:26:15 <amatas> ok, let me try
+2017-07-17T15:28:39 <amatas> stegru: haha, don\'t be a coward!
+'
+

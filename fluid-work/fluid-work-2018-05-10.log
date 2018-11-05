@@ -1,0 +1,267 @@
+b'2018-05-10T17:05:39 * amatas has quit
+2018-05-10T17:06:34 * yuriy has quit
+2018-05-10T17:07:29 * amatas joined the channel
+2018-05-10T17:13:20 * jeevan_ has quit
+2018-05-10T17:18:06 * YehchanP joined the channel
+2018-05-10T17:20:19 <sgithens> Bosmon: I\'m assuming the gpii is fine on the newest dev version of infusion that yuo mentioned during the communicty meeting yesterday?
+2018-05-10T17:20:59 <sgithens> If I put the PPT on dev versions of infusion, gpii-express, and gpii-handlebars
+2018-05-10T17:22:54 * rutvi joined the channel
+2018-05-10T17:27:29 <Bosmon> sgithens - I\'ve not tried universal with the potentia II release
+2018-05-10T17:27:57 <sgithens> i see
+2018-05-10T17:28:34 * janardan joined the channel
+2018-05-10T17:34:20 * danayo has quit
+2018-05-10T17:34:54 * cindyli joined the channel
+2018-05-10T17:47:15 * cindyli joined the channel
+2018-05-10T17:54:02 <sgithens> the-t-in-rtf: Does the latest dev gpii-express actually depend on potentia II infusion, or is it just updated so that it will work on the newer infusion, but doesn\'t require any of it\'s new features?
+2018-05-10T17:57:34 * sepidehshahi joined the channel
+2018-05-10T17:58:52 <sgithens> cindyli: Will be there in like 5 mins
+2018-05-10T17:59:07 <cindyli> sure
+2018-05-10T17:59:48 <cindyli> Bosmon, colinclark, simonjb, the-t-in-rtf: ready to meet? see u in my vidyo room
+2018-05-10T18:28:08 * danayo joined the channel
+2018-05-10T19:06:49 * amatas has quit
+2018-05-10T19:07:51 <mrtyler> cindyli: natarajaya is sergey!
+2018-05-10T19:07:58 * michelled joined the channel
+2018-05-10T19:08:05 <mrtyler> sergey would like to tell you about your ssl "default backend 404" problem from yesterday :)
+2018-05-10T19:12:23 * danayo_ joined the channel
+2018-05-10T19:12:58 <natarajaya> Hello cindyli!
+2018-05-10T19:13:58 <cindyli> hi natarajaya
+2018-05-10T19:14:38 <cindyli> welcome to irc :)
+2018-05-10T19:15:48 <natarajaya> Haven\'t used IRC for 5 years or something
+2018-05-10T19:16:02 <natarajaya> So about what happened to you dev cluster yesterday
+2018-05-10T19:16:14 <natarajaya> It is directly related to:
+2018-05-10T19:16:29 <natarajaya> https://letsencrypt.status.io/
+2018-05-10T19:17:01 <natarajaya> Letsencrypt staging issuer is down since yesterdays morning
+2018-05-10T19:17:25 <cindyli> ah ha
+2018-05-10T19:17:45 <cindyli> is it back up already or still down, natarajaya?
+2018-05-10T19:18:28 <natarajaya> So ingress controller failed to obtain certificates and had to fail back to plain HTTP
+2018-05-10T19:19:10 <cindyli> ok
+2018-05-10T19:19:17 <natarajaya> cindyli: it works for me now
+2018-05-10T19:19:23 <natarajaya> # curl -k https://preferences.dev-cindyli.gpii.net/preferences/carla
+2018-05-10T19:19:23 <natarajaya> {"contexts":{"gpii-default":{"name":"Default preferences","preferences":{"http://registry.gpii.net/applications/com.texthelp.readWriteGold":{"ApplicationSettings.AppBar.Width.$t":788,"ApplicationSettings.AppBar.ShowText.$t":true,"ApplicationSettings.AppBar.optToolbarShowText.$t":true,"ApplicationSettings.AppBar.LargeIcons.$t":true,"ApplicationSettings.AppBar.optToolbarLargeIcons.$t":true,"ApplicationSettings.Speech.optSAPI5Speed.$t":
+2018-05-10T19:19:24 <natarajaya> 50,"ApplicationSettings.Speech.optAutoUseScreenReading.$t":false},"http://registry.gpii.net/applications/org.gnome.desktop.a11y.magnifier":{"show-cross-hairs":true,"lens-mode":false,"mag-factor":2,"mouse-tracking":"proportional","screen-position":"right-half","scroll-at-edges":true},"http://registry.gpii.net/applications/com.microsoft.windows.magnifier":{"Magnification":200,"ZoomIncrement":50,"Invert":0,"FollowMouse":1,"FollowFocus":
+2018-05-10T19:19:24 <natarajaya> 1,"FollowCaret":1,"MagnificationMode":1},"http://registry.gpii.net/common/fontSize":24,"http://registry.gpii.net/common/foregroundColor":"white","http://registry.gpii.net/common/backgroundColor":"black","http://registry.gpii.net/common/fontFaceFontName":["Comic Sans"],"http://registry.gpii.net/common/fontFaceGenericFontFace":"sans serif","http://registry.gpii.net/common/magnification":2,"http://registry.gpii.net/common/tracking":["mo
+2018-05-10T19:19:24 <natarajaya> use"],"http://registry.gpii.net/common/invertColours":true,"http://registry.gpii.net/common/adaptationPreference":[{"adaptationType":"caption","language":"en"},{}],"http://registry.gpii.net/common/tableOfContents":false}}},"name":"Carla"}
+2018-05-10T19:20:15 <cindyli> cool. seems the preferences server is running
+2018-05-10T19:22:39 <natarajaya> Yep
+2018-05-10T19:22:46 <cindyli> natarajaya: what about the other issue caused by using the staging certificate with developers\' clusters?
+2018-05-10T19:23:06 <natarajaya> We are still thinking on it with mrtyler
+2018-05-10T19:23:18 <cindyli> great. thanks
+2018-05-10T19:24:06 <natarajaya> One of the possible solutions is to introduce a flag (env variable) that you can set before running rake on your dev cluster to force it to obtain certs from LE prod account
+2018-05-10T19:24:42 <natarajaya> Unfortunately this would be limited to 20 certs/week per domain
+2018-05-10T19:25:20 <cindyli> natarajaya: then this may not be a good solution because 20 may not be enough
+2018-05-10T19:25:45 <cindyli> well, does it mean that every time i run "rake" a new cert will be requested
+2018-05-10T19:25:57 <natarajaya> mrtyler: GPII-2989 and random postfix to dev clusters may eliminate this limitation
+2018-05-10T19:26:23 <natarajaya> cindyli: Cert is requested only when you spin up a new cluster
+2018-05-10T19:26:31 <cindyli> ok, i see
+2018-05-10T19:26:57 <mrtyler> hi i\'m back
+2018-05-10T19:26:59 <cindyli> if i keep using dev-cindyli, only 1 certificate is needed, right
+2018-05-10T19:27:40 <mrtyler> heh right, we were going to talk about the staging/prod cert issue today but i guess we ran out of time
+2018-05-10T19:27:52 <natarajaya> Yep
+2018-05-10T19:28:34 <mrtyler> natarajaya: oh interesting, it\'s 20 certs per week *per domain name*?
+2018-05-10T19:28:45 <natarajaya> Yep
+2018-05-10T19:28:54 <mrtyler> i.e. preferences.dev-tyler-abcd and preferences.dev-tyler-efgh each get 20/week?
+2018-05-10T19:28:57 <mrtyler> ok cool
+2018-05-10T19:29:01 <natarajaya> Yeah
+2018-05-10T19:29:20 <mrtyler> that seems good, but we\'re some distance away from that setup being available for cindy
+2018-05-10T19:29:34 <mrtyler> how can we unblock cindy today?
+2018-05-10T19:29:51 <mrtyler> i think the "https in stg/prd, http everywhere else" might be the simplest/quickest solution
+2018-05-10T19:30:08 <natarajaya> Not very secure though
+2018-05-10T19:30:28 <natarajaya> We may as well introduce the flag
+2018-05-10T19:30:51 <mrtyler> how does the flag improve the security situation?
+2018-05-10T19:31:18 <natarajaya> HTTPS is enabled by default
+2018-05-10T19:31:51 <cindyli> natarajaya: can i clarify again, if i run "rake destroy" then "rake" 20 times, i will use up 20 certificates for dev-cindyli.gpii.net?
+2018-05-10T19:32:21 <cindyli> or it will be the same certificate for these 20 runs
+2018-05-10T19:32:26 * gtirloni joined the channel
+2018-05-10T19:33:39 <cindyli> another issue i noticed is that, with the new certificate change in the master, i cannot just run "rake destroy; rake" only the first time, then use "rake undeploy; rake deploy_only"
+2018-05-10T19:33:58 <cindyli> this error will be thrown - https://pastebin.com/S6TnrQZ6
+2018-05-10T19:34:29 <cindyli> now i\'m running "rake destroy; rake" every time when a deployment step is changed
+2018-05-10T19:34:39 * michelled1 joined the channel
+2018-05-10T19:42:45 <mrtyler> cindyli: looks like the trouble there is this on line 476:
+2018-05-10T19:42:46 <mrtyler> WARNING: Failed to install helm chart nginx-ingress. Run \'rake deploy_only\' to try again. Continuing.
+2018-05-10T19:42:49 <mrtyler> natarajaya:
+2018-05-10T19:42:56 <mrtyler> i agree that looks like a bug
+2018-05-10T19:43:08 <mrtyler> more specifically:
+2018-05-10T19:43:08 <mrtyler> Error: the server has asked for the client to provide credentials
+2018-05-10T19:43:36 <mrtyler> i\'m heading out to lunch. hopefully you guys will figure everything out by the time i get back :p
+2018-05-10T20:31:43 <natarajaya> cindyli: let me check whats going on
+2018-05-10T20:33:34 <cindyli> thanks, natarajaya. soon i\'m heading offline for today. is it ok that we continue the talk tomorrow?
+2018-05-10T20:34:52 <natarajaya> Sure
+2018-05-10T20:36:47 <cindyli> thanks. see you tomorrow
+2018-05-10T20:42:49 <natarajaya> See ya
+2018-05-10T20:55:24 * mrtyler joined the channel
+2018-05-10T21:46:59 * mrtyler joined the channel
+2018-05-10T22:01:10 * michelled joined the channel
+2018-05-10T22:01:13 * michelled has quit
+2018-05-10T22:01:26 * michelled joined the channel
+2018-05-10T22:04:00 * michelled joined the channel
+2018-05-10T22:05:19 * simonjb has quit
+2018-05-10T22:13:27 * michelled joined the channel
+2018-05-10T22:15:04 * michelled has quit
+2018-05-10T22:42:19 * natarajaya1 joined the channel
+2018-05-10T22:47:33 * Bosmon2 joined the channel
+2018-05-10T22:49:48 * stegru has quit
+2018-05-10T23:33:50 <sgithens> hmm
+2018-05-10T23:34:02 <sgithens> do we have a scheduled downtown for Jira right now?
+2018-05-10T23:34:34 <sgithens> gtirloni, I think it\'s having some issues
+2018-05-10T23:34:55 <gtirloni> sgithens: i needed to restart it, it should be back in 1min. sorry about that
+2018-05-10T23:35:10 <sgithens> gtirloni: Awesome!  Thanks! :)
+2018-05-10T23:40:16 <gtirloni> sgithens: there you go!
+2018-05-10T23:40:29 <sgithens> Awesome thanks!
+2018-05-10T23:40:31 <sgithens> looks good
+2018-05-10T23:41:07 <gtirloni> cool!
+2018-05-10T23:44:51 <natarajaya1> thx!
+2018-05-10T23:53:20 * simonjb joined the channel
+'
+
+b'2018-05-10T00:12:58 <mrtyler> cindyli: sergey wants to poke around your cluster
+2018-05-10T00:13:06 <mrtyler> does that interfere with your plans?
+2018-05-10T00:13:24 <cindyli> not at all. go for it
+2018-05-10T00:13:58 <cindyli> in case he wants to poke into my branch too - https://github.com/cindyli/gpii-infra/tree/GPII-2630-temp
+2018-05-10T00:14:12 <cindyli> this is the new one that has the latest master merged
+2018-05-10T00:14:25 <mrtyler> cool, thx
+2018-05-10T00:14:35 <mrtyler> i\'ve asked him to get an irc client so he can ask you himself next time :)
+2018-05-10T00:14:46 <cindyli> great. thanks
+2018-05-10T00:14:52 <mrtyler> however, cindyli are you interested in an invite to the RtF Slack?
+2018-05-10T00:15:00 <cindyli> sure
+2018-05-10T00:15:06 <mrtyler> let me figure out how to do that
+2018-05-10T00:15:12 <cindyli> if it\'s allowed
+2018-05-10T00:17:53 * cindyli has quit
+2018-05-10T00:21:14 <mrtyler> i\'m not an admin in slack so i have to ask gregg either way :)
+2018-05-10T01:58:58 * danayo joined the channel
+2018-05-10T02:24:40 * natarajaya joined the channel
+2018-05-10T02:25:18 <natarajaya> Hello
+2018-05-10T02:40:16 <mrtyler> hi sergey
+2018-05-10T05:32:44 * dandimitrov_ joined the channel
+2018-05-10T05:43:50 * amatas joined the channel
+2018-05-10T06:06:54 * amatas has quit
+2018-05-10T06:08:08 * dandimitrov_ has quit
+2018-05-10T07:34:21 * amatas joined the channel
+2018-05-10T07:45:26 * georgitodorov joined the channel
+2018-05-10T07:53:02 * amatas has quit
+2018-05-10T08:04:34 * the-t-in-rtf joined the channel
+2018-05-10T08:21:06 * amatas joined the channel
+2018-05-10T08:34:25 * amatas has quit
+2018-05-10T08:36:26 * javjarfer[m] has quit
+2018-05-10T08:36:33 * amatas[m] has quit
+2018-05-10T08:46:06 * stegru joined the channel
+2018-05-10T09:34:11 * amatas[m] joined the channel
+2018-05-10T09:40:26 * amatas joined the channel
+2018-05-10T09:41:30 * amatas has quit
+2018-05-10T09:43:21 * amatas joined the channel
+2018-05-10T09:47:55 * suranamudit[m] joined the channel
+2018-05-10T09:47:55 * javjarfer[m] joined the channel
+2018-05-10T09:49:43 <georgitodorov> Bosmon: Hey, Antranig! We are in the process of reviewing the QSS specification and breaking it down into development tasks. We came across something interesting and wanted to share it with you and hear your thoughts on it.
+2018-05-10T09:49:52 <georgitodorov> Currently, the PSP consists of a main BrowserWindow and when necessary, additional BrowserWindows are created (e.g. when a survey is launched, when an error message needs to be shown to the user, when displaying the about page). This necessitates coordination between the various windows and makes the whole application more complex.
+2018-05-10T09:50:04 <georgitodorov> Following the same approach for the QSS will bring in even further complication in the application as the QSS consists of the strip itself, the tooltips for the buttons and the menu pop-ups. If we are to implement them as separate windows, this would mean that there will be a lot of IPC messages sent between the main and the renderer processes to facilitate communication between the different QSS components.
+2018-05-10T09:50:16 <georgitodorov> That is why we were thinking of a new strategy - to create the QSS as a large transparent BrowserWindow which will house everything related to the QSS. For the most part, this window will be transparent. And here comes the issue - electron does not have a built-in functionality to enable the user to click through the transparent area in a transparent window: https://github.com/electron/electron/blob/master/docs/api/frameless-window.md#transpa
+2018-05-10T09:50:16 <georgitodorov> rent-window
+2018-05-10T09:50:26 <georgitodorov> However, there is a way to make a window ignore all mouse events. This combined with a forwarding of mouse move messages to the page in the BrowserWindow makes it possible to detect if the mouse is within the transparent area and send clicks to whatever is behind it in this case and on the other hand, to determine when the mouse is not in the transparent area and send click events to the application itself: https://github.com/electron/electro
+2018-05-10T09:50:26 <georgitodorov> n/blob/master/docs/api/frameless-window.md#click-through-window
+2018-05-10T09:50:36 <georgitodorov> We experimented a little with this approach and it is indeed working. So far we haven\xe2\x80\x99t discovered any unexpected behavior but will need some more time to check whether any problems will emerge. We were thinking of creating a research task in order to do this.
+2018-05-10T09:50:46 * yuriy joined the channel
+2018-05-10T09:50:48 <georgitodorov> This may slow down a little the QSS development. However, if the result of the research confirms that we can use this strategy, then the time for the development of other QSS tasks will be less compared to the approach with multiple BrowserWindows. Also, if the outcome is positive, we won\xe2\x80\x99t be dealing with any height/width adjustments (e.g. when the DPI changes) as they will happen automatically and will be confined to the renderer proces
+2018-05-10T09:50:48 <georgitodorov> s only.
+2018-05-10T09:50:48 <georgitodorov> 
+2018-05-10T09:50:48 <georgitodorov> As this is a rather important technical decision, we wanted to run it by you first. Let us know what you think. Any further comments or suggestions will be greatly appreciated.
+2018-05-10T09:51:26 <Bosmon> Hi there georgitodorov - thanks for this investigation, this is indeed a very interesting issue
+2018-05-10T09:55:36 <Bosmon> I\'m wondering whether the approach will be effective if what is behind the window is not owned by the electron process at all
+2018-05-10T09:56:24 <Bosmon> Also, it would be important to test the effectiveness of the approach together with the use of a screenreader to see if there are any oddities with respect to announcement of focused controls
+2018-05-10T10:01:22 <georgitodorov> Bosmon: What issues do you see if what is behind the window is not owned by the electron process? I am not sure I understand what you mean by that.
+2018-05-10T10:01:39 <Bosmon> georgitodorov - I wondered if the events can be forwarded effectively if we don\'t own the process
+2018-05-10T10:02:28 <Bosmon> Also bear in mind that if we find we need to go with the IPC approach for some reason, there is the possibility of implementing https://issues.gpii.net/browse/GPII-2892 to reduce the burden of it
+2018-05-10T10:02:36 <georgitodorov> Bosmon: So far we have determined that mouse events are forwarded correctly (basic events such as clicks, right clicks, drags)
+2018-05-10T10:02:53 * kasparnet joined the channel
+2018-05-10T10:02:54 <Bosmon> georgitodorov - ok, sounds good
+2018-05-10T10:03:02 <georgitodorov> Keyboard events though will always be sent to the focused window
+2018-05-10T10:03:13 <Bosmon> Certainly the possibility of avoiding dpi change complications sounds good
+2018-05-10T10:03:51 <Bosmon> georgitodorov - can you imagine a case where a screenreader user might become confused as a result of mismatch between the target of mouse events and keyboard events?
+2018-05-10T10:04:53 <georgitodorov> Bosmon: When the user clicks on a transparent area of the BrowserWindow, the window will no longer be focused and thus will not receive any keyboard events
+2018-05-10T10:18:34 <georgitodorov> Bosmon: I just did some quick tests with the built-in screen reader for Windows. When the QSS window is focused and I hover through it on anything that can, for example, produce a tooltip, the tooltip will be read. The focus though remains in the QSS window. The situation will be the same in the case of multiple windows.
+2018-05-10T10:19:33 <georgitodorov> Only after the user clicks through the transparent window or outside of it will the BrowserWindow lose the focus. Then the screenreader will announce what is visible on the newly focused application
+2018-05-10T10:19:48 <Bosmon> georgitodorov - ok, it sounds workable
+2018-05-10T10:20:21 <Bosmon> Do you think you could write up this conversation on a "Task" type JIRA with title like "Investigate approaches for transparency in QSS implementation" or so?
+2018-05-10T10:20:56 <georgitodorov> Bosmon: Yes, already have a draft of it on my PC. Will create a task shortly.
+2018-05-10T10:21:04 <Bosmon> brilliant, thanks
+2018-05-10T10:25:51 * amatas has quit
+2018-05-10T10:26:53 * amatas joined the channel
+2018-05-10T10:32:57 * Bosmon joined the channel
+2018-05-10T10:34:57 <georgitodorov> Bosmon: Here is a link to the research ticket: https://issues.gpii.net/browse/GPII-3001
+2018-05-10T10:41:56 * amatas_ joined the channel
+2018-05-10T10:42:42 * kasparnet has quit
+2018-05-10T10:43:33 * amatas has quit
+2018-05-10T10:43:34 * amatas_ is now known as amatas
+2018-05-10T11:03:36 * Justin_o joined the channel
+2018-05-10T11:07:28 * yuriy__ joined the channel
+2018-05-10T11:10:21 * yuriy has quit
+2018-05-10T11:27:12 * gtirloni joined the channel
+2018-05-10T11:34:01 * kasparnet joined the channel
+2018-05-10T12:33:17 * yuriy joined the channel
+2018-05-10T12:37:00 * yuriy__ has quit
+2018-05-10T12:54:22 * jhung joined the channel
+2018-05-10T12:56:57 * yuriy__ joined the channel
+2018-05-10T12:59:57 * yuriy has quit
+2018-05-10T13:05:29 * simonjb joined the channel
+2018-05-10T13:17:25 * sepidehshahi joined the channel
+2018-05-10T13:21:28 * jessm joined the channel
+2018-05-10T13:22:55 * cindyli joined the channel
+2018-05-10T13:36:51 * colinclark joined the channel
+2018-05-10T13:37:50 * neuralmilkhotel joined the channel
+2018-05-10T13:40:27 * avtar joined the channel
+2018-05-10T13:47:42 * simonjb has quit
+2018-05-10T13:51:37 * cindyli joined the channel
+2018-05-10T13:57:27 * michelled joined the channel
+2018-05-10T14:19:27 * simonjb joined the channel
+2018-05-10T14:20:28 * kasparnet has quit
+2018-05-10T14:21:43 * mrtyler joined the channel
+2018-05-10T14:22:02 * danayo joined the channel
+2018-05-10T14:23:55 * georgitodorov has quit
+2018-05-10T14:57:23 * avtar has quit
+2018-05-10T15:02:17 * danayo_ joined the channel
+2018-05-10T15:02:46 * michelled joined the channel
+2018-05-10T15:05:48 * yuriy joined the channel
+2018-05-10T15:09:17 * yuriy__ has quit
+2018-05-10T15:26:35 <cindyli> Bosmon: is there a special script or command used to publish gpii/universal to npmjs.com?
+2018-05-10T15:26:41 <cindyli> or just "npm publish"?
+2018-05-10T15:27:59 <cindyli> i\'m now having an issue with the published gpii-universal not having the auto generated gpiiKeys.json and prefsSafes.json, which are built by the npm postinstall step
+2018-05-10T15:28:40 <cindyli> These files are required when both the flow manager and the prefs server running locally, such as what the windows does
+2018-05-10T15:30:21 <cindyli> so i\'m thinking maybe we could add a prepublish step that will generate these files, which then can be published with gpii-universal package
+2018-05-10T15:30:24 <cindyli> what do you think?
+2018-05-10T15:41:25 * cindyli has quit
+2018-05-10T15:45:09 * kavya joined the channel
+2018-05-10T15:49:05 * jeevan_ joined the channel
+2018-05-10T15:52:00 * cindyli joined the channel
+2018-05-10T15:52:19 * sepidehshahi joined the channel
+2018-05-10T15:52:27 * michelled joined the channel
+2018-05-10T16:04:52 <Bosmon> cindyli - it sounds good
+2018-05-10T16:04:58 <Bosmon> Currently we use Justin_o\'s "fluid-publish"
+2018-05-10T16:05:01 <Bosmon> To publish dev releases
+2018-05-10T16:05:44 <Justin_o> cindyli: you can get it from NPM https://www.npmjs.com/package/fluid-publish
+2018-05-10T16:06:48 <cindyli> thanks, guys
+2018-05-10T16:09:11 <cindyli> Bosmon, Justin_o, as you guys are more familiar with npm publish than me, what\'s the best way do you think i should test this workflow? shall i create my own npm account and test the prepublish by publishing to a test package such as "gpii-universal-2630", then point the windows repo to it?
+2018-05-10T16:10:03 * gtirloni joined the channel
+2018-05-10T16:10:18 <Bosmon> cindyli - why would it be a different package?
+2018-05-10T16:10:38 <Bosmon> You can just make a standard dev release from your branch
+2018-05-10T16:10:44 <Bosmon> It will get labelled, as per Justin_o\'s recent improvements
+2018-05-10T16:11:31 <Justin_o> cindyli: if you want to check what will be included in the package before actually publishing it, you can also use the --test flag which will just zip up the contents.
+2018-05-10T16:12:02 <Justin_o> but if you want to test an actual published package, you should follow what Bosmon suggested
+2018-05-10T16:12:21 <cindyli> Bosmon: do you mean because other ppl still use the gpii/windows which points to a different version, so it\'s safe as my branch version will only be used by me?
+2018-05-10T16:12:34 <Bosmon> cindyli I mean that, among other things, yes : P
+2018-05-10T16:12:41 <cindyli> Justin_o: thanks, i will do both
+2018-05-10T16:12:49 <cindyli> ok
+2018-05-10T16:15:35 <Justin_o> Bosmon: I\'m looking at the docs for fluid.resolveRootSingle https://docs.fluidproject.org/infusion/development/Contexts.html#global-components-fluidresolveroot-and-fluidresolverootsingle it says A fresh instance that holds the same value of the option singleRootType displaces the previous one from global visibility (but does not destroy it)
+2018-05-10T16:16:08 <Justin_o> Does that mean if someone else provides a new instance of it that is configured differently it may break other components that were already referring to it through the root?
+2018-05-10T16:18:03 <Bosmon> Justin_o - it\'s certainly something to be used cautiously, yes
+2018-05-10T16:18:15 * kavya has quit
+2018-05-10T16:18:18 <Bosmon> It is a singleton with all that comes with that pattern
+2018-05-10T16:20:38 <Justin_o> Bosmon: okay, thanks
+2018-05-10T16:31:12 * avtar joined the channel
+2018-05-10T16:34:26 * cindyli has quit
+2018-05-10T16:48:55 <Justin_o> Bosmon: can you refer to a resolveRootSingle component programmatically?
+2018-05-10T16:49:04 <Justin_o> or is it only through IoC references?
+2018-05-10T16:52:36 * jeevan_ has quit
+2018-05-10T16:53:00 * jeevan_ joined the channel
+2018-05-10T16:56:05 * gtirloni has quit
+2018-05-10T16:56:36 * jeevan_ has quit
+2018-05-10T16:57:02 * jeevan_ joined the channel
+'
+

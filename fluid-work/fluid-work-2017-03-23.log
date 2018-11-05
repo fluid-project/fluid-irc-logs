@@ -1,0 +1,456 @@
+b'2017-03-23T14:15:59 <the-t-in-rtf> Thanks, @stegru
+2017-03-23T14:16:04 <the-t-in-rtf> and @amatas
+2017-03-23T14:16:10 <the-t-in-rtf> I opened the transcript once I got home.
+2017-03-23T14:16:10 <the-t-in-rtf> :)
+2017-03-23T14:16:20 <amatas> kasparne_, just /quit "Connection reset by peer"
+2017-03-23T14:16:26 <colinclark> So for the HST, Gregg has requested a "feature" of the HST build that "pings" the "cloud" to ensure that it can connect to our servers via HTTP
+2017-03-23T14:16:38 <the-t-in-rtf> I plan to unmount the drive at the end of the test steps unless @stegru knows a way to "mount if not mounted" without an error.
+2017-03-23T14:16:46 <colinclark> Can you speculate on how much work it would be to build a "feature" like this?
+2017-03-23T14:17:01 <stegru> amatas: what did you do differently? is it the quotes? (I haven\'t seen the original one)
+2017-03-23T14:17:04 <colinclark> I think perhaps it could simply write a success/failure note to the log\xe2\x80\x94a kind of little inline unit test of sorts :P
+2017-03-23T14:17:13 <stegru> the-t-in-rtf: add "2>nul" at the end ;)
+2017-03-23T14:17:25 <amatas> the-t-in-rtf, you can also put the mounting step in a separate stage.
+2017-03-23T14:17:37 <the-t-in-rtf> now that I know how to do it from do.ps1, I can\xe2\x80\xa6 ;)
+2017-03-23T14:17:37 <amatas> stegru, I\'ve used simple quotes I guess
+2017-03-23T14:18:07 <amatas> the-t-in-rtf, and sure, the CI doc needs some additions regarding doit
+2017-03-23T14:18:11 <kasparne_> colinclark: yeah, that does sound pretty straight forward
+2017-03-23T14:18:30 <kasparne_> so is this a "on gpii startup" thing?
+2017-03-23T14:18:35 <colinclark> I guess so
+2017-03-23T14:18:38 <kasparne_> or something that should happen at regular intervals
+2017-03-23T14:18:39 <amatas> AFAIK I wasn\'t aware of this particular behavior about the net drives
+2017-03-23T14:18:47 <colinclark> I think it would just have to happen once
+2017-03-23T14:18:53 <kasparne_> ok - and what happens if its not connected?
+2017-03-23T14:19:02 <colinclark> then I guess we log it
+2017-03-23T14:19:07 <kasparne_> ok cool
+2017-03-23T14:19:12 <kasparne_> that sounds pretty easy
+2017-03-23T14:19:31 <stegru> amatas: the sharing between users?
+2017-03-23T14:19:41 <colinclark> Gregg just wants us to be able to catch the magical case where someone has a computer that has a working connection to the internet, but which isn\'t capable of making a standard HTTP request via the Flow Manager
+2017-03-23T14:19:43 <colinclark> "magical"
+2017-03-23T14:19:50 <gloob> colinclark: I\'m wondering about how we are going to update the build?
+2017-03-23T14:20:18 <gloob> how are we...
+2017-03-23T14:20:27 <amatas> stegru, AFAIK the winrm commands that vagrant executes uses the same credentials than doit
+2017-03-23T14:21:01 <colinclark> gloob: ?
+2017-03-23T14:21:07 <gloob> ah ok, for hst
+2017-03-23T14:21:12 <gloob> just download a new version
+2017-03-23T14:21:20 <gloob> but for pilots we will need an update mechanism
+2017-03-23T14:21:28 <colinclark> I\'m not sure we will for pilots, either
+2017-03-23T14:21:31 <gloob> or how are we going to apply hotfixes?
+2017-03-23T14:21:31 <colinclark> it would be nice
+2017-03-23T14:21:39 <gloob> Han running to them? :D
+2017-03-23T14:21:47 <colinclark> well, virtually, yes
+2017-03-23T14:21:52 <stegru> amatas: it does (i just did "whoami"), perhaps then drives aren\'t shared across login sessions
+2017-03-23T14:23:09 <amatas> it seems so, that approach seems closer to the reality
+2017-03-23T14:23:28 <stegru> this key disables this "feature"..
+2017-03-23T14:23:50 <stegru> [HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System]
+2017-03-23T14:23:50 <stegru> "EnableLinkedConnections"=dword:00000001
+2017-03-23T14:23:55 <the-t-in-rtf> @amatas, is it possible to change the default working directory that ends up being set in do.ps1?
+2017-03-23T14:25:43 <amatas> the default working directory is /vagrant for unix and c:\\vagrant for windows, and right now it\'s hardcoded. The only way to bypass that is executing a "cd" prior the command.
+2017-03-23T14:26:34 <amatas> anyway seems a good feature
+2017-03-23T14:27:42 <colinclark> kasparne_: By "pretty easy," are you thinking a couple of days-ish?
+2017-03-23T14:27:52 <kasparne_> colinclark: yes
+2017-03-23T14:27:59 <colinclark> ok thank you :)
+2017-03-23T14:28:10 <kasparne_> cheers
+2017-03-23T14:28:14 <gtirloni> colinclark kasparne_: "has a computer that has a working connection to the internet" -- there are layers to that :) we can test if the gateway is reachable, if the dns resolvers are reachable, if a super reliable internet host is reachable (8.8.8.8).. etc
+2017-03-23T14:28:44 <colinclark> I think what Gregg imagines, anyway, is that we will actually make a little HTTP request to a little Node.js server we wrote
+2017-03-23T14:28:51 <colinclark> and expect a response
+2017-03-23T14:29:31 <colinclark> so we\'re not really testing the viability of the internet connection, but rather that the magical IP elves continue to work even when it is the local flow manager making a request
+2017-03-23T14:30:16 <kasparne_> ... stupid sneaky IP elves
+2017-03-23T14:30:28 <colinclark> exactly!
+2017-03-23T14:31:03 <gtirloni> got it
+2017-03-23T14:31:30 <gloob> gtirloni: maybe your idea could be added to the introspection script
+2017-03-23T14:31:34 <gloob> I don\'t know the name
+2017-03-23T14:31:42 <gtirloni> i don\'t know what that is
+2017-03-23T14:31:46 <gloob> the one we are going to launch to acquire system information
+2017-03-23T14:31:50 <gloob> gtirloni: me neither
+2017-03-23T14:32:09 <the-t-in-rtf> re: IP elves: https://www.penny-arcade.com/comic/2002/11/25
+2017-03-23T14:33:20 <gloob> gtirloni: it should lives here https://github.com/GPII/gpii-hst-tools
+2017-03-23T14:33:45 <gtirloni> in the future, with a support line for gpii, i can understand it would be nice to have some hidden option to go through a few checks so it\'s more obvious what the issue is (e.g. test connectivity, test ping to gpii servers, test... etc, etc, etc). i just wanted to comment that detecting a working inet connection can be tricky sometimes (e.g. can ping 8.8.8.8 but dns is down, that won\'t help)
+2017-03-23T14:34:23 <kasparne_> haha the-t-in-rtf
+2017-03-23T14:43:57 <Bosmon> Yes, it can be tricky enough for the OS to determine that a connection is really "working"
+2017-03-23T14:44:28 <Bosmon> For a long time my Wifi was borked in such a way that my phone would connect to it, and then claim "there was no connectivity", but not credibly enough to cause it to switch to mobile data
+2017-03-23T14:55:44 * simonjb joined the channel
+2017-03-23T15:09:27 * javjarfer has quit
+2017-03-23T15:19:59 * mrtyler joined the channel
+2017-03-23T15:48:46 * javjarfer joined the channel
+2017-03-23T15:54:55 * kasparne_ has quit
+2017-03-23T15:55:01 * amatas joined the channel
+2017-03-23T15:55:21 * kasparnet joined the channel
+2017-03-23T16:00:42 * michelled joined the channel
+2017-03-23T16:21:47 * alanharnum joined the channel
+2017-03-23T16:35:21 * sgithens joined the channel
+2017-03-23T16:41:24 * colinclark joined the channel
+2017-03-23T16:56:05 * clown joined the channel
+2017-03-23T17:05:17 <colinclark> kasparnet, gtirloni, Bosmon: Sandra has filed this JIRA and I have tried to elaborate on Gregg\'s motivations for it: https://issues.gpii.net/browse/GPII-2349
+2017-03-23T17:05:45 <colinclark> I think we need to do just the tiniest bit of design to determine what we should actually do, and then see if who has time to implement this
+2017-03-23T17:06:03 <Bosmon> Ok
+2017-03-23T17:06:06 <colinclark> I\'m not even sure my comments in the JIRA fully make sense\xe2\x80\x94I find it somewhat hard to get my head around the actual concern motivating it
+2017-03-23T17:06:29 <colinclark> but I guess the most concrete example might be an antivirus package that didn\'t allow the Flow Manager to make HTTP requests for some reason
+2017-03-23T17:06:38 <Bosmon> It seems like a diagnostic that we can imagine some value behind
+2017-03-23T17:07:01 <colinclark> I mean, we might want to pair this with a more general type of network diagnostic as gtirloni was suggesting
+2017-03-23T17:07:03 <Bosmon> I think the words "test case" seem a bit misleading, given our typical usage of these terms
+2017-03-23T17:07:10 <colinclark> yes, I think so too
+2017-03-23T17:07:15 <colinclark> this is Sandra\'s terminology here
+2017-03-23T17:07:20 <Bosmon> yes
+2017-03-23T17:07:37 <colinclark> so we can log a) that the network is viable and b) that we were able to make a request to our "diagnostic server"
+2017-03-23T17:08:02 <Bosmon> I can imagine some value to us in being able to determine, retrospectively, for what periods of time the client was validly able to connect to our server
+2017-03-23T17:08:53 <Bosmon> I guess a "ping" say every minute or 5 minutes would be adequate
+2017-03-23T17:09:08 <colinclark> that seems like a reasonable idea
+2017-03-23T17:09:20 <colinclark> do you feel up for commenting on this JIRA?
+2017-03-23T17:09:24 <Bosmon> ok
+2017-03-23T17:27:19 * kathy_ joined the channel
+2017-03-23T17:39:05 * javjarfer_ joined the channel
+2017-03-23T17:39:14 * javjarfer has quit
+2017-03-23T17:45:38 * gtirloni joined the channel
+2017-03-23T17:49:10 * grass joined the channel
+2017-03-23T17:56:02 * jhernandez has quit
+2017-03-23T18:01:00 * amatas has quit
+2017-03-23T18:12:13 * jhung1 joined the channel
+2017-03-23T18:15:12 * jhung joined the channel
+2017-03-23T18:16:26 * jhung2 joined the channel
+2017-03-23T18:20:07 * jhung joined the channel
+2017-03-23T18:23:57 * amatas joined the channel
+2017-03-23T18:28:33 * cindyli joined the channel
+2017-03-23T18:42:00 * the-t-in-rtf joined the channel
+2017-03-23T18:48:27 * stegru has quit
+2017-03-23T18:57:57 * javjarfer_ has quit
+2017-03-23T18:59:39 * the-t-in-rtf has quit
+2017-03-23T19:00:17 * jhung1 joined the channel
+2017-03-23T19:02:41 * colinclark joined the channel
+2017-03-23T19:04:15 * the-t-in-rtf joined the channel
+2017-03-23T19:09:14 * the-t-in-rtf joined the channel
+2017-03-23T19:14:52 * gtirloni joined the channel
+2017-03-23T19:26:59 * the-t-in-rtf joined the channel
+2017-03-23T19:48:05 * jhung joined the channel
+2017-03-23T19:48:41 * jhernandez joined the channel
+2017-03-23T19:52:16 * jhernandez has quit
+2017-03-23T19:58:38 * jhung joined the channel
+2017-03-23T20:04:42 * alanharnum joined the channel
+2017-03-23T20:05:37 * colinclark joined the channel
+2017-03-23T20:31:15 * noveens joined the channel
+2017-03-23T20:37:19 * lliskovoi joined the channel
+2017-03-23T20:45:18 * stegru joined the channel
+2017-03-23T20:51:52 * kasparnet has quit
+2017-03-23T20:52:27 * kasparnet joined the channel
+2017-03-23T21:01:31 * javjarfer joined the channel
+2017-03-23T21:16:21 * javjarfer_ joined the channel
+2017-03-23T21:19:58 * michelled1 joined the channel
+2017-03-23T21:20:19 * colinclark joined the channel
+2017-03-23T21:24:43 * kasparnet has quit
+2017-03-23T21:32:04 * sgithens has quit
+2017-03-23T21:43:05 * gtirloni has quit
+2017-03-23T21:45:43 * alanharnum joined the channel
+2017-03-23T22:03:35 * michelled1 has quit
+2017-03-23T22:23:41 * javjarfer_ has quit
+2017-03-23T22:24:09 * javjarfer_ joined the channel
+2017-03-23T22:28:28 * javjarfer_ has quit
+2017-03-23T22:46:50 * alanharnum joined the channel
+2017-03-23T23:18:51 * javjarfer_ joined the channel
+2017-03-23T23:21:57 * javjarfer has quit
+2017-03-23T23:47:35 * alanharnum joined the channel
+2017-03-23T23:50:32 * javjarfer_ has quit
+'
+
+b'2017-03-23T13:08:52 <the-t-in-rtf> I am struggling to get the "net use" syntax right when using do.ps1
+2017-03-23T13:09:06 <the-t-in-rtf> it works without it, but I need to run a command that can access the desktop.
+2017-03-23T13:09:09 * danayo has quit
+2017-03-23T13:10:23 <the-t-in-rtf> If I use do.ps1 at the moment, it doesn\'t get any further than "net", as in:
+2017-03-23T13:10:24 <the-t-in-rtf> ==> windows10: + cd c:\\vagrant; {"do.ps1 -c \\"net use v"=>"\\\\\\\\\\\\\\\\vboxsrv\\\\\\\\vagrant; ...
+2017-03-23T13:10:24 <the-t-in-rtf> ==> windows10: +                              ~~~
+2017-03-23T13:10:24 <the-t-in-rtf> ==> windows10: Unexpected token \'net\' in expression or statement.
+2017-03-23T13:13:49 <the-t-in-rtf> I can mount the drive in another step, but if I use separate steps the drive doesn\'t appear to be visible from do.ps1
+2017-03-23T13:13:59 <the-t-in-rtf> speaking of which, what is that and who provides it?
+2017-03-23T13:19:09 * kavya has quit
+2017-03-23T13:20:50 <the-t-in-rtf> I found the copy in c:/windows, but there\'s no indication of where that source is stored.  Is it just part of the VMs you make?
+2017-03-23T13:23:17 * javjarfer has quit
+2017-03-23T13:24:22 <the-t-in-rtf> Anyway, I can run the command from powershell using do.ps1, but it fails from the QI config.
+2017-03-23T13:26:07 * kavya joined the channel
+2017-03-23T13:27:33 <kavya> Hi Kasparne_:
+2017-03-23T13:35:24 <amatas> the-t-in-rtf, doit is installed at build time of the windows VMs: http://www.chiark.greenend.org.uk/~sgtatham/doit/
+2017-03-23T13:36:09 <amatas> it is a tool that help to run commands that depend on the desktop to run, for example the acceptance tests of GPII
+2017-03-23T13:36:24 * javjarfer joined the channel
+2017-03-23T13:36:43 <the-t-in-rtf> Yes, the docs are very sparse.
+2017-03-23T13:37:22 <amatas> my understanding is that the command "net" doesn\'t need the desktop to work properly, so I guess that running it from a powershell interface is enough
+2017-03-23T13:37:42 <the-t-in-rtf> If I try that the drive does not seem to be visible when the next command is run.
+2017-03-23T13:38:31 <amatas> perhaps the drive isn\'t ready jet when the next command is executed
+2017-03-23T13:39:15 <amatas> it\'s odd
+2017-03-23T13:39:19 <gloob> the-t-in-rtf: the scaping in PS1 is weird
+2017-03-23T13:39:22 <gloob> let me check an example
+2017-03-23T13:39:39 <gloob> The escape character in Powershell is the "`" (backward apostrophe/grave).
+2017-03-23T13:40:17 <gloob> but that seems a vagrant issue right?
+2017-03-23T13:40:20 <the-t-in-rtf> so what do I have to escape?
+2017-03-23T13:40:27 <the-t-in-rtf> I mean, the command works from powershell
+2017-03-23T13:40:39 <the-t-in-rtf> it just doesn\'t work when run using "vagrant ci test"
+2017-03-23T13:41:18 <the-t-in-rtf> when I say it works from powershell, I mean "do.ps1 -c \'net use v: \\\\vboxsrv\\vagrant\\\'" works from powershell
+2017-03-23T13:41:39 <gloob> yes, the problem seems the double triple scaping it is doing
+2017-03-23T13:41:46 <gloob> + cd c:\\vagrant; {"do.ps1 -c \\"net use v"=>"\\\\\\\\\\\\\\\\vboxsrv\\\\\\\\vagrant; ...
+2017-03-23T13:42:02 <amatas> the-t-in-rtf, the error that you have pasted indicates that the semicolon is interpreted as the divisor of a key/value declaration. So I guess that you need to escape the semicolon ":"
+2017-03-23T13:42:49 <gloob> too
+2017-03-23T13:43:00 <gloob> it is being smarter :D
+2017-03-23T13:43:01 <Bosmon> stegru - what do you think about this use of the "DoIt remote execution daemon"?
+2017-03-23T13:43:07 <Bosmon> Do you think it is appropriate for this task? : P
+2017-03-23T13:43:36 * colinclark joined the channel
+2017-03-23T13:44:02 <Bosmon> I assume that we already have ample means within vagrant to cause arbitrary shell commands to execute within the Windows VM
+2017-03-23T13:44:05 <stegru> well, the winrm thing is running in a different context to the user desktop session
+2017-03-23T13:44:09 <Bosmon> So what use cases does do.ps1 cover?
+2017-03-23T13:44:46 <stegru> when you want to run something on the desktop
+2017-03-23T13:44:47 <amatas> other advantage of using doit is the fact that we can get the output of the command. (stdout and stderr)
+2017-03-23T13:45:13 <Bosmon> And I guess the-t-in-rtf requires this because he needs to launch browsers?
+2017-03-23T13:45:20 <amatas> which is important at the execution of the steps in the CI
+2017-03-23T13:45:23 <stegru> yes
+2017-03-23T13:45:36 * Jess__ joined the channel
+2017-03-23T13:45:54 <Bosmon> ok
+2017-03-23T13:45:57 <the-t-in-rtf> I can\'t find a way to escape the colon without making it unusable.
+2017-03-23T13:46:02 <stegru> it\'s the same problem we where solving, when we talked about CreateProcessAsUser
+2017-03-23T13:46:20 <the-t-in-rtf> Anyway, I need do.ps1 because I need to launch a browser, yet.
+2017-03-23T13:46:22 <the-t-in-rtf> s
+2017-03-23T13:46:38 <Bosmon> the-t-in-rtf - perhaps you just need to arrange for the shell script to be on the other side? Together with all of its inescapable arguments? : P
+2017-03-23T13:46:51 <Bosmon> If the shell script you want to execute is just part of your repo, I assume you can just pass its path to "do"
+2017-03-23T13:47:41 <amatas> the-t-in-rtf, why don\'t you try to exec the net command in some previous step?
+2017-03-23T13:47:46 <amatas> without the do.it
+2017-03-23T13:47:50 <the-t-in-rtf> Because the drive won\'t be visible in later stages.
+2017-03-23T13:47:58 <the-t-in-rtf> in fact, it won\'t be visible in the next line even.
+2017-03-23T13:48:10 <Bosmon> the-t-in-rtf - that is not possible, as I argued yesterday
+2017-03-23T13:48:20 <Bosmon> If the net use command succeeds, it will have a global effect on the system
+2017-03-23T13:48:26 <the-t-in-rtf> You would think so, yes.
+2017-03-23T13:48:37 <Bosmon> Drive letters in Windows are not "scoped"
+2017-03-23T13:48:42 <Bosmon> They either exist globally, or they don\'t
+2017-03-23T13:48:47 <Bosmon> The filesystem simply isn\'t that clever
+2017-03-23T13:48:51 <stegru> drive mappings aren\'t shared among users.. my "v:" could be different to whatever user the "winrm" service is running at
+2017-03-23T13:49:16 <stegru> network drives are
+2017-03-23T13:49:21 <Bosmon> !!!
+2017-03-23T13:50:08 <stegru> it makes sense, too... imagine i mapped \\\\private\\stegru to s:, then you logged onto the system.. should you be able to access S:?
+2017-03-23T13:50:40 <Bosmon> If I had rights to \\\\private\\stegru, sure
+2017-03-23T13:50:48 <the-t-in-rtf> so, the question is, is every line a different logon in essence?
+2017-03-23T13:50:50 <the-t-in-rtf> every stage?
+2017-03-23T13:51:14 <the-t-in-rtf> and is there something that clears out the mapped shares on "logout"?
+2017-03-23T13:51:18 <Bosmon> But I guess that all this must have emerged as a bizarre special case for network shares in the days when people were contending over the limited real estate of 26 letters
+2017-03-23T13:51:21 <Bosmon> Which, of course, they still are
+2017-03-23T13:51:37 <stegru> yes and no... running without "do.ps1" is in a different login session than with it
+2017-03-23T13:52:09 <Justin_o> cindyli: when you get a chance, could you please review this PR https://github.com/fluid-project/infusion/pull/811 and it\'s related docs pr
+2017-03-23T13:52:10 <the-t-in-rtf> That matches my experience, although I am only able to get things working at all if I mount the share as part of the same step as well.
+2017-03-23T13:52:30 <the-t-in-rtf> i.e. net use v: \\\\vboxsrv\\vagrant; npm install ; npm test
+2017-03-23T13:52:32 <cindyli> sure, Justin_o
+2017-03-23T13:52:33 <stegru> well, you can have "unlimited" but accessing \\\\aa\\bb directly.. but cmd doesn\'t allow that!
+2017-03-23T13:53:13 <Bosmon> the-t-in-rtf - again, would it not make sense to simply write all of those 3 commands in their own .ps1 file which you then trigger in 1 step from the outside?
+2017-03-23T13:53:21 <Justin_o> cindyli: thanks
+2017-03-23T13:53:26 <cindyli> np
+2017-03-23T13:53:43 <stegru> you could try "pushd \\\\vboxsrv\\vagrant ; next command; etc."
+2017-03-23T13:54:00 <the-t-in-rtf> yes, but I would like to understand what is happening here.
+2017-03-23T13:54:10 <stegru> me too
+2017-03-23T13:54:37 <the-t-in-rtf> it\'s more ideal for people to just write commands in the config file, i.e. if I only want to test on IE, it seems a bit much to have to write a PS1 file just to get the mounts right.
+2017-03-23T13:54:53 <Bosmon> Welcome to Windows :)
+2017-03-23T13:54:54 <amatas> I\'m testing that behavior
+2017-03-23T13:54:58 <the-t-in-rtf> thanks, @amatas.
+2017-03-23T13:55:34 <stegru> you just have to mount it once.. write a single ps1/bat file and run it with do.ps1 like Bosmon suggested
+2017-03-23T13:55:39 <kasparne_> kavya: hey
+2017-03-23T13:55:43 <kasparne_> sorry missed your ping
+2017-03-23T13:55:48 <the-t-in-rtf> yes, just trying to understand a few things.
+2017-03-23T13:55:51 * alanharnum joined the channel
+2017-03-23T13:55:58 <the-t-in-rtf> 1) is it possible to send a plain old colon to do.ps1
+2017-03-23T13:56:09 <the-t-in-rtf> for example, someone might want to just change the working directory
+2017-03-23T13:56:17 <stegru> 1) evidently not ;)
+2017-03-23T13:56:27 <the-t-in-rtf> it\'s going to keep coming up.
+2017-03-23T13:56:48 <the-t-in-rtf> If writing a script is the way to do it, the docs for the QI plugin will need to very clearly cover this.
+2017-03-23T13:57:03 <the-t-in-rtf> i.e. what you can expect to run and what you can\'t
+2017-03-23T13:57:31 <kavya> For JAWS, after installing it gives me option to run in 40 minute mode or authorize activation
+2017-03-23T13:57:45 <kavya> for testing MM do i need to activate JAWS?
+2017-03-23T13:57:50 <kasparne_> nopr
+2017-03-23T13:57:51 <kasparne_> nope*
+2017-03-23T13:58:01 <kasparne_> you should be able to just use it in 40 minute mode
+2017-03-23T13:58:12 <kasparne_> ... but then you only have the 40 minutes to test it in :)
+2017-03-23T13:58:23 <kasparne_> some motivation there to be superquick with the jaws testing
+2017-03-23T13:58:32 <kasparne_> ... once the 40 minutes have past, you\'ll have to restart windows
+2017-03-23T13:58:41 <kasparne_> which\'ll give you another 40 mins, and so on
+2017-03-23T13:59:50 <kavya> ok..so when i login with user with expicit settings to launch JAWS....gpii must launch JAWS in 40 minute mode right?
+2017-03-23T14:01:04 <kasparne_> yes
+2017-03-23T14:03:18 * lliskovoi joined the channel
+2017-03-23T14:03:20 <amatas> the-t-in-rtf:    - "net use s: \\\\\\\\VBOXSVR\\\\vagrant"
+2017-03-23T14:03:21 <amatas> - "dir s:"
+2017-03-23T14:03:45 <amatas> stegru, the dir command list the files in s:
+2017-03-23T14:04:00 <kavya> ok..got it and also am trying to understand JAWS behavior.
+2017-03-23T14:05:20 <kavya> once JAWS is launched it runs in 40 minute mode.logging off user will exit JAWS so at this stage do i need to restart my computer or i can still expect
+2017-03-23T14:05:39 <kavya> JAWS to launch when user tries to relogin again
+2017-03-23T14:05:50 <kasparne_> kavya: I think you need to restart
+2017-03-23T14:06:07 <stegru> amatas: yes, the colon works for me too
+2017-03-23T14:06:11 <kasparne_> though I haven\'t tried just logging out of windows, and then back in
+2017-03-23T14:06:56 <stegru> amatas: oh! no it doesn\'t...
+2017-03-23T14:07:21 <stegru> vagrant winrm -c \'do.ps1 -c "dir c:\\"\'
+2017-03-23T14:07:40 <kavya> ok..Thanks Kasper
+2017-03-23T14:07:56 * clown joined the channel
+2017-03-23T14:09:30 * kavya has quit
+2017-03-23T14:10:54 <stegru> amatas: this works: vagrant winrm -c \'psexec -i 1 net use t: \\\\vboxsvr\\vagrant\'
+2017-03-23T14:11:07 <stegru> t: is now accessible by the desktop user
+2017-03-23T14:11:35 * sirdancealot joined the channel
+2017-03-23T14:12:15 <amatas> stegru, good to know
+2017-03-23T14:12:23 <amatas> this also works: https://www.pastery.net/rghejy/
+2017-03-23T14:12:43 <amatas> where is Tony? he\'s missing the best!
+2017-03-23T14:13:35 <amatas> stegru, can you exec your command several times?
+2017-03-23T14:13:36 <stegru> yes! now he\'ll never know
+2017-03-23T14:14:25 <amatas> my approach throws this error the second time I run it: The local device name is already in use.
+2017-03-23T14:14:49 <stegru> yes, that\'s because the first command worked, and the drive is still there
+2017-03-23T14:14:51 * the-t-in-rtf joined the channel
+2017-03-23T14:15:03 <colinclark> hey kasparne_, can I ask you a question?
+2017-03-23T14:15:22 <kasparne_> colinclark: well....
+2017-03-23T14:15:25 <kasparne_> ok, then
+2017-03-23T14:15:29 <colinclark> hahaha
+2017-03-23T14:15:30 <gloob> xD
+2017-03-23T14:15:32 <amatas> the-t-in-rtf, <stegru> amatas: this works: vagrant winrm -c \'psexec -i 1 net use t: \\\\vboxsvr\\vagrant\'
+2017-03-23T14:15:38 <kasparne_> unless it\'s a very difficult one
+2017-03-23T14:15:45 <colinclark> no, it\'s an easy one
+2017-03-23T14:15:45 <amatas> the-t-in-rtf, <amatas> this also works: https://www.pastery.net/rghejy/
+2017-03-23T14:15:46 <gloob> kasparne_: quit, fast
+2017-03-23T14:15:52 <kasparne_> haha gloob
+'
+
+b'2017-03-23T01:45:51 * michelled has quit
+2017-03-23T02:28:53 * sgithens joined the channel
+2017-03-23T04:59:36 * kasparnet joined the channel
+2017-03-23T05:03:35 * kasparnet has quit
+2017-03-23T06:01:50 * the-t-in-rtf joined the channel
+2017-03-23T07:57:11 * the-t-in-rtf joined the channel
+2017-03-23T08:51:47 * stegru joined the channel
+2017-03-23T09:31:12 * amatas joined the channel
+2017-03-23T09:37:55 * kasparnet joined the channel
+2017-03-23T09:38:41 * kasparnet has quit
+2017-03-23T09:40:36 * kasparnet joined the channel
+2017-03-23T09:44:52 * kasparnet has quit
+2017-03-23T09:46:04 * kasparnet joined the channel
+2017-03-23T09:46:19 * kasparnet has quit
+2017-03-23T10:31:52 * kasparnet joined the channel
+2017-03-23T10:40:02 * kasparne_ joined the channel
+2017-03-23T10:42:32 * kasparnet has quit
+2017-03-23T10:49:35 * gtirloni joined the channel
+2017-03-23T11:00:40 * kasparne_ has quit
+2017-03-23T11:23:51 * kasparnet joined the channel
+2017-03-23T11:25:07 * kasparne_ joined the channel
+2017-03-23T11:27:34 <gloob> jhernandez: I\'m checking gpii-app and it seems we are not storing any settings for gpii-app explicitly, right?
+2017-03-23T11:27:46 <gloob> morning everyone o/
+2017-03-23T11:28:20 <stegru> hi gloob
+2017-03-23T11:28:45 * kasparnet has quit
+2017-03-23T11:29:00 <amatas> hi gloob
+2017-03-23T11:29:22 <gloob> stegru: sorry to hear the london event
+2017-03-23T11:29:37 <gloob> stegru: I hope all of you are safe and not touched by that in any sense
+2017-03-23T11:29:56 <jhernandez> stegru: +1
+2017-03-23T11:30:03 <jhernandez> gloob: hi
+2017-03-23T11:30:08 <gloob> jhernandez: ey
+2017-03-23T11:30:33 <jhernandez> gloob: right, we don\'t have anything to store
+2017-03-23T11:30:38 <jhernandez> at least now
+2017-03-23T11:30:39 <amatas> I\'m watching skynews right now about that incident.
+2017-03-23T11:30:40 <stegru> thanks, I wasn\'t affected
+2017-03-23T11:31:07 <jhernandez> gloob: I guess that in the future we will, but not yet
+2017-03-23T11:31:21 <jhernandez> why are you asking?
+2017-03-23T11:31:32 <jhernandez> (just curious)
+2017-03-23T11:31:47 <gloob> same for Bosmon
+2017-03-23T11:33:32 <gloob> jhernandez: well, Gregg is asking for a setting in PCP that set "lock/unlock of gpii into the system tray". So we have a chicken-egg here.
+2017-03-23T11:33:57 <jhernandez> gloob: mmm
+2017-03-23T11:33:59 <jhernandez> why?
+2017-03-23T11:34:00 <gloob> jhernandez: I understand that first we need to implement that feature and setting into gpii-app and afterward to onboard it into gpii as an app-specific setting
+2017-03-23T11:34:03 <gloob> or
+2017-03-23T11:34:19 <gloob> well, it\'s a good question, it should be special or not?
+2017-03-23T11:34:56 <gloob> probably it is a \xc3\xbcber-settings
+2017-03-23T11:35:09 * javjarfer joined the channel
+2017-03-23T11:35:25 <gloob> jhernandez: anyway, what I want to assure first is that we are not storing any setting for gpii-app right?
+2017-03-23T11:35:30 <jhernandez> well, it\'s true that we can start it with different configurations, for instance, you can use the "dev" config and you\'ll have the context menu with users to key in/out easily
+2017-03-23T11:35:52 <jhernandez> right, we don\'t store anything
+2017-03-23T11:36:26 <gloob> jhernandez: yes, that could be another setting, show the prefsets/personas or whatever in the system tray icon menu
+2017-03-23T11:37:03 <gloob> jhernandez: the second question is, because PCP will be connected with GPII. Should we use that mechanism? Or onboard it as a regular app for GPII?
+2017-03-23T11:37:12 <gloob> That\'s what I\'m wondering
+2017-03-23T11:40:21 <jhernandez> good question
+2017-03-23T11:40:49 <jhernandez> it\'s something I have in my "things to discuss" PCP list
+2017-03-23T11:41:39 <gloob> which one? how we are going to connect?
+2017-03-23T11:41:51 <gloob> how are we...
+2017-03-23T11:42:07 <jhernandez> in any case, in terms of "starting the gpii-app with concrete options" is something that is already manageable through kettle\'s config system
+2017-03-23T11:42:42 <jhernandez> okay, so there are 2 things
+2017-03-23T11:42:46 <gloob> three things
+2017-03-23T11:42:54 <gloob> three stranger things
+2017-03-23T11:43:18 <jhernandez> 1 the pcp needs a communication channel to interact with the flow manager
+2017-03-23T11:43:45 <gloob> for the 1 I though we are going to use cindy strategy and stegru\'s magic
+2017-03-23T11:43:49 <gloob> no?
+2017-03-23T11:43:52 <jhernandez> 2 the pcp should be adapted to the users\' needs
+2017-03-23T11:44:46 <gloob> I\'ll expand point 2 to "so, we need to store settings by user and they can be modified from GPII"
+2017-03-23T11:44:51 <jhernandez> for 1 we have the "PCPConnector", let\'s call it: "the PCP API"
+2017-03-23T11:45:00 <gloob> jhernandez: ah, correct, yes
+2017-03-23T11:45:20 <gloob> 2 the gpii-app needs to be onboarded into gpii
+2017-03-23T11:45:20 <jhernandez> for 2
+2017-03-23T11:45:27 <jhernandez> that\'s an open question
+2017-03-23T11:45:30 <gloob> 3 the gpii-app needs to be onboarded into gpii
+2017-03-23T11:46:31 <jhernandez> so, ideally, the PCP would use UIOptions so it can be configured easily, and yes, this would need to be onboarded
+2017-03-23T11:46:45 <gloob> this deserves an issue
+2017-03-23T11:46:56 <jhernandez> but as I said, this is something that we haven\'t discussed so far
+2017-03-23T11:47:00 <gloob> I\'ll
+2017-03-23T11:47:08 <gloob> jhernandez: do you know any related issue to this?
+2017-03-23T11:47:38 <jhernandez> not yet (if there is one, I\'m not aware of it)
+2017-03-23T11:50:02 <gloob> ok, I will make a search
+2017-03-23T11:50:04 <gloob> jhernandez: thanks
+2017-03-23T11:50:05 <jhernandez> but the thing is that, in order to implement 2 the way I just said, we need to support https://issues.gpii.net/browse/GPII-1881
+2017-03-23T11:50:16 <jhernandez> s/support/implement/
+2017-03-23T11:50:34 <gloob> jhernandez: great, that\'s what I wanted
+2017-03-23T11:50:50 <jhernandez> okay
+2017-03-23T11:51:23 <jhernandez> in any case, feel free to bug me if you need further explanations
+2017-03-23T12:01:09 <stegru> gloob: start screen customisation: https://issues.gpii.net/browse/GPII-2335
+2017-03-23T12:02:23 <gloob> stegru: why the embedded PS1? to overcome the permissions problems?
+2017-03-23T12:03:36 <stegru> well, I started writing a batch file without thinking I would need that much ps1
+2017-03-23T12:03:37 <gloob> javjarfer: this is interesting for the morpher
+2017-03-23T12:04:43 <gloob> stegru: hopefully we have method 3 :P
+2017-03-23T12:05:02 <gloob> stegru: is this windows10 specific?
+2017-03-23T12:05:05 <stegru> yes, method 3 is what the script uses
+2017-03-23T12:05:08 <gloob> stegru: looks good
+2017-03-23T12:05:13 <javjarfer> gloob, true! I\'m going to take a look
+2017-03-23T12:05:30 <stegru> yes, I think it is 10 only.. 8 might be similar, but not the same.
+2017-03-23T12:07:12 <gloob> stegru: ah, that is bobbins
+2017-03-23T12:07:13 <stegru> the batch file is just to prove it can be done in code - it was quicker than doing it in node, not having to wire up the registry handler.. then calling a command and dealing with the async callbacks, etc.
+2017-03-23T12:07:56 * the-t-in-rtf joined the channel
+2017-03-23T12:09:08 <gloob> stegru: I see, great, it will be useful for some of the demos
+2017-03-23T12:10:59 <gloob> taskkill /f /im ShellExperienceHost.exe >nul
+2017-03-23T12:11:05 <gloob> this is the one controlling the UI?
+2017-03-23T12:12:13 <javjarfer> stegru, this is great, this means we can reload the settings in the taskbar without the exploring restart?
+2017-03-23T12:13:38 * michelled joined the channel
+2017-03-23T12:13:45 <stegru> no I don\'t think so javjarfer.. this is just for the menu
+2017-03-23T12:13:56 <stegru> but try it
+2017-03-23T12:14:18 <javjarfer> stegru, I will, maybe we find something interesting!
+2017-03-23T12:14:47 <stegru> gloob: yes that process is what the start menu is
+2017-03-23T12:14:58 * cindyli joined the channel
+2017-03-23T12:19:53 <stegru> oh! gloob javjarfer : there\'s one little problem.. writing to that registry key required administrator privileges
+2017-03-23T12:21:21 <javjarfer> stegru, also I recently found this in personalization in windows 10 that could help with some things after Microsoft started limiting the way we can set default options with "hashes" per user
+2017-03-23T12:21:25 <javjarfer> https://msdn.microsoft.com/en-us/windows/hardware/commercialize/manufacture/desktop/dism-default-application-association-servicing-command-line-options
+2017-03-23T12:21:49 <javjarfer> stegru, well... we should have admin rights always true?
+2017-03-23T12:23:11 <javjarfer> (Am I wrong in that? Because I was assuming we had them xD)
+2017-03-23T12:23:21 <stegru> no, never. GPII runs as a normal user. in the vagrant VM it does run as administrator, but that\'s because the VM has been configured that way (UAC is off)
+2017-03-23T12:24:16 <stegru> however, I\'m writing a windows service which runs as administrator (well, a little higher) so there might be room for a work-around
+2017-03-23T12:24:44 <Bosmon> What does it mean to "unlock the GPII from the system tray"?
+2017-03-23T12:24:46 <Bosmon> Where will it go
+2017-03-23T12:25:42 <gloob> Bosmon: I think is more, visible/not visible
+2017-03-23T12:26:05 * colinclark joined the channel
+2017-03-23T12:27:19 <Bosmon> How will it be used, when it is not visible?
+2017-03-23T12:27:43 <gloob> launching pcp?
+2017-03-23T12:28:20 <gloob> I created this issue for that https://issues.gpii.net/browse/GPII-2347
+2017-03-23T12:28:47 <stegru> Does it mean "always show", like the volume and network icons?
+2017-03-23T12:29:07 * Justin_o joined the channel
+2017-03-23T12:29:46 * colinclark has quit
+2017-03-23T12:29:50 <gloob> stegru: I think so, that exact behaviour
+2017-03-23T12:30:20 <gloob> stegru: at the end it\'s like to have the shortcut or not, you can always show the main window where you can get it back or not
+2017-03-23T12:31:06 <stegru> https://blogs.msdn.microsoft.com/oldnewthing/20101215-00/?p=12003/
+2017-03-23T12:32:16 <gloob> stegru: ah yes, but you can modify if you want your icon in that list hidden or not, no?
+2017-03-23T12:32:50 <stegru> yes, the user can - but apparently the application can\'t make that change
+2017-03-23T12:34:24 <gloob> stegru: umh, I think they are talking about windows trimming the notification icons list
+2017-03-23T12:34:48 <stegru> that\'s what i\'m talking about.. the icons near the clock, right?
+2017-03-23T12:34:53 <gloob> stegru: anyway I will need to check the api to see if we can hide the gpii-app icon or not
+2017-03-23T12:34:57 <gloob> stegru: uyes
+2017-03-23T12:35:11 <gloob> stegru: the one with the nice icon :D
+2017-03-23T12:35:42 <stegru> the one that jhernandez spent 2 months on, but it still looks crap? ;)
+2017-03-23T12:36:04 * sgithens has quit
+2017-03-23T12:37:11 <gloob> stegru: maybe is that one, the one with "newtons"
+2017-03-23T12:37:21 <jhernandez> stegru: :*
+2017-03-23T12:41:13 <gloob> jhernandez: I\'m not a rapp^H^H^H^Hdesigner
+2017-03-23T12:42:25 <jhernandez> gloob: https://68.media.tumblr.com/487321f5b3c6b3ad88aeb982e1fc2f1f/tumblr_mg5y15KyPb1qa3bzoo1_400.gif
+2017-03-23T12:42:28 <jhernandez> :*
+2017-03-23T12:48:42 <javjarfer> stegru, oh, didn\'t knew that. Then it\'s an issue, that I need also to take into account in the future. Thanks for the tip, also, how are you planning to expose the communication with that service?
+2017-03-23T12:49:48 <stegru> I don\'t know yet, javjarfer... it\'s what I\'m working on now
+2017-03-23T12:50:18 <javjarfer> stegru, nice, will be great to have something like that
+2017-03-23T13:02:53 * kavya joined the channel
+2017-03-23T13:05:32 * jhung joined the channel
+2017-03-23T13:06:41 * danayo joined the channel
+2017-03-23T13:08:32 <the-t-in-rtf> @amatas, are there docs on the escaping required for do.ps1?
+2017-03-23T13:08:42 <the-t-in-rtf> and is that different than the escaping required in YAML?
+'
+

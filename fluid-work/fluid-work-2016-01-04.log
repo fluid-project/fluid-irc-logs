@@ -1,0 +1,292 @@
+b'2016-01-04T18:38:23 <jhung> ok
+2016-01-04T18:38:37 <danayo> also zamcnema, putting it between back and next might also be confusing as it would seem to relate to these functions
+2016-01-04T18:38:51 <danayo> would be better if it could be grouped with the adjuster itself
+2016-01-04T18:39:43 <Justin_o> jhung, clown: on VoiceOver it announces it as an indeterminate progress indicator
+2016-01-04T18:40:42 <clown> Justin_o, jhung, here are the AAPI mappings for <meter>:  http://rawgit.com/w3c/aria/master/html-aam/html-aam.html#el-meter
+2016-01-04T18:41:04 <clown> Most of the mapping are to "progress bar".
+2016-01-04T18:41:05 <clown> :-)
+2016-01-04T18:41:40 <clown> which explains the VO result that Justin_o just reported.
+2016-01-04T18:43:13 <Justin_o> clown: cool, so just using an aria progress role should work for us i think
+2016-01-04T18:43:44 <clown> it\'s probably the only thing you can do for now.  I am looking to see what AT-SPI has to offer.
+2016-01-04T18:44:35 * jhernandez has quit
+2016-01-04T18:45:21 * jhernandez joined the channel
+2016-01-04T18:46:20 * zamcnema has quit
+2016-01-04T18:46:50 <clown> Justin_o, jhung, I found a ROLE_DIAL, which is documented as "An object that allows a value to be changed via rotating a visual element, or which displays a value via such a rotating element."
+2016-01-04T18:47:41 * clown continues to look
+2016-01-04T18:52:00 * jhernandez has quit
+2016-01-04T18:52:12 * yzen joined the channel
+2016-01-04T18:52:41 * jhernandez joined the channel
+2016-01-04T19:04:45 <clown> Justin_o, jhung, I\'m now asking joanie about <meter> and ROLE_DIAL, but I suspect it is early days in terms of developing that solution.
+2016-01-04T19:05:38 <jhung> thanks clown.
+2016-01-04T19:06:32 <clown> she says that using a progress bar is not ideal.  ATK has a ROLE_RATING as well, but it\'s not quite right either.
+2016-01-04T19:07:50 * kasparnet has quit
+2016-01-04T19:08:26 <clown> Justin_o, jhung, she found ROLE_LEVEL_BAR, defined as, "A bar that serves as a level indicator to, for instance, show the strength of a password or the state of a battery."
+2016-01-04T19:08:42 <clown> but, it will take time to get the browsers to map to that role.
+2016-01-04T19:09:15 <clown> And that\'s an ATK/AT-SPI role.  I\'ll check IA2; it may be there.  It\'s unlikely that it will be in AXAPI nor UIA.
+2016-01-04T19:15:57 * colinclark has quit
+2016-01-04T19:16:01 <Justin_o> clown: thanks
+2016-01-04T19:17:02 * colinclark joined the channel
+2016-01-04T19:18:45 <clown> Justin_o: nothing analogous in IA2.
+2016-01-04T19:19:12 * clown checking MSAA
+2016-01-04T19:19:15 <Justin_o> clown: okay, should we just use progress bar for now then?
+2016-01-04T19:19:38 * alanharnum joined the channel
+2016-01-04T19:19:53 <clown> yes, since even if there is a ROLE_LEVEL_BAR in one of the AAPIs, it\'s not being exposed by any browser.
+2016-01-04T19:20:30 <clown> Justin_o: where is the page where you got VO to say "indeterminate progress"?  Is that the one I was looking at?
+2016-01-04T19:20:40 * michelled has quit
+2016-01-04T19:21:15 <Justin_o> no i just threw on a meter and tried it.. i\'ll give you a jsfiddle with a meter element... one second
+2016-01-04T19:21:36 <clown> also, the mac keychain has a gizmo that shows the strength of various passwords.  I wonder what it comes out as?
+2016-01-04T19:21:57 <Justin_o> clown: https://jsfiddle.net/2319uvva/
+2016-01-04T19:24:08 <Justin_o> clown i checked something else like that in another app i have, it came out as AXLevelIndicator
+2016-01-04T19:24:26 * jhernandez has quit
+2016-01-04T19:24:26 <clown> So:  AXAPI does have something.
+2016-01-04T19:24:45 <clown> but, safari is exposing it as a progress bar.
+2016-01-04T19:25:12 <Justin_o> clown: yes, AXProgressIndicator
+2016-01-04T19:25:20 * jhernandez joined the channel
+2016-01-04T19:26:59 <Justin_o> clown, jhung: https://developer.mozilla.org/en/docs/Web/HTML/Element/progress
+2016-01-04T19:27:21 <Justin_o> so there is a separate progress element as well, which makes it strange that meter is mapped to progressbar
+2016-01-04T19:27:54 <clown> well, it is an editors\' draft.  And trying to find the correct role in the AAPIs is not always obvious.
+2016-01-04T19:29:04 <Justin_o> clown: okay
+2016-01-04T19:31:26 <Justin_o> clown, jhung: i\'m thinking for now to just use a progress element and set the aria-valuetext as needed.
+2016-01-04T19:32:24 <clown> yeah,  you might also set the role thus:  role="levelindicator progress", but that\'s only a stopgap.
+2016-01-04T19:32:53 <Justin_o> clown: is "level indicator" an actual role now?
+2016-01-04T19:33:32 <clown> no, but the role attribute does take multiple values where the order given is "what I really want" followed by "fallback roles".
+2016-01-04T19:33:45 <Justin_o> clown: okay
+2016-01-04T19:34:48 <clown> and, the role string is copied verbatim to some property of the accessible object where an AT can look at that and use it over the actual ROLE property.  But, they have to parse the string, and decide if it\'s useful.
+2016-01-04T19:35:07 <Justin_o> ah intersting, didn\'t know that it did that
+2016-01-04T19:35:30 <clown> note that the value is a space separated list.  each whole "word" is another role.
+2016-01-04T19:35:52 <clown> so, not "level indicator", but "levelindicator".
+2016-01-04T19:36:21 <Justin_o> clown: thanks, that\'s good to know too
+2016-01-04T19:36:52 <clown> Justin_o:  see the fifth item here:  http://www.w3.org/TR/core-aam-1.1/#roleMappingGeneralRules
+2016-01-04T19:37:03 <clown> note that this does not work for MSAA nor AXAPI.
+2016-01-04T19:38:21 <clown> Justin_o: also check out the first item in that list.
+2016-01-04T19:39:01 <clown> just the first sentence in that item.
+2016-01-04T19:40:03 * michelled joined the channel
+2016-01-04T19:40:25 * clown brb
+2016-01-04T19:40:27 <Justin_o> clown: thanks
+2016-01-04T19:44:42 * clown has quit
+2016-01-04T19:45:12 * jhernandez has quit
+2016-01-04T19:45:56 * jhernandez joined the channel
+2016-01-04T19:46:00 <jhung> Justin_o: I\'ve updated the descriptions for john travoltage.
+2016-01-04T19:46:15 <Justin_o> jhung: thanks
+2016-01-04T19:51:52 * jhernand1z joined the channel
+2016-01-04T19:56:08 * clown joined the channel
+2016-01-04T19:57:06 * jhernand1z has quit
+2016-01-04T20:08:10 <clown> Justin_o, I looked at the a11y tree for you <meter> test, and it doesn\'t expose anything other than a rather neutral "section".
+2016-01-04T20:08:13 <clown> FF, that is.
+2016-01-04T20:09:19 <Justin_o> that\'s unfortunate
+2016-01-04T20:09:27 <Justin_o> i guess i\'ll stick with progress for now
+2016-01-04T20:09:40 <Justin_o> hopefully meter will get better support in the future
+2016-01-04T20:18:16 <Justin_o> jhung, clown: here\'s the example using a progress element http://jobara.github.io/john-travoltage-html/
+2016-01-04T20:20:30 <clown> Justin_o, okay.  I find it a bit surprsing how fast the discharge occurs.
+2016-01-04T20:20:43 <clown> but, I guess that\'s how static behaves.
+2016-01-04T20:21:05 <Justin_o> clown: in the real sim it won\'t all discharge at once
+2016-01-04T20:21:36 <clown> ah, I see.  no time to implement an animation yet?
+2016-01-04T20:22:01 * simonjb has quit
+2016-01-04T20:24:50 <colinclark> Justin_o: I noticed that MDN is listing Firefox 44 as supporting the Web Speech API
+2016-01-04T20:25:05 <Justin_o> clown: yep, well there is an interactive sim already, but this is going to be the parallel DOM that will go alongside it https://phet.colorado.edu/sims/html/john-travoltage/latest/john-travoltage_en.html
+2016-01-04T20:25:06 <colinclark> It looks like it\'s hidden behind a flag, as is the modern way
+2016-01-04T20:25:14 <colinclark> but that\'s progress, anyway :)
+2016-01-04T20:25:24 <Justin_o> clown: currently i\'m mocking up all the interactions though, so that it can be used for testing
+2016-01-04T20:25:35 <clown> Justin_o:  understood
+2016-01-04T20:25:52 <Justin_o> colinclark: cool, getting close then
+2016-01-04T20:25:56 <colinclark> yup
+2016-01-04T20:26:03 <Justin_o> maybe in a version or two it\'ll be fully supported
+2016-01-04T20:26:08 <Justin_o> without the flag
+2016-01-04T20:26:21 <colinclark> I hope so
+2016-01-04T20:26:30 <colinclark> I don\'t know how these things work...
+2016-01-04T20:26:35 * jhernandez has quit
+2016-01-04T20:26:41 <colinclark> I guess either a vendor decides that their implementation is stable enough
+2016-01-04T20:26:49 <colinclark> or they decide that the specification is stable enough
+2016-01-04T20:27:19 <colinclark> one would imagine that it should be the latter, but it must be quite political
+2016-01-04T20:27:26 <colinclark> almost makes you miss vendor prefixes :P
+2016-01-04T20:28:29 * jhernandez joined the channel
+2016-01-04T20:30:49 <Justin_o> ha yah, it\'d be nice to allow an option for sites to request to use a feature.
+2016-01-04T20:31:18 <Justin_o> i guess location and other hardware features already work like this
+2016-01-04T20:48:15 * clown has quit
+2016-01-04T21:09:36 * jhernandez has quit
+2016-01-04T21:17:31 * kasparnet joined the channel
+2016-01-04T21:28:54 * jhernandez joined the channel
+2016-01-04T21:33:24 * cindyli has quit
+2016-01-04T21:34:06 * jhernandez has quit
+2016-01-04T21:37:47 * the-t-in-rtf joined the channel
+2016-01-04T21:41:49 * sepidehshahi joined the channel
+2016-01-04T21:42:43 * brendan_d has quit
+2016-01-04T21:46:22 * kasparnet has quit
+2016-01-04T21:46:31 * anvk has quit
+2016-01-04T21:49:47 * michelled joined the channel
+2016-01-04T21:53:29 * clown joined the channel
+2016-01-04T21:54:12 * kasparnet joined the channel
+2016-01-04T21:58:58 * kasparnet has quit
+2016-01-04T21:59:28 * clown has left the channel
+2016-01-04T21:59:38 * anastasiac has quit
+2016-01-04T21:59:40 * jessm has quit
+2016-01-04T22:30:18 * alanharnum has quit
+2016-01-04T22:30:55 * jhernandez joined the channel
+2016-01-04T22:35:40 * jhernandez has quit
+2016-01-04T22:43:12 * yzen is now known as yzen_
+2016-01-04T22:47:02 * yzen_ is now known as yzen
+2016-01-04T22:57:43 * yzen is now known as yzen_
+2016-01-04T23:02:30 * yzen_ has quit
+2016-01-04T23:02:39 * danayo joined the channel
+2016-01-04T23:09:26 * yzen joined the channel
+2016-01-04T23:11:04 * danayo has quit
+2016-01-04T23:14:12 * jhung joined the channel
+2016-01-04T23:14:12 * jhung has quit
+2016-01-04T23:31:47 * jhernandez joined the channel
+2016-01-04T23:36:20 * jhernandez has quit
+2016-01-04T23:37:33 * Justin_o has quit
+2016-01-04T23:44:59 * jhernandez joined the channel
+'
+
+b'2016-01-04T00:23:48 * amatas has quit
+2016-01-04T00:49:32 * jhernandez joined the channel
+2016-01-04T05:12:48 * yzen joined the channel
+2016-01-04T05:31:57 * yzen is now known as yzen_
+2016-01-04T05:36:06 * yzen_ has quit
+2016-01-04T06:42:23 * amatas joined the channel
+2016-01-04T07:13:13 * the-t-in-rtf1 has quit
+2016-01-04T07:27:49 * the-t-in-rtf joined the channel
+2016-01-04T08:02:23 * the-t-in-rtf has quit
+2016-01-04T08:33:00 * the-t-in-rtf joined the channel
+2016-01-04T10:01:33 * kasparnet joined the channel
+2016-01-04T12:59:12 * jhung joined the channel
+2016-01-04T13:27:19 * simonjb joined the channel
+2016-01-04T13:35:42 * brendan_d joined the channel
+2016-01-04T13:39:29 * Justin_o joined the channel
+2016-01-04T14:09:04 * sepidehshahi joined the channel
+2016-01-04T14:10:46 * cindyli joined the channel
+2016-01-04T14:13:31 * jessm joined the channel
+2016-01-04T14:14:05 <Justin_o> jhung: do you remember where we left off on PhET work at the end of last year?
+2016-01-04T14:16:05 <jhung> Justin_o: we were getting the strings ready for the html demo.
+2016-01-04T14:16:44 <Justin_o> ah okay, are those still being worked on?
+2016-01-04T14:17:31 <jhung> There are some minor corrections suggested by Ariel and Emiliy. I\'ll update those now.
+2016-01-04T14:19:50 <Justin_o> jhung: okay... and did we decide if we should be using infusion and etc for this, or sticking with plain javascript
+2016-01-04T14:20:05 <Justin_o> i don\'t remember actually discussing that point
+2016-01-04T14:20:34 <jhung> Good question Justin_o. We never got around to talking about it.
+2016-01-04T14:22:37 * anvk joined the channel
+2016-01-04T14:24:17 * anastasiac joined the channel
+2016-01-04T14:24:19 <Justin_o> jhung: okay, for now i\'ll keep mocking up with plain javascript and we can worry about it when i get to the point where i need to start refactoring
+2016-01-04T14:29:43 <jhung> Justin_o: Sounds good.
+2016-01-04T14:30:11 * zamcnema joined the channel
+2016-01-04T14:47:37 * alanharnum joined the channel
+2016-01-04T14:50:33 * anastasiac joined the channel
+2016-01-04T14:50:40 * cindyli1 joined the channel
+2016-01-04T14:54:13 * yzen joined the channel
+2016-01-04T14:54:49 * Yan_Hu joined the channel
+2016-01-04T14:55:02 * cindyli has quit
+2016-01-04T14:59:04 <jhung> Justin_o: The description tables have been updated.
+2016-01-04T14:59:14 <Justin_o> jhung: thanks
+2016-01-04T14:59:49 <jhung> np
+2016-01-04T15:00:26 <Justin_o> i was playing with the mock up of the sim with VoiceOver on Safari. The value text was working well and the alert was announced, although it kind of messed up the screen reader. as i was still able to use the keyboard to interact with the slider but it was no longer communicated by VoiceOver. Once i left the slider and came back, it was okay though.
+2016-01-04T15:00:32 <Justin_o> jhung: ^
+2016-01-04T15:01:29 <jhung> odd. You think the alert caused that in some way Justin_o?
+2016-01-04T15:02:19 <Justin_o> It seemed to have, but i\'m not sure why, could have been a combination of the DOM injection and the alert, but i\'m not sure
+2016-01-04T15:02:31 <simonjb> Justin_o: are we having floe planing now? do you know?
+2016-01-04T15:03:08 <jhung> simonjb: in an hour usually
+2016-01-04T15:03:32 <Justin_o> simonjb: i\'m not sure, I haven\'t seen michelled yet this morning.
+2016-01-04T15:03:42 <simonjb> jhung, Justin_o: ok, the google calendar says it\'s at 10 today
+2016-01-04T15:03:49 <Justin_o> simonjb: hmm... so the calendar looks like it says 10am for the Floe meeting, but i thought we always did it at 11am
+2016-01-04T15:03:58 <simonjb> yeah, me too
+2016-01-04T15:04:02 <simonjb> it was 11 before
+2016-01-04T15:04:08 <Justin_o> strange
+2016-01-04T15:04:28 <Justin_o> anastasiac: any idea why the Floe Planning Meeting is at 10am on the calendar instead of 11am?
+2016-01-04T15:04:55 <anastasiac> Justin_o: I was wondering about that myself; I wasn\xe2\x80\x99t sure if I was remembering incorrectly when we used to have it...
+2016-01-04T15:05:23 <Justin_o> haha, i had that thought too for a minute
+2016-01-04T15:06:09 <anastasiac> well, Justin_o, we should probably wait for michelle today
+2016-01-04T15:06:27 <Justin_o> simonjb, anastasiac: i guess we can assume there is a problem with the calendar and expect to have the meeting at 11am today.
+2016-01-04T15:06:47 <simonjb> anastasiac, Justin_o: can you ping me when you start meeting?
+2016-01-04T15:06:51 <simonjb> thanks!
+2016-01-04T15:06:52 <Justin_o> simonjb: sure
+2016-01-04T15:09:27 * clown joined the channel
+2016-01-04T15:13:09 * michelled joined the channel
+2016-01-04T15:14:42 * danayo joined the channel
+2016-01-04T15:17:03 * the-t-in-rtf has quit
+2016-01-04T15:17:52 * the-t-in-rtf joined the channel
+2016-01-04T15:36:48 * kasparnet has quit
+2016-01-04T15:38:43 * colinclark joined the channel
+2016-01-04T15:49:59 * anastasiac joined the channel
+2016-01-04T16:00:27 * michelled1 joined the channel
+2016-01-04T16:02:04 * colinclark has quit
+2016-01-04T16:03:06 <michelled1> avtar: Floe planning :)
+2016-01-04T16:03:24 * colinclark joined the channel
+2016-01-04T16:04:01 <avtar> michelled1: here
+2016-01-04T16:04:04 <avtar> or there
+2016-01-04T16:11:48 * sepidehshahi has quit
+2016-01-04T16:14:46 * Bosmon joined the channel
+2016-01-04T16:16:59 * jhernandez has quit
+2016-01-04T16:20:26 * the-t-in-rtf has quit
+2016-01-04T16:22:40 * jhernandez joined the channel
+2016-01-04T16:24:19 * cindyli1 has quit
+2016-01-04T16:28:36 * colinclark has quit
+2016-01-04T16:30:08 * clown joined the channel
+2016-01-04T16:37:22 * anastasiac has quit
+2016-01-04T16:46:22 * michelled1 has quit
+2016-01-04T16:47:57 * sepidehshahi joined the channel
+2016-01-04T16:49:26 * cindyli joined the channel
+2016-01-04T16:50:49 * colinclark joined the channel
+2016-01-04T16:52:14 * jhernandez has quit
+2016-01-04T16:53:20 * jhernandez joined the channel
+2016-01-04T16:59:19 * anastasiac joined the channel
+2016-01-04T17:03:14 * michelled joined the channel
+2016-01-04T17:17:45 <Justin_o> Bosmon: the GPII-1337 docs pull request is ready for more review https://github.com/GPII/docs-first-discovery/pull/3
+2016-01-04T17:20:15 * michelled has quit
+2016-01-04T17:23:10 <Bosmon> Thanks, Justin_o
+2016-01-04T17:23:14 <Bosmon> I\'ll take a look
+2016-01-04T17:23:22 <Justin_o> Bosmon: thanks
+2016-01-04T17:23:42 * colinclark joined the channel
+2016-01-04T17:24:29 * michelled joined the channel
+2016-01-04T17:40:54 <Justin_o> jhung: did you happen to come up with a range for the Charge values
+2016-01-04T17:41:32 <Justin_o> so far i\'m using "no" = 0, "a small amount" < 34, "a moderate amount" < 67, "a large amount" >= 67
+2016-01-04T17:41:42 <jhung> Justin_o: sorry I\'ve been working on the other descriptions.
+2016-01-04T17:41:51 <jhung> Justin_o: that looks fine for the demo.
+2016-01-04T17:42:08 <Justin_o> jhung: cool thanks
+2016-01-04T17:54:46 * danayo joined the channel
+2016-01-04T18:01:06 <alanharnum> colinclark michelled Justin_o: made a wiki page at https://wiki.fluidproject.org/display/fluid/First+Discovery+Server+Demo
+2016-01-04T18:01:25 <alanharnum> in the process i also managed to get the "get a preference via FM" working
+2016-01-04T18:02:27 <michelled> cool, thx alanharnum
+2016-01-04T18:02:31 <alanharnum> so to sum up, you can go through the FD process, get a valid token, then use that to retrieve all the preferences you set (via the PS), or those for a specific application where they\'d be relevant (via FM)
+2016-01-04T18:03:37 * sepidehshahi has quit
+2016-01-04T18:06:02 <Justin_o> alanharnum: cool, thanks
+2016-01-04T18:07:07 <colinclark> alanharnum: That\'s great!
+2016-01-04T18:18:31 <Justin_o> clown: I\'m working on an html representation of a physics sim. Right now we are using sliders for moving a hand and foot. In this sim the foot rubs against the floor to build up electrons in the body. As the hand approaches the door knob the electrons will discharge from the hand. We\'re trying to find a way to represent the build up of the electrons.
+2016-01-04T18:18:31 <Justin_o> Currently we have a read-only text field in the form with a category of the value (e.g. a small amount). http://localhost:7888/john-travoltage-html/
+2016-01-04T18:18:43 <Justin_o> sorry, wrong url http://jobara.github.io/john-travoltage-html/
+2016-01-04T18:19:11 <clown> Justin_o:  *looking*
+2016-01-04T18:20:03 <Justin_o> clown: we\'re also thinking of updating the value text in the foot slider to indicate when a charge has been gained.
+2016-01-04T18:20:05 <clown> Justin_o:  makes me think of a progress bar, but that\'s not quite right since it isn\'t progress.
+2016-01-04T18:20:37 <Justin_o> clown: hmm.. could be, that\'s an interesting though
+2016-01-04T18:20:38 <Justin_o> thought
+2016-01-04T18:20:59 <clown> rhetorical question:  how does one represent (in a gui) sound levels on a recording deck.  They go up and down...
+2016-01-04T18:21:00 <Justin_o> clown: there is a max and min amount of charge that can be gained
+2016-01-04T18:21:35 <Justin_o> clown: might be a slider
+2016-01-04T18:21:58 <clown> but a slider that the use doesn\'t directly control.
+2016-01-04T18:22:03 <clown> *the user
+2016-01-04T18:22:32 <Justin_o> clown: ah i thought you meant the volume controls themselves
+2016-01-04T18:23:13 <clown> no, I mean the vertical columns in an equalizer that show the amplitude (?) of each band of frequencies.
+2016-01-04T18:25:12 <clown> maybe it is a progress bar, but one where "progress" can increase and decrease as the user fiddles with the other controls.
+2016-01-04T18:25:58 <clown> What other gui widgets show "quantity", or filling up at one time and depleting at another?
+2016-01-04T18:27:21 <Justin_o> hmm.. good question.. i can\'t think of anything... maybe like a thermometer, but i think mostly they\'d just show the numbers
+2016-01-04T18:28:50 <Justin_o> clown: maybe we could just make it an html meter
+2016-01-04T18:29:22 <Justin_o> too bad the browser support isn\'t very good http://caniuse.com/#search=meter
+2016-01-04T18:29:40 <Justin_o> sorry, it\'s good, just doesn\'t seem to cover all that we need it to
+2016-01-04T18:30:28 <jhung> clown, that\'s an interesting thought of using a meter to indicate your quantity of charge.
+2016-01-04T18:31:00 <clown> thanks jhung.
+2016-01-04T18:31:40 <clown> Justin_o:  is that meter thing something like <input type="meter"> ?
+2016-01-04T18:32:10 <jhung> Taking it a step further, it\'s almost like a breadcrumb where you can figure out how close or far you are from landmarks. The landmarks being "none, small, moderate, large, and maximum" number of charges.
+2016-01-04T18:32:28 <Justin_o> clown: no, it\'s an actual element https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meter
+2016-01-04T18:32:34 <clown> wow...
+2016-01-04T18:33:28 * clown noting that the <meter> element has reached Rec status.
+2016-01-04T18:33:44 * clown checking the AAPI mappings.
+2016-01-04T18:34:49 <jhung> Justin_o: should we be concerned that iOS and IE don\'t support <meter>?
+2016-01-04T18:35:15 <Justin_o> jhung: yes
+2016-01-04T18:35:16 <Justin_o> :(
+2016-01-04T18:35:27 <Justin_o> jhung: i\'m trying to see how they represent that element
+2016-01-04T18:37:13 * sepidehshahi joined the channel
+2016-01-04T18:37:22 <Justin_o> jhung: looks like IE just treats it like a span
+2016-01-04T18:37:28 <Justin_o> IE 11 that is
+2016-01-04T18:37:47 <danayo> hi zamcnema, in response to your question about adding a preview button to the First Discovery tool - using an icon alone may be problematic given the context of the tool (first-time users etc)
+2016-01-04T18:38:07 * alanharnum has quit
+2016-01-04T18:38:08 * kasparnet joined the channel
+2016-01-04T18:38:11 <Justin_o> jhung: but i guess we could see what clown finds out about the accessibility api mappings... that could suggest if we could use a progress bar or something else
+'
+

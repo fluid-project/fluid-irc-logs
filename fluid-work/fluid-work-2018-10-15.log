@@ -1,0 +1,366 @@
+b'2018-10-15T20:57:51 <cindyli> stegru: r u there?
+2018-10-15T20:58:04 <stegru> yes, cindyli
+2018-10-15T20:58:27 <stegru> unless it\'s a bug I\'ve created.. in that case i\'m not here
+2018-10-15T20:58:30 <cindyli> how can i reset the windows high contrast via a settings block in settingsHandler. i\'m using this - https://github.com/cindyli/universal/blob/GPII-3451/testData/snapshots/defaultSettings.win32.json5#L132-L136
+2018-10-15T20:58:35 <cindyli> and getting an erorr
+2018-10-15T20:59:22 <cindyli> just a question from me
+2018-10-15T21:00:08 <Bosmon> We should axe all the schema blocks before we send them to any settingsHandlers since none of them read them and they are getting bulky
+2018-10-15T21:00:19 <cindyli> ok
+2018-10-15T21:00:55 <Bosmon> What error do you get?
+2018-10-15T21:01:04 <Bosmon> And the block for the registry looks suspicious since it has no settings
+2018-10-15T21:01:49 <stegru> I can\'t see anything wrong with it
+2018-10-15T21:02:34 <cindyli> having trouble copying text from code writer in window vm\xe2\x80\xa6 damn
+2018-10-15T21:03:11 <Bosmon> cindyli - you enabled the "Bidirectional Clipboard" in the VM settings?
+2018-10-15T21:03:23 <cindyli> i did
+2018-10-15T21:03:39 <cindyli> sending email from vm. how smart i am!
+2018-10-15T21:04:15 <cindyli> 13:47:53.425:  Error received when dispatching settingsHandler.set gpii.windows.spiSettingsHandler with payload {
+2018-10-15T21:04:15 <cindyli> "com.microsoft.windows.highContrast": [
+2018-10-15T21:04:15 <cindyli> {
+2018-10-15T21:04:15 <cindyli> "settings": {
+2018-10-15T21:04:15 <cindyli> "HighContrastOn": false
+2018-10-15T21:04:15 <cindyli> },
+2018-10-15T21:04:15 <cindyli> "options": {
+2018-10-15T21:04:16 <cindyli> "getAction": "SPI_GETHIGHCONTRAST",
+2018-10-15T21:04:16 <cindyli> "setAction": "SPI_SETHIGHCONTRAST",
+2018-10-15T21:04:17 <cindyli> "uiParam": "struct_size",
+2018-10-15T21:04:17 <cindyli> "pvParam": {
+2018-10-15T21:04:18 <cindyli> "type": "struct",
+2018-10-15T21:05:00 <stegru> got up to:  "type": "struct",
+2018-10-15T21:05:09 <Bosmon> pastie please
+2018-10-15T21:05:34 <cindyli> https://pastebin.com/PZuXurfV
+2018-10-15T21:06:01 <stegru> also, might need to set the theme name to null or "regular-contrast"
+2018-10-15T21:07:36 <cindyli> stegru: where to set the theme name? i only find "LastHighContrastTheme" as the supported setting in a "configure-registry" block
+2018-10-15T21:08:13 <cindyli> i tried to set it to "regular-contrast" or "%SystemRoot%\\\\resources\\\\Ease of Access Themes\\\\hcwhite.theme". none worked
+2018-10-15T21:08:48 <cindyli> also tried "C:\\\\Windows\\\\resources\\\\Ease of Access Themes\\\\hcwhite.theme"
+2018-10-15T21:09:01 <stegru> ok I don\'t think it matters, and it wouldn\'t help with your current error
+2018-10-15T21:09:39 <Bosmon> cindyli - looks like a more fundamental problem - can you get the stack trace?
+2018-10-15T21:09:50 <cindyli> yes, one sec
+2018-10-15T21:09:56 <Bosmon> I think it is just that the settings block has the wrong format
+2018-10-15T21:10:24 <stegru> is this a hard-coded solutions registry?
+2018-10-15T21:11:22 <cindyli> yes, stegru
+2018-10-15T21:11:25 <cindyli> https://pastebin.com/pwNH2JzX
+2018-10-15T21:11:50 <cindyli> i can turn on fluid.logObjectRenderChars to get even more
+2018-10-15T21:12:12 <cindyli> stegru: this is to reset the system to default settings on the system startup
+2018-10-15T21:12:37 <cindyli> the system basically reads this hardcoded defaultSettings.json5 and applies it
+2018-10-15T21:12:56 <Bosmon> Oh, that\'s interesting
+2018-10-15T21:13:03 <Bosmon> The fail is inside the settings handler
+2018-10-15T21:14:03 <Bosmon> Looks like you\'ve missed off the "path" element of the setting, which is required
+2018-10-15T21:14:50 <Bosmon> Here it is in the original registry entry: https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L4785
+2018-10-15T21:15:50 <cindyli> cool. trying...
+2018-10-15T21:23:55 <stegru> I don\'t think you\'ll need the "configure-registry" block
+2018-10-15T21:24:34 <stegru> and just having "settings.configure-spi" in the "configure" block should be enough
+2018-10-15T21:26:46 <cindyli> ok, stegru. will try it later
+2018-10-15T21:27:22 <cindyli> Bosmon: another error after adding "path" element - https://pastebin.com/FWFkE7YS i\'m looking into it too
+2018-10-15T21:29:03 <cindyli> it seems the universal error triggers the gpii-app error handling. not much stack trace is given from universal :(
+2018-10-15T22:47:36 * kasper joined the channel
+2018-10-15T22:47:40 * kasparnet joined the channel
+2018-10-15T23:37:19 * kasparnet has quit
+2018-10-15T23:51:03 * Kavya has quit
+2018-10-15T23:53:47 * kasper has quit
+'
+
+b'2018-10-15T12:54:30 * kasparnet has quit
+2018-10-15T12:54:33 * kasper has quit
+2018-10-15T12:54:42 <kasper_> yeah, it\'s really a shame
+2018-10-15T12:54:46 * kasper_ is now known as kasparnet
+2018-10-15T12:54:56 <kasparnet> weeee, nick changed
+2018-10-15T12:57:00 <jhernandez> haha
+2018-10-15T12:57:05 <kasparnet> we finally managed to climb it though
+2018-10-15T12:57:20 <kasparnet> all the way to the top, which was pretty exciting
+2018-10-15T12:57:39 <jhernandez> heh, but, how sick it is? what kind of problem?
+2018-10-15T12:57:52 <kasparnet> ... one could see most of copenhagen from up there (which says more about copenhagen than the height of the tree)
+2018-10-15T12:58:13 <kasparnet> It was attacked by k\xc3\xa6mpesporesvamp
+2018-10-15T12:58:19 * danayo joined the channel
+2018-10-15T12:58:40 <kasparnet> which apparently eats the roots, resulting in tress falling in their full length
+2018-10-15T12:58:57 <kasparnet> which would be pretty intense with a tree that size
+2018-10-15T12:59:28 <kasparnet> ... depending on the direction, it could either kill us, a bunch of kids, or just destroy some crazy expensive houses
+2018-10-15T12:59:44 <kasparnet> all of which would be a bummer
+2018-10-15T13:00:13 <jhernandez> yes
+2018-10-15T13:00:15 <jhernandez> :/
+2018-10-15T13:01:04 <kasparnet> but at least we\'re gonna be getting some sunshine in our garden next summer
+2018-10-15T13:01:14 <jhernandez> didn\'t know about that fungus - thought it was a symbiosis thing and that the fungus didn\'t affect the tree in that way
+2018-10-15T13:02:01 <jhernandez> heh, yes, it\'s huge
+2018-10-15T13:03:12 * clown joined the channel
+2018-10-15T13:11:53 <kasparnet> I think there is really big symbiosis sort of thing going on with fungus, that store water and nutrition for tree, etc... but apparently the k\xc3\xa6mpesporesvamp is generally just a bit of an asshole
+2018-10-15T13:14:38 <jhernandez> interesting
+2018-10-15T13:14:47 * danayo has quit
+2018-10-15T13:33:15 * colinclark joined the channel
+2018-10-15T13:36:48 * alanharnum joined the channel
+2018-10-15T13:39:48 * alanharnum joined the channel
+2018-10-15T13:40:03 * danayo joined the channel
+2018-10-15T14:04:03 <Justin_o> Bosmon: I\'ve addressed your comments to the GPII-2914 PR. https://github.com/GPII/gpii-chrome-extension/pull/14
+2018-10-15T14:16:18 * danayo joined the channel
+2018-10-15T14:26:40 * georgitodorov has quit
+2018-10-15T14:39:49 * michelled joined the channel
+2018-10-15T14:51:35 * kasper joined the channel
+2018-10-15T14:51:40 * kasparnet_ joined the channel
+2018-10-15T14:52:10 * kasparnet_ has quit
+2018-10-15T14:52:25 * kasparnet has quit
+2018-10-15T15:14:49 * jhernandez has quit
+2018-10-15T15:27:48 * Kavya joined the channel
+2018-10-15T15:30:10 * jhernandez joined the channel
+2018-10-15T15:50:58 * michelled joined the channel
+2018-10-15T15:52:36 <cindyli> jhernandez: what\'s the problem with "reset all at startup"? let me know if it\'s easier to have a call so you can share screen
+2018-10-15T15:58:02 <jhernandez> cindyli: I don\'t have a build right now to show it to you
+2018-10-15T15:58:50 <jhernandez> but I updated gpii-app to use the last versions of universal and windows
+2018-10-15T15:59:14 <jhernandez> (and pulled the last changes from Astea too)
+2018-10-15T15:59:48 <jhernandez> I switched the universal config to use from gpii-app to the "production" one
+2018-10-15T16:01:15 <jhernandez> which should include the directive "flowManager.resetAtStart"
+2018-10-15T16:01:51 <jhernandez> I start the gpii, change a few settings and killed the app
+2018-10-15T16:02:26 <jhernandez> started the gpii again and I was expecting the settings to be restored ... but it didn\'t happen
+2018-10-15T16:02:48 <jhernandez> am I wrong about the expected behavioir? do I need to do anything else on the gpii-app side?
+2018-10-15T16:05:25 <jhernandez> I also tested to restart the OS - some changes were restored thanks to stegru\'s keyOut at OS shutdown, but the highContrast setting wasn\'t restored
+2018-10-15T16:06:25 <jhernandez> cindyli: do you want me to recreate the set up and ping for a call when I\'m done?
+2018-10-15T16:06:48 <stegru> personally, I don\'t see the high-contrast thing a show-stopper for the pilots, considering they\'re using deepfreeze
+2018-10-15T16:08:04 * cindyli joined the channel
+2018-10-15T16:09:06 <cindyli> jhernandez: sorry, stepped away just now. did you create testData/solutions/defaultSettings.json5 that should contain all settings to be restored
+2018-10-15T16:09:15 <jhernandez> ah\xc3\xa1
+2018-10-15T16:09:17 <jhernandez> ok
+2018-10-15T16:10:01 <jhernandez> hm
+2018-10-15T16:10:16 <cindyli> to reset settings that were changed via QSS, using "reset all" button should restore those settings. this button performs "key out" and "reset to default settings from testData/solutions/defaultSettings.json5". it was "key out" step that will restore QSS changes
+2018-10-15T16:11:08 <cindyli> the doc of how to use "reset all to default": https://github.com/GPII/universal/blob/master/documentation/ResetComputer.md
+2018-10-15T16:12:33 <jhernandez> okay
+2018-10-15T16:13:24 <jhernandez> then that file needs to be added manually
+2018-10-15T16:13:28 <cindyli> yes
+2018-10-15T16:13:43 <jhernandez> we are not providing anything right now
+2018-10-15T16:13:44 <cindyli> because it\'s OS sensitive
+2018-10-15T16:13:47 <jhernandez> ok ok
+2018-10-15T16:13:48 <jhernandez> yes
+2018-10-15T16:14:16 <jhernandez> and I guess that we need the snapshotter in place for us to use this functionality in a meaningful way
+2018-10-15T16:14:32 <cindyli> ya, there\'s another JIRA about creating this file using PPT
+2018-10-15T16:14:37 <jhernandez> yup
+2018-10-15T16:14:45 <jhernandez> oh, and yes, that tool
+2018-10-15T16:14:52 <jhernandez> got it
+2018-10-15T16:15:42 <jhernandez> then, I assume that I have to provide such file in the upcoming installer with everything "off"
+2018-10-15T16:16:47 <jhernandez> but what do I do with the DPI scaling? just set its value to 1 and tell people that they need to update that file in case they are using a different scaling factor?
+2018-10-15T16:17:23 <cindyli> we need to know if all computers are using same default settings
+2018-10-15T16:17:46 <jhernandez> yeah
+2018-10-15T16:19:52 * jhung joined the channel
+2018-10-15T16:34:02 * colinclark joined the channel
+2018-10-15T17:19:54 * clown joined the channel
+2018-10-15T17:28:58 <Bosmon> Hi there cindyli - so have you been working on the task to convert the reset all file from snapshot format to preference format?
+2018-10-15T17:29:08 <Bosmon> Justin_o - I\'ve merged https://github.com/GPII/gpii-chrome-extension/pull/14
+2018-10-15T17:29:33 <Bosmon> Do you think you could take a look at https://github.com/fluid-project/infusion/pull/939 ?
+2018-10-15T17:30:02 <Justin_o> Bosmon: thanks for the merge :) Sure i can take a look at that PR
+2018-10-15T17:30:11 <Bosmon> Awesome, thanks
+2018-10-15T17:30:12 <cindyli> Bosmon: no
+2018-10-15T17:30:13 <Bosmon> It is pretty bite-sized
+2018-10-15T17:30:30 <Bosmon> cindyli - so what is the meaning of testData/solutions/defaultSettings.json5?
+2018-10-15T17:31:02 <cindyli> the raw settings
+2018-10-15T17:31:19 <Bosmon> Ah sorry
+2018-10-15T17:31:22 <Bosmon> I see it is in "solutions"
+2018-10-15T17:31:51 <Bosmon> But that is a funny place for such a file
+2018-10-15T17:32:20 <Bosmon> Since "defaultSettings" is not a platform
+2018-10-15T17:32:38 <cindyli> i see. where\'s the right place for it?
+2018-10-15T17:34:10 * clown joined the channel
+2018-10-15T17:35:54 <Bosmon> cindyli - perhaps for the time being in a testData/snapshots directory? Until in time we can actually move it to testData/preferences
+2018-10-15T17:36:19 <cindyli> ok. will make this change
+2018-10-15T17:36:27 <Bosmon> cindyli - I realise now that your pull https://github.com/GPII/universal/pull/675 included logic to read from testData/solutions even though we currently put no such file in the system
+2018-10-15T17:37:16 <cindyli> that\'s true
+2018-10-15T17:39:38 <cindyli> Bosmon: what do you think of adding a defaultSettings.win32.json5 in testData/snapshots for windows? jhernandez still needs to rename it to defaultSettings.json5 at building a installer
+2018-10-15T17:39:57 <Bosmon> cindyli - yes, it sounds reasonable
+2018-10-15T17:40:05 <Bosmon> Actually I had thought you already had one
+2018-10-15T17:40:10 <Bosmon> Where is the one that the installer currently uses?
+2018-10-15T17:40:26 <cindyli> no such one ;)
+2018-10-15T17:41:02 <jhernandez> yeah, I though we had one in universal too
+2018-10-15T17:41:27 * kasper has quit
+2018-10-15T17:41:53 <jhernandez> but I\'m okay with taking the snapshot and manually put it there until we can put a "defaultSettings" prefsSet
+2018-10-15T17:43:52 <cindyli> jhernandez: just curious. how do you take snapshot? I do it by running integration test, which is not very convenient
+2018-10-15T17:44:04 <cindyli> this is what i got for windows - https://gist.github.com/cindyli/cfe7c17283f23f48714c647df00ed4fb
+2018-10-15T17:44:17 <jhernandez> although ... are we planning to request such profile through the regular prefs server endpoint or just read it from the folder?
+2018-10-15T17:44:31 <cindyli> read from the folder for now
+2018-10-15T17:45:04 <jhernandez> initially I was just going to take into account the settings that can be tweaked via the QSS
+2018-10-15T17:45:19 <cindyli> i believe eventually this file should be auto-created via some sort of snapshotter when GPII is installed
+2018-10-15T17:46:10 <cindyli> i agree
+2018-10-15T17:46:34 <cindyli> unless there are special requests for no-QSS-supported settings
+2018-10-15T17:46:37 <jhernandez> these are highContrast, screen zoom, read aloud and language
+2018-10-15T17:47:10 <jhernandez> cindyli: right
+2018-10-15T17:48:08 <jhernandez> I\'d say that this is all we can assume right now until the snapshotter is implemented
+2018-10-15T17:52:26 <Justin_o> Bosmon: I left a few comments on your PR?
+2018-10-15T17:52:44 <Justin_o> sorry.. not a question.. meant to put a "."
+2018-10-15T18:11:32 * the-t-in-rtf has quit
+2018-10-15T18:12:42 * the-t-in-rtf joined the channel
+2018-10-15T18:26:11 * danayo joined the channel
+2018-10-15T18:28:25 * kasper joined the channel
+2018-10-15T18:29:57 * kasper has quit
+2018-10-15T18:30:26 * michelled1 joined the channel
+2018-10-15T18:37:02 * alanharnum has quit
+2018-10-15T18:37:28 <jhernandez> cindyli, Bosmon: I am wondering why the defaultSettings.json5 file shouldn\'t be part of gpii-app. In fact, I think we should just add it there and create an npm script that copies it over to the right universal/testData/preferences folder
+2018-10-15T18:37:41 <jhernandez> but probably I\'m missing things
+2018-10-15T18:37:54 <Bosmon> jhernandez - it\'s a good idea I think
+2018-10-15T18:38:25 <Bosmon> Although at present testData/preferences is still the wrong place for this since it isn\'t (yet) formatted as a preference document
+2018-10-15T18:38:42 <jhernandez> sure
+2018-10-15T18:39:43 <jhernandez> it\'s not easy to come up with a snapshot with all the journal information from scratch
+2018-10-15T18:40:09 <jhernandez> I took cindyli\'s one from https://gist.github.com/cindyli/cfe7c17283f23f48714c647df00ed4fb and updated accordingly
+2018-10-15T18:40:47 <jhernandez> now the restoration process jumps in, but I\'m getting some errors and I am getting an unexpected behavior
+2018-10-15T18:41:06 <cindyli> Bosmon, jhernandez, so, shall i issue the pull request that adds defaultSettings.win32.json5: https://github.com/cindyli/universal/tree/GPII-3451
+2018-10-15T18:41:25 <cindyli> defaultSettings.win32.json5 looks like - https://github.com/cindyli/universal/commit/488f32398b983289abc47582e68f86f9169e4802#diff-feb68786ce93cbcbfd5cfb8376351cd0R1
+2018-10-15T18:41:26 <jhernandez> cindyli: I can show it to you if you want
+2018-10-15T18:41:33 <cindyli> sure, jhernandez
+2018-10-15T18:42:04 <cindyli> skype call, jhernandez
+2018-10-15T18:43:15 <Bosmon> It\'s interesting, it does look a bit like a solutions block, doesn\'t it :)
+2018-10-15T18:43:20 <Bosmon> It just has some settings in it
+2018-10-15T18:44:14 <Bosmon> Justin_o - FLUID-6330 is ready for another look
+2018-10-15T18:44:51 <Justin_o> Bosmon: thanks, will take another look
+2018-10-15T19:02:38 * the-t-in-rtf joined the channel
+2018-10-15T20:03:29 * cindyli joined the channel
+2018-10-15T20:10:34 <Justin_o> Bosmon: left you another comment about a test failure in IE 11
+2018-10-15T20:11:10 * michelled1 has quit
+2018-10-15T20:42:01 <Bosmon> Thanks Justin_o - good catch
+2018-10-15T20:42:13 <Bosmon> I mixed up the icons for the browsers when checking for compatibility : P
+2018-10-15T20:45:55 <Bosmon> Justin_o - ready for another look
+'
+
+b'2018-10-15T04:35:52 * alanharnum has quit
+2018-10-15T05:27:45 * alanharnum joined the channel
+2018-10-15T06:05:27 * alanharnum joined the channel
+2018-10-15T07:34:55 * alanharnum has quit
+2018-10-15T07:50:29 * georgitodorov joined the channel
+2018-10-15T07:51:47 * alanharnum joined the channel
+2018-10-15T07:56:27 * alanharnum has quit
+2018-10-15T08:44:12 * alanharnum joined the channel
+2018-10-15T08:54:46 * kasparnet joined the channel
+2018-10-15T09:06:39 * kasparnet has quit
+2018-10-15T09:07:12 * kasparnet joined the channel
+2018-10-15T09:17:51 * alanharnum has quit
+2018-10-15T09:17:57 * alanharnum joined the channel
+2018-10-15T10:12:29 * kasparnet has quit
+2018-10-15T10:16:08 * jhernandez joined the channel
+2018-10-15T10:46:05 * kasparnet joined the channel
+2018-10-15T10:55:01 <Bosmon> kasparnet - KASPARRENTT!
+2018-10-15T10:55:23 * kasparnet_ joined the channel
+2018-10-15T10:55:42 <kasparnet> Mr. Antranique Bassman
+2018-10-15T10:55:53 <Bosmon> I see that you have become a .... FULLRATE.... NINJER : P
+2018-10-15T10:56:27 <kasparnet> hahaha, yes, apperently - i didn\'t realize myself, but it makes me very happy
+2018-10-15T10:56:46 <Bosmon> Better than being a half-rate ninjer I guess : P
+2018-10-15T10:57:29 <kasparnet> absolutely, but even being a half rate ninja would be pretty decent
+2018-10-15T10:57:35 <Bosmon> hahahaha
+2018-10-15T10:57:38 <Bosmon> How\'s it going?
+2018-10-15T10:58:56 <kasparnet> oh, pretty well...
+2018-10-15T10:59:18 <kasparnet> enjoying the last bit of summer
+2018-10-15T10:59:24 <kasparnet> and working hard
+2018-10-15T10:59:40 <Bosmon> Awesome
+2018-10-15T10:59:47 <kasparnet> I just got my first salary in salary in 8 months the other day... 2000 Euros :)
+2018-10-15T10:59:52 <Bosmon> Thankfully it rained here significantly last night
+2018-10-15T10:59:54 <Bosmon> Oh crikey
+2018-10-15T10:59:56 <kasparnet> haha
+2018-10-15T11:00:07 <kasparnet> I\'m glad to hear you got rain
+2018-10-15T11:00:11 <Bosmon> That ninjer needs a rate increase : P
+2018-10-15T11:00:59 <kasparnet> if either of had actually believed in God, we could\'ve made a pact with him to keep the rain in england and the sun in denmark
+2018-10-15T11:01:20 <Bosmon> Well in practice if he keeps the sun in England, he ends up keeping the rain in iceland
+2018-10-15T11:01:22 <kasparnet> ... or.. I guess it\'s usually the devil you make those kinds of deals with
+2018-10-15T11:01:59 <kasparnet> from what I\'ve heard from people being in iceland, the rain is pretty much being kept there
+2018-10-15T11:02:03 <Bosmon> yes
+2018-10-15T11:03:22 <kasparnet> we just starting using JIRA in one of my projects
+2018-10-15T11:03:28 <kasparnet> the fancy online version
+2018-10-15T11:03:29 <Bosmon> Wow cool
+2018-10-15T11:03:36 <Bosmon> That must be a blast from the past
+2018-10-15T11:03:41 <Bosmon> Don\'t we use the fancy online version?
+2018-10-15T11:03:50 <kasparnet> and I realized the one that GPII uses is like a super duper awesome fancy version
+2018-10-15T11:03:56 <Bosmon> Oh wow
+2018-10-15T11:03:58 <Bosmon> I\'d never have suspected
+2018-10-15T11:04:03 <kasparnet> nope - I think we use the self-hosted version
+2018-10-15T11:04:26 <kasparnet> perhaps it\'s a matter of setup, or that the one GPII is using is actually an older version
+2018-10-15T11:04:35 <kasparnet> but it\'s a lot nicer than the online one
+2018-10-15T11:04:41 <Bosmon> Interesting
+2018-10-15T11:05:04 <kasparnet> yeah, I was quite surprised
+2018-10-15T11:05:40 <Bosmon> Even CATT was a little surprised
+2018-10-15T11:05:46 <kasparnet> hahaha
+2018-10-15T11:06:09 <Bosmon> I always think of you when we reach this line in BINGG\'s favorite book : P
+2018-10-15T11:06:10 <Bosmon> http://www.walker.co.uk/Oh-No-George-9781406344769.aspx
+2018-10-15T11:06:13 <kasparnet> I have a hard time imagining it being very surprised
+2018-10-15T11:07:26 <kasparnet> I dont think the link worked
+2018-10-15T11:07:32 <Bosmon> !!!
+2018-10-15T11:07:40 <kasparnet> ... it didn\'t link to a page or line
+2018-10-15T11:07:45 <Bosmon> Well no
+2018-10-15T11:07:49 <Bosmon> But the line was the one I said : P
+2018-10-15T11:08:19 <kasparnet> ahh
+2018-10-15T11:08:25 * Justin_o joined the channel
+2018-10-15T11:08:29 <Bosmon> It seems that Google has not yet indexed this marvellous book
+2018-10-15T11:08:44 <Bosmon> George is a bad DOGE who likes to dig soil and chase.... CATE
+2018-10-15T11:08:45 <kasparnet> that was very complex for my brain to understand
+2018-10-15T11:08:56 <kasparnet> nice, goooood boy George
+2018-10-15T11:09:27 <kasparnet> is BINGG 3 years old by now?
+2018-10-15T11:10:41 <Bosmon> No, only a bit over 2
+2018-10-15T11:11:04 <Bosmon> He has now learned to identify himself in pictures and a mirror
+2018-10-15T11:11:08 <Bosmon> And says.... **BINGG!**
+2018-10-15T11:13:02 <kasparnet> niiiice, so almost as smart as a monkey now?
+2018-10-15T11:13:32 <Bosmon> SOmething like that : P
+2018-10-15T11:13:40 <the-t-in-rtf> or as smart as me, I was in a cafe this morning and saw another cafe in the distance, I was going to go check it out before I realised it was a mirror
+2018-10-15T11:13:46 <Bosmon> hahahaha
+2018-10-15T11:14:07 <Bosmon> Reflecting the fact that you were ...... a cafe?
+2018-10-15T11:14:09 <the-t-in-rtf> I said to Elaine "I don\'t like the looks of that guy, I bet I could take him"
+2018-10-15T11:14:21 <the-t-in-rtf> I was actually having coffee in the break room of the death star (Elaine\'s work)
+2018-10-15T11:14:30 <the-t-in-rtf> my theory exam was nearby.
+2018-10-15T11:15:05 <the-t-in-rtf> one side of the lobby is mirrors, I assume secret labs or piles of money behind it.
+2018-10-15T11:15:19 <kasparnet> hahaha
+2018-10-15T11:15:49 <the-t-in-rtf> Anyway, Kaspar, you missed it the other day, I was proposing we call pirate/viking pads "bearded surfer pads" in your honour from now on.
+2018-10-15T11:16:00 <the-t-in-rtf> is it too cold to surf with a wetsuit yet?
+2018-10-15T11:16:02 <kasparnet> haha, cheers
+2018-10-15T11:16:14 <kasparnet> it\'s never too cold
+2018-10-15T11:16:17 <the-t-in-rtf> ha.
+2018-10-15T11:16:30 <kasparnet> ... one just stays out for a bit shorter time
+2018-10-15T11:16:38 <the-t-in-rtf> I guess you only need the weather data for the size of the waves, then?
+2018-10-15T11:16:38 <kasparnet> (or a lot shorter)
+2018-10-15T11:16:53 <kasparnet> exactly
+2018-10-15T11:18:16 <the-t-in-rtf> The Dutch have a term "water rat" for people who just love water sports.
+2018-10-15T11:18:30 <the-t-in-rtf> My son is definitely one, I\'m sure we\'ll be pumping you for info in time.
+2018-10-15T11:18:55 <the-t-in-rtf> here they have a very active parasailing and kite surfing community
+2018-10-15T11:18:58 <the-t-in-rtf> I assume it\'s similar there.
+2018-10-15T11:20:12 <kasparnet> yeah, it is... we do have a bit of waves here occasionally on the west coast, but most of what i surf is as sad as the waves you can find on holland... So a lot of people wind surf and kite surf instead
+2018-10-15T11:21:46 <the-t-in-rtf> I\'ve already found a wonderful surf club with good food and beer, my plan is to sip and wave in encouragement for afternoons at a time.
+2018-10-15T11:22:44 <the-t-in-rtf> maybe I can hire you for private lessons when the  time comes
+2018-10-15T11:23:05 <the-t-in-rtf> he needs someone to model a magnificent beard for him, I\'m certainly not up for it.
+2018-10-15T11:23:07 <kasparnet> that sounds like a great plan :) .... that\'ll make you qualify as a good dad while getting stuffed and tipsy
+2018-10-15T11:23:40 <kasparnet> haha
+2018-10-15T11:24:09 <kasparnet> yeah, that\'d give me an excuse for visiting holland as well
+2018-10-15T11:24:17 <kasparnet> you in*
+2018-10-15T11:25:35 <the-t-in-rtf> I hope to have a guest room again by the end of next year, will definitely keep you in the loop.
+2018-10-15T11:25:59 <the-t-in-rtf> for you the Netherlands is a summer holiday to warmer cilmes... ;)
+2018-10-15T11:26:05 <the-t-in-rtf> climes, even
+2018-10-15T11:27:05 * kasper joined the channel
+2018-10-15T11:29:50 * kasparnet has quit
+2018-10-15T11:29:51 * kasparnet_ has quit
+2018-10-15T11:30:06 * kasparnet joined the channel
+2018-10-15T11:38:03 <the-t-in-rtf> Kasper, do they have salt liqourice liqueur there?
+2018-10-15T11:38:07 <the-t-in-rtf> they do here.
+2018-10-15T11:44:31 <kasper> ah yes, they do, quite a few different ones
+2018-10-15T11:44:58 <kasper> ... I think almost everyone from denmark has traumas from drinking too much of that stuff when they were young
+2018-10-15T11:51:46 * alanharnum joined the channel
+2018-10-15T12:02:36 <the-t-in-rtf> well, now we know what you\'re bringing with you.
+2018-10-15T12:03:03 <the-t-in-rtf> I did a lot of research, the EU limit is 9% salmiak before it\'s considered outright poison
+2018-10-15T12:03:10 <the-t-in-rtf> I like stuff with 8%.... ;)
+2018-10-15T12:34:21 * alanharnum has quit
+2018-10-15T12:36:50 * jhung joined the channel
+2018-10-15T12:45:09 * cindyli joined the channel
+2018-10-15T12:48:31 <jhernandez> kasper: vs kasparnet ?!?!!!!
+2018-10-15T12:48:46 * kasparnet_ joined the channel
+2018-10-15T12:49:18 <kasparnet> "the EU limit is 9% salmiak before it\'s considered outright poison" ... seriously?? that\'s crazy
+2018-10-15T12:49:22 <kasparnet> heya jhernandez
+2018-10-15T12:49:41 <kasparnet> fucking hexchat spawns a new instance every time I unminimize it
+2018-10-15T12:49:53 <kasparnet> ... what irc client are you using?
+2018-10-15T12:50:08 <jhernandez> congrats on your first salary!!
+2018-10-15T12:50:42 <jhernandez> I use polari, the one that comes with gnome
+2018-10-15T12:50:51 <kasparnet_> thanks :) ... it\'s not much, but it\'s a hell of a lot more than 0
+2018-10-15T12:51:24 <kasparnet_> are you living in a new place now?
+2018-10-15T12:51:52 * kasper_ joined the channel
+2018-10-15T12:52:03 <jhernandez> kasparnet_: yes, we bought a house and we moved a few months ago
+2018-10-15T12:52:05 <jhernandez> :)
+2018-10-15T12:52:14 <kasparnet_> niiice
+2018-10-15T12:52:22 <kasparnet_> is it closer to the forest?
+2018-10-15T12:52:31 <jhernandez> yup, a bit closer
+2018-10-15T12:52:52 <kasper_> great
+2018-10-15T12:52:53 <jhernandez> now I only need to walk .. 2/3 mins
+2018-10-15T12:52:59 <kasper_> \
+ick kasparnet
+2018-10-15T12:53:05 <kasper_> ugh
+2018-10-15T12:53:41 <jhernandez> kasparnet_: I assume you\'re still living in the K\xc3\x96MUUNE
+2018-10-15T12:53:46 <kasparnet_> sounds very nice
+2018-10-15T12:53:49 <kasparnet_> yeah, I am
+2018-10-15T12:53:58 <kasparnet_> and still enjoying it very much
+2018-10-15T12:54:13 <kasparnet_> .... but our bigass tree is sick and needs to be cut down
+2018-10-15T12:54:19 <kasparnet_> which sucks
+2018-10-15T12:54:25 <jhernandez> :_(
+2018-10-15T12:54:25 * kasparnet_ has quit
+'
+

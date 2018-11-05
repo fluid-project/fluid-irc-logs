@@ -1,0 +1,255 @@
+b'2013-11-21T19:45:52 <Bosmon> cool
+2013-11-21T19:45:58 <Bosmon> How many duplicates are you down to now :)
+2013-11-21T19:46:12 <Justin_o> Bosmon: the components do still need to be created twice to 1) get the produce tree 2) recreate after rendering to re-establish any dom bindings
+2013-11-21T19:46:26 <Justin_o> just the 2 that we could see
+2013-11-21T19:47:06 <Justin_o> Bosmon: by the way, i\'ve fixed this in my FLUID-5205 branch
+2013-11-21T19:48:52 <Bosmon> Justin_o - thanks
+2013-11-21T19:49:06 <Bosmon> If the performance is still poor, it may be worth making a new lifecycle for the components whereby their DOM binder can be recreated
+2013-11-21T19:49:23 <Bosmon> Since a 100% speedup still shouldn\'t be sneezeed at
+2013-11-21T19:50:01 <Justin_o> Bosmon: interesting... what would happen to this-ist invokers those
+2013-11-21T19:50:23 <Bosmon> Those could be turned into "slow invokers"
+2013-11-21T19:50:27 <Bosmon> That is, with dynamic: true
+2013-11-21T19:50:35 <Bosmon> Shifting some of the cost from render time to runtime
+2013-11-21T19:50:44 <Justin_o> Bosmon: okay.. what about this-ist listeners that do things onCreate?
+2013-11-21T19:51:11 <Bosmon> Justin_o - those could be moved to listen to a new event, say "onDomBind"
+2013-11-21T19:51:50 <Justin_o> Bosmon: I guess the thing i\'d be worried about is that these panels should be usable in and out of a composite panel
+2013-11-21T19:52:01 <Justin_o> so as a top level or subpanel
+2013-11-21T19:52:18 <Bosmon> Justin_o - yes
+2013-11-21T19:52:23 <Bosmon> This could be mediated by a suitable "mixin grade"
+2013-11-21T19:52:43 <Bosmon> By default, there would be a single listener to onCreate which just fires onDomBind
+2013-11-21T19:52:54 <Bosmon> And when they are in the context of the composite panel, this listener would be removed
+2013-11-21T19:53:32 <Justin_o> Bosmon: interesting
+2013-11-21T19:54:04 <Justin_o> that might work.. it is a bit of an extra burden on the implementor to keep these things all straight
+2013-11-21T19:54:14 <Bosmon> Well, it should be no burden on them
+2013-11-21T19:54:22 <Bosmon> Just on the poor sap who wrote the aux builder :)
+2013-11-21T19:54:48 <Justin_o> haha
+2013-11-21T19:55:14 <Justin_o> Bosmon: but i mean the implementor would have to write the listener against onDomBind instead of onCreate
+2013-11-21T19:55:26 <Bosmon> Justin_o - yes
+2013-11-21T19:55:31 <Bosmon> But they would be instructed to do this
+2013-11-21T19:55:34 <Bosmon> By our documentation :)
+2013-11-21T19:56:02 <Justin_o> Bosmon: right, but it would be added cognitive burden for them.. although the performance improvement may be worth it
+2013-11-21T19:56:10 <Justin_o> anastasiac: do you have an opinion on this?
+2013-11-21T19:56:21 <Bosmon> I don\'t think it would be much extra burden... in fact it might well simplify things
+2013-11-21T19:56:27 <Bosmon> We register far too many things on "onCreate"
+2013-11-21T19:56:31 <anastasiac> Justin_o, how far back should I start reading?
+2013-11-21T19:56:36 <Bosmon> And this lifecycle point will be an important one in the "new renderer"
+2013-11-21T19:56:41 <Bosmon> So we had better start getting used to it :)
+2013-11-21T19:56:58 <Justin_o> anastasiac: from about 2:41
+2013-11-21T19:57:12 <Justin_o> Bosmon: oh so it will be a real thing..
+2013-11-21T19:57:54 <Bosmon> We\'re certainly not going to have renderer components in the new world that are obliged to destroy and recreate themselves when they render something : P
+2013-11-21T19:58:11 <Justin_o> :)
+2013-11-21T19:58:18 <Justin_o> Bosmon: thankfully
+2013-11-21T19:58:36 <Justin_o> Bosmon: okay.. i\'m going to file this under a new jira though.. i don\'t think it should hold up FLUID-5205
+2013-11-21T19:58:41 <Bosmon> ok
+2013-11-21T19:58:42 <Justin_o> does that make sense to you?
+2013-11-21T19:58:47 <Bosmon> How is the performance now?
+2013-11-21T19:58:53 <anastasiac> it sounds from the discussion that this onDomBind will be a formal framework lifecycle point, and I don\'t think it would be too unreasonable to expect developers to learn the difference between it and onCreate, and to understand when to use one or the other
+2013-11-21T19:59:11 <anastasiac> if I\'m understanding correctly
+2013-11-21T19:59:18 <Justin_o> anastasiac: i think for the moment though it will only apply to panels
+2013-11-21T19:59:26 <Bosmon> Very few things will go on "onCreate" in the future
+2013-11-21T19:59:31 <anastasiac> ok, so part of the prefs framework
+2013-11-21T19:59:53 <anastasiac> but still, it seems ok to me, from the integrator/documentation perspective
+2013-11-21T20:00:38 <Justin_o> anastasiac: thanks
+2013-11-21T20:01:10 <Justin_o> Bosmon: i would say definitely feels like less than a second if FF with firebug open.. i can put things back and get you some real numbers if you like
+2013-11-21T20:01:43 <Bosmon> "definitely less than a second" is still far from great : P
+2013-11-21T20:01:49 <Bosmon> Although firebug does make a huge difference
+2013-11-21T20:02:16 <anastasiac> FYI, Justin_o and Bosmon, I have a FLUID-5205 branch now that has the conditional adjuster instructional demos in place more formally. It\'s not quite ready for a pull request - there are some styling issues - but it\'s close, in case you want to merge it in for testing, Justin_o
+2013-11-21T20:02:47 <anastasiac> Justin_o, it\'s based on your latest FLUID-5205 branch
+2013-11-21T20:03:01 <Justin_o> anastasiac: did you just do an update, because i just made a change
+2013-11-21T20:03:24 <anastasiac> ok, no, not that recently :-)
+2013-11-21T20:03:27 <anastasiac> in progress
+2013-11-21T20:03:30 <Justin_o> thanks
+2013-11-21T20:04:18 <anastasiac> ok, Justin_o, merged and pushed
+2013-11-21T20:05:11 <Justin_o> anastasiac: thanks
+2013-11-21T20:05:17 <Justin_o> i guess i should merge yours into mine
+2013-11-21T20:05:43 <Justin_o> Bosmon: so before it took 1.841s  now it takes 0.699s
+2013-11-21T20:06:24 <Bosmon> Not as much of an improvement as expected
+2013-11-21T20:06:39 <Justin_o> :(
+2013-11-21T20:07:05 <Bosmon> But implementing "onDOMBind" should definitely get it below 0.5s at least
+2013-11-21T20:07:12 <Bosmon> Which is probably an important barrier
+2013-11-21T20:07:58 <Bosmon> You can do that in a new branch as you say
+2013-11-21T20:08:16 <Bosmon> Once we get anastasiac\'s stuff merged into this current one we should be good to go
+2013-11-21T20:08:20 <Justin_o> Bosmon: thanks.. i\'ll file a new jira for that
+2013-11-21T20:08:34 <Bosmon> Btw anastasiac - when you prepare your branch, could you also prepare a page describing "acceptance tests"?
+2013-11-21T20:08:46 <Bosmon> That is, for each one of your instructional demos, what the user should expect to see when they operate the component
+2013-11-21T20:09:18 <Justin_o> Bosmon: anastasiac\'s code is merged into my FLUID-5205 branch.. it should be up in the pull request now
+2013-11-21T20:09:30 <anastasiac> Bosmon, I can add that in a readme in the folder - is that what you\'re thinking of? Or perhaps in the HTML page of the demo, so that when they run it they see it?
+2013-11-21T20:10:07 <Bosmon> In the demo page would be even better, yes
+2013-11-21T20:10:24 <Bosmon> It would be useful to the "instructees" to know what they should expect the component to do
+2013-11-21T20:10:28 <Bosmon> Just as to "testers"
+2013-11-21T20:11:20 <anastasiac> will do
+2013-11-21T20:11:35 <Bosmon> thanks, anastasiac!
+2013-11-21T20:11:56 <anastasiac> FYI, Bosmon and Justin_o, the instructional demos that are now in Justin_o\'s 5205 branch aren\'t styled very well, I\'m still working on that
+2013-11-21T20:21:13 <cindyli> Bosmon: wonder if you have time to look at one of my another pull request - https://github.com/fluid-project/infusion/pull/438
+2013-11-21T20:35:47 <Justin_o> Bosmon: filed a new jira for the performance upgrades http://issues.fluidproject.org/browse/FLUID-5220
+2013-11-21T21:15:37 * yzen joined the channel
+2013-11-21T21:44:59 * anvk has quit
+2013-11-21T21:49:04 * cindyli has quit
+2013-11-21T21:54:44 * sgithens has quit
+2013-11-21T22:02:53 * greggy has quit
+2013-11-21T22:08:20 * clown has quit
+2013-11-21T22:15:58 * mrvisser has quit
+2013-11-21T22:31:03 * anastasiac has quit
+2013-11-21T22:38:24 * kasparnet joined the channel
+2013-11-21T22:54:44 * danaayotte has quit
+2013-11-21T22:54:48 * michelled has quit
+2013-11-21T23:18:07 * kasparnet has quit
+2013-11-21T23:19:32 * jessm has quit
+2013-11-21T23:29:00 * greggy joined the channel
+2013-11-21T23:30:07 * greggy has quit
+2013-11-21T23:41:23 * sgithens joined the channel
+2013-11-21T23:47:13 * vjoanna has quit
+'
+
+b"2013-11-21T00:07:07 * mrvisser_ has quit
+2013-11-21T00:10:59 * vjoanna has quit
+2013-11-21T00:37:45 * kasparnet joined the channel
+2013-11-21T00:42:02 * nanook is now known as gcc
+2013-11-21T00:45:06 * thealphanerd is now known as thebutterfly
+2013-11-21T01:04:18 * thebutterfly is now known as thealphanerd
+2013-11-21T01:09:02 * kasparnet has quit
+2013-11-21T01:16:29 * gcc is now known as nanook
+2013-11-21T01:16:56 * thealphanerd has quit
+2013-11-21T01:22:20 * sgithens joined the channel
+2013-11-21T03:16:20 * yzen has quit
+2013-11-21T06:33:46 * sgithens has quit
+2013-11-21T06:46:23 * sgithens joined the channel
+2013-11-21T07:33:18 * kasparnet joined the channel
+2013-11-21T07:39:06 * kasparnet has quit
+2013-11-21T08:32:56 * kasparnet joined the channel
+2013-11-21T08:35:02 * colinclark joined the channel
+2013-11-21T09:54:45 * colinclark has quit
+2013-11-21T10:26:54 * kasparnet has quit
+2013-11-21T10:28:55 * colinclark joined the channel
+2013-11-21T10:31:59 * colinclark has quit
+2013-11-21T10:34:56 * kasparnet joined the channel
+2013-11-21T10:37:54 * kasparnet has quit
+2013-11-21T10:57:00 * colinclark joined the channel
+2013-11-21T11:07:17 * kasparnet joined the channel
+2013-11-21T11:14:27 * amilchev joined the channel
+2013-11-21T11:21:05 * colinclark has quit
+2013-11-21T11:26:59 * kasparnet has quit
+2013-11-21T11:27:53 * kasparnet joined the channel
+2013-11-21T11:28:24 * kasparnet has quit
+2013-11-21T12:00:37 * kasparnet joined the channel
+2013-11-21T12:00:41 * kasparnet has quit
+2013-11-21T12:01:49 * colinclark joined the channel
+2013-11-21T12:30:26 * colinclark has quit
+2013-11-21T12:56:38 * colinclark joined the channel
+2013-11-21T13:16:57 * colinclark has quit
+2013-11-21T13:25:29 * jhung joined the channel
+2013-11-21T13:27:56 * kasparnet joined the channel
+2013-11-21T13:28:11 * colinclark joined the channel
+2013-11-21T13:38:15 * mrvisser joined the channel
+2013-11-21T13:38:18 * anvk joined the channel
+2013-11-21T13:54:14 * cindyli joined the channel
+2013-11-21T14:14:41 * greggy joined the channel
+2013-11-21T14:18:39 * danaayotte joined the channel
+2013-11-21T14:25:11 * yzen joined the channel
+2013-11-21T14:26:30 * jessm joined the channel
+2013-11-21T14:27:59 * kasparnet has quit
+2013-11-21T14:29:05 * jhung has quit
+2013-11-21T14:29:17 * jhung joined the channel
+2013-11-21T14:31:52 * yzen has quit
+2013-11-21T14:32:24 * kasparnet joined the channel
+2013-11-21T14:33:37 * yzen joined the channel
+2013-11-21T14:41:47 * amilchev has left the channel
+2013-11-21T14:45:19 <Justin_o> Bosmon: i'm trying out the conditional panels on some of alex's code and noticing it is quite slow
+2013-11-21T14:45:29 <Justin_o> Bosmon: any thoughts on how we might improve this
+2013-11-21T14:46:01 <Justin_o> Bosmon: i'm guess it's all the over head of having to generate all the trees and etc. before hand
+2013-11-21T14:47:12 * anastasiac joined the channel
+2013-11-21T14:53:03 <Justin_o> anastasiac: i wonder if we can remove this page again now.. http://wiki.fluidproject.org/display/docs/Demand+Resolution i've moved over the diagram and value resolution parts, although they aren't yet finished to http://wiki.fluidproject.org/display/docs/How+to+Use+Infusion+IoC.
+2013-11-21T14:53:18 <Justin_o> anastasiac: and there are 6 incoming links to the demand resolution page still
+2013-11-21T14:53:40 <anastasiac> Justin_o, that's probably a question for Bosmon. I had actually removed it, but he restored it. And if we remove it, we should clean up the incoming links first.
+2013-11-21T14:58:13 * sgithens has quit
+2013-11-21T15:02:13 * clown joined the channel
+2013-11-21T15:02:35 * mrvisser has quit
+2013-11-21T15:02:44 * clown is now known as clown_mtg
+2013-11-21T15:03:47 * colinclark has quit
+2013-11-21T15:06:31 * colinclark joined the channel
+2013-11-21T15:10:30 * amilchev joined the channel
+2013-11-21T15:12:20 <amilchev> Justin_o: are having telco today?
+2013-11-21T15:12:24 <amilchev> are we*
+2013-11-21T15:16:52 <amilchev> kasparnet, jessm, what's the link for the PCP/PMT meeting?
+2013-11-21T15:17:55 * vjoanna joined the channel
+2013-11-21T15:18:13 * clown_mtg is now known as clown
+2013-11-21T15:21:21 <kasparnet> amilchev: access4all
+2013-11-21T15:21:22 <kasparnet> oops that wasn't it
+2013-11-21T15:21:34 <kasparnet> it's https://global.gotomeeting.com/join/619028605
+2013-11-21T15:21:39 <amilchev> thanks!
+2013-11-21T15:30:14 <jessm> we're up in gotomeeting having a UX chat
+2013-11-21T15:30:21 <jessm> fluid-everyone: ^
+2013-11-21T15:43:54 * mrvisser joined the channel
+2013-11-21T15:48:51 * michelled joined the channel
+2013-11-21T15:57:04 <cindyli> justin, do you want to take a look on my pull request for passing down grade names supplied in the aux schema? https://github.com/fluid-project/infusion/pull/438
+2013-11-21T15:57:57 * sgithens joined the channel
+2013-11-21T16:01:21 <cindyli> Justin_o: ^
+2013-11-21T16:01:37 <Justin_o> cindyli: okay
+2013-11-21T16:03:37 * amilchev has left the channel
+2013-11-21T16:05:23 * avtar joined the channel
+2013-11-21T16:06:12 * kasparnet has quit
+2013-11-21T16:06:42 <Bosmon> Justin_o - have you tried running it in one or other of the profilers?
+2013-11-21T16:07:14 <Bosmon> It's most likely you'll discover that the cost is actually lying in some unnecessary DOM manipulations, even with our slow framework, manipulating and instantiating those component trees shouldn't take much time
+2013-11-21T16:07:39 <Bosmon> Especially given you discovered all those redundant ChangeAppliers, you'll most likely discover a storm of unnecessary model change events
+2013-11-21T16:11:03 <Justin_o> Bosmon: haven't tried that yet.. i can take a look now.. i was going to look at cindy's latest pull request.. unless you'd prefer to do that..
+2013-11-21T16:17:26 <anastasiac> Justin_o, I'm restructuring the instructional demo code for the conditional panels, and I'm rediscovering an issue with the template prefix
+2013-11-21T16:18:12 <anastasiac> the template prefix is used for the templates I'm using in my panel, but the same prefix is also used to seek out the SepratedPanelPrefsEditorFrame.html; I'd rather just use the one that comes with the framework, but the same prefix location is used for both
+2013-11-21T16:19:09 <anastasiac> the only way to tell the prefsEditor to use the framework version is with a blechy option to iframeRenderer
+2013-11-21T16:20:12 <anastasiac> otherwise, I have to copy it into my templates folder and rewrite the paths in its headers
+2013-11-21T16:22:44 * colinclark has quit
+2013-11-21T16:24:05 <anastasiac> Justin_o, do you know if there's any other way to tell the prefsEditor to just use the framework's iframe template? or maybe cindyli knows? was anything put in for this?
+2013-11-21T16:24:20 <Justin_o> anastasiac: i'd defer to cindyli but i don't know of way
+2013-11-21T16:26:14 <cindyli> anastasiac: r u using aux schema for this?
+2013-11-21T16:26:20 <anastasiac> yes, cindyli
+2013-11-21T16:26:56 <cindyli> if one path is exceptional than others, you can specify the full path for that template url, anastasiac
+2013-11-21T16:27:23 <cindyli> without using %prefix
+2013-11-21T16:27:41 <anastasiac> yes, but the exceptional path is the one for the iframe template, cindyli; can I specify that in the schema? it's in the markupProps option to the iframerenderer...
+2013-11-21T16:28:26 * colinclark joined the channel
+2013-11-21T16:28:50 <Justin_o> anastasiac: is that in the auxSchema?
+2013-11-21T16:28:57 <cindyli> which part is the iframe for? preview? anastasiac
+2013-11-21T16:28:58 <Justin_o> if so you might be able to use the @ references
+2013-11-21T16:29:11 <anastasiac> no preview
+2013-11-21T16:32:39 * avtar has quit
+2013-11-21T16:45:04 * avtar joined the channel
+2013-11-21T16:48:12 * colinclark has quit
+2013-11-21T16:50:50 * colinclark joined the channel
+2013-11-21T17:00:44 <anastasiac> cindyli and Justin_o, I've filed an issue for that problem I found with the iFrame template:  http://issues.fluidproject.org/browse/FLUID-5218
+2013-11-21T17:01:45 <anastasiac> and I've added it to the iteration page
+2013-11-21T17:02:59 * colinclark has quit
+2013-11-21T17:11:23 * mrvisser has quit
+2013-11-21T17:12:48 * sgithens has quit
+2013-11-21T17:17:20 * jhung has quit
+2013-11-21T17:18:02 * jhung joined the channel
+2013-11-21T17:21:27 * colinclark joined the channel
+2013-11-21T17:30:23 * colinclark has quit
+2013-11-21T17:35:32 * michelled has quit
+2013-11-21T17:37:29 <cindyli> hi Bosmon, just a reminder that the pull request for adding uiEnhancerConnections is ready. https://github.com/fluid-project/infusion/pull/425
+2013-11-21T17:38:01 <Bosmon> thanks. cindyli
+2013-11-21T17:38:17 <cindyli> thank you for reviewing it, Bosmon
+2013-11-21T17:54:27 * colinclark joined the channel
+2013-11-21T18:00:13 * colinclark has quit
+2013-11-21T18:05:47 * michelled joined the channel
+2013-11-21T18:14:24 * mrvisser joined the channel
+2013-11-21T18:36:11 * sgithens joined the channel
+2013-11-21T18:46:54 <anastasiac> cindyli, I see that FLUID-5190 has been fixed and merged (the textfieldSlider 'value' model path issue). Does this mean I can now use whatever model path I want for my sliders? Is there anything in particular I need to know?
+2013-11-21T18:58:41 <cindyli> yes, anastasiac
+2013-11-21T18:59:00 <cindyli> the new textfield slider makes use of model relay, let me find u an example
+2013-11-21T18:59:44 <cindyli> https://github.com/cindyli/infusion/blob/master/src/framework/preferences/js/Panels.js#L479-L490
+2013-11-21T19:01:52 <anastasiac> thanks, cindyli
+2013-11-21T19:02:00 <cindyli> anastasiac: Justin_o recently found an timing issue with having textfieldSlider rendered as a decorator on the protoTree when the panel is a subpanel of a composite panel. the safer way is to make textfieldSlider a subcomponent
+2013-11-21T19:02:22 <anastasiac> right: no decorators in composite panels
+2013-11-21T19:02:27 <Justin_o> anastasiac: yes.. decorators are not allowed :)
+2013-11-21T19:02:29 <cindyli> anastasiac: example again - https://github.com/cindyli/prefsEditors/blob/GPII-153_GPII-187/src/shared/adjusters/js/speakTextPanels.js#L32-L69
+2013-11-21T19:02:31 <anastasiac> hm
+2013-11-21T19:02:34 <anastasiac> but it works for me
+2013-11-21T19:02:48 <Justin_o> anastasiac: it can work, but if you need to share things from the parent like an applier it won't
+2013-11-21T19:03:36 <anastasiac> what would the use case for having to share the applier from the parent, Justin_o?
+2013-11-21T19:04:16 <cindyli> anastasiac: to pass down sourceApplier for model relay
+2013-11-21T19:04:35 <anastasiac> but when would I need to do that? I'm not doing it now, and everything works fine...
+2013-11-21T19:05:09 <cindyli> anastasiac: depends on ur use case i think.
+2013-11-21T19:05:45 <anastasiac> hm. well, I'd love to understand a use case that would require me to pass down the sourceApplier
+2013-11-21T19:06:16 <cindyli> well, anastasiac, the 2nd example is the use case you need: https://github.com/cindyli/prefsEditors/blob/GPII-153_GPII-187/src/shared/adjusters/js/speakTextPanels.js#L32-L69
+2013-11-21T19:36:34 * yzen has quit
+2013-11-21T19:45:33 <Justin_o> Bosmon: michelled  and i found the main culprit.. i had been calling the creation event too many times because it was accidentally placed inside of a loop instead of out.
+"
+

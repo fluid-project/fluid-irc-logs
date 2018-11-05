@@ -1,0 +1,234 @@
+b'2014-09-18T18:58:02 <Justin_o> :(
+2014-09-18T18:58:04 <Bosmon7> And it didn\'t seem to be a timing issue, since there was no change to numRequests at all during the test run
+2014-09-18T18:58:32 <Bosmon7> Could you try on Firefox and see if you can get similar behaviour?
+2014-09-18T19:00:24 <Justin_o> Bosmon7: sorry had to stash some changes for in progress work.. I\'m using the branch i sent you with your test changes included.. it is still working in firefox for me
+2014-09-18T19:00:38 <Bosmon7> ok
+2014-09-18T19:00:45 <Bosmon7> Well, that is very odd ...
+2014-09-18T19:01:04 <Justin_o> which line is causing the problem for you?
+2014-09-18T19:16:47 * jhung1 joined the channel
+2014-09-18T19:20:06 * jhung has quit
+2014-09-18T19:23:40 * danaayotte_ joined the channel
+2014-09-18T19:25:51 * kasparnet has quit
+2014-09-18T19:37:32 * danaayotte_ has quit
+2014-09-18T19:37:51 * danaayotte__ joined the channel
+2014-09-18T19:37:51 * danaayotte__ has quit
+2014-09-18T19:37:51 * danaayotte__ joined the channel
+2014-09-18T19:38:57 <Bosmon7> Justin_o - no line in particular
+2014-09-18T19:39:07 <Bosmon7> It\'s just that the expected event never arrives
+2014-09-18T19:39:14 <Bosmon7> And there is never a change to the numRequests value
+2014-09-18T19:48:58 <cindyli> hi Bosmon7
+2014-09-18T19:50:10 <cindyli> i\'ve addressed most comments you and Justin_o made for my pull request https://github.com/fluid-project/metadata/pull/41, except this one: https://github.com/fluid-project/metadata/pull/41#discussion_r17624759
+2014-09-18T19:50:55 <cindyli> the part to - avoid cumbersome and special-purpose utilities such as "isTooltipDialogShareSameTarget"
+2014-09-18T19:53:12 <cindyli> i\'ve pushed up the latest change where isDialogOpen and isTooltipOpen are tracked in the model but i found this utility is still needed.
+2014-09-18T19:54:17 <cindyli> in the current code, the function name is simplified to "isShareTarget"
+2014-09-18T19:54:18 <cindyli> are you suggesting to track that flag in the model too? is it necessary?
+2014-09-18T20:07:03 <Bosmon7> Hi cindyli
+2014-09-18T20:07:11 <cindyli> hi Bosmon7
+2014-09-18T20:07:12 <Bosmon7> The approach is still not quite as we would have wanted
+2014-09-18T20:07:24 <Bosmon7> You\'ve consolidated the logic, but it is still all view-level logic
+2014-09-18T20:07:36 <Bosmon7> As in your giant function gpii.metadata.feedback.tooltipDialogInteraction
+2014-09-18T20:08:10 <Bosmon7> I guess some state is stored in the model now
+2014-09-18T20:08:17 <Bosmon7> But as it stands, this function is still very mixed
+2014-09-18T20:08:36 <Bosmon7> For example, all the addClass/removeClass functionality should be implemented in terms of model listeners
+2014-09-18T20:09:00 <Bosmon7> And ideally the "isShareTarget" function should be implemented as a relay constraint rather than in custom logic
+2014-09-18T20:09:19 <cindyli> a relay constraint?
+2014-09-18T20:09:58 <cindyli> like two model states are relayed to isShareTarget?
+2014-09-18T20:10:27 <Bosmon7> cindyli - if this is possible
+2014-09-18T20:10:35 <Bosmon7> Can you outline what the interaction should be?
+2014-09-18T20:10:46 <Bosmon7> That is, what UI states are we interested in, with respect to isShareTarget
+2014-09-18T20:11:08 <cindyli> sure, Bosmon7, the interaction is basically in the code comments:
+2014-09-18T20:11:11 <cindyli> 1. If both dialog and tooltip are open for the same button, close the tooltip
+2014-09-18T20:11:32 <cindyli> this is one place we need to check if dialog and tooltip are pointing to the same target
+2014-09-18T20:11:38 <Bosmon7> ok
+2014-09-18T20:11:44 <cindyli> 2. If both dialog and tooltip are open for different buttons, only show the arrow pointer for the tooltip
+2014-09-18T20:11:54 <cindyli> another place for checking the same target
+2014-09-18T20:11:57 <Bosmon7> ok
+2014-09-18T20:12:12 <cindyli> 3. When the tooltip is closed but the dialog for another button is still open, add the arrow pointer back to the dialog
+2014-09-18T20:12:26 <Bosmon7> Looks like both of these can be implemented by a model relay rule, that relays the model to itself
+2014-09-18T20:12:48 <Bosmon7> Then everything else is implemented in terms of simple modelListeners
+2014-09-18T20:12:55 <Bosmon7> And things which trigger .change( )
+2014-09-18T20:13:46 <Bosmon7> You can see and example of this kind of style in the current pager
+2014-09-18T20:13:49 <Bosmon7> e.g. at https://github.com/fluid-project/infusion/blob/master/src/components/pager/js/Pager.js#L476
+2014-09-18T20:15:10 <Bosmon7> Although in this case you would relay the entire model block containing both the dialog and the tooltip flags in one transform
+2014-09-18T20:15:38 <Bosmon7> And you would write a set of rules that ensured the constraints that you listed in 1., 2., 3 above applied to the model
+2014-09-18T20:16:04 <Bosmon7> After this, there would be a clear separation in the application between view logic and model logic
+2014-09-18T20:17:19 <anastasiac> Bosmon7, I\xe2\x80\x99ve added a couple of new comments to your Pager migration tutorial pull request
+2014-09-18T20:17:29 <Bosmon7> Thanks, amilchev
+2014-09-18T20:17:31 <Bosmon7> er anastasiac sorry
+2014-09-18T20:19:12 <cindyli> ok, Bosmon7. i think now i understand it better. giving a try
+2014-09-18T20:19:50 <Bosmon7> cheers cindyli!
+2014-09-18T20:27:27 * kasparnet joined the channel
+2014-09-18T20:27:31 * kasparnet has quit
+2014-09-18T20:27:37 * jhernandez joined the channel
+2014-09-18T20:38:01 * jhung1 has quit
+2014-09-18T20:51:45 * anvk has quit
+2014-09-18T20:52:02 * jessm has quit
+2014-09-18T21:10:22 * clown has quit
+2014-09-18T21:17:20 * cindyli has quit
+2014-09-18T21:23:32 * yzen has quit
+2014-09-18T21:24:27 * kasparnet joined the channel
+2014-09-18T21:26:21 * anastasiac_ joined the channel
+2014-09-18T21:27:35 * anastasiac_ has quit
+2014-09-18T21:27:47 * anastasiac has quit
+2014-09-18T21:40:44 * danaayotte__ has quit
+2014-09-18T21:46:08 * Justin_o has quit
+2014-09-18T23:12:31 * colinclark joined the channel
+2014-09-18T23:16:01 * amilchev has quit
+2014-09-18T23:19:12 * amilchev joined the channel
+2014-09-18T23:19:17 * simonjb has quit
+2014-09-18T23:22:38 * kasparnet has quit
+2014-09-18T23:59:25 * danaayotte joined the channel
+'
+
+b'2014-09-18T00:00:24 * kasparnet has quit
+2014-09-18T00:01:35 * kasparnet joined the channel
+2014-09-18T00:20:53 * kasparnet has quit
+2014-09-18T00:52:01 * yzen joined the channel
+2014-09-18T01:08:58 * the-t-in-rtf has quit
+2014-09-18T01:09:36 * the-t-in-rtf joined the channel
+2014-09-18T01:09:50 * the-t-in-rtf has quit
+2014-09-18T01:20:37 * yzen has quit
+2014-09-18T01:24:52 * jhernandez has quit
+2014-09-18T01:46:58 * Bosmon8 joined the channel
+2014-09-18T01:48:22 * Bosmon7 has quit
+2014-09-18T01:49:58 * yzen joined the channel
+2014-09-18T03:05:51 * yzen has quit
+2014-09-18T06:54:27 * amilchev has quit
+2014-09-18T06:55:11 * amilchev joined the channel
+2014-09-18T06:56:43 * kasparnet joined the channel
+2014-09-18T07:13:34 * the-t-in-rtf joined the channel
+2014-09-18T07:47:02 * slim joined the channel
+2014-09-18T08:43:19 * slim has quit
+2014-09-18T08:43:56 * slim joined the channel
+2014-09-18T11:43:54 * kasparnet has quit
+2014-09-18T11:51:07 * cindyli joined the channel
+2014-09-18T11:57:22 * jhernandez joined the channel
+2014-09-18T12:06:34 * jhung joined the channel
+2014-09-18T12:17:47 * yzen joined the channel
+2014-09-18T12:34:46 * Justin_o joined the channel
+2014-09-18T12:42:16 * jessm joined the channel
+2014-09-18T12:47:14 * anvk joined the channel
+2014-09-18T12:59:03 * anastasiac joined the channel
+2014-09-18T13:01:09 <cindyli> hi Bosmon8
+2014-09-18T13:12:53 * yzen has quit
+2014-09-18T13:19:54 * kasparne_ joined the channel
+2014-09-18T13:24:53 * yzen joined the channel
+2014-09-18T13:30:11 * kasparne_ has quit
+2014-09-18T13:31:19 * danaayotte joined the channel
+2014-09-18T13:51:29 * clown joined the channel
+2014-09-18T13:51:38 * clown is now known as clown_mtg
+2014-09-18T13:54:17 * simonjb joined the channel
+2014-09-18T14:01:07 * danaayotte has quit
+2014-09-18T14:02:10 * danaayotte joined the channel
+2014-09-18T14:02:55 <amilchev> danaayotte Justin_o kasper won\'t be joining us today so I guess someone else should be the organizer
+2014-09-18T14:14:33 <clown_mtg> jhernandez, I just mentioned your accerciser release in #a11y-meeting (GNOME).
+2014-09-18T14:16:33 <Justin_o> anastasiac: I\'ve updated the FLUID-5485 infusion-docs pull request
+2014-09-18T14:16:43 <anastasiac> thanks, Justin_o, I\xe2\x80\x99ll ahve a look
+2014-09-18T14:16:57 <Justin_o> thanks
+2014-09-18T14:30:36 * colinclark joined the channel
+2014-09-18T14:31:20 * kasparnet joined the channel
+2014-09-18T14:37:12 * cindyli has quit
+2014-09-18T14:37:37 * cindyli joined the channel
+2014-09-18T14:50:09 * clown_mtg is now known as clown
+2014-09-18T14:57:43 <colinclark> hey Justin_o
+2014-09-18T14:57:49 <Justin_o> colinclark: hello
+2014-09-18T14:58:21 <colinclark> I really enjoyed reading the channel logs of your conversation with Bosmon8 yesterday
+2014-09-18T14:58:34 <colinclark> about datasources and queuing changes and so on
+2014-09-18T14:58:57 <colinclark> interesting stuff
+2014-09-18T15:02:40 <Justin_o> colinclark: oh thanks
+2014-09-18T15:03:07 <colinclark> I wanted to ask about the failing unit tests you\'re struggling with
+2014-09-18T15:03:17 <Justin_o> colinclark: i didn\'t get a chance to progress on the implementation of it yet, but hope to today.
+2014-09-18T15:03:19 <Justin_o> colinclark: sure
+2014-09-18T15:03:35 <colinclark> I had a talk yesterday with Bosmon8, who is himself struggling a bit with his workload
+2014-09-18T15:03:50 <Justin_o> colinclark: okay
+2014-09-18T15:03:53 <colinclark> After our meetings in Cambridge last week, there is a lot of work on his plate right now coming from Cloud4all
+2014-09-18T15:04:09 <colinclark> and so I suggested to him that he needs to focus on bug at a time
+2014-09-18T15:04:33 <colinclark> Which means he probably isn\'t going to be able to resolve your issue right away
+2014-09-18T15:04:51 <colinclark> is there a way you can modify or rewrite your tests in such a way that the issue isn\'t a blocker for you?
+2014-09-18T15:04:59 <colinclark> use raw QUnit or something if necessary?
+2014-09-18T15:05:17 <colinclark> I don\'t want you to be stuck here
+2014-09-18T15:05:27 <Justin_o> colinclark: okay that\'s too bad, but I understand there\'s for him to look at right now.
+2014-09-18T15:05:42 <colinclark> yeah, it totally sucks
+2014-09-18T15:06:11 <colinclark> I\'m worried that we\'re going to have a global revolt if we don\'t unblock pull request review and merging for the GPII repositories
+2014-09-18T15:06:11 <Justin_o> colinclark: him.. i\'m not sure.. i guess i could look into it.. there was a lot o sequential stuff going on which may pose an issue, but i\'ll have to sort through it again
+2014-09-18T15:06:17 <colinclark> ok
+2014-09-18T15:06:28 <Justin_o> colinclark: for sure.. those need to get prioirty
+2014-09-18T15:06:33 <colinclark> As an alternative, could you keep going without unit tests in some way?
+2014-09-18T15:06:39 <colinclark> Make a "hack branch" or something?
+2014-09-18T15:06:45 <Justin_o> colinclark: that is basically all done but for the tests
+2014-09-18T15:06:58 <colinclark> (michelled will kill me when she gets back for suggesting this)
+2014-09-18T15:06:59 <Justin_o> colinclark: i\'d send a pull request for it if they were working
+2014-09-18T15:07:03 <colinclark> ok
+2014-09-18T15:07:16 <Justin_o> colinclark: so i\'ve moved on to other things in the meantime
+2014-09-18T15:07:21 <colinclark> So you can continue on with other priorities in the meantime?
+2014-09-18T15:07:22 <colinclark> ah, great
+2014-09-18T15:07:33 <Justin_o> i guess i could still send a pull request with the caveat that the tests are failing, so we don\'t lose track of it
+2014-09-18T15:44:25 <jhernandez> clown: hey, thanks for mentioning :)
+2014-09-18T15:44:54 <clown> jhernandez, my pleasure.  (BTW, did the inteface change get in this time?)
+2014-09-18T15:44:58 <clown> *interface
+2014-09-18T15:45:05 * clown doesn\'t remember the bugzilla number.
+2014-09-18T15:45:33 <jhernandez> clown: https://git.gnome.org/browse/accerciser/commit/?id=1659fc5b47aa54bf25d6a8d49accdd09ba4b2e4b
+2014-09-18T15:45:36 <jhernandez> ?
+2014-09-18T15:46:08 <clown> you beat me1
+2014-09-18T15:46:12 <clown> *me!
+2014-09-18T15:46:15 <jhernandez> heh
+2014-09-18T15:46:33 <clown> in my defence, I was trying to find https://bugzilla.gnome.org/show_bug.cgi?id=704550
+2014-09-18T15:46:48 * Bosmon8 has quit
+2014-09-18T15:47:00 <colinclark> Justin_o: That makes sense to me
+2014-09-18T15:47:13 <jhernandez> clown: no excuses! :P
+2014-09-18T15:47:16 <colinclark> with a note explaining why you\'re making the pull request and what will need to be done before it can be merged
+2014-09-18T15:47:53 <clown> back to what happened in gnome-a11y earlier today, jhernandez.  API decided:  "it would be good to know if some new stuff was added on the release" (accerciser, that is), and ...
+2014-09-18T15:48:09 <clown> "he have time to came back here later or next week"
+2014-09-18T15:48:14 <clown> "he" is you, jhernandez.
+2014-09-18T15:49:05 * danaayotte has quit
+2014-09-18T15:49:06 <jhernandez> heh
+2014-09-18T15:49:15 <clown> I said that accerciser now works with wayland.  Did I get that right?
+2014-09-18T15:49:25 <jhernandez> you did it right
+2014-09-18T15:49:32 * clown pats his back.
+2014-09-18T15:50:49 <jhernandez> thanks for "infoing" it there
+2014-09-18T15:50:59 <jhernandez> this is it\'s been frentic to me
+2014-09-18T15:51:32 <jhernandez> as of today my frentic week has finished
+2014-09-18T15:51:38 <jhernandez> :)
+2014-09-18T15:53:18 <clown> you\'re welcome, but we didn\'t "#info" anything.  It is in the chat log though (not sure where that exists).
+2014-09-18T15:53:50 <clown> I found it:  https://meetbot.gnome.org/a11y-meeting/2014/a11y-meeting.2014-09-18-14.06.log.html
+2014-09-18T15:54:53 * colinclark has quit
+2014-09-18T15:55:04 <clown> but, since the stuff about accerciser wasn\'t "#info\'ed", it isn\'t in the minutes:  https://meetbot.gnome.org/a11y-meeting/2014/a11y-meeting.2014-09-18-14.06.html
+2014-09-18T16:08:33 * kasparnet has quit
+2014-09-18T16:10:33 * slim has quit
+2014-09-18T16:14:41 * slim joined the channel
+2014-09-18T16:36:57 <Justin_o> cindyli: if i have a queue of save requests
+2014-09-18T16:37:32 <Justin_o> and i fire a requestQueued event when request is added to the queue.. when would you expect the requestUnqueued event to fire. When we start processing the request or after it has finished?
+2014-09-18T16:38:16 * anastasiac has quit
+2014-09-18T16:40:30 * kasparnet joined the channel
+2014-09-18T16:58:18 <cindyli> Justin_o: i think requestUnqueued event should be fired after the request has been processed. The event can be fired with a success or failure signal
+2014-09-18T16:58:50 <Justin_o> cindyli: i was thinking of putting it afterwards, then if it fails it can remain in the queue
+2014-09-18T16:59:09 <cindyli> make sense
+2014-09-18T16:59:52 <cindyli> Justin_o: what if the request cannot be processed due to the wrong request or so, would it stay in the queue forever?
+2014-09-18T17:00:00 <Justin_o> yep
+2014-09-18T17:00:09 <Justin_o> i suppose we could have a number of attempts or something
+2014-09-18T17:00:25 <cindyli> ok
+2014-09-18T17:00:27 <Justin_o> cindyli: right now we don\'t track errors in the datasource though
+2014-09-18T17:00:40 <Justin_o> so there is no way to know if it succeeded or not
+2014-09-18T17:00:48 <Justin_o> or rather, an error will probably just not return
+2014-09-18T17:01:14 <cindyli> ok
+2014-09-18T17:01:29 <Justin_o> i suppose we could look at improving this as well
+2014-09-18T17:03:26 * danaayotte joined the channel
+2014-09-18T17:03:37 * jhernandez has quit
+2014-09-18T17:45:54 * slim has quit
+2014-09-18T17:47:56 * anastasiac joined the channel
+2014-09-18T17:48:59 * Bosmon7 joined the channel
+2014-09-18T18:08:35 * kasparnet has quit
+2014-09-18T18:09:10 * kasparnet joined the channel
+2014-09-18T18:28:39 * danaayotte has quit
+2014-09-18T18:51:56 <Bosmon7> Hi Justin_o - I could still consistently get the behaviour that your tests would hang, rather than fail
+2014-09-18T18:52:35 <Bosmon7> I couldn\'t easily see the reason why there should be a firing of the event numRequestsChanged at that point in the workflow, could you explain the connections?
+2014-09-18T18:54:20 <Justin_o> Bosmon7: sure i guess i\'ll start by explaining generally how the requests summary works. numRequests is the model used by the badge which goes over the requestSummary dialog icon in the feedback tool. It contains the total number of requests. It is updated any time a vote is added/removed and whenever a request is submitted/removed.
+2014-09-18T18:55:19 <Justin_o> requests is the model used by the content of the requestsSummary dialog. It contains an object which has a property for each request type which have values relating to the number of requests
+2014-09-18T18:55:32 <Justin_o> this is updated when it is opened and while open, whenever a vote is changed
+2014-09-18T18:55:38 <Justin_o> Bosmon7: does that make sense?
+2014-09-18T18:55:41 <Bosmon7> so the "clickMismatchDetailsLinks" action should submit a request of that kind?
+2014-09-18T18:57:03 <Justin_o> Bosmon7: yes, I believe so
+2014-09-18T18:57:29 <Justin_o> provide it is also submitting
+2014-09-18T18:57:53 <Bosmon7> Somehow in my runs it didn\'t seem to
+'
+

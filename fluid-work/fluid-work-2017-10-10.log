@@ -1,0 +1,313 @@
+b'2017-10-10T21:14:49 * clown has quit
+2017-10-10T21:26:14 * michelled has quit
+2017-10-10T21:26:36 * Jess_ has quit
+2017-10-10T21:34:40 * alanharnum joined the channel
+2017-10-10T21:35:54 * alanharnum joined the channel
+2017-10-10T21:51:18 * alanharnum has quit
+2017-10-10T23:11:02 * colinclark joined the channel
+'
+
+b'2017-10-10T14:53:06 <Bosmon> This would help cut down on garbage as well as being semantically clear
+2017-10-10T14:53:43 <Justin_o> Bosmon: so if there is a request in the queue, you just get that promise returned
+2017-10-10T14:53:47 <Justin_o> seems reasonable
+2017-10-10T14:53:54 <Bosmon> All that changes is that each successive request changes the "fate" of the final promise, in terms of its incoming payload being fresher, or staler, or whatever the semantics will be
+2017-10-10T14:54:11 <Bosmon> You can imagine different algorithms being appropriate for different situations
+2017-10-10T14:54:24 <Bosmon> Clearly you don\'t want to lose the user\'s most recent update
+2017-10-10T14:54:56 <Bosmon> So you can\'t throw away the *incoming* payloads
+2017-10-10T14:56:44 <Justin_o> speaking of debouncing, i\'m trying to think of where to actually put the debounce code. I\'m thinking of Fluid.js because it could be for more than just requests
+2017-10-10T14:56:52 <Justin_o> is there a logical place in that document you\'d like it
+2017-10-10T14:57:05 * michelled joined the channel
+2017-10-10T14:58:02 <Justin_o> i\'m thinking somewhere around fluid.transform
+2017-10-10T14:58:07 <Justin_o> Bosmon: ^
+2017-10-10T14:59:41 * colinclark joined the channel
+2017-10-10T15:00:05 * michelled1 joined the channel
+2017-10-10T15:00:20 <michelled1> fluid-everyone: I forgot to mention that IDRC planning is cancelled today
+2017-10-10T15:00:39 <Bosmon> Justin_o - I guess you could put it next to your existing fluid.roundToDecimal impl
+2017-10-10T15:00:40 <stegru> now you tell me
+2017-10-10T15:01:02 <clown> michelled1: Justin_o said something about that earlier.  all good.
+2017-10-10T15:13:18 * jhung1 joined the channel
+2017-10-10T15:13:43 * jhung has quit
+2017-10-10T15:14:55 <jhung1> fluid-everyone: the collaboration room is occupied today and won\'t be available for stand-up.
+2017-10-10T15:16:28 * jhung1 has quit
+2017-10-10T15:28:40 <cindyli> Bosmon: thanks for more comments on GPII-2435 pull request - https://github.com/GPII/universal/pull/519. it\'s been addressed and ready for another look.
+2017-10-10T15:30:02 <Bosmon> cindyli - sorry yes, I got interrupted partway through the review : P
+2017-10-10T15:30:18 <cindyli> ok
+2017-10-10T15:32:09 * avtar joined the channel
+2017-10-10T15:32:43 <stegru> clown / Bosmon - has the dust settled with the process reporter? So I can start de-duping the other processy code
+2017-10-10T15:33:18 <clown> stegru: in a meeting \xe2\x80\x94 talk to you soon.
+2017-10-10T15:34:08 <stegru> no rush
+2017-10-10T15:38:28 * yuriy has quit
+2017-10-10T15:38:46 * yuriy joined the channel
+2017-10-10T15:39:18 * dandimitrov joined the channel
+2017-10-10T15:43:38 * danailbd_ joined the channel
+2017-10-10T15:44:09 * danailbd_ has quit
+2017-10-10T15:44:16 * dandimitrov has quit
+2017-10-10T15:44:50 * dandimitrov joined the channel
+2017-10-10T15:46:30 * yuriy has quit
+2017-10-10T15:46:46 * yuriy joined the channel
+2017-10-10T15:47:45 * yuriy has quit
+2017-10-10T15:48:27 * colinclark has quit
+2017-10-10T15:49:47 * colinclark joined the channel
+2017-10-10T15:55:44 * amatas has quit
+2017-10-10T15:56:00 * amatas joined the channel
+2017-10-10T15:58:56 * alanharnum joined the channel
+2017-10-10T16:02:33 <Bosmon> Hi there alanharnum - there\'s a fix for the event you and gmoss ran into when using fetchResources plus composite events at https://github.com/fluid-project/infusion/pull/854/files
+2017-10-10T16:02:51 <Bosmon> The "fault" as such turned out to be in fetchResources rather than in the composite event implementation
+2017-10-10T16:03:03 <Bosmon> Although there is an extended writeup on the JIRA you made
+2017-10-10T16:04:22 <gmoss> Bosmon: excellent, thanks very much for looking into that! I see you were online pretty late last night doing so. I\'ll be reading your JIRA writeup shortly :)
+2017-10-10T16:07:27 <dandimitrov> Hi, Bosmon, we were wondering whether the currently used in dev "key in" functionality, simulates an actual user key in.
+2017-10-10T16:07:27 <dandimitrov> We wanted to have more "real world" scenarios for testing the pcp, e.g. a postponed "key in", let\'s say a few seconds after the PCP has started or even a real token for us to use through a USB. Could you recommend us a way to achieve this?
+2017-10-10T16:10:34 <Bosmon> Hi dandimitrov
+2017-10-10T16:11:00 <Bosmon> You can certain insert delays and reordered actions into the "sequence" held, e.g. in https://github.com/danailbd/gpii-app/blob/b16f7e425d87573da75bb50abf1a3bf4491cf7fa/tests/IntegrationTestDefs.js#L102 in order to walk through different scenarios
+2017-10-10T16:11:43 <Bosmon> In terms of "keyIn" the current mechanism is sufficiently realistic since all that is performed by app.keyIn is a request to exactly the same endpoint that is used by a real token via the USB listeners
+2017-10-10T16:11:53 <Bosmon> https://github.com/danailbd/gpii-app/blob/b16f7e425d87573da75bb50abf1a3bf4491cf7fa/src/app.js#L282
+2017-10-10T16:11:59 <Bosmon> So in these terms I think there is nothing further to do there
+2017-10-10T16:12:17 <Bosmon> I think the most important next area is to write some kind of functional tests for the PCP\'s UI itself
+2017-10-10T16:12:42 <Bosmon> That is, assure that certain widgets are rendered, and that their UI may be used to trigger change requests back into the system
+2017-10-10T16:15:13 * yuriy joined the channel
+2017-10-10T16:16:04 * yuriy has quit
+2017-10-10T16:16:11 * yuriy joined the channel
+2017-10-10T16:19:35 * sepidehshahi joined the channel
+2017-10-10T16:20:11 * colinclark has quit
+2017-10-10T16:20:12 * michelled joined the channel
+2017-10-10T16:20:25 * alanharnum joined the channel
+2017-10-10T16:20:27 * jhung joined the channel
+2017-10-10T16:20:58 <alanharnum> Bosmon: thanks Bosmon! taking a look now - I wondered if the issue might not be at the ResourceLoader level
+2017-10-10T16:21:45 * yuriy has quit
+2017-10-10T16:22:32 * sepidehshahi has quit
+2017-10-10T16:25:56 * kavya joined the channel
+2017-10-10T16:27:15 * michelled has quit
+2017-10-10T16:27:55 <dandimitrov> Ok, Bosmon, thank you, I just started working on those tests. I\'ll reach our for help if something troubles me :)
+2017-10-10T16:31:20 * michelled joined the channel
+2017-10-10T16:32:21 <alanharnum> Bosmon: very interesting
+2017-10-10T16:33:01 <alanharnum> we\'d wondered if there might be something down in how the resourceLoader was being "helpful" with caching that could account for this, but didn\'t dig into the internals of it to that level
+2017-10-10T16:38:57 * michelled has quit
+2017-10-10T16:40:26 * sepidehshahi joined the channel
+2017-10-10T16:42:29 <Bosmon> alanharnum - yes well, the issue of "where" the issue is precisely is a little abstruse
+2017-10-10T16:42:43 <Bosmon> Since one could argue that the ResourceLoader is perfectly within its rights to behave in this way
+2017-10-10T16:42:53 <Bosmon> Which, for over 7 years, we have done
+2017-10-10T16:44:46 <Bosmon> alanharnum - you\'ll encounter varieities of this issue in many contexts, for example michelled met many of these when writing IoC Testing framework fixtures for the "GPII app"
+2017-10-10T16:45:03 <Bosmon> This is the reason that the IoC Testing framework allows a special dispensation to write IoCSS selectors for event binding
+2017-10-10T16:45:13 <Bosmon> Unfortunately this doesn\'t yet extend to the rest of the framework
+2017-10-10T16:46:24 <Bosmon> There are at least 4 separate solutions to this problem creeping towards existence from different areas, but given they are creeping so slowly I thought it best to hack the ResourceLoader for now, given it is condemned anyway
+2017-10-10T16:47:07 <Bosmon> https://docs.fluidproject.org/infusion/development/IoCTestingFramework.html#supported-fixture-records - in the 3rd row of the table in this section
+2017-10-10T16:47:13 <Bosmon> You can see one possible solution to this problem
+2017-10-10T16:47:40 <Bosmon> If it were possible to write a binding onto an event which didn\'t cause the target component to construct at the point it was evaluated, it wouldn\'t matter how early the ResourceLoader became ready
+2017-10-10T16:51:18 * the-t-in-rtf joined the channel
+2017-10-10T16:59:38 <Justin_o> Bosmon: i was going to put the datasource in fluidRequests.js but there is a message that the entire file is deprecated
+2017-10-10T16:59:47 <Bosmon> Justin_o - yes
+2017-10-10T16:59:52 <Justin_o> should i just start a new file for this, or have you been placing things like this in another location
+2017-10-10T16:59:56 <Bosmon> Please make a new file, yes :)
+2017-10-10T17:00:31 <Justin_o> Bosmon: okay, by the way what\'s replacing all of the things in fluidRequests?
+2017-10-10T17:00:39 <Bosmon> Justin_o - the stuff you are writing now :)
+2017-10-10T17:00:44 <Justin_o> lol
+2017-10-10T17:00:45 <Justin_o> okay
+2017-10-10T17:04:42 * alanharnum joined the channel
+2017-10-10T17:06:28 * danailbd_ joined the channel
+2017-10-10T17:08:57 * dandimitrov has quit
+2017-10-10T17:10:33 * alanharnum has quit
+2017-10-10T17:17:53 * amatas has quit
+2017-10-10T17:18:31 * amatas joined the channel
+2017-10-10T17:27:43 * michelled joined the channel
+2017-10-10T17:27:54 * dandimitrov joined the channel
+2017-10-10T17:28:32 * danailbd_ has quit
+2017-10-10T17:39:03 * alanharnum joined the channel
+2017-10-10T17:41:57 * sepidehshahi joined the channel
+2017-10-10T18:03:13 * amatas has quit
+2017-10-10T18:11:56 * stegru has quit
+2017-10-10T18:14:38 * the-t-in-rtf joined the channel
+2017-10-10T18:16:04 <clown> stegru:  regarding dust settling on the process reporter: everytime I think it\'s done, another error pops up :-)
+2017-10-10T18:16:27 <clown> but, it\'s been a couple of weeks, so perhaps the dust has settled.
+2017-10-10T18:17:10 <clown> one issue outstanding is that there is a linux pull for the liinux specific process reporter code that needs reviewing/merging.
+2017-10-10T18:17:39 <clown> but, that won\'t change the code in universal where 95% of the process reporter code lives.
+2017-10-10T18:18:33 <clown> and \xe2\x80\xa6. I just realized stegru has (had) left the building.
+2017-10-10T18:19:59 * Jess_ joined the channel
+2017-10-10T18:20:53 * michelled joined the channel
+2017-10-10T18:22:25 * sepidehshahi joined the channel
+2017-10-10T18:29:35 * kavya has quit
+2017-10-10T18:39:16 * sepidehshahi joined the channel
+2017-10-10T18:43:45 * sepidehshahi has quit
+2017-10-10T18:51:13 * dandimitrov has quit
+2017-10-10T18:54:18 * dandimitrov joined the channel
+2017-10-10T18:55:28 * the-t-in-rtf joined the channel
+2017-10-10T19:02:40 * alanharnum joined the channel
+2017-10-10T19:08:59 * alanharnum has quit
+2017-10-10T19:18:55 * the-t-in-rtf joined the channel
+2017-10-10T19:19:04 * mrtyler joined the channel
+2017-10-10T19:20:59 * sepidehshahi joined the channel
+2017-10-10T19:21:35 * avtar1 joined the channel
+2017-10-10T19:34:01 * avtar1 has quit
+2017-10-10T19:34:22 * michelled has quit
+2017-10-10T19:39:39 * michelled joined the channel
+2017-10-10T19:41:15 * sepidehshahi joined the channel
+2017-10-10T19:42:45 * michelled has quit
+2017-10-10T19:42:55 * alanharnum joined the channel
+2017-10-10T19:45:29 * alanharnum has quit
+2017-10-10T19:45:56 * alanharnum joined the channel
+2017-10-10T19:58:05 * alanharnum joined the channel
+2017-10-10T19:59:38 * danay0 joined the channel
+2017-10-10T20:18:41 * michelled joined the channel
+2017-10-10T20:20:03 * simonjb joined the channel
+2017-10-10T20:33:50 * cindyli has quit
+2017-10-10T20:45:16 * sepidehshahi has quit
+2017-10-10T20:53:13 * alanharnum has quit
+2017-10-10T20:57:10 * danay0 has quit
+2017-10-10T20:58:19 * alanharnum joined the channel
+2017-10-10T20:58:59 * simonjb has quit
+2017-10-10T21:00:48 <Bosmon> alanharnum: WWAHHARNNUM :)
+2017-10-10T21:01:14 <alanharnum> Bosmon: boss mon
+2017-10-10T21:09:08 * dandimitrov has quit
+'
+
+b'2017-10-10T00:53:10 * mrtyler joined the channel
+2017-10-10T02:17:02 * mrtyler joined the channel
+2017-10-10T07:29:02 * javjarfer joined the channel
+2017-10-10T07:33:55 * georgitodorov joined the channel
+2017-10-10T07:43:35 * stegru joined the channel
+2017-10-10T08:27:43 * javjarfer has quit
+2017-10-10T08:29:59 * dandimitrov joined the channel
+2017-10-10T09:12:00 * the-t-in-rtf joined the channel
+2017-10-10T09:14:24 * javjarfer joined the channel
+2017-10-10T09:51:58 * dandimitrov has quit
+2017-10-10T10:01:27 * javjarfer_ joined the channel
+2017-10-10T10:02:41 * javjarfer has quit
+2017-10-10T10:04:51 * the-t-in-rtf1 joined the channel
+2017-10-10T10:08:11 * the-t-in-rtf has quit
+2017-10-10T10:11:16 * the-t-in-rtf1 has quit
+2017-10-10T10:19:16 * amatas joined the channel
+2017-10-10T10:20:57 * the-t-in-rtf joined the channel
+2017-10-10T10:31:02 * dandimitrov joined the channel
+2017-10-10T10:34:43 * the-t-in-rtf joined the channel
+2017-10-10T10:36:07 * dandimitrov has quit
+2017-10-10T10:40:52 * the-t-in-rtf joined the channel
+2017-10-10T10:47:03 * the-t-in-rtf joined the channel
+2017-10-10T10:52:17 * the-t-in-rtf has quit
+2017-10-10T10:53:17 * the-t-in-rtf joined the channel
+2017-10-10T10:53:24 * dandimitrov joined the channel
+2017-10-10T10:59:32 * the-t-in-rtf joined the channel
+2017-10-10T11:05:09 * the-t-in-rtf has quit
+2017-10-10T11:06:07 * the-t-in-rtf joined the channel
+2017-10-10T11:11:20 * the-t-in-rtf has quit
+2017-10-10T11:12:17 * the-t-in-rtf joined the channel
+2017-10-10T11:19:58 * danailbd_ joined the channel
+2017-10-10T11:22:31 * danailbd__ joined the channel
+2017-10-10T11:23:27 * dandimitrov has quit
+2017-10-10T11:25:15 * danailbd_ has quit
+2017-10-10T11:36:49 * gtirloni joined the channel
+2017-10-10T11:45:23 * gtirloni joined the channel
+2017-10-10T12:02:28 * the-t-in-rtf joined the channel
+2017-10-10T12:08:28 * the-t-in-rtf1 joined the channel
+2017-10-10T12:09:29 * the-t-in-rtf2 joined the channel
+2017-10-10T12:22:03 * yuriy joined the channel
+2017-10-10T12:33:21 * cindyli joined the channel
+2017-10-10T12:34:24 <the-t-in-rtf2> @stegru (or really anyone), I was asked to merge windows master into a pull with conflicts, I now get test errors like the following: https://www.pastiebin.com/59dcbe330824a
+2017-10-10T12:34:43 <the-t-in-rtf2> Is anyone else seeing those in the latest VM image?
+2017-10-10T12:36:02 <stegru> i don\'t know if i\'m getting them yet, but I\'d speak with clown when he arrives
+2017-10-10T12:37:23 * colinclark joined the channel
+2017-10-10T12:45:27 * jhung joined the channel
+2017-10-10T12:46:55 <stegru> the-t-in-rtf2: they pass for me
+2017-10-10T13:01:48 * danailbd__ has quit
+2017-10-10T13:05:13 * sepidehshahi joined the channel
+2017-10-10T13:06:51 * sepidehshahi has quit
+2017-10-10T13:07:16 * sepidehshahi joined the channel
+2017-10-10T13:07:48 * grrrero joined the channel
+2017-10-10T13:12:32 * simonjb joined the channel
+2017-10-10T13:20:59 * clown joined the channel
+2017-10-10T13:34:29 <jhung> fluid-everyone: there will not be a design crit today.
+2017-10-10T13:35:43 * Justin_o joined the channel
+2017-10-10T13:37:53 <cindyli> Bosmon: do you have more comments on my GPII-2435 pull request - https://github.com/GPII/universal/pull/519
+2017-10-10T13:43:43 * sepidehshahi joined the channel
+2017-10-10T13:45:52 * georgitodorov has quit
+2017-10-10T13:47:19 <Justin_o> Bosmon: hello
+2017-10-10T13:48:51 <Bosmon> Justin_o - yes, I am looking at it now :)
+2017-10-10T13:49:04 <Justin_o> Bosmon: thanks different questions though
+2017-10-10T13:50:07 <Justin_o> Bosmon: 1) did anything interesting come up regarding CSS in the PCP meeting yesterday? 2) looking at FLUID-6209, which will be around the store using promises. I have a few more questions regarding that if you are free to chat.
+2017-10-10T13:50:42 <Bosmon> Justin_o - there was some CSS discussion, yes
+2017-10-10T13:51:12 <Bosmon> The Astea team have selected a CSS library to help them in Windows 10-theme styling
+2017-10-10T13:51:20 <Bosmon> Although I forget the name of it at present
+2017-10-10T13:54:42 <Justin_o> ah okay
+2017-10-10T13:54:59 <Justin_o> it\'s specific to make things look like a windows 10 app?
+2017-10-10T13:55:05 <yuriy> it\xc2\xb4s winstrap
+2017-10-10T13:55:19 <yuriy> we added details to the research ticket at https://issues.gpii.net/browse/GPII-2629
+2017-10-10T13:55:20 <Bosmon> Thanks, yuriy :)
+2017-10-10T13:57:10 * alanharnum joined the channel
+2017-10-10T14:02:08 <Justin_o> yuriy, Bosmon: thanks.. i was looking at it and it seems that it\'s based off of bootstrap 3.3.7. I think there may be some issues with bootstrap using pixels for sizing, which they have changed in version 4 ( currently in beta ). I\'m not sure if that matters for PCP though. Does it have to apply adaptations to itself?
+2017-10-10T14:03:27 <Bosmon> Justin_o - yes, it will need to be fully adaptable
+2017-10-10T14:03:47 <Bosmon> We should consider that it has exactly the same adaptation issues as anything you are producing for UIO+
+2017-10-10T14:04:12 <Bosmon> So I\'m hoping that there can be some useful cross-conversations between these teams about this
+2017-10-10T14:04:34 <Bosmon> Justin_o - sure, we can talk about FLUID-6209
+2017-10-10T14:07:29 * Jess_ joined the channel
+2017-10-10T14:07:42 <Justin_o> fluid-everyone: no planning meeting today
+2017-10-10T14:07:51 <Justin_o> Bosmon: sure, did you want to chat here or on vidyo?
+2017-10-10T14:13:27 <Bosmon> Here is probably better, I have a few things on at present ...
+2017-10-10T14:14:28 <Justin_o> Bosmon: yes, i see you\'ve left me some comments on FLUID-6180... the scope of the work there grew a bit because it had to handle the persisted state of the adjuster through all the different methods of actually navigating to one
+2017-10-10T14:14:51 <Justin_o> Bosmon: anyways, regarding FLUID-6209, which from your comments on FLUID-6180 may also be needed there..
+2017-10-10T14:15:05 <Justin_o> Bosmon: the first thing I\'m wondering is should set and get both return a promise
+2017-10-10T14:15:23 <Justin_o> Also in there current state they are both unimplemented by default
+2017-10-10T14:15:41 <Bosmon> Justin_o - yes, the new model is that they both return a promise
+2017-10-10T14:15:48 <Justin_o> Should this change and require a getImpl and setImpl invoker to be provided in stead?
+2017-10-10T14:16:07 <Bosmon> Justin_o - well, we are planning to factor away the getImpl/setImpl model when we have a chance
+2017-10-10T14:16:31 <Justin_o> okay, what would be the best approach in this case to ensure that a promise is returned and resolved
+2017-10-10T14:16:34 <Bosmon> So you should ignore that part
+2017-10-10T14:17:23 <Bosmon> I see that you have this ancient one: https://github.com/fluid-project/infusion/pull/566/files
+2017-10-10T14:17:33 <Bosmon> Which, topically enough, also includes a debounce implementation :)
+2017-10-10T14:17:44 <Bosmon> This is so ancient it dates from the days of "eventedComponent"
+2017-10-10T14:18:10 <Justin_o> yes that\'s a super dusty/rusty PR
+2017-10-10T14:18:34 <Bosmon> Justin_o - so this JIRA describes the approach that is planned for refactoring "Kettle DataSource" - https://issues.fluidproject.org/browse/KETTLE-55
+2017-10-10T14:18:57 <Bosmon> This is also something that the-t-in-rtf has expressed an interest in since he has used DataSources a fair bit over the years
+2017-10-10T14:22:02 <Justin_o> Bosmon: what exactly are pseudo events?
+2017-10-10T14:22:07 <Bosmon> Justin_o - this is another JIRA which is active in this area - https://issues.fluidproject.org/browse/KETTLE-49
+2017-10-10T14:22:17 <Bosmon> alanharnum ran into this in his early days back with us
+2017-10-10T14:23:17 <Bosmon> Justin_o - pseudoevents are described here: https://docs.fluidproject.org/infusion/development/PromisesAPI.html#fluid-promise-firetransformevent-event-payload-options-
+2017-10-10T14:23:38 <Justin_o> Bosmon: yes, i was using this for something not to long ago too, can\'t remember what, and it was a bit confusing.
+2017-10-10T14:23:47 <Justin_o> but not sure what "linkage" means
+2017-10-10T14:23:51 <Bosmon> Justin_o - so, basically you should take the skeleton implementation from https://github.com/fluid-project/kettle/blob/master/lib/dataSource-core.js, but i) minus getImpl/setImpl - and ii) minus the wacky "getWritableGrade" business
+2017-10-10T14:24:08 <Bosmon> Justin_o - grade linkage is described here :)
+2017-10-10T14:24:08 <Bosmon> https://docs.fluidproject.org/infusion/development/IoCAPI.html#fluid-makegradelinkage-linkagename-inputnames-outputnames-
+2017-10-10T14:24:20 <Bosmon> What brilliant docs we have these days ....
+2017-10-10T14:25:15 <Justin_o> :) they really do cover a lot
+2017-10-10T14:28:18 <Justin_o> Bosmon: so we should create a base datasource grade in infusion, or should this still just be a store base grade?
+2017-10-10T14:28:52 <Bosmon> Justin_o - I guess this is a good time to migrate the prefs framework over to something that meets the dataSource contract, given we are changing the API already to accept promises
+2017-10-10T14:31:07 <Justin_o> Bosmon: okay, so create  datasource base grade in infusion that the prefs framework stores will use
+2017-10-10T14:31:09 <Justin_o> ?
+2017-10-10T14:33:26 <Bosmon> Justin_o - yes, this would just include the core skeleton of Kettle DataSource - which is i) the onRead, onWrite and onError events, ii) the implementations of get and set
+2017-10-10T14:34:43 <Bosmon> You might include a few definitions analogous to the "encoding" ones that are suitable for the browser, but these would just punch through to the browser\'s own JSON.parse and JSON.stringify methods for now
+2017-10-10T14:34:49 <Bosmon> These generally work much better than the ones in node.js
+2017-10-10T14:34:58 * colinclark joined the channel
+2017-10-10T14:35:09 <Bosmon> And so a lot of the extra machinery that we have in Kettle to get JSON parse diagnostics out isn\'t necessary
+2017-10-10T14:35:24 * the-t-in-rtf joined the channel
+2017-10-10T14:35:28 <the-t-in-rtf> Thanks, @stegru
+2017-10-10T14:36:21 <Justin_o> Bosmon: okay, i\'ll start with that.. anything I should be saving from the work on https://github.com/fluid-project/infusion/pull/566/files
+2017-10-10T14:37:56 <Bosmon> Justin_o - well, I guess "debounce" will get into the core as a standalone utility
+2017-10-10T14:38:48 <Bosmon> Justin_o - we might indeed carry on with the basic approach of trying to "hash" the directModel into a key in general, but it\'s ok for you to bypass this for now, since the prefs framework I imagine will only ever use "null" as the directModel for the time being
+2017-10-10T14:39:46 <Bosmon> Justin_o - but the main difference will be the overall reuse model, which is a lot less clunky than the "wrapped DataSource" model which was the scheme of the day 3 years ago : P
+2017-10-10T14:39:54 <Bosmon> I guess it\'s encouraging that this impl is only 3 years old
+2017-10-10T14:40:08 <Bosmon> The way it felt I imagined that it actually dated from the previous decade :)
+2017-10-10T14:40:12 <Justin_o> Bosmon: time flies, i\'m feeling old again :(
+2017-10-10T14:40:33 <Bosmon> The "pseudoevent" scheme for composing DataSource elements is a lot more graceful than componentwise wrapping
+2017-10-10T14:41:05 <Bosmon> And also makes it clear the exact order and priority when trying to do multiple adaptations at the same time - imagine one person wants to change the backend of the store, and another one wants to change the throttling algorithm
+2017-10-10T14:41:07 <Justin_o> Bosmon: i\'d agree what you\'ve outlined here seems much cleaner
+2017-10-10T14:41:12 <Bosmon> With the "wrapping" model this would just be a trainwreck
+2017-10-10T14:41:17 <Justin_o> Bosmon: regarding debounce i\'m going to pull this one up https://github.com/fluid-project/node-jqunit/blob/master/lib/jqUnit-node.js#L158
+2017-10-10T14:41:21 <Justin_o> into the framework
+2017-10-10T14:41:32 <Bosmon> But with pseudoevents, one person can override one listener, and another can override the other
+2017-10-10T14:42:17 * alanharnum joined the channel
+2017-10-10T14:42:22 <Bosmon> With "DataSource wrapping", the throttling wrapping just isn\'t transparent - if it weren\'t for options distributions, it would have created an impossible situation for someone trying to find the backend store to configure it
+2017-10-10T14:45:24 <Bosmon> So, under this new model, the throttling will be implemented by a kind of "fistful of promises" structure - all the promises which get queued up whilst the DataSource is blocked will all chain onto the same underlying queue event
+2017-10-10T14:45:35 <Bosmon> Justin_o - it\'s very useful that you have a concrete and immediate usecase now
+2017-10-10T14:45:51 <Bosmon> Since this will help us to distinguish between the two different ways of treating these blocked promises
+2017-10-10T14:46:19 <Bosmon> We could either i) resolve them all at once when the queue unblocks, or ii) throw away all the ones that end up blocked, and never resolve them
+2017-10-10T14:46:38 <Justin_o> ah
+2017-10-10T14:46:50 <Bosmon> I think once you look at your pattern of usage in UIO+ it should become pretty clear which one of these approaches we want to take
+2017-10-10T14:47:12 <Bosmon> I think this was always a stumbling block with your original 2014 impl, that the use case just wasn\'t immediate enough
+2017-10-10T14:47:44 * javjarfer_ has quit
+2017-10-10T14:48:43 <Bosmon> Justin_o - that, and the crushingly bad model of reuse that we were guided into at the time :)
+2017-10-10T14:49:09 * alanharnum joined the channel
+2017-10-10T14:49:30 * mrtyler joined the channel
+2017-10-10T14:50:33 <Justin_o> Bosmon: yah i\'m struggling to remember what the exact use case was back then
+2017-10-10T14:51:16 <Bosmon> Justin_o - I think it was something to do with the metadata component generating too many saves, or something like that : P
+2017-10-10T14:51:35 <Justin_o> Bosmon: yah that could be it
+2017-10-10T14:51:46 <Justin_o> because we\'d save on all the changes in the "editor"
+2017-10-10T14:52:55 <Bosmon> Justin_o - actually, now I think about it, I think the simplest architecture would be for all the blocked requests to return the SAME promise
+'
+

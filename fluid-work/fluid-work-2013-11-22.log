@@ -1,0 +1,422 @@
+b'2013-11-22T19:45:43 <Justin_o> :)
+2013-11-22T19:46:01 <Justin_o> Bosmon: okay.. so what should we call this function.. fluid.prefs.something
+2013-11-22T19:46:13 <Justin_o> something === createPrefsEditor ?
+2013-11-22T19:46:15 <Bosmon> Something like "buildAndCreate" or so
+2013-11-22T19:46:40 <Justin_o> Bosmon: how about fluid.prefs.create
+2013-11-22T19:47:02 <Bosmon> Seems reasonable
+2013-11-22T19:47:06 <Bosmon> By the "95% principle"
+2013-11-22T19:47:16 <Bosmon> I guess the 95% aren\'t even interested that they have in fact invoked a 2-step process
+2013-11-22T19:47:31 <Justin_o> Bosmon: cool :)
+2013-11-22T19:47:56 <Justin_o> Bosmon: i\'m going to file this under a different jira though
+2013-11-22T19:48:58 <Justin_o> Bosmon: do you think we need a similar onestop function for the enhancer?
+2013-11-22T19:49:55 * anvk joined the channel
+2013-11-22T19:50:58 <Bosmon> Justin_o - the use case for that isn\'t so powerful
+2013-11-22T19:51:07 <Bosmon> In what situation does an integrator just want to create an enhancer?
+2013-11-22T19:51:38 <Justin_o> Bosmon: i guess it would be for those case where you have  single prefsEditor on your site, but each page needs to be enhanced.
+2013-11-22T19:51:53 <Bosmon> Doesn\'t sound like a very powerful use case
+2013-11-22T19:52:03 <Bosmon> Why would we have places where preferences are acted upon, but can\'t be adjusted?
+2013-11-22T19:52:15 <Justin_o> Bosmon: yes..at any rate we can come back to it if need be.. starting with this should hit the majority
+2013-11-22T19:52:44 <Justin_o> Bosmon: i don\'t know if we will anymore.. not in the newer designs anyways.. but i think that was the idea of the full page variants before
+2013-11-22T19:54:54 <Justin_o> Bosmon: here\'s the new jira http://issues.fluidproject.org/browse/FLUID-5222
+2013-11-22T19:56:34 * thealphanerd joined the channel
+2013-11-22T19:58:36 <Justin_o> Bosmon: any thoughts on how to structure the options.. i guess there may be a distinction between options to the builder and those to the prefsEditor
+2013-11-22T19:58:49 <Justin_o> Bosmon: or do you think it would be better to just accept a subset of possible options
+2013-11-22T19:59:07 <Bosmon> Justin_o - yes, there should be two options areas
+2013-11-22T19:59:18 <Bosmon> Or even three, depending on whether there is an enhancer
+2013-11-22T19:59:30 <Justin_o> Bosmon: well there\'s always an enhancer.. :)
+2013-11-22T19:59:33 <Justin_o> sometimes it
+2013-11-22T19:59:41 <Justin_o> sometimes it\'s just empty, if you have no enactors
+2013-11-22T20:00:29 <Justin_o> but those can be passed in to the prefsEditor since at this level it refers to the whole stack
+2013-11-22T20:00:51 <Justin_o> perhaps there could be some renaming here since prefsEditor refers to both the stack and the UI portion
+2013-11-22T20:00:58 <Justin_o> Bosmon: ^
+2013-11-22T20:01:59 <Justin_o> Bosmon: so anyways.. i image you are expecting something like fluid.prefs.create(".container", {build: {}, prefsEditor: {});
+2013-11-22T20:01:59 * anvk has quit
+2013-11-22T20:02:08 <Bosmon> Justin_o - exactly, yes
+2013-11-22T20:02:12 * anvk joined the channel
+2013-11-22T20:02:42 <Justin_o> Bosmon: cool, that should be easy enough
+2013-11-22T20:03:25 * thealphanerd has quit
+2013-11-22T20:06:41 * thealphanerd joined the channel
+2013-11-22T20:10:46 * the-t-in-rtf has quit
+2013-11-22T20:16:56 * mrvisser_ has quit
+2013-11-22T20:16:59 * mrvisser joined the channel
+2013-11-22T20:18:52 <Bosmon> Justin_o - I think another fantastic antipattern is the WOLF TICKET ANTIPATTERN : P
+2013-11-22T20:18:53 <Bosmon> http://sourcemaking.com/antipatterns/wolf-ticket
+2013-11-22T20:18:57 * michelled joined the channel
+2013-11-22T20:19:04 <Bosmon> It seems prettly clear that OAuth is one of these
+2013-11-22T20:20:25 <Justin_o> Bosmon: is this true "Only 6 percent of information systems standards have test suites"
+2013-11-22T20:20:34 <Bosmon> Sure
+2013-11-22T20:20:39 <Bosmon> Where are the test suites for oauth?
+2013-11-22T20:20:45 <Bosmon> I think by definition such a thing is impossible
+2013-11-22T20:21:28 <Justin_o> you mean it\'s impossible to have tests for standards.. or specifically for OAuth
+2013-11-22T20:21:41 <Bosmon> For Oauth in particular
+2013-11-22T20:21:52 <Bosmon> Since the standard doesn\'t actually determine any particular behaviour
+2013-11-22T20:22:10 <Justin_o> ah.. has that guy succeeded in making a replacement for it yet.. i remember watching that video you sent along before
+2013-11-22T20:22:11 <Bosmon> WebGL is one of the few standards that have a test suite - but sadly, I don\'t think there is a single implementation which can pass them
+2013-11-22T20:22:20 <Justin_o> Bosmon: :(
+2013-11-22T20:22:36 <Bosmon> Justin_o - he hasn\'t, he just has a scrappy "scratch" project in github with no docs :)
+2013-11-22T20:22:57 <Justin_o> sounds like a good start ;)
+2013-11-22T20:35:11 <cindyli> Bosmon: for the pull request for 5213: https://github.com/fluid-project/infusion/pull/438, wonder if you have more suggestions on design.
+2013-11-22T20:53:14 * thealphanerd has quit
+2013-11-22T20:53:35 <Justin_o> cindyli: i\'m changing things up to have a one-stop build and create function.. as part of this i have to generate a unique namespace so that we can run it multiple times.. it seems reasonable to mean that this should be the default behaviour of the prefsFramework.. so i have it working but the auxBuilder tests are broken.. would you be able to help me fix
+2013-11-22T20:53:35 <Justin_o> them.
+2013-11-22T20:54:20 <cindyli> sure, Justin_o, is it 5220 branch? or 5205?
+2013-11-22T20:54:35 <Justin_o> cindyli: it\'s FLUID-5222
+2013-11-22T20:54:47 <Justin_o> i\'ll have something pushed up in one minute
+2013-11-22T20:54:49 <cindyli> ah ha. another one. ok, Justin_o
+2013-11-22T20:59:05 <Justin_o> cindyli: yes.. another one.. it\'s pushed up in my FLUID-5222 branch
+2013-11-22T20:59:36 <cindyli> got it
+2013-11-22T20:59:56 <Justin_o> cindyli: great, thanks
+2013-11-22T21:00:02 <cindyli> np
+2013-11-22T21:00:20 <Justin_o> cindyli: i\'m going to update the demos to use the new single build and init functions
+2013-11-22T21:00:23 <Justin_o> function
+2013-11-22T21:00:31 <cindyli> ok
+2013-11-22T21:00:59 * mrvisser has quit
+2013-11-22T21:01:21 * mrvisser joined the channel
+2013-11-22T21:06:35 * thealphanerd joined the channel
+2013-11-22T21:06:51 * thealphanerd has quit
+2013-11-22T21:13:29 <Justin_o> cindyli: i\'ve updated the manual tests..
+2013-11-22T21:13:47 <cindyli> ok, thanks. still fixing aux builder
+2013-11-22T21:13:48 * anvk has quit
+2013-11-22T21:14:12 <cindyli> i mean the unit tests for aux builder
+2013-11-22T21:17:22 <Justin_o> cindyli: this branch is based on master
+2013-11-22T21:17:36 <Justin_o> cindyli: probably should have mentioned that earlier, so if things look different that\'s why
+2013-11-22T21:17:56 <cindyli> ok
+2013-11-22T21:28:47 <Justin_o> cindyli: how are things going.. i hope the changes i made make sense..
+2013-11-22T21:29:50 <cindyli> getting close. why do we use a random string for namespace? to reduce the collision when 2 prefs editor on one page?
+2013-11-22T21:30:55 <Justin_o> cindyli: yes.. basically.. and it\'s not good to call fluid.default on the same name more than once
+2013-11-22T21:31:21 <Justin_o> cindyli: i have a startsWith function in the builder tests if that helps
+2013-11-22T21:31:58 <Justin_o> cindyli: i\'m going to head out now.. anything else before i go?
+2013-11-22T21:33:25 <cindyli> Justin_o: unit tests are fixed and pushed up
+2013-11-22T21:33:37 <Justin_o> cindyli: great thanks.. i\'ll file a pull request for it
+2013-11-22T21:33:41 <cindyli> thanks, Justin_o
+2013-11-22T21:35:01 <Justin_o> cindyli: is github down for you
+2013-11-22T21:35:06 <Justin_o> i can\'t seem to open my repos :(
+2013-11-22T21:35:56 <Justin_o> cindyli: if you are able to, could you send the pull request for FLUID-5222
+2013-11-22T21:36:01 <cindyli> i can
+2013-11-22T21:36:07 <cindyli> sure, i can send the pull request
+2013-11-22T21:36:11 <Justin_o> cindyli: thanks
+2013-11-22T21:36:15 <Justin_o> i just have bad luck i guess
+2013-11-22T21:36:18 <cindyli> np. have a good weekend
+2013-11-22T21:36:24 <Justin_o> thanks, you too
+2013-11-22T21:36:36 <cindyli> save ur good luck for weekend then ;)
+2013-11-22T21:36:44 <Justin_o> :)
+2013-11-22T21:47:39 <cindyli> Bosmon: Justin_o added a one-stop function to build and instantiate the prefs editor. the jira for this is FLUID-5222. here\'s the pull request - https://github.com/fluid-project/infusion/pull/440. can you review it when you have a chance? Thanks.
+2013-11-22T21:47:48 <Bosmon> Thanks, cindyli
+2013-11-22T21:47:58 <cindyli> np. thank YOU!
+2013-11-22T21:48:37 <cindyli> btw, Bosmon, don\'t forget my pull request for 5213 - https://github.com/fluid-project/infusion/pull/438. thanks
+2013-11-22T21:51:39 * clown has quit
+2013-11-22T21:56:01 * cindyli has quit
+2013-11-22T22:00:43 * greggy has quit
+2013-11-22T22:10:15 * yzen has quit
+2013-11-22T22:15:23 * anastasiac has quit
+2013-11-22T22:21:46 * yzen joined the channel
+2013-11-22T22:32:21 * yzen has quit
+2013-11-22T23:08:38 * mrvisser has quit
+2013-11-22T23:09:13 * mrvisser joined the channel
+2013-11-22T23:13:34 * mrvisser has quit
+'
+
+b'2013-11-22T16:08:51 <Justin_o> but this is for the components container..
+2013-11-22T16:09:10 <Justin_o> specifically the sub panels container
+2013-11-22T16:13:06 <Justin_o> cindyli1: i\'m drawing a blank.. I might have to talk to Bosmon about it
+2013-11-22T16:14:31 <cindyli1> good idea, Justin_o. Bosmon - our life saver ;-)
+2013-11-22T16:16:17 * anvk joined the channel
+2013-11-22T16:17:10 * yzen joined the channel
+2013-11-22T16:21:14 <Justin_o> ;)
+2013-11-22T16:21:19 <Justin_o> definitely
+2013-11-22T16:23:36 <Justin_o> cindyli1: i think i have a work around... i don\'t know if Bosmon would approve of it or not
+2013-11-22T16:24:11 <cindyli1> how?
+2013-11-22T16:31:38 <Justin_o> cindyli1: something like this, but i\'ll change it around to work in the subpanl grade.
+2013-11-22T16:31:39 <Justin_o> that.subPanel1.container = $(that.subPanel1.container.selector);
+2013-11-22T16:31:39 <Justin_o> fluid.initDomBinder(that.subPanel1, that.subPanel1.selectors);
+2013-11-22T16:34:29 <Justin_o> this example is from my test code where i\'m playing with it
+2013-11-22T16:41:31 <Justin_o> michelled, yzen: stand up
+2013-11-22T16:49:38 * cindyli1 has quit
+2013-11-22T17:23:24 * mrvisser has quit
+2013-11-22T17:34:07 <michelled> Justin_o: http://issues.fluidproject.org/browse/FLOE-108
+2013-11-22T17:37:14 <michelled> Justin_o: I think that work should happen in its own repo
+2013-11-22T17:53:08 * greggy has quit
+2013-11-22T17:53:46 * michelled has quit
+2013-11-22T17:55:25 * greggy joined the channel
+2013-11-22T18:19:19 <Bosmon> Justin_o - yes, that is correct
+2013-11-22T18:19:26 <Bosmon> You will need to recreate the DOM binder complete
+2013-11-22T18:19:28 <Bosmon> ly
+2013-11-22T18:20:18 <Justin_o> Bosmon: cool.. FLUID-5220 is basically done.. cindyli is just writing up a couple new tests. she\'s stepped out for a bit but that should be ready to go today at some point
+2013-11-22T18:20:35 <Bosmon> Justin_o - very good!
+2013-11-22T18:20:39 <Bosmon> What\'s the render time now?
+2013-11-22T18:21:14 <Justin_o> Bosmon: FLUID-5205 should be all ready now too.. i\'ve merged in anastasiac\'s instructional demos in
+2013-11-22T18:21:41 <Justin_o> Bosmon: hmm. not sure, but they looked fast.. we have to do a build to get it running with that other sample code.. so i\'ve been holding off doing that
+2013-11-22T18:22:17 <Justin_o> Bosmon: looked fast in anastasiac\'s examples that is
+2013-11-22T18:22:45 * cindyli joined the channel
+2013-11-22T18:23:55 <Justin_o> cindyli: good timing.. welcome back..
+2013-11-22T18:24:04 <Justin_o> cindyli: i\'ve finished up my work for FLUID-5220
+2013-11-22T18:24:10 <Justin_o> it\'s all pushed up into my branch now
+2013-11-22T18:24:30 <cindyli> oh yay. thanks. i will merge in
+2013-11-22T18:24:39 <Justin_o> thanks
+2013-11-22T18:31:46 * danaayotte has quit
+2013-11-22T18:32:23 <cindyli> Justin_o: the unit test for onDomBind is pushed up to my 5220 branch
+2013-11-22T18:32:41 <Justin_o> cindyli: thanks
+2013-11-22T18:32:45 <Justin_o> i\'ll pull that in and file a pull request
+2013-11-22T18:32:46 <cindyli> np
+2013-11-22T18:32:55 <cindyli> sounds good. thanks
+2013-11-22T18:34:41 * mrvisser joined the channel
+2013-11-22T18:37:27 <Justin_o> Bosmon: the pull request for FLUID-5220 is also ready. https://github.com/fluid-project/infusion/pull/439
+2013-11-22T18:37:37 <Bosmon> Thanks, Justin_o - quick work!
+2013-11-22T18:37:43 <Justin_o> it includes the changes from the FLUID-5205 pull request, so that should probably go in first.
+2013-11-22T18:37:54 <Justin_o> Bosmon: thanks.. hopefully it\'s up to par :)
+2013-11-22T18:38:38 <Bosmon> I think somehow the diff view of FLUID-5205 has got stuck :(
+2013-11-22T18:38:46 <Justin_o> Bosmon: really
+2013-11-22T18:38:56 <Bosmon> Oh wait, there it is, in the middle..
+2013-11-22T18:39:47 <Bosmon> Justin_o, anastasiac - didn\'t we in the end make a "one stop shop" function which creates and invokes a preferences editor in a single operation?
+2013-11-22T18:40:05 <Bosmon> It seems extremely unnatural to expect a "standard integrator" to call framework functions such as fluid.invokeGlobalFunction
+2013-11-22T18:40:37 <anastasiac> ah, right, the builder does create a function that the integrator can invoke. We should use that in our demos
+2013-11-22T18:40:42 * danaayotte joined the channel
+2013-11-22T18:40:50 <Justin_o> Bosmon: well the grade exists to be used as you\'d like.. we did something like that for uiOptions.. so we call fluid.uiOptions.prefsEditor i believe
+2013-11-22T18:41:11 <anastasiac> the default grade name is not \xe2\x80\xa6 ideal
+2013-11-22T18:41:14 <Bosmon> Justin_o - I very much doubt that "as you\'d like" includes arcana such as fluid.invokeGlobalFunction : P
+2013-11-22T18:41:38 <Bosmon> The instructional demos should illustrate standard workflow
+2013-11-22T18:41:50 <Bosmon> Which I imagine involves actually using the component you have defined : P
+2013-11-22T18:41:59 <Justin_o> Bosmon: some people might like to type out longs function names that they may not know how to use ;)
+2013-11-22T18:43:01 <anastasiac> Justin_o, just double checking: it looks like the default namespace is "fluid.prefs.create" - is that right? so they\'d invoke "fluid.prefs.create.prefsEditor();"?
+2013-11-22T18:43:12 <anastasiac> assuming they don\'t specify a namespace
+2013-11-22T18:43:14 <Justin_o> Bosmon: it is a shame that we\'ve gotten the gpii folks into the habit of using this method.. these new demos should help them with that
+2013-11-22T18:43:36 <Justin_o> anastasiac: i think that\'s correct
+2013-11-22T18:43:39 <Justin_o> let me take a quick look
+2013-11-22T18:44:03 <Justin_o> anastasiac: yes.. should be whatever the namespace is followed by prefsEditor
+2013-11-22T18:45:08 <anastasiac> confirmed, that works, Justin_o. Do you want me to make this change to my branch and you can merge, or do you just want to do it?
+2013-11-22T18:45:25 <Justin_o> i\'ll merge in your branch
+2013-11-22T18:45:28 <Justin_o> anastasiac: ^
+2013-11-22T18:45:35 <anastasiac> k
+2013-11-22T18:47:41 * mrvisser_ joined the channel
+2013-11-22T18:47:44 * mrvisser has quit
+2013-11-22T18:47:56 <anastasiac> Justin_o, pushed
+2013-11-22T18:48:09 <Justin_o> anastasiac: thanks.. i\'ll update my branch
+2013-11-22T18:49:10 <Justin_o> Bosmon: FLUID-5205 has been updated with anastasiac\'s change
+2013-11-22T18:56:13 * cindyli has quit
+2013-11-22T18:56:26 * cindyli joined the channel
+2013-11-22T18:56:49 * danaayotte has quit
+2013-11-22T18:57:18 <Justin_o> Bosmon: when you update tooltip for the new jQueryUI ... can you make sure that we can support custom content like http://jqueryui.com/tooltip/#custom-content
+2013-11-22T18:58:07 * michelled joined the channel
+2013-11-22T18:58:38 <Bosmon> Justin_o - ok
+2013-11-22T18:58:47 <Bosmon> Could you add a note for that to our jQuery upgrade JIRA?
+2013-11-22T18:58:57 <Bosmon> And - how bad is the contents of your branch? : P
+2013-11-22T18:59:04 <Bosmon> Are there massive and widespread failures? : P
+2013-11-22T18:59:11 <Justin_o> Bosmon: yes.. that makes sense.. i\'ll add a note..
+2013-11-22T18:59:27 <Bosmon> I noticed that we will need to adopt the use of a custom plugin since it seems that $.browser has been withdrawn
+2013-11-22T18:59:35 <Justin_o> Bosmon: no.. i think from what i remember it was only for things that used tooltip and tabs..
+2013-11-22T18:59:40 <Bosmon> And, contrary to what the jQuery religion suggests, I don\'t believe it\'s practical to do without it
+2013-11-22T19:00:04 <Justin_o> Bosmon: you don\'t think we can feature detect everything we need?
+2013-11-22T19:00:30 <Bosmon> Justin_o - we certainly can\'t
+2013-11-22T19:00:31 <Justin_o> Bosmon: i\'m guessing they are relying more on things like modernizr
+2013-11-22T19:01:37 <Justin_o> Bosmon: when do you think you\'ll have a chance to look at that by the way... i think i\'m going to need the tooltip for the metadata work
+2013-11-22T19:01:44 <Bosmon> I certainly appreciate the reasoning behind the elimination of browser detects, but for a practical person who actually wants things that work, many cases can\'t be eliminated
+2013-11-22T19:01:55 <Bosmon> Especially where we find ourselves working around particular bugs in particular implementations
+2013-11-22T19:02:16 <Justin_o> Bosmon: the solution to that is to drop support for that environment :)
+2013-11-22T19:02:26 <Justin_o> if only we could do that
+2013-11-22T19:02:30 <Bosmon> I just had to add another IE detection to my FLUID-5204 branch
+2013-11-22T19:02:50 <Bosmon> Justin_o - I\'m not aware of any particular brower implementations that are free of bugs that need to be worked around : P
+2013-11-22T19:03:14 <Bosmon> Although I guess Safari is close to being a "neutral" environment that doesn\'t bring too many of its own quirks to the engine
+2013-11-22T19:03:27 <Justin_o> Bosmon: yeah for safari..
+2013-11-22T19:03:37 <Justin_o> that\'s my personal browser of choice these days
+2013-11-22T19:04:04 * anvk has quit
+2013-11-22T19:05:31 * danaayotte joined the channel
+2013-11-22T19:06:13 <Bosmon> Unfortunately nothing these days performs as well as Chrome
+2013-11-22T19:06:19 <Bosmon> As we are seeing with your rendering tests
+2013-11-22T19:06:55 <Justin_o> Bosmon: yes.. it is pretty fast...
+2013-11-22T19:07:30 <Bosmon> Justin_o - I can\'t understand the operation of the "fluid.prefs.create.prefsEditor" function that I see in the demo files now
+2013-11-22T19:07:36 <Bosmon> Why doesn\'t it make reference to the operation of the builder?
+2013-11-22T19:11:42 * danaayotte has quit
+2013-11-22T19:17:13 <Justin_o> Bosmon: that is the grade that is created by the builder by default for a prefsEditor.
+2013-11-22T19:17:35 <Justin_o> Bosmon: an integrator could supply any namespace they\'d want though..
+2013-11-22T19:17:54 <Justin_o> Bosmon: does that make sense?
+2013-11-22T19:20:12 <Justin_o> Bosmon: also i added a comment to FLUID-5185 about the tooltip upgrade http://issues.fluidproject.org/browse/FLUID-5185#comment-24025
+2013-11-22T19:26:44 * michelled has quit
+2013-11-22T19:34:34 <Bosmon> Justin_o - I don\'t think it is desirable (the fixed grade)
+2013-11-22T19:34:49 <Bosmon> There is still too much "magic" in this process
+2013-11-22T19:35:13 <Bosmon> I think that what we should have is what was originally suggested, was a "one stop shop" method which defines and creates a preferences editor in one single operation
+2013-11-22T19:35:23 <Bosmon> I think I\'ve been saying this repeatedly, but perhaps it hasn\'t been understood :)
+2013-11-22T19:35:35 <Bosmon> And the editor should have a unique grade name each time, if one is not specified
+2013-11-22T19:35:44 <Bosmon> As well as being more reliable, this will be even easier for the integrator
+2013-11-22T19:35:58 <Bosmon> It\'s very important to not have a "things that go bump in the night" implementation
+2013-11-22T19:36:12 <Bosmon> That is, a thing which requires you to a) first do this, and b) then do this other apparently unrelated thing
+2013-11-22T19:36:37 <Bosmon> The fixed name "fluid.prefs.create.prefsEditor" should be removed as a fixed name used by the implementors
+2013-11-22T19:39:51 <Justin_o> Bosmon: i think we did talk this over before.. i\'m trying to remember the details though..
+2013-11-22T19:40:29 <Justin_o> Bosmon: i think one issue though is what you expect to get back.. so if it is something that runs a builder call internally, would you get the prefs editor back , or the builder, or a thing that includes a builder and a prefs editor
+2013-11-22T19:40:41 <Bosmon> Justin_o - you would just get the prefs editor
+2013-11-22T19:40:48 <Bosmon> The default user has no interest in the builder whatesolver
+2013-11-22T19:40:52 <Bosmon> whatsoever
+2013-11-22T19:41:17 <Bosmon> I would say that our current solution appears as a manifestation of the "POLTERGEIST ANTIPATTERN" : P
+2013-11-22T19:41:18 <Bosmon> http://sourcemaking.com/antipatterns/poltergeists
+2013-11-22T19:41:37 <Justin_o> i can\'t believe that\'s a real thing :)
+2013-11-22T19:41:40 <Bosmon> hahahaha
+2013-11-22T19:41:50 <Bosmon> It\'s quite an interesting book, although very old-fashioned
+2013-11-22T19:42:46 <Justin_o> Bosmon: cool.. maybe i\'ll take a look at it sometime
+2013-11-22T19:43:03 <Justin_o> Bosmon: anyways.. doesn\'t this break our convention where a component always returns itself
+2013-11-22T19:43:38 <Bosmon> Justin_o - how is the user to know that our "build and create" function isn\'t a component?
+2013-11-22T19:43:42 <Bosmon> It will look exactly like one
+2013-11-22T19:43:51 <Bosmon> Given it takes i) a container, and ii) some options as an argument
+2013-11-22T19:43:57 <Bosmon> And it returns a component
+2013-11-22T19:44:02 <Bosmon> NOTHING COULD BE MORE LOGICAL : P
+2013-11-22T19:44:15 <Justin_o> Bosmon: i guess what you are saying is that it isn\'t a component, but just a function
+2013-11-22T19:44:37 <Justin_o> so you couldn\'t use it in say an IoC tree
+2013-11-22T19:44:42 <Bosmon> The end user really doesn\'t care about whether "something is a component" or not, if they can call a function with a reasonable signature and get a component out of it
+2013-11-22T19:44:43 <Justin_o> as you would a component
+2013-11-22T19:44:46 <Bosmon> Right
+2013-11-22T19:44:55 <Bosmon> But the end user in general doesn\'t care about that either
+2013-11-22T19:45:08 <Bosmon> That is, the "particular kind of integrator" that we are targeting the instructional demos at
+2013-11-22T19:45:24 <Bosmon> If they are at the level of sophistication where they care about whether they can use it in an IoC tree or not, we can point them at other documentation
+2013-11-22T19:45:31 <Bosmon> but that already writes off 95% of our expected audience
+'
+
+b'2013-11-22T00:24:27 * cindyli joined the channel
+2013-11-22T00:29:20 <cindyli> hi Bosmon
+2013-11-22T00:29:40 <Bosmon> Hey cindyli :)
+2013-11-22T00:29:47 <Bosmon> At home now?
+2013-11-22T00:29:51 <cindyli> i\'m lucky :)
+2013-11-22T00:29:55 <cindyli> ya at home
+2013-11-22T00:30:00 <cindyli> a question about fluid.merge
+2013-11-22T00:30:48 <cindyli> a test case: http://pastie.org/8499755
+2013-11-22T00:31:52 <cindyli> Bosmon: rather than getting "expected", what i get is
+2013-11-22T00:31:54 <cindyli> {
+2013-11-22T00:31:54 <cindyli> "options": {
+2013-11-22T00:31:54 <cindyli> "path": "undefined source1 source2"
+2013-11-22T00:31:54 <cindyli> }
+2013-11-22T00:31:54 <cindyli> }
+2013-11-22T00:32:23 <Bosmon> cindyli - a lot depends on what is in fluid.tests.merge :)
+2013-11-22T00:32:48 <cindyli> right, missed pasting that. one sec
+2013-11-22T00:33:40 <cindyli> Bosmon: http://pastie.org/8499762
+2013-11-22T00:34:31 <Bosmon> cindyli - you can always expect to be called with any number of instances of "undefined" with the current framework
+2013-11-22T00:34:42 <Bosmon> You will just have to filter out "falsy" values yourself
+2013-11-22T00:35:08 <cindyli> meaning, filter out "undefined" in fluid.tests.merge?
+2013-11-22T00:35:31 <Bosmon> Yes, if either target or source is falsy, you should just return the other one
+2013-11-22T00:36:06 <Bosmon> But why do you want this space-separated string in the first place?
+2013-11-22T00:36:15 <cindyli> so, if i\'m using fluid.arrayConcatPolicy, which is provided by framework, i will need to create a wrapper function to filter out falsy ones?
+2013-11-22T00:36:39 <Bosmon> arrayConcatPolicy will already ignore undefined values since they get converted to [] by fluid.makeArray
+2013-11-22T00:38:07 <cindyli> of course, u r right. modified my unit test and it\'s proved. thanks, Bosmon
+2013-11-22T00:38:23 <Bosmon> It is one of its main improvements
+2013-11-22T00:38:32 <Bosmon> Compared to the idiotic $.makeArray which just crashes : p
+2013-11-22T00:41:00 <cindyli> ah ha. certainly an useful improvement
+2013-11-22T00:52:58 * cindyli has quit
+2013-11-22T00:53:35 * cindyli joined the channel
+2013-11-22T00:55:15 * cindyli1 joined the channel
+2013-11-22T00:55:15 * cindyli has quit
+2013-11-22T01:11:52 <cindyli1> Bosmon: your comments on pull request https://github.com/fluid-project/infusion/pull/438 have been addressed. ready for more. :) thanks.
+2013-11-22T01:15:48 <Bosmon> Thanks, cindyli1
+2013-11-22T01:15:51 <Bosmon> The code itself looks good
+2013-11-22T01:15:56 <cindyli1> yay!
+2013-11-22T01:16:04 <Bosmon> but there is a bit of a gap between the description in the JIRA and the work which was done
+2013-11-22T01:16:10 <Bosmon> Do you think you could improve the description a bit?
+2013-11-22T01:16:23 <Bosmon> In particular, to describe the need for the "validationFunc" etc.
+2013-11-22T01:16:32 <Bosmon> Since these seem well outside the scope of FLUID-5213 itself
+2013-11-22T01:17:08 <cindyli1> sure. in action
+2013-11-22T01:23:22 <Bosmon> Was there a call or a piratepad where this functionality was designed?
+2013-11-22T01:23:27 <Bosmon> Or an email thread?
+2013-11-22T01:48:49 <cindyli1> sorry, Bosmon, just saw ur msg. no, nothing in doc to decide on this design. all from my imagination. :) hope it\'s not a overkill
+2013-11-22T01:49:19 <cindyli1> btw, the jira description has been modified. feel free to make changes
+2013-11-22T01:52:00 * cindyli1 has quit
+2013-11-22T01:53:16 * jhung has quit
+2013-11-22T02:41:04 * avtar has quit
+2013-11-22T04:02:27 * thealphanerd joined the channel
+2013-11-22T04:03:31 * sgithens has quit
+2013-11-22T05:30:45 * thealphanerd has quit
+2013-11-22T07:12:08 * yzen has quit
+2013-11-22T07:13:34 * yzen joined the channel
+2013-11-22T07:18:19 * yzen has quit
+2013-11-22T07:53:22 * jhernandez joined the channel
+2013-11-22T08:00:39 * kasparnet joined the channel
+2013-11-22T08:05:05 * kasparnet has quit
+2013-11-22T08:05:17 * kasparnet joined the channel
+2013-11-22T08:12:19 * kasparnet has quit
+2013-11-22T08:28:42 * thealphanerd joined the channel
+2013-11-22T09:01:31 * thealphanerd has quit
+2013-11-22T09:01:40 * thealphanerd joined the channel
+2013-11-22T09:16:43 * the-t-in-rtf joined the channel
+2013-11-22T10:30:58 * thealphanerd has quit
+2013-11-22T12:06:56 * mrvisser joined the channel
+2013-11-22T13:03:45 * mrvisser has quit
+2013-11-22T13:04:00 * mrvisser joined the channel
+2013-11-22T13:24:50 * mrvisser_ joined the channel
+2013-11-22T13:25:04 * mrvisser has quit
+2013-11-22T13:26:21 * yzen joined the channel
+2013-11-22T13:27:18 * cindyli joined the channel
+2013-11-22T13:28:05 * mrvisser joined the channel
+2013-11-22T13:28:23 * mrvisser_ has quit
+2013-11-22T13:42:56 * cindyli1 joined the channel
+2013-11-22T13:42:56 * cindyli has quit
+2013-11-22T13:45:15 * michelled joined the channel
+2013-11-22T13:45:24 * mrvisser has quit
+2013-11-22T13:51:32 * sgithens joined the channel
+2013-11-22T13:54:34 * mrvisser joined the channel
+2013-11-22T13:56:39 <Justin_o> cindyli1: good morning
+2013-11-22T13:56:40 * sgithens has quit
+2013-11-22T13:56:48 <cindyli1> morning, Justin_o
+2013-11-22T13:57:01 <Justin_o> cindyli1: i see you\'ve been talking to Bosmon
+2013-11-22T13:57:10 <Justin_o> cindyli1: and your FLUID-5191 pull has been merged
+2013-11-22T13:57:53 <cindyli1> ya
+2013-11-22T13:58:24 <Justin_o> cindyli1: are you working on FLUID-5213 or waiting on Bosmon for code review
+2013-11-22T13:58:49 <cindyli1> waiting on more code review. let me know if anything I can help with
+2013-11-22T13:58:52 * greggy joined the channel
+2013-11-22T13:59:09 <Justin_o> cindyli1:  are you working on anything in particular at the moment?
+2013-11-22T13:59:55 <cindyli1> not really. Bosmon said the code itself looks good, i wonder if he has more suggestions on design
+2013-11-22T14:00:19 <cindyli1> i mean the code for 5213
+2013-11-22T14:03:33 * yzen has quit
+2013-11-22T14:05:10 * yzen joined the channel
+2013-11-22T14:06:51 <Justin_o> cindyli1: ah yes.. i see that up there..
+2013-11-22T14:07:01 <Justin_o> cindyli1: okay.. did you want to help me with FLUID-5220
+2013-11-22T14:07:38 <cindyli1> sure, meantime, i\'m going thru the bug tracker for prefs framework to see if any other blockers
+2013-11-22T14:07:50 <cindyli1> the only one left is: http://issues.fluidproject.org/browse/FLUID-5174
+2013-11-22T14:07:52 <Justin_o> cindyli1: there are those 3 things i mentioned yesterday. 1) unit tests 2) updating all the panels 3) refactoring the composite panel
+2013-11-22T14:08:13 <cindyli1> ok, carry on
+2013-11-22T14:08:18 <Justin_o> that\'s it
+2013-11-22T14:08:28 <Justin_o> cindyli1: i wonder if that one is related to the work in bosmon\'s last pull request
+2013-11-22T14:09:12 <cindyli1> exactly, just tried one demo with ie8 and seems it\'s fixed. I will try others. if all works, will close that jira
+2013-11-22T14:09:23 * yzen has quit
+2013-11-22T14:10:04 * danaayotte joined the channel
+2013-11-22T14:10:04 <cindyli1> Justin_o: let me know which one you\'d prefer me to pick up for 5220. should we skype to chat?
+2013-11-22T14:10:57 <Justin_o> cindyli1: sure
+2013-11-22T14:16:44 * clown joined the channel
+2013-11-22T14:20:47 * yzen joined the channel
+2013-11-22T14:22:11 * anvk joined the channel
+2013-11-22T14:22:49 <Justin_o> cindyli1: i forgot to put something gin the composite panel.. I need to actually have a function that refreshes the dom binder and that should trigger the onDomBind event.. it should still happen afterRender but there needs to be an intermediate process.. i\'ll work that in now and push up asap
+2013-11-22T14:24:09 <cindyli1> thanks, Justin_o. i need some time to file a jira for an IE8 issue anyway. the good news is it\'s confirmed that 5174 is fixed
+2013-11-22T14:24:40 <cindyli1> by Bosmon\'s fix on 5172
+2013-11-22T14:25:57 <Justin_o> cindyli1: excellent
+2013-11-22T14:32:14 * danaayotte has quit
+2013-11-22T14:48:00 <Justin_o> cindyli1: forgot to tell you that i pushed up the change to the events already
+2013-11-22T14:48:47 <cindyli1> cool. thanks, Justin_o
+2013-11-22T14:49:41 <Justin_o> cindyli1: thanks.. hacking on the composite panel code now..
+2013-11-22T14:50:37 <cindyli1> ok. btw, i created a new jira for ie8 issue: http://issues.fluidproject.org/browse/FLUID-5221 don\'t think it\'s a blocker
+2013-11-22T14:51:22 <Justin_o> cindyli1: thanks.. i think the css isn\'t supported
+2013-11-22T14:51:32 <cindyli1> ya
+2013-11-22T15:02:41 * anastasiac joined the channel
+2013-11-22T15:04:30 * greggy has quit
+2013-11-22T15:09:05 * greggy joined the channel
+2013-11-22T15:14:13 * danaayotte joined the channel
+2013-11-22T15:21:16 * [o__o] joined the channel
+2013-11-22T15:23:07 * yzen has quit
+2013-11-22T15:50:01 <Justin_o> cindyli1:  did you push up all the changes for your work on FLUID-5220?
+2013-11-22T15:50:20 <cindyli1> nothing changed for (2), working on (1)
+2013-11-22T15:50:27 <Justin_o> cindyli1: okay.. thanks
+2013-11-22T15:50:33 <cindyli1> np
+2013-11-22T15:51:13 <Justin_o> cindyli1: i think i\'m done my part of 3, except that i need to update the unit tests.. which i\'m going to work on now.
+2013-11-22T15:51:57 <cindyli1> go ahead, Justin_o, i\'m working on a new unit test, not touching the ones already in there
+2013-11-22T15:52:36 <Justin_o> cindyli1: great.. no collisions :)
+2013-11-22T15:52:56 <cindyli1> :)
+2013-11-22T15:56:31 <Justin_o> cindyli1:  i pushed up my code changes.. working on the tests now.. you may want to wait till your tests pass before merging mine in though.. in case my changes are buggy.
+2013-11-22T15:56:50 <cindyli1> ok. thanks, Justin_o
+2013-11-22T16:00:19 * anvk has quit
+2013-11-22T16:01:04 <Justin_o> cindyli1: hmm.. there may be a problem with my code :(
+2013-11-22T16:01:19 <cindyli1> oh, what\'s up
+2013-11-22T16:01:30 <Justin_o> cindyli1:  the container is wrong
+2013-11-22T16:01:40 <Justin_o> i wonder how i can rebind the container
+2013-11-22T16:01:49 <Justin_o> for the subpanels
+2013-11-22T16:01:54 <cindyli1> at the 2nd refreshView?
+2013-11-22T16:02:07 <Justin_o> cindyli1: afterRender
+2013-11-22T16:02:19 <Justin_o> so the container of the component is still pointing at the old container that had been removed from the markup
+2013-11-22T16:02:52 <cindyli1> umm..
+2013-11-22T16:06:25 <Justin_o> cindyli1: haha.. that\'s my thoughts too
+2013-11-22T16:06:44 <cindyli1> :)
+2013-11-22T16:07:38 <cindyli1> Justin_o: not clear DOM at the first afterRender?
+2013-11-22T16:08:43 <Justin_o> cindyli1: no.. that clears the dom binders cache.. probably only really needed if there was a use of fastlocate
+'
+

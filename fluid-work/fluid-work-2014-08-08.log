@@ -1,0 +1,146 @@
+b'2014-08-08T02:08:21 * jhernandez has quit
+2014-08-08T07:01:25 * kasparnet joined the channel
+2014-08-08T07:31:26 * kasparnet has quit
+2014-08-08T07:53:01 * kasparnet joined the channel
+2014-08-08T08:48:32 * jhernandez joined the channel
+2014-08-08T10:59:14 * kasparnet has quit
+2014-08-08T11:32:52 * kasparnet joined the channel
+2014-08-08T11:50:08 * kasparnet has quit
+2014-08-08T11:58:38 * kasparnet joined the channel
+2014-08-08T12:03:46 * yzen joined the channel
+2014-08-08T12:26:17 * Justin_o joined the channel
+2014-08-08T12:34:36 * yzen has quit
+2014-08-08T12:44:42 * jhung joined the channel
+2014-08-08T12:47:30 * yzen joined the channel
+2014-08-08T12:51:33 * cindyli joined the channel
+2014-08-08T12:53:18 * jessm joined the channel
+2014-08-08T12:54:55 * kasparnet has quit
+2014-08-08T13:07:57 * yzen has quit
+2014-08-08T13:13:41 * anastasiac joined the channel
+2014-08-08T13:22:14 * yzen joined the channel
+2014-08-08T13:23:28 * kasparnet joined the channel
+2014-08-08T13:24:37 * michelled joined the channel
+2014-08-08T13:32:47 * anvk joined the channel
+2014-08-08T13:34:38 <Justin_o> Bosmon: hello
+2014-08-08T13:34:49 <Justin_o> i\'m seeing something strange in my test
+2014-08-08T13:35:12 <Justin_o> i have a sequence.. at the beginning i simulate a keydown event on the "enter" key.. this worked using the simulate plugin
+2014-08-08T13:35:18 <Bosmon> Hi there Justin_o
+2014-08-08T13:35:26 <Justin_o> Bosmon: next i tried to test that the "escape" key works
+2014-08-08T13:35:38 <Justin_o> but the test hangs
+2014-08-08T13:35:59 <Justin_o> when i put in a log on the my function that runs the simulate, it appears to log the escape event before the enter one
+2014-08-08T13:36:05 <Justin_o> any idea why this might happen?
+2014-08-08T13:36:39 <Bosmon> Have you tried the effect in another browser?
+2014-08-08T13:36:49 <Justin_o> Bosmon: not yet.. i\'ll try that now
+2014-08-08T13:36:53 <Bosmon> I seem to recall that processing of the "Escape" key was historically a little dodgy
+2014-08-08T13:37:37 <Justin_o> Bosmon: same issue in chrome and firefox
+2014-08-08T13:37:42 <Bosmon> The browser does intercept it for some special treatment - at least this used to be the case
+2014-08-08T13:37:51 <Justin_o> Bosmon: oh
+2014-08-08T13:38:33 <Justin_o> Bosmon: was there a work around you found?
+2014-08-08T13:39:16 <Bosmon> You can try listening to different combinations of the base events
+2014-08-08T13:39:23 <Bosmon> For example, keyup, keydown, keypress, etc.
+2014-08-08T13:39:28 <Bosmon> but it would be best to understand what the effect is first
+2014-08-08T13:40:46 * kasparnet has quit
+2014-08-08T13:43:08 <Justin_o> using keyup, keydown, or keypress don\'t work
+2014-08-08T13:43:23 <Justin_o> interestingly keydown causes the "enter" keydown event to fire twice
+2014-08-08T13:43:44 <Justin_o> but in all case it happens after the "esc" key event which is later in the sequence
+2014-08-08T13:44:44 <Justin_o> Bosmon: i changed the esc to a different key and same issue.. it\'s logging before the earlier event still
+2014-08-08T13:45:04 <Justin_o> https://www.irccloud.com/pastebin/wMWMzlY6
+2014-08-08T13:45:24 <Justin_o> it\'s the sequence from line 182 - 212
+2014-08-08T13:45:30 * kasparnet joined the channel
+2014-08-08T13:45:53 <Justin_o> you can see that the first simulated key event happens on line 183
+2014-08-08T13:45:57 <Justin_o> the last on line 207
+2014-08-08T13:46:07 <Justin_o> but the one on line 207 is console logging earlier
+2014-08-08T13:47:25 <Bosmon> Justin_o - you mean the logging on line 98?
+2014-08-08T13:48:05 <Justin_o> Bosmon: yes
+2014-08-08T13:48:37 * simonjb joined the channel
+2014-08-08T13:48:49 <Bosmon> Justin_o - why not check for basic sanity and also make sure that the events are actually firing in the right order : P
+2014-08-08T13:49:13 <Bosmon> This may be our old friend again of course - in that this entire sequence may currently be happening synchronously
+2014-08-08T13:49:29 <Bosmon> Also check the situation with "harmless" keys such as letters ....
+2014-08-08T13:49:52 <Justin_o> Bosmon: so the demo works.. i put log statements on the dialogs open and close events
+2014-08-08T13:50:11 <Justin_o> in the test, the log for the dialogs open event logs before either of the simulate logs
+2014-08-08T13:50:18 <Justin_o> but the close event never happens
+2014-08-08T13:55:42 * amilchev has quit
+2014-08-08T13:55:57 * kasparnet has quit
+2014-08-08T14:06:44 * avtar joined the channel
+2014-08-08T14:07:27 <Justin_o> Bosmon: the escape binding comes from the jQuery UI Dialog.. i don\'t think i can change that to try with a different key
+2014-08-08T14:08:56 <Bosmon> Justin_o - welcome to the marvellous world of unconfigurable software :)
+2014-08-08T14:09:22 <Justin_o> Bosmon: a world full of tears and sorrow
+2014-08-08T14:09:30 <Bosmon> So it historically has been
+2014-08-08T14:09:40 <Bosmon> What does the escape binding do?
+2014-08-08T14:09:52 <Bosmon> Didn\'t you say that if you picked a key other than escape, the strange effect went away?
+2014-08-08T14:10:32 <Justin_o> Bosmon: no, the same effect happened in terms of the logging
+2014-08-08T14:10:39 <Justin_o> the escape binding closes the dialog
+2014-08-08T14:12:33 <jhung> anastasiac: Do you think we can close FLUID-5476?
+2014-08-08T14:23:08 * michelled has quit
+2014-08-08T14:23:52 <Justin_o> Bosmon: got it working.. turns out i was executing the key event on the wrong DOM element :(
+2014-08-08T14:24:15 <Bosmon> Justin_o - ok, cool - glad it\'s sorted out :)
+2014-08-08T14:24:37 <Justin_o> Bosmon: thanks for the help
+2014-08-08T14:24:44 * avtar has quit
+2014-08-08T14:25:09 <Justin_o> Bosmon: another question.. can I not have more than one sequence test in a module in the IoC Testing framework
+2014-08-08T14:25:13 <Justin_o> ?
+2014-08-08T14:26:11 <Bosmon> Justin_o - you could
+2014-08-08T14:26:34 <Justin_o> i\'m finding at the moment that it only runs the first one
+2014-08-08T14:26:46 <Justin_o> https://www.irccloud.com/pastebin/ayEVLV5y
+2014-08-08T14:27:02 <Justin_o> if you look at lines 135 - 220
+2014-08-08T14:27:06 <Justin_o> only the first sequence is run
+2014-08-08T14:27:13 <Justin_o> no errors in the console
+2014-08-08T14:30:43 * michelled joined the channel
+2014-08-08T14:32:05 <Justin_o> Bosmon: never mind that.. i had the query parameter left over in the url for the test :(
+2014-08-08T15:02:05 * michelled has quit
+2014-08-08T15:04:17 * michelled joined the channel
+2014-08-08T15:07:41 * michelled has quit
+2014-08-08T15:09:36 * michelled joined the channel
+2014-08-08T15:27:58 * michelled has quit
+2014-08-08T15:32:37 * colinclark joined the channel
+2014-08-08T15:42:47 <Justin_o> cindyli: do you think we need to test the opening and closing of the tooltip, since this is all done by the tooltip component itself? or should we just make sure that it is created?
+2014-08-08T15:42:58 <Justin_o> that the component is created?
+2014-08-08T15:43:29 <cindyli> Justin_o: i think testing the latter should be enough
+2014-08-08T15:43:43 <Justin_o> cindyli: okay.. i\'ll do that for now..
+2014-08-08T15:43:43 <Justin_o> thanks
+2014-08-08T15:44:01 <cindyli> np
+2014-08-08T15:48:29 <Justin_o> cindyli: okay, tests are done.. i\'m going to try to fix up the last oddities of the tooltip in feedback now
+2014-08-08T15:48:57 <cindyli> cool!
+2014-08-08T15:59:17 * jhung has quit
+2014-08-08T16:06:41 <anastasiac> jhung, sorry I missed your question about FLUID-5476. Yes, I suspect we can close that. We might still add more content, but we could add it directly
+2014-08-08T16:11:50 <cindyli> Justin_o: i submitted a pull request for FLOE-160 - https://github.com/fluid-project/metadata/pull/32. can you review it when you have time?
+2014-08-08T16:15:09 <Justin_o> cindyli: will do
+2014-08-08T16:15:16 <cindyli> thanks, Justin_o
+2014-08-08T16:19:49 * danaayotte joined the channel
+2014-08-08T16:27:04 * danaayotte has quit
+2014-08-08T16:38:02 * michelled joined the channel
+2014-08-08T16:39:18 * jhung joined the channel
+2014-08-08T16:56:24 * kasparnet joined the channel
+2014-08-08T17:01:11 * kasparnet has quit
+2014-08-08T17:35:16 * michelled has quit
+2014-08-08T18:11:09 * colinclark has quit
+2014-08-08T18:32:39 <Justin_o> Bosmon: I submitted a pull request for FLOE-207. https://github.com/fluid-project/metadata/pull/33 cindyli and I both worked on it. Would you be able to code review it?
+2014-08-08T18:57:30 * danaayotte_ joined the channel
+2014-08-08T19:00:04 * danaayotte_ has quit
+2014-08-08T19:38:07 <Justin_o> anastasiac: could you please take a look at my docs pull request https://github.com/fluid-project/infusion-docs/pull/27
+2014-08-08T19:38:19 <Justin_o> I didn\'t get a chance to look at yours today, i\'ll try to do that next week.
+2014-08-08T19:38:39 <anastasiac> Will do, Justin_o. I will have a pull request for the DOM Binder docs by end of today
+2014-08-08T19:38:56 <Justin_o> anastasiac: okay.. thanks
+2014-08-08T19:51:23 * danaayotte_ joined the channel
+2014-08-08T19:54:03 * danaayotte_ has quit
+2014-08-08T20:04:15 * cindyli has quit
+2014-08-08T20:19:47 * anvk has quit
+2014-08-08T20:20:55 * michelled joined the channel
+2014-08-08T20:32:47 * the-t-in-rtf has quit
+2014-08-08T20:33:38 * kasparnet joined the channel
+2014-08-08T20:41:36 <anastasiac> Justin_o, I\'ve left some comments on your UIO docs pull request
+2014-08-08T20:52:48 * kasparnet has quit
+2014-08-08T20:57:39 * jhung1 joined the channel
+2014-08-08T20:59:32 * jhung has quit
+2014-08-08T21:07:11 * yzen has quit
+2014-08-08T21:09:47 * michelled has quit
+2014-08-08T21:10:47 * jhung1 has quit
+2014-08-08T21:13:31 * michelled joined the channel
+2014-08-08T21:18:18 * anastasiac has quit
+2014-08-08T21:42:55 * jessm has quit
+2014-08-08T21:43:52 * michelled has quit
+2014-08-08T21:45:07 * simonjb has quit
+2014-08-08T21:45:58 * Justin_o has quit
+2014-08-08T23:53:14 * kasparnet joined the channel
+2014-08-08T23:57:50 * kasparnet has quit
+'
+

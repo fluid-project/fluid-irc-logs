@@ -1,0 +1,160 @@
+b"2018-07-06T20:43:17 <sgithens> mrtyler: I think that makes.  Actually right now when you go do download a prefs in the PPT it is just the prefsset, I'll leave that the way it is and add another download icon for the entire safe
+2018-07-06T20:44:48 <mrtyler> sounds good
+2018-07-06T21:06:03 * clown has quit
+2018-07-06T22:41:30 * kasparnet has quit
+2018-07-06T22:47:45 * kasparnet joined the channel
+2018-07-06T23:09:16 * kasparnet has quit
+"
+
+b'2018-07-06T00:09:29 * mrtyler joined the channel
+2018-07-06T00:43:35 * danayo joined the channel
+2018-07-06T01:09:06 * danayo has quit
+2018-07-06T02:57:32 * danayo joined the channel
+2018-07-06T07:24:41 * georgitodorov joined the channel
+2018-07-06T08:28:34 * kasparnet joined the channel
+2018-07-06T09:44:21 * kasparnet has quit
+2018-07-06T09:46:50 * kasparnet joined the channel
+2018-07-06T10:38:31 * gmoss has quit
+2018-07-06T10:38:44 * gmoss joined the channel
+2018-07-06T11:03:58 * Justin_o joined the channel
+2018-07-06T11:09:36 * kasparnet has quit
+2018-07-06T11:11:06 * kasparnet joined the channel
+2018-07-06T11:52:36 * gtirloni joined the channel
+2018-07-06T12:13:44 * gtirloni_ joined the channel
+2018-07-06T12:36:21 <Justin_o> Bosmon: I\'m having some problems with a singleton component..  In one of my tests I add it as a subcomponent ( the singleton component would normally be somewhere higher up in the tree, but i\'m trying to just test a component in relative isolation). However, trying to refer to one of it\'s methods in my listener doesn\'t resolve
+2018-07-06T12:36:48 <Bosmon> Hi there Justin_o
+2018-07-06T12:36:55 <Justin_o> this came up as i was trying to make use of the event pipeline for queue speech
+2018-07-06T12:36:56 <Bosmon> Could you show the structure that you have?
+2018-07-06T12:37:39 <Justin_o> Bosmon:  okay, i\'ll paste a few code snippets here
+2018-07-06T12:38:07 <Justin_o> https://www.irccloud.com/pastebin/tYvHycdN/
+2018-07-06T12:39:01 <Justin_o> that\'s the original code definition, the issue comes up with the onQueueSpeech.queueSpeech listener on line 76
+2018-07-06T12:39:18 * gtirloni__ joined the channel
+2018-07-06T12:39:24 <Justin_o> this is the grade used by the test
+2018-07-06T12:39:34 <Justin_o> https://www.irccloud.com/pastebin/wuoH6RMk/
+2018-07-06T12:39:59 <Justin_o> which adds this grade to include the fluid.textToSpeech singleton grade.
+2018-07-06T12:40:14 <Justin_o> https://www.irccloud.com/pastebin/RTuc2ELx/
+2018-07-06T12:41:34 <Justin_o> the definitions for fluid.textToSpeech and the mock can be seen here https://github.com/jobara/infusion/tree/FLUID-6177/src/components/textToSpeech/js
+2018-07-06T12:41:58 * gtirloni_ has quit
+2018-07-06T12:42:49 * gtirloni_ joined the channel
+2018-07-06T12:45:04 <Bosmon> Justin_o - and what message do you get?
+2018-07-06T12:45:49 <Justin_o> "Assertion failure - check console for more details: Failed to resolve reference {fluid.textToSpeech}.queueSpeech - could not match context with name fluid.textToSpeech from component { typeName: "fluid.tests.orator.domReader" gradeNames: ["fluid.orator.domReader","fluid.tests.orator.mockTTS","fluid.tests.orator.domReader"] id: 3zbh90ix-125} at path domReaderTests-3zbh90ix-111,domReader component: [object Object]"
+2018-07-06T12:46:31 <Bosmon> Justin_o - the problem will most likely be that the component hasn\'t been constructed yet
+2018-07-06T12:46:53 <Justin_o> the tts subcomponent?
+2018-07-06T12:46:55 <Bosmon> You may want to switch to using my FLUID-6148 branch
+2018-07-06T12:47:07 <Justin_o> is there a way to force that to happen, or do i just have to add it somewhere else?
+2018-07-06T12:48:08 <Justin_o> Bosmon: do you know when your FLUID-6148 branch will be going into master?
+2018-07-06T12:48:16 <Bosmon> Justin_o - just as soon as you review it :)
+2018-07-06T12:50:14 <Bosmon> Or indeed, anyone else
+2018-07-06T12:51:06 <Justin_o> hmm...
+2018-07-06T12:51:48 <Justin_o> i\'m in a bit of a time crunch as i need to get the self voicing stuff, plus a few other features into UIO+ by the end of this month
+2018-07-06T12:53:18 <Bosmon> OK
+2018-07-06T12:53:35 <Bosmon> In the absence of this you\'ll just have to do something crude to make sure that your component is constructed in time
+2018-07-06T12:53:42 <Justin_o> looks like sgithens left you a a couple of comments on both of your PRs for it
+2018-07-06T12:53:55 <Bosmon> Yes, he has been working through it from time to time
+2018-07-06T12:55:07 <Justin_o> Bosmon: do you have a recommendation for the crude approach? I tried adding a member in the next to the subcomponent to access it\'s id, but that didn\'t seem to help
+2018-07-06T12:56:32 <Bosmon> Justin_o - you really only have two options - i) use some kind of crass explicit sequencing that constructs one thing first procedurally, ii) try to trigger the discovery of the component through the existing rather weak ginger mechanism, that would involve visiting the component\'s path in its known parent explicitly
+2018-07-06T12:56:40 <Bosmon> For example you could try visiting {mockTTS}.tts
+2018-07-06T12:57:12 <Bosmon> I see you already have this member in there
+2018-07-06T12:57:34 <Bosmon> So it looks like you might need to win the race one level further up
+2018-07-06T12:57:34 * g2szeto joined the channel
+2018-07-06T12:58:07 <Justin_o> perhaps i need to put it in the environments grade instead of in the component that is being tested?
+2018-07-06T12:58:20 <Bosmon> Justin_o - that would help, yes
+2018-07-06T13:00:14 <Justin_o> Bosmon: okay, i\'ll try that first.. i\'ll try to come back to your branch from time-to-time as time permits... if no one else gets to it before me.
+2018-07-06T13:02:29 * gtirloni joined the channel
+2018-07-06T13:02:34 <Bosmon> Cheers!
+2018-07-06T13:02:58 <Bosmon> I know it\'s a big task, but it would be useful to push on it since it clearly fixes bugs that we are encountering fairly regularly
+2018-07-06T13:04:35 * gtirloni_ has quit
+2018-07-06T13:06:42 <Justin_o> that\'s very true.. it will be great to have it in
+2018-07-06T13:08:25 * clown joined the channel
+2018-07-06T13:10:39 * jhung joined the channel
+2018-07-06T13:16:29 * simonjb joined the channel
+2018-07-06T13:21:28 * sepidehshahi joined the channel
+2018-07-06T13:39:29 * kavya joined the channel
+2018-07-06T13:43:30 * georgitodorov has quit
+2018-07-06T13:48:59 * colinclark joined the channel
+2018-07-06T13:54:27 * michelled joined the channel
+2018-07-06T13:54:42 * neuralmilkhotel joined the channel
+2018-07-06T13:55:08 <Justin_o> colinclark: hello.. i was talking with Gregg and Bern yesterday about UIO+. They\'d like to add some more low contrast options based on some windows themes. They are a bit different than our existing themes in that they make use of more than 2 colours, so there will need to be some changes to or a new set of theming styles helpers made. Do you think this is something we\'ll want to add to UIO in Infusion?
+2018-07-06T13:55:42 <Justin_o> colinclark: here\'s the GPII issue https://issues.gpii.net/browse/GPII-3156
+2018-07-06T13:59:23 <colinclark> Seems like it\'s probably ideal new functionality for UIO
+2018-07-06T14:00:08 <colinclark> So most of these seem to show eight different colour parameters for a theme, is that right?
+2018-07-06T14:03:28 <Justin_o> yes, i believe that\'s correct
+2018-07-06T14:06:18 <Justin_o> potentially we can look at restructuring all of our themes in a similar way, or just having a separate theming file for these
+2018-07-06T14:10:36 * kavya has quit
+2018-07-06T14:13:01 * sepidehshahi joined the channel
+2018-07-06T14:13:40 <Justin_o> colinclark: ^
+2018-07-06T14:13:57 <colinclark> that sounds like a good plan to me
+2018-07-06T14:17:17 <Justin_o> okay thanks
+2018-07-06T14:53:42 * simonjb joined the channel
+2018-07-06T14:58:42 * mrtyler joined the channel
+2018-07-06T15:20:50 <stegru> Bosmon: about the "High/Low Contrast" QSS item, would it be a problem if the low-contrast themes are in a different solution than the high-contrast ones?
+2018-07-06T15:40:58 * sepidehshahi has quit
+2018-07-06T15:42:05 * sepidehshahi joined the channel
+2018-07-06T15:57:00 * Hassany2 joined the channel
+2018-07-06T17:04:10 * michelled joined the channel
+2018-07-06T17:05:55 <sgithens> @the-t-in-rtf I need to respond your comment still, but just a quick note is that they are broke because I\'m reading prefssafes from the prefs server now instead of prefs sets from the testData folder and need to update those tests still.
+2018-07-06T17:06:12 <sgithens> working through them now
+2018-07-06T17:07:16 <the-t-in-rtf> That\'s great, thanks, @sgithens, I was hoping to put in that quick pull, obviously that\'s an easier conversation if the tests pass... ;)
+2018-07-06T17:07:40 <the-t-in-rtf> There\'s zero chance I\'ll look at that until Monday, buit if it\'s there early next week that\'d be awesome.
+2018-07-06T17:07:46 <the-t-in-rtf> s/buit/but/
+2018-07-06T17:08:04 <sgithens> the-t-in-rtf, awesome, they should be back in order by then
+2018-07-06T17:08:09 <sgithens> thanks
+2018-07-06T17:09:18 <sgithens> I had a pretty good review of it yesterday with Kavya so she can start working with it for the windows 10 features, and then your jaws ones too
+2018-07-06T18:18:01 <sgithens> Bosmon jhernandez How often are we rolling new builds of the GPII-App, in general and for APCP?  Do you know if currently or when the local version of the demo system is going to have a local universal that\'s reading from pouchdb for the prefssafes rather than testData/preferences?
+2018-07-06T18:18:58 <sgithens> When kavya is testing with the PPT, which is cued up to save in *ouchdb now, I\'m wondering if she\'ll need to sync in an entire prefssafe, or just the prefssets still
+2018-07-06T18:26:24 <jhernandez> stegru: re how often, we roll them as they are required, either for testing or for deployment at the AJCs
+2018-07-06T18:30:44 <jhernandez> re using prefsafes, right now  I don\'t have the big picture in mind, but certainly, the time is coming. Back in Toronto, I talked to cindyli about doing a full update through gpii-app and start testing the new model, but not sure whether we are still missing any loose end
+2018-07-06T18:31:40 <sgithens> jhernandez cool
+2018-07-06T18:31:41 <sgithens> thanks
+2018-07-06T18:32:05 <jhernandez> oops, yeah, I meant sgithens
+2018-07-06T18:32:15 <jhernandez> :*
+2018-07-06T18:32:30 <sgithens> no worried :p
+2018-07-06T18:32:39 <sgithens> s/ied/ies/
+2018-07-06T18:35:36 <jhernandez> sgithens: btw, when you think you\'re ready with the PPT for testing, let me know if you want me to go through it before passing it to kavya - and/or need any help for getting it ready
+2018-07-06T18:35:39 <jhernandez> ;)
+2018-07-06T18:37:18 <sgithens> jhernandez: Thanks!  We did a full walk through of it yesterday (with Sandra and Kavya). I\'m fixing up a few things so it\'s easier to run locally still, but I need to stop working on it for a few days to get it up on a test VM again
+2018-07-06T18:37:30 <sgithens> fingers crossed pretty soon
+2018-07-06T18:37:52 <sgithens> I guess we may talk about it a bit during the meeting on monday
+2018-07-06T18:39:46 <jhernandez> great
+2018-07-06T18:53:31 * sepidehshahi has quit
+2018-07-06T18:58:52 <Bosmon> sgithens - we don\'t have any builds of the GPII-app
+2018-07-06T18:59:10 <Bosmon> Because the Astea team are still sprinting, and they haven\'t merged up with trunk of universal/windows for months
+2018-07-06T18:59:14 * sohpei joined the channel
+2018-07-06T18:59:23 <sgithens> well, whatever we call the thing we install on teh viaos
+2018-07-06T18:59:30 <sgithens> what do we call that? Bosmon
+2018-07-06T18:59:34 <Bosmon> Yes, it\'s the gpii-app
+2018-07-06T18:59:36 * sohpei has left the channel
+2018-07-06T18:59:39 <Bosmon> We have all agreed to call it that
+2018-07-06T18:59:41 <Bosmon> Even Gregg
+2018-07-06T18:59:51 <Bosmon> We don\'t have any builds of it
+2018-07-06T19:00:08 <sgithens> We have installers for it, I would call that a build, even if Javi did it on his laptop :p
+2018-07-06T19:00:22 <Bosmon> Yes, but they are very old
+2018-07-06T19:00:52 <sgithens> the point is, at somepoint this stuff is going to be pulling from a pouch instance and not testdata, and we will need to bring testers up to date on that
+2018-07-06T19:01:05 <Bosmon> Yes, we will
+2018-07-06T19:01:16 <sgithens> Actually it will be this week
+2018-07-06T19:01:29 <sgithens> I\'ll need ot make sure the PPT still exports the format Kavya needs to use
+2018-07-06T19:01:33 <Bosmon> You mean, this coming week?
+2018-07-06T19:01:40 <sgithens> whether it\'s a file in testData, or pouch
+2018-07-06T19:01:51 <sgithens> well, she wants to make some prefsets to test the windows 10 features
+2018-07-06T19:02:07 <sgithens> and it\'s a good opportunity to get some real life PPT usage testing
+2018-07-06T19:02:27 <sgithens> she should be able to still jus ttake the preferences section from a prefssafe
+2018-07-06T19:24:09 * sepidehshahi joined the channel
+2018-07-06T19:24:38 * g2szeto has quit
+2018-07-06T19:26:43 <colinclark> hey jhernandez
+2018-07-06T19:27:01 <colinclark> We\'re going to be introducing Demo Wednesdays starting next week
+2018-07-06T19:29:01 <jhernandez> colinclark: hey
+2018-07-06T19:29:07 <jhernandez> Demo Wednesdays?
+2018-07-06T19:31:31 <jhernandez> sgithens, Bosmon: yes, the builds are old
+2018-07-06T19:37:16 <jhernandez> the last installers we\'re delivering are, either for specific branches of ASTEA (for testing purposes) or the pilots one, which is based on a very early version of gpii-app
+2018-07-06T19:45:13 <colinclark> jhernandez: Demonstrations on Wednesdays before the archi meeting\xe2\x80\x94so like 1700 your time
+2018-07-06T19:46:13 * colinclark has quit
+2018-07-06T19:50:57 * sepidehshahi has quit
+2018-07-06T20:09:43 * Justin_o has quit
+2018-07-06T20:13:10 * sepidehshahi joined the channel
+2018-07-06T20:24:55 * mrtyler joined the channel
+2018-07-06T20:26:56 <Bosmon> jhernandez - by the results of the call I had with Gregg today, we will be deploying from specific branches of Astea for a considerable period of time
+2018-07-06T20:27:05 <Bosmon> In fact, up to and beyond August\'s release
+2018-07-06T20:27:29 <mrtyler> sgithens: +1 for PPT being able to export preference(sets|safes) as json5. i think we will need something like to manage preferences across environments, e.g. build a preferenceset in stg, push it forward to prd and also backward to dev so it\'s available for dev testing
+2018-07-06T20:27:43 <mrtyler> (i can explain further if that\'s confusing)
+'
+

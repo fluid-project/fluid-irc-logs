@@ -1,0 +1,300 @@
+b'2016-09-01T15:30:47 <cindyli> i have this code for resetting pouchdb used by the auth server to initial state - https://github.com/cindyli/universal/blob/GPII-1821/gpii/node_modules/pouchManager/src/pouchManager.js#L57-L64
+2016-09-01T15:31:17 <Bosmon7> cindyli - I can\'t think how you determined that this variable is not used or not set?
+2016-09-01T15:31:29 <Bosmon7> https://github.com/fluid-project/infusion/blob/master/tests/component-tests/uploader/js/FileQueueTests.js#L315
+2016-09-01T15:31:34 <bens___> gloob, you\'re on a mac right? do you have a bash shell?
+2016-09-01T15:32:04 <cindyli> Bosmon7: the calculation of numReadyFiles has been removed in Justin_o\'s pull request
+2016-09-01T15:32:24 <Bosmon7> I see
+2016-09-01T15:32:34 <cindyli> right, i should actually not using master for that line
+2016-09-01T15:32:41 <cindyli> should have used justin\'s branch
+2016-09-01T15:32:54 <cindyli> anyway, continue the chain problem, Bosmon7
+2016-09-01T15:33:13 <Bosmon7> cindyli, the-t-in-rtf - for this "load data on startup business", I think the idea needs to be reconceived a bit
+2016-09-01T15:33:29 <Bosmon7> If there\'s some data that needs to be loaded on startup, we should just ensure to always load it on startup if it is not already there
+2016-09-01T15:33:52 <Bosmon7> Or indeed, "ensure that the data is there after startup" I think is a more accurate way of descibing this requirement
+2016-09-01T15:35:15 <cindyli> Bosmon7: i think that is how gpii.express.pouch is currently implemented with, correct me if i\'m wrong, the-t-in-rtf
+2016-09-01T15:36:52 <Bosmon7> cindyli, Justin_o - I\'m really confused by https://github.com/fluid-project/infusion/pull/744/files
+2016-09-01T15:36:53 <cindyli> Bosmon: back to the chain: from the code above in pouchManager, the chain is, 1. when the reset request is received, it calls expressPouch.cleanup.
+2016-09-01T15:37:09 <Bosmon7> it appears that we are actually removing functionality from the Uploader, rather than just backward compatibility material
+2016-09-01T15:37:36 <cindyli> 2. at onCleanupComplete, destroy expressPouch
+2016-09-01T15:38:02 <cindyli> 3. at afterDestroy of expressPouch, call the createOnEvent to recreate expressPouch
+2016-09-01T15:38:12 <Bosmon7> cindyli - right
+2016-09-01T15:38:18 <cindyli> 4. at onStarted of expressPouch, send back the success response
+2016-09-01T15:38:52 <cindyli> i have a few questions with this chain
+2016-09-01T15:39:43 <cindyli> 1. the code to send back the success response has problem with line 62
+2016-09-01T15:39:50 <cindyli> {gpii.pouchManager.reset.handler} is unrecognized in the context
+2016-09-01T15:40:14 <gloob> bens___: yes
+2016-09-01T15:41:08 <cindyli> i guess it\'s a reasonable error since "gpii.pouchManager.reset.handler" is hooked up with handlerGrade option which I\'m not sure where it\'s located on the component tree or maybe it\'s not on the tree at all but as an option value
+2016-09-01T15:41:28 <cindyli> so how can i send back the response in this case
+2016-09-01T15:42:14 <cindyli> the 2nd question is related to the first one
+2016-09-01T15:42:16 <Bosmon7> cindyli - yes, obviously the handler for this particular request isn\'t in scope on expressPouch
+2016-09-01T15:42:28 <Bosmon7> How could it be
+2016-09-01T15:42:41 <cindyli> 2. is it possible to use promise chain rather than chained events?
+2016-09-01T15:42:42 <Bosmon7> All this material needs to go onto the request
+2016-09-01T15:42:52 <Bosmon7> Only the request knows which request it is
+2016-09-01T15:42:58 <cindyli> ah ok
+2016-09-01T15:43:02 <Bosmon7> Or the "handler" in the-t-in-rtf \'s terminology
+2016-09-01T15:43:18 <Bosmon7> The longer scoped component must always be injected into the shorter scoped component
+2016-09-01T15:43:55 <cindyli> Bosmon7: do you mean to inject all those events into "gpii.pouchManager.reset.handler"
+2016-09-01T15:44:43 <cindyli> would that be the same issue since the request handler and pouchExpress are not in the same scope and don\'t see each other
+2016-09-01T15:44:57 * alanharnum joined the channel
+2016-09-01T15:47:30 <Bosmon7> If the handler can\'t see pouchExpress, this could never have worked at all
+2016-09-01T15:47:37 <cindyli> right
+2016-09-01T15:55:18 * alanharnum has quit
+2016-09-01T15:55:23 <cindyli> Bosmon7: before creating a separate express server for reset, i started with adding the /reset request handler to the express server that has expressPouch. but underlying pouchExpress was aggressive enough that it takes all the requests to root, meaning looking up a database with that name
+2016-09-01T15:55:41 <cindyli> so, i decided to try with a separate express server
+2016-09-01T15:56:22 <Bosmon7> the-t-in-rtf - can you consider cindyli\'s report?
+2016-09-01T15:56:40 <Bosmon7> What could be represented by "pouchExpress was aggressive enough that it takes all the requests to root"?
+2016-09-01T15:56:54 <Bosmon7> Will this be a phenomenon caused by express-pouchdb itself?
+2016-09-01T15:57:36 <Bosmon7> It\'s really problematic if we can\'t use an express server which has pouchExpress mounted in it for any other purpose
+2016-09-01T15:58:43 * kavya has quit
+2016-09-01T15:59:45 <cindyli> ok, seems i need to go back to the initial approach, will look up approaches to work around this agression
+2016-09-01T16:00:08 <Justin_o> Bosmon7: I replied to your comments on the FLUID-5370 PR
+2016-09-01T16:00:15 <avtar> bens___, gloob, gtirloni: vagrant winrm -c "do.ps1 -c \'type listeners\\libcurl\\include\\libcurl\\curl.h\'"
+2016-09-01T16:00:18 <avtar> so far so good
+2016-09-01T16:02:38 <Bosmon7> cindyli perhaps it needs to be mounted in a "router" at a lower level of the express app
+2016-09-01T16:02:52 <Bosmon7> This is something the-t-in-rtf could perhaps help with
+2016-09-01T16:03:26 <bens___> avtar, how about exit codes?
+2016-09-01T16:03:38 <cindyli> Bosmon: u mean to mount a router on the express app where pouchExpress is mounted?
+2016-09-01T16:03:41 <cindyli> i could try that too
+2016-09-01T16:04:07 <bens___> avtar, using vagrant winrm -c "do.ps1 -c \'exit 127\'" i get exit code of 0 from vagrant (checking $?)
+2016-09-01T16:08:30 <avtar> bens___: i\'ve been checking exit codes of the gpii test scripts and other commands i\'ve run, like installing third party software, and so far i\'m seeing expected results
+2016-09-01T16:08:39 <avtar> i\'ll try that as well
+2016-09-01T16:09:10 <bens___> done any negative tests/
+2016-09-01T16:09:15 <bens___> ?
+2016-09-01T16:09:24 * alanharnum joined the channel
+2016-09-01T16:10:17 <avtar> yup
+2016-09-01T16:10:21 * kavya joined the channel
+2016-09-01T16:10:49 <bens___> i\'ll msg you some results i\'m getting
+2016-09-01T16:18:49 <Bosmon7> cindyli - yes - I imagine that will allow you to get the insulation you require
+2016-09-01T16:33:03 <gloob> Bosmon7: meeting, are you joining?
+2016-09-01T16:33:28 <Bosmon7> gloob - yes
+2016-09-01T16:33:40 <Bosmon7> GLOO GLOO GLOO JOOB
+2016-09-01T16:37:16 <gloob> Bosmon7: https://app.gotomeeting.com/?meetingId=161482213
+2016-09-01T16:37:35 <Bosmon7> Hi, I\'m in there
+2016-09-01T16:53:34 * jhung joined the channel
+2016-09-01T16:53:44 <the-t-in-rtf> Saw the mention.  I\'m finished for the week, but happy to meet before or immediately after our regular Monday meeting, @cindyli
+2016-09-01T16:53:56 <the-t-in-rtf> I will shortly start working Fridays as well, which should make it a little easier to coordinate.
+2016-09-01T16:54:17 <cindyli> thanks, the-t-in-rtf, enjoy the weekend
+2016-09-01T16:54:36 <the-t-in-rtf> you too
+2016-09-01T16:54:37 <cindyli> btw, Monday is a public holiday in canada, the-t-in-rtf, shall we move the meeting to another day
+2016-09-01T16:54:59 <the-t-in-rtf> Let\'s skip this week, next week is honestly kind of crazy.
+2016-09-01T16:55:17 <the-t-in-rtf> skip a week, I mean.
+2016-09-01T16:55:22 <cindyli> ok, the-t-in-rtf.
+2016-09-01T16:55:43 <the-t-in-rtf> Sorry, I really look forward to them usually, just bad timing next week.
+2016-09-01T16:55:48 <the-t-in-rtf> Enjoy the long weekend!
+2016-09-01T16:56:03 <cindyli> thanks, the-t-in-rtf, have fun
+2016-09-01T17:25:46 * simonjb joined the channel
+2016-09-01T17:26:03 <simonjb> hi michelled
+2016-09-01T17:26:22 <michelled> hey simonjb, do you have a few minutes to meet?
+2016-09-01T17:26:36 <simonjb> yes michelled -- vidyo?
+2016-09-01T17:26:45 <michelled> yep, call when you\'re ready
+2016-09-01T18:02:29 <jhung> Justin_o: I merged https://github.com/fluid-project/infusion/pull/743
+2016-09-01T18:02:31 <gtirloni> bens___: thanks for helping test the new win10 box
+2016-09-01T18:11:09 * cindyli has quit
+2016-09-01T18:13:43 <Justin_o> jhung: great thanks
+2016-09-01T18:14:16 <bens___> gtirloni, sure
+2016-09-01T18:18:43 * cindyli joined the channel
+2016-09-01T18:23:30 * clown has quit
+2016-09-01T18:43:18 <jhung> merged and closed https://github.com/fluid-project/infusion/pull/745 Justin_o
+2016-09-01T18:54:23 * alanharnum has quit
+2016-09-01T18:58:10 * alanharn_ joined the channel
+2016-09-01T19:00:13 * alanharn_ is now known as alanharnum
+2016-09-01T19:08:42 <Justin_o> jhung: thanks
+2016-09-01T19:17:18 * clown joined the channel
+2016-09-01T19:24:24 * the-t-in-rtf joined the channel
+2016-09-01T19:24:27 * the-t-in-rtf has quit
+2016-09-01T19:36:03 * stegru has quit
+2016-09-01T19:49:47 * alanharnum has quit
+2016-09-01T19:56:24 * alanharnum joined the channel
+2016-09-01T20:47:23 * jhung has quit
+2016-09-01T20:51:02 * kavya has quit
+2016-09-01T20:53:34 * gtirloni joined the channel
+2016-09-01T20:57:07 * gtirloni has quit
+2016-09-01T20:59:38 * gtirloni joined the channel
+2016-09-01T21:01:32 * stegru joined the channel
+2016-09-01T21:04:57 * yzen has quit
+2016-09-01T21:17:42 * cindyli has quit
+2016-09-01T21:23:11 * gtirloni has quit
+2016-09-01T21:24:08 <avtar> bens___, gloob: https://www.vagrantup.com/docs/cli/powershell.html
+2016-09-01T21:24:18 <avtar> doesn\'t look like that vagrant-winrm plugin is required anymore
+2016-09-01T21:24:35 <avtar> the following works:
+2016-09-01T21:24:35 <avtar> vagrant powershell -c "do.ps1 -c \'node tests\\AcceptanceTests.js builtIn\'"
+2016-09-01T21:30:56 * clown has left the channel
+2016-09-01T21:37:21 <bens___> avtar, awesome! and we can powershell anything we want now as well i take it
+2016-09-01T21:37:40 <avtar> yup :)
+2016-09-01T21:38:18 <avtar> btw we\'ll probably release that box on atlas next tuesday
+2016-09-01T21:38:33 <avtar> but so far it\'s looking pretty good
+2016-09-01T21:38:48 <avtar> simonjb\'s giving it a spin on a linux desktop
+2016-09-01T21:40:31 <bens___> hmm avtar are you on linux or windows desktop?
+2016-09-01T21:40:47 <avtar> windows desktop
+2016-09-01T21:40:49 <bens___> cause i am linux, i think gloob is mac... did we cover windows?
+2016-09-01T21:40:55 <bens___> oh good
+2016-09-01T21:41:04 <avtar> ah i didn\'t know you were using linux
+2016-09-01T21:41:13 <avtar> in that case, yes, all bases are covered
+2016-09-01T21:41:31 <bens___> yep i am red hat 7.2... on the desktop
+2016-09-01T21:41:53 <avtar> you mean rhel 7.2?
+2016-09-01T21:41:59 <bens___> yes
+2016-09-01T21:42:01 <avtar> ok
+2016-09-01T21:43:18 <avtar> looks like simonjb discovered the powershell subcommand is only available on windows hosts :/
+2016-09-01T21:44:01 * michelled has quit
+2016-09-01T21:44:34 * bens___ tests
+2016-09-01T21:44:46 <bens___> same here
+2016-09-01T21:46:23 <avtar> that\'s too bad, one less moving piece would have been nice
+2016-09-01T21:47:04 * simonjb has quit
+2016-09-01T22:20:54 * stegru has quit
+2016-09-01T22:30:33 * cindyli joined the channel
+2016-09-01T22:33:25 <cindyli> hi Bosmon7, r u available for a question?
+2016-09-01T22:40:59 * Justin_o has quit
+'
+
+b'2016-09-01T00:00:25 <avtar> bens___, gloob: i tried doitclient.exe wcmd refreshenv & "%*" but that won\'t be reliable
+2016-09-01T00:00:44 <avtar> if you do \'vagrant reload\' and then:
+2016-09-01T00:00:46 <avtar> vagrant winrm -c "do.bat \'node tests\\UnitTests.js\'"
+2016-09-01T00:01:44 <avtar> that results in great success
+2016-09-01T00:06:21 <avtar> also, the following works if you want to avoid restarting windows
+2016-09-01T00:06:25 <avtar> vagrant winrm -c "do.bat \'refreshenv && node tests\\UnitTests.js\'"
+2016-09-01T00:14:06 * gtirloni has quit
+2016-09-01T00:16:01 <avtar> bens___, gloob: vagrant winrm -c "do.bat \'refreshenv && node tests\\AcceptanceTests.js builtIn\'"
+2016-09-01T00:16:03 <avtar> works as well
+2016-09-01T01:04:48 * bens___ has quit
+2016-09-01T01:08:54 * Bosmon has quit
+2016-09-01T01:13:15 * Bosmon joined the channel
+2016-09-01T01:26:49 * alanharnum joined the channel
+2016-09-01T01:57:50 * alanharnum has quit
+2016-09-01T02:02:25 * alanharnum joined the channel
+2016-09-01T02:13:02 * yzen joined the channel
+2016-09-01T02:30:42 * yzen is now known as yzen_
+2016-09-01T02:35:48 * yzen_ has quit
+2016-09-01T02:38:33 * alanharnum has quit
+2016-09-01T02:51:30 * yzen joined the channel
+2016-09-01T02:56:51 * alanharnum joined the channel
+2016-09-01T03:25:01 * yzen is now known as yzen_
+2016-09-01T03:29:49 * yzen_ has quit
+2016-09-01T03:39:07 * alanharnum joined the channel
+2016-09-01T03:44:25 * alanharnum has quit
+2016-09-01T04:36:05 * scott_gonzalez has quit
+2016-09-01T04:40:34 * alanharnum joined the channel
+2016-09-01T04:43:26 * scott_gonzalez joined the channel
+2016-09-01T05:26:28 * yzen joined the channel
+2016-09-01T05:30:32 * yzen has quit
+2016-09-01T05:35:32 * alanharnum joined the channel
+2016-09-01T05:44:04 * alanharnum has quit
+2016-09-01T06:03:00 * kasparnet joined the channel
+2016-09-01T06:24:11 * kasparnet has quit
+2016-09-01T06:28:11 * yzen joined the channel
+2016-09-01T06:32:55 * yzen has quit
+2016-09-01T06:40:24 * amatas joined the channel
+2016-09-01T06:41:11 * kasparnet joined the channel
+2016-09-01T06:44:33 * alanharnum joined the channel
+2016-09-01T06:49:03 * alanharnum has quit
+2016-09-01T06:58:24 * alanharnum joined the channel
+2016-09-01T07:03:22 * alanharnum has quit
+2016-09-01T08:09:13 * stegru joined the channel
+2016-09-01T08:30:08 * yzen joined the channel
+2016-09-01T08:35:51 * yzen has quit
+2016-09-01T08:58:49 * kasparnet has quit
+2016-09-01T08:58:49 * scott_gonzalez has quit
+2016-09-01T09:03:01 * scott_gonzalez joined the channel
+2016-09-01T09:03:01 * kasparnet joined the channel
+2016-09-01T09:03:07 * scott_gonzalez has quit
+2016-09-01T09:03:07 * scott_gonzalez joined the channel
+2016-09-01T10:32:49 * yzen joined the channel
+2016-09-01T10:37:25 * stegru has quit
+2016-09-01T10:37:31 * yzen has quit
+2016-09-01T10:42:39 * gtirloni joined the channel
+2016-09-01T10:49:38 * stegru joined the channel
+2016-09-01T11:00:06 * alanharnum joined the channel
+2016-09-01T11:04:37 * alanharnum has quit
+2016-09-01T11:43:05 <kasparnet> hello there, mr. Antwarning!
+2016-09-01T11:43:19 <kasparnet> aka: Bosmon / Bosmon7
+2016-09-01T11:44:33 * michelled joined the channel
+2016-09-01T11:48:53 * alanharnum joined the channel
+2016-09-01T11:53:36 * alanharnum has quit
+2016-09-01T12:04:27 * alanharnum joined the channel
+2016-09-01T12:11:55 * Justin_o joined the channel
+2016-09-01T12:23:55 <Bosmon7> Hi kasparnet
+2016-09-01T12:24:00 <Bosmon7> KASPADRNUT
+2016-09-01T12:24:10 <kasparnet> hey
+2016-09-01T12:24:28 <kasparnet> do you have time for a chat about the MM and multi settingshandler stuff today?
+2016-09-01T12:25:41 * cindyli joined the channel
+2016-09-01T12:26:39 * yzen joined the channel
+2016-09-01T12:26:51 <Bosmon7> Yes, perhaps a bit
+2016-09-01T12:26:56 <Bosmon7> I\'ve got meetings at 2pm and 5.30pm my time
+2016-09-01T12:29:09 <kasparnet> how long is your 2 pm?
+2016-09-01T12:29:28 <kasparnet> I have to be somewhere at 4pm your time
+2016-09-01T12:31:07 * yzen has quit
+2016-09-01T12:45:39 <kasparnet> Bosmon7:
+2016-09-01T12:54:18 * kasparne_ joined the channel
+2016-09-01T12:57:44 * kasparnet has quit
+2016-09-01T12:59:18 <Bosmon7> Apologise to all in the user management meeting, I think I\'ll be about 10 mins late
+2016-09-01T13:01:20 * simonjb joined the channel
+2016-09-01T13:01:26 <alanharnum> the-t-in-rtf: where are we having the user management meeting?
+2016-09-01T13:01:34 <simonjb> alanharnum: https://global.gotomeeting.com/join/161482213
+2016-09-01T13:04:33 * yzen joined the channel
+2016-09-01T13:05:27 * kavya joined the channel
+2016-09-01T13:27:57 * clown joined the channel
+2016-09-01T13:35:39 * jhung joined the channel
+2016-09-01T13:37:52 <Justin_o> cindyli: could you please take a look at my PR https://github.com/fluid-project/infusion/pull/744 and related Infusion-Docs PR https://github.com/fluid-project/infusion-docs/pull/98
+2016-09-01T13:50:30 * yzen is now known as yzen_
+2016-09-01T13:53:37 * bens___ joined the channel
+2016-09-01T13:55:31 * yzen_ has quit
+2016-09-01T13:59:11 <cindyli> ok, Justin_o
+2016-09-01T13:59:21 <Justin_o> cindyli: thanks
+2016-09-01T13:59:30 <cindyli> np
+2016-09-01T14:03:21 * jessm joined the channel
+2016-09-01T14:17:04 <Justin_o> jhung: Could you also look at this PR for me https://github.com/fluid-project/infusion/pull/745
+2016-09-01T14:19:03 <jhung> Justin_o: For pull #745, I\'ll trade you https://github.com/inclusive-design/idi-theme/pull/78 :)
+2016-09-01T14:19:18 <jhung> We can look at Pull #78 together next time I\'m in.
+2016-09-01T14:20:03 <Justin_o> sure remind me when you\'re in next and we can look at it together
+2016-09-01T14:20:06 <Justin_o> jhung: ^
+2016-09-01T14:20:30 <jhung> ok Justin_o.
+2016-09-01T14:22:42 <cindyli> Justin_o: i left a couple of comments on ur pull request
+2016-09-01T14:24:10 <Justin_o> cindyli: thanks
+2016-09-01T14:24:20 <cindyli> np
+2016-09-01T14:29:13 <jhung> Justin_o: which was the other PR you wanted me to look at?
+2016-09-01T14:32:56 * amatas has quit
+2016-09-01T14:42:54 * [o__o] joined the channel
+2016-09-01T14:42:58 * alanharnum has quit
+2016-09-01T14:43:17 <Justin_o> jhung: https://github.com/fluid-project/infusion/pull/743
+2016-09-01T14:49:12 <Justin_o> cindyli: i\'ve addressed your comments and left a comment of my own
+2016-09-01T14:49:34 <cindyli> thanks, Justin_o, having a look
+2016-09-01T14:49:43 <Justin_o> cindyli: thanks
+2016-09-01T14:49:47 <cindyli> np
+2016-09-01T15:00:58 * yzen joined the channel
+2016-09-01T15:01:33 * alanharnum joined the channel
+2016-09-01T15:01:42 <Bosmon7> Hi cindyli - still not clear on your meaning of "unused tokens"
+2016-09-01T15:02:25 <cindyli> Bosmon7: did u see that in comments for Justin_o\'s infusion pull request?
+2016-09-01T15:02:34 <Bosmon7> Yes
+2016-09-01T15:02:55 <cindyli> means the tokens that should be removed in 2.0 since we no longer maintain the backwards compatibility with 1.5, Bosmon7
+2016-09-01T15:03:21 <cindyli> "unused variables" should be more proper
+2016-09-01T15:03:41 <cindyli> but as that term is already used in JIRA...
+2016-09-01T15:05:33 <bens___> hi avtar, gtirloni, does the box 0.4.3 version have the new do.ps1 included in it?
+2016-09-01T15:06:12 <avtar> hey bens___ 0.4.3 does
+2016-09-01T15:06:22 * alanharnum has quit
+2016-09-01T15:06:47 <avtar> 0.4.4 will be uploaded today which will be the last version until 3 months from now
+2016-09-01T15:07:12 <avtar> that will just silence refreshenv otherwise the behaviour will be the same as 0.4.3
+2016-09-01T15:08:57 <bens___> avtar, uploaded to the cdn or atlas?
+2016-09-01T15:09:02 <Justin_o> Bosmon: in regards to backwards compatibility and deprecation, i\'m thinking about filing a JIRA to remove all of those things for the Infusion 2.0 release... could also be a good time to remove any old browser hacks if you know of any
+2016-09-01T15:09:15 <avtar> bens___: both
+2016-09-01T15:12:45 <gloob> avtar: the box is working for me, thinking about a very verbose and intesive process, although our unit tests are
+2016-09-01T15:12:48 <gloob> by the way
+2016-09-01T15:13:27 <gloob> stegru: I noticed a slow down in the windows tests, is it my system or new tests you added?
+2016-09-01T15:13:31 <gloob> anyone noticed it?
+2016-09-01T15:13:44 <gloob> would be good to add some kind of basic profiling I guess
+2016-09-01T15:14:04 <stegru> it could be the new tests, yes
+2016-09-01T15:14:48 <stegru> however, the fix i made for the high-contrast bug will slow it down, because it now waits for the setting to be applied
+2016-09-01T15:19:38 <stegru> gloob: yes, I\'ve just looked it the new tests and they should not take long (if they\'re passing)
+2016-09-01T15:24:00 <Bosmon7> cindyli - that takes care of the "tokens" part - how about "unused"? : P
+2016-09-01T15:24:06 <Bosmon7> The variable you linked to appeared to be used
+2016-09-01T15:24:07 * alanharnum joined the channel
+2016-09-01T15:25:24 <bens___> gloob, stegru, i\'ve just run them about 15 times in a row. getting runtimes of about 7 seconds +/- 300ms
+2016-09-01T15:25:33 <cindyli> Bosmon7: that variable is used in tests but is no longer calculated/generated in the uploader source code. i might get it wrong?
+2016-09-01T15:26:23 <Bosmon7> Justin_o - we could consider getting rid of code like this - https://github.com/fluid-project/infusion/blob/master/src/components/inlineEdit/js/InlineEdit.js#L33
+2016-09-01T15:26:40 <Bosmon7> But I\'m not particularly happy about the burden of this until we have some automated webdriver tests of the kind that the-t-in-rtf \'s work will enable
+2016-09-01T15:27:02 <Bosmon7> There\'s all kinds of funny "user-level" hacks in our components that its unclear that they do anything any more
+2016-09-01T15:27:07 <Bosmon7> Although this function probably has to be the worst
+2016-09-01T15:27:21 <Bosmon7> If we had webdriver tests for InlineEdit we could have a massive purge without a massive QA effort
+2016-09-01T15:27:34 <Bosmon7> the-t-in-rtf - any story on webdriver from IE11 or edge?
+2016-09-01T15:30:09 * kasparne_ has quit
+2016-09-01T15:30:22 <cindyli> Bosmon7, the-t-in-rtf, need ur help with some chained events issue and how to send back the response when the chain completes
+'
+

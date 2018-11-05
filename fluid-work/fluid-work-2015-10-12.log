@@ -1,0 +1,405 @@
+b'2015-10-12T16:56:06 <slim__> *no
+2015-10-12T17:02:21 <kasparnet> Bosmon: ok, so I tried to add some debug statements
+2015-10-12T17:02:32 <kasparnet> but the flow of this part of the code isn\'t exactly clear to me
+2015-10-12T17:02:43 <kasparnet> sec - creating a jist
+2015-10-12T17:02:49 <kasparnet> gist
+2015-10-12T17:03:36 <slim__> kasparnet: its async - it runs 3 commands and then on errors
+2015-10-12T17:04:12 <slim__> oh - is that a problem? Code expects sequential?
+2015-10-12T17:04:42 <kasparnet> my log is here: https://gist.github.com/kaspermarkus/5a645cf78c767837f6ad
+2015-10-12T17:04:50 <kasparnet> towards the bottom
+2015-10-12T17:05:18 <kasparnet> I\'ve added the modified gpii.js file as well for completeness
+2015-10-12T17:06:28 <kasparnet> it would definitely be a probem if eg. npm install is run before the git clone
+2015-10-12T17:06:47 <kasparnet> but I doubt the actual execution of these blocks is not sequential
+2015-10-12T17:06:55 <kasparnet> they\'re likely just queued, the tasks
+2015-10-12T17:07:52 <Bosmon> Yes
+2015-10-12T17:08:03 <Bosmon> I\'m just trying to assemble some kind of "hot patch" that will bypass grunt for this
+2015-10-12T17:08:27 <kasparnet> slim__: is this stuff broke for you using CMD as well?
+2015-10-12T17:08:44 <slim__> yes Grunt hasa task queue
+2015-10-12T17:08:56 <slim__> https://github.com/gruntjs/grunt/blob/0a968d0becd81e78851da108b0961cc42a4744c5/lib/util/task.js
+2015-10-12T17:09:37 <slim__> yes but get the no git error 1st
+2015-10-12T17:14:15 <Bosmon> ok, slim_, kasparnet - try patching your copy of grunt-gpii with this version: https://gist.github.com/amb26/791ff1e3937615fd9a8f
+2015-10-12T17:14:36 <slim__> Bosmon: just reseting and retrying in cmd
+2015-10-12T17:14:40 <Bosmon> The file you need to patch is windows/node_modules/grunt-gpii/tasks/gpii.js
+2015-10-12T17:14:53 <Bosmon> Then try grunt build in windows again
+2015-10-12T17:15:16 <Bosmon> YOu should see it say this:
+2015-10-12T17:15:17 <Bosmon> Running "gpii-universal" task
+2015-10-12T17:15:17 <Bosmon> pushd: no other directory
+2015-10-12T17:15:17 <Bosmon> EXECUTING git clone  git://github.com/GPII/universal.git ../node_modules/universal
+2015-10-12T17:15:17 <Bosmon> Cloning into \'../node_modules/universal\'...
+2015-10-12T17:15:17 <Bosmon> popd: directory stack empty
+2015-10-12T17:15:50 <slim__> arrg it just workd-
+2015-10-12T17:15:57 <slim__> race condition?
+2015-10-12T17:16:32 <slim__> Bosmon: oh - will try your patch now
+2015-10-12T17:16:51 <kasparnet> Bosmon: ok running it now
+2015-10-12T17:16:59 <Bosmon> Yes, my belief it is a race condition
+2015-10-12T17:17:00 <kasparnet> (roll drum)
+2015-10-12T17:17:12 <Bosmon> Cause by the pitiful misunderstanding of the numskull (me) who wrote this grunt task
+2015-10-12T17:17:45 <Bosmon> That, plus the idiotic architecture of grunt itself
+2015-10-12T17:18:03 <slim__> why not just use npm scripts :D
+2015-10-12T17:18:08 <Bosmon> QUITE
+2015-10-12T17:18:09 <kasparnet> ok - so at least it LOOKS like it worked
+2015-10-12T17:18:14 <Bosmon> WHY NOT JUST USE NPM SCRIPTS
+2015-10-12T17:18:27 <Bosmon> To which the answer is - we had no understanding of this terrain at the time
+2015-10-12T17:18:32 <Bosmon> And little idea that npm scripts even existed
+2015-10-12T17:18:46 <Bosmon> And as we know, npm scripts have their own hazards as well - in particular postinstall
+2015-10-12T17:19:05 <Bosmon> OK, well I need to update grunt-gpii anyway, to eliminate the faulty dedupe-infusion code
+2015-10-12T17:19:10 <Bosmon> I\'ll issue a pull for you later
+2015-10-12T17:19:11 <kasparnet> so things actually seem to work with your patch antranig
+2015-10-12T17:19:15 <slim__> also hardto write portable scripts
+2015-10-12T17:19:24 <Bosmon> Well that\'s an awesome result
+2015-10-12T17:19:29 <Bosmon> I will now go to DINAR in peace
+2015-10-12T17:19:33 <kasparnet> ya
+2015-10-12T17:19:34 <kasparnet> yay*
+2015-10-12T17:19:35 <slim__> loggin tips the race condition?
+2015-10-12T17:19:52 <kasparnet> me to -- need to eat now, be back in 45 mins
+2015-10-12T17:20:47 <slim__> ooo pathc is doing something
+2015-10-12T17:22:08 <slim__> Bosmon: kasparnet Wh000t Done, without errors.
+2015-10-12T17:23:37 <slim__> i\'ll close the loop on the list
+2015-10-12T17:50:51 * kasparnet has quit
+2015-10-12T17:59:49 * slim__ has quit
+2015-10-12T18:06:05 * kasparnet joined the channel
+2015-10-12T18:20:03 * slim_ has quit
+2015-10-12T18:21:10 * slim_ joined the channel
+2015-10-12T18:23:42 * slim_ has quit
+2015-10-12T18:57:18 * slim_ joined the channel
+2015-10-12T18:57:26 * slim_ has quit
+2015-10-12T20:07:25 * kasparnet has quit
+2015-10-12T20:07:59 * kasparnet joined the channel
+2015-10-12T21:10:23 * kasparnet has quit
+2015-10-12T21:20:39 * ewbjr has quit
+2015-10-12T21:39:32 * cindyli joined the channel
+2015-10-12T22:53:51 * ewbjr joined the channel
+'
+
+b'2015-10-12T16:20:11 <Bosmon> So it\'s not an npm failure at all?
+2015-10-12T16:20:17 <slim__> npm always runs OMSPEC% and I suspect gulp ends up going that route to
+2015-10-12T16:20:19 <Bosmon> The question then is how kasparnet managed to reproduce it
+2015-10-12T16:20:26 <Bosmon> gulp you mean grunt?
+2015-10-12T16:20:28 <slim__> so it cannot run git - nothign to do with version
+2015-10-12T16:20:41 <slim__> I copied your npm 2 but still get the error
+2015-10-12T16:20:48 <Bosmon> slim_ - ok, very interesting
+2015-10-12T16:20:49 <slim__> oops grunt
+2015-10-12T16:20:52 <kasparnet> Bosmon: it might have been that i ran it from the command prompt the first time, and from cygwin or something the next time
+2015-10-12T16:20:59 <kasparnet> not sure
+2015-10-12T16:21:05 <Bosmon> ok
+2015-10-12T16:21:06 <kasparnet> let me just fire up Virtual Box
+2015-10-12T16:21:09 <slim__> so Bosmon can you windowskey + X C and then type git?
+2015-10-12T16:21:22 <Bosmon> I guess there will always be 1,000,000 ways that a Windows machine can be misconfigured
+2015-10-12T16:21:24 <slim__> if git runs for you that is it
+2015-10-12T16:21:32 <Bosmon> slim_ - of course, I am running it all the time : P
+2015-10-12T16:21:40 <slim__> from cmd?
+2015-10-12T16:21:42 <Bosmon> yes
+2015-10-12T16:21:46 <slim__> how did you install it then?
+2015-10-12T16:21:56 <Bosmon> It\'s the one in cygwin
+2015-10-12T16:22:02 <slim__> github and git for windows do not put it on the path for me
+2015-10-12T16:22:12 <Bosmon> Well, I have a .cmd script which inserts it onto the path
+2015-10-12T16:22:32 <slim__> so thats why it works for you and no one else?
+2015-10-12T16:22:36 <slim__> kasparnet:
+2015-10-12T16:22:42 <Bosmon> Well, I can\'t run it from a plain window, no
+2015-10-12T16:22:51 <Bosmon> But normally there is environment variable inheritance for any commands
+2015-10-12T16:22:53 <slim__> oh! I\'n getting confused
+2015-10-12T16:23:07 <Bosmon> That is, any shell you construct should inherit the PATH settings from the parent process
+2015-10-12T16:23:30 <Bosmon> But it may be that somehow the parent process is considered your parent CMD window and not your cygwin bash shell
+2015-10-12T16:23:33 <slim__> yes env is supposed to get inherited in subshellls but Iknow NPM ignores that when running a package.json script
+2015-10-12T16:23:50 <slim__> but perhaps that is not relevent
+2015-10-12T16:23:57 <Bosmon> I don\'t think it has the option to ignore it, but it may choose the "wrong" process to inherit from
+2015-10-12T16:24:19 <Bosmon> I always set my env variables in the parent CMD script before running b ash
+2015-10-12T16:24:28 <slim__> true.so is it possible when you run gulp build it can run git but when I do it cant?
+2015-10-12T16:24:49 <Bosmon> It\'s conceviable that it is a cygwin-oriented fuckup, yes
+2015-10-12T16:24:52 <kasparnet> .. it\'s still grunt :)
+2015-10-12T16:25:02 <slim__> I\'ll make git run from a cmd shell and wil see if it then works
+2015-10-12T16:25:16 <slim__> arrrg
+2015-10-12T16:25:20 <kasparnet> slim__, Bosmon: just tried reproducing in my CMD and I\'m not able to
+2015-10-12T16:25:22 <Bosmon> I\'m not convinced that npm will necessarily believe in the bash shell\'s environment because it is not a standard Windows command process
+2015-10-12T16:25:31 <slim__> come on grunt is so last year! :)
+2015-10-12T16:25:38 <kasparnet> :D
+2015-10-12T16:25:46 <Bosmon> So you should try setting your env variables in the parent CMD first, before you start any cygwin process to invoke npm
+2015-10-12T16:26:03 <kasparnet> so I cant reproduce ... but my git is running just fine from CMD as well
+2015-10-12T16:26:10 <Bosmon> There are good reasons why the npm instructions on "install on cygwin" simply read "NO" : P
+2015-10-12T16:26:24 <Bosmon> cygwin isn\'t an environment to be used by the light-hearted : P
+2015-10-12T16:26:28 <slim__> Bosmon: is npm involved here? On windows it ALWAYS runs OMPSEPC% for a shell which is cmd and there is no proper env inheritance
+2015-10-12T16:26:42 <slim__> not using cygwin
+2015-10-12T16:26:55 <slim__> GitHUb bash and git for win hub both use msys
+2015-10-12T16:27:02 <Bosmon> Ok
+2015-10-12T16:27:13 <Bosmon> Well I\'d imagine you\'d have the equivalent issues there
+2015-10-12T16:27:19 <Bosmon> How does git ever get onto your PATH?
+2015-10-12T16:27:42 <slim__> git for windows - yo ualways use bash
+2015-10-12T16:27:59 <slim__> github if you select cmd as defaul shell then icon lunches cmd with path set
+2015-10-12T16:28:14 <slim__> windows+X, C doesn;t get git on path
+2015-10-12T16:28:16 <Bosmon> I see
+2015-10-12T16:28:27 <slim__> pants
+2015-10-12T16:28:30 <Bosmon> Well
+2015-10-12T16:28:41 <Bosmon> This suggests then that we still don\'t completely understand the issue
+2015-10-12T16:28:51 <Bosmon> Since none of these tools are on my system path
+2015-10-12T16:29:05 <slim__> correct - that\'s why I wanted yo to tun that test and then I will add gt to path if you have it
+2015-10-12T16:29:07 <Bosmon> I only get access to them by running a .BAT file after I start a window
+2015-10-12T16:29:12 <Bosmon> I don\'t have git on my system path, no
+2015-10-12T16:29:21 <Bosmon> Nor anything else
+2015-10-12T16:29:31 <slim__> so git form a cmd never works for you?
+2015-10-12T16:29:42 <Bosmon> Not until I\'ve run my so-called "setit.bat", no
+2015-10-12T16:29:53 <slim__> in that case I agree I dont undertsand fully
+2015-10-12T16:30:15 <slim__> which you do in you cmd windows?
+2015-10-12T16:30:24 <Bosmon> Yes
+2015-10-12T16:30:40 <Bosmon> I open up a cmd window, and if I am going to do dev in it, I run "setit.bat"
+2015-10-12T16:30:50 <Bosmon> Or else I have a different one to set up things for msys or whatever
+2015-10-12T16:30:57 <slim__> so what made me think this was the problem is hat I ran grunt build in a command prompt and got the same error but it also windged about git - perhasp that is an extra error - not more info
+2015-10-12T16:31:09 <Bosmon> Given of course all these blasted environments have massively different expectations about what should be on the path
+2015-10-12T16:31:17 <Bosmon> There\'s yet another one for these blasted MSVC builds
+2015-10-12T16:31:25 <slim__> yeah! it\'s a bit of a mess on windows.
+2015-10-12T16:31:52 <slim__> oh - yes you get another bat to run :)
+2015-10-12T16:31:58 <slim__> so a recap.
+2015-10-12T16:32:02 <Bosmon> Perhaps you didn\'t succeed in updating the correct npm in the end?
+2015-10-12T16:32:08 <Bosmon> Since my money is still on an npm issue
+2015-10-12T16:32:19 <slim__> I installed Nodejs 0.10.40 and copied your npm and still get an error
+2015-10-12T16:32:40 <Bosmon> And you run npm --version and it believes the new version is installed?
+2015-10-12T16:33:09 <slim__> that si a messto and the instructions you showed me do not work as %APPDATA%\
+pm does not include runnable npm as they assume - perhasp a version issue
+2015-10-12T16:33:17 <slim__> yes!
+2015-10-12T16:33:20 <Bosmon> ok
+2015-10-12T16:33:24 <Bosmon> Well, the plot thickens....
+2015-10-12T16:33:46 <slim__> but grunt build gives same old error
+2015-10-12T16:34:03 <slim__> I even re ran everything for setting up gpii
+2015-10-12T16:34:11 <slim__> I need beer
+2015-10-12T16:34:12 <Bosmon> "EINVAL, invalid argument" is a pretty opaque error
+2015-10-12T16:34:18 <slim__> yep
+2015-10-12T16:34:28 <Bosmon> We believe this is being thrown by the git command execution?
+2015-10-12T16:34:38 <slim__> I tried debug and verbose opts but no more clues
+2015-10-12T16:35:04 <Bosmon> The "--force to continue" is a classic grunt report
+2015-10-12T16:35:12 <slim__> am trying again. But clean and reboot first :)
+2015-10-12T16:35:16 <slim__> sigh
+2015-10-12T16:35:55 <Bosmon> The Warning also is just a warning....
+2015-10-12T16:36:07 <Bosmon> So does it look as if the git command has executed or not?
+2015-10-12T16:36:11 <slim__> npm -v = 2.13.0
+2015-10-12T16:36:15 <Bosmon> Does a "universal" checkout actually appear in the FS
+2015-10-12T16:36:39 <Bosmon> And what errors do you get following the warning
+2015-10-12T16:39:10 <slim__> no ../node_modules is empty
+2015-10-12T16:39:26 <slim__> seems it was created though
+2015-10-12T16:39:59 <Bosmon> ok
+2015-10-12T16:40:05 <Bosmon> So it really is the git command line failing
+2015-10-12T16:41:35 <Bosmon> Not much lore in EINVAL
+2015-10-12T16:41:38 <Bosmon> I found this: http://soyuka.me/using-nodejs-with-cygwin-v0-10-25/
+2015-10-12T16:43:06 <Bosmon> It may be that you have some specifically bugged variety of git installed....
+2015-10-12T16:43:58 <kasparnet> so I\'m suddenly confused -- where are you seeing this error, slim__? In cygwin or in the CMD?
+2015-10-12T16:44:10 <Bosmon> kasparnet - I don\'t believe he\'s using cygwin at all
+2015-10-12T16:44:16 <Bosmon> Just the shell which is supplied by "git for windows"
+2015-10-12T16:44:40 <Bosmon> I guess it\'s conceivable that that variety of git is complaining about being asked to check something out into ".."
+2015-10-12T16:44:51 <kasparnet> Bosmon, slim__: So i managed to reproduce - in cygwin
+2015-10-12T16:44:58 <Bosmon> kasparnet - wow
+2015-10-12T16:45:01 <kasparnet> yeah
+2015-10-12T16:46:33 <kasparnet> ok - and on my non-VM windows box as well
+2015-10-12T16:46:37 <slim__> kasparnet: I see this in Git for Windows Bash
+2015-10-12T16:46:40 <Bosmon> argh
+2015-10-12T16:46:45 <slim__> but also GitHub shell
+2015-10-12T16:46:54 <slim__> let me double check the latter
+2015-10-12T16:47:17 <slim__> Bosmon: ooooooohhhhhh, I feel soooo much better :)
+2015-10-12T16:47:42 <slim__> so is it a new version of grunt?
+2015-10-12T16:47:47 <Bosmon> kasparnet, slim__  - ok, so you can start to debug into this by inserting diagnostics into gpii/node_modules/universal/node_modules/grunt-gpii/tasks/gpii.js line 103 and line 57
+2015-10-12T16:48:02 <Bosmon> Should start by logging exactly what blasted args it is trying to send
+2015-10-12T16:48:03 <slim__> im 0.1.13
+2015-10-12T16:48:31 <Bosmon> I hve grunt-cli v0.1.13 and grunt v0.4.5
+2015-10-12T16:48:38 <slim__> Bosmon: year already did some of that :) Got stuck at your mangling the commands :)
+2015-10-12T16:48:51 <kasparnet> already have debug info added to 103
+2015-10-12T16:49:27 <Bosmon> If the args look legit, then we can just hack out gpiiGrunt.shellImmediate completely and just make a call to shelljs directly - https://www.npmjs.com/package/shelljs
+2015-10-12T16:49:43 <Bosmon> Unfortunately I\'ll be helping you blind since everything works fine over here, both in my VMs and host OS
+2015-10-12T16:50:03 <slim__> I printed out the options before - let me see if still ahve all my hacks
+2015-10-12T16:50:57 <slim__> aha yet another shell! Bet it doesn\'t find git :)
+2015-10-12T16:51:07 <slim__> kasper can you get it to echo $PATH
+2015-10-12T16:51:15 <Bosmon> slim_ - what\'s your grunt library version?
+2015-10-12T16:51:25 <Bosmon> The one you quoted is just the cli version
+2015-10-12T16:51:43 <slim__> remind be the npm foo to list it
+2015-10-12T16:51:56 <Bosmon> "grunt --version"
+2015-10-12T16:51:59 <kasparnet> grunt is 0.1.13 and 0.4.5 for me as well
+2015-10-12T16:52:07 <Bosmon> good grief
+2015-10-12T16:52:11 <Bosmon> What in Mike is going on
+2015-10-12T16:52:33 <slim__> 0.4.5
+2015-10-12T16:52:41 <Bosmon> ok ok
+2015-10-12T16:53:13 <Bosmon> Just on the off-chance - neither of you happened to implement the hack that avtar was advertising recently for getting his vagrant builds working on Windows, by editing your fstab file?
+2015-10-12T16:53:28 <kasparnet> nope
+2015-10-12T16:53:31 <Bosmon> ok
+2015-10-12T16:54:25 <Bosmon> Well, see if you can verify that i) the last thing that the build tries to do is the grunt.task.run call on line 57 of grunt-gpii\'s gpii.js, and ii) see what arguments it was given
+2015-10-12T16:54:50 <Bosmon> ooh
+2015-10-12T16:54:56 <Bosmon> I have a horrifying idea :(
+2015-10-12T16:55:08 <Bosmon> Perhaps this invocation strategy is completely faulty
+2015-10-12T16:55:38 <slim__> so that shel doesn have a proper echo or env but does have a which ASFAIKT
+2015-10-12T16:56:02 <slim__> Bosmon: mo to vagrent hack
+'
+
+b'2015-10-12T01:13:53 * kasparne_ has quit
+2015-10-12T06:55:32 * the-t-in-rtf joined the channel
+2015-10-12T08:19:47 * kasparnet joined the channel
+2015-10-12T08:41:56 * slim_ joined the channel
+2015-10-12T09:38:08 * jhernandez joined the channel
+2015-10-12T11:02:35 * slim__ joined the channel
+2015-10-12T11:02:49 <slim__> kasparnet: ping
+2015-10-12T11:03:15 * slim_ has quit
+2015-10-12T11:04:35 * slim_ joined the channel
+2015-10-12T11:04:58 <slim__> where or where is Basmon when you need him? :)
+2015-10-12T11:05:07 <slim__> I\'m blocked with gulp not building gpii
+2015-10-12T11:05:22 <slim__> Thought master was always deployable?
+2015-10-12T11:05:31 <slim__> oh well off to lunch and will try again later
+2015-10-12T11:11:03 * slim_ has quit
+2015-10-12T11:11:48 * slim__ has quit
+2015-10-12T11:12:23 * slim_ joined the channel
+2015-10-12T11:30:35 * kasparnet has quit
+2015-10-12T11:54:13 * kasparnet joined the channel
+2015-10-12T12:01:38 * the-t-in-rtf has quit
+2015-10-12T12:18:55 <kasparnet> slim_: ping
+2015-10-12T12:51:54 * slim__ joined the channel
+2015-10-12T14:05:01 * Bosmon joined the channel
+2015-10-12T14:14:15 <slim__> Hey Bosmon
+2015-10-12T14:14:23 <Bosmon> Hi slim_ - sorry to be away
+2015-10-12T14:14:37 <slim__> np - how do I update npm?
+2015-10-12T14:14:37 <Bosmon> My machine crashed as a result of not having the SACRIFICIAL HDMI CABLE OF DOOM installed
+2015-10-12T14:14:44 <slim__> npm update -g npm errors
+2015-10-12T14:14:52 <Bosmon> I see
+2015-10-12T14:14:55 <Bosmon> What errors does it give?
+2015-10-12T14:15:02 <slim__> ;latest reelase from npm web page is not 2.x.x
+2015-10-12T14:15:03 <slim__> https://nodejs.org/download/release/npm/
+2015-10-12T14:15:20 <Bosmon> slim_ - yes, but you need to install the latest 2.x release since it is what we support
+2015-10-12T14:15:39 <Bosmon> npm 3 only came out of beta last month and we have not had time to test with it
+2015-10-12T14:15:58 <slim__> so why don\'t they have it on their site? That URL is release (albeit node)
+2015-10-12T14:16:06 <Bosmon> slim_ - also check this reference that I linked in my post: https://github.com/npm/npm/wiki/Troubleshooting#upgrading-on-windows
+2015-10-12T14:16:06 <slim__> I followed it form the npm page
+2015-10-12T14:16:23 <slim__> errors are npm WARN package.json async@1.4.2 No README data
+2015-10-12T14:16:25 <slim__> npm WARN package.json string_decoder@0.10.31 string_decoder is also the name of a node core module.
+2015-10-12T14:16:26 <slim__> npm WARN package.json wcwidth@1.0.0 No repository field.
+2015-10-12T14:16:28 <slim__> npm ERR! Error: EPERM, open \'C:\\Program Files\
+odejs\
+pm\'
+2015-10-12T14:16:29 <slim__> npm ERR!  { [Error: EPERM, open \'C:\\Program Files\
+odejs\
+pm\']
+2015-10-12T14:16:31 <slim__> npm ERR!   errno: 50,
+2015-10-12T14:16:32 <slim__> npm ERR!   code: \'EPERM\',
+2015-10-12T14:16:34 <slim__> npm ERR!   path: \'C:\\\\Program Files\\\
+odejs\\\
+pm\' }
+2015-10-12T14:16:35 <slim__> npm ERR!
+2015-10-12T14:16:37 <slim__> npm ERR! Please try running this command again as root/Administrator.
+2015-10-12T14:16:38 <slim__> npm ERR! System Windows_NT 6.2.9200
+2015-10-12T14:16:40 <slim__> npm ERR! command "C:\\\\Program Files\\\
+odejs\\\
+ode.exe" "C:\\\\Program Files\\\
+odejs\\\
+ode_modules\\\
+pm\\\\bin\\\
+pm-cli.js" "update" "-g" "npm"
+2015-10-12T14:16:41 <slim__> npm ERR! cwd C:\\Users\\Steve
+2015-10-12T14:16:43 <slim__> npm ERR! node -v v0.10.40
+2015-10-12T14:16:44 <slim__> npm ERR! npm -v 1.4.28
+2015-10-12T14:16:46 <Bosmon> ok
+2015-10-12T14:16:46 <slim__> npm ERR! path C:\\Program Files\
+odejs\
+pm
+2015-10-12T14:16:47 <slim__> npm ERR! code EPERM
+2015-10-12T14:16:49 <slim__> npm ERR! errno 50
+2015-10-12T14:16:50 <slim__> npm ERR! stack Error: EPERM, open \'C:\\Program Files\
+odejs\
+pm\'
+2015-10-12T14:16:52 <slim__> npm ERR! error rolling back Error: EPERM, unlink \'C:\\Program Files\
+odejs\
+pm\'
+2015-10-12T14:16:53 <slim__> npm ERR! error rolling back  { [Error: EPERM, unlink \'C:\\Program Files\
+odejs\
+pm\']
+2015-10-12T14:16:55 <slim__> npm ERR! error rolling back   errno: 50,
+2015-10-12T14:16:55 <Bosmon> Did you try running it from an Administrator command prompt?
+2015-10-12T14:16:57 <slim__> npm ERR! error rolling back   code: \'EPERM\',
+2015-10-12T14:16:58 <slim__> npm ERR! error rolling back   path: \'C:\\\\Program Files\\\
+odejs\\\
+pm\' }
+2015-10-12T14:17:00 <slim__> npm
+2015-10-12T14:17:19 <slim__> yes I am admin
+2015-10-12T14:17:42 <slim__> oh, hold on was git bash - is tha ta problem?
+2015-10-12T14:17:47 <Bosmon> I can\'t explain why node only has 1.x versions of npm zips on their site, but that dir full of zips isn\'t the standard place for npm releases....
+2015-10-12T14:17:52 <Bosmon> node and npm are entirely separate organisations
+2015-10-12T14:18:28 <Bosmon> Actually it looks like that "download" tree hasn\'t been keep up to date with node either for more than a year
+2015-10-12T14:19:15 <slim__> yeah thats wha tI thought but followed from https://www.npmjs.com/, the installing npm link - doah!
+2015-10-12T14:19:55 <Bosmon> slim_ - it\'s awkward when the projects upstream from us keep randomly breaking stuff, hard-linking dependencies between themselves and moving things around, but we survive as best we can :)
+2015-10-12T14:19:59 <slim__> They do install node - but that\'s no good as we have to use 0.10.x
+2015-10-12T14:20:03 <Bosmon> Hopefully once we can get into the node 4 era things will calm down a bit
+2015-10-12T14:20:07 <slim__> phew
+2015-10-12T14:20:38 <Bosmon> See if you can get the npm update -g command to work somehow since this will be by far the most workable route
+2015-10-12T14:20:46 <slim__> so node/npm not on my admin path
+2015-10-12T14:20:50 <Bosmon> ok
+2015-10-12T14:21:20 <Bosmon> You could just try changing the permissions on your npm tree in C:\\Program Files\
+odejs\
+pm
+2015-10-12T14:21:30 <Bosmon> But of course this won\'t help other unfortunate Windows devs....
+2015-10-12T14:21:46 <slim__> actually \
+ode\\ is not node\\bin - weird
+2015-10-12T14:21:49 <Bosmon> I haven\'t yet found up to date npm dist zips, the link in their package.json is broken
+2015-10-12T14:22:00 <slim__> you think thats the problem - only one ofseveral erros reported
+2015-10-12T14:24:41 <Bosmon> slim_ - see if you can follow the instructions in https://github.com/npm/npm/wiki/Troubleshooting#upgrading-on-windows
+2015-10-12T14:26:17 <slim__> so one problem is the error above "C:\\Program Files\
+odejs\
+pm" is rubbish as have x86 version and am on x64.
+2015-10-12T14:26:17 <Bosmon> You got several errors but the EPERM one is the earliest and most fatal-seeming
+2015-10-12T14:26:22 <slim__> even thos instructions get it wrong
+2015-10-12T14:26:30 <slim__> agree
+2015-10-12T14:26:38 <Bosmon> slim_ - we only support x86 versions of node and dependencies
+2015-10-12T14:26:50 <Bosmon> YOu shouldn\'t try to install the x64 variants
+2015-10-12T14:27:08 <slim__> I know - but that path is assuming x64 version
+2015-10-12T14:27:15 <Bosmon> ok
+2015-10-12T14:27:17 <Bosmon> Yet more woes
+2015-10-12T14:27:36 <Bosmon> I guess if you ever installed an x64 node it would have screwed up your path
+2015-10-12T14:27:56 <Bosmon> A Windows machine can acquire quite a "history" : P
+2015-10-12T14:28:23 <slim__> perhaps I am using nvm-windows so have multiple versions and archs. This is a major pain. Long live node 4!
+2015-10-12T14:28:33 <Bosmon> To get you out of immediate trouble I could upload a zip of my npm installation, sec
+2015-10-12T14:28:38 <slim__> will unistall node and start again
+2015-10-12T14:28:41 <slim__> or use a VM
+2015-10-12T14:28:42 <slim__> sigh
+2015-10-12T14:28:42 <Bosmon> ok
+2015-10-12T14:28:56 <slim__> yes that would help
+2015-10-12T14:29:04 <slim__> and I\'ll stick it on path
+2015-10-12T14:29:41 <Bosmon> I think things are easier with a clean node install too, yes - I think avtar does actually have windows VMs that work, but today is still CANADIAN THANKSGIVING
+2015-10-12T14:32:04 <Bosmon> slim_ - here\'s my zipped entry from global node_modules/npm: http://ponder-public.s3.amazonaws.com/npm-2.13.0.zip
+2015-10-12T14:33:59 <slim__> and can you confirm which programe files nodejs is on?
+2015-10-12T14:35:26 <Bosmon> slim__ - unfortunately I manually copy around all my stuff on Windows to strange dirs so that I know exactly which versions I am running - but you should be using the x86 paths
+2015-10-12T14:36:01 <slim__> yes nvm-windows does that - use NTFS symblic too
+2015-10-12T14:36:06 <Bosmon> If you are in a cygwin shell you can at least type "which node" to know what you have
+2015-10-12T14:36:23 <slim__> I\'m gonna clean install node and update npm just so can dev
+2015-10-12T14:36:30 <Bosmon> ok cool
+2015-10-12T14:36:36 * kasparnet has quit
+2015-10-12T14:36:39 <slim__> yea - but which npm is failing :(
+2015-10-12T14:37:04 <Bosmon> If we can be sure exactly what the critera are for using npm update -g then we can update the wiki page
+2015-10-12T14:37:17 <Bosmon> which npm fails but npm still starts if you type npm?
+2015-10-12T14:38:24 <Bosmon> nvm-windows seems pretty mad, I\'m not surprised there are problems :)
+2015-10-12T14:38:29 <slim__> agree - actually way ahead of you. Actuall when I tried on other person last week I do not recall updating but it work with node 0.10.40. But who knows - path might have put npm before node version as had installed various versions
+2015-10-12T14:38:32 <Bosmon> Easier to just copy and rename files by hand : P
+2015-10-12T14:38:39 <slim__> such fun and games
+2015-10-12T14:39:13 <slim__> all it does is copy and symblink whic hI used to do my hand
+2015-10-12T14:39:33 <Bosmon> even symlinks are horrifying enough on Windows :)
+2015-10-12T14:39:36 <slim__> of course the x32 / x64 is an extra pain
+2015-10-12T14:39:49 <slim__> mklink works for me
+2015-10-12T14:40:12 <Bosmon> Yes, I guess they must work in theory
+2015-10-12T14:40:21 <Bosmon> Since apparently npm link now works on Windows
+2015-10-12T14:40:25 <slim__> agree though with copy you know where you are
+2015-10-12T14:40:25 <Bosmon> But I\'m too terrified to try it
+2015-10-12T14:40:40 <Bosmon> I need to get work done : P
+2015-10-12T14:40:54 <slim__> hehe - there be dragons ( aka junctions)
+2015-10-12T14:41:25 <Bosmon> I hope to be able to have us VERSION CLEAN by the end of the month
+2015-10-12T14:41:30 <Bosmon> On to node 4, npm 3, express 4 and Infusion 2
+2015-10-12T14:41:39 <Bosmon> But it\'s a big job
+2015-10-12T14:42:32 <slim__> me too - will respond on arch list
+2015-10-12T14:57:44 * kasparnet joined the channel
+2015-10-12T14:57:49 * the-t-in-rtf joined the channel
+2015-10-12T16:17:04 <slim__> Bosmon:
+2015-10-12T16:17:13 <slim__> I think I have got to the bottom of it
+2015-10-12T16:17:59 <slim__> kasparnet: ping
+2015-10-12T16:18:09 <Bosmon> slim_ - excellent
+2015-10-12T16:18:12 <kasparnet> slim__: oooh nice
+2015-10-12T16:18:19 <slim__> not really
+2015-10-12T16:18:23 <Bosmon> Does this shed light on how anyone can easily update their npm on Windows?
+2015-10-12T16:18:41 <slim__> kasparnet: are you on the windows PC that has rhe problem
+2015-10-12T16:19:12 <kasparnet> well - it was in my VM which was slow as hell, so tried it out on a different machine where I couldn\'t reproduce
+2015-10-12T16:19:23 <kasparnet> then back on my VM, i suddenly couldn\'t reproduce it again
+2015-10-12T16:19:30 <slim__> Bosmon: kasparnet I think the error I get is simply as it cannot run git
+2015-10-12T16:19:30 <kasparnet> after having deleted the node_modules folder
+2015-10-12T16:19:45 <slim__> for me git is not on the cmd path
+2015-10-12T16:19:50 <Bosmon> Ah fascinating
+2015-10-12T16:19:52 <slim__> I only access from bash
+2015-10-12T16:19:55 <Bosmon> And how did you get into that condition?
+2015-10-12T16:19:56 <Bosmon> Ok I see
+'
+

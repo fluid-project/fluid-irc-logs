@@ -1,0 +1,510 @@
+b"2018-08-02T17:46:39 <jhernandez> and on linux, as usually
+2018-08-02T17:48:32 <Bosmon> jhernandez - probably the functionality wasn't in at that point
+2018-08-02T17:48:35 <Bosmon> Try upgrading to 2.2.0
+2018-08-02T17:49:31 <Bosmon> jhernandez - yes, functionality was first introduced in 2.1.0
+2018-08-02T17:50:06 * michelled joined the channel
+2018-08-02T17:50:42 * jhernandez looking for a whip
+2018-08-02T17:53:15 <jhernandez> okay, now it's fine
+2018-08-02T17:53:20 <jhernandez> npm version --no-git-tag-version 0.3.0-dev.20180802T173948Z.6f9984a2.feds-audit
+2018-08-02T17:53:44 <jhernandez> this time I added the --test parameter
+2018-08-02T18:02:58 * alanharnum has quit
+2018-08-02T18:03:24 * alanharnum joined the channel
+2018-08-02T18:11:20 * jhernandez has quit
+2018-08-02T18:26:05 <Justin_o> Bosmon: sorry i missed the message. glad it was just needing to update to the latest version
+2018-08-02T18:26:47 * jhernandez joined the channel
+2018-08-02T18:27:46 <Justin_o> Bosmon: also noticed that the PR for reseting the package-lock.json file was closed. I saw that you mentioned we shouldn't commit it. I don't think I fully understand the reason for having the package-lock file. But am wondering if we don't want to commit it, we should probably gitignore it so that we do accidentally commit it.
+2018-08-02T18:41:23 * alanharnum joined the channel
+2018-08-02T18:44:30 <Bosmon> Justin_o - I believe we already do
+2018-08-02T18:44:40 <Bosmon> At least in the projects we have dealt with so far ...
+2018-08-02T18:44:52 <Justin_o> okay, so we should do the opportunistically i guess?
+2018-08-02T18:50:29 <Justin_o> Bosmon: by the way, i've been plugging away at option 2 that uses the message passing approach for dealing with the YouTube captions in UIO+. I actually just got something working that doesn't require externally hosting the code. We can serve web accessible code from the extension actually. The major drawback that i've encountered though is that because we are messaging the web page with the preferences to set, those
+2018-08-02T18:50:29 <Justin_o> preferences are exposed to the web page
+2018-08-02T18:50:51 <Bosmon> Justin_o - doesn't seem avoidable
+2018-08-02T18:51:10 <Justin_o> not using this approach no
+2018-08-02T18:51:51 <Bosmon> I don't believe it's really avoidable even in theory
+2018-08-02T18:52:08 <Bosmon> I don't believe in the protection domains offered by JavaScript, browers, or even operating systems : P
+2018-08-02T18:52:51 <Justin_o> you're probably right not to trust them
+2018-08-02T18:55:30 * alanharnum has quit
+2018-08-02T19:16:46 * alanharnum joined the channel
+2018-08-02T19:21:35 * michelled has quit
+2018-08-02T19:33:02 * sepidehshahi has quit
+2018-08-02T19:37:09 * gtirloni_ has quit
+2018-08-02T19:40:50 * jeevan_ joined the channel
+2018-08-02T20:05:16 * michelled joined the channel
+2018-08-02T20:08:46 * cindyli joined the channel
+2018-08-02T20:16:49 * sepidehshahi joined the channel
+2018-08-02T20:28:48 * jeevan_ has quit
+2018-08-02T20:47:12 * cindyli has quit
+2018-08-02T20:49:09 * alanharnum joined the channel
+2018-08-02T20:49:13 * jhung has quit
+2018-08-02T21:25:19 * alanharnum has quit
+2018-08-02T21:25:45 * alanharnum joined the channel
+2018-08-02T21:29:34 * alanharnum has quit
+2018-08-02T21:29:41 * alanharnum joined the channel
+2018-08-02T21:33:59 * jhernandez has quit
+2018-08-02T21:36:25 * avtar has quit
+2018-08-02T21:37:13 * mrtyler joined the channel
+2018-08-02T21:59:28 * cindyli joined the channel
+2018-08-02T22:10:12 * colinclark_ joined the channel
+2018-08-02T22:10:14 * colinclark_ is now known as colinclark
+2018-08-02T22:30:49 * cindyli has quit
+2018-08-02T22:41:33 * cindyli joined the channel
+2018-08-02T23:09:25 <cindyli> hi Bosmon, r u there
+"
+
+b'2018-08-02T14:25:51 <stegru> that script will be out of date by now ;)
+2018-08-02T14:26:37 <jhernandez> yes
+2018-08-02T14:27:43 <jhernandez> colinclark: dude, you should be arrived a fee minutes earlier for the branch baptism
+2018-08-02T14:27:48 <jhernandez> :P
+2018-08-02T14:28:28 * jhernandez has quit
+2018-08-02T14:32:38 * jhernandez joined the channel
+2018-08-02T14:34:26 * jhernandez has quit
+2018-08-02T14:35:27 * jhung joined the channel
+2018-08-02T14:36:04 * danayo joined the channel
+2018-08-02T14:37:33 <Bosmon> cindyli, dandimitrov - I\'m wondering about the "isReset" fix that cindyli just made
+2018-08-02T14:37:51 <Bosmon> Hadn\'t we decided that the appropriate way of resetting the system was simply to log out the current user?
+2018-08-02T14:38:27 <cindyli> Bosmon: yes, the issue occurs when "noUser" is keyed in and a reset request is sent
+2018-08-02T14:38:37 <cindyli> the old logic will logout "noUser"
+2018-08-02T14:39:03 <cindyli> without logging "noUser" back in
+2018-08-02T14:40:12 <Bosmon> cindyli - ok, I think I see
+2018-08-02T14:40:18 <cindyli> this was caused by this line of code: https://github.com/cindyli/universal/blob/GPII-3193/gpii/node_modules/flowManager/src/UserLogonStateChange.js#L95
+2018-08-02T14:40:26 <Bosmon> Just one more thing that will need to be demolished once we refactor the login model.....
+2018-08-02T14:40:32 <cindyli> before, there\'s only one condition: gpiiKey !== "noUser"
+2018-08-02T14:40:59 <cindyli> to prevent proximityTrigger gets into infinite loops
+2018-08-02T14:41:16 <cindyli> which will also stop "noUser" being logged back in
+2018-08-02T14:41:31 <cindyli> the fix is to add the 2nd condition: gpiiKey === "noUser" && isReset
+2018-08-02T14:42:12 <dandimitrov> Bosmon, cindyli: keying out should reset the system but are QSS setting values being sent to the PSP :?
+2018-08-02T14:42:21 <cindyli> this logic will be fixed in the new implementation when we have a queue to check against
+2018-08-02T14:42:34 <dandimitrov> I can\xe2\x80\x99t remember whether the \xe2\x80\x9cnoUser\xe2\x80\x9d have any settings on his own
+2018-08-02T14:42:47 <cindyli> noUser doesn\'t have any settings on its own
+2018-08-02T14:42:51 <Bosmon> dandimitrov - there will currently be no settings
+2018-08-02T14:43:18 <Bosmon> Once cindyli turns back to her snapshotting work there will be a new flag in the "settingsControl" structure indicating whether it originated from a user preference or from a snapshot
+2018-08-02T14:43:45 <Bosmon> But this will not be ready in time for tomorrow
+2018-08-02T14:44:15 <Bosmon> Also, cindyli will be away for Monday-Wednesday next week, so we will just concentrate for now on fixing immediate issues for tomorrow\'s testing release
+2018-08-02T14:45:07 <cindyli> dandimitrov: #3 has been fixed and pushed up. working on #1
+2018-08-02T14:45:49 <dandimitrov> Bosmon: I understand
+2018-08-02T14:46:47 <dandimitrov> cindyli: great, thank you
+2018-08-02T15:01:06 * alanharnum joined the channel
+2018-08-02T15:11:18 * yuriy__ joined the channel
+2018-08-02T15:13:39 * avtar has quit
+2018-08-02T15:14:01 * jessm joined the channel
+2018-08-02T15:14:45 * yuriy has quit
+2018-08-02T15:27:50 * sepidehshahi_ joined the channel
+2018-08-02T15:30:25 * sepidehshahi_ is now known as sepidehshahi
+2018-08-02T15:36:24 * dandimitrov has quit
+2018-08-02T15:36:33 * colinclark has quit
+2018-08-02T15:38:14 * colinclark joined the channel
+2018-08-02T15:43:26 * mrtyler joined the channel
+2018-08-02T15:43:27 * sepidehshahi has quit
+2018-08-02T15:58:51 * jhernandez joined the channel
+2018-08-02T15:59:28 * jhernandez has quit
+2018-08-02T15:59:42 * jhernandez joined the channel
+2018-08-02T16:01:29 * danayo has quit
+2018-08-02T16:09:08 * sepidehshahi joined the channel
+2018-08-02T16:19:56 * yuriy__ has quit
+2018-08-02T16:23:12 <Bosmon> Hi there cindyli - how are you getting on?
+2018-08-02T16:24:01 <cindyli> Bosmon: i think i found why updated settings are not applied
+2018-08-02T16:24:06 <Bosmon> cindyli - oh awesome
+2018-08-02T16:24:22 <cindyli> let me find the code
+2018-08-02T16:25:10 <cindyli> the problem is with this line - https://github.com/GPII/universal/blob/master/gpii/node_modules/lifecycleManager/src/LifecycleManager.js#L245
+2018-08-02T16:25:28 <cindyli> it updates the inferred configuration based on the new prefs
+2018-08-02T16:25:57 <cindyli> however, one parameter uses session.model.matchMakerOutput.inferredConfiguration, which is the old inferredConfiguration returned from the cloud
+2018-08-02T16:26:17 <cindyli> this block only contains inferred config related to users old preferences
+2018-08-02T16:26:48 <cindyli> so, if old prefs are updated, there\'s no problem to generate new infers
+2018-08-02T16:27:27 <cindyli> if there are new prefs that requires new solutions being added to the model.preferences, the infer config for new ones never exist in session.model.matchMakerOutput.inferredConfiguration
+2018-08-02T16:27:37 <cindyli> the new infer would not be able to generated
+2018-08-02T16:28:16 <cindyli> since the matchmaking is happening in the cloud, i think the proper fix might be to send another request to the cloud to get new lifecycle instruction
+2018-08-02T16:28:29 <cindyli> but this is too much to do for today or tomorrow
+2018-08-02T16:28:44 <cindyli> a quick fix i\'m thinking is to do a round of matchmakingn locally
+2018-08-02T16:29:29 <cindyli> i\'m studying "processMatch" again to understand how to do it locally
+2018-08-02T16:30:16 <cindyli> do you have a more simple solution, Bosmon?
+2018-08-02T16:31:21 <cindyli> so the problem is not that just with a key having or not having pre-set prefs
+2018-08-02T16:31:41 <Bosmon> cindyli - yes, I suspected we would find something like this
+2018-08-02T16:31:53 <Bosmon> Given this was exactly the function we were looking at this morning
+2018-08-02T16:31:56 <cindyli> all new prefs need to be processed by applyPreferenecs() will not be applied on local computer
+2018-08-02T16:32:35 <Bosmon> cindyli - can you rephrase that
+2018-08-02T16:32:49 <Bosmon> Do you mean, all new prefs that are not applied by applyPreferences() will not be applied?
+2018-08-02T16:32:56 <cindyli> yes
+2018-08-02T16:33:10 <Bosmon> Yes
+2018-08-02T16:33:14 <cindyli> new prefs will not get newInferred returned
+2018-08-02T16:33:24 <cindyli> only existing prefs will get new inferred
+2018-08-02T16:33:46 <Bosmon> I was starting to realise as we traced this through this morning that there are a lot of assumptions in our core workflow that tie settings updates to matchmaking
+2018-08-02T16:34:21 <Bosmon> cindyli - so yes, please go ahead and produce some "hard-coded canned matchmaking" to support the particular settings which are updated by the QSS
+2018-08-02T16:34:34 <cindyli> ok
+2018-08-02T16:36:23 <Bosmon> I guess in fact you will have to make sure currently to make sure that "model.preferences" is *not* updated otherwise there is a risk that this might get saved to the cloud
+2018-08-02T16:36:39 <Bosmon> At least with updating inferredConfiguration itself there is not that risk
+2018-08-02T16:38:00 <cindyli> if a key is keyed in and the user use QSS to add/update settings, these changed settings should be saved to the cloud, right?
+2018-08-02T16:38:06 <Bosmon> cindyli - yes
+2018-08-02T16:38:08 <cindyli> of course, "noUser" is exceptional
+2018-08-02T16:38:20 <Bosmon> But we should not attempt to save anything that we acquired through the initial snapshot
+2018-08-02T16:38:21 <cindyli> ok. that should be fine then
+2018-08-02T16:38:27 <cindyli> right
+2018-08-02T16:38:33 <Bosmon> But that is not relevant for today\'s work
+2018-08-02T16:38:37 <cindyli> yes
+2018-08-02T16:38:53 <cindyli> i won\'t manually change model.preferences with this work
+2018-08-02T16:42:05 * colinclark has quit
+2018-08-02T16:43:12 * danayo joined the channel
+2018-08-02T17:00:20 * avtar joined the channel
+2018-08-02T17:01:47 <jhernandez> Bosmon, the-t-in-rtf: finally, I can reproduce the problem locally
+2018-08-02T17:01:59 <jhernandez> I had to wipe out my vm and start over again
+2018-08-02T17:02:42 <jhernandez> so gpii-universal doesn\'t end up in node_modules but in node_modules/gpii-windows/node_modules/gpii-universal
+2018-08-02T17:03:34 <jhernandez> as I said earlier, not sure if having npm refs (rather than git refs) would change anything
+2018-08-02T17:04:09 <the-t-in-rtf> It\'s an interesting question, you could certainly temporarily switch to npm refs and just rerun npm install to see.
+2018-08-02T17:04:25 <jhernandez> as the-t-in-rtf said, we can just add gpii-universal into gpii-app\'s package.json
+2018-08-02T17:05:05 <the-t-in-rtf> I still think that\'s the smartest option.
+2018-08-02T17:05:13 <jhernandez> the-t-in-rtf: yeah, but I would need to publish dev versions of both universal and windows from our shiny new feds-audit branches
+2018-08-02T17:05:35 <the-t-in-rtf> not really, you could just use existing versions for the test I have in mind.
+2018-08-02T17:05:53 <the-t-in-rtf> You\'re just switching them, blowing away node_modules, running npm install, and examining the contents of your new node_modules directory
+2018-08-02T17:05:58 <the-t-in-rtf> you wouldn\'t actually run tests that way.
+2018-08-02T17:06:16 <the-t-in-rtf> I suspect it won\'t make a difference and it\'s easy to check
+2018-08-02T17:06:47 <the-t-in-rtf> it\'d be nice to have even informal evidence for when/why these things get pulled up vs. left in a child dependency\'s node_modules directory.
+2018-08-02T17:06:53 <jhernandez> the-t-in-rtf: yeah, the only drawback of adding universal into gpii-app\'s package.json is that we have to remember to update both windows and gpii-app to point the same universal
+2018-08-02T17:07:09 * jhernandez nods
+2018-08-02T17:08:10 * gtirloni_ joined the channel
+2018-08-02T17:10:27 * gtirloni has quit
+2018-08-02T17:11:27 <jhernandez> the-t-in-rtf: I\'ll try that, I\'m curious about what\'s going on
+2018-08-02T17:13:51 <the-t-in-rtf> great, curious to hear what you find out.
+2018-08-02T17:14:38 <jhernandez> oops, deleted the resulting package-lock.json file from the last run
+2018-08-02T17:15:12 <jhernandez> at least I renamed the previous node_modules so I can see the differences in there
+2018-08-02T17:19:15 <Bosmon> jhernandez - yes, I guess in retrospect we have had this issue many times before
+2018-08-02T17:19:22 <Bosmon> Which is why we decided to stop using git references
+2018-08-02T17:19:31 <Bosmon> I\'m sorry, we should have remembered this more clearly before
+2018-08-02T17:20:10 <Bosmon> the-t-in-rtf - I think there\'s plenty of evidence that npm\'s deduping algorithm doesn\'t play nicely with git dependencies
+2018-08-02T17:20:23 <Bosmon> It becomes very confused by the fact that they share versions in package.json but are in fact different
+2018-08-02T17:20:33 <Bosmon> This kind of thing will screw up its cache as well, and we should continue to remember not to do it
+2018-08-02T17:21:44 <the-t-in-rtf> yes, I agree that they are a kind of poison.
+2018-08-02T17:21:59 <the-t-in-rtf> I just wanted to know if they were responsible for this ailment
+2018-08-02T17:22:39 <Bosmon> the-t-in-rtf - I\'m completely sure they are, but there\'s no harm in gathering more evidence
+2018-08-02T17:31:02 <jhernandez> npm just finished, and yes, by using npm refs everything is on the right place
+2018-08-02T17:31:16 <jhernandez> this is, universal ends up in node_modules
+2018-08-02T17:31:38 <jhernandez> Bosmon: and yes, I wasn\'t completely sure, that\'s why I was asking
+2018-08-02T17:31:40 <jhernandez> okay
+2018-08-02T17:32:14 <Bosmon> We did a lot of work to get ourselves out of the git-ref era : p
+2018-08-02T17:32:22 <Bosmon> Let\'s not sink back into it
+2018-08-02T17:32:31 <jhernandez> so, I\'ll merge cindy\'s noUser branch into universal and ASTEA\'s into gpii-app
+2018-08-02T17:33:04 <Bosmon> jhernandez - into the feds-audit branches, you mean?
+2018-08-02T17:33:12 <jhernandez> yup
+2018-08-02T17:34:23 <jhernandez> this way I can drop the git refs and try building an installer with what we have today
+2018-08-02T17:34:36 <Bosmon> jhernandez - very good
+2018-08-02T17:35:19 <jhernandez> Bosmon: for creating releases from the feds branch with fluid publish, all I need to to is to execute fluid-publish and it will take into account the branch I\'m releasing from, isn\'t it?
+2018-08-02T17:35:42 <Bosmon> jhernandez - that is correct, yes
+2018-08-02T17:35:43 <jhernandez> this is, it\'ll add the feds-audit suffix
+2018-08-02T17:35:47 <jhernandez> okay
+2018-08-02T17:35:49 <jhernandez> coolie
+2018-08-02T17:35:52 <jhernandez> *coolio
+2018-08-02T17:35:57 <jhernandez> on to it
+2018-08-02T17:37:09 * colinclark joined the channel
+2018-08-02T17:38:44 * simonjb has quit
+2018-08-02T17:43:33 <jhernandez> Bosmon: oops, didn\'t happen that way (and sorry for not passing the --test before)
+2018-08-02T17:44:03 <jhernandez> it ended up being 0.3.0-dev.20180802T173948Z.6f9984a2, without the suffix
+2018-08-02T17:44:07 <jhernandez> :/
+2018-08-02T17:44:36 <Bosmon> jhernandez - well, that\'s odd
+2018-08-02T17:44:39 <Bosmon> It\'s always worked for me before
+2018-08-02T17:45:00 <Bosmon> Justin_o - can you think that there might be any sensitivity about the structure of the name of a branch?
+2018-08-02T17:46:17 <jhernandez> if it helps, I\'m on fluid-publish 2.0.0
+'
+
+b'2018-08-02T10:59:43 <jhernandez> the-t-in-rtf: nop, re-tried locally, can\'t reproduce it - I asked Alfredo to run it locally
+2018-08-02T11:00:03 <jhernandez> let\'s see what results he get
+2018-08-02T11:03:17 <the-t-in-rtf> I meant adding the dep and committing to see if CI works.
+2018-08-02T11:03:32 <the-t-in-rtf> but I don\'t blame you for continuing to try to reproduce things locally. that definitely is faster to troubleshoot.
+2018-08-02T11:06:29 * Justin_o joined the channel
+2018-08-02T11:12:19 <jhernandez> yeah
+2018-08-02T11:12:52 <jhernandez> adding the dep is my last card
+2018-08-02T11:13:27 <jhernandez> I have to switch trains, will be off for half an hour or so
+2018-08-02T11:13:35 * jhernandez has quit
+2018-08-02T11:29:47 * dandimitrov has quit
+2018-08-02T11:32:47 * dandimitrov joined the channel
+2018-08-02T11:56:10 * cindyli joined the channel
+2018-08-02T12:04:17 <Justin_o> Bosmon: hello, are you free to meet to talk about UIO+ and YouTube captions?
+2018-08-02T12:04:27 <Justin_o> Bosmon: also, was this JIRA supposed to have been filed against Infusion https://issues.gpii.net/browse/GPII-3252
+2018-08-02T12:04:27 <georgitodorov> Bosmon, jhernandez, stegru, cindyli: In order to have a functional PSP/QSS for the demo in mid-August, the following things remain to be done on the Core\xe2\x80\x99s end:
+2018-08-02T12:04:37 <georgitodorov> 1. Apply QSS settings when there is no keyed in user (i.e. when the \xe2\x80\x9cnoUser\xe2\x80\x9d is keyed in)
+2018-08-02T12:04:45 <georgitodorov> 2. Provide a snapshot of the system\xe2\x80\x99s settings at the startup of the QSS so that the QSS settings can be reverted to these values when keying out
+2018-08-02T12:04:52 <georgitodorov> 3. If there is no user keyed in (i.e. the \xe2\x80\x9cnoUser\xe2\x80\x9d is keyed in) and a reset command (i.e. key out) is sent to the Core, the \xe2\x80\x9cnoUser\xe2\x80\x9d is not keyed back in automatically
+2018-08-02T12:05:01 <georgitodorov> 4. If the value of the \xe2\x80\x9cSupport Tools\xe2\x80\x9d setting is changed, the new value is not saved (used to be saved when the 0.3.0-dev.20180725T122921Z.8721e27 version of \xe2\x80\x9cgpii-windows\xe2\x80\x9d was used
+2018-08-02T12:05:08 <georgitodorov> 5. Integrate the \xe2\x80\x9cApp / Text Zoom\xe2\x80\x9d functionality
+2018-08-02T12:05:19 <georgitodorov> 6. Add support for additional setting values in the solutions registry (https://issues.gpii.net/browse/GPII-3202) - available in two PRs that need to be merged?
+2018-08-02T12:05:27 <georgitodorov> 7. (not critical for now, can be postponed) If integration tests in the PSP execute too quickly, a socket on the Core\xe2\x80\x99s end hangs up unexpectedly which results in the next integration tests failing.
+2018-08-02T12:05:33 <georgitodorov> We were wondering what the progress of these items is and whether they will be ready for tomorrow so that we can start integrating them on our end. If you would like, we can discuss the list and the possible further steps at a brief call today.
+2018-08-02T12:08:38 <stegru> georgitodorov: I can take #5 - expect a PR in an hour or so, and there\'s a 3rd PR for #6
+2018-08-02T12:09:53 <cindyli> georgitodorov: i\'m working on 1 & 2, hopefully to get them ready today. will fix 3 too
+2018-08-02T12:11:21 <cindyli> 4 should be on my list too
+2018-08-02T12:12:34 <georgitodorov> cindyli: Do you have a vision of what the snapshot will be like and when it will be sent to the PSP? We can start integrating this on our end without the actual functionality being ready.
+2018-08-02T12:13:09 <georgitodorov> Not integrating but prepare to integrate it :)
+2018-08-02T12:13:36 <cindyli> checking..
+2018-08-02T12:15:54 <cindyli> georgitodorov: with my so far implementation, it looks like - https://pastebin.com/wsrYT7r7, but i need to check with Bosmon if this should the expected structure
+2018-08-02T12:18:28 <georgitodorov> cindyli: The QSS uses the path\'s of the corresponding settings. For example, for DPI: http://registry\\\\.gpii\\\\.net/common/DPIScale
+2018-08-02T12:18:51 <georgitodorov> I see that in your implementation the DPI is referred to as com.microsoft.windows.screenDPI
+2018-08-02T12:20:01 <georgitodorov> Is there a particular reason not to use the first format and if so, is there something on the Core\'s end that we can use to transform between QSS keys and the keys in your implementation?
+2018-08-02T12:20:34 <cindyli> i will do the transformation
+2018-08-02T12:25:13 * dandimitrov has quit
+2018-08-02T12:26:46 <cindyli> georgitodorov: shall the "settings" level be removed too? the transformed structure will look like: https://pastebin.com/T9j3U0A3
+2018-08-02T12:31:58 * gtirloni joined the channel
+2018-08-02T12:33:01 * alanharnum joined the channel
+2018-08-02T12:38:34 <georgitodorov> cindyli: I think that the settings level is unnecessary, yes. Can we use something like this: https://pastebin.com/kade4Jah?
+2018-08-02T12:39:30 <georgitodorov> Because the PSP is a thin client and it does not actually know that "HighContrastOn" is a setting for the "HighContrast"
+2018-08-02T12:45:51 <stegru> georgitodorov: I\'m no longer doing #5 (zoom integration) - I don\'t have enough understanding of the qss. The core code is complete, however
+2018-08-02T12:45:58 <cindyli> Bosmon: it seems we do need matchmaking to map "HighContrastOn" back to "http://registry\\\\.gpii\\\\.net/common/highContrast/enabled"
+2018-08-02T12:47:31 <cindyli> shall i hardcode these mappings too?
+2018-08-02T12:48:05 <Bosmon> cindyli - yes, I think so - just write a big JSON structure that encodes our "skeleton matchmaker"
+2018-08-02T12:48:15 <georgitodorov> stegru: Can I have a link to the branch? What is the path of the "App / Text Zoom" setting? What are its possible values?
+2018-08-02T12:48:40 <Bosmon> cindyli - but your structure does agree with the one that will accept updates from the PSP API, right?
+2018-08-02T12:49:28 <stegru> it\'s not a setting, georgitodorov. it\'s a function to call
+2018-08-02T12:49:53 <Bosmon> georgitodorov - as agreed with Gregg, there are no "values" to this setting
+2018-08-02T12:49:58 <cindyli> Bosmon: which structure?
+2018-08-02T12:50:06 <Bosmon> All there is a function which will increase the zoom, and one which will decrease it
+2018-08-02T12:50:14 <Bosmon> cindyli - the one in https://pastebin.com/wsrYT7r7
+2018-08-02T12:50:31 <Bosmon> This agrees with the structure which is currently accepted by model.preferences in the lifecycleManager\'s session, right?
+2018-08-02T12:50:58 <stegru> georgitodorov: here\'s the app zoom anyway: https://github.com/GPII/windows/pull/188
+2018-08-02T12:51:28 <georgitodorov> stegru, Bosmon: In this case the mechanism for changing this setting should be different from the one employed for other QSS settings?
+2018-08-02T12:51:29 <cindyli> Bosmon: you mean this structure should be same as the structure of model.preferences?
+2018-08-02T12:51:38 <Bosmon> cindyli - you mean it\'s not?
+2018-08-02T12:51:41 <Bosmon> Where are you storing it then?
+2018-08-02T12:52:19 <Bosmon> cindyli - bear in mind that this is the function which is going to transform your structure for the use of the PSP: https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/PSPChannel.js#L184
+2018-08-02T12:52:27 <cindyli> they will go into session model.originalSettings
+2018-08-02T12:52:36 <Bosmon> cindyli - but they are useless to the PSP there
+2018-08-02T12:52:39 <Bosmon> It actually needs the values
+2018-08-02T12:53:12 <Bosmon> cindyli - ok, so this agrees with originalSettings
+2018-08-02T12:53:16 <Bosmon> But you also need to update preferences
+2018-08-02T12:54:46 <cindyli> Bosmon: this is a good reminder. i totally forgot originalSettings will go thru gpii.pspChannel.sessionToPSP() as session model.preferences
+2018-08-02T12:54:53 <cindyli> need to look a bit more into it
+2018-08-02T12:55:05 <Bosmon> cindyli - I don\'t think originalSettings goes through this channel
+2018-08-02T12:55:15 <Bosmon> cindyli - it\'s just that you need to store the settings in two places
+2018-08-02T12:55:23 <Bosmon> Just as the "snapshotter" function we looked at yesterday does
+2018-08-02T12:55:30 * jhernandez joined the channel
+2018-08-02T12:55:38 <Bosmon> georgitodorov - yes, the mechanism for changing this setting will be different to all others
+2018-08-02T12:55:56 * dandimitrov joined the channel
+2018-08-02T12:56:56 <Bosmon> georgitodorov - Just to confim - the way the QSS writes settings is that it writes to the preference session directly, even though there is no corresponding PSP "settingControl"?
+2018-08-02T12:58:05 * michelled joined the channel
+2018-08-02T12:58:50 * sepidehshahi joined the channel
+2018-08-02T12:59:07 <georgitodorov> Bosmon: It actually uses the same approach that the PSP does - it sends a message to the pspChannel
+2018-08-02T12:59:25 <Bosmon> georgitodorov - yes cool
+2018-08-02T12:59:48 <Bosmon> I see everything still goes through this function, right? https://github.com/GPII/gpii-app/pull/48/files#diff-dd3d9001594fe1211a332abc9fa79228R99
+2018-08-02T13:00:14 <Bosmon> cindyli - you should arrange the mapping of the settings into the session so that this approach works
+2018-08-02T13:00:16 <georgitodorov> Bosmon: Yes
+2018-08-02T13:01:26 <cindyli> mapping of session.model.originalSettings?
+2018-08-02T13:01:29 <Bosmon> As we established before, the paths that the QSS actually uses are encoded here: https://github.com/GPII/gpii-app/pull/48/files#diff-854e7c96442be6cafe779083bd503d63R1
+2018-08-02T13:02:39 <Bosmon> cindyli - no
+2018-08-02T13:02:55 <Bosmon> cindyli - remember to look at this function: https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/PSPChannel.js#L184
+2018-08-02T13:03:49 <Bosmon> This is where you are going to have to read the "provenance" information that you will write in the updated snapshotter function we talked about
+2018-08-02T13:04:34 <cindyli> Bosmon: so, this function needs to consolidate originalSettings and preferences and come up with one preferences that contains all paths with values
+2018-08-02T13:04:43 <Bosmon> cindyli - no
+2018-08-02T13:04:56 <Bosmon> cindyli - I think we need to have a call : P
+2018-08-02T13:05:03 <cindyli> skype
+2018-08-02T13:05:38 <Justin_o> Bosmon: when you\'re finished chatting with Cindy, can we chat about YouTube captions in UIO+?
+2018-08-02T13:06:15 <georgitodorov> stegru: As far as I can see, I need to call the `sendZoom` invoker of the `gpii.windows.appZoom` component with an "increase" or "decrease" as an argument
+2018-08-02T13:07:16 <stegru> yeh, georgitodorov
+2018-08-02T13:07:17 <georgitodorov> stegru: Does a component with this grade exist somewhere in the component tree?
+2018-08-02T13:07:32 <stegru> it can do, if you want it to
+2018-08-02T13:08:21 <georgitodorov> stegru: Is the idea that the PSP should instantiate this component and call its `sendZoom` invoker?
+2018-08-02T13:08:31 <stegru> yes, georgitodorov
+2018-08-02T13:08:59 <Bosmon> stegru - ideally we should just instantiate this component already in the flowManager
+2018-08-02T13:09:05 <Bosmon> And ahve the PSP tinker with it from there
+2018-08-02T13:09:11 <stegru> ok
+2018-08-02T13:10:24 * klown joined the channel
+2018-08-02T13:16:12 * simonjb joined the channel
+2018-08-02T13:16:41 * g2szeto joined the channel
+2018-08-02T13:33:08 * dandimitrov has quit
+2018-08-02T13:33:28 * dandimitrov joined the channel
+2018-08-02T13:42:28 * dandimitrov has quit
+2018-08-02T13:46:49 * avtar joined the channel
+2018-08-02T13:50:33 <cindyli> georgitodorov: after a discussion with Bosmon, i\'m going to put snapshotter on hold and start to work on #3, and the issue that updated settings are not applied if that setting is not in the user preferences
+2018-08-02T13:55:39 * dandimitrov joined the channel
+2018-08-02T13:56:11 <georgitodorov> cindyli: Okay, thank you for the update. Could you please send us an email at the end of your working day today with your progress together with any branches that we need to use and any other information you consider useful? This would make it possible for us to start integrating the functionalities as soon as we come to work tomorrow morning.
+2018-08-02T13:57:33 <cindyli> sure, georgitodorov
+2018-08-02T13:58:30 * dandimitrov has quit
+2018-08-02T13:58:34 <Bosmon> jhernandez - so you have a "release branch" of universal now, that we can use to pool all of this work?
+2018-08-02T13:58:44 * dandimitrov joined the channel
+2018-08-02T13:59:28 <jhernandez> Bosmon: not yet, in fact I was going to ask you to create one for each repo
+2018-08-02T13:59:38 <jhernandez> do we still want to call it "cloud-one"?
+2018-08-02T14:00:02 <Bosmon> jhernandez - May as well
+2018-08-02T14:00:25 <jhernandez> I can definitely create them and start pulling from all people\'s branches
+2018-08-02T14:00:36 <Bosmon> jhernandez - although it seems we are somewhat creating a release "before" this one
+2018-08-02T14:00:58 <jhernandez> exactly, that\'s why asked
+2018-08-02T14:01:02 <Bosmon> In that there is some of cindy\'s early work that is not going to go into core in its current form
+2018-08-02T14:01:16 <Bosmon> So perhaps we should first create branches for something like "federal-audit"
+2018-08-02T14:01:37 <Bosmon> I guess it doesn\'t really matter
+2018-08-02T14:01:41 <jhernandez> yup
+2018-08-02T14:01:43 <jhernandez> okay
+2018-08-02T14:01:44 <Bosmon> May as well be cloud-one
+2018-08-02T14:02:18 * georgitodorov has quit
+2018-08-02T14:02:53 <jhernandez> as you will, my only concern is that we may end up putting things on branches that later can be a pain the ass to get rid of them
+2018-08-02T14:03:29 <jhernandez> such as Cindy\'s noUser branch
+2018-08-02T14:03:31 <jhernandez> dunno
+2018-08-02T14:04:15 * georgitodorov joined the channel
+2018-08-02T14:04:21 * georgitodorov has quit
+2018-08-02T14:06:42 <jhernandez> okay, I\'ll create the "feds-audit" branches for our repos and start merging stuff
+2018-08-02T14:13:46 * colinclark joined the channel
+2018-08-02T14:15:33 * alanharnum has quit
+2018-08-02T14:19:59 <jhernandez> Bosmon, stegru, cindyli, dandimitrov: (and any other interested) I have just created the "feds-audit" branches for universal, windows and gpii-app
+2018-08-02T14:20:08 <jhernandez> I also created this pad https://pad.gpii.net/p/feds-audit-august-2018-lye4n8z
+2018-08-02T14:20:27 <jhernandez> in order for us to keep track of what gets in, what\'s needed, etc
+2018-08-02T14:20:30 <stegru> nice one
+2018-08-02T14:20:40 <cindyli> cool. thanks
+2018-08-02T14:20:53 <jhernandez> feel free to add anything you consider relevant to it
+2018-08-02T14:20:58 <cindyli> sure
+2018-08-02T14:21:03 <dandimitrov> jhernandez: great, thank you
+2018-08-02T14:22:13 <Bosmon> Thanks very much jhernandez
+2018-08-02T14:22:39 <stegru> are Gregg\'s desires listed anywhere?
+2018-08-02T14:23:34 <jhernandez> haha
+2018-08-02T14:24:09 <jhernandez> what about OUR desires\xc2\xbf!
+2018-08-02T14:24:09 <jhernandez> :P
+2018-08-02T14:25:14 <colinclark> that\'s a hilarious branch name
+2018-08-02T14:25:18 <Bosmon> Well, there is the demo script for what he wants to be able to run through on 15th
+2018-08-02T14:25:26 <Bosmon> I can\'t lay may hands on it immediately
+2018-08-02T14:25:50 <jhernandez> stegru: now being serious, yes, we can add links to the docs with the  wishlist
+'
+
+b'2018-08-02T01:12:42 * mrtyler joined the channel
+2018-08-02T03:38:27 * sepidehshahi joined the channel
+2018-08-02T05:41:01 * the-t-in-rtf joined the channel
+2018-08-02T05:43:14 * mrtyler joined the channel
+2018-08-02T06:11:08 * jhernandez has quit
+2018-08-02T06:35:08 * mrtyler has quit
+2018-08-02T06:38:22 * mrtyler joined the channel
+2018-08-02T06:44:26 * mrtyler has quit
+2018-08-02T06:55:22 * mrtyler joined the channel
+2018-08-02T07:37:06 * georgitodorov joined the channel
+2018-08-02T08:49:20 * dandimitrov joined the channel
+2018-08-02T08:57:35 * jhernandez joined the channel
+2018-08-02T08:58:33 <jhernandez> dandimitrov: morning
+2018-08-02T08:59:51 <jhernandez> the build now works, but now we have problems with the tests https://github.com/GPII/gpii-app/pull/53
+2018-08-02T09:00:22 <dandimitrov> jhernandez: Morning
+2018-08-02T09:00:46 <dandimitrov> hmm, \xe2\x80\x9cCannot find module gpii-universal\xe2\x80\x9d
+2018-08-02T09:01:24 <jhernandez> yeah
+2018-08-02T09:01:27 <jhernandez> pretty weird
+2018-08-02T09:01:43 <jhernandez> not sure whether there\'s a wrong infusion resolution
+2018-08-02T09:03:09 <dandimitrov> (as a side note) Would you catch up with our branch - there are two commits that are related to the tests
+2018-08-02T09:03:36 <jhernandez> when did these last changes get in?
+2018-08-02T09:03:40 <dandimitrov> these commits are not related to that problem
+2018-08-02T09:03:42 <jhernandez> let me check
+2018-08-02T09:03:55 <dandimitrov> yesterday evening I believe
+2018-08-02T09:04:49 <jhernandez> ok
+2018-08-02T09:05:05 <dandimitrov> And regarding the failing CI - could it be the case that the CI has trouble with branch refs in the package.json :?
+2018-08-02T09:05:17 <jhernandez> that\'s another thing
+2018-08-02T09:05:20 <jhernandez> yes
+2018-08-02T09:05:22 <jhernandez> probably
+2018-08-02T09:05:50 <jhernandez> I guess we should publish dev releases of both windows and universal in npm
+2018-08-02T09:05:57 <dandimitrov> Like this one - https://github.com/danailbd/gpii-app/blob/feature/QSS/package.json#L15
+2018-08-02T09:06:00 <jhernandez> (the ones we are going to use to build=
+2018-08-02T09:06:17 <jhernandez> yup
+2018-08-02T09:06:20 <jhernandez> okay
+2018-08-02T09:06:24 <dandimitrov> jhernandez: mhm, sounds reasonable
+2018-08-02T09:06:47 <jhernandez> ok, let me do that
+2018-08-02T09:07:09 <jhernandez> also, will update my branch with your last changes from yesterday
+2018-08-02T09:08:30 <georgitodorov> jhernandez: I am not sure that dev releases will help in this case
+2018-08-02T09:08:54 <jhernandez> georgitodorov: me neither
+2018-08-02T09:09:00 <georgitodorov> Cindy\'s work related to the "noUser" functionality is in a separate branch which has not yet been merged into master
+2018-08-02T09:09:18 <jhernandez> georgitodorov: but we can make dev releases of specific branches
+2018-08-02T09:09:21 <georgitodorov> And as far as I know, it will be rewritten before it gets merged
+2018-08-02T09:10:24 <georgitodorov> jhernandez: I thought that the releases were made only from master. Well, let\'s give this a try then and see what happens.
+2018-08-02T09:10:43 <jhernandez> georgitodorov: we can also create dev releases from specific branches
+2018-08-02T09:10:58 <jhernandez> take a look at the output of "npm show gpii-universal versions"
+2018-08-02T09:11:23 <jhernandez> i.e.: there is a 0.3.0-dev.20180515T004320Z.ccb3fbc7.GPII-2630
+2018-08-02T09:11:46 <jhernandez> as you can see, that version was released from the branch GPII-2630
+2018-08-02T09:11:59 <georgitodorov> jhernandez: Great!
+2018-08-02T09:12:37 <georgitodorov> Bosmon: Hey, Antranig! Regarding the reset functionality that we spoke about on Monday\'s status call...
+2018-08-02T09:13:15 <georgitodorov> It turned out that this was simply a key out operation both when there is a keyed in user and when there is not (i.e. when the noUser is keyed in)
+2018-08-02T09:14:09 <georgitodorov> Unfortunately, when the noUser is keyed out, the Core does not key him back in automatically
+2018-08-02T09:14:25 <georgitodorov> I guess this is another thing which needs to be added to Cindy\'s branch
+2018-08-02T09:16:56 * yuriy joined the channel
+2018-08-02T09:17:43 <Bosmon> georgitodorov - yes, we\'ll note it to her later
+2018-08-02T09:17:49 <Bosmon> It is good that you have tested it out
+2018-08-02T09:18:15 <georgitodorov> Bosmon: Thank you!
+2018-08-02T09:21:31 <jhernandez> Bosmon: hey
+2018-08-02T09:21:31 <jhernandez> we are having a weird problem when running the tests
+2018-08-02T09:21:31 <jhernandez> you can read back on the channel
+2018-08-02T09:21:31 * jhernandez has quit
+2018-08-02T09:21:45 * jhernandez joined the channel
+2018-08-02T09:22:08 <jhernandez> here\'s the output of the https://ci.gpii.net/job/gpii-app-test/298/consoleText
+2018-08-02T09:22:18 <Bosmon> Thanks jhernandez
+2018-08-02T09:23:12 <Bosmon> jhernandez - I guess we can\'t reproduce this problem locally
+2018-08-02T09:23:48 <Bosmon> Doesn\'t appear to be anything to do with Infusion, this is a result of a simple require from tests.js
+2018-08-02T09:24:21 <jhernandez> yeah, not sure, it\'s very weird
+2018-08-02T09:24:27 <jhernandez> not seeing this problem locally
+2018-08-02T09:24:31 <Bosmon> More likely to be something to do with the instrumentation workflow
+2018-08-02T09:24:53 <Bosmon> Can you get a snapshot of the file image inside the VM at the time of the failure?
+2018-08-02T09:25:55 <Bosmon> You see, this path is suspicious - "\\\\vboxsvr\\vagrant\\instrumented\\tests.js"
+2018-08-02T09:26:07 <Bosmon> It\'s out of line with the rest of the node_modules installation
+2018-08-02T09:26:11 <Bosmon> the-t-in-rtf - can you remind us how this works?
+2018-08-02T09:27:57 <jhernandez> mmm, that path looks good to me
+2018-08-02T09:28:03 <Bosmon> Is it good?
+2018-08-02T09:28:15 <jhernandez> yup
+2018-08-02T09:28:25 <jhernandez> it\'s part of the tests instrumentation as you said
+2018-08-02T09:28:42 <the-t-in-rtf> It\'s completely inline with running the tests from that damned UNC path.
+2018-08-02T09:28:56 <Bosmon> ok
+2018-08-02T09:29:04 <the-t-in-rtf> When you reproduce locally, are you running the tests from the same directory?
+2018-08-02T09:29:24 <the-t-in-rtf> I always use the full mount on v:
+2018-08-02T09:29:28 <jhernandez> the-t-in-rtf: can\'t reproduce it locally
+2018-08-02T09:29:36 <the-t-in-rtf> yes, but where do you run it from?
+2018-08-02T09:29:49 <the-t-in-rtf> I meant when you TRIED to reproduce, dude.
+2018-08-02T09:29:51 <the-t-in-rtf> :P
+2018-08-02T09:30:12 <the-t-in-rtf> your own checked out copy of the same code?
+2018-08-02T09:30:16 <the-t-in-rtf> a VM?
+2018-08-02T09:30:17 <jhernandez> I do exactly the same as CI
+2018-08-02T09:30:17 <jhernandez> from the host machine
+2018-08-02T09:30:23 <jhernandez> vagrant winrm ..... npm test
+2018-08-02T09:31:16 <jhernandez> from my working folder
+2018-08-02T09:31:26 <the-t-in-rtf> What host OS?
+2018-08-02T09:31:37 <jhernandez> gnu/linux
+2018-08-02T09:31:46 <jhernandez> as CI, I\'d say
+2018-08-02T09:31:59 <the-t-in-rtf> yeah, that seems like it would be very similar.
+2018-08-02T09:32:27 <the-t-in-rtf> so, when did this start coming up?
+2018-08-02T09:32:37 <jhernandez> hold a sec, had to ran npm install and will try again if I can reproduce the issue
+2018-08-02T09:32:48 <the-t-in-rtf> I mean, the tests have always run from that path and have been working for a while.
+2018-08-02T09:32:55 <jhernandez> yup
+2018-08-02T09:32:57 <jhernandez> true
+2018-08-02T09:33:06 <jhernandez> it happened just yesterday night
+2018-08-02T09:33:31 <the-t-in-rtf> And it keep happening on repeated builds?
+2018-08-02T09:33:38 <the-t-in-rtf> keeps
+2018-08-02T09:34:14 * jhernandez has quit
+2018-08-02T09:34:32 * jhernandez joined the channel
+2018-08-02T09:35:21 <jhernandez> let\'s see what happens
+2018-08-02T09:35:32 <jhernandez> FYI, this is the pr, https://github.com/GPII/gpii-app/pull/53
+2018-08-02T09:36:14 <jhernandez> btw, I\'m on a train right now, so sorry for being in/out, network doesn\'t work very well when in a tunnel
+2018-08-02T09:36:20 <jhernandez> :P
+2018-08-02T09:38:47 * jhernandez has quit
+2018-08-02T09:39:06 * jhernandez joined the channel
+2018-08-02T09:40:12 <jhernandez> the-t-in-rtf: right now is running again on CI, just in case you missed the message
+2018-08-02T09:40:38 <the-t-in-rtf> Yes, I\'m watching for the results.
+2018-08-02T09:40:43 <the-t-in-rtf> were the last failures all the same?
+2018-08-02T09:41:35 <jhernandez> nope
+2018-08-02T09:42:04 <jhernandez> one was an npm thing, then it was me that I missed to add some deps
+2018-08-02T10:05:03 <jhernandez> the-t-in-rtf, Bosmon: exactly the same problem
+2018-08-02T10:05:08 <jhernandez> https://ci.gpii.net/job/gpii-app-test/299/console
+2018-08-02T10:05:36 <jhernandez> and can\'t reproduce it locally
+2018-08-02T10:07:25 <the-t-in-rtf> So, you mentioned new dependencies in a comment, and it\'s failing to resolve gpii-universal
+2018-08-02T10:07:59 <the-t-in-rtf> I\'m refreshing my memory about the script now.
+2018-08-02T10:08:25 <jhernandez> yes, I mentioned deps, but they are not npm deps but chocolatey deps
+2018-08-02T10:09:19 <the-t-in-rtf> https://github.com/GPII/gpii-app/blob/master/package.json#L14
+2018-08-02T10:09:31 <the-t-in-rtf> So, I guess we were counting on gpii-universal showing up by way of the windows dep?
+2018-08-02T10:09:39 <the-t-in-rtf> It\'s not actually in the dependencies itself.
+2018-08-02T10:10:35 <jhernandez> right
+2018-08-02T10:10:56 <the-t-in-rtf> my suspicion is that it\'s down to where npm puts the dep
+2018-08-02T10:11:10 <the-t-in-rtf> so if it ends up living in node_modules/windows, you won\'t be able to see it.
+2018-08-02T10:11:23 <the-t-in-rtf> What happens if you add it as a direct dependency?
+2018-08-02T10:12:33 <jhernandez> hmmmm, I guess it will be found for sure, but I don\'t see any problem resolving it from gpii-windows
+2018-08-02T10:12:38 * jhernandez shurgs
+2018-08-02T10:13:50 <the-t-in-rtf> we\'ve seen stuff like this with other inherited deps recently.
+2018-08-02T10:14:30 <jhernandez> wondering whether this can be related to the fact that we are pulling deps from git refs rather than from npm
+2018-08-02T10:15:13 <the-t-in-rtf> In any case I think it\'s a bit sloppy to count on picking it up when you require it from gpii-app itself.
+2018-08-02T10:15:15 <the-t-in-rtf> https://github.com/GPII/gpii-app/blob/497400f79044076e57b327a8ce4c10d37da432f7/main.js#L21
+2018-08-02T10:15:29 <the-t-in-rtf> It seems more appropriate to have everything you directly require listed as a dependency.
+2018-08-02T10:17:12 <the-t-in-rtf> you could try updating the npm test command to use the "noCoverage" setup
+2018-08-02T10:17:28 <the-t-in-rtf> to confirm whether the require also fails independently of the instrumentation process
+2018-08-02T10:17:53 * dandimitrov has quit
+2018-08-02T10:26:29 * dandimitrov joined the channel
+2018-08-02T10:44:14 * jhernandez has quit
+2018-08-02T10:44:42 * jhernandez joined the channel
+2018-08-02T10:48:46 * jhernandez has quit
+2018-08-02T10:48:59 * jhernandez joined the channel
+2018-08-02T10:54:08 * jhernandez has quit
+2018-08-02T10:54:27 * jhernandez joined the channel
+2018-08-02T10:58:31 <the-t-in-rtf> Just back from lunch, @jhernandez.  Any news?
+2018-08-02T10:58:46 * jhernandez has quit
+2018-08-02T10:58:53 <the-t-in-rtf> I was hoping you could try adding gpii-universal as a dev dependency at least, just to see.
+2018-08-02T10:59:00 * jhernandez joined the channel
+2018-08-02T10:59:02 <the-t-in-rtf> That or try running the "noCoverage" route in CI.
+'
+

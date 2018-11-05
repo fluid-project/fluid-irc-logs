@@ -1,0 +1,241 @@
+b'2016-08-16T18:45:47 * the-t-in-rtf joined the channel
+2016-08-16T18:46:40 * colinclark joined the channel
+2016-08-16T18:56:13 * gloob_ has quit
+2016-08-16T18:57:36 * yzen_ joined the channel
+2016-08-16T18:57:48 * gloob_ joined the channel
+2016-08-16T19:00:12 * yzen has quit
+2016-08-16T19:06:43 * cindyli joined the channel
+2016-08-16T19:06:43 * cindyli1 has quit
+2016-08-16T19:08:25 * yzen joined the channel
+2016-08-16T19:11:39 * yzen_ has quit
+2016-08-16T19:13:49 * Yan_Hu has quit
+2016-08-16T19:22:34 <Justin_o> jhung: that makes sense
+2016-08-16T19:22:59 <Justin_o> jhung: does it make sense to include the js directly in the infusion-docs repo, or do you think it should be sourced from another repo entirely
+2016-08-16T19:23:25 <Justin_o> i\'m leaning towards keeping it all under the same repo, especially because i think this is a rare case, but could be convinced either way
+2016-08-16T19:42:15 <Justin_o> jhung: by the way, i just noticed that if you run a page through https://developers.google.com/speed/pagespeed/insights/ it gives you the option to download the optimized assets..
+2016-08-16T19:42:40 <Justin_o> not sure it\'s useful for the JS and CSS as we should have proper build tools for this, but could help with the image optimization if you don\'t have something for that already
+2016-08-16T19:43:20 <jhung> Justin_o: for now it\'s easiest to keep it all in the same repo.
+2016-08-16T19:43:52 <Justin_o> alanharnum, bens__: do you know of a good resource explaining the different types of optimizations you could implement for a website
+2016-08-16T19:44:55 <bens__> Justin_o, https://developers.google.com/speed/
+2016-08-16T19:45:36 <bens__> Justin_o, there are a lot of tools available linked there that will scan and make recommendations. and then for just general reading you can check here: https://developers.google.com/speed/docs/insights/rules
+2016-08-16T19:45:54 <Justin_o> bens__: excellent thanks
+2016-08-16T19:46:39 <bens__> Justin_o, also for more indepth items: https://developers.google.com/web/fundamentals/performance/?hl=en
+2016-08-16T19:47:28 <alanharnum> what bens__ said
+2016-08-16T19:47:39 <gloob> google
+2016-08-16T19:47:39 <alanharnum> Google is probably the best relatively neutral resource for this
+2016-08-16T19:47:49 <gloob> well, neutral hihi
+2016-08-16T19:47:57 <alanharnum> i said "relatively" :)
+2016-08-16T19:48:01 <gloob> gotcha
+2016-08-16T19:48:05 <gloob> ;)
+2016-08-16T19:48:27 <alanharnum> this article is a decent overview if you ignore the "BUY OUR CDN SERVICES" stuff: https://www.maxcdn.com/blog/frontend-optimizations/
+2016-08-16T19:49:12 <alanharnum> and this Smashing article is a good in-depth case study: https://www.smashingmagazine.com/2014/09/improving-smashing-magazine-performance-case-study/
+2016-08-16T19:50:48 <bens__> that url containing "frontend-optimizations" is rather interesting. you could probably split website performance optimization into a couple of big buckets with backend, over the wire, and front end
+2016-08-16T19:51:59 <bens__> each of which you could go very deep into the rabbit hole. Justin_o do you have a guess which bucket you\'re most interested with?
+2016-08-16T19:55:47 <Justin_o> bens__: not really.. i\'m writing up a tutorial about a particular configuration of a preferences server that could be used in cases where page load speeds are highly critical. I wanted to make mention of other optimizations that could be done along side or instead of this
+2016-08-16T19:55:53 <Justin_o> alanharnum: thanks for the links
+2016-08-16T19:57:07 <alanharnum> bens__: yeah when I think of "optimization" it tends to be mostly in terms of front end, but i agree about the buckets
+2016-08-16T19:57:44 <Justin_o> bens__: mind if i use your buckets for my tutorial?
+2016-08-16T19:58:08 <bens__> Justin_o, of course!
+2016-08-16T19:58:16 <Justin_o> thanks :)
+2016-08-16T20:00:21 <bens__> alanharnum, i think these days front end gets a lot more attention (the attention it deserves) whereas even a couple years back it was all about back end and wire time
+2016-08-16T20:01:02 <alanharnum> bens__: yeah - there\'s a much better general sense of how to measure those
+2016-08-16T20:01:28 <alanharnum> in the sense of "how long does it take before the HTML is delivered to the browser"
+2016-08-16T20:01:56 <alanharnum> front end optimizations with modern sites get you into all kinds of gnarliness about real speed vs. perceived speed, cognitive psychology of what "fast" means for users, etc etc
+2016-08-16T20:04:54 <Justin_o> alanharnum: that\'s a good point.. i was looking at the throttling feature in the chrome dev tools the other day.
+2016-08-16T20:05:19 <alanharnum> and all the AJAXy / websockets / etc things that are hard to measure outside the context of a particular browser
+2016-08-16T20:05:48 * yzen_ joined the channel
+2016-08-16T20:05:50 <Justin_o> It occurred to me that if we employ lazy loading, on a fast connection it my flash the change, on a slow site it might appear over time.. but if everything is loading slowly anyways, they may not notice that as much as someone on a fast connection where it flashes at them
+2016-08-16T20:06:35 <bens__> alanharnum, yes! lots of perf testing tools "add up" time for downloading all... resources.. even things lazily loaded. Without the context of a browser experience you think your load times are sky high
+2016-08-16T20:07:32 * godfrey_ has quit
+2016-08-16T20:07:53 * TPark has quit
+2016-08-16T20:08:34 * yzen has quit
+2016-08-16T20:08:36 * Yan_Hu joined the channel
+2016-08-16T20:09:44 <bens__> Justin_o, do you have an example URL? it kind of sounds like there is a page that has to load enough to figure out it needs to make a request to the prefs server and then enact the prefs it receives.. thus the fast response from the prefs server?
+2016-08-16T20:13:44 <Justin_o> bens__: not per se, but i have been playing around with a lazy loading strategy that you can see examples of here https://cdn.rawgit.com/jobara/prefsFramework-optimization-examples/debd1f6ac6da992b9368bd144d0e97c879331f21/index.html
+2016-08-16T20:14:11 <Justin_o> Here\'s one of the particular examples https://cdn.rawgit.com/jobara/prefsFramework-optimization-examples/debd1f6ac6da992b9368bd144d0e97c879331f21/enhancer/lazyLoad-grade/custom-minified/prefsEditor/index.html
+2016-08-16T20:14:12 <alanharnum> bens__: yeah, I know this is an overused phrasing, but front-end optimization is at least as much art as science
+2016-08-16T20:14:21 <Justin_o> not sure how well it loads over the CDN though
+2016-08-16T20:15:54 <alanharnum> if you really want to get deep into this it turns out this is available online for free: https://hpbn.co/
+2016-08-16T20:16:22 <alanharnum> by Ilya Grigorik, "a web performance engineer at Google and co-chair of the W3C Web Performance Working Group".
+2016-08-16T20:30:29 <jhung> alanharnum: are there notes for the meetings w Benetech?
+2016-08-16T20:30:52 <alanharnum> jhung: https://github.com/benetech/DiagramDevelopersWG
+2016-08-16T20:31:04 * sepidehshahi_ has quit
+2016-08-16T20:33:24 <jhung> thanks alanharnum.
+2016-08-16T20:46:02 * colinclark has quit
+2016-08-16T20:52:54 * gloob_ has quit
+2016-08-16T20:54:29 * the-t-in-rtf has quit
+2016-08-16T20:56:02 * sepidehshahi_ joined the channel
+2016-08-16T20:57:14 * cindyli has quit
+2016-08-16T21:03:16 * alanharnum has quit
+2016-08-16T21:07:00 * alanharn_ joined the channel
+2016-08-16T21:14:49 * jhung has quit
+2016-08-16T21:19:25 * yzen_ has quit
+2016-08-16T21:21:05 * alanharn_ joined the channel
+2016-08-16T21:24:03 * bens__ has quit
+2016-08-16T21:46:09 * sepidehshahi_ has left the channel
+2016-08-16T21:51:53 * Yan_Hu has quit
+2016-08-16T22:03:06 * stegru has quit
+2016-08-16T22:06:24 * lliskovoi_ joined the channel
+2016-08-16T22:10:04 * lliskovoi has quit
+2016-08-16T22:21:21 * danayo has quit
+2016-08-16T22:23:03 * amatas has quit
+2016-08-16T22:28:42 * sepidehshahi_ joined the channel
+2016-08-16T22:28:47 * sepidehshahi_ has left the channel
+2016-08-16T22:40:47 * Justin_o has quit
+2016-08-16T22:54:33 * Bosmon7 has quit
+2016-08-16T23:31:45 * alanharnum joined the channel
+2016-08-16T23:36:03 * alanharnum has quit
+'
+
+b'2016-08-16T00:02:12 * Bosmon7 joined the channel
+2016-08-16T00:22:47 * Bosmon8 joined the channel
+2016-08-16T00:27:12 * Bosmon7 has quit
+2016-08-16T00:37:49 * gloob_ joined the channel
+2016-08-16T01:04:42 * gloob_ has quit
+2016-08-16T01:44:04 * yzen joined the channel
+2016-08-16T01:48:21 * yzen has quit
+2016-08-16T03:03:37 * alanharnum joined the channel
+2016-08-16T03:05:30 * gloob_ joined the channel
+2016-08-16T03:09:32 * gloob_ has quit
+2016-08-16T03:37:19 * yzen joined the channel
+2016-08-16T04:14:40 * yzen has quit
+2016-08-16T04:15:13 * yzen joined the channel
+2016-08-16T04:59:39 * yzen has quit
+2016-08-16T04:59:45 * yzen_ joined the channel
+2016-08-16T05:04:46 * alanharnum joined the channel
+2016-08-16T05:06:21 * gloob_ joined the channel
+2016-08-16T05:08:54 * alanharnum has quit
+2016-08-16T05:10:26 * gloob_ has quit
+2016-08-16T05:20:16 * yzen_ has quit
+2016-08-16T05:22:10 * yzen joined the channel
+2016-08-16T05:51:32 * yzen is now known as yzen_
+2016-08-16T05:56:15 * yzen_ has quit
+2016-08-16T06:51:30 * amatas joined the channel
+2016-08-16T07:05:35 * the-t-in-rtf joined the channel
+2016-08-16T07:06:54 * gloob_ joined the channel
+2016-08-16T07:11:22 * gloob_ has quit
+2016-08-16T08:03:14 * stegru joined the channel
+2016-08-16T08:44:08 * Bosmon7 joined the channel
+2016-08-16T08:48:21 * Bosmon8 has quit
+2016-08-16T09:07:46 * gloob_ joined the channel
+2016-08-16T09:12:05 * gloob_ has quit
+2016-08-16T11:06:54 * alanharnum joined the channel
+2016-08-16T11:22:40 * Bosmon7 has quit
+2016-08-16T11:23:42 * dinuka joined the channel
+2016-08-16T12:04:20 * michelled joined the channel
+2016-08-16T12:10:18 * gloob_ joined the channel
+2016-08-16T12:13:50 * Justin_o joined the channel
+2016-08-16T12:15:31 * godfrey_ joined the channel
+2016-08-16T12:20:57 * bens__ joined the channel
+2016-08-16T12:26:58 * TPark joined the channel
+2016-08-16T12:28:38 * jhung joined the channel
+2016-08-16T12:37:22 * cindyli joined the channel
+2016-08-16T12:40:42 * PaliwalSparsh joined the channel
+2016-08-16T12:49:35 * PaliwalSparsh has quit
+2016-08-16T13:00:51 * sepidehshahi_ joined the channel
+2016-08-16T13:07:40 * colinclark joined the channel
+2016-08-16T13:10:04 * alanharnum joined the channel
+2016-08-16T13:20:07 * gloob_ has quit
+2016-08-16T13:20:13 * gloob_ joined the channel
+2016-08-16T13:26:31 * yzen joined the channel
+2016-08-16T13:27:55 * lliskovoi joined the channel
+2016-08-16T13:28:45 * gloob_ has quit
+2016-08-16T13:28:56 * gloob_ joined the channel
+2016-08-16T13:32:40 * lliskovoi has quit
+2016-08-16T13:33:17 * lliskovoi joined the channel
+2016-08-16T13:35:25 * gloob_ has quit
+2016-08-16T13:35:30 * gloob__ joined the channel
+2016-08-16T13:37:51 * gloob_ joined the channel
+2016-08-16T13:37:52 * gloob__ has quit
+2016-08-16T13:47:56 * danayo joined the channel
+2016-08-16T13:53:54 <jhung> fluid-everyone: the weekly design crit is starting in 5 minutes. Today we\'re talking about the new IDRC website navigation, and UIO Mobile.
+2016-08-16T14:00:55 * lliskovoi_ joined the channel
+2016-08-16T14:01:50 * alanharnum has quit
+2016-08-16T14:03:56 * lliskovoi has quit
+2016-08-16T14:44:01 * kavya joined the channel
+2016-08-16T14:47:11 * PaliwalSparsh joined the channel
+2016-08-16T15:03:06 * Bosmon7 joined the channel
+2016-08-16T15:11:46 * lliskovoi has quit
+2016-08-16T15:13:10 * lliskovoi joined the channel
+2016-08-16T15:13:52 * lliskovoi joined the channel
+2016-08-16T15:16:56 * alanharn_ joined the channel
+2016-08-16T15:27:23 * kasparnet joined the channel
+2016-08-16T15:27:27 <colinclark> hey kasparnet
+2016-08-16T15:27:39 <kasparnet> hey there colinclark
+2016-08-16T15:27:40 <colinclark> our own Justin_o is a very eagle-eyed reader of the GPII commits list
+2016-08-16T15:28:19 * danayo has quit
+2016-08-16T15:28:42 <colinclark> and he was puzzled by these two: http://lists.idrc.ocad.ca/pipermail/commits/2016-August/007126.html and http://lists.idrc.ocad.ca/pipermail/commits/2016-August/007127.html
+2016-08-16T15:28:55 <colinclark> I was confused
+2016-08-16T15:29:11 <colinclark> but I guess if you push a branch to "upstream," this will trigger a commit notification?
+2016-08-16T15:30:12 * danayo joined the channel
+2016-08-16T15:31:07 <kasparnet> yeah, colinclark, I somehow managed to clone the repo directly from GPII with git@github.com (ie. write access) - so when thinking I was pushing a branch to my local repo (ie. origin) I was actually pushing it to the GPII org
+2016-08-16T15:31:22 <kasparnet> I deleted the branch straight away from the org
+2016-08-16T15:31:36 <colinclark> aha, yes
+2016-08-16T15:31:41 <kasparnet> and modified my remotes so origin is pointing at my own, and upstream is GPII
+2016-08-16T15:31:41 <colinclark> I always worry about doing this
+2016-08-16T15:31:45 <colinclark> easily done
+2016-08-16T15:31:51 <colinclark> so how did you remove the branch?
+2016-08-16T15:32:05 <kasparnet> yeah - I\'m totally paranoid about it as well - but somehow I missed it this time
+2016-08-16T15:32:48 <kasparnet> just a "git push upstream :GPII-1955" will delete a GPII-1955 branch
+2016-08-16T15:32:55 <kasparnet> i.e. prefix with a ":"
+2016-08-16T15:34:41 <colinclark> aha
+2016-08-16T15:34:44 <colinclark> makes sense
+2016-08-16T15:35:01 <colinclark> thanks for clarifying
+2016-08-16T15:35:08 <kasparnet> np
+2016-08-16T15:35:12 <colinclark> I\'m so glad people are reading the lists and keeping an eye stuff
+2016-08-16T15:35:30 <colinclark> and I\'m glad you\'re working on our "mini technical preferences editor" too
+2016-08-16T15:36:42 <kasparnet> yay
+2016-08-16T15:39:17 * the-t-in-rtf has quit
+2016-08-16T15:47:31 <TPark> If you have not already, please complete this survey prior to attending tomorrow\'s community workshop on accessible gaming: https://goo.gl/forms/fkdFgMzvvghZTR1p2
+2016-08-16T15:47:55 <michelled> kasparnet, colinclark: you can also delete a remote branch with: git push origin --delete <branchName>
+2016-08-16T15:49:59 * jessm joined the channel
+2016-08-16T15:50:45 <Justin_o> kasparnet: thanks for the explanation, that definitely clears things up
+2016-08-16T15:52:59 * kasparnet has quit
+2016-08-16T15:54:42 * alanharnum joined the channel
+2016-08-16T16:00:57 <Justin_o> danayo, PaliwalSparsh: ready to meet?
+2016-08-16T16:01:17 <PaliwalSparsh> sure Justin_o
+2016-08-16T16:02:18 <Justin_o> PaliwalSparsh: thanks, i guess we can wait a couple minutes to see if danayo is free
+2016-08-16T16:02:22 <danayo> yes Justin_o PaliwalSparsh
+2016-08-16T16:02:38 <Justin_o> danayo, PaliwalSparsh: skype?
+2016-08-16T16:02:40 <danayo> skype?
+2016-08-16T16:04:14 * PaliwalSparsh1 joined the channel
+2016-08-16T16:04:39 <PaliwalSparsh1> Justin_o danayo https://cdn.rawgit.com/PaliwalSparsh/Discovery-Cat/dfb65d96b831a5e5bbc1872aefffb79f15d75294/demo/index.html
+2016-08-16T16:06:18 * PaliwalSparsh has quit
+2016-08-16T16:13:53 * colinclark has quit
+2016-08-16T16:16:22 <godfrey_> hi danayo: could you send Tim and I the links to the two google docs you mentioned during standup, in regards to the notes about IDRC resources/ Handbook and the Design Guide
+2016-08-16T16:19:26 * PaliwalSparsh2 joined the channel
+2016-08-16T16:22:47 * PaliwalSparsh1 has quit
+2016-08-16T16:45:33 <alanharnum> wacky: https://auduno.github.io/clmtrackr/examples/clm_emotiondetection.html
+2016-08-16T16:45:47 <alanharnum> expression detection / emotion gauging in pure JS
+2016-08-16T16:46:31 <alanharnum> it appears to get super-confused by facial hair
+2016-08-16T17:01:56 * sgithens joined the channel
+2016-08-16T17:02:00 * cindyli has quit
+2016-08-16T17:05:05 <Justin_o> alanharnum: that\'s pretty interesting.. another thing to integrate with the nexus :)
+2016-08-16T17:05:19 <alanharnum> ya
+2016-08-16T17:05:48 <alanharnum> the description of the library at https://github.com/auduno/clmtrackr is really interesting
+2016-08-16T17:05:49 * alanharnum has quit
+2016-08-16T17:06:31 * alanharn_ joined the channel
+2016-08-16T17:11:33 * PaliwalSparsh2 has quit
+2016-08-16T17:16:31 <danayo> godfrey_, TPark: sorry for delay, here are the links https://wiki.fluidproject.org/display/fluid/August+10%2C+2016%2C+Community+Meeting, https://docs.google.com/document/d/1ZYjWJlB7gMhpqiwuMpd4g_JuEdjAteRSdcK8EBw5A50/edit?usp=sharing
+2016-08-16T17:17:43 <godfrey_> danayo: thanks!
+2016-08-16T17:18:04 * danayo has quit
+2016-08-16T17:25:01 * kasparnet joined the channel
+2016-08-16T17:26:23 * kasparnet has quit
+2016-08-16T17:35:18 * cindyli joined the channel
+2016-08-16T17:49:17 <Justin_o> jhung: docpad question for you
+2016-08-16T17:49:22 * danayo joined the channel
+2016-08-16T17:49:29 <jhung> sure Justin_o
+2016-08-16T17:49:40 <Justin_o> if i want to write a tutorial that comes with a js file for someone to download, where should i put that js file
+2016-08-16T17:49:52 <Justin_o> specifically this would be for the infusion docs
+2016-08-16T17:50:03 <Justin_o> jhung: ^
+2016-08-16T17:51:45 <jhung> So you want to create an infusion doc with a link to a JS file. You\'re wondering where to put that JS file Justin_o?
+2016-08-16T17:51:56 <Justin_o> yes
+2016-08-16T17:53:22 <jhung> You\'d probably put it in the ./src/static/ directory. Probably in a sub directory called "examples" so it doesn\'t get confused for JS that\'s used for the site.
+2016-08-16T17:53:32 <jhung> ^Justin_o
+2016-08-16T17:57:17 * TPark_ joined the channel
+2016-08-16T18:21:30 * cindyli1 joined the channel
+2016-08-16T18:22:19 * cindyli has quit
+2016-08-16T18:23:14 * TPark_ has quit
+2016-08-16T18:29:29 * Yan_Hu joined the channel
+'
+

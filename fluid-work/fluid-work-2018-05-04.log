@@ -1,0 +1,322 @@
+b'2018-05-04T22:15:13 <Bosmon> Since it uses a slightly rehoused version of its change protocol
+2018-05-04T22:15:40 <Bosmon> Well, it\'s an interesting point - in terms of just this "rehousing" I was mentioning
+2018-05-04T22:15:50 <Bosmon> I realised that it is best to send typed messages down a WebSockets bus
+2018-05-04T22:15:58 <Bosmon> So that targetted change messages can coexist with other things
+2018-05-04T22:16:06 <Bosmon> But the "Nexus proper" is a bit backward about this
+2018-05-04T22:16:15 <Bosmon> There are some improvements from the PSP channel we need to feed back to it
+2018-05-04T22:16:25 <Bosmon> And then also we need to make the reconnection "metaprotocol"
+2018-05-04T22:17:30 <sgithens> interesting
+2018-05-04T22:17:46 <sgithens> so I should take a look at he PSP protocol that goes over the wire
+2018-05-04T22:17:52 <sgithens> which is just going to the local flowmanager
+2018-05-04T22:18:48 <Bosmon> Yes
+2018-05-04T22:18:55 <Bosmon> Well there\'s not much to the difference here yet
+2018-05-04T22:19:27 <Bosmon> It\'s just that i) messages are quoted with types, and ii) we don\'t send the raw change value as an entire message on connection, which means that we can properly report a model whose initial value is `undefined`
+2018-05-04T22:20:10 * stegru has quit
+2018-05-04T22:43:50 * mrtyler joined the channel
+2018-05-04T23:39:11 * Bosmon joined the channel
+'
+
+b'2018-05-04T16:31:21 * yuriy has quit
+2018-05-04T16:31:41 * stegru has quit
+2018-05-04T16:32:18 * yuriy joined the channel
+2018-05-04T16:32:55 * gtirloni joined the channel
+2018-05-04T16:33:42 * sepidehshahi joined the channel
+2018-05-04T16:34:13 <gtirloni> mrtyler: yeah, https://github.com/idi-ops/ansible-docker-ce -- i think that one was mostly tested with 17.03
+2018-05-04T16:34:35 <gtirloni> but i haven\'t looked at it in a while
+2018-05-04T16:34:48 <mrtyler> thanks for the pointer
+2018-05-04T16:35:07 <mrtyler> hmm, this role isn\'t in ops-shared
+2018-05-04T16:35:27 * yuriy__ has quit
+2018-05-04T16:35:28 <gtirloni> it\'s not, i just used it for a few dev machines here but had to stop midway in developing it
+2018-05-04T16:35:56 * alanharnum has quit
+2018-05-04T16:36:01 <mrtyler> ah
+2018-05-04T16:36:16 <mrtyler> and it looks like this is someting you wrote from scratch? i.e. it\'s not a 3rdparty role or anything
+2018-05-04T16:36:25 <gtirloni> right
+2018-05-04T16:36:52 <mrtyler> ok cool
+2018-05-04T16:37:07 <mrtyler> and this is a complete replacement for this role, right? https://github.com/idi-ops/ansible-docker
+2018-05-04T16:37:29 <mrtyler> the old non-ce role does some stuff with network devices and things, but those are no longer needed?
+2018-05-04T16:38:50 <gtirloni> i don\'t think they are... that\'s working around bugs in the old docker I think
+2018-05-04T16:39:04 <gtirloni> the storage stuff is very redhat-specific too
+2018-05-04T16:39:24 <mrtyler> e.g. https://github.com/idi-ops/ansible-docker/blob/master/tasks/deploy.yml
+2018-05-04T16:39:34 <mrtyler> ok great
+2018-05-04T16:39:42 <mrtyler> i\'ll give this role a shot
+2018-05-04T16:39:48 <mrtyler> thanks for the help :)
+2018-05-04T16:44:24 <gtirloni> np
+2018-05-04T17:10:29 * cindyli has quit
+2018-05-04T17:13:26 * danayo joined the channel
+2018-05-04T17:14:33 * cindyli joined the channel
+2018-05-04T17:33:31 * janardan joined the channel
+2018-05-04T17:33:37 * rutvi joined the channel
+2018-05-04T17:37:06 * michelled joined the channel
+2018-05-04T17:52:25 <sgithens> cindyli: Based on our discussion yesterday, I\'d like to draft out if possible what the json would look like for keys assuming different types of them contained all the login credentials for vraious types of auth systems.  Where would be a good place for me to put that? On a jira? on a subpage from your Keys/Tokens/Prefs wiki page? Somewhere else?
+2018-05-04T17:53:07 <sgithens> maybe just on that etherpad
+2018-05-04T17:53:21 <cindyli> "a subpage from your Keys/Tokens/Prefs wiki page" sounds good
+2018-05-04T17:53:48 <cindyli> or probably a different section on the Keys/Tokens/Prefs wiki page
+2018-05-04T17:54:17 <sgithens> great thanks!
+2018-05-04T17:54:59 <cindyli> thank you for putting in more thoughts on this
+2018-05-04T17:55:48 <sgithens> I\'m very keen to see this get pushed forward soon :)  After years of working on the core parts of the project I\'m excited for people to actually be able to sign up and use it :p
+2018-05-04T17:56:11 <sgithens> also for us not to make the same mistakes from other systems about having multiple login types
+2018-05-04T17:57:11 <sgithens> Which happens every time one of my ancestors initially signs in to some new webapp using google or facebook, and then later wants to switch to a username and password, and it\'s nearly impossible to make it work correctly
+2018-05-04T18:28:19 * stegru joined the channel
+2018-05-04T18:38:06 <sgithens> Is the all the communication the PSP sends out still to just the local flowmanager, or is there some work already done on the configuation that will save things up to a cloud prefsserver/flowmanager?
+2018-05-04T18:51:01 * alanharnum joined the channel
+2018-05-04T19:06:51 * colinclark joined the channel
+2018-05-04T19:13:01 <cindyli> sorry, sgithens, just saw ur msg. yes, PSP still sends out to the local flow manager and doesn\'t save to the cloud yet
+2018-05-04T19:13:10 <cindyli> saving to the cloud is on my to do list
+2018-05-04T19:13:19 <sgithens> cindyli: aha cool
+2018-05-04T19:13:26 <sgithens> but you haven\'t started it at all yet?
+2018-05-04T19:13:36 <sgithens> Also, not sure if you would know
+2018-05-04T19:13:37 <sgithens> but
+2018-05-04T19:14:05 <cindyli> started a bit but putting on hold due to the change to 2630
+2018-05-04T19:14:14 <sgithens> I\'m looking through the code, and I see that the PSP sends updates to the local flow manager, but I\'m wondering, does get updates at all from the local flowmanager?
+2018-05-04T19:14:33 <sgithens> Like if a prefset changed on the local flowmanager, would the PSP get updated to rerender and adjust itself?
+2018-05-04T19:14:46 <cindyli> i believe so
+2018-05-04T19:14:49 <sgithens> cindyli: For sure, 2630 is def the priority
+2018-05-04T19:15:24 <cindyli> psp talks to LFM via a web socket. when a prefs set changes, psp should receive a notification
+2018-05-04T19:15:35 <cindyli> but we should confirm this with Bosmon
+2018-05-04T19:15:46 <sgithens> I imagine that would happen by the PSP heartbeating the local flowmanager, or does it actually get a websocket update it premptively
+2018-05-04T19:15:47 <sgithens> for sure
+2018-05-04T19:15:50 <sgithens> I\'ll check with him
+2018-05-04T19:16:02 <cindyli> thanks
+2018-05-04T19:16:02 <sgithens> I\'m looking at prototyping an APPLY function
+2018-05-04T19:16:21 <cindyli> what is that
+2018-05-04T19:16:31 <sgithens> so that if you updated something in the PPT, the local flow manager would pick it up from the cloud, and adjust things locally
+2018-05-04T19:16:39 <cindyli> i see
+2018-05-04T19:16:49 <sgithens> so like the local flow manger would heartbeat the cloudflowmanager or something
+2018-05-04T19:17:16 <cindyli> nice feature
+2018-05-04T19:17:20 <sgithens> do we have any configs yet where the local flow manager talks to the cloud one?
+2018-05-04T19:17:34 <cindyli> what configs do you mean?
+2018-05-04T19:17:36 <sgithens> to get the prefs
+2018-05-04T19:17:42 <cindyli> APIs?
+2018-05-04T19:17:49 <sgithens> I mean, like, the different configurations we use for starting the gpii
+2018-05-04T19:18:01 <sgithens> gpii.local.prod.psp.devicereporter.stuff.something.json
+2018-05-04T19:18:07 <cindyli> yes we do
+2018-05-04T19:18:22 <cindyli> let me find it
+2018-05-04T19:18:32 <sgithens> cindyli: Thanks!
+2018-05-04T19:19:12 <cindyli> sgithens: this is the dev config for both cloud and local flow manager running locally
+2018-05-04T19:19:13 <cindyli> https://github.com/GPII/universal/blob/master/gpii/configs/gpii.config.untrusted.development.all.local.json
+2018-05-04T19:20:23 <sgithens> awesome, and that assumes that there is a corresponding set of cloud servers on 8084
+2018-05-04T19:20:44 <cindyli> it doesn\'t assume, it will start the cloud server on 8084
+2018-05-04T19:20:51 <sgithens> ah
+2018-05-04T19:21:02 <sgithens> so this configuration only starts a cloudserver
+2018-05-04T19:21:08 <sgithens> it doesn\'t also start a local flowmanager
+2018-05-04T19:21:45 <cindyli> this part start the local flow manager: https://github.com/GPII/universal/blob/master/gpii/configs/gpii.config.untrusted.development.all.local.json#L6-L9
+2018-05-04T19:22:28 <sgithens> cindyli: Awesome, probably on like port 8081 by default?
+2018-05-04T19:22:40 <cindyli> exactly
+2018-05-04T19:23:26 <sgithens> so, if I hacked the configs a bit in the GPII-app so that the flowmanager portion looked like this, the PSP would essentially read it\'s start up configs from the cloud preferences (via the local flowmanager of course)
+2018-05-04T19:23:48 <cindyli> yes, i think so
+2018-05-04T19:23:52 <sgithens> great
+2018-05-04T19:24:14 <sgithens> and then maybe I could stick a quick prototype hack in somewhere, for it to check the cloudserver everyonce in a while
+2018-05-04T19:26:41 <cindyli> good luck
+2018-05-04T19:27:23 <sgithens> Thanks!  :)
+2018-05-04T19:28:06 <sgithens> I think I\'ll need a little input from Bosmon on it, but I believe I nearly have everything I need to make a demo
+2018-05-04T19:28:14 <sgithens> or prototype
+2018-05-04T19:28:38 <cindyli> that\'s great
+2018-05-04T19:42:24 <cindyli> hi mrtyler, wonder if you could help me with this problem: I modified and rebuilt the data loader image. then running gpii-infra "rake deploy_only" to redeploy my dev cloud and hitting this error - https://pastebin.com/5vk92qpe
+2018-05-04T19:42:38 <cindyli> it complaints about "Invalid value"
+2018-05-04T19:42:47 <cindyli> but i cannot tell which value is invalid
+2018-05-04T19:42:54 <mrtyler> cindyli: yeah we\'ve talked about this
+2018-05-04T19:42:59 <mrtyler> you have to delete the dataloader job and re-create it
+2018-05-04T19:43:18 <cindyli> ah ha
+2018-05-04T19:43:22 <mrtyler> you can\'t change the docker image of an existing Job
+2018-05-04T19:43:48 <cindyli> how can i delete the old job
+2018-05-04T19:44:02 <cindyli> sorry you probably have taught me how to do it
+2018-05-04T19:44:09 <mrtyler> yeah i think it\'s in your notes somewhere
+2018-05-04T19:44:24 <mrtyler> the easiest way is rake undeploy, rake deploy_only
+2018-05-04T19:44:32 <mrtyler> you can also delete the Job from the k8s dashboard
+2018-05-04T19:44:40 <mrtyler> or you can use kubectl delete job
+2018-05-04T19:45:06 <cindyli> trying...
+2018-05-04T20:00:11 * gtirloni has quit
+2018-05-04T20:05:04 <cindyli> mrtyler: did "rake undeploy, rake deploy_only" and hit another error - https://pastebin.com/tykmsgcK
+2018-05-04T20:05:14 <cindyli> line 26 says - Error: could not find tiller
+2018-05-04T20:13:23 * jhung has quit
+2018-05-04T20:21:33 * cindyli joined the channel
+2018-05-04T20:24:05 <Bosmon> cindyli, sgithens - well, naturally we will build a new WebSockets based settings bus for this application
+2018-05-04T20:24:12 <Bosmon> "When it is appropriate to do so"
+2018-05-04T20:25:19 <cindyli> good to know. thanks, Bosmon
+2018-05-04T20:43:02 * simonjb has quit
+2018-05-04T20:47:55 * jhernandez has quit
+2018-05-04T20:54:26 * clown has quit
+2018-05-04T20:58:50 * cindyli has quit
+2018-05-04T21:07:20 * colinclark joined the channel
+2018-05-04T21:59:14 * janardan has quit
+2018-05-04T22:07:08 <sgithens> Bosmon: A new websockets bus for the local flowmanager to talk back to the PSP, or a new websockets bus for the cloudbased flowmanager to communicate these pushes/heartbeats back to the local flowmanager?
+2018-05-04T22:07:55 <Bosmon> The latter
+2018-05-04T22:07:59 <sgithens> Bosmon: This has ended up on the MVP document, which is why I\'m looking in to it\'s prototype
+2018-05-04T22:08:01 <Bosmon> It\'s not really going to be a heartbeat, just updates
+2018-05-04T22:09:07 <sgithens> but the local machine would have to check the server occasionally right?  I don\'t think we can a push model in this situation where the cloudserver connects to the client? ( or maybe my definitiaon of heartbeat is wrong)
+2018-05-04T22:09:19 <sgithens> the local machine would have to ping the cloud for updates occasionally
+2018-05-04T22:10:04 * rutvi has quit
+2018-05-04T22:10:21 <Bosmon> sgithens - we don\'t need to ping the cloud if we have an open WebSockets bus
+2018-05-04T22:10:44 <sgithens> I see, they can just stay open for a reasonable period of time?
+2018-05-04T22:10:49 <Bosmon> FOR EVER
+2018-05-04T22:10:51 <Bosmon> That is what they are for
+2018-05-04T22:10:54 <sgithens> kJKL!J!LKJ!!!!
+2018-05-04T22:11:02 <sgithens> FOREVER!
+2018-05-04T22:11:06 <Bosmon> It will stay open for the duration of the key-in session
+2018-05-04T22:11:20 <sgithens> THE ENTIRE KEYIN SESSION WEBSOCKET BUS!
+2018-05-04T22:11:26 <sgithens> that\'s great
+2018-05-04T22:12:01 <sgithens> I guess i need to brush up on the specifics of websockets... like what happens if the network is dodgy and stuff
+2018-05-04T22:12:23 <sgithens> like if the wireless goes down for 45 seconds and comes back up... the WS connection is still ok-ish?
+2018-05-04T22:12:24 <Bosmon> Well, we will have to bracket it with some kind of meta-protocol
+2018-05-04T22:12:28 <Bosmon> But that\'s what the Nexus is for
+2018-05-04T22:12:45 <Bosmon> It is the main virtue of having "integral protocols"
+2018-05-04T22:12:59 <sgithens> are we using hte nexus for anything in universal at the moment?
+2018-05-04T22:14:37 <Bosmon> no
+2018-05-04T22:14:46 <Bosmon> I mean, in a sense it doesn\'t really exist
+2018-05-04T22:14:54 <Bosmon> And neither does this "meta-protocol" that I am speaking about
+2018-05-04T22:15:01 <Bosmon> You could say that the "PSP channel" is already an incarnation of the Nexus
+2018-05-04T22:15:13 <sgithens> can a nexus service be spun up on existing kettle port, or does it have to start up it\'s own complete thing?
+'
+
+b'2018-05-04T00:39:45 <sgithens> cindyli: Sure
+2018-05-04T02:24:21 * danayo joined the channel
+2018-05-04T02:28:49 * jhernandez has quit
+2018-05-04T02:50:41 * danayo joined the channel
+2018-05-04T03:47:55 * jessm has quit
+2018-05-04T04:23:20 * danayo has quit
+2018-05-04T06:12:03 * mrtyler has quit
+2018-05-04T07:23:06 * georgitodorov joined the channel
+2018-05-04T07:32:48 * georgit joined the channel
+2018-05-04T07:35:59 * georgitodorov has quit
+2018-05-04T07:51:10 * kasparnet joined the channel
+2018-05-04T08:10:18 * stegru joined the channel
+2018-05-04T08:23:30 * kasparnet has quit
+2018-05-04T08:24:06 * jhernandez joined the channel
+2018-05-04T08:32:06 * kasparnet joined the channel
+2018-05-04T08:41:50 * kasparnet has quit
+2018-05-04T09:29:48 * kasparnet joined the channel
+2018-05-04T10:21:08 <Bosmon> kasparnet - what in Mike was "queryProcess"
+2018-05-04T10:21:15 <Bosmon> I don\'t find any reference to it in the rest of the project
+2018-05-04T10:22:43 <kasparnet> Bosmon, it\'s in universals process reporter
+2018-05-04T10:22:48 <kasparnet> sec
+2018-05-04T10:23:28 <kasparnet> ... or not
+2018-05-04T10:23:34 <Bosmon> It\'s nonexistent : P
+2018-05-04T10:24:44 <georgit> Bosmon: Hey, Antranig! I have just created a PR for the PSP3 functionality: https://github.com/GPII/gpii-app/pull/47
+2018-05-04T10:25:05 <georgit> It contains quite a large change set :(
+2018-05-04T10:26:19 <Bosmon> georgit - that\'s fine, we\'ve seen bigger ones :)
+2018-05-04T10:27:08 <kasparnet> where do you see query process?
+2018-05-04T10:27:19 <Bosmon> kasparnet - in the pull against universal you just issued
+2018-05-04T10:27:22 <Bosmon> That is, you got rid of it
+2018-05-04T10:27:26 <kasparnet> lies!!! all lies
+2018-05-04T10:27:31 <kasparnet> oh, i see
+2018-05-04T10:27:31 <Bosmon> I\'m just asking after this "how has this ever worked" idiom : P
+2018-05-04T10:28:44 <kasparnet> oh, i see, it would be the old windows registeredAT launch handlers "get" - i.e. definig which process to check for
+2018-05-04T10:29:13 <kasparnet> which was changed as per josephs review comment (and pull requests)
+2018-05-04T10:32:51 <Bosmon> kasparnet - I see, I\'m just puzzled that there doesn\'t seem to be anything that reads it in current trunk
+2018-05-04T10:33:15 <Bosmon> Is this because of some previous incompletely finished pull?
+2018-05-04T10:35:14 <kasparnet> it\'s cause it was windows specific functionality https://github.com/GPII/windows/pull/120
+2018-05-04T10:35:47 <kasparnet> ah: "yes yes, I know, but where the hell is the damn universal solution registry entries for this stuff?"
+2018-05-04T10:36:49 <kasparnet> https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5
+2018-05-04T10:37:03 <kasparnet> https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L932
+2018-05-04T10:37:34 <Bosmon> kasparnet - right
+2018-05-04T10:37:38 <Bosmon> And that is the stuf you got rid of
+2018-05-04T10:38:52 <Bosmon> ah ah I see
+2018-05-04T10:39:00 <Bosmon> This is a block nested within that particular ,a
+2018-05-04T10:39:04 <Bosmon> launchHandler type
+2018-05-04T10:39:28 <Bosmon> But bizarrely it still is ...........
+2018-05-04T10:40:34 <Bosmon> Why does the "enabledRegisteredAT" launch handler take such different arguments to the "flexibleHandler" for what is arguably the same function?
+2018-05-04T10:40:42 <Bosmon> I mean, arguably they have been brought one step closer
+2018-05-04T10:40:46 <Bosmon> But why not actually make them the same
+2018-05-04T10:42:09 <kasparnet> i.e. call it getState
+2018-05-04T10:42:48 <kasparnet> ?
+2018-05-04T10:42:56 <kasparnet> I think that would definitely make sense
+2018-05-04T10:43:42 <Bosmon> Given we\'ve touched everything in this pair of pulls, could we do this now?
+2018-05-04T11:01:44 * Justin_o joined the channel
+2018-05-04T11:04:57 <Bosmon> kasparnet ^
+2018-05-04T11:05:13 <kasparnet> ofc
+2018-05-04T11:14:29 <Bosmon> hey brilliant, thanks
+2018-05-04T11:27:19 <kasparnet> Bosmon, ok, updated both and check on my computer and everything seems to pass... updated the pull (https://github.com/GPII/windows/pull/173) .. waiting for CI to verify
+2018-05-04T11:54:08 <Bosmon> Yay it\'s a ..... PARSS!
+2018-05-04T11:54:32 <kasparnet> yay
+2018-05-04T11:55:30 <Bosmon> kasparnet - so does this mean we close #120 now?
+2018-05-04T11:55:54 <kasparnet> yes
+2018-05-04T11:56:16 <kasparnet> not sure why i didn\'t just update that one, but...
+2018-05-04T12:08:26 * gtirloni joined the channel
+2018-05-04T12:10:07 <gtirloni> <gtirloni> Justin_o: i\'ll retrigger your last failed build, one sec
+2018-05-04T12:10:07 <gtirloni> <gtirloni> the directory had 1.7GB of coverage data
+2018-05-04T12:10:07 <gtirloni> <gtirloni> the last build failed due to lack of memory, i think istambul is loading everything into memory
+2018-05-04T12:10:27 <Justin_o> gtirloni: thanks, i hadn\'t realized it failed. Please let me know if it was something caused by my PR
+2018-05-04T12:10:30 <gtirloni> i erased the coverage data and restarted it
+2018-05-04T12:10:36 <Justin_o> gtirloni: thanks
+2018-05-04T12:14:45 * ussjoin has quit
+2018-05-04T12:16:08 * alanharnum joined the channel
+2018-05-04T12:19:56 * ussjoin joined the channel
+2018-05-04T12:23:10 * kasparnet has quit
+2018-05-04T12:29:52 <Justin_o> gtirloni: did you kill the build, or did it die on it\'s own?
+2018-05-04T12:29:58 <Justin_o> it says "Killed by signal 15"
+2018-05-04T12:30:26 <gtirloni> i killed it, i\'ll start again
+2018-05-04T12:30:33 <Justin_o> okay
+2018-05-04T12:51:20 * cindyli joined the channel
+2018-05-04T13:02:12 * jhung joined the channel
+2018-05-04T13:03:22 * kasparnet joined the channel
+2018-05-04T13:08:51 * jessm joined the channel
+2018-05-04T13:09:47 * michelled joined the channel
+2018-05-04T13:16:50 * kasparnet has quit
+2018-05-04T13:19:47 * Guest26055 joined the channel
+2018-05-04T13:19:53 * sepidehshahi joined the channel
+2018-05-04T13:19:54 * Guest26055 is now known as clown_
+2018-05-04T13:27:01 * gtirloni has quit
+2018-05-04T13:36:38 * colinclark joined the channel
+2018-05-04T13:44:41 * avtar joined the channel
+2018-05-04T13:44:49 * michelled joined the channel
+2018-05-04T13:59:42 * neuralmilkhotel joined the channel
+2018-05-04T14:00:05 * mrtyler joined the channel
+2018-05-04T14:00:35 * kasparnet joined the channel
+2018-05-04T14:11:43 * cindyli1 joined the channel
+2018-05-04T14:12:31 * georgit has quit
+2018-05-04T14:14:54 * cindyli joined the channel
+2018-05-04T14:16:05 * cindyli1 has quit
+2018-05-04T14:27:43 * simonjb joined the channel
+2018-05-04T14:29:12 <Justin_o> neuralmilkhotel: good morning.. Bosmon merged my fix for the line-height enactor in Infusion. You may want to update to the latest Infusion master for the inclusive cities site.
+2018-05-04T14:30:39 <neuralmilkhotel> Justin_o: This should do the trick right? ```grunt custom --include="uiOptions"```
+2018-05-04T14:31:51 <Justin_o> neuralmilkhotel: yep after updating master, that should be all that\'s needed
+2018-05-04T14:32:56 <neuralmilkhotel> Cool thanks Justin_o
+2018-05-04T14:34:35 <Bosmon> avtar, amatas[m] or somebody - could you remind me how to grab the current version of our Windows 10 box?
+2018-05-04T14:34:42 <Bosmon> I am getting a 404 when I try to do vagrant box update
+2018-05-04T14:35:33 <Justin_o> neuralmilkhotel: i\'m about to head offline, if you have any problems with the build you can try to send me an e-mail or alanharnum or cindyli might be able to help you.
+2018-05-04T14:35:48 <neuralmilkhotel> Ok sounds good, thanks Justin_o -- have a good weekend :)
+2018-05-04T14:35:55 <Justin_o> thanks, you too
+2018-05-04T14:35:58 <alanharnum> Justin_o neuralmilkhotel: sure thing - I\'ll be in the office post-standup
+2018-05-04T14:36:30 <neuralmilkhotel> alanharnum: \xf0\x9f\x91\x8d
+2018-05-04T14:36:46 <Justin_o> thanks
+2018-05-04T14:40:56 <avtar> Bosmon: is this what you\'re trying? vagrant box update --box inclusivedesign/windows10-eval-x64-Apps
+2018-05-04T14:41:32 <Bosmon> avtar yes, that
+2018-05-04T14:41:58 <Bosmon> If I try to "add" the box I get this: https://atlas.hashicorp.com/inclusivedesign/windows10-eval-x64-Apps returned error 404 Not Found
+2018-05-04T14:42:25 <Bosmon> Which is indeed a 404
+2018-05-04T14:45:22 * kasparnet has quit
+2018-05-04T14:46:54 <avtar> Bosmon: hmm that looks like a url from their decommissioned service
+2018-05-04T14:47:10 <avtar> it should be directing you to vagrantcloud.com
+2018-05-04T14:47:11 <avtar> https://www.pastery.net/ujvtqc/raw/
+2018-05-04T14:48:00 <avtar> which version of vagrant are you using?
+2018-05-04T14:48:10 <Bosmon> 1.9.1
+2018-05-04T14:48:32 <avtar> i would update that and try again
+2018-05-04T14:49:01 <Bosmon> Do the later versions work? : P
+2018-05-04T14:49:05 <Bosmon> I often found they didn\'t
+2018-05-04T14:49:23 <avtar> i seem to have 2.0.1 here
+2018-05-04T14:49:30 <Bosmon> Our current instructions recommend 1.8.6: https://github.com/GPII/qi-development-environments
+2018-05-04T14:50:34 <avtar> Bosmon: that should be "1.9.2 or newer" https://github.com/GPII/qi-development-environments/pull/10/files
+2018-05-04T14:50:40 * colinclark joined the channel
+2018-05-04T14:50:48 <avtar> which i guess now might be 2.0 or newer
+2018-05-04T15:03:50 * gtirloni joined the channel
+2018-05-04T15:09:03 * simonjb joined the channel
+2018-05-04T15:10:49 * amatas joined the channel
+2018-05-04T15:17:39 * amatas has quit
+2018-05-04T15:21:52 * michelled joined the channel
+2018-05-04T15:27:15 * gtirloni joined the channel
+2018-05-04T15:27:18 * yuriy joined the channel
+2018-05-04T15:47:49 * sepidehshahi joined the channel
+2018-05-04T15:49:41 * michelled has quit
+2018-05-04T15:53:58 * gtirloni has quit
+2018-05-04T15:54:28 * gtirloni joined the channel
+2018-05-04T16:19:22 * sepidehshahi has quit
+2018-05-04T16:27:34 <mrtyler> gtirloni: can i chat with you about docker on h5?
+2018-05-04T16:28:28 * yuriy__ joined the channel
+2018-05-04T16:28:33 <mrtyler> i can provide more context but i think i need a newer docker than what the centos/epel repos provide
+2018-05-04T16:29:40 <mrtyler> it looks like we can move off of upstream centos/epel and switch to docker-provided repos
+2018-05-04T16:29:47 <mrtyler> see https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-centos-7 and/or https://www.cyberciti.biz/faq/install-use-setup-docker-on-rhel7-centos7-linux/
+2018-05-04T16:29:51 <gtirloni> hi! we\'ve tested docker-ce 17.03 and 18.03 with good results in other hosts, it seems fine to switch to it if you want
+2018-05-04T16:30:04 <gtirloni> overlay2 fs should speed things up too
+2018-05-04T16:30:27 <mrtyler> ok cool
+2018-05-04T16:30:42 <mrtyler> how are you installing docker-ce 17/18 on those other hosts? is there ansible code for it?
+'
+

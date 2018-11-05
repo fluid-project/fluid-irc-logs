@@ -1,0 +1,341 @@
+b'2017-06-07T19:49:06 * kasparne_ joined the channel
+2017-06-07T19:50:59 * kasparnet has quit
+2017-06-07T19:59:14 * cindyli1 joined the channel
+2017-06-07T19:59:14 * cindyli has quit
+2017-06-07T19:59:55 * simonjb joined the channel
+2017-06-07T20:02:30 * the-t-in-rtf1 joined the channel
+2017-06-07T20:02:30 * the-t-in-rtf has quit
+2017-06-07T20:05:08 * simonjb has quit
+2017-06-07T20:20:36 * kasparne_ has quit
+2017-06-07T20:34:54 * cindyli joined the channel
+2017-06-07T20:39:54 * cindyli has quit
+2017-06-07T21:01:31 * clown has quit
+2017-06-07T21:24:01 * ewbjr_ joined the channel
+2017-06-07T21:27:26 * colinclark joined the channel
+2017-06-07T21:27:52 * avtar has quit
+2017-06-07T21:28:06 * kasparnet joined the channel
+2017-06-07T21:29:05 * avtar joined the channel
+2017-06-07T21:29:23 * ewbjr has quit
+2017-06-07T21:29:26 * ewbjr_ is now known as ewbjr
+2017-06-07T21:49:28 * kasparnet has quit
+2017-06-07T21:50:18 * avtar joined the channel
+2017-06-07T21:57:29 * kasparnet joined the channel
+2017-06-07T22:07:38 * alanharnum has quit
+2017-06-07T22:13:48 * amatas has quit
+2017-06-07T22:32:21 * kasparnet has quit
+2017-06-07T22:32:23 * colinclark has quit
+2017-06-07T22:38:02 * Justin_o has quit
+2017-06-07T22:41:28 * stegru has quit
+2017-06-07T23:10:57 * javjarfer has quit
+2017-06-07T23:15:33 * michelled has quit
+2017-06-07T23:15:57 * michelled joined the channel
+2017-06-07T23:16:25 * michelled has quit
+2017-06-07T23:34:30 * avtar has quit
+2017-06-07T23:49:01 * michelled joined the channel
+2017-06-07T23:49:01 * michelled has quit
+'
+
+b'2017-06-07T14:39:39 <amatas> today the gitlab-ci runner of the h-0005 runs the tests of gpii-universal, gpii-windows, gpii-linux, gpii-nexus, vagrant build boxes..
+2017-06-07T14:39:44 <mrtyler> but there are also multiple [[runners]] stanzas in /etc/gitlab-runner/config.toml
+2017-06-07T14:39:47 <amatas> the gpii-* only for tests of gitlab-ci
+2017-06-07T14:40:14 <amatas> https://gitlab.com/GPII-test
+2017-06-07T14:40:17 <mrtyler> i think that situation will persist regardless of how i do the automation
+2017-06-07T14:40:59 <amatas> if I remember well they are limited to 5 stanzas
+2017-06-07T14:41:24 <mrtyler> that would be pretty annoying if true
+2017-06-07T14:41:43 <amatas> what is annoying?
+2017-06-07T14:42:01 <mrtyler> limiting to 5 stanzas
+2017-06-07T14:42:13 <amatas> why?
+2017-06-07T14:42:37 <mrtyler> because that\'s a pointless and arbitrary limitation?
+2017-06-07T14:43:43 <amatas> it isn\'t arbitrary: https://gitlab.com/amatas/packer-win/pipelines/8366714
+2017-06-07T14:44:04 <mrtyler> i don\'t understand what this link is supposed to teach me
+2017-06-07T14:44:13 <amatas> I set that limitation to build each stage of the vms at the same time, leaving one stanza for other tests
+2017-06-07T14:44:25 <mrtyler> we are talking about different things
+2017-06-07T14:44:37 <mrtyler> you are talking about the limit on concurrent builds i guess?
+2017-06-07T14:44:46 <amatas> yes
+2017-06-07T14:44:55 <mrtyler> i\'m talking about the number of projects a gitlab-runner is registered to
+2017-06-07T14:44:56 <amatas> I\'m talking about the concurrent builds
+2017-06-07T14:45:05 * michelled has quit
+2017-06-07T14:45:31 <mrtyler> yeah i already answered that
+2017-06-07T14:45:39 <mrtyler> [07.08:36:01] <        mrtyler> | it\'s a single gitlab-runner per build node, so afaict any limits on number of builds would apply
+2017-06-07T14:45:42 <mrtyler> [07.08:36:06] <        mrtyler> | regardless of number of projects configured
+2017-06-07T14:46:02 <mrtyler> my understanding could be wrong but that\'s my read
+2017-06-07T14:46:35 <amatas> ok, wait a sec, one single gitlab-runner can be registered to multiple projects I didn\'t know that
+2017-06-07T14:46:54 <mrtyler> our single gitlab-runner builds all the projects today, right?
+2017-06-07T14:47:23 <amatas> yes, but it\'s registered only one time, I see at each project the same runner-id
+2017-06-07T14:48:19 <mrtyler> the distinct runner-ids (like gpii-terraform-live) still resolve to the same gitlab-runner process on the build node
+2017-06-07T14:48:20 <amatas> and in your terraform repositories I see different runner-ids which made me understand multiple gitlab-ci-runners
+2017-06-07T14:48:31 <mrtyler> so my expectation is that they\'re all treated as a single gitlab-runner, but that could be incorrect
+2017-06-07T14:48:32 <amatas> ok
+2017-06-07T14:49:13 <mrtyler> anyway i guess your point is you think that if we have distinct registrations, the concurrent limits will be multiplied by the number of registrations?
+2017-06-07T14:49:25 <mrtyler> and then we would overwhelm the build node
+2017-06-07T14:50:02 <amatas> yes, that is my concern
+2017-06-07T14:50:21 <mrtyler> i guess we\'d have to test it
+2017-06-07T14:50:37 <mrtyler> but since your solution is to just have one registration, not really relevant today
+2017-06-07T14:52:39 <amatas> I proposed that solution because my concern about the lost of the control of the number of concurrent builds
+2017-06-07T14:53:25 <mrtyler> aha
+2017-06-07T14:53:41 <mrtyler> so let\'s say i\'m right and the concurrent build limit is "global" for all registrations using a single gitlab-runner
+2017-06-07T14:53:44 <mrtyler> (i\'ll test this to make sure)
+2017-06-07T14:53:52 <mrtyler> can we talk about an automation strategy?
+2017-06-07T14:54:22 <amatas> I can do so
+2017-06-07T14:54:23 <mrtyler> or do you prefer manual configuration for each repo
+2017-06-07T14:54:26 <amatas> we* can do so
+2017-06-07T14:54:46 <amatas> I prefer automation if it\'s possible
+2017-06-07T14:54:52 <mrtyler> me too :)
+2017-06-07T14:55:12 <mrtyler> i think it would look something like this:
+2017-06-07T14:55:40 <mrtyler> ansible has a list of all gitlab repos: name + registration token (unique per repo)
+2017-06-07T14:55:58 <mrtyler> so we\'d ahve a bunch of registrations: gpii-terraform, gpii-terraform-live, gpii-windows, gpii-linux, ...
+2017-06-07T14:56:12 <mrtyler> ansible handles the registrations automatically
+2017-06-07T14:56:30 <mrtyler> when you create a new build node, you run ansible and everything is registered
+2017-06-07T14:57:24 <amatas> that could work, but be sure that we can limit the concurrent builds at the same host
+2017-06-07T14:57:37 <mrtyler> yes we\'re assuming the concurrent build limit is global
+2017-06-07T14:57:59 <mrtyler> a downside is that there are a bunch of "unused" registrations. i.e. gpii-terraform sees (but does not use) gpii-linux-builder, gpii-universal-builder, ...
+2017-06-07T14:58:10 <mrtyler> gpii-terraform has only the gpii-terraform-builder enabled
+2017-06-07T14:58:42 <mrtyler> which could be slightly confusing but which i don\'t think is a big deal, especially since the config will mostly be automated
+2017-06-07T14:59:07 <mrtyler> adding a new gitlab repo to be built requires adding that repo\'s name and registration token to ansible, run ansible, done
+2017-06-07T14:59:08 <amatas> yes, we are going to have a registration per project in the ci setup page
+2017-06-07T15:00:04 <mrtyler> well to be clear: we\'ll have an ENABLED RUNNER per project no matter what
+2017-06-07T15:00:06 <amatas> if you add a new repo, will be all the previous runners registered again?
+2017-06-07T15:00:40 <mrtyler> but we\'ll either have ONE REGISTERED RUNNER (also enabled) or MULTIPLE REGISTERED RUNNERS (with only the "right" one enabled)
+2017-06-07T15:01:09 <mrtyler> amatas: no. the ansible role only registers a runner if it can\'t find that registration already
+2017-06-07T15:01:15 <mrtyler> let me link you some code...
+2017-06-07T15:01:29 <mrtyler> https://github.com/DBLaci/ansible-gitlab-runner/blob/master/tasks/register-runner.yml#L24
+2017-06-07T15:02:00 <mrtyler> note the when: at the end
+2017-06-07T15:05:24 <amatas> ok
+2017-06-07T15:06:07 <mrtyler> (i have a different question when we\'re done talking about this one)
+2017-06-07T15:06:24 <amatas> ok, go ahead
+2017-06-07T15:06:46 <mrtyler> i\'m thinking that i will NOT do any registration during tests
+2017-06-07T15:06:55 <mrtyler> because it ties tests to a third party thing (gitlab)
+2017-06-07T15:07:08 <mrtyler> and because it\'s not obvious how to clean up registrations created only for testing
+2017-06-07T15:07:28 <mrtyler> so tests will set up gitlab-runner inside vagrant with molecule
+2017-06-07T15:07:39 <mrtyler> but they won\'t actually register in tests. only in "production"
+2017-06-07T15:07:42 <mrtyler> does that seem fair?
+2017-06-07T15:08:38 <amatas> seems fair
+2017-06-07T15:08:54 <mrtyler> ok cool
+2017-06-07T15:09:37 <mrtyler> i think that\'s it for now
+2017-06-07T15:09:47 <mrtyler> i\'ll keep banging on this and see what happens
+2017-06-07T15:09:59 <mrtyler> one more topic:
+2017-06-07T15:10:13 <amatas> ok, I\'ll be over here if you want to discuss anything
+2017-06-07T15:10:29 <mrtyler> am i still doing my demo on thursday? isn\'t that one of the days gtirloni is busy with demo-babysitting?
+2017-06-07T15:10:50 <mrtyler> also were you going to make a calendar invite for that?
+2017-06-07T15:11:22 <mrtyler> also if sandra or colinclark want to see it, they\'ll still be in meetings on thursday afaik
+2017-06-07T15:11:39 <mrtyler> i was going to announce it at the meeting today in case other people wanted to attend
+2017-06-07T15:11:42 <mrtyler> is why i\'m asking
+2017-06-07T15:11:48 <colinclark> yeah, i\'m cooked all day thursday
+2017-06-07T15:11:53 <colinclark> as is gtirloni
+2017-06-07T15:11:57 <mrtyler> colinclark: how much do you care about this demo?
+2017-06-07T15:12:00 <colinclark> presenting to the steering committee
+2017-06-07T15:12:17 <colinclark> I care a lot about demos in general :)
+2017-06-07T15:12:20 <mrtyler> altho if gio is out, i think it\'s useful for him to see
+2017-06-07T15:12:33 <colinclark> but if you want to schedule something and then I take a look later, that\'s totally cool
+2017-06-07T15:12:46 <mrtyler> we could just punt to next monday\'s regular weekly devops meeting
+2017-06-07T15:12:59 <mrtyler> i could also record it with GTM i guess
+2017-06-07T15:13:48 <amatas> mrtyler: whenever is better for all of us, I suggested the thursday because gtirloni said that he will be "cooked" the beggining of this week.
+2017-06-07T15:14:15 <amatas> mrtyler: next monday works for me
+2017-06-07T15:14:35 <mrtyler> monday seems simplest to me
+2017-06-07T15:15:09 <amatas> I\'ll be on vacation from tuesday to the next monday
+2017-06-07T15:17:09 <mrtyler> unrelated: my favorite tweet this week: https://twitter.com/stephenjmolloy/status/871799913528602627
+2017-06-07T15:24:48 <amatas> :D, in spanish is "teethpaste"
+2017-06-07T15:25:19 <amatas> well, at least in Spain...
+2017-06-07T15:28:42 <mrtyler> heh, i guess so
+2017-06-07T15:28:47 <mrtyler> also teethbrush (cepilla de dientes)
+2017-06-07T15:29:24 * avtar1 joined the channel
+2017-06-07T15:29:50 * Jess_ joined the channel
+2017-06-07T15:36:51 * michelled joined the channel
+2017-06-07T15:43:18 * alanharnum has quit
+2017-06-07T15:43:21 * alanharn_ joined the channel
+2017-06-07T15:48:36 * kasparnet joined the channel
+2017-06-07T16:01:48 * Jess_ has quit
+2017-06-07T16:09:46 * kasparnet has quit
+2017-06-07T16:24:14 * alanharn_ has quit
+2017-06-07T16:29:39 * alanharnum joined the channel
+2017-06-07T16:34:36 * alanharnum has quit
+2017-06-07T16:35:34 * kasparnet joined the channel
+2017-06-07T17:40:22 * alanharnum joined the channel
+2017-06-07T17:42:52 * Jess_ joined the channel
+2017-06-07T17:44:03 * cindyli joined the channel
+2017-06-07T17:44:05 <mrtyler> wow, gitlab-runner is able to run jobs triggered by gitlab.com in a vagrant box on my laptop which is behind NAT
+2017-06-07T17:44:14 <mrtyler> i\'m somewhat impressed
+2017-06-07T17:44:24 <mrtyler> / afraid
+2017-06-07T18:20:57 * alanharnum has quit
+2017-06-07T18:21:06 * stegru has quit
+2017-06-07T18:21:26 * alanharnum joined the channel
+2017-06-07T18:21:57 <amatas> I guess that it uses poll method from the runner to the server using http requests.
+2017-06-07T18:22:29 <amatas> no matter where the runner is located while it has Internet connection
+2017-06-07T18:27:38 * colinclark_ joined the channel
+2017-06-07T18:28:30 * stegru joined the channel
+2017-06-07T18:29:26 * colinclark_ is now known as colinclark
+2017-06-07T18:37:43 * simonjb joined the channel
+2017-06-07T18:57:24 * colinclark has quit
+2017-06-07T18:58:20 * kasparnet has quit
+2017-06-07T19:04:38 * colinclark joined the channel
+2017-06-07T19:08:48 * kasparnet joined the channel
+2017-06-07T19:11:23 * avtar joined the channel
+2017-06-07T19:23:28 <gtirloni> amatas: do you know if we\'re using long polling with our runners?
+2017-06-07T19:23:49 <amatas> no idea
+2017-06-07T19:24:27 <gtirloni> no worries, i read about it in a blog post from gitlab but wasn\'t sure if it\'s now the default or not (i was wondering what\'s the delay on running new jobs, if it\'s a second/minute interval or if with long polling it\'s faster)
+2017-06-07T19:25:17 <amatas> it\'s almost instant
+2017-06-07T19:25:46 <amatas> every time I trigger a new pipeline I see that it\'s already started when I click on the log console
+2017-06-07T19:25:51 <gtirloni> cool, that\'s the long polling them (a.k.a. push with firewalls)
+2017-06-07T19:25:55 <gtirloni> then
+2017-06-07T19:26:14 <gtirloni> pretty nice solution they have
+2017-06-07T19:26:50 * colinclark has quit
+2017-06-07T19:28:26 <amatas> yes, we don\'t need to care about the network connectivity
+2017-06-07T19:29:42 * colinclark joined the channel
+2017-06-07T19:34:04 * colinclark has quit
+2017-06-07T19:36:00 * colinclark joined the channel
+2017-06-07T19:41:07 * Jess_ has quit
+2017-06-07T19:42:04 * colinclark joined the channel
+'
+
+b'2017-06-07T00:14:07 * kasparnet joined the channel
+2017-06-07T00:38:22 * kasparnet has quit
+2017-06-07T01:48:25 * colinclark joined the channel
+2017-06-07T01:59:17 * colinclark has quit
+2017-06-07T02:53:18 * kasparnet joined the channel
+2017-06-07T03:03:46 * colinclark joined the channel
+2017-06-07T03:09:40 * kasparnet has quit
+2017-06-07T03:21:50 * colinclark has quit
+2017-06-07T03:24:07 * colinclark joined the channel
+2017-06-07T03:29:26 * colinclark has quit
+2017-06-07T03:46:41 * colinclark joined the channel
+2017-06-07T03:46:42 * colinclark has quit
+2017-06-07T04:41:18 * mrtyler has quit
+2017-06-07T06:35:24 * the-t-in-rtf joined the channel
+2017-06-07T07:25:15 * stegru joined the channel
+2017-06-07T07:29:47 * javjarfer joined the channel
+2017-06-07T07:54:34 * the-t-in-rtf has quit
+2017-06-07T07:54:38 * the-t-in-rtf1 joined the channel
+2017-06-07T08:15:12 * the-t-in-rtf joined the channel
+2017-06-07T08:26:14 * amatas joined the channel
+2017-06-07T08:53:15 * the-t-in-rtf1 joined the channel
+2017-06-07T08:53:15 * the-t-in-rtf has quit
+2017-06-07T10:29:22 * kasparnet joined the channel
+2017-06-07T11:01:31 * kasparnet has quit
+2017-06-07T11:02:29 * kasparnet joined the channel
+2017-06-07T11:02:29 * kasparnet has quit
+2017-06-07T11:22:35 * stegru has quit
+2017-06-07T11:22:57 * stegru joined the channel
+2017-06-07T12:38:34 * alanharnum joined the channel
+2017-06-07T12:40:01 * gtirloni joined the channel
+2017-06-07T12:48:27 * Justin_o joined the channel
+2017-06-07T12:55:15 * michelled joined the channel
+2017-06-07T12:57:21 <alanharnum> This looks interesting: https://github.com/kentcdodds/all-contributors
+2017-06-07T12:57:31 <alanharnum> ^ Justin_o michelled in particular
+2017-06-07T13:01:51 <Justin_o> alanharnum: that\'s intersting
+2017-06-07T13:02:30 <Justin_o> alanharnum: i wonder how important it is to mention their type of contribution though.
+2017-06-07T13:02:59 * kasparnet joined the channel
+2017-06-07T13:04:30 <michelled> that\'s pretty cool alanharnum
+2017-06-07T13:04:41 <alanharnum> it\'s interesting conceptually
+2017-06-07T13:05:10 <Justin_o> I left a link to that on the planning page
+2017-06-07T13:05:14 <Justin_o> in the infusion section
+2017-06-07T13:07:53 * cindyli joined the channel
+2017-06-07T13:10:25 * kasparnet has quit
+2017-06-07T13:14:02 * clown joined the channel
+2017-06-07T13:14:59 * simonjb joined the channel
+2017-06-07T13:24:13 * colinclark joined the channel
+2017-06-07T13:39:52 * kasparnet joined the channel
+2017-06-07T13:47:29 * mrtyler joined the channel
+2017-06-07T13:56:02 * the-t-in-rtf1 has quit
+2017-06-07T13:56:22 * the-t-in-rtf joined the channel
+2017-06-07T13:57:16 <mrtyler> amatas: buenas tardes
+2017-06-07T13:57:30 <mrtyler> can we chat about gitlab-runner?
+2017-06-07T13:57:47 <amatas> buenas mrtyler
+2017-06-07T13:57:52 <amatas> sure
+2017-06-07T13:57:57 * avtar joined the channel
+2017-06-07T13:58:36 <mrtyler> first some good news: i have gitlab-runner running inside molecule
+2017-06-07T13:58:45 <mrtyler> https://gitlab.com/gpii-ops/gpii-terraform/settings/ci_cd
+2017-06-07T13:58:49 <mrtyler> https://gitlab.com/gpii-ops/gpii-terraform-live/settings/ci_cd
+2017-06-07T13:59:01 <amatas> awesome
+2017-06-07T14:00:27 <mrtyler> question 1: how do we handle gitlab-runner registration? it looks like the runner needs to be registered with each gitlab project (which is why there are distinct runners for gpii-terraform and gpii-terraform-live)
+2017-06-07T14:00:47 <mrtyler> are we going to maintain a list in ansible of every gitlab project, so the runner registers with each gitlab project?
+2017-06-07T14:00:55 <mrtyler> or is there a better way?
+2017-06-07T14:01:11 <mrtyler> i tried to look at some of the pre-existing gitlab setups but i don\'t have permissions to see settings
+2017-06-07T14:01:34 <amatas> yes, once the runner is registered in gitlab.com you have to enable it manually using the gitlab.com interface
+2017-06-07T14:01:54 <mrtyler> that is not true
+2017-06-07T14:01:59 <amatas> I don\'t know if there is an API call or similar for that
+2017-06-07T14:02:07 <mrtyler> you can register from the build node, using the cli
+2017-06-07T14:02:41 <amatas> yes, register can be performed from the node, but by default is disabled at the project in gitlab.com
+2017-06-07T14:02:41 <mrtyler> anyway it sounds like your plan would be to configure the runner once automatically, then by hand for each repo that uses the runner?
+2017-06-07T14:02:55 <mrtyler> that is not correct
+2017-06-07T14:03:10 <mrtyler> source: i never touched anything in the gitlab web interface, yet my runner shows up as registered
+2017-06-07T14:03:54 <amatas> is your runner with the button "Enable for this project" enabled by default?
+2017-06-07T14:04:17 <mrtyler> yes
+2017-06-07T14:04:21 <mrtyler> i mean no
+2017-06-07T14:04:31 <mrtyler> by default it says "remove runner" because it\'s already enabled
+2017-06-07T14:04:45 <mrtyler> i\'ll show you if you want
+2017-06-07T14:04:53 <amatas> ok, interesting, that should be changed in the latest releases
+2017-06-07T14:05:26 <mrtyler> it should be changed? like this behavior is going away? why would this not be the right way for the runner registration to behave?
+2017-06-07T14:05:42 <avtar> amatas, mrtyler: https://docs.gitlab.com/ce/api/runners.html#enable-a-runner-in-project
+2017-06-07T14:05:43 <amatas> I can see that it\'s enabled in the gpii-terraform-live project
+2017-06-07T14:06:07 <avtar> you just need to know the project\'s and runner\'s IDs
+2017-06-07T14:06:12 <mrtyler> avtar: neat. the gitlab-runner has a register command that wraps that api
+2017-06-07T14:06:27 <mrtyler> fyi
+2017-06-07T14:06:33 <avtar> nice :D
+2017-06-07T14:07:15 <mrtyler> definitely easier than mucking around with curl -X POST
+2017-06-07T14:08:22 <avtar> i can\'t verify this at the moment but i have a hunch that the register subcommand only registers a runner with an account
+2017-06-07T14:08:34 <amatas> sorry mrtyler, I said it wrong, I meant that that behavior (change the status to enabled by default) must have change in the latest releases of the gitlab.com because it didn\'t work in the past
+2017-06-07T14:08:39 <mrtyler> i don\'t understand the distinction avtar
+2017-06-07T14:08:47 <mrtyler> amatas: ok
+2017-06-07T14:08:59 <avtar> then that post request is required to make a project use the previously registered (with a gitlab account) runner
+2017-06-07T14:09:31 <amatas> also I see that the shared runners are disabled
+2017-06-07T14:10:59 <amatas> mmm, I see that there is a runner per project, is that correct mrtyler?
+2017-06-07T14:11:47 <mrtyler> avtar: gitlab-runner cli handles all of this
+2017-06-07T14:11:50 <mrtyler> amatas: where are you seeing the shared runners as disabled?
+2017-06-07T14:12:06 <amatas> https://gitlab.com/gpii-ops/test_project/settings/ci_cd
+2017-06-07T14:12:10 <amatas> sorry
+2017-06-07T14:12:14 <mrtyler> amatas: yes, because it\'s the only way i could figure out to do it, i think. if you have a way to not do it that way, that\'s one of the things i\'m asking about
+2017-06-07T14:12:27 <mrtyler> amatas: i\'m not using test_project. i\'m using the two projects i linked you to
+2017-06-07T14:12:29 <amatas> https://gitlab.com/gpii-ops/gpii-terraform-live/settings/ci_cd <- here they are disabled
+2017-06-07T14:12:45 <mrtyler> amatas: you don\'t see this?:
+2017-06-07T14:12:46 <mrtyler> Runners activated for this project
+2017-06-07T14:12:46 <mrtyler> 37947771 Remove Runner
+2017-06-07T14:12:46 <mrtyler> #168983
+2017-06-07T14:12:46 <mrtyler> ansible-gpii-ci-worker-gpii-terraform-live
+2017-06-07T14:13:03 <mrtyler> admittedly i haven\'t tried to run a build yet, but that looks enabled to me
+2017-06-07T14:13:49 <amatas> "Shared runners" the right side of that page, with a green button that allows you to enable them if you want. In the past those shared runners were enabled by default
+2017-06-07T14:14:00 <mrtyler> oh shared runners, sorry
+2017-06-07T14:14:15 <mrtyler> i may have disabled those by hand last week
+2017-06-07T14:15:02 <mrtyler> shared runners are probably not handled with gitlab-runner cli
+2017-06-07T14:15:16 <amatas> I don\'t think so as well
+2017-06-07T14:16:42 <amatas> I guess that if  you register a runner using the token of a particular project, that runner will be enabled by default for such project
+2017-06-07T14:16:47 <mrtyler> i think the shared runner problem is out of scope. i\'m worried about the build node end
+2017-06-07T14:16:57 <mrtyler> i believe that is correct
+2017-06-07T14:21:42 <amatas> I guess that an alternative could be to register a runner per tech i.e. ansible, vagrant and then enable the runners at the repositories. This approach could help us to control the amount of instances of each runner running at the same time.
+2017-06-07T14:23:04 <amatas> the registration of the runner is inside the scope of the task. The setup of the CI at the repository could be handle by hand, I don\'t think that that requires a lot of effort. In addition, the repositories only will be setup one time.
+2017-06-07T14:23:04 <mrtyler> so you want to handle registration manually?
+2017-06-07T14:23:31 <amatas> nono, the registration of the runner could be automatically, with a token.
+2017-06-07T14:23:49 * simonjb joined the channel
+2017-06-07T14:23:58 <mrtyler> ok walk me through the process of setting up a new build node
+2017-06-07T14:24:12 <amatas> once the runner is available to be enabled at the repositories we can do it manually
+2017-06-07T14:24:47 <mrtyler> ok. how do i register a runner with something other than a specific project
+2017-06-07T14:24:56 <mrtyler> i.e. can i register a runner with the gpii-ops organization?
+2017-06-07T14:25:10 <amatas> new build node, I imagine these steps: 1. install the gitlab-ci-runner on the host, 2. register the runner using a token, 3. check that is available in gitlab.com (if it\'s possible)
+2017-06-07T14:25:12 <mrtyler> what token do i use?
+2017-06-07T14:25:32 <mrtyler> for 2.
+2017-06-07T14:25:53 <amatas> I guess that any token of the gpii-ops organization should work
+2017-06-07T14:26:34 <amatas> in fact, I\'m able to enable the runners that you registered in this project: https://gitlab.com/gpii-ops/test_project/settings/ci_cd
+2017-06-07T14:27:21 <mrtyler> hm ok. so which project should i use. test_project?
+2017-06-07T14:27:47 <mrtyler> dedicated project to be a stable target for gitlab runner registration (like gpii-gitlab-runner-registration)?
+2017-06-07T14:28:16 <amatas> that is a good idea
+2017-06-07T14:28:28 <mrtyler> ok
+2017-06-07T14:29:16 <mrtyler> and what you\'re telling me is: we\'re going to do runner-per-project config by hand. so if we ever move the build node (i.e. from h5 to a box in the cloud), we will manually update every repo that was built by that build node
+2017-06-07T14:30:25 <amatas> yes, ATM
+2017-06-07T14:30:48 <amatas> we can automate the process using the API call that avtar sent before
+2017-06-07T14:32:00 <mrtyler> again: the gitlab-runner cli already knows how to do that. and so does the ansible role that manages gitlab-runner
+2017-06-07T14:32:25 <mrtyler> anyway that is a plan. thanks for the input amatas and avtar
+2017-06-07T14:32:46 * kasparnet has quit
+2017-06-07T14:33:45 * kasparnet joined the channel
+2017-06-07T14:34:54 <amatas> mrtyler: yes, but you have to register one runner per project and we could lost the feature of controlling the number of instances that must run at the same time, and it can be so in the case of intense creation of the VMs at the same time.
+2017-06-07T14:35:07 <amatas> that is my concern
+2017-06-07T14:35:57 <mrtyler> it\'s a single gitlab-runner per build node, so afaict any limits on number of builds would apply
+2017-06-07T14:36:02 <mrtyler> regardless of number of projects configured
+2017-06-07T14:36:07 <mrtyler> is that wrong?
+2017-06-07T14:37:09 <amatas> a single gitlab-runner per build node?, so if we have 15 projects with one runner per project, do we need 15 build nodes?. Sorry I just trying to understand.
+2017-06-07T14:37:23 <mrtyler> no, it\'s exactly like it is today
+2017-06-07T14:37:32 <mrtyler> so yes, one gitlab-runner per build node
+2017-06-07T14:37:45 <mrtyler> but one build node is fine, as we have it today
+2017-06-07T14:38:13 * kasparnet has quit
+2017-06-07T14:38:37 <mrtyler> actually, hmm
+2017-06-07T14:39:25 <mrtyler> now i\'m not so sure. there is only one gitlab-runner process running, so i think i\'m still right
+'
+

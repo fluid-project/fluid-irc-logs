@@ -1,0 +1,353 @@
+b'2015-06-02T20:12:30 <Bosmon> So what do you feel constitutes the bug then?
+2015-06-02T20:13:25 <anastasiac> Bosmon: that\xe2\x80\x99s what I\xe2\x80\x99m not clear on \xe2\x80\x93\xc2\xa0where the bug is.
+2015-06-02T20:13:32 * anvk has quit
+2015-06-02T20:13:35 <anastasiac> it\xe2\x80\x99s either in the FD tool, in that it wasn\xe2\x80\x99t declaring the default locale
+2015-06-02T20:14:03 <anastasiac> or in the framework, for not handling \xe2\x80\x9cen-US\xe2\x80\x9d as a possible default local
+2015-06-02T20:14:10 <anastasiac> I\xe2\x80\x99m not clear on how the language stuff works
+2015-06-02T20:14:21 <anastasiac> so I can\xe2\x80\x99t judge it the latter is a reasonable expectation
+2015-06-02T20:14:32 * maozillah has quit
+2015-06-02T20:14:45 <anastasiac> your answer, Bosmon, might just be \xe2\x80\x9cno, the FD tool should declare its default locale\xe2\x80\x9d which would be fine
+2015-06-02T20:15:08 <Bosmon> I think en-US in itself could be a default locale - but not at the same time as supporting fallback to that bundle from a language code of "en"
+2015-06-02T20:15:18 * maozillah joined the channel
+2015-06-02T20:16:14 <anastasiac> Bosmon, it sounds like you\xe2\x80\x99re saying it would not be reasonable to expect the framework to work its way through progressively less specific fallbacks, i.e. check \xe2\x80\x9cen-US\xe2\x80\x9d first, then \xe2\x80\x9cen\xe2\x80\x9d
+2015-06-02T20:16:17 <anastasiac> which I would agree with
+2015-06-02T20:16:49 <anastasiac> if that\xe2\x80\x99s the case, then it seems to me that the \xe2\x80\x9ccorrect\xe2\x80\x9d solution is for applications to declare a default locale if it wants something other than \xe2\x80\x9cen"
+2015-06-02T20:16:57 <anastasiac> does it sound like I\xe2\x80\x99m understanding, Bosmon?
+2015-06-02T20:17:10 <Bosmon> anastasiac - yes, the application must declare a default locale if it wants something other than "en"
+2015-06-02T20:17:16 <anastasiac> perfect
+2015-06-02T20:17:23 <anastasiac> thanks for double-checking my understanding, Bosmon
+2015-06-02T20:17:44 <Bosmon> But yes, on the other hand, the framework does indeed support fallback from "en_US" (note underscore) to "en" and then to the default
+2015-06-02T20:18:06 <Bosmon> Justin_o - have we reported the issue with JIRA?
+2015-06-02T20:19:28 <anastasiac> cindyli: if the framework is working with underscores to separate country codes from region codes, should we change the FD tool string files to use that? or is the FD tool dependent on the dash?
+2015-06-02T20:20:55 <Bosmon> anastasiac - our resource fallback rules should be identical to the ones described here: https://sites.google.com/site/openjdklocale/design-notes/resource-bundle-lookup-order
+2015-06-02T20:21:48 <anastasiac> agree. cindyli, Justin_o: is there any reason we can\xe2\x80\x99t change the FD string files to use _en_US.json as extension instead of _en-US.json ?
+2015-06-02T20:22:19 <Justin_o> anastasiac, Bosmon: it\'s because the same model value is used to set the lang attr
+2015-06-02T20:22:30 <Justin_o> which requires the the "-"
+2015-06-02T20:22:48 <anastasiac> Justin_o: can we not change the model values as well? does it actually require the dash?
+2015-06-02T20:23:04 <Justin_o> anastasiac: that is what is used by the lookup
+2015-06-02T20:23:19 <Justin_o> we probably need some model transformation somewhere
+2015-06-02T20:24:05 <anastasiac> ah, Justin_o has just explained that when we set the lang attr on the HTML, it needs to be a dash
+2015-06-02T20:24:20 <anastasiac> ok, for now, we stick with dash
+2015-06-02T20:24:47 <Bosmon> anastasiac - it\'s rather easier to fix up our lang attr code than to fix up our resource fallback algorithm
+2015-06-02T20:25:09 <Bosmon> But perhaps we don\'t need to demonstrate any fallback for the demo next week
+2015-06-02T20:25:25 <anastasiac> right, Bosmon
+2015-06-02T20:26:36 <anastasiac> Justin_o, cindyli, I have a one-line pull request: https://github.com/fluid-project/first-discovery/pull/81
+2015-06-02T20:36:10 * kasparnet has quit
+2015-06-02T20:38:41 <cindyli> thanks, anastasiac
+2015-06-02T20:41:33 * cindyli has quit
+2015-06-02T20:48:38 * kasparnet joined the channel
+2015-06-02T20:58:34 * jhung has quit
+2015-06-02T21:04:49 * Jess__ joined the channel
+2015-06-02T21:06:57 * yzen has quit
+2015-06-02T21:16:11 * maozillah has quit
+2015-06-02T21:23:23 * gtirloni has quit
+2015-06-02T22:01:18 * lliskovoi has quit
+2015-06-02T22:17:48 * colinclark has quit
+2015-06-02T22:21:32 * kasparnet has quit
+2015-06-02T23:01:06 * sgithens______ joined the channel
+'
+
+b'2015-06-02T17:10:44 <Bosmon> Justin_o - there can\'t be a hover until the new markup arrives
+2015-06-02T17:11:34 <Bosmon> Justin_o - so a fix that appears to work is - to add a new listener on line 101 of first-discovery/src/js/panels.js
+2015-06-02T17:11:37 <Justin_o> Bosmon: but if do this on afterRender, won\'t the new markup have already arived
+2015-06-02T17:11:44 <Justin_o> or am i confused about the order of things there
+2015-06-02T17:11:50 <Bosmon> Which reads:             "onRenderTree": "gpii.firstDiscovery.panel.obliterateTooltip",
+2015-06-02T17:12:03 <Bosmon> Justin_o - there is a helpful "onRenderTree" event exposed by the renderer component infrastructure
+2015-06-02T17:12:09 <Justin_o> oh, i didn\'t know about that
+2015-06-02T17:12:12 <Justin_o> that\'s handy
+2015-06-02T17:12:16 <Bosmon> Which is the last one that fires just before the last markup is destroyed
+2015-06-02T17:12:29 <Justin_o> Bosmon: thanks, that\'s super useful
+2015-06-02T17:12:37 <Bosmon> Then inside "obliterateTooltip" you can put "        $("[id^=ui-tooltip]").remove();"
+2015-06-02T17:13:12 <Bosmon> Yes, unfortunately the secret weapon wasn\'t as helpful as I expected, given unfortunately it doesn\'t reveal the cause of the problem
+2015-06-02T17:13:24 <Bosmon> But it\'s good enough, I think, to get the tool working for the demo
+2015-06-02T17:13:35 <Justin_o> Bosmon: yes, and that\'s really helpful in itself
+2015-06-02T17:13:46 <Bosmon> What I believe at the moment is that there is no longer a bug either in the fluid Tooltip widget or the jQuery UI widget
+2015-06-02T17:14:00 <Bosmon> But the bug is now in our rendering workflow for either the prefs framework or the FD tool itself
+2015-06-02T17:14:31 <Bosmon> And I suspect that what changed since Saturday was that some subtle alteration was committed to that workflow
+2015-06-02T17:15:23 <Bosmon> What\'s happening now is that both jQuery UI and the Fluid component are saying that there is no tooltip to close
+2015-06-02T17:15:36 <Bosmon> Which as far as they know is correct, since the markup it was attached to is gone from the document
+2015-06-02T17:17:28 <Justin_o> Bosmon: did you try this out on the speechRate adjuster..
+2015-06-02T17:17:51 <Justin_o> it didn\'t seem to be broken there, so wondering if your secret weapon might be useful to tease out the differences
+2015-06-02T17:18:49 <Bosmon> Justin_o - I believe both of those panels are derived from the same panel base, the "ranged" adjuster
+2015-06-02T17:18:55 <Bosmon> So the same code will now be executing for both of them
+2015-06-02T17:19:10 <Justin_o> Bosmon: yes, they are
+2015-06-02T17:19:33 <Bosmon> What I do notice is that the new "hover" does not appear on that panel until the mouse leaves and re-enters the button
+2015-06-02T17:19:57 <Justin_o> but there is also a difference i\'m seeing where you can use the keyboard to repeatedly modify the adjuster, but the textSize you have to tab back to the button
+2015-06-02T17:19:59 <Justin_o> Bosmon: ^
+2015-06-02T17:22:09 <Bosmon> Ok - Justin_o, ok, looking at these two panels, I have just realised something horrifying
+2015-06-02T17:22:14 <Bosmon> Both of these buttons have exactly the same id
+2015-06-02T17:22:18 <Justin_o> :(
+2015-06-02T17:22:23 <Bosmon> They are both "#gpiic-fc-increase"
+2015-06-02T17:22:28 <Bosmon> er fd
+2015-06-02T17:22:30 <Justin_o> i thought i took that out
+2015-06-02T17:22:32 <Bosmon> They are both "#gpiic-fd-increase"
+2015-06-02T17:22:39 <Justin_o> the id is unecessary
+2015-06-02T17:22:43 <Bosmon> I see
+2015-06-02T17:22:48 <Bosmon> Well, this may well be related
+2015-06-02T17:23:03 <Justin_o> i\'ll remove the id and name attributes
+2015-06-02T17:23:12 <Justin_o> from the buttons
+2015-06-02T17:23:27 * simonjb joined the channel
+2015-06-02T17:24:46 <Bosmon> What\'s interesting is that a jQuery query for the element only returns one of them, the currently visible one
+2015-06-02T17:25:13 <Bosmon> Although perhaps this really is the real underlying problem - that as soon as we create a fresh one with the same id, the browser unlinks the old one from the document
+2015-06-02T17:25:28 <Bosmon> This would account for us seeing two instances of the DOM node going by
+2015-06-02T17:26:00 <Justin_o> Bosmon: i think this was it.. i removed the ids and the obliteration call and the tooltip is removed.
+2015-06-02T17:26:08 <Bosmon> Justin_o - well, that\'s good
+2015-06-02T17:26:14 <Justin_o> the button activation with keyboard is different though
+2015-06-02T17:26:33 <Justin_o> Bosmon: so i guess i either forgot to commit the id removal or else it was merged back in by accident :(
+2015-06-02T17:27:01 <Bosmon> I guess this has to count as the hardest class of issue to debug of all time
+2015-06-02T17:27:25 <Bosmon> But the browser, I imagine, is entitled to do absolutely anything it likes on creation of two nodes with the same ID
+2015-06-02T17:27:48 <Justin_o> Bosmon: yes.. i guess so.. it would be good if we got some sort of error for it though
+2015-06-02T17:29:18 * colinclark has quit
+2015-06-02T17:29:55 <Justin_o> Bosmon: thanks for your help tracking this down
+2015-06-02T17:30:08 <Justin_o> cindyli: FLOE-361 is ready for review now
+2015-06-02T17:30:44 <Bosmon> Justin_o - no problem
+2015-06-02T17:31:21 <Justin_o> danayo: do you have some time to chat about the tooltip placement.. I\'ll need to share my screen with you
+2015-06-02T17:32:45 <Bosmon> Justin_o - I guess that part of the issue is that the increase and decrease buttons are not actually using the renderer
+2015-06-02T17:32:57 <Bosmon> If they were, the renderer would have made efforts to ensure that the ids were unique
+2015-06-02T17:33:14 <Bosmon> I guess when we write the "new renderer" we should ensure that it handles this situation
+2015-06-02T17:33:16 * Jess_ joined the channel
+2015-06-02T17:33:44 <Bosmon> And should uniquify ALL ids that pass through its hands, not just for nodes that have matching renderer components
+2015-06-02T17:34:18 <Justin_o> Bosmon: makes sense, but we\'ll need to make sure that we can still use them for references e.g. for labels and aria attributes
+2015-06-02T17:34:39 <Bosmon> Justin_o - yes, it already takes care of that aspect when it does rewrite an id
+2015-06-02T17:34:59 <Bosmon> But the current impl only bothers to rewrite an id if it thinks it is responsible for rendering a component
+2015-06-02T17:35:45 <Justin_o> Bosmon: okay, so it\'s just a matter or extending the machinery
+2015-06-02T17:35:48 <Justin_o> to cover more cases
+2015-06-02T17:44:47 <Bosmon> Justin_o - I wrote this up as http://issues.fluidproject.org/browse/FLUID-5674
+2015-06-02T17:45:58 * maozillah joined the channel
+2015-06-02T17:47:01 * gtirloni has quit
+2015-06-02T17:48:24 <Justin_o> Bosmon: thanks for that
+2015-06-02T17:53:05 * michelled joined the channel
+2015-06-02T17:58:29 <Jess_> Bosmon: can we connect in Skype?
+2015-06-02T18:01:58 * michelled1 joined the channel
+2015-06-02T18:03:04 * michelled2 joined the channel
+2015-06-02T18:06:43 * colinclark joined the channel
+2015-06-02T18:20:15 <sepideh> danayo: do you think it\xe2\x80\x99s necessary to show all the panels for sticky keys preferences?
+2015-06-02T18:21:22 <sepideh> Since the navigation is more important I was thinking maybe the presenter can just press next then we can skip a lot of trouble for definig interactio for Sticky Keys panels. thoughs?
+2015-06-02T18:24:23 <Justin_o> cindyli: could you please review my FLOE-327 pull request as well https://github.com/fluid-project/first-discovery/pull/80
+2015-06-02T18:24:30 <Justin_o> FLOE-361 needs to go in first though
+2015-06-02T18:25:30 <cindyli> ok, Justin_o
+2015-06-02T18:25:32 <danayo> sepideh, I think that sounds reasonable. so you mean for the senior\'s intake flow they\'ll go straight from first sticky keys panel to confirmation panel?
+2015-06-02T18:26:13 <danayo> the other thing we could do is just make the next / back buttons functional for those panels and not worry about the rest
+2015-06-02T18:26:22 <danayo> sepideh ^
+2015-06-02T18:26:49 <sepideh> that\xe2\x80\x99s what I was thinking
+2015-06-02T18:27:25 <sepideh> Since they have only 15 min to present 3 settings, I think the most reasonable approach is to make only back and next functional
+2015-06-02T18:29:40 <danayo> sounds good sepideh. also, i think i\'ve figured out how to use inDesign so we can split up some of that work if that would help?
+2015-06-02T18:30:51 * gtirloni joined the channel
+2015-06-02T18:31:03 <sepideh> Awesome! I am building the panels in Inesign now. I should be done with the panels before I leave today. And then we can start making them interactive tomorrow
+2015-06-02T18:31:05 <sepideh> :)
+2015-06-02T18:35:34 * avtar has quit
+2015-06-02T18:41:24 <danayo> how do you mean you are building them, sepideh? can we not copy and paste panels right into InDesign?
+2015-06-02T18:42:27 <sepideh> Just copy and pasting elements from Illustrator to Indesign. Then we can make interactive buttons. And also I\xe2\x80\x99m replacing the icons on the progress bar with the new icons
+2015-06-02T18:43:21 <sepideh> the only problem is pasting text. when you paste text it treats it as an image. so we have to define text boxes and copy paste into that text box.
+2015-06-02T18:43:46 <sepideh> I\xe2\x80\x99m almost done with the first two branches and
+2015-06-02T18:45:56 <danayo> ok great. I tried just copying a full panel into InDesign and it seems ok - why does it matter if the text is am image for the interactive pdf\'s?
+2015-06-02T18:47:16 <danayo> sepideh ^
+2015-06-02T18:47:48 <sepideh> it looks a bit pixelated and may not turn out sharp on the desktp view.
+2015-06-02T18:48:34 <danayo> ah. ok sepideh
+2015-06-02T18:48:37 <sepideh> I have saved the file on drop box, I\xe2\x80\x99m still working on it, but you can have a look.
+2015-06-02T18:48:43 <sepideh> https://www.dropbox.com/s/bgdvcqq4olwc40l/PGA%20Workshop%20FD%20Tool%20Mockup.indd?dl=0
+2015-06-02T18:49:25 <danayo> cool. thanks sepideh. this is exciting
+2015-06-02T18:49:33 <sepideh> :)
+2015-06-02T18:58:45 * avtar joined the channel
+2015-06-02T18:59:59 * cindyli joined the channel
+2015-06-02T19:06:48 * danayo has quit
+2015-06-02T19:07:17 <Justin_o> Bosmon: wonder if you have time to help out with some stuff for FD Tool?
+2015-06-02T19:07:42 * danayo joined the channel
+2015-06-02T19:11:48 <Bosmon> Justin_o - not precisely, involved in the interviewing at present
+2015-06-02T19:11:51 <Bosmon> What kind of stuff is there?
+2015-06-02T19:12:46 <Justin_o> Bosmon: code reviews and unit tests.. i\'m thinking that the code review might be easier to do when you have spare moments..
+2015-06-02T19:12:59 <Justin_o> Bosmon: if you have time, could you look at my pull requests https://github.com/fluid-project/first-discovery/pulls
+2015-06-02T19:13:21 <Justin_o> FLOE-365 still needs more work, so no need to look at that one right now
+2015-06-02T19:23:37 <Bosmon> Hi Justin_o - your pulls look good, only https://github.com/fluid-project/first-discovery/pull/77 seems to have no tests - but I guess this is a more systemic kind of issue
+2015-06-02T19:23:54 <Bosmon> What we need to construct as part of our "resolving technical debt" is a mock implementation of your TTS enactor
+2015-06-02T19:24:19 <Bosmon> So it\'s fine for this to go in so long as we make a JIRA for that and refer to it here
+2015-06-02T19:25:09 <Justin_o> Bosmon: when you say refer to it here, what do you mean? Would you like a comment in the code somewhere.. or you mean to track it on the iteration page
+2015-06-02T19:25:26 <Bosmon> Justin_o - I mean to add a comment to that impl referring to the JIRA that we will make, yes
+2015-06-02T19:25:48 <Justin_o> Bosmon: okay
+2015-06-02T19:26:03 <Justin_o> Bosmon: we do have some test for the selfVoicing
+2015-06-02T19:26:17 <Justin_o> i could try to follow that pattern to write a test
+2015-06-02T19:30:36 <Bosmon> Justin_o - those are a bit cumbersome, I think we wouldn\'t want to have one in that style everywhere where we are trying to test speech output
+2015-06-02T19:31:11 <Bosmon> We need to construct a mock implementation that assembles a linear "transcript" of all the things it tried to speak (or was cancelled from speaking) so we can just verify against that with a single jqUnit.assertDeepEq
+2015-06-02T19:32:00 <Bosmon> The tests you\'ve got there (for TextToSpeechTests.js) are fine for what they test, which is that a particular concrete impl works at all
+2015-06-02T19:32:15 <Bosmon> But we need something that assists us to write integration tests against TTS in particular contexts
+2015-06-02T19:32:24 <Bosmon> Which is what your pull 77 could have used
+2015-06-02T19:33:04 <anastasiac> simonjb: michelled just showed me the bug you found. I\xe2\x80\x99m filing a jira and investigating
+2015-06-02T19:36:10 <Justin_o> Bosmon: sort of like an enhanced version of what this is doing https://github.com/fluid-project/first-discovery/blob/master/tests/js/keyboardInputTests.js#L631-L636
+2015-06-02T19:37:13 <Bosmon> Justin_o - like that, yes, only it would replace the actual concrete implementation rather than just listen to it
+2015-06-02T19:37:25 <Bosmon> So that we could run these integration tests on browsers other than ones where TTS was supported
+2015-06-02T19:38:40 <Justin_o> Bosmon: that makes sense
+2015-06-02T19:38:54 <Justin_o> i\'m attempting to write a jira now, although there seems to be something wrong with Jira at the moment
+2015-06-02T19:49:55 * michelled joined the channel
+2015-06-02T19:58:32 <anastasiac> simonjb, cindyli, michelled: I think I\xe2\x80\x99ve discovered the root of our language oddness: Our english files were renamed to add the \xe2\x80\x9c_en-US\xe2\x80\x9d extension, but it looks like the build site still has the un-extended files in place as well as the new ones. The fact that our local dev instances (where we don\xe2\x80\x99t have the old files) fail indicates that there\xe2\x80\x99s a bug in the language fall-back code
+2015-06-02T19:59:02 <simonjb> thanks for investigating anastasiac
+2015-06-02T19:59:55 <anastasiac> not sure what the fix is i.e. why did out build site deploy not clean up the files that aren\xe2\x80\x99t in github anymore. That might be a gtirloni question?
+2015-06-02T20:00:44 <anastasiac> when the build site is fixed so that the errant files aren\xe2\x80\x99t there anymore, the one missing tooltip will be fixed, but then the build site will exhibit the problem we all see on our local machines, which is a bit more serious
+2015-06-02T20:01:09 <Bosmon> anastasiac - our language fallback code expects to use multiple underscores, e.g. _en_US, rather than a hyphen as in _en-US
+2015-06-02T20:01:45 * michelled joined the channel
+2015-06-02T20:01:49 * michelled has quit
+2015-06-02T20:02:14 * michelled joined the channel
+2015-06-02T20:06:37 <anastasiac> cindyli: Bosmon\xe2\x80\x99s comment is a bit different than our converstion\xe2\x80\xa6 ^
+2015-06-02T20:09:20 <cindyli> Bosmon, anastasiac, ideally, we should use underscores, but in the first discovery environment, dashes should be fine because we are not falling back to _en, the entire language code en-US will be stripped out when matching up for another language code
+2015-06-02T20:10:22 * maozillah has left the channel
+2015-06-02T20:10:34 <anastasiac> cindyli, Bosmon: the problem in the FD tool is that we don\xe2\x80\x99t have any version of the bundles with the entire code stripped out i.e. we don\xe2\x80\x99t have \xe2\x80\x9clang.json\xe2\x80\x9d only \xe2\x80\x9clang_en-US.json\xe2\x80\x9d
+2015-06-02T20:10:46 <Bosmon> anastasiac - ok
+2015-06-02T20:10:49 <anastasiac> setting the defaultLocale in the FD tool addresses the problems
+2015-06-02T20:10:59 <anastasiac> but I\xe2\x80\x99m not sure that\xe2\x80\x99s the \xe2\x80\x9ccorrect\xe2\x80\x9d solution
+2015-06-02T20:11:04 * maozillah joined the channel
+2015-06-02T20:11:54 <Bosmon> anastasiac - would you prefer to have localisable files in our deployment image that don\'t indicate what language they are in?
+2015-06-02T20:12:16 <anastasiac> not in particular, Bosmon, we kind of like having the language codes to make it clear what\xe2\x80\x99s what
+2015-06-02T20:12:23 <Bosmon> cool
+'
+
+b'2015-06-02T00:05:40 * danayo joined the channel
+2015-06-02T01:38:13 * sgithens______ joined the channel
+2015-06-02T02:46:19 * colinclark joined the channel
+2015-06-02T02:46:26 * colinclark has quit
+2015-06-02T06:05:16 * the-t-in-rtf joined the channel
+2015-06-02T06:10:18 * the-t-in-rtf has quit
+2015-06-02T07:44:32 * the-t-in-rtf joined the channel
+2015-06-02T08:53:55 * kasparnet joined the channel
+2015-06-02T10:05:10 * gtirloni joined the channel
+2015-06-02T12:00:07 * jhung joined the channel
+2015-06-02T12:05:38 * jhung joined the channel
+2015-06-02T12:11:42 * Justin_o joined the channel
+2015-06-02T12:30:54 * michelled joined the channel
+2015-06-02T12:49:57 * cindyli joined the channel
+2015-06-02T12:57:20 * anastasiac joined the channel
+2015-06-02T13:09:29 * anvk joined the channel
+2015-06-02T13:13:51 * sepideh joined the channel
+2015-06-02T13:27:23 * the-t-in-rtf1 joined the channel
+2015-06-02T13:29:25 * lliskovoi joined the channel
+2015-06-02T13:29:34 * the-t-in-rtf has quit
+2015-06-02T13:34:23 * Jess_ joined the channel
+2015-06-02T13:50:42 <jhung> cindyli: I\'m looking at your FLOE-359 branch now.
+2015-06-02T13:55:04 <cindyli> thanks, jhung
+2015-06-02T13:56:28 * clown joined the channel
+2015-06-02T14:00:37 * colinclark joined the channel
+2015-06-02T14:04:03 * murilo_crivellar joined the channel
+2015-06-02T14:14:28 * cindyli joined the channel
+2015-06-02T14:16:31 <jhung> cindyli: I have a fix for the spacer issue. Should I submit a pull req to your branch or should I do it directly to master?
+2015-06-02T14:17:18 <cindyli> jhung: u can do it directly to the master
+2015-06-02T14:17:29 <cindyli> thanks for fixing that
+2015-06-02T14:17:33 <jhung> np.
+2015-06-02T14:27:55 <jhung> cindyli: is there a reason for having the Welcome and Congratulations items in the nav bar? Can we remove these?
+2015-06-02T14:29:24 <cindyli> jhung: we can potentially remove congrats icon since it\'s the last icon. but we do need to keep the welcome icon which is a place holder to maintain the icon position to match up with the panel number
+2015-06-02T14:29:46 * sepideh has quit
+2015-06-02T14:30:03 <cindyli> jhung: also, if we can, i think it\'s better to keep congrats icon too. it implies a panel to be mapped on
+2015-06-02T14:30:15 <jhung> ok.
+2015-06-02T14:34:08 <Justin_o> cindyli: when you have time, could you please review my FLOE-363 pull request? https://github.com/fluid-project/first-discovery/pull/77
+2015-06-02T14:34:20 <cindyli> sure, Justin_o
+2015-06-02T14:34:25 <Justin_o> cindyli: thanks
+2015-06-02T14:34:30 <cindyli> i owe you so many reviews, Justin_o
+2015-06-02T14:35:03 <Justin_o> :)
+2015-06-02T14:35:13 <Justin_o> it\'s only 2
+2015-06-02T14:36:46 <cindyli> Bosmon: it seems i cannot use distributeOptions to override a namespaced model listener. The distributed listener is added rather than replacing
+2015-06-02T14:42:35 <Bosmon> cindyli - namespaces are not supported for modelListeners in the current implementation
+2015-06-02T14:42:42 * yzen joined the channel
+2015-06-02T14:42:48 <cindyli> ok, Bosmon
+2015-06-02T14:43:00 <cindyli> i can work around it anyway
+2015-06-02T14:45:22 <Justin_o> Bosmon: :( i was doing some more testing and I think that FLUID-5673 might still be an issue in chrome. Although it is working fine in Safari.
+2015-06-02T14:45:30 <Justin_o> I\'ll double check that it isn\'t a cache issue
+2015-06-02T14:48:08 <Justin_o> Bosmon: now it is only happening for one of the +/- adjusters.. the one that changes text size
+2015-06-02T14:48:12 <Justin_o> the other one is okay though
+2015-06-02T14:49:26 <jhung> cindyli: do you have time to chat?
+2015-06-02T14:49:52 <Bosmon> Justin_o - I only see one such adjuster
+2015-06-02T14:49:52 <cindyli> yes, jhung
+2015-06-02T14:49:57 <Bosmon> and the text size one is the one I tested with
+2015-06-02T14:50:09 <Justin_o> Bosmon: did you turn voice off?
+2015-06-02T14:50:14 <Bosmon> Justin_o - yes
+2015-06-02T14:50:15 <Justin_o> you don\'t get the speech rate if the voice is off
+2015-06-02T14:50:17 <Bosmon> I see
+2015-06-02T14:50:33 <Justin_o> Bosmon: can you try my FLOE-361 branch with chrome
+2015-06-02T14:50:41 <Bosmon> Justin_o - ok
+2015-06-02T14:50:46 <Justin_o> Bosmon: thanks
+2015-06-02T14:51:17 <Justin_o> Bosmon: okay, it\'s not working in safari either, maybe i missed committing something
+2015-06-02T14:51:45 <jhung> give me a sec cindyli. Vidyo in Windows crashing. :(
+2015-06-02T14:51:55 <cindyli> sure
+2015-06-02T14:52:14 <Bosmon> Justin_o - yes, I see your branch as broken
+2015-06-02T14:52:29 * avtar joined the channel
+2015-06-02T14:52:40 <Justin_o> Bosmon: thanks for checking.. i was sure this was working yesterday :(
+2015-06-02T14:53:28 <Justin_o> or maybe i just tested with the speech rate yesterday
+2015-06-02T14:53:58 <Bosmon> Well, the last time I tested this function, the size enactor wasn\'t actually doing anything
+2015-06-02T14:54:07 <Bosmon> it worked on Sunday when I committed against that version
+2015-06-02T14:54:51 <Justin_o> Bosmon: that\'s strange, the size enactor should have been working for a while
+2015-06-02T14:55:02 <Justin_o> Bosmon: hmm.. so maybe still something to do with the rendering then
+2015-06-02T14:55:10 <Justin_o> or the enacting
+2015-06-02T14:55:56 <Bosmon> Justin_o - maybe, yes
+2015-06-02T14:55:59 <Bosmon> Let me look at this a bit
+2015-06-02T14:56:12 <Bosmon> I have a SECRET WEAPPON I developed against such a problem on Saturday
+2015-06-02T14:56:14 <Bosmon> That may help here : P
+2015-06-02T14:56:25 <Bosmon> So I noticed in my testing over the weekend that the rendering behaviour of the component is pretty bizarre
+2015-06-02T14:56:28 <Justin_o> Bosmon: secret weapon :)
+2015-06-02T14:56:35 <Bosmon> in that it rerenders all kinds of things that it shouldn\'t
+2015-06-02T14:57:08 <Justin_o> Bosmon: it pretty much re-renders everything right now when something in the preferences model changes
+2015-06-02T14:57:10 <Bosmon> This confused me for a long while since I was sure that it was destroying a tooltip component that it wasn\'t
+2015-06-02T14:57:21 <Justin_o> i think this is historically for the enactors, but not really necessary for this tool i don\'t think
+2015-06-02T14:57:25 <Bosmon> Justin_o - ok
+2015-06-02T14:57:38 <Bosmon> So for example I would find it doing things like closing tooltips for the prev/next buttons as well
+2015-06-02T14:58:27 <Justin_o> right, so even in cases where those tooltips are already closed?
+2015-06-02T15:00:12 * sepideh joined the channel
+2015-06-02T15:14:27 <Justin_o> Bosmon: i wonder if it has to do with the fact that you are still hovering over the button when you click it and it re-renders
+2015-06-02T15:14:37 <Bosmon> Justin_o - that has always been the case
+2015-06-02T15:14:41 <Bosmon> And it is the case for the other button too
+2015-06-02T15:15:06 <Justin_o> Bosmon:  :( I\'m out of theories
+2015-06-02T15:23:37 <cindyli> Justin_o: can you review my pull request for adding the voting demo - https://github.com/fluid-project/first-discovery/pull/78
+2015-06-02T15:26:24 <Justin_o> cindyli: sure
+2015-06-02T15:26:52 <cindyli> thanks, Justin_o
+2015-06-02T15:29:05 <avtar> fluid-everyone: anyone who is remote today could you please join this room for standup? https://conf.inclusivedesign.ca/flex.html?roomdirect.html&key=rkSs1zg5mxxnMMcppnBLaWAl2o
+2015-06-02T15:33:04 * michelled joined the channel
+2015-06-02T15:35:45 <jhung> cindyli: I submitted a pull req for that whitespace issue. Do you want to review it? https://github.com/fluid-project/first-discovery/pull/79
+2015-06-02T15:38:29 <jhung> also cindyli I am starting on FLOE-367 (voting booth styling). I\'m merging in your FLOE-365 branch to start.
+2015-06-02T15:48:35 * the-t-in-rtf1 has quit
+2015-06-02T16:15:41 <Bosmon> Justin_o - getting a little closer to the problem
+2015-06-02T16:15:53 <Bosmon> It appears that something has removed and replaced the markup for the buttons BEFORE the panel has re-rendered
+2015-06-02T16:16:08 <Bosmon> And so the $.data() element for the tooltip id is missing and so it leaks
+2015-06-02T16:16:58 <Bosmon> The button which receives the click event is actually a different button to the one which receives the hover event
+2015-06-02T16:17:00 <Bosmon> Which is pretty appalling
+2015-06-02T16:44:01 * cindyli joined the channel
+2015-06-02T16:46:28 <cindyli> sorry, jhung, just saw ur message. yes. i will review #79
+2015-06-02T16:47:15 <Bosmon> cindyli, Justin_o - there seems to be some serious problem with the FD tool rendering
+2015-06-02T16:47:27 <cindyli> what\'s about, Bosmon
+2015-06-02T16:47:31 <Bosmon> As far as I can see, it is re-rendering at least twice for every model change
+2015-06-02T16:47:48 <Bosmon> And the tooltip problem is caused by the fact that the tooltip widget is bound to the instance of the markup which is destroyed
+2015-06-02T16:47:55 <Jess_> fluid-everyone: that was pretty cool having standup in the new room. here\xe2\x80\x99s the google doc I mentioned where we\xe2\x80\x99ll be keeping our punch list of issues or notables. Help me fill it in during this \xe2\x80\x9cburn-in\xe2\x80\x9d period and we\xe2\x80\x99ll get things fixed https://docs.google.com/spreadsheets/d/1j2ZM1oTya5pYGCeEpmyoA8AWt-wrco8-xSTgqMArqmg/edit#gid=0
+2015-06-02T16:48:07 * sepideh joined the channel
+2015-06-02T16:49:24 <cindyli> ah ha, jhung, u can file ur windows crashing issue in this doc
+2015-06-02T16:49:51 <cindyli> Bosmon: playing with the tool on the double rendering...
+2015-06-02T16:51:49 <Bosmon> cindyli - unfortunately it\'s very hard to tell what is going on, and we have only very crude tools : P
+2015-06-02T16:51:50 <Bosmon> http://pastie.org/10219611
+2015-06-02T16:51:55 <Bosmon> Here is a little utility I am using
+2015-06-02T16:52:12 <Bosmon> From time to time you can call         gpii.diagnoseTarget($("#gpiic-fd-increase"));
+2015-06-02T16:52:28 <Bosmon> And you will see that the "count" associate with the increase size button goes up by TWO every time there is a model change
+2015-06-02T16:52:42 <Justin_o> Bosmon: just catching up.. so you\'re saying that when we click a button, there we re-render twice. where does the hover and click event happen to the components?
+2015-06-02T16:52:44 <Bosmon> And you will see the tooltip bound to one instance, whilst the other one is the one in the live document
+2015-06-02T16:53:27 <Justin_o> Bosmon: shouldn\'t the destroy be happening for each of those tooltips though.. when we re-render
+2015-06-02T16:53:34 <Bosmon> Justin_o - it should
+2015-06-02T16:53:45 <Bosmon> But bizarrely, I\'m not convinced that one lot of markup replacement is actually due to a re-render
+2015-06-02T16:54:56 <Bosmon> ah
+2015-06-02T16:57:01 <Bosmon> So, for example, when clicking on the "increase size" button, I see two panels rerender
+2015-06-02T16:57:12 <Bosmon> The first one is the speechRate panel
+2015-06-02T16:57:23 <Bosmon> And the second one is the size panel, the one which should re-render
+2015-06-02T16:57:52 <Justin_o> is it because they share the same base grade?
+2015-06-02T16:58:03 <Justin_o> those are the only two panels that you see rerendering?
+2015-06-02T16:59:07 <Bosmon> Justin_o - yes
+2015-06-02T16:59:21 <Bosmon> Ah wait
+2015-06-02T16:59:26 <Bosmon> I\'m only tracking the "ranged" panels
+2015-06-02T16:59:33 <Bosmon> So ok, I guess in truth they are all re-rendering
+2015-06-02T17:00:13 <Justin_o> Bosmon: yes, i think that\'s expected, maybe we can get rid of that though
+2015-06-02T17:00:47 <Bosmon> So yes, although the panel only re-renders once, I see two distinct instances of the button\'s DOM nodes going by.....
+2015-06-02T17:01:59 <Justin_o> Bosmon: we do update the disabled prop on them, but that should cause rerendering.
+2015-06-02T17:02:39 <Justin_o> Bosmon: that\'s the only other DOM manipulation i can think of
+2015-06-02T17:04:53 <Bosmon> Justin_o - since we are probably running out of time on this, I suggest putting in a hack that just manually clears out all tooltips from the DOM after a render
+2015-06-02T17:06:16 <Justin_o> Bosmon: you mean look for anything that starts with the "ui-tooltip.." class and call hide on it?
+2015-06-02T17:06:36 <Bosmon> remove, in fact, yes
+2015-06-02T17:07:03 <Bosmon> Since the genuine owner element has been taken out of the document long ago, there is no risk that the widget code will ever try to interact with it again
+2015-06-02T17:08:20 <Justin_o> Bosmon: and that wouldn\'t cause a problem for other tooltips on the page?
+2015-06-02T17:08:45 <Bosmon> Justin_o - no such tooltips should be showing at the moment we re-render
+2015-06-02T17:08:48 * maozillah joined the channel
+2015-06-02T17:10:09 <Justin_o> Bosmon: okay, i\'ll give that a try
+2015-06-02T17:10:17 <Bosmon> Justin_o - having done this, I can confirm it works : P
+2015-06-02T17:10:27 <Justin_o> Bosmon: won\'t you lose the new hover tooltip though
+2015-06-02T17:10:27 * danayo joined the channel
+'
+

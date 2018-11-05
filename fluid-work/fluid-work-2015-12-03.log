@@ -1,0 +1,349 @@
+b'2015-12-03T19:32:33 * sepidehshahi joined the channel
+2015-12-03T19:39:02 <michelled> anastasiac, jhung: if you were planning on attending the dspace meeting, the time has changed. Please add your name to this Doodle: http://doodle.com/poll/pfwakwmch7iccn99
+2015-12-03T19:39:12 * clown joined the channel
+2015-12-03T19:39:29 * the-t-in-rtf joined the channel
+2015-12-03T19:39:54 <anastasiac> done
+2015-12-03T20:00:38 * jtworkme has quit
+2015-12-03T20:02:21 * zamcnema has quit
+2015-12-03T20:08:08 <jhung> thanks michelled. Submitted my response.
+2015-12-03T20:11:59 * sgithens joined the channel
+2015-12-03T20:12:04 <Justin_o> Bosmon: can a config have gradeNames?
+2015-12-03T20:12:25 <Justin_o> Bosmon: ah i see it can
+2015-12-03T20:14:53 * cindyli joined the channel
+2015-12-03T20:18:37 * jtworkme joined the channel
+2015-12-03T20:18:43 * simonjb joined the channel
+2015-12-03T20:19:58 <Bosmon> Justin_o - yes, it\'s a normal grade in absolutely every way
+2015-12-03T20:20:07 <Bosmon> Just with the 3 special extra properties recognised at top level
+2015-12-03T20:21:03 <Justin_o> Do those special properties get mixed into the grade as well? Can I reference them through options?
+2015-12-03T20:36:57 * anastasiac has quit
+2015-12-03T20:37:41 * anastasiac joined the channel
+2015-12-03T20:45:50 <Justin_o> Bosmon: for example how would i validate a something that is pulled in with loadConfigs.
+2015-12-03T20:46:00 <Justin_o> I can see from https://github.com/amb26/kettle/blob/KETTLE-32/tests/configs/kettle.tests.loadConfig.config.json
+2015-12-03T20:46:14 <Justin_o> that i can use the grade name, but how would i validate the configuration itself?
+2015-12-03T20:52:36 <Bosmon> Justin_o - the idea is not that you validate stuff pulled in with loadConfigs, but that you validate YOURSELF...
+2015-12-03T20:52:49 <Bosmon> The stuff pulled with loadConfigs is the "real app" which we assume already works
+2015-12-03T20:58:53 * danayo joined the channel
+2015-12-03T21:10:50 * jtworkme has quit
+2015-12-03T21:11:52 * yzen is now known as yzen_
+2015-12-03T21:16:21 * colinclark joined the channel
+2015-12-03T21:27:58 * clown joined the channel
+2015-12-03T21:33:23 * michelled has quit
+2015-12-03T21:34:58 * michelled joined the channel
+2015-12-03T21:36:49 * colinclark_ joined the channel
+2015-12-03T21:37:41 * anvk has quit
+2015-12-03T21:39:44 * Jess_ has quit
+2015-12-03T21:46:17 * gtirloni joined the channel
+2015-12-03T21:54:09 * the-t-in-rtf has quit
+2015-12-03T21:56:38 * ben_s has quit
+2015-12-03T21:57:48 * sepidehshahi has left the channel
+2015-12-03T22:04:26 * colinclark joined the channel
+2015-12-03T22:45:07 * anastasiac has quit
+2015-12-03T23:05:27 * amatas has quit
+2015-12-03T23:56:35 * colinclark joined the channel
+2015-12-03T23:57:20 * colinclark has quit
+'
+
+b'2015-12-03T15:38:11 <Justin_o> "{fluid.prefs.store}.set"
+2015-12-03T15:38:13 <Bosmon> simonjb - great news - the update and build of the windows repo to node 4.x worked first time!
+2015-12-03T15:38:28 <Bosmon> Just a few bits of minor tidyup...
+2015-12-03T15:38:48 <bjderzin_> Justin_o: yup i see it
+2015-12-03T15:38:53 <Justin_o> bjderzin_: that is a reference to the set member which in this case would be a method, from the fluid.prefs.store grade
+2015-12-03T15:39:51 <Justin_o> the {} are IoC references, you can read more on those http://docs.fluidproject.org/infusion/development/IoCReferences.html
+2015-12-03T15:40:49 <Justin_o> bjderzin_: that takes us to Store.js https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Store.js#L31-L38
+2015-12-03T15:41:23 <Justin_o> for the time being don\'t worry about the contextAwareness part, that can be used as a means of modifying configuration under different conditions/environemnts
+2015-12-03T15:42:06 <Justin_o> bjderzin_: you can read about that http://docs.fluidproject.org/infusion/development/ContextAwareness.html but for the time being you could just know the it points to using the cookie store
+2015-12-03T15:42:14 <simonjb> Bosmon: Nice!
+2015-12-03T15:42:39 <Justin_o> bjderzin_: which is why the cookie store\'s set invoker is used https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Store.js#L60
+2015-12-03T15:42:56 <Justin_o> which by default points to https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Store.js#L116-L124
+2015-12-03T15:43:00 <bjderzin_> Justin_o: so th fluid.prefs.store is the cookie store?
+2015-12-03T15:43:00 <Justin_o> which is the last step :)
+2015-12-03T15:44:34 <Justin_o> bjderzin_: not exactly, you might think of it more of fork in the road and the traffic gets directed to the cookie store
+2015-12-03T15:45:14 <Justin_o> bjderzin_: for example in our unit tests we use https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Store.js#L135 instead
+2015-12-03T15:46:39 <Justin_o> so we just adjust the environment a bit and it picks up a different strategy without us having to modify the configuration directly.
+2015-12-03T15:48:14 <Justin_o> bjderzin_: https://github.com/fluid-project/infusion/blob/master/tests/framework-tests/preferences/js/PrefsEditorTestsCommon.js#L19-L28
+2015-12-03T15:48:28 <Justin_o> but that\'s a bit of a digression that you shouldn\'t have to worry about for now
+2015-12-03T15:49:02 <bjderzin_> Justin_o: ok coo
+2015-12-03T15:49:04 <bjderzin_> cooll
+2015-12-03T15:50:36 <Justin_o> bjderzin_: all of that indirection is to facilitate the decoupling needed to achieve something that is highly configurable and modular. We really want it to be possible to modify, swap in and out pieces at every stage, so that all the users are first class citizens and can partake in the authoring process
+2015-12-03T15:53:24 <bjderzin_> Justin_o: it is very indirect, but i see how that makes it configurable like you want.
+2015-12-03T15:56:56 * kasparnet has quit
+2015-12-03T15:57:55 <Justin_o> bjderzin_: :) yes
+2015-12-03T15:57:59 <bjderzin_> im gonna make a copy of this transcript to go through again, especially the links to the infusion pages. theres a lot more here i want to explore into at each step. going through this step by step also helped me get a better understanding how infusion operates. for me i think thats my biggest weakness in understanding the code
+2015-12-03T15:59:27 <Justin_o> bjderzin_: that\'s a great idea, infusion is bit different than a lot of other systems. It\'ll take some time to get used to, so don\'t feel discouraged. But remember there\'s usually someone in the channel or on the mailing list who\'d be around to help if you have questions.
+2015-12-03T15:59:52 <Justin_o> bjderzin_: oh and by the way, the channel is logged, so you can always review the logs later https://botbot.me/freenode/fluid-work/2015-12-03/?msg=55381845&page=1
+2015-12-03T16:00:25 <bjderzin_> Justin_o: thanks again for you\'re help. ill be back here again for sure
+2015-12-03T16:01:07 <Justin_o> bjderzin_: no problem :)
+2015-12-03T16:02:37 <anastasiac> Justin_o: I\xe2\x80\x99ve pushed fixes to my 5754 and 5757 branches in response to your feedback (thanks for catching all those errors! good eye\xe2\x80\xa6) and re-deployed to my ghpages branch. Ready for another round...
+2015-12-03T16:03:03 <Justin_o> anastasiac: great thanks, i\'ll take another look
+2015-12-03T16:03:46 <Justin_o> Bosmon: anastasiac\'s pull is getting close to being merged, but we\'re a bit unsure about this https://github.com/fluid-project/infusion/pull/629#discussion_r45634358
+2015-12-03T16:03:49 <Justin_o> do you have thoughts?
+2015-12-03T16:10:33 * slim_ joined the channel
+2015-12-03T16:19:01 * clown joined the channel
+2015-12-03T16:24:00 <Bosmon> Justin_o - I thought I just added a comment on the pull, but it appears to have vanished
+2015-12-03T16:24:03 <Bosmon> DId you get a notification mail?
+2015-12-03T16:24:18 <Justin_o> hmm. no i don\'t think so
+2015-12-03T16:24:20 <Justin_o> let me take a look
+2015-12-03T16:24:36 <Justin_o> Bosmon: i see your comment there now though
+2015-12-03T16:24:43 <Bosmon> Oh yes, I see it too now when I refresh
+2015-12-03T16:24:53 <Bosmon> Thank goodness, it took long enough to write
+2015-12-03T16:25:42 <Justin_o> Bosmon: lol
+2015-12-03T16:25:51 <Justin_o> Bosmon: thanks
+2015-12-03T16:27:38 <anastasiac> Bosmon: thanks for the input
+2015-12-03T16:32:42 <gtirloni> just a heads up, openssl released a security advisory right now. it doesn\'t seem super critical. nodejs links to openssl and v0.10.x is affected... new nodejs packages will probably follow in a few hours. the same goes for our servers... so as soon as we have them we\'ll be scheduling outages to patch systems.
+2015-12-03T16:33:01 <gtirloni> anyone interested in the details, see: https://mta.openssl.org/pipermail/openssl-announce/2015-December/000050.html
+2015-12-03T16:33:27 <gtirloni> amatas: ^^
+2015-12-03T16:33:45 <Justin_o> gtirloni: will that require use to use a different version of nodejs for our work?
+2015-12-03T16:34:09 * sepidehshahi has quit
+2015-12-03T16:35:30 <gtirloni> Justin_o: there will be updates to 0.10.x, probably 0.10.41.. but we can continue to use the same major version + the security fixes
+2015-12-03T16:36:49 <gtirloni> same for 4.2.x and 5.x
+2015-12-03T16:37:00 <amatas> thanks gtirloni
+2015-12-03T16:40:45 <Justin_o> michelled: i can\'t quite remember, but uglify might run before concat, which could be part of the issue you are having with the source maps
+2015-12-03T16:41:05 * sepidehshahi joined the channel
+2015-12-03T16:41:08 * anastasiac joined the channel
+2015-12-03T16:46:28 * the-t-in-rtf1 has quit
+2015-12-03T17:07:14 * yzen has quit
+2015-12-03T17:13:13 * jhung has quit
+2015-12-03T17:13:18 * sepidehshahi joined the channel
+2015-12-03T17:16:51 <anastasiac> Bosmon, Justin_o, michelled: jQuery core is up to v2.1.4; Infusion is still using v1.11.0
+2015-12-03T17:16:58 <anastasiac> I wonder if we should be considering upgrading?
+2015-12-03T17:17:10 <Bosmon> anastasiac - yes, I imagine we should
+2015-12-03T17:17:22 <Bosmon> Especially since we have ditched support for old browsers
+2015-12-03T17:21:04 <anastasiac> ok, I\xe2\x80\x99ll file a JIRA for upgrading jQuery, Bosmon. Thanks to ben_s for noticing that\xe2\x80\xa6
+2015-12-03T17:21:05 <Justin_o> Bosmon, anastasiac: yes we held back from jumping to the 2.x line because at the time we needed to support older versions of I.E. We now only support the latest browsers (well, haven\'t switch to Edge yet).
+2015-12-03T17:21:10 * clown joined the channel
+2015-12-03T17:21:17 * clown is now known as clown_mtg
+2015-12-03T17:21:42 * michelled has quit
+2015-12-03T17:25:21 <anastasiac> Bosmon, Justin_o, ben_s: https://issues.fluidproject.org/browse/FLUID-5825
+2015-12-03T17:26:35 <Justin_o> anastasiac: thanks
+2015-12-03T17:26:42 <Justin_o> it should make our build a bit smaller too
+2015-12-03T17:30:39 <ben_s> anastasiac, thanks, and, could you recap your chat messages from yesterday about infusion and versions? I lost them from the zoom chat before I could save them
+2015-12-03T17:32:24 <ben_s> some pages in the infusion wiki have a banner that the documentation is moving to the new documentation site and links to docs.fluidproject.com/infusion. The https://wiki.fluidproject.org/display/docs/Browser+Support page however not have that banner
+2015-12-03T17:33:44 <ben_s> i guess the question is: do we prefer docs.fluidproject.com/infusion over wiki.fluidproject.org.. or is there up-to-date information in both?
+2015-12-03T17:35:59 <anastasiac> ben_s, bjderzin_, yes: http://docs.fluidproject.org/infusion/ is the place to go for Infusion docs. There are a few pages that are not yet available, but the wiki version is reasonably out-of-date
+2015-12-03T17:36:45 <anastasiac> for First Discovery specific docs, use http://gpii.github.io/docs-first-discovery/
+2015-12-03T17:37:44 <anastasiac> For the Infusion Preferences Framework tutorial, we\xe2\x80\x99re almost finished a new version, which is served up here until it\xe2\x80\x99s ready: http://acheetham.github.io/infusion-docs/infusion/development/tutorial-prefsFramework/CreatingAPrefsEditor.html
+2015-12-03T17:38:34 <anastasiac> regarding browser support, ben_s and bjderzin_, the basic answer is: we support the latest versions. Justin_o can clarify, if there is more that needs to be said :-)
+2015-12-03T17:39:07 <anastasiac> actually, the FD Tool will only work on browsers that support the Web Speech API
+2015-12-03T17:39:16 <anastasiac> which eliminates FF right now, I believe
+2015-12-03T17:40:15 <anastasiac> zamcnema: ^
+2015-12-03T17:40:22 <anastasiac> sorry, still learning everyone\xe2\x80\x99s names/handles
+2015-12-03T17:40:45 <ben_s> yes you get a banner message about it.. i assume the "... we support the latest versions." is for the infusion framework itself?
+2015-12-03T17:40:58 <anastasiac> jtworkme, ATW: ^
+2015-12-03T17:41:06 <anastasiac> ben_s, right
+2015-12-03T17:41:12 <Justin_o> anastasiac: that\'s pretty much it
+2015-12-03T17:43:45 * zamcnema has quit
+2015-12-03T17:43:51 * kasparnet joined the channel
+2015-12-03T17:44:51 * ATW has quit
+2015-12-03T17:47:10 <Justin_o> anastasiac, ben_s: here\'s the ticket for supporting browsers that don\'t support the web speech api https://issues.gpii.net/browse/GPII-1475
+2015-12-03T17:50:00 * avtar has quit
+2015-12-03T17:50:19 * avtar joined the channel
+2015-12-03T17:58:48 * kasparnet has quit
+2015-12-03T18:06:14 <Justin_o> Bosmon: i\'m getting back to making the config changes for FLOE-430
+2015-12-03T18:06:23 <Justin_o> do you have some time to talk about using the kettle config?
+2015-12-03T18:06:40 <Bosmon> sure
+2015-12-03T18:06:54 <Justin_o> Bosmon: great
+2015-12-03T18:07:03 <Justin_o> would you like chat here or vidyo?
+2015-12-03T18:07:32 <Bosmon> I guess viddyo will  be a bit quicker
+2015-12-03T18:08:03 <Justin_o> Bosmon: okay, i\'m ready, please call me when you are
+2015-12-03T18:10:49 * Yan_Hu has quit
+2015-12-03T18:16:19 * anastasiac joined the channel
+2015-12-03T18:16:47 * michelled joined the channel
+2015-12-03T18:17:50 * slim_ has quit
+2015-12-03T18:26:01 * bjderzin_ has quit
+2015-12-03T18:45:16 <Justin_o> Bosmon: so i\'m thinking of the Environment Variable creating grade
+2015-12-03T18:45:49 <Justin_o> could i just do something like
+2015-12-03T18:45:59 <Justin_o> https://www.irccloud.com/pastebin/tzo5HY20/
+2015-12-03T18:46:22 <Justin_o> as process.env is provided by node for getting and setting environment variables that are exposed to the node process
+2015-12-03T18:48:28 <Bosmon> I think that\'s reasonable... Another possibility is trying to remove the need for the "env" path segment, which you could do by just writing something crude like an onCreate that copies all the members of process.env onto the component
+2015-12-03T18:49:44 <Justin_o> Bosmon: i guess i don\'t want to have an issue where the components own members get conflated with those of the environment variables
+2015-12-03T18:50:02 <Bosmon> It\'s possible, but this component shouldn\'t have any other members
+2015-12-03T18:50:25 <Justin_o> Bosmon: there are things that come from the fluid.component base grade though
+2015-12-03T18:50:29 <Bosmon> There is a small risk of someone doing something perverse like naming an environment variable as "distributeOptions" : P
+2015-12-03T18:50:51 <Justin_o> Bosmon: what about "id" or something like that
+2015-12-03T18:50:57 <Bosmon> Those are all safe
+2015-12-03T18:51:08 <Justin_o> okay
+2015-12-03T18:51:14 <Bosmon> But yes, an environment variable named "listeners", "events", "gradeNames", etc. would be awkward
+2015-12-03T18:51:59 <Justin_o> Bosmon: but it seems unlikely that someone would use an environment variable with such a name anyways eh?
+2015-12-03T18:52:15 <Bosmon> Somewhat.... they would need to get the case right too
+2015-12-03T18:52:27 <Bosmon> But I guess it\'s better to be safe
+2015-12-03T18:52:39 <Bosmon> If we say that this component is always added directly as a child, it will be safe to refer to it using a short name
+2015-12-03T18:52:53 <Bosmon> So the references will look something like ${environment}.env.PORT_NUMBER of whatever
+2015-12-03T18:53:08 <Bosmon> Which I think is probably compact enough, what do you think?
+2015-12-03T18:53:10 <Justin_o> Bosmon: you mean {environment}.GPII_SOME_VARIABLE
+2015-12-03T18:53:32 <Bosmon> Justin_o - if we stick with your safer "env" option, they would have to write that too
+2015-12-03T18:53:37 <Justin_o> Bosmon: see what yo mean
+2015-12-03T18:53:39 <Justin_o> you mean
+2015-12-03T18:53:43 <Bosmon> I don\'t think it\'s too much to pay for a little extra safety, I dunno
+2015-12-03T18:53:54 <Justin_o> Bosmon: i don\'t thin it\'s too much
+2015-12-03T18:54:11 <Bosmon> Some people observed, for example, that in JavaScript it is impossible to use Objects as genuine hash maps
+2015-12-03T18:54:20 <Bosmon> Because it is impossible to store a member named "prototype" : P
+2015-12-03T18:54:20 <Justin_o> i\'ll go with that for now, it\'s hard to predict what might be lying in the environment and could be confusing if it\'s causing errors
+2015-12-03T18:54:24 <Bosmon> Or __proto__
+2015-12-03T18:54:36 <Bosmon> WHich is why they introduced the new language feature Object.create(null)
+2015-12-03T18:54:49 <Bosmon> Which allows you for the first time to construct an object that inherits from absolutely nothing
+2015-12-03T18:55:05 <Justin_o> Bosmon: does it behave like an object?
+2015-12-03T18:55:19 <Bosmon> Well, you can store and retrieve properties from it, yes : P
+2015-12-03T18:56:03 <Bosmon> But the fact that 10 years have passed and noone has notoriously run into problems from trying to store values named "toString" etc I think shows that these edge cases are somewhat rarer than people like to think
+2015-12-03T18:56:14 <Bosmon> CS nerds are notoriously obsessed with edge cases, rather than being obsessed with usability : P
+2015-12-03T18:56:29 <Justin_o> Bosmon: true :)
+2015-12-03T18:57:11 <Bosmon> But I imagine a member named "env" is a reasonable enough tradeoff
+2015-12-03T18:58:21 <Justin_o> Bosmon: yah, i don\'t think it\'s much
+2015-12-03T19:10:03 * clown_mtg has quit
+2015-12-03T19:11:46 * zamcnema joined the channel
+2015-12-03T19:17:58 * jhung joined the channel
+2015-12-03T19:28:46 * yzen joined the channel
+2015-12-03T19:32:00 * anastasiac joined the channel
+'
+
+b'2015-12-03T00:34:26 * Bosmon joined the channel
+2015-12-03T01:28:41 * jhung joined the channel
+2015-12-03T02:43:13 * danayo joined the channel
+2015-12-03T03:00:07 * [o__o] joined the channel
+2015-12-03T03:28:50 * [o__o] joined the channel
+2015-12-03T04:37:08 * yzen joined the channel
+2015-12-03T07:28:54 * amatas joined the channel
+2015-12-03T08:26:34 * kasparnet joined the channel
+2015-12-03T08:29:38 * kasparnet has quit
+2015-12-03T08:29:54 * kasparnet joined the channel
+2015-12-03T09:52:38 * the-t-in-rtf joined the channel
+2015-12-03T10:00:57 * slim_ joined the channel
+2015-12-03T10:53:51 * gtirloni joined the channel
+2015-12-03T11:05:07 * slim_ has quit
+2015-12-03T11:07:57 * slim_ joined the channel
+2015-12-03T12:05:19 * Justin_o joined the channel
+2015-12-03T12:46:39 * kasparnet has quit
+2015-12-03T12:47:38 * kasparnet joined the channel
+2015-12-03T13:20:30 * kasparnet has quit
+2015-12-03T13:24:55 * Jess_ joined the channel
+2015-12-03T13:25:23 * jhung joined the channel
+2015-12-03T13:48:29 * jtworkme joined the channel
+2015-12-03T13:52:01 * michelled joined the channel
+2015-12-03T13:57:19 * bjderzin joined the channel
+2015-12-03T14:00:03 <bjderzin> I\'m looking at the first discovery tool, specifically at the use of cookies in the demo... Is there anyone who could help me out with that?
+2015-12-03T14:00:44 * anastasiac joined the channel
+2015-12-03T14:03:10 * zamcnema joined the channel
+2015-12-03T14:05:03 * cindyli joined the channel
+2015-12-03T14:05:14 * yzen joined the channel
+2015-12-03T14:08:26 * kasparnet joined the channel
+2015-12-03T14:10:26 <Justin_o> bjderzin: Hello, perhaps cindyli or I could help.
+2015-12-03T14:10:45 <Justin_o> bjderzin: what would you like to know about the cookies?
+2015-12-03T14:15:28 * anvk joined the channel
+2015-12-03T14:24:08 <Justin_o> anastasiac: I\'ve left you comments on the FLUID-5757 and FLUID-5754 pull requests
+2015-12-03T14:24:20 <anastasiac> thanks, Justin_o
+2015-12-03T14:24:30 <bjderzin> im having trouble tracking the cookies in the demo. so far, the only references to cookies is in the first discovery demo, in the demo.js file.
+2015-12-03T14:25:20 <Justin_o> bjderzin: i see, you want to know how they are set
+2015-12-03T14:25:57 <bjderzin> yes
+2015-12-03T14:25:57 <Justin_o> bjderzin: i\'ll try to dig up some references in the code for you
+2015-12-03T14:26:04 <bjderzin> thanks
+2015-12-03T14:26:21 <anastasiac> Justin_o: did you see my comments on your FD Server docs pull request?
+2015-12-03T14:27:00 <bjderzin> im not sure where you\'re talking about
+2015-12-03T14:27:01 <Justin_o> anastasiac: i did thanks, i\'ll try to take a look at those. I\'ll probably have to re-write some of those docs with the changes to the config that I\'ll try to work on today as well
+2015-12-03T14:27:13 <anastasiac> okley, thanks
+2015-12-03T14:31:26 * ATW joined the channel
+2015-12-03T14:31:49 * bjderzin_ joined the channel
+2015-12-03T14:32:10 * bjderzin has quit
+2015-12-03T14:34:01 * simonjb joined the channel
+2015-12-03T14:34:14 * the-t-in-rtf1 joined the channel
+2015-12-03T14:35:15 * ben_s joined the channel
+2015-12-03T14:35:29 <Justin_o> bjderzin_: So most of the "code" related to saving the cookie is actually in the Infusion Prefs Framework code. I\'ll try to walk you through that, but I\'ll begin by showing you the start and end points.
+2015-12-03T14:35:47 <Justin_o> bjderzin_: in first discovery (FD) https://github.com/GPII/first-discovery/blob/master/src/js/firstDiscoveryEditor.js#L61-L70
+2015-12-03T14:35:57 <simonjb> hey kasparnet, regarding your email about meeting, did you want to meet today or Friday?
+2015-12-03T14:36:42 <Justin_o> bjderzin_: there you can see that when the model values for states and preferences change we call the save or saveAndApply methods respectively.
+2015-12-03T14:37:32 <Justin_o> bjderzin_: at the end they will call the set method of the cookie store https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Store.js#L116-L124
+2015-12-03T14:37:43 * the-t-in-rtf has quit
+2015-12-03T14:38:34 <Justin_o> bjderzin_: let me know if you have any questions about that so far? I\'ll try to fill in the space between those next, but want to make sure you are comfortable with that first.
+2015-12-03T14:38:49 <kasparnet> simonjb: tomorrow would suit me better
+2015-12-03T14:39:57 <simonjb> that works for me kasparnet, I\'d like cindyli also to join us and she is currently working on the security work as I focus more on the Nexus
+2015-12-03T14:40:30 <simonjb> cindyli: would you be available tomorrow to meet with kasparnet and me?
+2015-12-03T14:40:39 <simonjb> kasparnet: what time would work for you?
+2015-12-03T14:41:29 <kasparnet> simonjb, cindyli: the earlier the better :D
+2015-12-03T14:41:37 <bjderzin_> Justin_o: why does it require both the save and saveAndApply? whats the difference between them?
+2015-12-03T14:42:01 <kasparnet> simonjb, cindyli: if today is better for you, we can do that instead
+2015-12-03T14:42:14 <kasparnet> I have to run off at noon EDT though
+2015-12-03T14:43:02 <simonjb> kasparnet, cindyli: I could do today (now)
+2015-12-03T14:43:25 * sepidehshahi joined the channel
+2015-12-03T14:43:26 * gtirloni joined the channel
+2015-12-03T14:43:31 <cindyli> kasparnet, simonjb: i could do today too
+2015-12-03T14:43:51 <cindyli> what time is good for you, kasparnet? shall we do it now?
+2015-12-03T14:44:15 <Justin_o> bjderzin_: save and apply causes the interface to re-render. This is so that any enactors on the page that may be operating on a given preference could pick up the changes and apply them to the page. Save on the other hand just saves to the persistence. In this case we only call "save" for state based changes such as storing which panel is open.
+2015-12-03T14:45:15 <Justin_o> bjderzin_: by the way an example of an enactor would be the mechanism that changes the font size
+2015-12-03T14:45:57 <bjderzin_> Justin_o: oh ok that makes sense.
+2015-12-03T14:47:05 <kasparnet> just give me 5\'
+2015-12-03T14:47:09 <kasparnet> simonjb, cindyli
+2015-12-03T14:47:15 <cindyli> sure
+2015-12-03T14:47:30 <simonjb> kasparnet, cindyli: let\'s meet in my vidyo room
+2015-12-03T14:47:33 <Justin_o> bjderzin_: there may also be cases where you just want to save and don\'t want to apply the changes, so you could use save for preference changes as well, but I don\'t think that will be the case for FD
+2015-12-03T14:48:25 <Justin_o> bjderzin_: any other questions/comments before the next part?
+2015-12-03T14:48:30 * anastasiac has quit
+2015-12-03T14:49:07 <bjderzin_> Justin_o: no, I understand this part. we can move on
+2015-12-03T14:49:29 <Justin_o> bjderzin_: cool, anyways, feel free to stop me if i\'m glossing over anything or not explaining something well.
+2015-12-03T14:50:01 <bjderzin_> Justin_o: I will. and I appriciate the help
+2015-12-03T14:50:06 <simonjb> michelled: cindyli and I are meeting with kasparnet about review 4 security demo -- did you want to join?
+2015-12-03T14:50:49 <michelled> simonjb: yes, are you meeting now?
+2015-12-03T14:50:59 <michelled> oh, in 5 min :)
+2015-12-03T14:51:14 <simonjb> michelled: yes, in a few mins in my room on vidyo
+2015-12-03T14:51:33 <Justin_o> bjderzin_: no problem, happy to help
+2015-12-03T14:51:48 <Justin_o> bjderzin_: okay, so next you might be wondering where the save and saveAndApply methods come from.
+2015-12-03T14:52:24 <kasparnet> simonjb, michelled, cindyli: omw
+2015-12-03T14:53:48 * anastasiac joined the channel
+2015-12-03T14:54:51 <Justin_o> bjderzin_: Essentially that comes from https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L275
+2015-12-03T14:55:02 * anastasiac has quit
+2015-12-03T14:55:08 <Justin_o> this is attached as a subComponent https://github.com/GPII/first-discovery/blob/master/src/js/firstDiscoveryEditor.js#L57
+2015-12-03T14:55:21 <Justin_o> you may want to do some reading on http://docs.fluidproject.org/infusion/development/ComponentGrades.html
+2015-12-03T14:55:27 * slim_ has quit
+2015-12-03T14:56:10 <Justin_o> bjderzin_: for now you can see that save and saveAndApply are added as invokers https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L292-L298
+2015-12-03T14:56:51 * anastasiac joined the channel
+2015-12-03T14:57:04 <bjderzin_> Justin_o: ok yea i can see them there
+2015-12-03T14:57:39 <Justin_o> bjderzin_: sorry, was looking for the invoker docs
+2015-12-03T14:57:41 <Justin_o> bjderzin_: http://docs.fluidproject.org/infusion/development/Invokers.html
+2015-12-03T14:58:07 <Justin_o> so basically invokers are a way to add methods to a component, but they allow them to be completely configurable.
+2015-12-03T14:58:40 <Justin_o> bjderzin_: however, the default concrete functions they are bound to are defined here https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L373-L414
+2015-12-03T14:59:12 <Justin_o> and you can see that saveAndApply calls save internally. https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L407
+2015-12-03T14:59:39 <Justin_o> the interesting part in the save that you may want to look at is that.setSettings https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L401
+2015-12-03T15:00:16 <Justin_o> bjderzin_: how is that so far?
+2015-12-03T15:02:21 <bjderzin_> so the save and saveAndApply invokers are added to the defaults?
+2015-12-03T15:05:14 <Justin_o> bjderzin_: yes, so they are added to the components default configuration. When the component is initialized the framework will transform that configuration into a method on the instantiated component.
+2015-12-03T15:08:14 <bjderzin_> Justin_o: so here they are added, but theres not much code for each. It looks like theyre just given funsction names so they can be called, and \'args: ["{that}"] \' what does that mean?
+2015-12-03T15:08:57 <Justin_o> let\'s look at saveAndApply to start
+2015-12-03T15:09:00 <Justin_o> bjderzin_: ^
+2015-12-03T15:09:47 <Justin_o> bjderzin_: so the funcName points at a concrete function. https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L297 points at https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L405-L414
+2015-12-03T15:10:28 <Justin_o> notice also that fluid.pref.prefsEditor takes a single argument in it\'s signature, "that".
+2015-12-03T15:11:11 <Justin_o> so the args property says use this thing as the argument https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L298
+2015-12-03T15:11:42 <Justin_o> in this case we use "{that}" which is a reference back to the component itself. Similar to "this", but it\'s stable.
+2015-12-03T15:12:32 <Justin_o> so if we did something like var prefsEd = fluid.prefs.prefsEditor(".container", {});
+2015-12-03T15:12:40 <Justin_o> we could then do prefsEd.saveAndApply();
+2015-12-03T15:13:25 <Justin_o> bjderzin_: you can see this in how fluid.prefs.presfEditor.saveAndApply internally just calls that.save();
+2015-12-03T15:13:25 <Justin_o> https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L407
+2015-12-03T15:14:20 * jtworkme has quit
+2015-12-03T15:15:35 * Yan_Hu joined the channel
+2015-12-03T15:17:55 <bjderzin_> Justin_o: ok i see so they are added to the defaults, and done so by referencing code later on with the concrete function and copies the functoin code by using \'that\'
+2015-12-03T15:18:24 <bjderzin_> thats how im understanding it
+2015-12-03T15:21:02 <Justin_o> bjderzin_: hmm.. i\'m not sure i\'m understanding you exactly, so not completely sure.. you may want to read this section of the invoker docs http://docs.fluidproject.org/infusion/development/Invokers.html#standard-invoker-binding-to-a-function-using-funcname-func
+2015-12-03T15:22:56 <Justin_o> bjderzin_: in javascript you can call functions by there names, which is essentially what happens internally, so someone makes a call to component.saveAndApply (where component is the instantiated component), this triggers the framework to  call fluid.prefs.prefsEditor.saveAndApply(component)
+2015-12-03T15:24:07 <bjderzin_> Justin_o: i understand that part. I guess im not explaining it the same way, but conceptually i understand whats going on here
+2015-12-03T15:24:40 <Justin_o> bjderzin_: okay that\'s great, that\'s the important part
+2015-12-03T15:27:55 <Justin_o> bjderzin_: okay so back to the save method, which concretely is fluid.prefs.prefsEditor.save by default
+2015-12-03T15:28:01 <Justin_o> you\'ll notice the method https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L401
+2015-12-03T15:28:04 <Justin_o> call there
+2015-12-03T15:28:22 <Justin_o> oops, pasted early, anyways, it\'s the that.setSettings(modelToSave) call
+2015-12-03T15:28:52 <Justin_o> so there isn\'t a setSettings invoker listed here https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L277-L308
+2015-12-03T15:29:01 <Justin_o> and that\'s because it comes from a different grade
+2015-12-03T15:29:20 <Justin_o> bjderzin_: https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L214-L227
+2015-12-03T15:29:39 * jtworkme joined the channel
+2015-12-03T15:29:49 <Justin_o> that grade is merged into fluid.prefs.prefsEditor via the gradeNames property
+2015-12-03T15:29:50 <Justin_o> https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L276
+2015-12-03T15:30:02 <Justin_o> bjderzin_: any questions there?
+2015-12-03T15:31:48 <bjderzin_> Justin_o: what does the gradeNames mean exactly?
+2015-12-03T15:33:37 <Justin_o> bjderzin_: so you\'ll want to read through this http://docs.fluidproject.org/infusion/development/ComponentGrades.html
+2015-12-03T15:33:40 <Justin_o> to get the full idea
+2015-12-03T15:33:43 * clown joined the channel
+2015-12-03T15:33:59 <Justin_o> also now the comments are really just grades, or at least a type of grade
+2015-12-03T15:34:27 <Justin_o> sorry, components not comments
+2015-12-03T15:34:55 <Justin_o> grades are essentially named blocks of configuration, that can be composed together.
+2015-12-03T15:35:54 <bjderzin_> Justin_o: ok i got it
+2015-12-03T15:36:02 <Justin_o> cool
+2015-12-03T15:36:50 <Justin_o> bjderzin_: in this case, the fluid.prefs.prefsEditor mixes in the https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L217 from fluid.prefs.setttingsSetter
+2015-12-03T15:37:50 <Justin_o> bjderzin_: so the next part is here https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L219
+2015-12-03T15:38:03 <Justin_o> notice the second item in the args array
+'
+

@@ -1,0 +1,296 @@
+b'2014-09-17T17:53:22 <Justin_o> i guess pouchDB can already work like this with a real served couch instance
+2014-09-17T17:53:51 <Bosmon7> I guess our concurrency problem with pouchDB is pretty mild - I assume it is actually relatively quick to service updates, and all we need to do is ensure that we don\'t send a further request to it whilst one is outstanding
+2014-09-17T17:53:57 <Bosmon7> Otherwise we end up in a race against our own update
+2014-09-17T17:54:32 <Justin_o> Bosmon7: yes.. and that\'s probably most likely to happen in tests or if the browser is slow (maybe from firebug)
+2014-09-17T17:54:47 <Bosmon7> Justin_o - out of interest, what kind of error condition do we get from PouchDB if we do this?
+2014-09-17T17:54:51 <Bosmon7> Does it complain of a conflict?
+2014-09-17T17:55:01 <Justin_o> Bosmon7: here was my current sketch.. i\'ll amend this to be a wrapper.. but if you see any other glaring issues please let me know.
+2014-09-17T17:55:04 <Justin_o> https://www.irccloud.com/pastebin/6asMkzah
+2014-09-17T17:55:21 <Justin_o> Bosmon7: i\'m not actually sure, i haven\'t seen the issue
+2014-09-17T17:55:28 <Justin_o> cindyli: do you remember what the error was?
+2014-09-17T17:55:47 <cindyli> catching up the conversation..
+2014-09-17T17:56:00 <Bosmon7> Justin_o - it\'s reasonable, but I think the "add" method is overcomplicated
+2014-09-17T17:56:19 <Bosmon7> In this case I don\'t think there is any value to having the "queue" member in a model, since our ChangeApplier semantics for arrays are not very good
+2014-09-17T17:56:34 <Justin_o> Bosmon7: oops yes i meant to remove that, it was from a previous attempt
+2014-09-17T17:56:47 <Justin_o> i had been thinking of having an arbitrary number of queues
+2014-09-17T17:56:48 <Bosmon7> You can just maintain "queue" as a standard member, and just use the standard "push" and "shift" operations on it
+2014-09-17T17:56:52 <Justin_o> but then decided to have just one
+2014-09-17T17:57:08 <Bosmon7> I think having one is just fine, even though it might slow us down more than is strictly necessary
+2014-09-17T17:57:25 <Bosmon7> Since I assume the only risk with PouchDB is a simultaneous update of the same document
+2014-09-17T17:57:33 <Justin_o> Bosmon7: cool, and you don\'t think the queue should be in the model?
+2014-09-17T17:57:36 <Bosmon7> A simple implementation will do for now
+2014-09-17T17:57:54 <Justin_o> Bosmon7: as far as I know yes.. although i suppose views could have the same issue..
+2014-09-17T17:57:57 <Bosmon7> Justin_o - right, although it goes against our general "religion" putting all modifiable state into a model, I don\'t think it pays its way here
+2014-09-17T17:58:17 <Justin_o> Bosmon7: so you\'d just want to have isActive in the model?
+2014-09-17T17:58:18 <Bosmon7> One really puts things in models to gain the advantage of ChangeApplier events emitted from the model
+2014-09-17T17:58:25 <Bosmon7> And the ability to coordinate transactions etc.
+2014-09-17T17:58:39 <Justin_o> Bosmon7: i was thinking of having the queue there so you\'d know when something was added
+2014-09-17T17:58:51 <Justin_o> although there is unneeded overhead for when something is removed i guess
+2014-09-17T17:59:06 <Bosmon7> But at the moment we don\'t have any dedicated ChangeApplier support for dealing with array elements
+2014-09-17T17:59:17 <Bosmon7> In the future I imagine we will have dedicated "INSERT" and "REMOVE" event types
+2014-09-17T17:59:32 <Bosmon7> But right now all we can usefully determine is that "the array changed"
+2014-09-17T17:59:38 <Bosmon7> For which it\'s just reasonable to use a standard event
+2014-09-17T17:59:43 <Justin_o> Bosmon7: yes.. i was going to have check the lenght
+2014-09-17T17:59:48 <Justin_o> Bosmon7: okay
+2014-09-17T18:00:10 <Justin_o> Bosmon7: i see, the add method will just fire the event
+2014-09-17T18:00:17 <Bosmon7> Justin_o - yup
+2014-09-17T18:00:44 <Bosmon7> I think dedicated "requestQueued" and "requestUnqueued" standard events are fine here
+2014-09-17T18:01:10 <Justin_o> Bosmon7: that makes sense
+2014-09-17T18:01:21 <Justin_o> i was trying to think of good names too.. so thanks for supplying those :)
+2014-09-17T18:01:39 <Bosmon7> Since a modelListener to "" as you have written is all we are actually ever interested in - and this clearly displays that the ChangeApplier isn\'t actually doing any work for us here
+2014-09-17T18:02:19 <Bosmon7> In the future we will improve it so that it has a clear semantic for array operations
+2014-09-17T18:02:33 <Bosmon7> You met these kinds of problems in the metadata tool, for example
+2014-09-17T18:02:54 <Bosmon7> There should really be a dedicated ChangeApplier event signifying "a new element has been appended to this array" or "a new element has been inserted into this array"
+2014-09-17T18:03:15 <Bosmon7> And then the NEW RENDERER would be able to react to these, for example, by just permuting the markup it has already, rather than having to re-render it all
+2014-09-17T18:04:16 <Bosmon7> You can see an attempt at this kind of thing in ancient APIs which are part of Java\'s "ListModel" for example.....
+2014-09-17T18:04:17 <Justin_o> Bosmon7: yes, that would be awesome
+2014-09-17T18:04:18 <Bosmon7> http://docs.oracle.com/javase/7/docs/api/javax/swing/event/ListDataListener.html
+2014-09-17T18:04:45 <Bosmon7> Of course our version of this would be declarative rather than having an API involving 3 interfaces : P
+2014-09-17T18:05:05 <Justin_o> :)
+2014-09-17T18:05:21 <Justin_o> Bosmon7: is there an updated ETA for the new renderer?
+2014-09-17T18:05:31 <Justin_o> or are we still looking at about a year away?
+2014-09-17T18:05:58 <Bosmon7> Yes
+2014-09-17T18:06:00 <Bosmon7> Something like that
+2014-09-17T18:06:18 <Bosmon7> It will really be past January before we can make a really big push on the framework again
+2014-09-17T18:06:30 <Bosmon7> Since we will be tied up until then preparing for the Cloud4All review meeting
+2014-09-17T18:07:01 <Bosmon7> However I do mean to fix up these annoyances with the IoC testing framework as soon as possible
+2014-09-17T18:15:47 <kasparnet> Bosmon7:  I\'m considering doing THE SWITCH
+2014-09-17T18:16:04 <kasparnet> taking all the solutions registry entries and using flat prefs format
+2014-09-17T18:16:25 <kasparnet> since that\'s what we have most things defined in, this seems reasonable to do
+2014-09-17T18:16:42 <kasparnet> and better do it know, while the MM framework is being modified anyway than later on
+2014-09-17T18:16:47 <kasparnet> am I crazy?
+2014-09-17T18:17:22 * yzen_ has quit
+2014-09-17T18:21:59 <Justin_o> Bosmon7: thanks
+2014-09-17T18:23:13 * Jess_ joined the channel
+2014-09-17T18:27:55 <Justin_o> fluid-everyone: Would anyone like to join the community meeting remotely? Will be continuing on with doc work in today\'s community meeting
+2014-09-17T18:28:13 <cindyli> me, Justin_o
+2014-09-17T18:30:34 * yzen joined the channel
+2014-09-17T18:30:40 <Justin_o> cindyli: thanks
+2014-09-17T18:30:52 <cindyli> np
+2014-09-17T18:34:52 * yzen has quit
+2014-09-17T18:35:14 * kasparnet has quit
+2014-09-17T18:38:36 * anastasiac has quit
+2014-09-17T18:52:01 * yzen joined the channel
+2014-09-17T19:15:12 * kasparnet joined the channel
+2014-09-17T19:27:38 <Bosmon7> kasparnet - updating the solutions registry?
+2014-09-17T19:27:39 <Bosmon7> Do we need to?
+2014-09-17T19:28:14 <kasparnet> Bosmon7: well, we dont need need to (the double need was on purpose) ... but it seems sensible in a lot of ways
+2014-09-17T19:28:35 <kasparnet> it\'s only the flat MM and canopy MM that uses the hierarchical ontology
+2014-09-17T19:28:51 <kasparnet> and if you look, eg at https://code.stypi.com/kaspermarkus/MM%20stuff/MM%20Output.js
+2014-09-17T19:28:58 <Bosmon7> Well sure, but does it make much of a difference what format our solutions entries are in?
+2014-09-17T19:29:03 <kasparnet> line 25\'sh
+2014-09-17T19:29:12 <kasparnet> the MM output is in the flat format
+2014-09-17T19:29:38 <kasparnet> so instead of having to do an ontogy transformation to interpret this, we could just take it directly
+2014-09-17T19:29:38 <Bosmon7> It "happens do be"
+2014-09-17T19:29:44 <Bosmon7> er
+2014-09-17T19:29:45 <Bosmon7> "happens to be"
+2014-09-17T19:30:01 <kasparnet> what do you mean: happens to be
+2014-09-17T19:30:10 <Bosmon7> Well ok kasparnet - why not just abolish ontologies altogether :)
+2014-09-17T19:30:15 <Bosmon7> if we only plan to support one of them?
+2014-09-17T19:30:22 <Bosmon7> I know it would make your life a lot easier : P
+2014-09-17T19:30:25 <Bosmon7> One less component in the system.....
+2014-09-17T19:30:50 <kasparnet> because our MM depends on it, and other MMs might depend on others
+2014-09-17T19:30:56 <Bosmon7> Sure
+2014-09-17T19:30:58 <kasparnet> as well as the preferences tools
+2014-09-17T19:31:05 <Bosmon7> So why don\'t we keep the solutions the way they are?
+2014-09-17T19:31:44 <Bosmon7> Are you saying that we should insist that all solutions should be in the flat ontology?
+2014-09-17T19:31:45 <kasparnet> because our C4A vocabulary is common terms, these are what we\'re asking the implementers to relate their settings to, etc
+2014-09-17T19:32:15 <kasparnet> well - all transformations in the solutions registry need to be in one type
+2014-09-17T19:32:23 <kasparnet> else we\'ll need some sort of qualifier everywhere
+2014-09-17T19:32:32 <Bosmon7> I see
+2014-09-17T19:32:35 <Bosmon7> Hadn\'t we planned to do this?
+2014-09-17T19:32:48 <kasparnet> ... I guess that\'s my general concern -- if we allow different ontologies everywhere, we would need qualifiers everywhere
+2014-09-17T19:33:02 <kasparnet> not according to our payloads
+2014-09-17T19:34:00 <Bosmon7> This sounds like a big decision to just make off the bat....
+2014-09-17T19:34:23 <Bosmon7> It\'s the kind of thing we should check at least amongst the summit team
+2014-09-17T19:34:38 <kasparnet> well - the alternative decision - to qualify every payload that has to do with preferences by ontology seems to be a big decision as well
+2014-09-17T19:34:44 <Bosmon7> right
+2014-09-17T19:34:53 <Bosmon7> Either one seems like a big decision : P
+2014-09-17T19:35:01 <Bosmon7> I don\'t think we can just answer that amongst the two of us
+2014-09-17T19:35:42 <kasparnet> Bosmon7: dammit - i hate you antranig
+2014-09-17T19:35:47 <kasparnet> :D
+2014-09-17T19:37:39 <kasparnet> Bosmon7: it\'s a bit scary, when hacking on this stuff, one realizes a lot of the MM challenges - and that we will have to deal with at least some of them if we want the flat (or canopy) MM to be a half-way decent functioning matchmaker, to use as a baseline
+2014-09-17T19:38:15 <kasparnet> like actually making decisions on what should launch and what shouldn\'t, what the PCP should display, selecting between solutions covering the same need, etc
+2014-09-17T19:38:20 <Bosmon7> yes
+2014-09-17T19:38:27 <Bosmon7> There\'s a huge amount to do
+2014-09-17T19:38:38 <Bosmon7> Although deciding what to do is thankfully a fairly big part of it : P
+2014-09-17T19:38:41 <kasparnet> in some ways I\'m getting the feeling that this is a queue to retiring the flat MM and fixing up the canopy
+2014-09-17T19:39:01 <kasparnet> as I doubt the flat\'s ability to do much intelligent work
+2014-09-17T19:39:46 <kasparnet> anyway - I\'m glancing at the MM code as I go through this stuff, so hopefully I\'ll have a list of issues/holes at the end of the process
+2014-09-17T19:41:00 <Bosmon7> great!
+2014-09-17T19:47:24 * anastasiac joined the channel
+2014-09-17T19:53:33 * heidiv has quit
+2014-09-17T20:00:08 <Justin_o> Bosmon7: were you expecting the unqueue event to fire after the save has started or after it has finished
+2014-09-17T20:00:20 <Justin_o> i\'m thinking it will be pulled from the queue when we are operating it
+2014-09-17T20:15:15 * anvk has quit
+2014-09-17T20:23:06 * kasparnet has quit
+2014-09-17T20:33:25 <Bosmon7> Justin_o - I\'m wondering why "verifyNumRequests" is a sequence element of type "listener"?
+2014-09-17T20:40:33 * slim has quit
+2014-09-17T20:54:31 * cindyli has quit
+2014-09-17T20:59:13 * clown has quit
+2014-09-17T21:00:51 * kasparnet joined the channel
+2014-09-17T21:16:37 * colinclark joined the channel
+2014-09-17T21:28:02 * anastasiac has quit
+2014-09-17T21:49:30 * yzen has quit
+2014-09-17T21:49:36 * yzen_ joined the channel
+2014-09-17T22:06:08 * Justin_o has quit
+2014-09-17T22:11:51 * simonjb has quit
+2014-09-17T22:15:47 * Jess_ has quit
+2014-09-17T22:17:44 * kasparnet has quit
+2014-09-17T22:23:40 * kasparnet joined the channel
+2014-09-17T22:56:17 * yzen_ has quit
+2014-09-17T22:58:31 * colinclark has quit
+'
+
+b'2014-09-17T00:29:15 * kasparnet has quit
+2014-09-17T00:51:11 * yzen joined the channel
+2014-09-17T01:32:03 * jhernandez has quit
+2014-09-17T01:48:28 * Bosmon7 has quit
+2014-09-17T01:50:42 * heidiv joined the channel
+2014-09-17T01:54:13 * Bosmon7 joined the channel
+2014-09-17T02:22:37 * heidiv has quit
+2014-09-17T03:02:22 * yzen has quit
+2014-09-17T03:27:51 * yzen joined the channel
+2014-09-17T03:29:39 * kasparnet joined the channel
+2014-09-17T03:34:17 * kasparnet has quit
+2014-09-17T04:39:37 * Bosmon7 has quit
+2014-09-17T04:46:06 * Bosmon7 joined the channel
+2014-09-17T04:59:09 * Bosmon8 joined the channel
+2014-09-17T05:01:43 * Bosmon7 has quit
+2014-09-17T05:04:25 * yzen has quit
+2014-09-17T05:29:45 * Bosmon8 has quit
+2014-09-17T05:30:09 * Bosmon7 joined the channel
+2014-09-17T05:32:15 * yzen joined the channel
+2014-09-17T05:36:56 * yzen has quit
+2014-09-17T06:58:04 * the-t-in-rtf has quit
+2014-09-17T06:58:41 * the-t-in-rtf joined the channel
+2014-09-17T07:32:47 * kasparnet joined the channel
+2014-09-17T07:59:30 * slim joined the channel
+2014-09-17T08:28:43 * yzen joined the channel
+2014-09-17T08:33:19 * yzen has quit
+2014-09-17T09:10:18 * jhernandez joined the channel
+2014-09-17T09:40:37 * kasparnet has quit
+2014-09-17T09:46:52 * kasparnet joined the channel
+2014-09-17T11:18:15 * kasparnet has quit
+2014-09-17T11:22:31 * heidiv joined the channel
+2014-09-17T11:22:53 * heidiv has quit
+2014-09-17T11:42:07 * kasparnet joined the channel
+2014-09-17T12:16:21 * cindyli joined the channel
+2014-09-17T12:23:46 * Justin_o joined the channel
+2014-09-17T12:44:43 * yzen joined the channel
+2014-09-17T13:05:30 * amilchev has left the channel
+2014-09-17T13:12:43 * yzen has quit
+2014-09-17T13:22:17 * simonjb joined the channel
+2014-09-17T13:25:01 * simonjb has quit
+2014-09-17T13:27:36 * simonjb joined the channel
+2014-09-17T13:27:43 * anvk joined the channel
+2014-09-17T13:35:59 * amilchev joined the channel
+2014-09-17T13:39:58 * yzen joined the channel
+2014-09-17T13:41:26 <Justin_o> cindyli: i was just looking at the component grades docs, is it true that a model and modelRelay components are not evented? https://github.com/fluid-project/infusion-docs/blob/master/ComponentGrades.md
+2014-09-17T13:44:35 <cindyli> Justin_o: i think so. but so far i haven\'t got a chance to use model and modelRelay components. ;). littleComponent, standardComponent and standardRelayComponent apparently are more popular.
+2014-09-17T13:45:06 <Justin_o> ah standared component i had missed that one
+2014-09-17T13:45:59 <cindyli> :)
+2014-09-17T13:46:11 <Justin_o> thanks
+2014-09-17T13:46:14 <cindyli> np
+2014-09-17T14:00:23 * yzen has quit
+2014-09-17T14:00:43 * yzen joined the channel
+2014-09-17T14:23:32 <amilchev> hey kasparnet, quick question: can we categorize any application specific adjuster that PCP would need to show into one of the groups we\'re having (visual alternatives, volume, language, add contrast & increase size)?
+2014-09-17T14:23:33 * anastasiac joined the channel
+2014-09-17T14:24:04 <amilchev> so that the pcp won\'t need to create even whole new groups as well
+2014-09-17T14:26:25 <kasparnet> amilchev: yeah, I think that might be possible
+2014-09-17T14:28:37 <amilchev> kasparnet ok as a starting point I\'ll assume we can do this in all cases. The name of the group can be passed to pcp along with other info
+2014-09-17T14:30:40 <kasparnet> yup
+2014-09-17T14:36:10 * sgithens_ has quit
+2014-09-17T14:36:54 * Justin_o has quit
+2014-09-17T14:47:58 * Justin_o joined the channel
+2014-09-17T14:49:16 * sgithens__ joined the channel
+2014-09-17T15:02:40 * clown joined the channel
+2014-09-17T15:06:45 * clown waves at cindyli
+2014-09-17T15:12:23 <cindyli> *waves back at clown* :)
+2014-09-17T15:15:46 * yzen has quit
+2014-09-17T15:15:51 * yzen_ joined the channel
+2014-09-17T15:43:26 <amilchev> hey Justin_o, you once mentioned that infusion supports dynamic HTML template creation (like handlebars.js e.g.)
+2014-09-17T15:43:51 * heidiv joined the channel
+2014-09-17T15:44:57 <amilchev> (semantic templates I guess it\'s called)
+2014-09-17T15:45:32 <amilchev> Justin_o: what was the lib/framework for this and could you link me any docs/examples for it?
+2014-09-17T15:47:21 * kasparnet has quit
+2014-09-17T15:51:00 <Justin_o> it\'s called the renderer
+2014-09-17T15:51:34 <Justin_o> There are a bunch of renderer docs here https://github.com/fluid-project/infusion-docs
+2014-09-17T15:51:42 <Justin_o> https://github.com/fluid-project/infusion-docs/blob/master/Renderer.md
+2014-09-17T15:52:10 <Justin_o> it can be a bit tricky to use at times, it is slated for a major change, but that probably won\'t happen for a year or so
+2014-09-17T15:52:17 <Justin_o> amilchev: ^
+2014-09-17T15:54:01 <amilchev> Justin_o thanks
+2014-09-17T15:58:35 <Justin_o> amilchev: let me know if you need help with it at all
+2014-09-17T15:58:55 <amilchev> sure
+2014-09-17T16:05:12 * kasparnet joined the channel
+2014-09-17T16:17:27 * cindyli has quit
+2014-09-17T16:22:30 <Bosmon7> Hi there Justin_o - I started to check out your branch for metadata/feedback
+2014-09-17T16:22:41 <Bosmon7> I noticed that the tests actually hang on Firefox, as part of the 3rd sequence
+2014-09-17T16:22:44 <Bosmon7> Is this what you observe as well?
+2014-09-17T16:22:50 <Justin_o> Bosmon7: thanks for looking
+2014-09-17T16:22:58 <Justin_o> Bosmon7: did uncomment anything out?
+2014-09-17T16:23:05 <Bosmon7> Justin_o - I didn\'t change anything yet
+2014-09-17T16:23:13 <Bosmon7> I get the "anti-hang" message at sequence point 5 of 10
+2014-09-17T16:23:19 <Justin_o> Bosmon7: was it hanging on the verifyRequests one?
+2014-09-17T16:23:40 <Bosmon7> Justin_o - verifyNumRequests in fact
+2014-09-17T16:23:49 <Justin_o> oh really.. no i didn\'t see that before
+2014-09-17T16:23:54 <Justin_o> let me try it again
+2014-09-17T16:25:29 <Justin_o> Bosmon7: hmm.. all passing for me.. i suppose it could be some timing thing that\'s different on our machines i guess
+2014-09-17T16:26:21 <Justin_o> i would have expected that one to work though
+2014-09-17T16:26:59 <Justin_o> if it is the one with two events though, it could be a timing issue since they both are triggered by the same workflow
+2014-09-17T16:27:01 <Bosmon7> ok
+2014-09-17T16:27:04 <Bosmon7> I\'ll investigate further
+2014-09-17T16:27:22 <Justin_o> Bosmon7: thanks, appreciate it
+2014-09-17T16:37:31 * cindyli joined the channel
+2014-09-17T17:00:53 * amilchev has quit
+2014-09-17T17:00:53 * slim has quit
+2014-09-17T17:02:01 * amilchev joined the channel
+2014-09-17T17:02:01 * slim joined the channel
+2014-09-17T17:06:38 * clown is now known as clown_mtg
+2014-09-17T17:35:58 <Justin_o> Bosmon7, cindyli: "" vs "*" in a modelListener is that "*" will fire on all changed paths, and "" will only fire once? is that correct
+2014-09-17T17:36:00 <Justin_o> ?
+2014-09-17T17:37:02 <Bosmon7> Justin_o - * will fire once per top-level path which changes
+2014-09-17T17:37:14 <Justin_o> Bosmon7: thanks
+2014-09-17T17:44:12 <Justin_o> Bosmon7: i\'m starting to look at http://issues.fluidproject.org/browse/FLOE-227
+2014-09-17T17:44:39 <Justin_o> were you hoping for something specific to the pouchDB datasource or something general to anything?
+2014-09-17T17:44:54 <Bosmon7> Justin_o - it should be a general wrapper that can accept any other dataSource
+2014-09-17T17:45:05 <Justin_o> Bosmon7: oh it should accept a datasource
+2014-09-17T17:45:09 <Justin_o> i think i don\'t understand that
+2014-09-17T17:45:33 <Bosmon7> Our infrastructure for this isn\'t terribly good yet, in fact I am having to rewrite all of our existing DataSource tests in Kettle
+2014-09-17T17:45:45 <Bosmon7> But you can see some examples of dataSource "wrapping"
+2014-09-17T17:45:59 <Bosmon7> Such a datasource can wrap another one, exposing just the same API upstream
+2014-09-17T17:46:18 <Bosmon7> In our terms, the sensible thing would be to supply the wrapped datasource as a subcomponent of the wrapper
+2014-09-17T17:46:31 <Bosmon7> Then the wrapper exposes exactly the same get/set API combination
+2014-09-17T17:46:49 <Bosmon7> It will then forward the requests to the wrapped datasource in some kind of modified way
+2014-09-17T17:46:55 <Justin_o> Bosmon7: okay.. i was wondering how the callback would be managed
+2014-09-17T17:47:06 <Justin_o> but maybe this is clearer in this wrapping with a subcomponent case
+2014-09-17T17:47:20 <Bosmon7> In our situation, it will forward the requests after "globbing" them together - that is, it will combine what would be multiple "set" requests into one
+2014-09-17T17:47:32 <Justin_o> Bosmon7: oh really
+2014-09-17T17:47:36 * clown_mtg is now known as clown
+2014-09-17T17:47:39 <Justin_o> we wouldn\'t still want to run them independentyly
+2014-09-17T17:47:41 <Bosmon7> And so in that way it will cut down on the rate of requests to the real datasource, as well as ensuring that only one is active at any time
+2014-09-17T17:48:14 <Bosmon7> Justin_o - yes, the most reasonable way of operating this kind of wrapper is for it to maintain a cache of models which have been modified
+2014-09-17T17:48:26 <Bosmon7> Which it uses its own ChangeApplier to track
+2014-09-17T17:48:37 <Justin_o> Bosmon7: so we\'d have a queue and just send them off one at a time after the previous one has finished?
+2014-09-17T17:48:42 <Bosmon7> When it decides that it is a good time to hit the real DataSource, it will flush its cache into just one big request
+2014-09-17T17:48:52 <Justin_o> oh
+2014-09-17T17:49:12 <Justin_o> so it still does a single save, but it maintains a local copy of the model it\'s going to push up?
+2014-09-17T17:49:19 <Bosmon7> Justin_o - right
+2014-09-17T17:49:34 <Bosmon7> And if it considers that the real dataSource is "busy" or otherwise unavailable, it will just update its own cache and wait
+2014-09-17T17:49:40 <Justin_o> Bosmon7:  would that work for creating and modifying different documents though?
+2014-09-17T17:50:02 <Bosmon7> Justin_o - with the current dataSource architecture, we would have to maintain one cache per document
+2014-09-17T17:50:32 <Bosmon7> You could just implement your original idea first as an experiment
+2014-09-17T17:50:42 <Bosmon7> That is a "one for one" relay of requests, just delayed
+2014-09-17T17:50:48 <Justin_o> Bosmon7: okay.. is it worth doing?
+2014-09-17T17:50:51 <Bosmon7> Sure
+2014-09-17T17:51:08 <Bosmon7> It will get our feet wet with this kind of implementation, which I think we will be doing a lot of in the future
+2014-09-17T17:51:24 <Bosmon7> There are lots of ways in which a dataSource can be improved by wrapping
+2014-09-17T17:52:12 <Bosmon7> I guess our pouchDB problem is a relatively simple one
+2014-09-17T17:52:20 <Bosmon7> But you could imagine a client connected to a real server
+2014-09-17T17:52:28 <Bosmon7> And needing to deal with the case that the connection to the server might go down
+2014-09-17T17:52:42 <Justin_o> Bosmon7: yes, that\'s a good point
+2014-09-17T17:53:03 <Justin_o> Bosmon7: i suppose in a case like that having alternative datasources like a pouchDB instance would be useful too
+2014-09-17T17:53:11 <Bosmon7> We\'d like a UI that allows the user to continue to do work, whilst the dataSource periodically retries the server connection
+2014-09-17T17:53:14 <Bosmon7> Justin_o - yes, that\'s right
+'
+

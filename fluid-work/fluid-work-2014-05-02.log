@@ -1,0 +1,298 @@
+b'2014-05-02T18:04:59 <cindyli> \tvalue: "{parent}.model.audio"
+2014-05-02T18:04:59 <cindyli> }
+2014-05-02T18:05:07 <cindyli> the other is using modelRelay option
+2014-05-02T18:05:21 <cindyli> if both of them are presented in the same component, which one will take precedent?
+2014-05-02T18:05:38 <cindyli> or they are conflicting with each other?
+2014-05-02T18:07:50 <Bosmon> cindyli - you shouldn\'t set up two rules between the same two endpoints
+2014-05-02T18:08:00 <Bosmon> But if the endpoints are different, the rules should merge together fine
+2014-05-02T18:08:19 <cindyli> cool, thanks, Bosmon
+2014-05-02T18:08:52 <Bosmon> There\'s not any way to cancel or unregister a rule separately from destroying the component which holds it
+2014-05-02T18:08:53 * yzen_ has quit
+2014-05-02T18:09:04 <cindyli> ok
+2014-05-02T18:12:09 * yzen joined the channel
+2014-05-02T18:24:40 <jhernandez> sgithens: ok
+2014-05-02T18:24:58 <sgithens> Bosmon: Did you hear back at all from the crete guy
+2014-05-02T18:29:37 <jhernandez> Bosmon: sgithens I\'ll be around, so if you need anything from me to book the third appartment, just ping me
+2014-05-02T18:41:47 <Bosmon> sgithens - yes, we\'re all booked in
+2014-05-02T18:41:53 <Bosmon> It seems he\'s ok not to take our money now
+2014-05-02T18:42:04 <Bosmon> We can pay for the other 2 apts when we arrive
+2014-05-02T18:44:09 <cindyli> Bosmon: Justin_o and i are rewriting this chunk with the model relay - https://github.com/jobara/metadata/blob/FLOE-116/src/js/panel.js#L63-L80
+2014-05-02T18:44:23 * kasparnet joined the channel
+2014-05-02T18:44:35 <Bosmon> Hi cindyli
+2014-05-02T18:45:26 <cindyli> btw, Bosmon, is the pull request for FLOE-116 ready to be merged?
+2014-05-02T18:45:43 <Bosmon> cindyli - it looks good, yes
+2014-05-02T18:45:43 <Bosmon> I should just test it a bit now
+2014-05-02T18:45:52 <cindyli> cool. thanks, Bosmon
+2014-05-02T18:46:22 <Bosmon> cindyli - have you had a chance to look at https://github.com/fluid-project/infusion/pull/484 ?
+2014-05-02T18:47:06 <cindyli> yes, Bosmon, i tried and it works pretty well
+2014-05-02T18:47:14 <cindyli> writing a comment on the pull
+2014-05-02T18:47:20 <Bosmon> cindyli - cool
+2014-05-02T18:47:49 <Bosmon> In order to deal with the chunk of code you pasted, you\'ll need to rewrite fluid.metadata.panel.transformPanelModel as a model transformation transform
+2014-05-02T18:52:00 <cindyli> yes, understand, Bosmon. the problem we have is how to accommodate different input type. there could be three inputs from the parent panel component:
+2014-05-02T18:52:17 <Bosmon> cindyli - you can just use the same implementation you have now
+2014-05-02T18:52:26 <cindyli> oh, i see
+2014-05-02T18:52:42 <cindyli> can we replace the whole thing with modelRelay option?
+2014-05-02T18:52:53 <Bosmon> cindyli - except for the inverse rule, as we discussed previously
+2014-05-02T18:53:08 <sgithens> Bosmon: Awesome
+2014-05-02T18:53:11 <Bosmon> YOu will write the forward rule as a modelRelay rule using a single large transformer
+2014-05-02T18:53:15 <Bosmon> The reverse rule can stay the way it is
+2014-05-02T18:53:24 <cindyli> we don\'t need to invert back to the panel
+2014-05-02T18:53:26 <sgithens> which is probably good, so I have enough credit to book the plane ticket
+2014-05-02T18:54:59 <cindyli> Bosmon: reverse rule, there\'s no reverse rule in here
+2014-05-02T18:57:37 <cindyli> Bosmon: the problem is it\'s difficult to use one model relay to handle different input from the parent panel component.
+2014-05-02T18:58:23 <cindyli> from line 71, the panel has a "indicatorModelRules" option that basically provides the modelRelay
+2014-05-02T18:58:39 <Bosmon> cindyli - you can just write a transform rule of the normal kind
+2014-05-02T18:58:45 <Bosmon> In this case the input consists of the entire model
+2014-05-02T18:58:54 <Bosmon> And the options to the transform rule consists of the indicatorModelRules
+2014-05-02T19:01:49 <Bosmon> Ah, I see that indicatorModelRules just consists of transforms
+2014-05-02T19:02:10 <Bosmon> So, you may as well just get rid of that configuration block, and have the users write a modelRelay block instead
+2014-05-02T19:02:25 <cindyli> Bosmon: in the case that the transformation rule is the direct mapping btw two elements, such as { value: "{panel}.model.value" }, how do we write the modelRelay
+2014-05-02T19:03:09 * the-t-in-rtf joined the channel
+2014-05-02T19:03:20 <cindyli> once the modelRelay in place, we will always need to write a relay even for the direct mapping, right?
+2014-05-02T19:04:09 <Bosmon> Well..... you could just set up a relay rule using fluid.identity
+2014-05-02T19:04:40 <cindyli> by using "fluid.transforms.free"? that\'s a good point
+2014-05-02T19:04:53 <Bosmon> You can even just use fluid.identity directly
+2014-05-02T19:05:04 <cindyli> ah. good to know
+2014-05-02T19:05:08 <Bosmon> Any function that is not otherwise recognised is interpreted as a "standardTransformFunction"
+2014-05-02T19:05:22 <Bosmon> so a transform rule of type: "fluid.identity" should be fine
+2014-05-02T19:05:42 <cindyli> trying..
+2014-05-02T19:07:09 <Bosmon> You can see these lines in ModelTransformation.js, line 231
+2014-05-02T19:07:12 <Bosmon> if (!fluid.hasGrade(expdef, "fluid.transformFunction")) {
+2014-05-02T19:07:12 <Bosmon> expdef = fluid.defaults("fluid.standardTransformFunction");
+2014-05-02T19:07:12 <Bosmon> }
+2014-05-02T19:07:44 <Bosmon> There\'s actually a comment there
+2014-05-02T19:07:49 <Bosmon> But it didn\'t come through on IRC : P
+2014-05-02T19:08:00 <Bosmon> It read "   // If no suitable grade is set up, assume that it is intended to be used as a standardTransformFunction"
+2014-05-02T19:09:52 <cindyli> ok. tried this but doesn\'t work - http://pastie.org/9134474
+2014-05-02T19:10:35 <Bosmon> cindyli - you didn\'t specify any input!
+2014-05-02T19:10:50 <cindyli> Bosmon: the input is "model" variable
+2014-05-02T19:11:09 <Bosmon> cindyli - you didn\'t specify any input to the transform rule
+2014-05-02T19:11:58 <cindyli> what do you mean\xe2\x80\xa6\xe2\x80\xa6.
+2014-05-02T19:12:09 <cindyli> :/
+2014-05-02T19:12:15 <cindyli> :)
+2014-05-02T19:12:39 <Bosmon> Remember this? : P
+2014-05-02T19:12:40 <Bosmon> http://issues.fluidproject.org/browse/FLUID-5294
+2014-05-02T19:12:45 <Bosmon> You need to specify a value for "input"
+2014-05-02T19:12:48 <Bosmon> For the transform rule
+2014-05-02T19:12:53 <Bosmon> Either input, or inputPath
+2014-05-02T19:13:16 <Bosmon> If you\'re going to use it in IoC, you would use an IoC expression as "input"
+2014-05-02T19:13:23 <Bosmon> If you use it standalone, you would write a model path in "inputPath"
+2014-05-02T19:15:25 <cindyli> ah ha. you are my hero. yes, adding inputPath. i thought the whole model would be assumed as the input if an explicit input is provided
+2014-05-02T19:15:47 <Bosmon> It doesn\'t work that way... you need to explicitly specify what the input is
+2014-05-02T19:16:28 <cindyli> ok
+2014-05-02T19:16:53 <Bosmon> I guess we could make an improvement to the framework that if neither input nor inputPath is specified, it defaults to an inputPath of ""
+2014-05-02T19:17:31 <cindyli> +100! smart!
+2014-05-02T19:19:48 <Bosmon> http://issues.fluidproject.org/browse/FLUID-5357
+2014-05-02T19:19:54 <Bosmon> I\'ve assigned it to KASPPARNETT : P
+2014-05-02T19:22:44 <cindyli> thanks, Bosmon
+2014-05-02T19:35:20 <Bosmon> cindyli
+2014-05-02T19:35:25 <Bosmon> I\'m testing out the metadata component
+2014-05-02T19:35:30 <Bosmon> How do I actually complete the wizard?
+2014-05-02T19:35:47 <cindyli> are you at the index page, index.html?
+2014-05-02T19:35:57 <Bosmon> cindyli - I was
+2014-05-02T19:36:09 <Bosmon> But then when I clicked on "Create new resource" it took me to a new page
+2014-05-02T19:36:16 <Bosmon> resource.html
+2014-05-02T19:36:16 <cindyli> exactly
+2014-05-02T19:36:20 <Bosmon> From which I seem to be unable to return
+2014-05-02T19:36:31 <cindyli> restart demo link
+2014-05-02T19:36:41 <cindyli> top right corner
+2014-05-02T19:36:50 <Bosmon> well yes
+2014-05-02T19:36:55 <Bosmon> But that doesn\'t actually cause any resources to be added
+2014-05-02T19:37:51 <cindyli> it doesn\'t really add any other resources. the demo just shows scenarios of adding or editing content
+2014-05-02T19:37:59 <Bosmon> I see
+2014-05-02T19:38:11 <Bosmon> ok
+2014-05-02T19:38:24 <Bosmon> Well, it would be nice and I imagine not too much trouble in future to have an end-to-end demo
+2014-05-02T19:38:33 <Bosmon> We do after all seem to have the pouchDBDataSource....
+2014-05-02T19:38:47 <cindyli> yes, agree
+2014-05-02T19:38:56 <Bosmon> Ok, this looks reasonable, merging now
+2014-05-02T19:39:04 <cindyli> yay! thanks!
+2014-05-02T19:39:19 <Bosmon> Two things re the overview component i) it would be nice to have a tooltip, ii) it would be nice to have it use our "globalDismissal" facility to close itself
+2014-05-02T19:40:14 <cindyli> the opening/closing of the overview panel is tracked until the restart is clicked, Bosmon
+2014-05-02T19:40:33 <Bosmon> cindyli - what do you mean by "tracked"?
+2014-05-02T19:41:41 <cindyli> the first time you visit the index page, the overview panel is open. if you close it and click on the edit or create, you are redirected to resource page and the overview panel stays closed
+2014-05-02T19:42:22 <cindyli> isn\'t this want you want by ii) close itself?
+2014-05-02T19:42:34 <cindyli> the first "want" -> what
+2014-05-02T19:43:37 <Bosmon> cindyli - I mean, it should have the affordance to close itself simply by clicking outside itself, rather than only being closable from the "close" button
+2014-05-02T19:43:49 <cindyli> ah. i see. agree
+2014-05-02T19:43:50 <Bosmon> This is what our "global dismissal" component does
+2014-05-02T19:44:13 <Bosmon> Invented for use in ......... CEE SPACE!
+2014-05-02T19:44:54 <cindyli> do you want me to create jiras for your i) and ii)?
+2014-05-02T19:46:09 * the-t-in-rtf has quit
+2014-05-02T19:48:22 <cindyli> jhung: to save your time to dig up, i\'m copying pasting two suggestions from Bosmon regarding the overview panel:
+2014-05-02T19:48:23 <cindyli> i) it would be nice to have a tooltip, ii) it would be nice to have it use our "globalDismissal" facility to close itself
+2014-05-02T19:49:17 <cindyli> "globalDissmissal" means - it should have the affordance to close itself simply by clicking outside itself, rather than only being closable from the "close" button
+2014-05-02T19:49:19 <jhung> i). Yes! Tooltip would be fantastic.
+2014-05-02T19:49:59 <jhung> ii). Yes x2! vjoanna and I were talking about this the other day. We\'ll file a new jira for it.
+2014-05-02T19:50:16 <cindyli> cool. on ur shoulder, jhung. :) thanks
+2014-05-02T20:16:13 * yzen has quit
+2014-05-02T20:20:32 <cindyli> Bosmon: fluid.identity is declared as a function rather than a component. When I use it in the modeRelay, the error "transformOpts.defaults is undefined" is thrown from here: https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/ModelTransformation.js#L344
+2014-05-02T20:21:42 <cindyli> my test case: http://pastie.org/9134640
+2014-05-02T20:21:46 <cindyli> hope it makes sense
+2014-05-02T20:24:14 * jhung has quit
+2014-05-02T20:24:40 * jhung joined the channel
+2014-05-02T20:24:50 * jhung has quit
+2014-05-02T20:25:27 * jhung joined the channel
+2014-05-02T20:26:10 * yzen joined the channel
+2014-05-02T20:27:06 * cindyli has quit
+2014-05-02T20:29:30 * jhung has quit
+2014-05-02T20:33:20 * anvk has quit
+2014-05-02T21:13:31 * anastasiac has quit
+2014-05-02T21:16:23 * yzen has quit
+2014-05-02T21:26:11 * sgithens has quit
+2014-05-02T22:05:36 * Justin_o has quit
+2014-05-02T22:38:56 * jessm has quit
+2014-05-02T23:27:29 * kasparnet has quit
+'
+
+b'2014-05-02T00:22:17 * kasparnet joined the channel
+2014-05-02T00:26:31 * kasparnet has quit
+2014-05-02T03:24:08 * BogdanR has quit
+2014-05-02T03:24:34 * BogdanR joined the channel
+2014-05-02T06:09:59 * Bosmon has quit
+2014-05-02T07:57:01 * kasparnet joined the channel
+2014-05-02T08:03:35 * kasparnet has quit
+2014-05-02T08:06:20 * jash4 joined the channel
+2014-05-02T08:12:56 * kasparnet joined the channel
+2014-05-02T08:20:33 * jash4_ joined the channel
+2014-05-02T08:20:58 * BogdanR_ joined the channel
+2014-05-02T08:21:19 * BogdanR has quit
+2014-05-02T08:21:28 * jash4 has quit
+2014-05-02T08:56:20 * kasparnet has quit
+2014-05-02T09:43:24 * kasparnet joined the channel
+2014-05-02T09:57:52 * kasparne_ joined the channel
+2014-05-02T10:00:43 * kasparnet has quit
+2014-05-02T11:56:53 * yzen joined the channel
+2014-05-02T12:17:58 * jhung joined the channel
+2014-05-02T12:19:00 * Justin_o joined the channel
+2014-05-02T12:19:49 <Justin_o> Bosmon: yes, that\'s true
+2014-05-02T12:36:20 * jash4_ has quit
+2014-05-02T12:44:38 * yzen has quit
+2014-05-02T12:53:25 * cindyli joined the channel
+2014-05-02T13:00:38 * jessm joined the channel
+2014-05-02T13:06:00 * jhung is now known as jhung_away
+2014-05-02T13:06:47 * yzen joined the channel
+2014-05-02T13:13:18 * yzen has quit
+2014-05-02T13:19:50 <Justin_o> cindyli:  if you have time, could you please code review https://github.com/fluid-project/infusion/pull/507
+2014-05-02T13:20:08 <cindyli> sure, Justin_o
+2014-05-02T13:21:54 * jhung_away is now known as jhung
+2014-05-02T13:22:44 <jhung> Justin_o: FYI, I\'ve updated the pull requests.
+2014-05-02T13:23:07 <Justin_o> jhung: cool thanks, I\'ll take a look at it again today
+2014-05-02T13:25:53 * yzen joined the channel
+2014-05-02T13:34:40 <Justin_o> cindyli: i found another issue with FLUID-5344 and have submitted a new pull request https://github.com/fluid-project/infusion/pull/508
+2014-05-02T13:34:46 <Justin_o> cindyli: could you also look at this when you have time
+2014-05-02T13:34:47 <Justin_o> ?
+2014-05-02T13:35:09 <cindyli> ok justin
+2014-05-02T13:36:40 <Justin_o> cindyli: thanks
+2014-05-02T13:36:48 <cindyli> np
+2014-05-02T13:39:12 * anvk joined the channel
+2014-05-02T13:40:53 * anastasiac joined the channel
+2014-05-02T13:43:41 <Justin_o> jhung: i left you a couple more comments on the pull request
+2014-05-02T13:44:29 <jhung> Justin_o: thanks.
+2014-05-02T13:49:25 <jhung> As for the headers of the overview panel showing up in the table of contents - I guess this is an issue because if the panel is hidden, the headers are not visible. So selecting the item in the TOC won\'t put focus to the header in the overview panel.
+2014-05-02T13:49:30 <jhung> ^Justin_o
+2014-05-02T13:49:45 <Justin_o> jhung: yes, that\'s correct
+2014-05-02T13:50:18 <Justin_o> jhung: the strange thing is that they aren\'t supposed to show headers that are hidden, when it is enabled.
+2014-05-02T13:50:47 <Justin_o> jhung: actually that does work properly
+2014-05-02T13:51:38 <Justin_o> jhung: so things that are hidden after it is turned on, will still show up in the list.. i don\'t know what we could do about that though.. it\'s a limitation with the ToC enactor
+2014-05-02T13:52:01 <Justin_o> jhung: what do you think?
+2014-05-02T14:00:36 <jhung> Justin_o: Part of me thinks that ToC should be aware of changes and update accordingly.
+2014-05-02T14:01:44 * sgithens joined the channel
+2014-05-02T14:04:37 <Justin_o> jhung: that would make sense, although it might not be very performant to monitor all of the activity on a page.
+2014-05-02T14:04:53 <Justin_o> jhung: i think the ToC may be completely rethought in new designs though
+2014-05-02T14:05:20 <cindyli> Justin_o: http://issues.fluidproject.org/browse/FLUID-5342 lists a bunch of other jiras, which tests it\'s intended to fix?
+2014-05-02T14:05:27 * kasparne_ has quit
+2014-05-02T14:05:57 <Justin_o> cindyli: those were actually the names of the tests that are failing.. the tests happen to be named after jiras
+2014-05-02T14:06:20 <cindyli> oh, i see
+2014-05-02T14:06:38 <jhung> Justin_o: yes. So where does this leave us with respect to the overviewPanel? Is there a way to prevent ToC from indexing a header?
+2014-05-02T14:07:26 <Justin_o> jhung: ys
+2014-05-02T14:07:27 <Justin_o> yes
+2014-05-02T14:08:44 <jhung> Justin_o: Cool. Maybe we\'ll do that as a temporary fix.
+2014-05-02T14:08:44 <Justin_o> jhung: this is how it finds the headers now https://github.com/fluid-project/infusion/blob/master/src/components/tableOfContents/js/TableOfContents.js#L111
+2014-05-02T14:09:13 <Justin_o> jhung: we\'d have to modify that, but it would mean that they never show up in the table of contents
+2014-05-02T14:10:18 <Justin_o> jhung: if we do make this change, we\'ll need to have it work for all of the prefsFramework demos that have overviewPanels.
+2014-05-02T14:10:21 <jhung> I think that\'s fine Justin_o. The ToC should really apply to the demo content. The overviewPanel is something outside of the demo. It\'s more metadata than actual frmo content.
+2014-05-02T14:10:31 <Justin_o> jhung: i\'m inclined to just file a separate jira for this and worry about it later though
+2014-05-02T14:10:34 <jhung> *frmo = demo.
+2014-05-02T14:10:50 <Justin_o> jhung: okay
+2014-05-02T14:11:07 <jhung> Justin_o: makes sense to file another jira.
+2014-05-02T14:12:10 * simonjb joined the channel
+2014-05-02T14:12:49 * simonjb has left the channel
+2014-05-02T14:16:17 <Justin_o> jhung: okay
+2014-05-02T14:17:37 <jhung> I\'m pushing up a fix for the font size issue now
+2014-05-02T14:17:50 <Justin_o> jhung: thanks
+2014-05-02T14:23:50 <Justin_o> jhung: here\'s the new jira http://issues.fluidproject.org/browse/FLUID-5356
+2014-05-02T14:25:17 <jhung> great Justin_o
+2014-05-02T14:41:40 * anvk has left the channel
+2014-05-02T14:42:01 * anvk joined the channel
+2014-05-02T14:50:05 <Justin_o> anastasiac: could you please review this pull request https://github.com/fluid-project/infusion/pull/509
+2014-05-02T14:50:26 <anastasiac> Sure, Justin_o
+2014-05-02T14:50:49 <Justin_o> anastasiac: thanks
+2014-05-02T15:10:30 <jhernandez> jessm: around?
+2014-05-02T15:13:23 <jhernandez> sgithens: around?
+2014-05-02T15:14:36 <jhernandez> just wondering if any of you has booked the 3rd appartment
+2014-05-02T15:15:06 <jhernandez> catching up on email now after almost 3 days offline
+2014-05-02T15:18:18 <Justin_o> jhung: i can\'t seem to reproduce http://issues.fluidproject.org/browse/FLUID-5338
+2014-05-02T15:18:52 <Justin_o> jhung: i remember having this issue before though. Firefox was recently updated, so it could have been a weird caching bug that has now gone away. Are you still able to reproduce it?
+2014-05-02T15:19:46 <jhung> I was able to reproduce it Wednesday. Let me try again.
+2014-05-02T15:23:35 <jhung> I was able to reproduce it now on FF Mac, but not FF Windows.
+2014-05-02T15:23:52 <Justin_o> jhung: ah.. i was able to reproduce it now, but only when running the code locally and only with firebug open
+2014-05-02T15:24:47 <jhung> I can reproduce it using the build site Justin_o on mac. such a weird bug. I don\'t think we can fix it either way. Just document it may be enough.
+2014-05-02T15:25:04 <Justin_o> jhung: which version of Firefox are you using?
+2014-05-02T15:25:27 <jhung> Justin_o: 28.0
+2014-05-02T15:25:38 <jhung> It\'s downloading an update now though.
+2014-05-02T15:25:48 <Justin_o> jhung: okay.. i\'m trying with FF 29
+2014-05-02T15:25:55 <Justin_o> you\'ll probably like this version better.. :)
+2014-05-02T15:26:06 <Justin_o> but please let me know if you can still reproduce the issue
+2014-05-02T15:27:40 <jhung> Ah. it\'s gone now Justin_o.
+2014-05-02T15:28:22 <jhung> FF29 is pretty, but what happened to my tabs? They look nothing like tabs. I like it more tabby.
+2014-05-02T15:29:19 <Justin_o> :) too round?
+2014-05-02T15:30:07 <jhung> too flat. Tabs look like the old bookmark toolbar
+2014-05-02T15:30:13 <Justin_o> jhung: by the way, i\'ve left FLUID-5338 open with a comment about my experience and removed the fix for 1.5
+2014-05-02T15:30:19 <jhung> k
+2014-05-02T15:30:36 <Justin_o> jhung:  you mean the closed ones
+2014-05-02T15:30:51 <jhung> yeah - the non-active ones Justin_o
+2014-05-02T15:40:03 <Justin_o> jhung: :) yes, the non-active ones.. the closed ones aren\'t there at all ;)
+2014-05-02T15:40:34 <Justin_o> jhung: by the way, did you say at standup that your pull requests are ready again
+2014-05-02T15:42:28 <jhung> yes Justin_o. Ready.
+2014-05-02T15:46:40 <Justin_o> jhung: left you another comment https://github.com/fluid-project/infusion/pull/496
+2014-05-02T15:46:47 <Justin_o> https://github.com/fluid-project/infusion/pull/496#issuecomment-42045985
+2014-05-02T15:51:05 <jhung> thanks. Looking into that now Justin_o
+2014-05-02T15:51:26 <Justin_o> jhung: is there a transition on linespacing in the overviewPanel?
+2014-05-02T15:52:59 <jhung> Justin_o: There\'s a transition: all 0.2s ease on the container. So everything that changes gets transitioned.
+2014-05-02T15:53:16 <Justin_o> jhung: okay
+2014-05-02T15:53:19 <Justin_o> looks good :)
+2014-05-02T15:55:11 * yzen has quit
+2014-05-02T16:20:57 * the-t-in-rtf has quit
+2014-05-02T16:36:28 * [o__o] joined the channel
+2014-05-02T16:41:14 * yzen joined the channel
+2014-05-02T16:46:37 * Bosmon joined the channel
+2014-05-02T16:50:33 <anastasiac> Bosmon, I\'m confused about the applier\'s hasChangeSource() function. There are two, and the one the video player is using doesn\'t work :-)
+2014-05-02T16:50:38 <anastasiac> https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/DataBinding.js#L1577-1579
+2014-05-02T16:50:47 <anastasiac> https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/DataBinding.js#L1160-1162 (not working)
+2014-05-02T16:50:56 <anastasiac> can you shed any light?
+2014-05-02T16:51:46 <Bosmon> anastasiac - hasChangeSource has been discontinued as of the new relay system
+2014-05-02T16:53:35 <Bosmon> I think it is now possible to do without it
+2014-05-02T16:53:47 <anastasiac> Bosmon, how does it work now?
+2014-05-02T16:54:18 <Bosmon> anastasiac - we now have pretty good "unchanged value detection" which seems powerful enough in all the cases we\'ve seen so far to prevent "indefinite value propagation"
+2014-05-02T16:56:29 <anastasiac> Bosmon, how does this "unchanged value detection" work? For example, if the video player detects a change to the volume property of the mode, how can it tell whether or not that change was triggered by the "mute" property change?
+2014-05-02T17:03:36 <Bosmon> anastasiac - we should be able to maintain two separate pieces of model state - that is, the volume settings, and a separate boolean value for "mute"
+2014-05-02T17:03:43 <Bosmon> That should make all of this logic a good deal less tortuous
+2014-05-02T17:04:06 <Bosmon> That is a float for the volume, and a boolean for mute
+2014-05-02T17:05:01 <anastasiac> I admit, I\'m still sorting throught the connections, but there are interactions betweent the two: If the mute state is set to true, the volume must be set to 0 (and the previous volume noted) and vice versa; if the volume is set to 0 (via the slider), the mute should be set to true, and vice versa
+2014-05-02T17:06:37 <anastasiac> I\'ll see if I can clean up the code in a way that knowing the source of the volume change doesn\'t matter...
+2014-05-02T17:06:42 * yzen_ joined the channel
+2014-05-02T17:08:53 * yzen has quit
+2014-05-02T17:10:23 * the-t-in-rtf has quit
+2014-05-02T17:10:31 * Bosmon has quit
+2014-05-02T17:39:02 <sgithens> jhernandez: I tried, but there was some sort of glitch in AirBNB
+2014-05-02T17:39:14 <sgithens> Antranig is emailing iwth them to get it worked out
+2014-05-02T17:39:27 <sgithens> he seems to be absent
+2014-05-02T17:39:40 <sgithens> colin and kaspernet are gone too
+2014-05-02T17:39:44 <sgithens> quiet day on the IRC
+2014-05-02T17:39:59 <sgithens> oh, he just left
+2014-05-02T17:42:43 * Bosmon joined the channel
+2014-05-02T17:43:13 * Bosmon7 joined the channel
+2014-05-02T18:04:57 <cindyli> hi Bosmon, there are two forms of defining model relay, one is something like:
+2014-05-02T18:04:59 <cindyli> model: {
+'
+

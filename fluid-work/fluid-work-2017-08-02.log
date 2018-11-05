@@ -1,0 +1,268 @@
+b'2017-08-02T14:10:03 <stegru> why are we still coding in v4, anyway? or at least, the linter seems to want me to
+2017-08-02T14:10:37 <Bosmon> I don\'t know, how does it make you?
+2017-08-02T14:10:44 <Bosmon> We should be in the node 6.x LTS
+2017-08-02T14:11:10 <Bosmon> Although that doesn\'t necessarily mean we allow all the crazy language features it supports
+2017-08-02T14:11:15 <stegru> oh yes, my node is 6
+2017-08-02T14:11:18 <stegru> yes
+2017-08-02T14:12:30 <Bosmon> Looks like one "Timothy Gu" assigned the issue to himself 3 weeks ago
+2017-08-02T14:14:20 <Bosmon> Ah, lots of activity on this pull
+2017-08-02T14:14:21 <Bosmon> https://github.com/nodejs/node/pull/14231
+2017-08-02T14:20:03 <Bosmon> Ok.... sadly node 7.10.1 didn\'t work either
+2017-08-02T14:22:18 <stegru> what GUI are you using?
+2017-08-02T14:43:25 * the-t-in-rtf1 joined the channel
+2017-08-02T14:45:54 <stegru> gloob, are you around? I have GPII-2472 in front of me
+2017-08-02T14:53:24 * kavya joined the channel
+2017-08-02T14:54:38 <Bosmon> Well
+2017-08-02T14:54:42 <Bosmon> I simply can\'t debug anything
+2017-08-02T14:54:51 <Bosmon> I\'ve tried 2 versions of node-inspector, and tried patching one of them
+2017-08-02T15:04:28 * the-t-in-rtf joined the channel
+2017-08-02T15:12:08 <Bosmon> Ok
+2017-08-02T15:12:17 <Bosmon> I have managed to get node-inspector working by downgrading to node 6.3.1
+2017-08-02T15:14:35 <Justin_o> Bosmon: i did some inspecting using VS Code on GPII Universal. I used node v6.9.4 and --inspect
+2017-08-02T15:17:16 <Bosmon> Justin_o - yes - see my report above
+2017-08-02T15:17:28 <Bosmon> You would have been able to inspect into universal, but not into its loaded version of Infusion
+2017-08-02T15:18:17 <Justin_o> Bosmon: hmm.. i probably didn\'t debug that far down
+2017-08-02T15:32:41 * alanharnum joined the channel
+2017-08-02T15:34:17 * mrtyler joined the channel
+2017-08-02T15:34:35 <Bosmon> stegru - ok, I think I\'ve found the problem with your GPII-2333 pull test failures :)
+2017-08-02T15:34:39 <Bosmon> It\'s a little hilarious
+2017-08-02T15:35:15 <Bosmon> Inside your writeLog function, you issue "fluid.logObjectRenderChars = 0xffffff;"
+2017-08-02T15:35:18 <Bosmon> Which is possibly a little unwise
+2017-08-02T15:35:39 <Bosmon> Or at least, it is unwise to set it without unsetting it : P
+2017-08-02T15:35:54 <Bosmon> What then happens is that there is an expected test failure in the JournalIntegrationTests
+2017-08-02T15:35:58 <stegru> oh!
+2017-08-02T15:36:00 <Bosmon> Which then tries to dump a log of its activity to the console
+2017-08-02T15:36:09 <stegru> actually, that was a temporary setting
+2017-08-02T15:36:29 <Bosmon> So fluid.prettyPrintJSON has had a fair amount of work on it, but it\'s still not perfect
+2017-08-02T15:36:43 <Bosmon> One interesting thing it does is impose its char limit in a kind of "streaming" way
+2017-08-02T15:36:52 <Bosmon> So if it hits the char cap, it simply bails out of its recusion
+2017-08-02T15:37:05 <stegru> ah got it
+2017-08-02T15:37:27 <Bosmon> it turns out that VERY VERY DEEP inside the object tree descended from the component, there is an object of type IncomingMessage from node\'s API
+2017-08-02T15:37:39 <Bosmon> Which turns out to have a bummed synthetic property named "encoding"
+2017-08-02T15:37:45 <Bosmon> Which explodes the moment you try to access it
+2017-08-02T15:38:35 <stegru> ok i see
+2017-08-02T15:38:40 <Bosmon> So, really, there is actually an Infusion bug
+2017-08-02T15:38:45 <stegru> yeh, like i said ;)
+2017-08-02T15:38:54 <Bosmon> Well, sure
+2017-08-02T15:39:06 <stegru> it just took my crappy code to uncover it
+2017-08-02T15:39:06 <Bosmon> But nonetheless you contribute to the problem with a fault of your own : P
+2017-08-02T15:39:48 <Bosmon> The problem is in this use of fluid.keys
+2017-08-02T15:39:49 <Bosmon> https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/FluidDebugging.js#L228
+2017-08-02T15:40:00 <Bosmon> Which was a first attempt to deal with exactly this kind of problem
+2017-08-02T15:40:24 <Bosmon> YOu see there is this blasted fluid.getSafeProperty utility
+2017-08-02T15:40:35 <Bosmon> But it seems that there are some properties which are too bummed even for this
+2017-08-02T15:41:07 <stegru> in a perfect world, you shouldn\'t need that wrapper
+2017-08-02T15:41:55 <Bosmon> fluid.keys is buggered because it always tries to READ any key it finds
+2017-08-02T15:41:59 <stegru> so.. i guess there\'s a "encoding" property that\'s been overridden by a getter
+2017-08-02T15:42:37 * simonjb joined the channel
+2017-08-02T15:42:37 <Bosmon> I think there\'s no reason we can\'t just replace this with Object.keys
+2017-08-02T15:44:46 * alanharnum joined the channel
+2017-08-02T16:02:18 <the-t-in-rtf> Is someone other than Kasper going to start the meeting?
+2017-08-02T16:03:29 <cindyli> jhernandez: ^
+2017-08-02T16:03:51 * yuriy-donev has left the channel
+2017-08-02T16:03:54 <jhernandez> oh, I can open it
+2017-08-02T16:04:13 <stegru> yes Bosmon, especially because you want "keys" not "properties"
+2017-08-02T16:04:31 <clown> jhernandez, will you become \xe2\x80\xa6 and organizer?!?
+2017-08-02T16:04:34 <clown> *an
+2017-08-02T16:05:02 <jhernandez> okay Sandra opened the room
+2017-08-02T16:07:47 * pratik_r has quit
+2017-08-02T16:07:56 * pratik_r joined the channel
+2017-08-02T16:09:54 * the-t-in-rtf1 joined the channel
+2017-08-02T16:13:43 * pratik_r joined the channel
+2017-08-02T16:17:14 * gtirloni_ joined the channel
+2017-08-02T16:18:13 <simonjb> Bosmon: would you have any time to review https://github.com/fluid-project/infusion-docs/pull/122
+2017-08-02T16:18:40 <simonjb> it\'s the infusion-docs update for the fluid.modelPairToChanges() function
+2017-08-02T16:18:48 <Bosmon> simonjb - sure
+2017-08-02T16:18:58 <simonjb> awesome, thanks Bosmon
+2017-08-02T16:36:20 * javjarfer joined the channel
+2017-08-02T16:37:04 * the-t-in-rtf joined the channel
+2017-08-02T17:02:20 * alanharnum joined the channel
+2017-08-02T17:04:57 * stegru has quit
+2017-08-02T17:11:04 * pratik_r joined the channel
+2017-08-02T17:16:57 * colinclark joined the channel
+2017-08-02T17:25:04 * kavya has quit
+2017-08-02T17:26:28 * alanharnum joined the channel
+2017-08-02T17:34:22 * pratik_r joined the channel
+2017-08-02T17:45:39 * cindyli joined the channel
+2017-08-02T17:49:44 * stegru joined the channel
+2017-08-02T18:02:44 * the-t-in-rtf1 joined the channel
+2017-08-02T18:24:37 * colinclark joined the channel
+2017-08-02T18:31:57 * pratik_r joined the channel
+2017-08-02T18:39:57 * avtar joined the channel
+2017-08-02T18:46:17 * the-t-in-rtf joined the channel
+2017-08-02T18:49:07 * simonjb joined the channel
+2017-08-02T19:11:01 <michelled> cindyli: are you there?
+2017-08-02T19:11:10 <cindyli> yes, michelled
+2017-08-02T19:11:47 <michelled> cindyli: Sandra would like to ask you something on skype :)
+2017-08-02T19:12:17 <cindyli> ok, thanks for letting me know, michelled
+2017-08-02T19:13:10 <michelled> np
+2017-08-02T19:39:56 * simonjb joined the channel
+2017-08-02T19:41:02 <michelled> jhernandez: when you get a chance - super small pull request for you: https://github.com/GPII/gpii-app/pull/18
+2017-08-02T19:43:11 * sirdancealot joined the channel
+2017-08-02T20:03:08 * stegru has quit
+2017-08-02T20:20:08 <michelled> https://wiki.gpii.net/w/Technology_Evaluation_-_Internationalising_and_Localising_UI_strings
+2017-08-02T20:20:19 <gmoss> thanks michelled!
+2017-08-02T20:21:06 <michelled> np
+2017-08-02T20:50:21 * alanharnum joined the channel
+2017-08-02T21:37:52 * javjarfer has quit
+2017-08-02T21:49:03 * alanharnum joined the channel
+2017-08-02T22:09:03 * alanharnum joined the channel
+2017-08-02T22:11:26 * pratik_r joined the channel
+2017-08-02T22:11:48 * Jess_ has quit
+2017-08-02T22:12:15 * alanharnum joined the channel
+2017-08-02T22:14:33 * pratik_r has left the channel
+2017-08-02T22:45:37 * amatas has quit
+'
+
+b'2017-08-02T00:01:52 * jhernandez has quit
+2017-08-02T04:18:32 * sirdancealot joined the channel
+2017-08-02T04:21:47 * https_GK1wmSU joined the channel
+2017-08-02T04:24:34 * https_GK1wmSU has left the channel
+2017-08-02T06:38:57 * mrtyler has quit
+2017-08-02T06:43:26 * the-t-in-rtf joined the channel
+2017-08-02T07:19:28 * the-t-in-rtf1 joined the channel
+2017-08-02T07:48:42 * amatas joined the channel
+2017-08-02T07:53:59 * javjarfer joined the channel
+2017-08-02T09:51:50 * stegru joined the channel
+2017-08-02T10:44:03 * gtirloni joined the channel
+2017-08-02T11:36:13 * Jess_ joined the channel
+2017-08-02T11:36:57 * Bosmon has quit
+2017-08-02T11:37:15 * javjarfer has quit
+2017-08-02T11:39:38 <the-t-in-rtf1> Hi, all.  I\'m still getting frequent networking errors from within Vagrant VMs, so much so that I can only provision a box after many many passes.
+2017-08-02T11:39:49 <the-t-in-rtf1> Obviously my networking in general is fine.
+2017-08-02T11:40:28 <the-t-in-rtf1> Anyone having problems with OS X and/or particular versions of virtualbox?
+2017-08-02T11:40:59 <the-t-in-rtf1> The latest failure for a linux VM (infusion) was along the lines of "Couldn\'t resolve host name for https://rpm.nodesource.com/pub_6.x/fc/24/x86_64/nodesource-release-fc24-1.noarch.rpm"
+2017-08-02T11:41:20 <the-t-in-rtf1> I get similarly low-level failures trying to provision a windows VM: "[NuGet] An error occurred while loading packages from \'https://chocolatey.org/api/v2/\': Unable to connect to the remote server
+2017-08-02T11:41:20 <the-t-in-rtf1> python2 not installed. The package was not found with the source(s) listed.
+2017-08-02T11:41:20 <the-t-in-rtf1> "
+2017-08-02T11:43:23 <the-t-in-rtf1> I\'m wondering about this: https://serverfault.com/questions/453185/vagrant-virtualbox-dns-10-0-2-3-not-working
+2017-08-02T11:46:29 <the-t-in-rtf1> I don\'t have any problems with the linux repo, which is using the newer fedora 26 image.
+2017-08-02T11:48:47 <gtirloni> that\'s interesting (f24 vs f26). is it intermittent?
+2017-08-02T11:50:07 <gtirloni> i remember vbox\'s nat daemon was a bit unstable in the 5.0 branch but i don\'t remember when it got better (usually restarting it would "fix")
+2017-08-02T11:53:03 * Jess_ joined the channel
+2017-08-02T11:54:49 <the-t-in-rtf1> Trying a second pass of f26 to see
+2017-08-02T11:55:04 <the-t-in-rtf1> I haven\'t been able to get a windows VM to provision in something like a dozen straight attempts
+2017-08-02T11:55:50 <the-t-in-rtf1> huh, maybe it is a timing thing, the f24 one I had running in the background succeeded
+2017-08-02T11:56:15 <the-t-in-rtf1> So, define "it" in "restarting it", @gtirloni
+2017-08-02T11:56:25 <the-t-in-rtf1> You mean the nat daemon?
+2017-08-02T11:57:13 <gtirloni> yeah, i don\'t know what it\'s called in OSX but VBox on Windows had a vboxnatd process that kept crashing a while ago
+2017-08-02T11:57:42 <the-t-in-rtf1> What\'s the latest version of vbox that the team recommends?
+2017-08-02T11:57:59 <the-t-in-rtf1> I have 5.1.14, I know I haven\'t upgraded in a while.
+2017-08-02T11:58:00 <gtirloni> vbox 5.1.26 and vagrant 1.9.7 seem to be working fine
+2017-08-02T11:58:05 * jhernandez joined the channel
+2017-08-02T11:58:22 <gtirloni> that\'s what\'s being used in the CI node too
+2017-08-02T12:01:02 * the-t-in-rtf joined the channel
+2017-08-02T12:04:31 * the-t-in-rtf1 joined the channel
+2017-08-02T12:15:19 * cindyli joined the channel
+2017-08-02T12:16:11 * Bosmon joined the channel
+2017-08-02T12:17:48 * Jess_ joined the channel
+2017-08-02T12:17:53 <the-t-in-rtf1> 5.1.26 provisioned the windows VM first time.
+2017-08-02T12:17:58 <the-t-in-rtf1> Thanks!
+2017-08-02T12:19:06 * Justin_o joined the channel
+2017-08-02T12:21:02 <gtirloni> nice!
+2017-08-02T12:24:49 * the-t-in-rtf joined the channel
+2017-08-02T12:47:32 <stegru> jhernandez: when you have a moment, I would like you to test the updated proximity listener before i dish it out
+2017-08-02T12:48:00 <jhernandez> stegru: in fact I\'ve already tested it
+2017-08-02T12:48:06 <jhernandez> :)
+2017-08-02T12:48:13 <jhernandez> it works nice
+2017-08-02T12:48:30 <stegru> the thing I only compiled 5 minutes ago?
+2017-08-02T12:48:39 <jhernandez> oh
+2017-08-02T12:48:46 <jhernandez> no
+2017-08-02T12:48:47 <stegru> i mean, the vaio listener
+2017-08-02T12:48:52 <jhernandez> oh
+2017-08-02T12:48:54 <jhernandez> okay
+2017-08-02T12:49:01 <stegru> https://github.com/stegru/gpii-proximity-listener
+2017-08-02T12:49:27 <stegru> it\'s the thing that githens did
+2017-08-02T12:49:31 <jhernandez> I see
+2017-08-02T12:49:52 <jhernandez> and, what\'s the plan?
+2017-08-02T12:50:20 <jhernandez> I mean, I assume it only works with the VAIO built-in reader
+2017-08-02T12:50:39 <stegru> well, give it to maureen so they don\'t need the external reader
+2017-08-02T12:50:56 <jhernandez> okay
+2017-08-02T12:51:19 <jhernandez> right
+2017-08-02T12:51:50 <jhernandez> they said that they were going to set up the vaios before sending to the AJCs
+2017-08-02T12:51:59 <jhernandez> for the pre-pilots
+2017-08-02T12:52:19 <jhernandez> okay, I\'ll give it a test later
+2017-08-02T12:52:52 <jhernandez> I\'m somehow fixing my laptop - which at this moment is a BRICK
+2017-08-02T12:53:00 <stegru> not desperate or anything.. i\'d just rather someone else took a look before i caused a disaster
+2017-08-02T12:53:03 <stegru> that\'s nice
+2017-08-02T12:53:25 <stegru> maybe you should clean it
+2017-08-02T12:53:44 <jhernandez> I had to set up my mac to keep working - my linux installation defeated when trying to run an upgrade :)
+2017-08-02T12:54:22 <jhernandez> and I ended up with a half-working system
+2017-08-02T12:54:27 <stegru> ah
+2017-08-02T12:54:48 <stegru> which half was working? ;)
+2017-08-02T12:55:15 <jhernandez> I tried to rollback to a previous snapshot but it didn\'t work
+2017-08-02T12:55:25 <jhernandez> and zypper rejects to keep updating the system
+2017-08-02T12:56:24 <the-t-in-rtf> @Bosmon or anyone else, I am now consistently getting "cannot look up component type name fluid.textfieldSlider" errors when running the browser tests against infusion.
+2017-08-02T12:56:30 <the-t-in-rtf> Is anyone aware of anything related?
+2017-08-02T12:56:40 <jhernandez> so in fact I\'ve got a decent and working desktop environment, but there are things such as vbox that aren\'t working anymore
+2017-08-02T12:57:18 <the-t-in-rtf> I am also getting variations on "fluid.modelPairToChanges is not a function"
+2017-08-02T12:57:29 <stegru> just re-install the OS, that\'s why i have /home on another partition
+2017-08-02T12:57:36 <jhernandez> looks like a rpm db thing - a dead end I\'d say
+2017-08-02T12:58:13 <Bosmon> the-t-in-rtf - modelPairToChanges was a recent update
+2017-08-02T12:58:24 <Bosmon> So I imagine you have a stale copy of some of the files
+2017-08-02T12:58:48 <jhernandez> stegru: yeah, me too - but I tried to avoid re-installing the os
+2017-08-02T12:59:12 <stegru> yeh me too, i never re-install
+2017-08-02T12:59:30 <stegru> since i moved away from rpm ;)
+2017-08-02T12:59:35 <stegru> (kidding)
+2017-08-02T13:00:40 <stegru> anyway, testing that vaio listener isn\'t urgent at all, since they have a work around - just ticking off my action item
+2017-08-02T13:01:27 <stegru> but i\'m glad the regular listener is working, it means this one should (it\'s the same fix)
+2017-08-02T13:02:36 <the-t-in-rtf> @bosmon, I assume that rerunning the build from the host and blowing away the VM should be adequate, or is there some other source of staleness?
+2017-08-02T13:05:08 <Bosmon> the-t-in-rtf - are you running the tests via gpii-testem?
+2017-08-02T13:05:20 <Bosmon> I guess it\'s possible that it is somehow resolving infusion onto its own dependent version of infusion
+2017-08-02T13:05:25 <Bosmon> Rather than the head one
+2017-08-02T13:05:44 <the-t-in-rtf> That\'s interesting, and yes, these are browser tests.
+2017-08-02T13:05:54 <the-t-in-rtf> but that would be resolving infusion on the node side?
+2017-08-02T13:06:14 <Bosmon> I have no idea, just speculating wildly
+2017-08-02T13:06:26 <Bosmon> Thinking what other infusions might be in the filesystem
+2017-08-02T13:06:32 <Bosmon> The tests run fine to me as bare browser tests
+2017-08-02T13:06:46 * colinclark joined the channel
+2017-08-02T13:07:06 <the-t-in-rtf> The instrumented copies of the code might be out of date, but there is a step that should clear that.
+2017-08-02T13:07:35 <Bosmon> I\'m firing up my windows vagrant box to try testing in there, but they were fine there when I last pushed to trunk
+2017-08-02T13:07:39 <Bosmon> Which test gives you the failure?
+2017-08-02T13:07:42 <the-t-in-rtf> various.
+2017-08-02T13:07:45 <the-t-in-rtf> dozens of them.
+2017-08-02T13:07:56 <Bosmon> You are running the tests via "npm test"?
+2017-08-02T13:08:20 <the-t-in-rtf> no, I was following up Cindy and Justin\'s questions about running "npm test:vagrantBrowser" from the host environment.
+2017-08-02T13:08:46 <Bosmon> oh wow
+2017-08-02T13:09:06 <the-t-in-rtf> The first failure is "not ok 82 Firefox 54.0 - Data Binding Tests: modelPairToChanges"
+2017-08-02T13:09:24 <the-t-in-rtf> the next tests fails with the same error.
+2017-08-02T13:09:25 <Bosmon> That\'s what you\'d get if you had resolved an up-to-date test against a stale infusion
+2017-08-02T13:10:04 <Bosmon> But I can\'t yet account for how you might have done it
+2017-08-02T13:10:18 <the-t-in-rtf> I\'m pretty sure it\'s down to the instrumentation step
+2017-08-02T13:10:23 <Bosmon> ok
+2017-08-02T13:10:37 <the-t-in-rtf> if I blow away the contents of the instrumented directory, which should be recreated, I now get all kinds of failures to resolve jQuery
+2017-08-02T13:10:53 <Bosmon> I heard gtirloni talking about that on the list
+2017-08-02T13:11:05 <the-t-in-rtf> This one is clearly my fault, and I have what I need to investigate.
+2017-08-02T13:13:44 <Bosmon> Oh right, we don\'t yet have testem tests in master : P
+2017-08-02T13:13:47 <Bosmon> That is what this is all about
+2017-08-02T13:14:41 * grrrero joined the channel
+2017-08-02T13:15:05 <Bosmon> But I\'ve re-verified that all the browser tests run fine in themselves in the one vagrant box I can afford to keep around
+2017-08-02T13:15:15 <jhernandez> Bosmon: hey there - wrt stegru\'s windows/pull/122, I\'m happy with it after his last update - do you want to take a look before I merge it?
+2017-08-02T13:18:45 * simonjb joined the channel
+2017-08-02T13:26:48 * pratik_r joined the channel
+2017-08-02T13:30:28 * yuriy-donev joined the channel
+2017-08-02T13:31:55 * yuriy-donev has quit
+2017-08-02T13:32:09 * yuriy-donev joined the channel
+2017-08-02T13:32:44 * jhung joined the channel
+2017-08-02T13:39:15 * alanharnum joined the channel
+2017-08-02T13:50:49 * michelled joined the channel
+2017-08-02T14:01:19 <Bosmon> jhernandez - sure, I\'ll take another look
+2017-08-02T14:01:42 <Bosmon> fluid-everyone - awkward heads-up about node 8.x and debugging - https://github.com/nodejs/node/issues/7593
+2017-08-02T14:02:07 <Bosmon> Because of this open bug it is not possible to debug into code which is loaded within a V8 context - which, unfortunately, includes all of Infusion\'s code
+2017-08-02T14:02:23 <Bosmon> The recommended fix is to "downgrade to 7.10.1" !
+2017-08-02T14:02:41 <colinclark> oh no
+2017-08-02T14:03:00 <Bosmon> Also, the issue is nearly a year old
+2017-08-02T14:03:31 <stegru> I used "--debug" instead of "--inspect" - isn\'t that supported by 8?
+2017-08-02T14:05:09 <Bosmon> stegru - people who aren\'t superhuman need a GUI to debug with
+2017-08-02T14:05:22 * avtar joined the channel
+2017-08-02T14:05:51 <stegru> even I use a GUI
+2017-08-02T14:06:00 <Bosmon> Which one?
+2017-08-02T14:06:08 <stegru> the command line
+2017-08-02T14:06:12 <stegru> heh no, WebStorm
+2017-08-02T14:06:12 <Bosmon> Oh yes
+2017-08-02T14:07:10 <Bosmon> Anyway, 7.10.1 looks like a good option for me....
+2017-08-02T14:07:16 <Bosmon> let\'s hope this gets fixed before an 8.x becomes LTS
+2017-08-02T14:07:50 <Bosmon> Which looks like..... in about two months .....
+2017-08-02T14:08:27 * clown joined the channel
+'
+

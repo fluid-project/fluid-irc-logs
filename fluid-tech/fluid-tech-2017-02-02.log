@@ -1,0 +1,502 @@
+b"2017-02-02T20:59:54 <gloob> and the instance detection is working great too!!
+2017-02-02T20:59:57 <gloob> yay
+2017-02-02T21:00:14 <gloob> thanks stegru for the support!
+2017-02-02T21:00:45 <gloob> I will commited it to my gpii-app branch probably it will be useful for michelled ;)
+2017-02-02T21:01:50 <stegru> well done gloob
+2017-02-02T21:02:10 <michelled> great!
+2017-02-02T21:02:23 <gloob> stegru: it was just that lines, now I should figure it out where it should belong, currently is a hack
+2017-02-02T21:03:33 <gloob> stegru: you were right I was over thinking on it
+2017-02-02T21:05:38 <stegru> yes i thought you where, gloob
+2017-02-02T21:15:00 * the-t-in-rtf joined the channel
+2017-02-02T21:41:22 * kasparnet joined the channel
+2017-02-02T21:43:22 * alanharnum joined the channel
+2017-02-02T21:43:56 <cindyli> gtirloni: i updated the wiki page with methods and possible attacks with using Windows DPAPI: https://wiki.gpii.net/index.php?title=Continued_Researches_on_Possible_Approaches_for_Protecting_Communication_btw_LFM_and_CBFM&type=revision&diff=20089&oldid=20088
+2017-02-02T21:52:23 * alanharnum joined the channel
+2017-02-02T22:35:19 <gloob> michelled: are you going to merge to your master?
+2017-02-02T22:35:56 <gloob> or in other words, as you are being the upstream now, to which branch should I PR, I want to send a pair of PR
+2017-02-02T22:36:39 <gloob> and I'm seeing 1596-pair is modern than 1596, any special wish?
+2017-02-02T22:39:30 <michelled> gloob: thanks for asking! 1596-pair is a working branch that I might destroy. I didn't want to mess with 1596 because I knew you were depending on it :)
+2017-02-02T22:39:35 <michelled> please pull request to 1596
+2017-02-02T22:39:43 <gloob> mrtyler: I thought of you today
+2017-02-02T22:39:52 <michelled> I'll be looking at the pull requests tomorrow.
+2017-02-02T22:39:59 <mrtyler> oh?
+2017-02-02T22:40:08 <gloob> michelled: ok, perfect
+2017-02-02T22:41:05 * kasparnet has quit
+2017-02-02T22:44:05 <gloob> mrtyler: I think this match your sense of humor accurately
+2017-02-02T22:44:07 <gloob> mrtyler: http://imgur.com/a/5a3Pb
+2017-02-02T22:44:58 <mrtyler> is this the gitlab guy?
+2017-02-02T22:45:21 <mrtyler> or a compatriot of the gitlab guy?
+2017-02-02T22:45:57 <gloob> I don't know, but it is great
+2017-02-02T22:46:25 <mrtyler> haha
+2017-02-02T22:47:37 <mrtyler> oh ok i hadn't read the postmortem yet
+2017-02-02T22:48:43 <mrtyler> i didn't realize they anonymized him
+2017-02-02T22:48:58 <mrtyler> someone on reddit posted an anonymized view of his github page
+2017-02-02T22:50:33 <gloob> yes, in the report was team-member-1
+2017-02-02T22:50:39 <gloob> haha, we should use numbers
+2017-02-02T22:50:45 <gloob> Hi, I'm team-member-5
+2017-02-02T22:51:12 <team-member-11> team-member-5 i'm not convinced of your commitment to the cause
+2017-02-02T22:51:12 <gloob> xD
+2017-02-02T22:51:35 <team-member-5> and call it a day
+2017-02-02T22:51:46 <team-member-5> I will maintain this nickname during my sleep
+2017-02-02T22:51:51 <team-member-11> team-member-5: that is better, fellow team-member!
+2017-02-02T22:51:51 <team-member-5> as a tribute
+2017-02-02T22:52:01 <team-member-5> be good, catch you tomorrow
+2017-02-02T22:52:07 <team-member-11> :)
+"
+
+b'2017-02-02T19:04:36 <simonjb> I think we have a good mechanism to keep the secret separate from the user process in the separate service but I\'m not sure yet if we have a good mechanism to ensure that only authorized/registered processes can communicate with the service
+2017-02-02T19:05:34 <simonjb> if the process filename could be faked (and I know we don\'t know yet) then we couldn\'t rely on that
+2017-02-02T19:05:55 <stegru> ok, found a way to fake the name.. but the method will require hooking into the service\'s process (and if that\'s possible then there\'s more to worry about): http://www.ieee-security.org/TC/SP2012/posters/Botnet%20Spoofing.pdf (search QueryFullProcessImageName)
+2017-02-02T19:06:36 <stegru> there must be a way to do this, i mean we\'re not the first people to need this
+2017-02-02T19:08:25 <simonjb> stegru: I keep having the same thought! but I\'m unable to figure it out
+2017-02-02T19:09:13 <simonjb> on Unix we could use setgid bit to run the process with group privs different from the user and give the process access to files that the user does have access to
+2017-02-02T19:09:27 <simonjb> but I don\'t know of a similar mechanism in Windows
+2017-02-02T19:10:22 <cindyli> simonjb: in linux, can a user setgid to assign the process to another group that this user doesn\'t belong to?
+2017-02-02T19:10:25 <simonjb> sorry "the user does have access to" should have been "does NOT have access to"
+2017-02-02T19:10:39 <stegru> yeh
+2017-02-02T19:11:12 <stegru> the "ping" command is set to root - no normal use is root
+2017-02-02T19:11:23 <cindyli> if so, could it be possible that someone sets a process to a root group and use that process to read root files?
+2017-02-02T19:11:43 <stegru> no, only root can change the file\'s owner to root
+2017-02-02T19:12:05 <simonjb> cindyli: you have to have permission to alter the file attributes (be root)
+2017-02-02T19:13:29 <cindyli> simonjb: that means if user A wants to set a process to a group that user B belongs to, user A must have permission to alter the file attributes to that group?
+2017-02-02T19:13:40 <simonjb> yes
+2017-02-02T19:14:12 <cindyli> and that permission doesn\'t grant user A access to other privileges that user B has
+2017-02-02T19:15:16 <simonjb> if you are only using setgid then it\'s only group permissions
+2017-02-02T19:15:36 <simonjb> and is independent of any other permissions user B has
+2017-02-02T19:16:43 <cindyli> cool, this is a nice feature
+2017-02-02T19:17:11 <simonjb> cindyli: yeah, you need to be careful with it (obviously) but can be quite useful
+2017-02-02T19:17:17 <simonjb> there\'s also setuid
+2017-02-02T19:17:38 <simonjb> which alters user ownership rather than group ownership
+2017-02-02T19:18:01 <gtirloni> cindyli simonjb: without knowing much about the proposed solution, instead of creating a separate process for secret-keeping, could we rely on some OS-sanctioned way to store secrets?
+2017-02-02T19:18:32 <cindyli> gtirloni: that\'s another approach listed on that wiki - https://wiki.gpii.net/w/Continued_Researches_on_Possible_Approaches_for_Protecting_Communication_btw_LFM_and_CBFM
+2017-02-02T19:18:35 <cindyli> section 6.2
+2017-02-02T19:18:49 <simonjb> gtirloni: that is a very good question :) we need some mechanism which will allow a user process to access the secret but only that process and not the user in general
+2017-02-02T19:18:54 <gtirloni> ah ok, let me read that before asking questions
+2017-02-02T19:19:23 * kasparnet joined the channel
+2017-02-02T19:20:40 <stegru> but a bad process can still "use" the secret
+2017-02-02T19:21:44 <cindyli> simonjb: still curious about setgid. so, if user A has the permission to alter files/processes to group B, it doesn\'t user A needs to belong to group B or has same privileges that group B has, right?
+2017-02-02T19:22:51 <cindyli> "being able to alter file/process group" is an independent permission from whatever what other privileges that group B has
+2017-02-02T19:23:02 <simonjb> cindyli: you tend to manage that by having such process owned by root
+2017-02-02T19:23:22 <gtirloni> on linux, i\'d say the "gnome keyring" (or "kde keyring") services would be a more general solution comparable to windows\' credential manager (maybe not as elaborated)... instead of /etc/{passwd,shadow}. i don\'t know if they use the kernel key mgmt facility ("keyctl").. otherwise that\'s another option (not constrained by the desktop environment chosen)
+2017-02-02T19:23:28 <simonjb> and only root can write
+2017-02-02T19:23:46 * stegru has left the channel
+2017-02-02T19:23:46 <simonjb> so all set up of setgid is done by root only
+2017-02-02T19:23:55 * stegru joined the channel
+2017-02-02T19:24:31 <cindyli> thanks, gtirloni, very useful information. i will update the wiki with that.
+2017-02-02T19:24:43 <gtirloni> re: we\'re not the first ones with this need, can we think of any other application (from microsoft or others) that would have the same need? chrome and its password manager? on linux it asks for my gnome keyring\'s password (there is a keyring dedicated to it)
+2017-02-02T19:25:09 <gtirloni> since we\'re communicating over http, certificates come to mind, but that might be clunky
+2017-02-02T19:25:20 <gtirloni> (on a local machine)
+2017-02-02T19:25:49 <cindyli> gtirloni: i looked into using certificate, but it came down to the same root issue of where to store that certificate
+2017-02-02T19:26:09 <gtirloni> got it
+2017-02-02T19:26:16 <stegru> the problem is a bad process can access whatever gpii can access
+2017-02-02T19:26:38 <cindyli> that\'s true, stegru
+2017-02-02T19:27:38 <cindyli> that\'s why I have a list of pre-requisites at the bottom of the wiki page
+2017-02-02T19:28:54 <stegru> oh i\'m getting shouted down for tea. i\'m going to make it my life mission to find how this is already done. it must have
+2017-02-02T19:29:14 <cindyli> haha. thanks, stegru
+2017-02-02T19:36:36 <gtirloni> just a "fyi".. chromium/chrome will use kde/gnome password managers and fallback to encrypting secrets on its own if they are not available. so in our case, a "gpii keyring" would be created, with an individual password that the user has to supply by any means, and _it seems_ it would be enough to fence off "bad apps"
+2017-02-02T19:36:37 <gtirloni> https://developer.gnome.org/platform-overview/stable/tech-secret.html.en
+2017-02-02T19:37:29 <simonjb> cindyli: regarding your earlier question about setgid -- you are only allowed to set group ownership on a file to a group that you are a member of
+2017-02-02T19:38:00 <the-t-in-rtf> @Bosmon, @kasparnet, I saw a bouncing icon and scrolled back in the history to find your testem question.
+2017-02-02T19:38:16 <gtirloni> it\'s an interesting problem, sorry for intruding :P i\'m puzzled that windows\' credential manager will allow apps to access each other secrets... i think maybe they focused too much on those UWP apps (are we a UWP app on windows?) and evolving the security mechanisms for that
+2017-02-02T19:38:28 <the-t-in-rtf> I don\'t remember anything relevant that can help there.
+2017-02-02T19:39:03 <cindyli> gtirloni: i was surprised by that too :)
+2017-02-02T19:39:09 <simonjb> gtirloni: yeah, UWP would give us some other options
+2017-02-02T19:39:53 <simonjb> gtirloni: it\'s great to get your input :)
+2017-02-02T19:40:03 <gtirloni> :D
+2017-02-02T19:40:15 <cindyli> simonjb: ok, even say user A is a member in the same group with user B, but A still cannot access files that owned by B
+2017-02-02T19:40:57 <cindyli> gtirloni: in terms of "gpii keyring", does that mean the first time when the secret is used, user needs to manually enter that keyring
+2017-02-02T19:41:18 <simonjb> cindyli: correct, they can if they are owned by the group that they have in common but not files owned by B not in that group
+2017-02-02T19:41:34 <simonjb> in unix, each file has a user and group owner
+2017-02-02T19:41:45 <simonjb> and each user is a member of 1 or more groups
+2017-02-02T19:42:48 <simonjb> and there are 3 sets of permissions for 1. everyone 2. group 3. user
+2017-02-02T19:43:06 <cindyli> simonjb: so, if user A uses setgid to assign the process to the group B, but that process is not owned by user B, how can that process read files owned by user B
+2017-02-02T19:44:00 <simonjb> cindyli: sorry can you ask again in a little more detail?
+2017-02-02T19:44:38 <simonjb> or in another way
+2017-02-02T19:44:48 <simonjb> I\'m not quite understanding
+2017-02-02T19:45:07 <cindyli> sorry, maybe i should describe the work flow
+2017-02-02T19:45:19 <cindyli> this thing IS confusing...
+2017-02-02T19:45:24 <simonjb> :)
+2017-02-02T19:46:44 <cindyli> 1. when gpii starts, 2 processes will be started: one process can access client secret but the other one cannot
+2017-02-02T19:46:46 <gtirloni> cindyli: on gnome3, chrome asks for my keyring password (the default keyring), but it also has other keyrings with a password that seemes hardcoded (it can show me, the app used for managing this is called \'seahorse\' if you want to take a look at it). also, skype for linux alpha (which is an electron app), has its own keyring too (here its password is a json variable with some huge token)
+2017-02-02T19:48:01 <cindyli> gtirloni: that sounds like windows credential manager which allows you save password.
+2017-02-02T19:48:34 <cindyli> as u know, credential manager has some security issues. i will have a look on \'seahorse\'
+2017-02-02T19:49:16 <cindyli> simonjb: 2. my understanding is these 2 processes need to be owned by 2 different users
+2017-02-02T19:49:43 <cindyli> so one process cannot read what the other process can read
+2017-02-02T19:51:25 <cindyli> let\'s say, when gpii is installed, a special user "gpii" is created by the installer
+2017-02-02T19:51:49 <cindyli> the client secret is written by user "gpii" into its own file system
+2017-02-02T19:52:17 <cindyli> when gpii starts,
+2017-02-02T19:52:27 <cindyli> 1. local flow manager starts as the first process
+2017-02-02T19:52:48 <cindyli> 2. local flow manager process spawn a chile process for reading secret
+2017-02-02T19:53:06 <simonjb> cindyli: you are wondering how to do the secret thing with setgid?
+2017-02-02T19:53:12 <cindyli> yes
+2017-02-02T19:53:14 <simonjb> ah
+2017-02-02T19:53:23 <simonjb> I think we don\'t even need 2 processes
+2017-02-02T19:53:28 <cindyli> i wonder if setgid is enough
+2017-02-02T19:53:34 <cindyli> really?
+2017-02-02T19:54:30 <simonjb> I think like this: 1) secret is owned by group gpii 2) user is not member of group gpii and cannot read the secret 3) gpii user process is owned by group gpii and is setgid
+2017-02-02T19:54:56 <simonjb> the user can run the gpii user process
+2017-02-02T19:55:09 <simonjb> and it then gets access to the gpii group files
+2017-02-02T19:55:23 <simonjb> that the user cannot access
+2017-02-02T19:55:56 <simonjb> I _think_ that should work
+2017-02-02T19:56:04 <cindyli> when gpii starts, it\'s the login user who starts it
+2017-02-02T19:56:11 <simonjb> right
+2017-02-02T19:56:17 <cindyli> and the process at this point should belong to the login user
+2017-02-02T19:56:23 <simonjb> right
+2017-02-02T19:56:46 <simonjb> but due to the setgid mechanism that process can access group files that the user cannot
+2017-02-02T19:57:31 <cindyli> let\'s use work flow again
+2017-02-02T19:57:43 <cindyli> i\'m still not very clear
+2017-02-02T19:58:02 <cindyli> 1. user starts gpii. at this moment, gpii process belongs to user
+2017-02-02T19:58:18 <simonjb> and also gpii secret group
+2017-02-02T19:58:20 <cindyli> 2. user issues setgid() to change the process to "gpii" group
+2017-02-02T19:58:26 <simonjb> no
+2017-02-02T19:58:38 <simonjb> setgid is a permission on the file on the filesystem
+2017-02-02T19:58:54 <cindyli> ah
+2017-02-02T19:59:07 <simonjb> gpii user process has: owner root, group gpii, setgid on
+2017-02-02T19:59:17 <gtirloni> cindyli: re: that issue with windows, the gnome doc mentioned that explicity: "If an unknown application attempts to access a keyring item, the keyring manager will prompt the user to allow or deny that application access. This helps prevent malicious or poorly-written programs from accessing the user\'s sensitive data." https://developer.gnome.org/platform-overview/stable/tech-secret.html.en
+2017-02-02T19:59:26 <simonjb> so, user can run but not modify
+2017-02-02T20:00:12 <cindyli> ok
+2017-02-02T20:00:33 <cindyli> thanks for searching this up, gtirloni. linux has better security guards than windows apparently
+2017-02-02T20:01:16 <gtirloni> maybe it\'s a "feature" of windows\' legacy support (they have pretty good backwards compatibility). i\'d look into that UWP thing, maybe that\'s the answer for more advanced mechanisms
+2017-02-02T20:01:56 <gtirloni> although that restricts us to Win10..
+2017-02-02T20:02:05 <gtirloni> http://stackoverflow.com/questions/30317848/run-windows-10-universal-apps-on-windows-8-1
+2017-02-02T20:04:55 <cindyli> thanks, gtirloni
+2017-02-02T20:06:40 <cindyli> simonjb: so it\'s the gpii process uses setgid() to set itself into user\'s group?
+2017-02-02T20:07:35 <simonjb> cindyli: it\'s an attribute of the executable on the filesystem and it would be the kernel that assigns the ownership
+2017-02-02T20:08:15 <simonjb> when the process is run
+2017-02-02T20:08:31 <simonjb> we would set the attribute on the executable at install time
+2017-02-02T20:08:49 * javjarfer has quit
+2017-02-02T20:10:58 * kasparnet has quit
+2017-02-02T20:11:11 <cindyli> ah ok, simonjb. that explains. i think when applying prefs to the local machine, gpii process also needs to be able to write into the current file system, but i\'m not sure if it needs to be on behalf of the login user
+2017-02-02T20:11:53 <cindyli> not sure if being in the same group of the login user would be good enough
+2017-02-02T20:15:05 <simonjb> cindyli: yeah, I think we\'d be able to work that out
+2017-02-02T20:15:19 <simonjb> but this doesn\'t help us on Windows :(
+2017-02-02T20:15:30 <cindyli> bingo!
+2017-02-02T20:16:15 * clown joined the channel
+2017-02-02T20:22:24 <stegru> i remember that\'s how games on redhat (in the 90\'s) wrote to shared hi-score files, they where sgid to "games" user
+2017-02-02T20:24:34 * michelled joined the channel
+2017-02-02T20:25:02 * kasparnet joined the channel
+2017-02-02T20:33:04 <simonjb> stegru: ha, interesting
+2017-02-02T20:35:16 <simonjb> stegru: follow up question -- do windows games protect high score files? and if so, how?
+2017-02-02T20:36:15 <simonjb> cindyli: ^
+2017-02-02T20:37:34 <stegru> can\'t think of a game that has a per-system + multi-user score board
+2017-02-02T20:37:47 <stegru> it\'s not really a multi-user os ;)
+2017-02-02T20:38:01 <simonjb> right :(
+2017-02-02T20:38:57 * kasparnet has quit
+2017-02-02T20:39:08 <gtirloni> cindyli: did you get a notification for my edits to that wiki page?
+2017-02-02T20:39:42 <cindyli> gtirloni: no, maybe i need to subscribe for notifications
+2017-02-02T20:40:17 <gtirloni> cindyli: ah ok, i thought as an owner you\'d receive it. so i made two edits for linux and windows
+2017-02-02T20:41:01 <gtirloni> https://wiki.gpii.net/index.php?title=Continued_Researches_on_Possible_Approaches_for_Protecting_Communication_btw_LFM_and_CBFM&type=revision&diff=20088&oldid=20086
+2017-02-02T20:42:14 <cindyli> cool. thanks, gtirloni
+2017-02-02T20:42:17 <gtirloni> yw
+2017-02-02T20:42:26 <gtirloni> cindyli: make windows security great again!
+2017-02-02T20:42:36 <gtirloni> :P
+2017-02-02T20:42:45 <cindyli> i wish :)
+2017-02-02T20:42:48 <gtirloni> haha
+2017-02-02T20:58:13 <gloob> stegru: the port detection worked fine. I just updated my universal to current master through my windows and just detect all the current electrones in my computer abusing of :8081
+2017-02-02T20:59:18 <stegru> ok
+'
+
+b'2017-02-02T15:50:29 <Bosmon> I can run the web tests from inside the zip file you produced absolutely fine
+2017-02-02T15:50:48 <gtirloni> mrtyler: yeah, that\'s where the complexity of supporting multiple distros in a single role cause issues.. and not only that, templating config files sometimes, and many other things.. that\'s why our roles are simpler, we only target centos/fedora
+2017-02-02T15:51:14 <mrtyler> ok i think that answers my questions. thanks gtirloni amatas
+2017-02-02T15:51:17 <gtirloni> yw
+2017-02-02T15:51:22 <kasparnet> Bosmon: hmm
+2017-02-02T15:51:27 <kasparnet> and how are you running them?
+2017-02-02T15:51:43 <Bosmon> kasparnet - just via an Apache instance as usual
+2017-02-02T15:51:56 <gtirloni> you\'ll see in the nodejs role we support vagrant, docker and standalone (systemd) deployments, plus a dev-environment (where files are monitored and the app restarted)... it\'s not the prettiest code
+2017-02-02T15:51:58 <kasparnet> not inside a VM or anything?
+2017-02-02T15:52:01 <Bosmon> Would you like to open up the debugger when you run the failing test to see if it reports anything extra before the failure?
+2017-02-02T15:52:02 <Bosmon> kasparnet - no
+2017-02-02T15:52:12 <Bosmon> kasparnet - how are you running them
+2017-02-02T15:52:38 <kasparnet> with either "grunt tests" or "grunt browser tests"
+2017-02-02T15:52:44 <kasparnet> browser-tests*
+2017-02-02T15:53:45 <amatas> kasparnet, perhaps is not the case but, could you try to run the tests keeping the main focus on the browser window?
+2017-02-02T15:54:11 <amatas> I\'ve experiences some issues when the web browser lost the focus while it runs the tests
+2017-02-02T15:54:14 <kasparnet> amatas: I think I have done so already, but let me try again
+2017-02-02T15:54:33 <Bosmon> amatas - this is a different issue
+2017-02-02T15:55:12 <amatas> ok, nevermind, just trying to help
+2017-02-02T15:55:19 <Bosmon> Well, my feeling is that this is just some kind of testem screwup
+2017-02-02T15:55:36 <Bosmon> Shame that the-t-in-rtf has gone home
+2017-02-02T15:55:54 * the-t-in-rtf joined the channel
+2017-02-02T15:56:00 <Bosmon> Ah, speak of the devil :)
+2017-02-02T15:56:12 <Bosmon> the-t-in-rtf - I am thinking that kasparnet is running in to some kind of testem failure
+2017-02-02T15:56:33 <Bosmon> He consistently fails to be able to run the universal browser tests using our grunt launcher
+2017-02-02T15:56:50 <Bosmon> WHereas he has sent me a zip file of his entire npm-installed checkout and I can run them just fine manually
+2017-02-02T15:58:27 <Bosmon> The failure he gets looks exactly like the following one that we once got in CI: http://lists.gpii.net/pipermail/ci/2017-February/000446.html
+2017-02-02T15:58:47 <Bosmon> Although gtirloni says that in that case this was caused by some kind of jammed process
+2017-02-02T15:59:18 <kasparnet> Bosmon: well - you can definitely let a partly damning begin, antranig... Just ran the web based tests manually in firefox and everything passes
+2017-02-02T15:59:29 <Bosmon> kasparnet - yes, I am sure they do :)
+2017-02-02T15:59:29 <kasparnet> so your pulls could\'ve been merged a long time ago
+2017-02-02T15:59:44 <Bosmon> Well right, only we still have no understanding of what is going on
+2017-02-02T16:00:02 <kasparnet> nope
+2017-02-02T16:00:06 <amatas> 1..34
+2017-02-02T16:00:06 <amatas> # tests 34
+2017-02-02T16:00:06 <amatas> # pass  34
+2017-02-02T16:00:06 <amatas> # skip  0
+2017-02-02T16:00:06 <amatas> # fail  0
+2017-02-02T16:00:18 <amatas> using the kasparnet\'s folder
+2017-02-02T16:00:37 <kasparnet> with a VM?
+2017-02-02T16:00:40 <amatas> yes
+2017-02-02T16:00:53 <kasparnet> and "grunt browser-tests"?
+2017-02-02T16:00:57 <kasparnet> (from host)
+2017-02-02T16:00:58 <Bosmon> The problem is that I\'ve never been able to run these linux-based vagrant VMs on my system for quite some time
+2017-02-02T16:01:03 <Bosmon> I don\'t know the reason
+2017-02-02T16:01:20 <Bosmon> But it means I can\'t observe the failure myself personally
+2017-02-02T16:02:00 <kasparnet> Bosmon, amatas:
+2017-02-02T16:02:06 <kasparnet> I unfortunately have to run now
+2017-02-02T16:02:14 <kasparnet> .. hope to be back online in 1 hr or so
+2017-02-02T16:02:21 <Bosmon> ok, see you later
+2017-02-02T16:02:36 <kasparnet> In either case, I can write up a JIRA with the exact steps, versions, etc., for reproducing the issue
+2017-02-02T16:02:46 <amatas> kasparnet, yes, grunt browser-tests from my host
+2017-02-02T16:02:52 <kasparnet> Bosmon: I\'ll get your pulls merged tonight
+2017-02-02T16:02:54 <amatas> see you then!
+2017-02-02T16:03:01 * kasparnet has quit
+2017-02-02T16:03:02 <Bosmon> Well, it\'s pretty odd that the same steps work for the CI and not for you
+2017-02-02T16:10:46 * simonjb joined the channel
+2017-02-02T16:33:31 * javjarfer joined the channel
+2017-02-02T16:34:35 * alanharnum joined the channel
+2017-02-02T16:49:22 * alanharnum joined the channel
+2017-02-02T16:52:39 * Jess__ joined the channel
+2017-02-02T17:08:39 * colinclark joined the channel
+2017-02-02T17:09:50 * the-t-in-rtf joined the channel
+2017-02-02T17:21:38 * cindyli1 joined the channel
+2017-02-02T17:38:37 * clown1 joined the channel
+2017-02-02T17:43:00 * clown joined the channel
+2017-02-02T17:52:32 * kasparnet joined the channel
+2017-02-02T18:02:54 * clown joined the channel
+2017-02-02T18:03:21 * alanharn_ joined the channel
+2017-02-02T18:19:04 * kasparnet has quit
+2017-02-02T18:24:28 <stegru> gloob: ?
+2017-02-02T18:24:36 <gloob> stegru: yes
+2017-02-02T18:25:03 <stegru> what are your doubts with the instance detection?
+2017-02-02T18:25:27 <gloob> how to integrate into gpii-app
+2017-02-02T18:25:31 <Bosmon> hahahaha
+2017-02-02T18:25:35 <Bosmon> LITTLE DOUBTS
+2017-02-02T18:25:52 * colinclark joined the channel
+2017-02-02T18:27:37 <gloob> I lack knowledge about how kettle and infusion interact with the execution of the gpii components
+2017-02-02T18:28:12 <gloob> based on that electron.app is a overall wrapper containing all of it
+2017-02-02T18:28:18 <stegru> ok
+2017-02-02T18:28:30 <stegru> if (!gpii.singleInstance.registerInstance()) { System.exit(); }
+2017-02-02T18:28:32 <gloob> my doubt is: if you are detecting the replication of processes in gpii services
+2017-02-02T18:28:40 <stegru> that\'s the integration
+2017-02-02T18:28:52 <Bosmon> stegru - has it right
+2017-02-02T18:29:34 <stegru> all it does is write the process id to the file.. the next instance reads that file and sees if that pid is still running
+2017-02-02T18:30:20 <gloob> in which moment I have a gpii instance available from the eletron point of view?
+2017-02-02T18:30:32 <gloob> that\'s my point that I don\'t see clearly
+2017-02-02T18:30:35 <Bosmon> gloob - once the Flow Manager has started up
+2017-02-02T18:30:45 <gloob> that is run by kettle
+2017-02-02T18:30:49 <gloob> inside main electron.app
+2017-02-02T18:31:27 <gloob> oh well
+2017-02-02T18:31:32 <stegru> after require("universal")?
+2017-02-02T18:31:48 <gloob> well, current implementation is tricky
+2017-02-02T18:32:16 <Bosmon> Not very
+2017-02-02T18:32:20 <gloob> because we are requiring all windows/index.js
+2017-02-02T18:32:24 <Bosmon> gloob - this is the line which starts the GPII process: https://github.com/GPII/gpii-app/pull/1/files#diff-7a9076d6d94e62c13d641aa71f19ae8eR27
+2017-02-02T18:32:29 <gloob> that\'s where that happens
+2017-02-02T18:32:52 <gloob> finally we should implement that code into the main gpii-app starter script I guess
+2017-02-02T18:33:36 <Bosmon> I think the current solution is reasonable, as well as portable
+2017-02-02T18:33:44 <Bosmon> No need to "Make a rod for our own back"
+2017-02-02T18:33:46 <stegru> well, this check needs to be done fairly soon, before things like listening on 8081
+2017-02-02T18:33:55 <gloob> Bosmon: oh, I don\'t discuss that
+2017-02-02T18:33:57 <Bosmon> Yes
+2017-02-02T18:34:00 <Bosmon> The check goes at the top
+2017-02-02T18:34:20 <Bosmon> After require("universal")
+2017-02-02T18:34:57 <gloob> let\'s test it
+2017-02-02T18:35:43 <stegru> we\'ve typed more conversation than the actual code ;)
+2017-02-02T18:36:26 <gloob> it\'s worth I didn\'t get the full picture to be honest, a lot of things happens behind the curtains
+2017-02-02T18:37:06 <stegru> i think you\'ve over-estimated the complexity
+2017-02-02T18:37:28 <gloob> stegru: probably, where\'s your code? master?
+2017-02-02T18:37:42 <stegru> yes
+2017-02-02T18:37:44 <stegru> https://github.com/GPII/universal/blob/master/gpii/node_modules/singleInstance/src/singleInstance.js
+2017-02-02T18:37:54 <gloob> that could create new problems :D
+2017-02-02T18:38:34 <Bosmon> quit raising concerns, gloob :)
+2017-02-02T18:39:32 <gloob> neurotics...
+2017-02-02T18:39:43 <colinclark> hahaha
+2017-02-02T18:39:44 <Bosmon> FESTETICS!
+2017-02-02T18:41:49 <gloob> I would love to understand that :D
+2017-02-02T18:41:56 <gloob> Festetics (singular, not plural) is the name of a noble Hungarian family of Croatian origin, prominent during the Austro-Hungarian Empire.
+2017-02-02T18:42:19 <michelled> looks like the windows repo needs to be updated to depend on a more modern version of universal
+2017-02-02T18:44:03 <stegru> why does it point to that particular one? is there a reason?
+2017-02-02T18:44:45 <gloob> fear
+2017-02-02T18:53:42 <simonjb> hi cindyli1
+2017-02-02T18:53:53 <cindyli1> hi simonjb
+2017-02-02T18:54:04 <simonjb> I read through the updated notes for "A dedicated process running on a different account for storing the GPII client secret"
+2017-02-02T18:54:12 <simonjb> it looks very good I think
+2017-02-02T18:54:26 <cindyli> cool
+2017-02-02T18:54:43 <cindyli> any feedback on other parts of the wiki, simonjb
+2017-02-02T18:54:48 <simonjb> I had a question about point 6 "The service validates this pid is the GPII local flow manager process"
+2017-02-02T18:55:48 <cindyli> does it make more sense to replace "this pid" with "the process at the other end of the pipe", simonjb?
+2017-02-02T18:55:49 <simonjb> do we know what options are available here? how much info can the service get about the connected process?
+2017-02-02T18:56:16 <cindyli> i don\'t know, stegru, do you have an idea? ^
+2017-02-02T18:56:40 <simonjb> it might be worthwhile to research this a little more before presenting options to the wider group
+2017-02-02T18:57:10 <simonjb> as the security of this approach relies on the service being able to only speak to authorized GPII clients
+2017-02-02T18:57:20 <stegru> erm.. the pid, and from that the executable path, and perhaps more
+2017-02-02T18:57:47 <simonjb> stegru: do you have the name of the call to get the path?
+2017-02-02T18:58:33 <simonjb> path might be good enough, if it\'s trustworthy -- the service could be configured to only respond to processes at specific paths
+2017-02-02T18:58:55 <cindyli> stegru: is it this API to get the path - https://msdn.microsoft.com/en-us/library/ms683198(VS.85).aspx
+2017-02-02T18:59:29 <cindyli> http://stackoverflow.com/questions/1933113/c-windows-how-to-get-process-path-from-its-pid
+2017-02-02T18:59:59 * gtirloni joined the channel
+2017-02-02T19:00:12 <cindyli> need to call openProcess(pid) first to get a handle to pass into that API
+2017-02-02T19:00:20 <stegru> yes
+2017-02-02T19:00:40 <stegru> type type of thing is already implemented in GPII (looking for it)
+2017-02-02T19:01:35 <simonjb> do we know if that can be faked? can a Windows process set its own filename?
+2017-02-02T19:01:56 <stegru> https://github.com/GPII/windows/blob/hst-2017/gpii/node_modules/debugLogger/debugLogger.js#L179
+2017-02-02T19:02:24 <stegru> possibly possible
+2017-02-02T19:02:34 <stegru> (wtf?)
+2017-02-02T19:02:45 <simonjb> ?
+2017-02-02T19:03:12 <cindyli> wtf means "what the freak"? ;)
+2017-02-02T19:03:27 <stegru> it might be possible to fake the name, i\'m not sure
+'
+
+b'2017-02-02T00:34:53 * stegru has quit
+2017-02-02T01:05:18 * arishuynhvan joined the channel
+2017-02-02T04:54:09 * Sitesh joined the channel
+2017-02-02T04:58:48 * Sitesh has left the channel
+2017-02-02T06:11:12 * Bosmon2 joined the channel
+2017-02-02T08:10:44 * kasparnet joined the channel
+2017-02-02T08:49:19 * the-t-in-rtf joined the channel
+2017-02-02T08:49:44 * the-t-in-rtf joined the channel
+2017-02-02T08:55:09 <kasparnet> jhernandez: I definitely didn\'t do anything special in my browser... Ran from a freshly provisioned box
+2017-02-02T09:39:58 * amatas joined the channel
+2017-02-02T11:03:36 * javjarfer joined the channel
+2017-02-02T11:07:48 * stegru joined the channel
+2017-02-02T11:17:27 <jhernandez> kasparnet: okay
+2017-02-02T11:33:53 * gtirloni joined the channel
+2017-02-02T12:03:18 <kasparnet> amatas: do you know whether we\'re compatible with the latest virtualbox version?
+2017-02-02T12:05:06 <amatas> kasparnet, the latest windows VM has been tested using the 5.1.14 version of virtualbox
+2017-02-02T12:05:12 <amatas> and Vagrant 1.9.1
+2017-02-02T12:05:16 <kasparnet> ok cool
+2017-02-02T12:05:33 <amatas> I think it\'s safe to run the VMs using those versions
+2017-02-02T12:06:13 <kasparnet> awesome
+2017-02-02T12:06:24 <kasparnet> updating both now, then
+2017-02-02T12:06:26 <kasparnet> cheers amatas
+2017-02-02T12:06:41 <amatas> please, give a try and tell me if you see any failure
+2017-02-02T12:06:46 <kasparnet> will do
+2017-02-02T12:06:47 <amatas> ok cool, np :)
+2017-02-02T12:46:12 <Bosmon2> Hey there kasparnet
+2017-02-02T12:46:27 <Bosmon> Just a nudge on the pulls of the day - https://github.com/GPII/universal/pull/501
+2017-02-02T12:46:39 <Bosmon> and https://github.com/GPII/universal/pull/487
+2017-02-02T12:57:45 * gtirloni joined the channel
+2017-02-02T13:01:13 <Bosmon> kasparnet - is "Dong" a very Danish name? : P
+2017-02-02T13:01:18 <Bosmon> http://www.telegraph.co.uk/business/2017/02/02/dong-energy-phase-coal-worlds-largest-wind-farm-moves-ahead/
+2017-02-02T13:02:40 <kasparnet> haha, no, it\'s a pretty weird name - even for denmark
+2017-02-02T13:03:20 <kasparnet> Bosmon: btw - on the pulls... Been having some troubles with my VMs
+2017-02-02T13:07:18 * Jess_ joined the channel
+2017-02-02T13:17:44 * Justin_o joined the channel
+2017-02-02T13:20:44 * gtirloni joined the channel
+2017-02-02T13:24:47 <Bosmon> kasparnet - sorry to hear it
+2017-02-02T13:24:53 <Bosmon> What kind of trouble do you think it is?
+2017-02-02T13:25:35 * cindyli joined the channel
+2017-02-02T13:30:41 * gtirloni joined the channel
+2017-02-02T13:48:04 * gtirloni joined the channel
+2017-02-02T14:19:33 * clown joined the channel
+2017-02-02T14:32:38 * javjarfer has quit
+2017-02-02T14:45:00 <kasparnet> Bosmon: well, much the same as yesterday
+2017-02-02T14:45:20 <kasparnet> ... tests fail on #17 on firefox (and occasionally on #11)
+2017-02-02T14:45:47 <Bosmon> kasparnet - can you tell what the problem is?
+2017-02-02T14:45:50 * gtirloni joined the channel
+2017-02-02T14:46:06 <kasparnet> I just updated to latest vagrant and virtual box, so that shouldn\'t be it
+2017-02-02T14:48:16 * michelled joined the channel
+2017-02-02T14:48:52 <kasparnet> Bosmon: It\'s this exact issue: http://lists.gpii.net/pipermail/ci/2017-February/000446.html
+2017-02-02T14:49:08 <kasparnet> I\'ve shut down all other VMs I got running, just in case
+2017-02-02T14:49:13 <kasparnet> but it still fails there consistently
+2017-02-02T14:49:48 <Bosmon> kasparnet - but this pull seemed to pass CI: https://github.com/GPII/universal/pull/501
+2017-02-02T14:50:14 <kasparnet> ...I know... same with https://github.com/GPII/universal/pull/487
+2017-02-02T14:50:26 <kasparnet> and both of them are failing for me
+2017-02-02T14:50:37 <kasparnet> I wonder if it has to do with when/where I run npm
+2017-02-02T14:50:40 <kasparnet> npm install*
+2017-02-02T14:50:45 <Bosmon> When/where do you run it
+2017-02-02T14:51:18 * alanharnum joined the channel
+2017-02-02T14:51:18 <kasparnet> well, I\'ve actually tried what I think amounts to all combinations
+2017-02-02T14:51:24 <Bosmon> Ok
+2017-02-02T14:51:31 <Bosmon> Well, what has happened to fluid.tabbable anyway
+2017-02-02T14:51:40 <kasparnet> but perhaps I screwed up somewhere along the way
+2017-02-02T14:51:45 <Bosmon> Is there CI build that has failed in this way?
+2017-02-02T14:51:51 <Bosmon> Can we look at its filesystem?
+2017-02-02T14:51:56 <Bosmon> Or you can look at your filesystem
+2017-02-02T14:52:06 <kasparnet> ... So I\'m just seeing I got node v4.4.4 on my local machine
+2017-02-02T14:52:14 <Bosmon> How is that possible
+2017-02-02T14:52:21 <Bosmon> Aren\'t you using the vagrant box?
+2017-02-02T14:52:27 <kasparnet> well - host machine
+2017-02-02T14:52:38 <Bosmon> Shouldn\'t that be irrelevant?
+2017-02-02T14:52:44 <Bosmon> Hopefully you only ever run npm install inside the box
+2017-02-02T14:52:49 <kasparnet> well, I\'d think so
+2017-02-02T14:53:11 <kasparnet> but right now I\'d believe in anything as a source of failure
+2017-02-02T14:53:22 <Bosmon> So, has any online CI build ever failed in this way?
+2017-02-02T14:53:28 <Bosmon> Or has it just happened to you locally
+2017-02-02T14:53:34 <kasparnet> well, just the one I linked to
+2017-02-02T14:53:39 <kasparnet> http://lists.gpii.net/pipermail/ci/2017-February/000446.html
+2017-02-02T14:53:44 <Bosmon> Ah
+2017-02-02T14:53:48 <kasparnet> but gtirloni found the source of that
+2017-02-02T14:54:03 <kasparnet> ... apparently a conflict with some stalled process or something
+2017-02-02T14:54:04 <Bosmon> What was the source of it?
+2017-02-02T14:54:06 <Bosmon> ok
+2017-02-02T14:54:11 * kasparnet looking for thread
+2017-02-02T14:54:28 <kasparnet> https://github.com/GPII/universal/pull/494#issuecomment-276714696
+2017-02-02T14:54:37 <Bosmon> Yes
+2017-02-02T14:54:45 <Bosmon> I see that it now claims that this build has passed
+2017-02-02T14:56:54 <Bosmon> kasparnet ok then, can you just zip up your entire installed universal dir into a giant ZIP file and upload it somewhere
+2017-02-02T14:57:45 * mrtyler joined the channel
+2017-02-02T14:59:00 * colinclark joined the channel
+2017-02-02T14:59:37 * Jess__ joined the channel
+2017-02-02T15:07:01 * the-t-in-rtf1 joined the channel
+2017-02-02T15:08:05 <the-t-in-rtf1> I\'m hoping that issue will give us a way of avoiding the yarn/leveldown problems in builds that depend on gpii-pouchdb
+2017-02-02T15:22:41 <Bosmon> kasparnet ^
+2017-02-02T15:30:57 * mrtyler joined the channel
+2017-02-02T15:35:04 <mrtyler> amatas: are you still here?
+2017-02-02T15:35:57 <mrtyler> actually maybe someone else can guide me
+2017-02-02T15:36:13 <mrtyler> i want to ansible-ify the changes i made to get grafana+influxdb back up and running on i-0023
+2017-02-02T15:36:30 <mrtyler> 1. is this a good idea? or should i spend my time elsewhere?
+2017-02-02T15:36:48 <mrtyler> while i was looking at that, i thought gosh, i bet someone else has written an influxdb ansible role
+2017-02-02T15:37:07 <mrtyler> so i looked and lo and behold there are many
+2017-02-02T15:37:28 <mrtyler> one of them looks pretty good, ansible vars for every single line of influxdb.conf
+2017-02-02T15:37:46 <amatas> hi mrtyler
+2017-02-02T15:37:57 <mrtyler> but OTOH, all i want to do is install a package, make two changes to a config file, and fetch a third thing from somewhere else
+2017-02-02T15:38:07 <amatas> well, most of our ansible roles started as a clone of some role found in ansible galaxy
+2017-02-02T15:38:21 <mrtyler> so a big well-developed role may be overkill / bring in complexity we don\'t need
+2017-02-02T15:38:39 <mrtyler> 2. how often do we clone an existing role vs write a simpler one from scratch?
+2017-02-02T15:39:53 <mrtyler> amatas: can you show me some examples? looking through https://github.com/idi-ops it seems like most are forked from gtirloni
+2017-02-02T15:40:14 <mrtyler> i guess i can go look at his github page to see if any of those were forked from somewhere else initially
+2017-02-02T15:40:15 <amatas> not too often. We try to keep the same structure in all of our roles: https://github.com/idi-ops/ansible-nodejs
+2017-02-02T15:40:18 <gtirloni> hey, i usually only use the galaxy roles to get ideas sometimes... in my case, i don\'t remember forking any of those
+2017-02-02T15:40:24 <mrtyler> or is there some way to sort this out with the github interface?
+2017-02-02T15:40:37 <amatas> the split of the tasks between: install, configure, deploy and test
+2017-02-02T15:40:59 <mrtyler> amatas: i found ansible-galaxy init, which i think solves that problem for me if i decide to roll my own role
+2017-02-02T15:41:08 <amatas> https://github.com/amatas/ansible-jenkins-master/tree/master/tasks
+2017-02-02T15:41:10 <amatas> other sample
+2017-02-02T15:41:39 <amatas> actually I use ansible galaxy as the same way as gtirloni does
+2017-02-02T15:41:44 <gtirloni> sometimes i cannot tell if some tasks should be in install, configure or deploy :( but i guess that confusion varies from role to role, sometimes it makes more sense.. i wouldn\'t be too strict about that
+2017-02-02T15:42:06 <amatas> to get ideas or see how other people tackles some tasks
+2017-02-02T15:42:20 <gtirloni> for the influxdb, my suggestion is to start small: create a role that install the package, modifies the lines you want (see \'lineinfile\' module) and run some command you want
+2017-02-02T15:42:44 <mrtyler> so you\'re saying that you look at existing ansible roles for inspiration but tend to write your own from scratch rather than forking an existing one?
+2017-02-02T15:42:46 <amatas> gtirloni, I always start putting all the tasks in the same file, then I split trying to keep the criteria
+2017-02-02T15:43:03 <amatas> yes, mrtyler
+2017-02-02T15:43:04 <gtirloni> there\'s always the risk of basically rewriting the json/yaml/toml format that the application uses into ansible.. i don\'t see a lot of value in that (it\'s a cat/mouse game, your yaml will get outdated very soon)
+2017-02-02T15:43:16 <gtirloni> mrtyler: exactly
+2017-02-02T15:43:34 <amatas> we cloned some roles at the beginning, don\'t remember if gtirloni was with us at that time.
+2017-02-02T15:43:45 <gtirloni> the code re-usability at lower levels is a myth
+2017-02-02T15:44:08 <gtirloni> usually, roles make too many assumptions.. because they are working with a very specific environment
+2017-02-02T15:45:00 <mrtyler> gtirloni: i definitely observed that in some of the influxdb roles i looked at
+2017-02-02T15:45:16 <gtirloni> i\'ve tried to fork some roles in the past... then i spend 90% of the time taking things out because they don\'t apply to our environments (and they break stuff), then i add my changes.. and then it probably doesn\'t make change any more to the original author
+2017-02-02T15:45:55 <mrtyler> i\'m not sure i agree about code reusability being a myth, or about mapping all json/yaml/toml format to ansible variables being bad
+2017-02-02T15:46:06 <mrtyler> but i think i understand what you\'re saying
+2017-02-02T15:46:10 <kasparnet> Bosmon: Fatal error: Unable to find local grunt.
+2017-02-02T15:46:14 <gtirloni> there are some roles that are more general, user \'geerlingguy\' usually has some decent ones (that try to cover ubuntu/debian/centos/fedora at the same time... which i find a nightmare to manage but he seems happy doing it)
+2017-02-02T15:46:15 <kasparnet> ooops
+2017-02-02T15:46:22 <kasparnet> wrong clipboard
+2017-02-02T15:46:50 <kasparnet> https://drive.google.com/file/d/0ByfE6R0ipKCjZlVldWNva2FhSXc/view
+2017-02-02T15:46:59 <gtirloni> i think mapping *some*, the ones that make sense, it\'s a nice thing.. but it\'s a daunting task sometimes (you end up adding 200+ variables to defaults/main.yml and use 5-10)
+2017-02-02T15:47:13 <mrtyler> yeah i\'m pretty disturbed that ansible doesn\'t provide a higher-level concept "source repos" rather than having "apt" and "rpm" specifically
+2017-02-02T15:47:31 <gtirloni> of course it\'s nice to have all of that in defaults/main.yml if one is up to the task.. as a user of a role, it\'s great
+2017-02-02T15:47:53 <amatas> mrtyler, http://docs.ansible.com/ansible/package_module.html
+2017-02-02T15:47:55 <gtirloni> there\'s a "pkg" module in ansible 2.x, i don\'t know if that would fit
+2017-02-02T15:47:57 <gtirloni> yeah
+2017-02-02T15:48:22 <Bosmon> Cheers kasparnet - got it
+2017-02-02T15:48:26 <amatas> we started with ansible 1.2 if I rememeber well
+2017-02-02T15:48:37 <gtirloni> it provides a generic cross-distro way of installing packages, but the common denominator means there are fewer options
+2017-02-02T15:48:39 <amatas> lots of changes since that version
+2017-02-02T15:48:39 <mrtyler> sure that\'s great but you still need apt: and yum: config separate for debians and redhats
+2017-02-02T15:48:52 <gtirloni> amatas: i think so.. 1.2 iirc
+2017-02-02T15:50:19 <Bosmon> kasparnet - so here\'s something very funny
+'
+

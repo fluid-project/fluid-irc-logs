@@ -1,0 +1,210 @@
+b"2017-03-10T16:30:03 <simonjb> I'm implementing the first presentation for the science lab (simple table of values)
+2017-03-10T16:30:14 <simonjb> and want to handle removal of sensors
+2017-03-10T16:30:41 * alanharnum joined the channel
+2017-03-10T16:30:41 <simonjb> with the current implementation old values just stick around in the model on the client side
+2017-03-10T16:42:15 <Bosmon> simonjb - yup, that's great
+2017-03-10T16:42:21 <Bosmon> Yes, we don't currently have an implementation which does this
+2017-03-10T16:42:42 <Bosmon> But such a thing needs to go into the core Nexus as well as in my authoring branch's model binding
+2017-03-10T16:44:30 <simonjb> ok, thanks Bosmon, I'll implement it in the context that I need it for (https://github.com/simonbates/nexus-client/blob/master/src/NexusWebSocketBoundComponent.js#L123) and then we can chat about ensuring it's general for other use cases
+2017-03-10T16:46:26 <Bosmon> simonjb - I think even in the minimial viable case there needs to be an update in the Nexus itself?
+2017-03-10T16:46:35 <Bosmon> Since otherwise it will not relay DELETE messages at all
+2017-03-10T16:47:33 <simonjb> that would be if you delete the path bound to? if we delete within the path bound to, we will get updates with the value removed I think
+2017-03-10T16:48:01 <simonjb> if my model is { a: 10 } and I delete a, I get an update of {}
+2017-03-10T16:48:27 <simonjb> with the current Nexus implementation
+2017-03-10T16:49:56 <simonjb> in the science lab stuff, I have model sensorValues: { phValue: 7, ... }
+2017-03-10T16:50:04 <simonjb> and I bind to sensorValues
+2017-03-10T16:50:26 <simonjb> if I delete phValue, I see a Nexus change with updated model of {}
+2017-03-10T16:51:53 <Bosmon> simonjb - ah ok right, the Nexus *can* actually trade in DELETE messages
+2017-03-10T16:52:02 <Bosmon> https://github.com/GPII/nexus/blob/master/src/Nexus.js#L197
+2017-03-10T16:52:07 <Bosmon> We just need to generate some
+2017-03-10T16:52:08 <Bosmon> ok
+2017-03-10T16:54:04 <simonjb> so I think for my case anyway, on the client I can just diff the incoming model message against the current model without needing to change the Nexus
+2017-03-10T16:54:19 <Bosmon> simonjb - yup, ok
+2017-03-10T16:54:30 <simonjb> cool, thanks Bosmon
+2017-03-10T17:06:12 * kasparnet has quit
+2017-03-10T17:12:56 * kasparnet joined the channel
+2017-03-10T17:19:53 * kasparnet has quit
+2017-03-10T17:36:36 * sirdancealot joined the channel
+2017-03-10T17:45:28 * michelled joined the channel
+2017-03-10T17:45:28 * michelled has quit
+2017-03-10T17:47:09 * kavya has quit
+2017-03-10T17:55:24 * sirdancealot has quit
+2017-03-10T17:56:15 * sirdancealot joined the channel
+2017-03-10T18:17:35 * 17SAAI51G joined the channel
+2017-03-10T18:39:53 * michelled joined the channel
+2017-03-10T18:43:53 * kathy joined the channel
+2017-03-10T18:49:12 * stegru has quit
+2017-03-10T19:39:17 * cindyli has quit
+2017-03-10T19:43:08 * alanharnum joined the channel
+2017-03-10T19:44:25 * stegru joined the channel
+2017-03-10T20:09:38 * Jess__ joined the channel
+2017-03-10T20:14:55 * sirdancealot has quit
+2017-03-10T20:16:08 * colinclark joined the channel
+2017-03-10T20:17:16 * sirdancealot joined the channel
+2017-03-10T20:22:06 * cindyli joined the channel
+2017-03-10T20:53:05 <simonjb> Bosmon: https://github.com/simonbates/nexus-client/blob/master/src/NexusWebSocketBoundComponent.js#L134-L183
+2017-03-10T20:54:25 * sirdancealot has quit
+2017-03-10T20:55:03 * sirdancealot joined the channel
+2017-03-10T21:17:33 * sirdancealot has quit
+2017-03-10T21:17:55 * sirdancealot joined the channel
+2017-03-10T22:16:36 * noveens joined the channel
+2017-03-10T22:35:01 * aashay joined the channel
+2017-03-10T22:53:53 * sirdancealot has quit
+2017-03-10T22:54:56 * sirdancealot joined the channel
+2017-03-10T23:03:10 * kathy has quit
+2017-03-10T23:13:54 * amatas has quit
+2017-03-10T23:32:03 * michelled has quit
+"
+
+b'2017-03-10T01:08:05 * alanharnum joined the channel
+2017-03-10T02:23:53 * danayo joined the channel
+2017-03-10T02:45:28 * noveens joined the channel
+2017-03-10T03:11:17 * alanharnum joined the channel
+2017-03-10T04:25:07 * danayo joined the channel
+2017-03-10T04:54:51 * noveens has quit
+2017-03-10T05:12:19 * alanharnum joined the channel
+2017-03-10T05:52:27 * the-t-in-rtf joined the channel
+2017-03-10T07:14:13 * alanharnum joined the channel
+2017-03-10T08:11:24 * stegru joined the channel
+2017-03-10T08:55:04 * colinclark joined the channel
+2017-03-10T08:56:27 * kasparnet joined the channel
+2017-03-10T08:59:39 * noveens joined the channel
+2017-03-10T09:16:24 * alanharnum joined the channel
+2017-03-10T09:32:13 * sirdancealot joined the channel
+2017-03-10T10:55:35 * gtirloni joined the channel
+2017-03-10T11:17:34 * alanharnum joined the channel
+2017-03-10T11:35:21 * colinclark joined the channel
+2017-03-10T11:38:34 * kasparnet has quit
+2017-03-10T11:41:18 * kasparnet joined the channel
+2017-03-10T11:41:21 * kasparnet has quit
+2017-03-10T12:06:19 * kasparnet joined the channel
+2017-03-10T12:26:45 * Justin_o joined the channel
+2017-03-10T12:37:18 * amatas joined the channel
+2017-03-10T13:05:44 * kasparnet has quit
+2017-03-10T13:07:26 * cindyli joined the channel
+2017-03-10T13:13:04 * sirdancealot has quit
+2017-03-10T13:19:34 * alanharnum joined the channel
+2017-03-10T13:24:27 * alanharnum has quit
+2017-03-10T13:44:27 * kasparnet joined the channel
+2017-03-10T13:44:50 * kavya joined the channel
+2017-03-10T13:53:29 * colinclark joined the channel
+2017-03-10T13:53:33 * amatas has quit
+2017-03-10T14:01:17 * simonjb joined the channel
+2017-03-10T14:04:24 * alanharnum joined the channel
+2017-03-10T14:08:36 * amatas joined the channel
+2017-03-10T14:43:41 <Justin_o> Bosmon, colinclark: if you have a chance to look at the e-mail i sent to fluid work about URLs in HTML templates, I\'m interested in what you think.
+2017-03-10T14:45:07 <Bosmon> Justin_o - our approach to these things has traditionally been to place them in CSS
+2017-03-10T14:45:14 <Bosmon> Which somehow doesn\'t appear in your list of options
+2017-03-10T14:45:46 <Bosmon> But I think this could be done via a content directive
+2017-03-10T14:46:35 <Bosmon> This sidesteps all the awfulness of trying to deal with any of the horrifying solutions required by rebasing URLs from HTML
+2017-03-10T14:47:07 <Bosmon> "how do you solve the problem of a URL appearing in a template" => "don\'t do it" : P
+2017-03-10T14:47:14 <Justin_o> Bosmon: the CSS solution wouldn\'t allow us access to modify the styling of the SVG
+2017-03-10T14:47:39 <Justin_o> which would be a requirement for the use
+2017-03-10T14:47:45 <Justin_o> otherwise we\'d stick with font icons
+2017-03-10T14:47:57 <Bosmon> Justin_o - that seems paradoxical to me - can you explain more?
+2017-03-10T14:48:02 <Justin_o> Bosmon: also not sure what you mean by "content directive"
+2017-03-10T14:48:19 <Bosmon> Justin_o - I mean this: https://developer.mozilla.org/en/docs/Web/CSS/content
+2017-03-10T14:48:49 <Justin_o> Bosmon: adding an SVG through CSS is akin to adding any image format. It\'s referenced like a binary in essence, so you don\'t have access via CSS to modify colour for example.
+2017-03-10T14:49:10 <Bosmon> Justin_o - I mean adding the entire SVG element through these means
+2017-03-10T14:50:25 <Bosmon> Or there may be some other route via this element type: https://developer.mozilla.org/en-US/docs/Web/CSS/url
+2017-03-10T14:50:33 <Justin_o> Bosmon: hmm.. i\'ll explore that as an option.. it doesn\'t seem to allow for injecting markup though, but perhaps it will work
+2017-03-10T14:50:35 <Bosmon> "Relative URLs are allowed and are relative to the URL of the stylesheet (not to the URL of the web page)."
+2017-03-10T14:51:29 <Justin_o> Bosmon: the latter approach you mentioned about URLs won\'t work as you do not get access to modify the SVG\'s internals
+2017-03-10T14:51:35 * mrtyler joined the channel
+2017-03-10T14:51:35 <Bosmon> Justin_o - if you look at the examples on the "content" page you can see that arbitrary content is possible
+2017-03-10T14:51:54 <Bosmon> Justin_o - can you show an example of what we would use this access to do?
+2017-03-10T14:52:33 <Bosmon> I strongly suggest we fully explore all the possibilities of approaches like this, rather than require integrators deal with the issue of URLs in template
+2017-03-10T14:53:16 <Bosmon> It will add a significant extra layer of configuration and processing to an already very complex system
+2017-03-10T14:54:47 <Justin_o> Bosmon: you can look at this wiki page that has some information i\'ve written up already https://wiki.fluidproject.org/display/fluid/Research+SVG+Icons
+2017-03-10T14:55:28 <Justin_o> Bosmon: the main trick is that we want to be able to have the ability to style at least the fill color of the SVG, and also try to avoid placing the entire content of an SVG into the markup manually.
+2017-03-10T14:56:06 <Justin_o> and yes, i agree about avoiding extra processing
+2017-03-10T15:01:06 * michelled joined the channel
+2017-03-10T15:08:19 * Jess__ joined the channel
+2017-03-10T15:10:10 * danayo joined the channel
+2017-03-10T15:18:58 <Bosmon> Hi Justin_o - yes, the link on your page suggests that there are probably sufficient CSS tricks we can use to get this done
+2017-03-10T15:18:59 <Bosmon> E.g. https://css-tricks.com/cascading-svg-fill-color/
+2017-03-10T15:20:59 <Justin_o> Bosmon: so not sure which part you are specifically referring to there.. if it\'s using the "fill: currentColor" CSS style, yes.. planning on using that
+2017-03-10T15:21:17 * alanharn_ joined the channel
+2017-03-10T15:21:23 <Justin_o> Bosmon: if using "<use>".. also was planning on using this, but it\'s where the issue is.. that is.. the URL being in the template
+2017-03-10T15:21:26 <Bosmon> Justin_o - above you said "the main trick is that we want to be able to have the ability to style at least the fill color of the SVG, and also try to avoid placing the entire content of an SVG into the markup manually."
+2017-03-10T15:23:00 <Bosmon> So your page suggests that we have no IE11 support for <use> which implies that we will want to use inline SVG for now, which in turn suggests that applying the URL via CSS "content" will be fine
+2017-03-10T15:25:15 <Bosmon> I imagine that we can\'t apply a CSS content url to produce content within an <svg> block?
+2017-03-10T15:27:43 <Justin_o> Bosmon: so there is a polyfil to for IE 11, the issue there is that the svg sprite needs to be in the page, as opposed to referenced externally, so it sort of just copies in the SVG sprite and makes the references local instead of referencing an external svg
+2017-03-10T15:28:57 <Bosmon> Justin_o - what do we need to do to operate the polyfill?
+2017-03-10T15:30:29 <Justin_o> Bosmon: the one i link to you basically just add it to the page and call it\'s method to run it
+2017-03-10T15:31:22 <Justin_o> i suppose if you dynamically add templates you\'ll have to call that method at the end.. not sure if it listens for dom manipulations
+2017-03-10T15:32:27 <Justin_o> Bosmon: also, content in css looks like it doesn\'t accept markup as it doesn\'t process it, and will just output it as a text string. quick example https://jsfiddle.net/on4qh8mc/
+2017-03-10T15:36:02 * kasparnet has quit
+2017-03-10T15:50:04 * colinclark joined the channel
+2017-03-10T15:54:42 <Bosmon> Justin_o - I assume this SVG work is being done now in order to get decent mobile support for UIO?
+2017-03-10T15:57:10 <Bosmon> Justin_o - how about the approach described in this answer: http://stackoverflow.com/a/25410621
+2017-03-10T15:58:35 <Justin_o> Bosmon: thanks, we still need to be able to style the fill colour of the svg though
+2017-03-10T16:04:37 * clown joined the channel
+2017-03-10T16:05:54 <Bosmon> Justin_o - it is possible that this approach might work: http://stackoverflow.com/a/34860572
+2017-03-10T16:06:13 <simonjb> Hi Bosmon: can I ask you a change applier question? when doing an applier.change() call objects get merged into the existing model -- what is the recommended way of removing keys from the model that are not in the change?
+2017-03-10T16:06:23 <Bosmon> Justin_o - do we consider that the use of icon fonts is really unacceptable on mobile?
+2017-03-10T16:06:36 <Bosmon> simonjb - the recommended way is to issue two changes, a DELETE followed by an ADD
+2017-03-10T16:06:45 <Bosmon> You can do this in a transaction if you won\'t want spurious notifications
+2017-03-10T16:07:09 <Justin_o> Bosmon: it\'s not really specifically a mobile issue.. it\'s more of a maintenance issue... and also an issue with collisions for expected uses of the font icons..
+2017-03-10T16:07:26 <Justin_o> it\'s a problem basically whenever we need to add additional icons to the font set
+2017-03-10T16:07:39 <Justin_o> but there maybe ways to create build tools for that as well.
+2017-03-10T16:08:25 <Bosmon> Ah, I see the note at the bottom of your page about "currentColor"
+2017-03-10T16:08:46 <simonjb> Bosmon: this is for updating a model based on receipt of Nexus websocket change messages
+2017-03-10T16:08:51 <Bosmon> What is "grunt-webfoot" like?
+2017-03-10T16:09:02 <Justin_o> Bosmon: the collision issue is reflected in this JIRA https://issues.fluidproject.org/browse/FLUID-5225?jql=text%20~%20%22icon%20voiceover%22
+2017-03-10T16:09:03 <simonjb> where we don\'t have explicit delete messaging
+2017-03-10T16:09:12 <simonjb> just the changed model value
+2017-03-10T16:09:40 <Justin_o> perhaps we would work around the collisions with aria role presentation and aria-label as needed.. not sure though
+2017-03-10T16:10:03 <Bosmon> simonjb - oh yes, of course
+2017-03-10T16:10:10 <simonjb> Would I inspect the target model and issue deletes for any values not in the incoming message?
+2017-03-10T16:10:13 <Bosmon> The existing Nexus implementation is faulty in this aspect, I remember now
+2017-03-10T16:10:31 <Bosmon> We should update it to use the scheme in my branch
+2017-03-10T16:11:12 <Bosmon> https://github.com/amb26/fluid-authoring/blob/FLUID-4884/src/server/js/VisibleNexus.js#L234
+2017-03-10T16:11:17 <Bosmon> There is a utility in my branch
+2017-03-10T16:11:27 <Bosmon> Which takes care of hoisting a change into a "DELETE" message if this is required
+2017-03-10T16:11:30 <Justin_o> Bosmon: something like grunt-webfont would help as we could assign specific codes to each icon and generate the font on build, and not commit to the repo.
+2017-03-10T16:12:06 <Justin_o> Bosmon: the amount of configuration is a bit unfortunate as you\'d have to update the grunt file each time, but it\'s workable.
+2017-03-10T16:12:08 <Bosmon> Although I\'m starting to think that this isn\'t sufficient in itself to generate a "faithful" change message
+2017-03-10T16:12:49 <Bosmon> But we should use something like this as the basis of a fully reusable utility to convert a "receive change" to a "firable change"
+2017-03-10T16:12:50 <Justin_o> Bosmon: i\'m done for the day, but good chat.. please let me know if you have more thoughts/suggestions.. perhaps you could also reply to the e-mail thread on the list with your thoughts and perspectives on things.. thanks
+2017-03-10T16:12:51 <Bosmon> received
+2017-03-10T16:13:00 <Bosmon> Justin_o - sure, will do!
+2017-03-10T16:14:02 <Justin_o> Bosmon: thanks :)
+2017-03-10T16:14:17 <Bosmon> simonjb - currently it looks like this: https://github.com/amb26/fluid-authoring/blob/FLUID-4884/src/shared/js/AuthorUtils.js#L86
+2017-03-10T16:16:12 <simonjb> Bosmon: I might not be fully understanding your current implementation, but I think we might need more that this
+2017-03-10T16:16:22 <Bosmon> simonjb - I assume you tested my UI-based fix for rendering deletions and found that it didn\'t work
+2017-03-10T16:16:23 <Bosmon> Yes
+2017-03-10T16:16:26 <Bosmon> I think we do
+2017-03-10T16:16:29 <simonjb> yes
+2017-03-10T16:16:33 <Bosmon> ok
+2017-03-10T16:16:39 * danayo joined the channel
+2017-03-10T16:17:05 <simonjb> for example, if we have a model like: { sensorValues: { a: 10, b: 20 } }
+2017-03-10T16:17:24 <Bosmon> simonjb - yes, I think this utility will need to be improved, to filter out a "mixed change" into a sequence of additions and deletions
+2017-03-10T16:17:33 <simonjb> and I bind over Nexus websocket to sensorValues
+2017-03-10T16:17:48 <simonjb> I will get updates like { a: 11, b: 21 }
+2017-03-10T16:17:55 <Bosmon> It\'s obviously inadequate as it stands
+2017-03-10T16:18:00 <simonjb> but if I delete sensorValues.a
+2017-03-10T16:18:23 <simonjb> the updates will now be { b: 22 }
+2017-03-10T16:18:44 <simonjb> the value bound to wasn\'t deleted, but rather one of its children
+2017-03-10T16:19:59 <Bosmon> simonjb - exacatly
+2017-03-10T16:20:14 <Bosmon> exactly, sorry CATT is next to my wrist : P
+2017-03-10T16:20:15 <Bosmon> https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/DataBinding.js#L566
+2017-03-10T16:20:21 <Bosmon> This is what we do within the model relay system to make this work
+2017-03-10T16:20:34 * kasparnet joined the channel
+2017-03-10T16:20:41 <Bosmon> It can afford to do this because it is inside a transaction, but it\'s a bit clumsy
+2017-03-10T16:21:30 <Bosmon> It\'s probably unacceptable for us to issue a delete for EVERY change, whether it has deletes in it or not
+2017-03-10T16:21:49 <Bosmon> We\'ve got enough information in the change message to sort this out, but it will require us to manually inspect the "oldValue" and "value" to see if it harbour any deletes
+2017-03-10T16:22:04 <simonjb> yes, that\'s what I was thinking
+2017-03-10T16:22:13 <Bosmon> This is what the UI code in StructureView does, but clearly this needs to happen within the Nexus relay itself too
+2017-03-10T16:22:52 <Bosmon> The code for driving our "diff" algorithm to create a report on this looks like this: https://github.com/amb26/fluid-authoring/blob/FLUID-4884/src/client/js/StructureView.js#L139
+2017-03-10T16:23:35 <Bosmon> It\'s unbearably expensive, but this is just demo-quality code : P
+2017-03-10T16:24:16 <Bosmon> We can use this to "explode" a compound received change into multiple ADD and DELETE changes accounting for all of its effects
+2017-03-10T16:24:42 <Bosmon> In practice we would want some "transaction framing" for this too, which would mean a significant update to the Nexus protocol, but I think we can leave this for now
+2017-03-10T16:24:52 <Bosmon> We just need this to work : P
+2017-03-10T16:24:56 <Bosmon> And soon!
+2017-03-10T16:26:39 <simonjb> yeah, for now, I need a way to have Nexus messages update a model including deletes
+2017-03-10T16:27:33 <simonjb> it looks like we can use fluid.model.diff()? right and then generate the model updates?
+2017-03-10T16:27:56 <simonjb> and we don\'t currently have an implementation for this, am I right?
+2017-03-10T16:29:37 <simonjb> Bosmon: I can work on that today as part of my current work and check in with you later or Monday
+'
+

@@ -1,0 +1,209 @@
+b'2018-08-06T18:09:01 <Justin_o> jhernandez: I haven\'t updated the chrome web store yet. I\'ll keep working on things tomorrow. Let me know if there is a hard deadline for anything.
+2018-08-06T18:09:38 <jhernandez> Justin_o: we can wait until tomorrow for it to be published
+2018-08-06T18:09:45 <Justin_o> thanks
+2018-08-06T18:10:03 <jhernandez> I\'m seeing several problems after been integrating everything
+2018-08-06T18:10:33 <the-t-in-rtf> @Bosmon, paths are resolved via calls to fluid.module.resolve as usual, as shown here: https://github.com/GPII/gpii-testem/blob/master/src/js/testem-component.js#L592
+2018-08-06T18:10:33 <jhernandez> so, I don\'t think I will have time for testing it today
+2018-08-06T18:10:37 <the-t-in-rtf> resolvePath, I mean
+2018-08-06T18:10:47 <Bosmon> the-t-in-rtf - I know, but how does the module registration get in there in the first place?
+2018-08-06T18:11:05 <the-t-in-rtf> well,  you\'re expected to require or fluid.require anything you want to resolve.
+2018-08-06T18:11:18 <the-t-in-rtf> and the package must have the standard boilerplate to register itself.
+2018-08-06T18:11:31 <Bosmon> I guess the package arranges to load itself somehow, but where exactly?
+2018-08-06T18:11:48 <the-t-in-rtf> define "the package" in this context
+2018-08-06T18:12:07 <Bosmon> the-t-in-rtf - "the one itself"
+2018-08-06T18:12:10 <Bosmon> E.g. gpii-universal
+2018-08-06T18:12:13 <Bosmon> Or infusion, etc.
+2018-08-06T18:12:24 <the-t-in-rtf> require("..")
+2018-08-06T18:12:33 <the-t-in-rtf> well, add a slash
+2018-08-06T18:12:38 <Bosmon> Oh yes
+2018-08-06T18:12:40 <Bosmon> I see it now
+2018-08-06T18:12:43 <the-t-in-rtf> https://github.com/GPII/universal/blob/master/tests/testem.js#L15
+2018-08-06T18:13:11 <Bosmon> It looks like this is probably what Justin_o has forgotten to do
+2018-08-06T18:13:21 <Bosmon> https://github.com/jobara/gpii-chrome-extension/blob/GPII-3053/tests/browser/testem.js
+2018-08-06T18:13:47 <the-t-in-rtf> yes, definitely.
+2018-08-06T18:17:25 <Justin_o> Bosmon, the-t-in-rtf: i\'m trying that but get that the module can\'t be found
+2018-08-06T18:17:46 <Justin_o> https://www.irccloud.com/pastebin/JRXNeapu/
+2018-08-06T18:17:51 <Bosmon> Justin_o - perhaps because you have written no driver function for the module
+2018-08-06T18:18:14 <Justin_o> i used ../../ because the testem.js file is located in tests/browser but ../ also failed with the same error
+2018-08-06T18:18:15 <the-t-in-rtf> well, ../.. from that dir is "tests"
+2018-08-06T18:19:11 <Justin_o> Bosmon: ah because this isn\'t meant to be used as an npm module
+2018-08-06T18:19:27 <Bosmon> Justin_o - sure, but it will have to load as one in order for testem to resolve itself
+2018-08-06T18:19:41 <Bosmon> It just needs a simple stub that registers its base directory with Infusion\'s module loader
+2018-08-06T18:19:55 <the-t-in-rtf> It\'s best practice to have a minimal stub so that people can reuse your material via %package-name/path/to/content references
+2018-08-06T18:19:57 <Bosmon> Justin_o - I was wondering where you got the string "%ui-options-chrome" from
+2018-08-06T18:20:08 <Bosmon> Given you don\'t seem to have registered it anywhere, and it doesn\'t agree with the module\'s name
+2018-08-06T18:20:25 <the-t-in-rtf> at least I think it\'s best practice.
+2018-08-06T18:21:10 <Justin_o> Bosmon: i thought it was pulling that from the name in the package file
+2018-08-06T18:21:21 <Justin_o> Bosmon, the-t-in-rtf: how do you do that simple stub
+2018-08-06T18:21:23 <Justin_o> is there an example
+2018-08-06T18:22:48 <Bosmon> Justin_o
+2018-08-06T18:22:51 <Bosmon> Every one of our projects has one
+2018-08-06T18:23:23 <Bosmon> https://github.com/GPII/universal/blob/master/index.js
+2018-08-06T18:23:30 <Bosmon> Naturally your stub wouldn\'t include any other files
+2018-08-06T18:23:55 <Bosmon> It would just load Infusion and register the base directory
+2018-08-06T18:26:32 <the-t-in-rtf> https://github.com/GPII/gpii-location-bar-relay/blob/master/index.js
+2018-08-06T18:26:42 <the-t-in-rtf> that\'s the cleanest example I could find on short notice
+2018-08-06T18:29:17 <Justin_o> Bosmon, the-t-in-rtf: thanks
+2018-08-06T18:38:17 <Justin_o> Bosmon, the-t-in-rtf: I\'ve pushed up the latest changes that should include the module, but i\'m getting the same problem. Unfortunately I have to head off now, but I\'ll check in again tomorrow
+2018-08-06T20:43:41 * Justin_o has quit
+2018-08-06T20:44:43 <sgithens> gtirloni: Is our jira being upgraded?
+2018-08-06T20:44:59 <sgithens> or rebooted or something
+2018-08-06T20:46:42 <sgithens> either way our Jira is down
+2018-08-06T20:55:34 <sgithens> There is an issue with issues.fluidproject.org as well
+2018-08-06T20:56:44 <gtirloni> sgithens: thanks for the heads up, there were some issues with the DB server.. they should be coming back in a few minutes
+2018-08-06T20:57:17 <sgithens> gtirloni : Awesome thanks!
+2018-08-06T22:54:21 * mrtyler has quit
+'
+
+b'2018-08-06T08:15:09 * georgitodorov joined the channel
+2018-08-06T10:51:53 * jhernandez joined the channel
+2018-08-06T10:55:52 * jhernandez has quit
+2018-08-06T10:56:04 * jhernandez joined the channel
+2018-08-06T12:26:53 * gtirloni joined the channel
+2018-08-06T13:11:01 * yuriy joined the channel
+2018-08-06T13:22:52 * yuriy__ joined the channel
+2018-08-06T13:26:05 * yuriy has quit
+2018-08-06T14:31:46 * Justin_o joined the channel
+2018-08-06T14:33:23 <Justin_o> Bosmon, jhernandez: I worked a bit this weekend and will scatter a couple hours around today as well. I\'m getting close with the youtube captions. How are we looking for UIO+ for the audit. Did we want to try to get things merged into master, or should I create a new release off of my own branch?
+2018-08-06T14:40:53 <jhernandez> Justin_o: hey, given that the universal portions of it are already in universal, I\'d say that you can release a new version from a branch of yours that contains everything on it
+2018-08-06T14:41:45 <Justin_o> jhernandez: okay thanks.. by the way, what are you calling the branches you are making for the audi?
+2018-08-06T14:41:48 <Justin_o> audit
+2018-08-06T14:41:58 <jhernandez> but I\'ll wait for Bosmon thoughts on this
+2018-08-06T14:42:10 <jhernandez> Justin_o: the branches are called feds-audit
+2018-08-06T14:42:49 <Justin_o> jhernandez: okay.. i\'ll see what Bosmon says, but i\'ll look at making that branch just in case
+2018-08-06T14:43:11 <jhernandez> ok, great :)
+2018-08-06T14:43:42 <Justin_o> i\'ll wait to hear back from Bosmon before i push up a release to the chrome web store though
+2018-08-06T14:44:26 <Justin_o> jhernandez: by the way, if you didn\'t notice. The Dictionary preference is removed from UIO+. So if they still need that feature in Chrome we\'ll need to install it from the installer.
+2018-08-06T14:45:05 <jhernandez> hmmm
+2018-08-06T14:45:10 <jhernandez> not sure about that
+2018-08-06T14:45:47 <jhernandez> do you think we should ask Sandra
+2018-08-06T14:46:12 <Justin_o> Sure... i\'m not really sure who would know, but I guess she might
+2018-08-06T14:46:30 <jhernandez> can you write up a short email indicating such thing?
+2018-08-06T14:46:37 <Justin_o> sure
+2018-08-06T14:46:39 <Justin_o> will do that now
+2018-08-06T14:46:48 <jhernandez> just to make sure that they are aware of the reasons for that
+2018-08-06T14:46:54 <jhernandez> thanks a lot
+2018-08-06T14:47:23 <jhernandez> already looking forward to seeing the youtube captions working btw
+2018-08-06T14:47:27 <jhernandez> :)
+2018-08-06T14:48:06 <Justin_o> :) thanks
+2018-08-06T14:50:05 <Justin_o> jhernandez: e-mail sent
+2018-08-06T14:50:13 <jhernandez> coolioo!
+2018-08-06T14:50:56 <Bosmon> Hi there Justin_o - I\'ve merged two of your pulls - could you please regenerate https://github.com/GPII/gpii-chrome-extension/pull/10 against current master so it\'s clear what the contents are?
+2018-08-06T14:51:51 <Justin_o> Bosmon: sure, will do
+2018-08-06T14:54:41 <Justin_o> Bosmon: it\'s been updated with master
+2018-08-06T14:56:43 <Bosmon> Cheers, Justin_o
+2018-08-06T14:57:32 <Justin_o> Bosmon: after that\'s merged, i\'ll create another beta release in the Chrome Web Store. Then I\'ll get back to working on getting the captions preference ready for UIO+
+2018-08-06T14:58:10 <jhernandez> stegru: I\'m getting into a conflict when merging your GPII-3220 into feds-audit
+2018-08-06T14:58:15 <Bosmon> Could you update the linting definitions to the ones from the-t-in-rtf which we\'ve now adopted in the GPII - https://github.com/GPII/universal/blob/master/Gruntfile.js#L18
+2018-08-06T14:58:16 <jhernandez> (windows side)
+2018-08-06T14:58:22 <Bosmon> Justin_o ^ - cheers
+2018-08-06T14:58:54 <stegru> ok jhernandez
+2018-08-06T14:58:56 <jhernandez> stegru: this is the conflict https://pastebin.com/rs2ckhGR
+2018-08-06T14:59:30 <jhernandez> I guess that all must be included, but just wanted to double check with you
+2018-08-06T14:59:36 <stegru> yes, that\'s right
+2018-08-06T14:59:52 <stegru> all 3 functions
+2018-08-06T14:59:53 <jhernandez> okay
+2018-08-06T14:59:56 <jhernandez> thanks
+2018-08-06T15:01:11 <Justin_o> Bosmon, the-t-in-rtf: is there a new stable release for gpii-grunt-lint-all or should i still be using the dev release?
+2018-08-06T15:01:57 <Bosmon> Justin_o - npm view gpii-grunt-lint-all says there is a release
+2018-08-06T15:02:05 <Bosmon> \'1.0.1\': \'2018-08-01T16:25:01.321Z\' },
+2018-08-06T15:02:34 <the-t-in-rtf> that\'s correct
+2018-08-06T15:03:01 <Justin_o> Bosmon, the-t-in-rtf: thanks.. i\'ll update fluid-publish to use gpii-grunt-lint-all v1.0.1 as well
+2018-08-06T15:04:12 <Bosmon> We should also try to update infusion itself
+2018-08-06T15:04:15 <Bosmon> If there are no further issues
+2018-08-06T15:06:02 <jhernandez> stegru: and now this ( https://pastebin.com/35Z3UPxQ ) when merging GPII-3236 in
+2018-08-06T15:06:08 <jhernandez> same here, isn\'t it?
+2018-08-06T15:06:50 <stegru> yeh, include them all
+2018-08-06T15:08:29 <jhernandez> ok, done
+2018-08-06T15:08:31 <jhernandez> tks
+2018-08-06T15:13:49 <Justin_o> the-t-in-rtf: I\'m getting this error when trying to run gpii-grunt-lint-all
+2018-08-06T15:13:55 <Justin_o> Registering module gpii-grunt-lint-all from path /Users/J.O./Documents/git/gpii-chrome-extension/node_modules/gpii-grunt-lint-all
+2018-08-06T15:13:55 <Justin_o> Loading "lint-all.js" tasks...ERROR
+2018-08-06T15:13:55 <Justin_o> >> Error: Cannot find module \'grunt-lintspaces\' from \'/Users/J.O./Documents/git/gpii-chrome-extension/node_modules/gpii-grunt-lint-all/src\'
+2018-08-06T15:16:02 <the-t-in-rtf> @Justin_o, I can see why, there was a funny merge putting together the release and it got chopped.
+2018-08-06T15:16:03 <the-t-in-rtf> https://github.com/GPII/gpii-grunt-lint-all/blob/v1.0.1/package.json
+2018-08-06T15:16:14 <the-t-in-rtf> Please add it temporarily as a dev dependency, I will fix that ASAP.
+2018-08-06T15:16:54 <Justin_o> the-t-in-rtf: thanks
+2018-08-06T15:21:32 * mrtyler joined the channel
+2018-08-06T15:25:57 <georgitodorov> jhernandez: Javi, I just sent an email that we pushed everything on our end to the feature/QSS branch
+2018-08-06T15:26:37 <georgitodorov> The app won\'t function unless stegru\'s work for the "App / Text Zoom" is merged
+2018-08-06T15:27:54 <Justin_o> Bosmon: GPII-3053 is ready for more review. Linting has been updated
+2018-08-06T15:28:31 <jhernandez> georgitodorov: okay great, thanks for the heads up!
+2018-08-06T15:28:59 * georgitodorov has quit
+2018-08-06T15:31:03 <the-t-in-rtf> @bosmon, I\'m just going to self-merge the dependency fix and cut a new release if that\'s OK with you.
+2018-08-06T15:31:16 <Bosmon> the-t-in-rtf - yes, that\'s great
+2018-08-06T15:32:01 <Bosmon> Justin_o - could you also update to the latest grunt since it has a couple fewer security advisories - cheers
+2018-08-06T15:37:18 <the-t-in-rtf> 1.0.2 release is available.
+2018-08-06T15:37:31 <the-t-in-rtf> I will add the release notes later.
+2018-08-06T15:40:57 * yuriy__ has quit
+2018-08-06T15:42:28 * jeevan_ joined the channel
+2018-08-06T15:45:09 <Justin_o> Bosmon: sure.
+2018-08-06T15:45:14 <Justin_o> the-t-in-rtf: thanks, i\'ll switch to that now
+2018-08-06T15:48:51 <Justin_o> Bosmon: updated the dependencies.. ready for more review
+2018-08-06T15:50:55 <Bosmon> Cheer Justin_o - could you do a general "npm outdated" on the package since many are very old
+2018-08-06T15:51:06 <Bosmon> We\'ve got a "high" security vulnerability on the version of ws that you are using
+2018-08-06T15:51:24 <Bosmon> Also isn\'t eslint-config-fluid an unnecessary dependency now?
+2018-08-06T15:56:08 <Justin_o> Bosmon: it\'s still used in the eslintrc.json file https://github.com/GPII/universal/blob/master/.eslintrc.json
+2018-08-06T15:56:15 <Justin_o> is that not needed either?
+2018-08-06T15:56:24 <Bosmon> the-t-in-rtf - I don\'t think it is, right?
+2018-08-06T16:04:46 <Justin_o> Bosmon: I updated the dependencies.. waiting to hear from the-t-in-rtf about the eslint-config-fluid dependency and eslintrc file
+2018-08-06T16:05:04 <Bosmon> Justin_o - I guess you can just try removing them and see if the linting task explodes :)
+2018-08-06T16:07:09 * jeevan joined the channel
+2018-08-06T16:07:42 * jeevan_ has quit
+2018-08-06T16:08:35 * jeevanprakash joined the channel
+2018-08-06T16:10:10 <the-t-in-rtf> It should work without it, but it all depends on how npm decides to sort things.
+2018-08-06T16:10:27 <the-t-in-rtf> I always add it as a dev dependency so that it\'s also available in my IDE.
+2018-08-06T16:10:36 <Bosmon> the-t-in-rtf - doesn\'t the lint-all task now source its configuration from inside its own module?
+2018-08-06T16:10:43 <the-t-in-rtf> nope.
+2018-08-06T16:11:09 <Bosmon> Justin_o - ok... better leave it in then
+2018-08-06T16:11:14 <the-t-in-rtf> I mean, it has a config file, but we didn\'t want to neuter the control we have, where a single module can opt out of a check or configure its environment.
+2018-08-06T16:11:27 * jeevan has quit
+2018-08-06T16:11:27 <the-t-in-rtf> mainly it\'s the environment configuration that saves a lot of boilerplate.
+2018-08-06T16:12:03 <the-t-in-rtf> i.e. you don\'t need /*eslint-env node */ everywhere.
+2018-08-06T16:12:06 <Justin_o> Bosmon: okay, it\'s ready for review then
+2018-08-06T16:14:58 <Bosmon> Cheer Justin_o - it currently gives linting errors for me
+2018-08-06T16:15:10 <Justin_o> Bosmon: really.. what for?
+2018-08-06T16:15:29 <Bosmon> Missing JSDocs in utils.js
+2018-08-06T16:15:52 <Justin_o> Bosmon: i\'ll check again
+2018-08-06T16:16:21 <Justin_o> now that\'s failing for me too
+2018-08-06T16:16:22 <Justin_o> hmm
+2018-08-06T16:21:19 <Justin_o> Bosmon: ah it\'s because i updated the eslint config dependency which added the jsdoc stuff i think.. anyways, i\'ve fixed that up now.
+2018-08-06T16:21:49 <the-t-in-rtf> yes, 1.0.3 has a bit more in the way of teeth
+2018-08-06T16:22:10 <the-t-in-rtf> at least that\'s the one that has revealed new linting errors in most of my projects lately.
+2018-08-06T16:22:50 <Bosmon> Cheers Justin_o - all merged up!
+2018-08-06T16:44:00 <Justin_o> Bosmon: thanks.. i\'ll try to get you something for captions soon, but it might not be till tomorrow
+2018-08-06T16:46:58 <Justin_o> Bosmon: also here\'s a PR to update the linting for Fluid-Publish https://github.com/fluid-project/fluid-publish/pull/14
+2018-08-06T16:50:47 * jeevanprakash has quit
+2018-08-06T16:59:57 <Justin_o> Bosmon: I just noticed that the browser tests for my last pull were broken because of the ninon-chrome update. I\'ve fixed those.. could you please look at this PR for that https://github.com/GPII/gpii-chrome-extension/pull/11
+2018-08-06T17:00:45 <Bosmon> Justin_o - ah, that\'s awkward
+2018-08-06T17:00:51 <Bosmon> Could you fix it so that npm test runs those as well?
+2018-08-06T17:02:58 <Justin_o> Bosmon: using vagrant?
+2018-08-06T17:12:39 <Bosmon> Justin_o - using gpii-testem
+2018-08-06T17:42:13 <Justin_o> Bosmon, the-t-in-rtf: my tests are failing when being run through testem but not when i run them directly
+2018-08-06T17:42:29 <Justin_o> it says it can\'t find a global function that I wrote. Any ideas?
+2018-08-06T17:42:47 <Bosmon> Justin_o - do always supply the full details in the first instance :)
+2018-08-06T17:43:18 <Justin_o> Bosmon:
+2018-08-06T17:43:25 <Justin_o> https://www.irccloud.com/pastebin/3MryZzCF/
+2018-08-06T17:43:28 <Bosmon> Cheers
+2018-08-06T17:44:00 <Bosmon> Does it say which test failed?
+2018-08-06T17:44:33 <Bosmon> I guess it\'s portBinding tests
+2018-08-06T17:44:46 <Bosmon> I believe a bit of wrapping is required in your markup to get this to work
+2018-08-06T17:44:49 <Justin_o> Bosmon: looking at the tests in the browser.. none run.. it\'s trying to run the port binding tests and it just shows a global failure with the same message
+2018-08-06T17:45:45 <Bosmon> Well, I thought there was, but I was wrong...
+2018-08-06T17:46:37 <Bosmon> All I can think of is whether you set up your testem.js file correctly
+2018-08-06T17:46:41 <Bosmon> Like this one: https://github.com/fluid-project/infusion/blob/master/tests/testem.js
+2018-08-06T17:46:44 <Justin_o> Bosmon: also i imagine the coverage reports won\'t be too helpful because I test against the built versions
+2018-08-06T17:47:33 <Justin_o> Bosmon:
+2018-08-06T17:47:42 <Justin_o> https://www.irccloud.com/pastebin/Z4RXvlNw/
+2018-08-06T17:48:02 <Justin_o> i\'m not really sure how that should look exactly.. i tried to figure it out, but is there documentation for it somewhere
+2018-08-06T17:50:58 <jhernandez> stegru: having some problems after integrating the app/text zoom
+2018-08-06T17:51:44 <the-t-in-rtf> @Justin_o, if you\'re still stuck at the end of the day, commit and mention me somewhere that will lead me to your branch.
+2018-08-06T17:52:08 <the-t-in-rtf> I can certainly try it and leave feedback.
+2018-08-06T17:54:30 <stegru> you touched it last, jhernandez
+2018-08-06T17:56:24 <Bosmon> the-t-in-rtf - I\'m wondering how module references like %gpii-universal get resolved in files like these - https://github.com/GPII/universal/blob/master/tests/testem.js
+2018-08-06T17:56:32 <Bosmon> How does the GPII code get loaded by this point?
+2018-08-06T17:56:39 <jhernandez> stegru: xDDD
+2018-08-06T18:08:06 <Justin_o> the-t-in-rtf: thanks for the help. I\'ve pushed up my work to this branch https://github.com/jobara/gpii-chrome-extension/tree/GPII-3053. You will see that running the tests through the npm scripts both halt (node and browser), but running them directly should work.
+2018-08-06T18:08:23 <Justin_o> Bosmon, the-t-in-rtf: i\'m going to head offline now. I\'ll try to pick this up tomorrow.
+'
+

@@ -1,0 +1,94 @@
+b'2016-04-19T00:30:02 * kasparne_ has quit
+2016-04-19T02:30:35 * kasparnet joined the channel
+2016-04-19T02:34:41 * kasparnet has quit
+2016-04-19T04:32:23 * kasparnet joined the channel
+2016-04-19T04:36:58 * kasparnet has quit
+2016-04-19T06:33:59 * kasparnet joined the channel
+2016-04-19T06:39:07 * kasparnet has quit
+2016-04-19T06:56:03 * the-t-in-rtf joined the channel
+2016-04-19T08:35:23 * kasparnet joined the channel
+2016-04-19T08:39:43 * kasparnet has quit
+2016-04-19T09:56:36 * kasparnet joined the channel
+2016-04-19T11:50:47 * alanharnum joined the channel
+2016-04-19T11:57:43 * alanharnum has quit
+2016-04-19T11:59:21 * alanharnum joined the channel
+2016-04-19T12:58:35 * cindyli joined the channel
+2016-04-19T13:01:37 * gtirloni joined the channel
+2016-04-19T13:05:37 * jessm joined the channel
+2016-04-19T13:35:29 * michelled joined the channel
+2016-04-19T13:51:08 * colinclark joined the channel
+2016-04-19T13:55:28 * alanharnum joined the channel
+2016-04-19T15:50:34 <Bosmon> the-t-in-rtf has been working with the utility kettle.test.pushInstrumentedErrors
+2016-04-19T15:50:57 <Bosmon> And has the following implementation: https://github.com/the-t-in-rtf/gpii-express/blob/GPII-1682/tests/js/errorMiddleware/errorMiddleware-caseholder.js#L100
+2016-04-19T15:51:58 <Bosmon> We found that his handler wasn\'t being called
+2016-04-19T15:52:19 <Bosmon> This is because the primary purpose of this method is to allow testing of an "uncaught exception handler"
+2016-04-19T15:52:35 <Bosmon> In his case, since he is in an express handler chain, express will always catch any propagating exceptions
+2016-04-19T15:52:51 <Bosmon> What he was wanting to do was to explicitly check the action of fluid.fail
+2016-04-19T15:53:42 <the-t-in-rtf> Actually, not exactly.
+2016-04-19T15:53:57 <Bosmon> Here is the impl of pushInstrumentedErrors: https://github.com/amb26/kettle/blob/KETTLE-32/lib/test/KettleTestUtils.js#L87
+2016-04-19T15:54:00 <the-t-in-rtf> unless by that you mean, confirm that fluid.fail is called when I wander down a broken road.
+2016-04-19T15:54:08 <Bosmon> the-t-in-rtf - I did mean that
+2016-04-19T15:54:42 <Bosmon> So, this function has two effects - firstly, to displace the jqUnit-scoped default handler for fluid.fail which immediately fails the current test
+2016-04-19T15:54:50 <Bosmon> secondly, to register a global uncaught exception handler
+2016-04-19T15:54:58 <Bosmon> What the-t-in-rtf wants isn\'t quite either of these
+2016-04-19T15:55:18 <Bosmon> But instead to register his own handler as by this line: https://github.com/amb26/kettle/blob/KETTLE-32/lib/test/KettleTestUtils.js#L89
+2016-04-19T15:55:34 <Bosmon> That is, to displace the automatic "test-failing" listener for fluid.fail by a custom test assertion
+2016-04-19T15:56:01 <Bosmon> So what\'s required here is to add his custom test assertion here in the role for what currently receives fluid.identity
+2016-04-19T15:56:13 <the-t-in-rtf> OK, great, I see that now.
+2016-04-19T15:56:19 <Bosmon> And then when the test is done, to pop it off the stack again with removeListener: https://github.com/amb26/kettle/blob/KETTLE-32/lib/test/KettleTestUtils.js#L95
+2016-04-19T15:56:39 <the-t-in-rtf> And I\'d just need a paired remove listener call to avoid masking exceptions in later tests?
+2016-04-19T15:56:45 <the-t-in-rtf> ah, too slow\xe2\x80\xa6 :)
+2016-04-19T15:57:03 <the-t-in-rtf> Great, I have this for my reference in the morning, thanks as always.
+2016-04-19T15:57:31 <the-t-in-rtf> FYI, all this came of running istanbul against my code.  I discovered that I was not testing enough of the failure modes, and needed this to be able to cleanly do that.
+2016-04-19T15:58:10 <the-t-in-rtf> https://github.com/gotwarlost/istanbul
+2016-04-19T16:00:12 <Bosmon> the-t-in-rtf - very useful
+2016-04-19T16:00:29 <Bosmon> I\'d always wanted to have coverage tests but never had the time to dig in to how to configure tham
+2016-04-19T16:00:30 <Bosmon> them
+2016-04-19T16:00:41 <Bosmon> We should really have this in the core framework, I\'m sure it would turn up some interesting dark corners
+2016-04-19T16:09:32 * the-t-in-rtf has quit
+2016-04-19T16:56:06 * alanharnum joined the channel
+2016-04-19T17:05:04 * alanharnum joined the channel
+2016-04-19T17:15:06 * cindyli joined the channel
+2016-04-19T17:32:54 <Bosmon> Hi cindyli - I left you some feedback
+2016-04-19T17:33:04 <Bosmon> I wonder if I could get you to look at a couple of tiny pull requests myself :)
+2016-04-19T17:33:07 <cindyli> thanks, Bosmon. working on those
+2016-04-19T17:33:19 <cindyli> what are those, Bosmon
+2016-04-19T17:33:21 <Bosmon> https://github.com/fluid-project/infusion/pull/683
+2016-04-19T17:33:29 <Bosmon> and https://github.com/fluid-project/infusion/pull/702
+2016-04-19T17:33:57 <cindyli> sure. will do
+2016-04-19T17:50:09 * clown joined the channel
+2016-04-19T18:23:50 * alanharnum joined the channel
+2016-04-19T18:34:44 * clown joined the channel
+2016-04-19T18:46:04 * alanharn_ joined the channel
+2016-04-19T18:56:04 <cindyli> Bosmon: one comment for gpii-payloads about the auth server privacy filtering says - Also talk about ontologies a bit - that is, that the filter is referred to a particular ontology, where this is defined, and also helpful to give a code link
+2016-04-19T18:56:14 <cindyli> looking at the related code - https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/FlowManagerUtilities.js#L200-L203
+2016-04-19T18:56:56 <cindyli> the auth server currently takes in the tranform rules directly instead of using the ontology given to the prefs server
+2016-04-19T18:57:55 <cindyli> shall i describe the current strategy in the doc that the privacy filtering is based on certain transformation rules that are defined in the code link above?
+2016-04-19T18:58:31 <cindyli> it won\'t touch the concept of ontology tho
+2016-04-19T18:58:55 <Bosmon> cindyli - you should say that this uses an ontology, but note that the ontology it uses is hard-coded for the time being
+2016-04-19T18:59:09 <cindyli> ok. cool
+2016-04-19T18:59:32 <Bosmon> The ontology "is" stored in the official area we have for ontologies, it\'s just that this area of the architecture is rather half-baked at present
+2016-04-19T18:59:47 <Bosmon> kasparnet and I have been kicking around GRAND PLANS for reforming the way that ontologies work......
+2016-04-19T19:03:42 <cindyli> that\'s great, Bosmon. my understanding of the use of ontology is via the :view parameter passed in thru the http requests to the prefs server, and the corresponding mapping for that view is saved in users prefs. i imagine that :view parameter should be used across whenever an ontology transformation is needed.
+2016-04-19T19:04:05 <cindyli> privacy filtering is not using that pass in ontology name apparently
+2016-04-19T19:04:29 <cindyli> not sure if i misunderstood the ontology
+2016-04-19T19:12:49 <cindyli> Bosmon: all comments addressed and ready for another look
+2016-04-19T19:13:23 <Bosmon> cindyli - well, this is "morally" an ontology
+2016-04-19T19:13:35 <Bosmon> Even if we are not using it via the prefs server front-end API
+2016-04-19T19:13:43 <Bosmon> In the end there will be all kinds of purposes for ontologies
+2016-04-19T19:35:14 * the-t-in-rtf joined the channel
+2016-04-19T19:37:47 <cindyli> ok. good to know
+2016-04-19T19:46:48 * the-t-in-rtf has quit
+2016-04-19T20:34:57 * clown joined the channel
+2016-04-19T21:06:28 * clown has quit
+2016-04-19T21:07:32 * the-t-in-rtf joined the channel
+2016-04-19T21:10:38 * alanharnum joined the channel
+2016-04-19T21:22:26 * the-t-in-rtf has quit
+2016-04-19T21:29:47 * jessm has quit
+2016-04-19T22:34:44 * michelled joined the channel
+2016-04-19T23:18:13 * kasparnet has quit
+2016-04-19T23:20:14 * alanharnum joined the channel
+2016-04-19T23:24:33 * kasparnet joined the channel
+2016-04-19T23:29:09 * kasparnet has quit
+'
+

@@ -1,0 +1,158 @@
+b'2017-03-30T21:59:51 * Caren has quit
+2017-03-30T22:02:08 * amatas has quit
+2017-03-30T22:13:55 * stegru has quit
+2017-03-30T23:01:28 * javjarfer has quit
+'
+
+b'2017-03-30T00:03:48 * jhernandez joined the channel
+2017-03-30T02:31:28 * michelled joined the channel
+2017-03-30T03:31:42 * danayo joined the channel
+2017-03-30T04:41:46 * Bosmon2 joined the channel
+2017-03-30T05:15:57 * gloob has quit
+2017-03-30T05:16:51 * gloob joined the channel
+2017-03-30T06:07:56 * sgithens_ joined the channel
+2017-03-30T06:09:22 * sgithens has quit
+2017-03-30T06:09:22 * sgithens_ is now known as sgithens
+2017-03-30T06:46:07 * the-t-in-rtf joined the channel
+2017-03-30T06:48:59 * kasparnet joined the channel
+2017-03-30T06:54:37 * kasparnet has quit
+2017-03-30T07:10:53 * the-t-in-rtf joined the channel
+2017-03-30T07:21:10 * kasparnet joined the channel
+2017-03-30T07:49:41 * javjarfer_ joined the channel
+2017-03-30T07:54:49 * stegru joined the channel
+2017-03-30T08:46:04 * amatas joined the channel
+2017-03-30T08:59:26 * javjarfer_ is now known as javjarfer
+2017-03-30T09:19:23 <amatas> fluid-everyone: I\'m going to update issues.gpii.net, I hope a downtime of 15 minutes or so.
+2017-03-30T09:58:21 <amatas> issues.gpii.net is back and updated
+2017-03-30T10:03:40 <stegru> and it even works
+2017-03-30T10:04:02 <amatas> :D
+2017-03-30T10:10:26 <amatas> at least the part I checked
+2017-03-30T10:57:14 <jhernandez> stegru: buenos dias
+2017-03-30T10:57:21 <jhernandez> I\'ve got a question related to https://github.com/GPII/gpii-app/pull/11
+2017-03-30T10:58:02 <jhernandez> the original issue was that the notification wasn\'t being shown always
+2017-03-30T11:00:19 <jhernandez> okay, I can answer to my question by simply testing it
+2017-03-30T11:00:44 <jhernandez> in any case, what happens if for whatever reason the notification isn\'t being created?
+2017-03-30T11:01:19 <jhernandez> are we going to hang out there forever waiting for the balloon-closed event?
+2017-03-30T11:02:26 <jhernandez> or are we really sure that it was just a timing issue? (and we assume that the notifications always work)
+2017-03-30T11:18:16 <jhernandez> stegru: okay, after a few attempts I could reproduce the issue
+2017-03-30T11:19:03 <jhernandez> and yes, we end up hanging out there waiting for a balloon-closed event
+2017-03-30T11:24:00 <stegru> sorry, i was just eating
+2017-03-30T11:24:43 <stegru> well, are you afraid of the balloon never closing?
+2017-03-30T11:25:23 <jhernandez> I\'m afraid of the balloon never opening
+2017-03-30T11:25:32 <jhernandez> so we will wait forever
+2017-03-30T11:25:45 <stegru> ah ok
+2017-03-30T11:26:01 <stegru> so, shall we have both a timeout and wait for the close event?
+2017-03-30T11:26:32 <jhernandez> also, I\'ve found that if you click on the notification the balloon-closed event is never being fired
+2017-03-30T11:26:37 <jhernandez> :)
+2017-03-30T11:26:57 <stegru> oh right, I didn\'t get that
+2017-03-30T11:27:42 <stegru> i\'ll just make it die after 10 seconds, unless the close event is fired?
+2017-03-30T11:28:53 <jhernandez> I guess that when you click on the notification the balloon-click event is fired
+2017-03-30T11:29:03 <jhernandez> tssss
+2017-03-30T11:29:43 <stegru> there is another way, instead of a balloon show a message box with an "ok" button - the only thing with this is it\'s synchronous and the function only returns after \'ok\' is clicked, but that\'s ok because we\'re terminating right after
+2017-03-30T11:30:07 <stegru> they look butt-ugly, though
+2017-03-30T11:30:30 <stegru> ok i\'ll listen on both, with a timeout as a back-up
+2017-03-30T11:32:07 <jhernandez> well, I\'m not sure whether we want to complicate/uglify our code due to the malfunctioning of either electron or windows
+2017-03-30T11:32:29 <stegru> yes, it\'s already ugly and complicated enough ;)
+2017-03-30T11:34:40 <stegru> by the way, how are you reproducing this? I\'m just starting gpii (not the app)
+2017-03-30T11:35:09 <jhernandez> with gpii-app
+2017-03-30T11:35:40 <jhernandez> I first run node --debug-brk=8081 and then I run npm start
+2017-03-30T11:35:42 <stegru> twice? to make 8081 in use?
+2017-03-30T11:35:50 <stegru> ahh!
+2017-03-30T11:38:51 <stegru> oh yes! I\'ve been clicking on the \'X\'.. not the balloon
+2017-03-30T11:39:30 <jhernandez> yeah
+2017-03-30T11:40:22 <jhernandez> looks like some people prefer to not use electron\'s builtin balloons
+2017-03-30T11:41:22 <jhernandez> and use things like node-notifier, electron-notifications, etc
+2017-03-30T11:42:30 <jhernandez> I\'m not sure what are the benefits or real motivations to use such alternatives
+2017-03-30T11:49:42 * gtirloni joined the channel
+2017-03-30T11:51:01 <jhernandez> in any case, I guess that, for hst, it should be just fine to use the timeout as you suggested initially
+2017-03-30T11:52:05 <jhernandez> I\'d say that we should file a JIRA describing the problem that we can reference from a TODO comment right before the timeout
+2017-03-30T11:52:30 <jhernandez> stegru: does this make sense to you?
+2017-03-30T11:53:33 <stegru> yes
+2017-03-30T11:53:57 <stegru> and they look a bit nicer, jhernandez
+2017-03-30T11:55:16 <stegru> ok make a jira so I can refer to it?
+2017-03-30T11:57:15 <jhernandez> we can just add more information to the one we\'re already dealing with
+2017-03-30T12:01:33 <stegru> pushed the fix, jhernandez
+2017-03-30T12:01:44 <jhernandez> stegru: okay, thanks
+2017-03-30T12:01:49 <stegru> i\'ve tried clicking, closing, and ignoring
+2017-03-30T12:01:59 <jhernandez> I\'m commenting on the JIRA right now
+2017-03-30T12:16:57 <jhernandez> stegru: done - thanks for the quick update
+2017-03-30T12:17:16 <stegru> that\'s ok javjarfer
+2017-03-30T12:17:22 <stegru> jhernandez, i mean
+2017-03-30T12:17:24 <jhernandez> I\'ll re-review it after ci passes
+2017-03-30T12:21:32 * Justin_o joined the channel
+2017-03-30T12:27:39 * michelled joined the channel
+2017-03-30T12:27:51 * kavya joined the channel
+2017-03-30T12:48:25 * cindyli joined the channel
+2017-03-30T12:49:40 * jhung joined the channel
+2017-03-30T12:55:49 * kavya has quit
+2017-03-30T12:55:56 * alanharnum joined the channel
+2017-03-30T13:03:59 * the-t-in-rtf joined the channel
+2017-03-30T13:35:58 * colinclark joined the channel
+2017-03-30T13:49:02 * simonjb joined the channel
+2017-03-30T14:12:48 * lliskovoi joined the channel
+2017-03-30T14:33:38 * danayo joined the channel
+2017-03-30T14:35:29 * lliskovoi joined the channel
+2017-03-30T14:36:28 * alanharnum joined the channel
+2017-03-30T14:44:40 <jhernandez> Bosmon2: morning
+2017-03-30T14:46:02 <jhernandez> do you mind taking a look at this pull request (https://github.com/GPII/windows/pull/117) from stegru?
+2017-03-30T14:46:32 <jhernandez> ok, stegru just closed it
+2017-03-30T14:46:34 <jhernandez> :)
+2017-03-30T14:46:57 * the-t-in-rtf has quit
+2017-03-30T14:47:14 <stegru> oh i\'m changing the jira number
+2017-03-30T14:47:26 <jhernandez> stegru: don\'t worry
+2017-03-30T14:47:44 <jhernandez> I\'ll re-ping Bosmon2 with the right pr once you\'re done
+2017-03-30T14:48:17 <jhernandez> stegru: mmm, the branch had the right name
+2017-03-30T14:48:49 * the-t-in-rtf joined the channel
+2017-03-30T14:50:14 <jhernandez> you could just have performed a git commit --ammend to fix the typo in the commit message and followed by a git push --force
+2017-03-30T14:50:30 <jhernandez> in any case, do whatever you feel more comfortable with
+2017-03-30T14:54:03 <stegru> it was only a couple of lines
+2017-03-30T14:54:06 <stegru> https://github.com/GPII/windows/pull/118
+2017-03-30T14:54:57 * noveens has quit
+2017-03-30T14:56:15 <stegru> jhernandez: but the funny thing is, when I re-created the branch I named it wrong!
+2017-03-30T14:57:53 <jhernandez> hahaha
+2017-03-30T14:58:28 <jhernandez> non eu citizens ...
+2017-03-30T14:58:32 <jhernandez> xDDDD
+2017-03-30T15:14:16 <stegru> jhernandez: i\'ve added the test, for both deleting an existing key and non-existing one
+2017-03-30T15:14:38 <jhernandez> stegru: sweet, thanks!!
+2017-03-30T15:29:25 * michelled joined the channel
+2017-03-30T15:46:12 * alanharnum joined the channel
+2017-03-30T16:05:39 * clown joined the channel
+2017-03-30T16:23:16 * lliskovoi joined the channel
+2017-03-30T16:23:53 * noveens joined the channel
+2017-03-30T16:37:55 * lliskovoi joined the channel
+2017-03-30T16:47:47 * lliskovoi has quit
+2017-03-30T16:48:02 * lliskovoi joined the channel
+2017-03-30T16:54:26 * alanharnum joined the channel
+2017-03-30T16:54:30 <jhernandez> Bosmon2: do you mind taking a look at this pull request? now with the righ one: https://github.com/GPII/windows/pull/118
+2017-03-30T17:00:01 * lliskovoi joined the channel
+2017-03-30T17:02:44 * colinclark joined the channel
+2017-03-30T17:02:44 * kavya joined the channel
+2017-03-30T17:18:42 * kasparnet has quit
+2017-03-30T17:24:49 <Justin_o> jhung: you might find this useful for your site building work https://github.com/giakki/uncss although you\'ll have to probably run it without the prefs framework specific css active on the page
+2017-03-30T17:25:44 <jhung> Cool Justin_o. That\'s worth looking into.
+2017-03-30T17:26:28 <Justin_o> i used it for the new prefs framework demo.. it turned 28000 lines of css that i still had to clean up down to 1204
+2017-03-30T17:45:04 * sgithens has quit
+2017-03-30T18:11:28 * sirdancealot joined the channel
+2017-03-30T18:16:53 * colinclark joined the channel
+2017-03-30T18:24:25 * alanharnum joined the channel
+2017-03-30T18:25:55 * kasparnet joined the channel
+2017-03-30T18:26:33 * kasparne_ joined the channel
+2017-03-30T18:30:22 * kasparnet has quit
+2017-03-30T18:32:10 * stegru has quit
+2017-03-30T18:41:41 * kasparne_ has quit
+2017-03-30T18:55:29 * alanharnum joined the channel
+2017-03-30T19:16:09 * kavya has quit
+2017-03-30T19:22:57 * simonjb joined the channel
+2017-03-30T19:25:16 * stegru joined the channel
+2017-03-30T19:27:06 * gtirloni_ joined the channel
+2017-03-30T19:37:52 * danayo has quit
+2017-03-30T21:01:53 * alanharnum joined the channel
+2017-03-30T21:05:47 * alanharnum joined the channel
+2017-03-30T21:17:28 * kasparnet joined the channel
+2017-03-30T21:17:58 * kasparne_ joined the channel
+2017-03-30T21:19:22 * kasparne_ has quit
+2017-03-30T21:22:08 * kasparnet has quit
+2017-03-30T21:53:17 * danayo joined the channel
+2017-03-30T21:57:12 * Caren joined the channel
+'
+

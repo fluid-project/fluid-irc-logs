@@ -1,0 +1,462 @@
+b'2014-11-10T18:55:12 <Bosmon> And then you\'ll compare that against the expected structure using assertDeepEq
+2014-11-10T18:55:41 <Justin_o> Bosmon: here\'s google\'s definition https://www.google.ca/#q=define:+merry+as+a+grig
+2014-11-10T18:55:45 <Justin_o> which isn\'t very exciting
+2014-11-10T18:56:28 <Justin_o> Bosmon: because we don\'t care which ones actually returned, we just care that the value we want is returned by something
+2014-11-10T18:56:41 <Justin_o> Bosmon: I thought we wanted to keep track of which requests were dropped
+2014-11-10T18:56:55 <Justin_o> for testing purposes
+2014-11-10T18:57:08 <Bosmon> Justin_o - we can determine which requests were dropped by actually looking at the results
+2014-11-10T18:57:18 <Bosmon> Clearly those requests which are dropped are the ones which don\'t return
+2014-11-10T18:57:29 <Bosmon> And this method has the extra benefit of testing the real implementation
+2014-11-10T18:57:55 <Bosmon> Rather than testing a structure of events which may have implementation bugs of its own
+2014-11-10T18:58:06 <Justin_o> Bosmon: sure, but i still don\'t see how we know which request is dropped for a get request on a model that increments. Wouldn\'t we just know the number of requests that were dropped as opposed to which of them were
+2014-11-10T18:58:32 <Bosmon> Justin_o - well, WE issue each request - and we get its return value!
+2014-11-10T18:58:46 <Bosmon> Clearly we can know, by looking at its return value, whether it has got one
+2014-11-10T18:58:48 <Justin_o> Bosmon: i\'m sure i\'m missing something here
+2014-11-10T18:59:05 <Bosmon> The model that increments is just an extra courtesy to assure that the request hit the model at the right time
+2014-11-10T18:59:18 <Justin_o> i issue three get requests.. lets say request 2 is dropped. the return from the model will be {count: 1} and then {count: 2}
+2014-11-10T18:59:28 <Justin_o> how do i prove that request 2 was dropped but not request 1 or 3
+2014-11-10T18:59:38 <Bosmon> !
+2014-11-10T18:59:44 <Bosmon> Because the promise for request 2 has not resolved!
+2014-11-10T19:00:06 <Justin_o> i see you want explicit assertions on each of the requests
+2014-11-10T19:00:22 <Justin_o> okay doable
+2014-11-10T19:00:38 <Bosmon> Yes, only by testing the values returned by the requests can we actually test what the implementation behaviour is
+2014-11-10T19:00:45 <Justin_o> sure
+2014-11-10T19:00:49 <Bosmon> Since it is the values returned by the requests that form the API we expose to our users
+2014-11-10T19:00:49 * simonjb_ joined the channel
+2014-11-10T19:01:49 <Justin_o> okay
+2014-11-10T19:01:50 * simonjb has quit
+2014-11-10T19:01:55 <Justin_o> Bosmon: next.. for the events
+2014-11-10T19:02:01 * simonjb_ is now known as simonjb
+2014-11-10T19:02:18 <Justin_o> i\'m actually using enqueued to know when to start
+2014-11-10T19:02:34 <Justin_o> perhaps i should actually remove dropped and onRequestStart
+2014-11-10T19:03:04 <Justin_o> enqueued says, somethings been added to the queue, see if you are busy processing a request and if not trigger it.
+2014-11-10T19:03:07 <Bosmon> Justin_o - yes, I think you can probably remove all the events from the queue
+2014-11-10T19:03:19 <Bosmon> That is, the "external"-ish ones
+2014-11-10T19:03:35 <Justin_o> Bosmon: ah okay.. sure.. i\'ll do that too
+2014-11-10T19:03:59 <Justin_o> Bosmon: how did the actual implementation look aside from the events?
+2014-11-10T19:04:34 <Bosmon> Justin_o - it\'s looking good
+2014-11-10T19:05:03 * danaayotte joined the channel
+2014-11-10T19:05:07 <Bosmon> If you can make your test structure fully declarative, it will make it easier to generate multiple tests from a "skeleton" without lots of cut and paste
+2014-11-10T19:05:11 <Justin_o> Bosmon: cool thanks.. i\'ll try to fix up the tests and get back to you.
+2014-11-10T19:05:18 <Bosmon> For example, you can run the "get" tests with lots of different combinations of delays
+2014-11-10T19:05:44 <Bosmon> Justin_o - great
+2014-11-10T19:05:58 <Justin_o> Bosmon: hmm.. i\'ll have to think about that.. the idea sounds good.. i just don\'t have a clear picture in my head about how that structure will look yet.
+2014-11-10T19:07:17 <Bosmon> Justin_o - well, it will look very similar to the one you have now - only you can write an "even more compact structure" which comes before it, e.g. that just has the delays in it
+2014-11-10T19:07:29 <Bosmon> Then take multiple copies of it that are the same apart from the delays, etc.
+2014-11-10T19:09:28 <Justin_o> Bosmon: ah okay.. things are clearing up.. so something like {get: [0, 20, 30, 40], set: [20, 40, 60], delete: [...]}
+2014-11-10T19:09:50 <Bosmon> Justin_o - yup, just like that
+2014-11-10T19:10:07 <Bosmon> Once everything is declarative, you can just connect it all up with "little machines"
+2014-11-10T19:10:21 <Justin_o> Bosmon: cool thanks
+2014-11-10T19:17:01 * cindyli has quit
+2014-11-10T19:18:01 * cindyli joined the channel
+2014-11-10T19:22:54 <kasparnet> Bosmon: ok, all is passing in windows again now with my branch and nodejs 0.10.33
+2014-11-10T19:23:18 <kasparnet> Bosmon: should I try reproducing your error in Linux?
+2014-11-10T19:23:50 <Bosmon> xrandr one?
+2014-11-10T19:25:06 <kasparnet> yeah
+2014-11-10T19:26:47 <Bosmon> yes, thanks
+2014-11-10T19:27:02 <kasparnet> ok - is it just the GPII-434 branch in linux?
+2014-11-10T19:27:05 <Bosmon> I\'m still hacking on getting the Windows integration tests to run in Linux
+2014-11-10T19:27:05 <kasparnet> Bosmon:
+2014-11-10T19:27:10 <Bosmon> A little tougher than I thought
+2014-11-10T19:27:14 <Bosmon> kasparnet - yes, that one
+2014-11-10T19:27:17 <kasparnet> ok
+2014-11-10T19:27:35 <Bosmon> It has VVERNANDDEZZ fix for the orca handler in it
+2014-11-10T19:27:42 <Bosmon> And also I made a top-level driver "UnitTests.sh"
+2014-11-10T19:27:54 <Bosmon> But I\'ve currently commented out the xrandr tests since they are crashing out for me
+2014-11-10T19:39:46 <jhernandez> Bosmon: FYI, android is "almost" working
+2014-11-10T19:39:47 <jhernandez> :)
+2014-11-10T19:40:04 <Bosmon> jhernandez that is "almost" COMPLETELY FANTASTIC!!
+2014-11-10T19:40:11 <jhernandez> haha
+2014-11-10T19:40:44 <kasparnet> lol
+2014-11-10T19:44:42 <jhernandez> Bosmon: btw, the other day I made a photo for Rachel -> http://pasteboard.co/1BrKUzYx.jpg
+2014-11-10T19:46:08 * clown_mtg has quit
+2014-11-10T19:46:26 <Bosmon> Oh great, very nice
+2014-11-10T19:46:31 <Bosmon> The so-called "YYARNBOMBBING"
+2014-11-10T19:46:56 <jhernandez> there were yarntrees aswell
+2014-11-10T19:46:57 <jhernandez> xDDDD
+2014-11-10T19:48:14 * colinclark has quit
+2014-11-10T19:52:19 <anastasiac> jhung, did you still want me to continue trying to get the PhET sims running?
+2014-11-10T19:52:50 <jhung> anastasiac: I don\'t think so. I\'ll send an email to the phet peeps and ask for help.
+2014-11-10T19:52:58 <anastasiac> ok
+2014-11-10T19:54:52 <Bosmon> OK, kasparnet, jhernandez - I have fixed up universal in my branch so that nvda integration tests run under both Windows and Linux
+2014-11-10T19:55:02 <Bosmon> We will have to somehow back out of kasparnet\'s last commit to his branch
+2014-11-10T19:55:17 <Bosmon> Perhaps we can just create a new branch from the revision one level back
+2014-11-10T19:56:16 <kasparnet> ugh crap, sorry about that
+2014-11-10T19:58:32 <Bosmon> Ok, so we can consider GPII-497 resolved as well
+2014-11-10T19:58:42 <kasparnet> very nice!!
+2014-11-10T19:58:45 <Bosmon> I\'ll just get some food and I need to write up an Infusion JIRA and some notes
+2014-11-10T19:58:52 <kasparnet> ok
+2014-11-10T19:58:55 <Bosmon> Since the scheme I had to use to resolve it was very crappy
+2014-11-10T19:59:39 <Bosmon> I was struck by a sudden lightning bolt when working on this issue and it suddenly dawned on me how the ASYNCHRONOUS GINGER WORLD framework will actually work
+2014-11-10T19:59:39 <kasparnet> would it be horrific if I just manually rolled back (ie. did an extra commit that changes back to original the changes I made re the GPII-497 issue)?
+2014-11-10T20:00:05 <Bosmon> kasparnet - I guess it\'s fine - but I don\'t know what would happen if you merged - I guess git will just pick up the pieces
+2014-11-10T20:00:15 <Bosmon> It generally does things which are broadly sensible, I find
+2014-11-10T20:00:49 <Bosmon> I realised that PROMISES AREN\'T JUST FOR GENUINE ASYNCHRONY
+2014-11-10T20:00:52 <kasparnet> great with the async GW - I thought it was halfway working already
+2014-11-10T20:00:59 <Bosmon> Which is just as well, since our promises aren\'t genuinely asynchronous
+2014-11-10T20:01:03 <Bosmon> No, it\'s not every started
+2014-11-10T20:01:09 <Bosmon> not even started, I meant to say
+2014-11-10T20:01:15 <Bosmon> We don\'t even have the WAVE OF EXPLOSIONS yet
+2014-11-10T20:01:18 <kasparnet> Bosmon: ok, I\'ll try with the rollback and see if I can still merge up with you
+2014-11-10T20:01:38 <kasparnet> haha - can we wait with the explosions till post F2F?
+2014-11-10T20:01:43 <Bosmon> This JIRA comes first - http://issues.fluidproject.org/browse/FLUID-4925
+2014-11-10T20:01:55 <Bosmon> And then this one next: http://issues.fluidproject.org/browse/FLUID-4982
+2014-11-10T20:02:04 <Bosmon> Well, more than that, we\'ll have to wait until after the review
+2014-11-10T20:02:26 <kasparnet> yeah
+2014-11-10T20:02:36 <Bosmon> I haven\'t even finished clearing out the blatant bugs in Infusion that Justin_o and cindyli have turned up in the months since I was intensively fixing the GPII junk
+2014-11-10T20:02:38 <kasparnet> that sounds very good to me
+2014-11-10T20:02:58 <Bosmon> But I can probably turn back to that for a bit next week
+2014-11-10T20:03:09 <Bosmon> Since it looks like we may be able to reopen trunk very soon
+2014-11-10T20:03:25 * kasparnet crossing his fingers
+2014-11-10T20:03:37 <Bosmon> What\'s your tomorrow looking like?
+2014-11-10T20:03:43 <Bosmon> Do we absolutely need to get it done this evening?
+2014-11-10T20:03:49 <kasparnet> meeting at 15:00
+2014-11-10T20:03:58 <kasparnet> and need to prep a presentation before then
+2014-11-10T20:04:06 <Bosmon> We still need some Infusion review from colinclark
+2014-11-10T20:04:18 <Bosmon> So we may have to try to slip it in tomorrow somehow
+2014-11-10T20:04:21 <kasparnet> Bosmon: I think it\'s ok to wait until tomorrow
+2014-11-10T20:04:24 <Bosmon> Especially if we want to do at least a little testing
+2014-11-10T20:04:51 <kasparnet> yeah
+2014-11-10T20:05:21 <Bosmon> The good news is at least we reopen trunk with about a dozen pull requests "pre-disposed" of
+2014-11-10T20:05:38 <Bosmon> And several of the outstanding ones (e.g. DeviceReporter) we need to rethink a bit anyway
+2014-11-10T20:07:29 * jhernandez hugs Bosmon for his gpii.settingsHandlers.numberify function
+2014-11-10T20:07:31 <jhernandez> :)
+2014-11-10T20:07:39 <Bosmon> ha
+2014-11-10T20:08:19 <Bosmon> Must be the first time someone has been hugged for something both at once so obscure and clumsy : P
+2014-11-10T20:08:56 <Bosmon> There are actually quite a few gpii.settingsHandlers.* utilities that we can clean up a lot of our code with
+2014-11-10T20:09:12 <Bosmon> Since so many of the settings handlers and their tests do so much redundant junk
+2014-11-10T20:16:18 <kasparnet> Bosmon: Removed my crap, merged with your branch and everything is passing under mac
+2014-11-10T20:16:29 <Bosmon> kasparnet - fantastic
+2014-11-10T20:21:01 * clown joined the channel
+2014-11-10T20:24:28 * kasparnet has quit
+2014-11-10T20:27:58 * jhernandez has quit
+2014-11-10T20:58:35 * heidiv has quit
+2014-11-10T20:59:39 * colinclark joined the channel
+2014-11-10T21:24:48 * anvk has quit
+2014-11-10T21:26:08 * jhung has quit
+2014-11-10T21:28:43 * colinclark has quit
+2014-11-10T21:29:05 * cindyli has quit
+2014-11-10T21:35:31 * anastasiac has quit
+2014-11-10T21:47:44 * jhung joined the channel
+2014-11-10T21:49:14 * kasparnet joined the channel
+2014-11-10T21:50:05 * jhung has quit
+2014-11-10T21:53:32 * kasparnet has quit
+2014-11-10T22:08:19 * clown has quit
+2014-11-10T22:25:58 * simonjb has quit
+2014-11-10T22:37:04 * colinclark joined the channel
+2014-11-10T22:46:52 * Justin_o has quit
+2014-11-10T23:52:45 * jhernandez joined the channel
+2014-11-10T23:56:29 * kasparnet joined the channel
+2014-11-10T23:58:39 * danaayotte has quit
+'
+
+b'2014-11-10T15:38:13 <Bosmon> Can I merge up with your GIANT BRANCH?
+2014-11-10T15:38:19 <Bosmon> is everything working other than Integration Tests?
+2014-11-10T15:40:31 * kasparnet has quit
+2014-11-10T15:42:25 * jhernandez has quit
+2014-11-10T15:44:29 * simonjb has quit
+2014-11-10T15:46:36 <jhung> anastasiac: I want to test the latest Forces phet simulation so I can give a11y feedback and test the sim in ibooks. However, it\'s not going smoothly. I\'m having problems even building from scratch.
+2014-11-10T15:46:49 <anastasiac> oh, that\xe2\x80\x99s not good, jhung
+2014-11-10T15:47:50 <jhung> If you have time today anastasiac, I was wondering if you can try going through a build from scratch? I wonder if it\'s just me.
+2014-11-10T15:48:29 <anastasiac> sure, jhung, I\xe2\x80\x99ll try. Are you using the latest code from all the various repos?
+2014-11-10T15:50:56 <jhung> yes anastasiac. I started from an empty directory and went from there.
+2014-11-10T15:51:17 <anastasiac> ok, jhung, I\xe2\x80\x99ll give it a try and let you know how it goes.
+2014-11-10T15:51:26 <jhung> thanks.
+2014-11-10T15:51:30 <Justin_o> Bosmon: my pull request for FLUID-5542 is ready for another round or review. https://github.com/fluid-project/infusion/pull/566
+2014-11-10T15:51:50 <Justin_o> Bosmon: i\'m not sure if the way I\'ve used the setTimeouts in the tests are safe, please let me know what you think.
+2014-11-10T15:54:53 * slim_jim joined the channel
+2014-11-10T15:59:07 <Justin_o> anastasiac: i\'m looking at your FLUID-5543 infusion-docs pull request
+2014-11-10T15:59:18 <Justin_o> i think it\'s okay.. i\'m going to merge it into master
+2014-11-10T15:59:31 <anastasiac> thanks, Justin_o
+2014-11-10T16:02:51 <Justin_o> np done
+2014-11-10T16:08:10 <Justin_o> anastasiac, cindyli, jhung: are we going to do a floe checkin today?
+2014-11-10T16:08:12 * slim_jim has quit
+2014-11-10T16:08:22 <jhung> Justin_o: sure
+2014-11-10T16:08:24 <anastasiac> oh! yes, we should, I think
+2014-11-10T16:08:37 <cindyli> ah, right
+2014-11-10T16:08:51 <Justin_o> okay.. lets meet in the colab room and the fluid-standup vidyo channel
+2014-11-10T16:11:28 * anastasiac_ joined the channel
+2014-11-10T16:13:01 * anastasiac has quit
+2014-11-10T16:13:01 * anastasiac_ is now known as anastasiac
+2014-11-10T16:32:18 * danaayotte has quit
+2014-11-10T16:34:55 * cindyli has quit
+2014-11-10T16:43:05 * danaayotte joined the channel
+2014-11-10T16:50:07 * anastasiac has quit
+2014-11-10T16:50:36 * cindyli joined the channel
+2014-11-10T16:52:26 * anastasiac joined the channel
+2014-11-10T16:53:31 * kasparnet joined the channel
+2014-11-10T16:53:39 <kasparnet> Bosmon: back
+2014-11-10T16:53:49 <kasparnet> sorry - didn\'t see your ping before leaving
+2014-11-10T16:54:06 <kasparnet> yeah - everything is working except integration tests - though I haven\'t tested much in windows or linux
+2014-11-10T16:54:17 <kasparnet> but that was my plan to do now
+2014-11-10T16:57:10 * jhernandez joined the channel
+2014-11-10T17:00:08 * simonjb joined the channel
+2014-11-10T17:01:40 <colinclark> jhernandez: Your GNOME extension for the GPII is awesome, by the way
+2014-11-10T17:01:43 <colinclark> really cool
+2014-11-10T17:02:07 <jhernandez> colinclark: hey!
+2014-11-10T17:02:09 <jhernandez> thanks!!!
+2014-11-10T17:02:13 <jhernandez> :)
+2014-11-10T17:04:00 <jhernandez> right now it\'s just a mock-up, but at least it gives some ideas of what can we do with it
+2014-11-10T17:04:03 <jhernandez> :)
+2014-11-10T17:06:24 <kasparnet> hey colinclark\'ster
+2014-11-10T17:06:32 <colinclark> hello
+2014-11-10T17:06:55 <kasparnet> how are things?
+2014-11-10T17:07:03 <colinclark> not bad
+2014-11-10T17:07:06 <colinclark> how about with you?
+2014-11-10T17:07:49 <kasparnet> pretty good -- my stresslevel have dropped dramatically... not sure whether it\'s good or it\'s because it\'s been replaced with resignation :)
+2014-11-10T17:07:55 <colinclark> lol
+2014-11-10T17:07:59 <kasparnet> but it\'s less stressful for sure :)
+2014-11-10T17:08:13 <kasparnet> plus I\'m in a bar with jhernandez
+2014-11-10T17:08:53 <colinclark> that\'ll help lower the stress level, for sure
+2014-11-10T17:09:02 <kasparnet> indeed :)
+2014-11-10T17:09:25 <kasparnet> colinclark: really exciting to see how much work antranig got done saturday
+2014-11-10T17:09:45 <kasparnet> we\'re getting really close to have the fireball branch ready to replace master, I think
+2014-11-10T17:10:26 <colinclark> that\'s awesome
+2014-11-10T17:16:36 * cindyli has quit
+2014-11-10T17:17:13 * cindyli joined the channel
+2014-11-10T17:18:37 <Bosmon> Hey there KASPERNETT
+2014-11-10T17:30:09 <kasparnet> hey Bosmon
+2014-11-10T17:30:29 <kasparnet> I\'ve been spending the last 20 minutes trying to get fucking npm install to run in windows
+2014-11-10T17:30:32 <kasparnet> and it keeps failing
+2014-11-10T17:30:45 <Bosmon> So I\'ve merged jhernandez branch into linux and now the linux integration tests seem to be working fine
+2014-11-10T17:30:48 <Bosmon> Sorry
+2014-11-10T17:30:52 <Bosmon> Linux acceptance tests
+2014-11-10T17:31:00 <Bosmon> Now I\'m just working on the "windows integration tests in linux" issue
+2014-11-10T17:31:20 <kasparnet> Bosmon: awesome!
+2014-11-10T17:31:59 <kasparnet> jhernandez: is currently looking at android
+2014-11-10T17:32:04 <Bosmon> That\'s great
+2014-11-10T17:32:37 <kasparnet> yeah
+2014-11-10T17:40:09 <jhernandez> btw, who\'s gonna take care of Android\'s pull requests? - It would be great if someone gives a review to https://github.com/GPII/android/pull/23/
+2014-11-10T17:40:38 <kasparnet> Bosmon: just an FYI - tried running your windows branch on my 32 bit install - works just fine... Tried running mine and a few of the tests are failing... Might be due to my half-assed "fix" to the integration tests ... will look into it now
+2014-11-10T17:48:06 * clown has quit
+2014-11-10T17:50:02 <kasparnet> jhernandez: I think sgithens____ is probably still the best for that... I can perhaps get my phone set up while here to test that it\'s working, but steve should probably do a sanity check on it
+2014-11-10T17:56:46 <jhernandez> yeah
+2014-11-10T17:56:52 <jhernandez> no prob
+2014-11-10T17:58:54 * clown joined the channel
+2014-11-10T17:59:13 * clown is now known as clown_mtg
+2014-11-10T18:07:54 <jhung> Justin_o: I have used the ghpages plugin in docpad and created a gh-pages branch in my personal repo. I\'m now going to issue a pull request to master. After that not sure what happens. Any idea?
+2014-11-10T18:08:18 <Justin_o> jhung: did you push that up to your github repo?
+2014-11-10T18:08:27 <jhung> yes Justin_o
+2014-11-10T18:08:34 <Justin_o> can you drop a link for us to look at
+2014-11-10T18:08:57 <jhung> Justin_o: https://github.com/jhung/fluidproject.org/tree/gh-pages
+2014-11-10T18:09:01 <Justin_o> jhung: a couple things will be needed, code review and pushing up to master.. maybe some docs on how to use the plugin and what the workflow is should be added to the repo too..
+2014-11-10T18:09:19 <Justin_o> jhung: also we\'ll need to change the DNS and add a CNAME file to the gh-pages branch in the main repo
+2014-11-10T18:09:32 <jhung> good idea Justin_o. Also I noticed the plugin removes the readme.md from the output.
+2014-11-10T18:09:58 <jhung> avtar was going to look after the DNS and CNAME changes once we have the site running.
+2014-11-10T18:10:54 <Justin_o> jhung: i actually meant the link to the hosted site :)
+2014-11-10T18:14:08 <jhung> Justin_o: yep. I inferred that. :) I\'ll update the readme to include the deploy workflow. In the deployed site, do you think we should have a readme.md file or is it understood what a gh-pages branch is?
+2014-11-10T18:19:23 <Justin_o> jhung: i was thinking that the main branch that holds the source files that docpad uses should have the readme
+2014-11-10T18:21:49 <jhung> Yes Justin_o that already has a readme. It just needs updating with the gh-pages deploy info. I will update that now and submit a pull for it.
+2014-11-10T18:23:46 * danaayotte has quit
+2014-11-10T18:27:10 <Justin_o> Bosmon: should the queuedDataSource be a relay component
+2014-11-10T18:27:28 <Justin_o> now that it doesn\'t actually have  model itself i was going to switch it to an eventedComponent
+2014-11-10T18:27:39 <Bosmon> Justin_o - certainly, an eventedComponent is fine
+2014-11-10T18:29:57 <Justin_o> Bosmon: thanks, looking over your comments on the pull request now
+2014-11-10T18:30:12 <Justin_o> what you say they should be declarative, what did you have in mind
+2014-11-10T18:30:18 <Justin_o> currently it is an array of objects
+2014-11-10T18:38:02 <Bosmon> Justin_o - it sort of looks like an array of objects
+2014-11-10T18:38:13 <Bosmon> But in a little way, it is actually a fake array of objects : P
+2014-11-10T18:38:32 <Bosmon> Since it has things in it which have been fished out of members of a component
+2014-11-10T18:38:43 <Bosmon> By "declarative" I mean, "equivalent to a structure written in JSON"
+2014-11-10T18:38:58 <Bosmon> And also in general, into the bargain, "Expressed at a well-known location in a public namespace"
+2014-11-10T18:39:42 <Bosmon> Our sense of "declarative", in our community, is generally a little stronger than the one this word generally has
+2014-11-10T18:40:22 <Bosmon> "Normal people" when they say "declarative" can mean a variety of things... generally implying some kind of sense that "they are no longer encoding explicit logical steps"
+2014-11-10T18:40:52 <Bosmon> Whereas our sense is generally stronger than this, in terms of saying that "declarative" implies "completely externalisable"
+2014-11-10T18:41:08 <Bosmon> That is, "You could take this structure and store it in a JSON-structured file without losing any of its function or meaning"
+2014-11-10T18:46:44 <Justin_o> Bosmon: hmm. okay.. i get the namespace part
+2014-11-10T18:46:50 <Justin_o> i\'m still not clear on how this should look
+2014-11-10T18:47:18 <Bosmon> Justin_o - well - what would happen if you took one of your "requests" structures and wrote it to disk
+2014-11-10T18:47:22 <Bosmon> And then tried to read it back again?
+2014-11-10T18:47:34 <Justin_o> Bosmon: sure.. i understand that part
+2014-11-10T18:47:43 <Justin_o> Bosmon: i guess i\'m not sure i know what to do about it :)
+2014-11-10T18:47:54 <Justin_o> Bosmon: so instead of writing that.get
+2014-11-10T18:48:01 <Justin_o> i could just write type: "get"
+2014-11-10T18:48:04 <Justin_o> or something like that
+2014-11-10T18:48:09 <Justin_o> would that address that part of the issue
+2014-11-10T18:48:12 <Bosmon> Justin_o - well, the typical answer takes the form, "turn things into strings and then make little machines to interpret them"
+2014-11-10T18:48:34 <Bosmon> Which you could say the entire IoC framework is an example of
+2014-11-10T18:49:00 <Bosmon> little machines or big
+2014-11-10T18:49:22 <Justin_o> right so just writing type: "get" and having the component figure out which method would be sufficient
+2014-11-10T18:49:35 <Bosmon> For this will be a jolly Court, for little and for big!
+2014-11-10T18:49:43 <Bosmon> Sing hey, the jolly jinks of Pfennig Halbpfennig!
+2014-11-10T18:49:49 <Justin_o> where is that from
+2014-11-10T18:49:50 <Justin_o> ?
+2014-11-10T18:49:51 <Bosmon> From morn to night our lives shall be as merry as a grig!
+2014-11-10T18:50:00 <Bosmon> Sing hey, the jolly jinks of Pfennig Halbpfennig!
+2014-11-10T18:50:28 <Bosmon> http://diamond.boisestate.edu/gas/grand_duke/html/
+2014-11-10T18:50:34 <Bosmon> Sorry for the musical interlude : P
+2014-11-10T18:50:55 <Bosmon> Apparently the exact sense of "merry as a grig" has never been decrypted by later commentators
+2014-11-10T18:51:06 <Justin_o> for point 2 I\'ll have to think some more about what is interesting.. i was afraid of making things overly complex to the point where the tests were unreadable and unintelligible for anyone trying to update them or trying to find out why something may or may not be passing
+2014-11-10T18:51:09 <Bosmon> Although there is a theory that this might actually imply "as merry as a GREEK"
+2014-11-10T18:51:43 <Justin_o> Bosmon: when was this written.. maybe the author is still around to ask :)
+2014-11-10T18:51:45 <Bosmon> Justin_o - well, there\'s readability on one hand.... and then there\'s making the tests actually test the implementation as another : P
+2014-11-10T18:51:56 <Justin_o> Bosmon: i think we need both
+2014-11-10T18:51:58 <Bosmon> I\'m sure you can find a way of achieving the latter without compromising the former too much
+2014-11-10T18:52:18 <Bosmon> Unfortunately he died over a century ago
+2014-11-10T18:52:40 <Justin_o> Bosmon: that\'s too bad... it will be hard to form proofs then
+2014-11-10T18:52:47 <Bosmon> http://en.wiktionary.org/wiki/grig
+2014-11-10T18:53:29 <Justin_o> Bosmon: okay.. next question
+2014-11-10T18:53:30 <Justin_o> "As discussed in the channel, the "get" tests should verify "point of delivery of request" by returning values from a model which is considered "continuously incrementing" (and it is these these returned values which are put into the "record" and so tested)"
+2014-11-10T18:53:45 <Justin_o> when you say that.. i don\'t quite understand how that will show which get request returned what
+2014-11-10T18:53:53 <Justin_o> i\'m probably missing something here
+2014-11-10T18:54:49 <Bosmon> Justin_o - well, you\'ll simply construct an array consisting of the return values of each get request that you issue
+'
+
+b'2014-11-10T00:03:42 * colinclark has quit
+2014-11-10T00:07:38 * heidiv has quit
+2014-11-10T00:10:25 * heidiv joined the channel
+2014-11-10T01:10:54 <jhernandez> Bosmon: https://github.com/javihernandez/linux/commit/28629c0d7238f552e1e6ff8484c0b0cbf7ac7675
+2014-11-10T01:11:43 <jhernandez> :*
+2014-11-10T01:45:42 * jhernandez has quit
+2014-11-10T02:26:43 * heidiv has quit
+2014-11-10T04:00:36 * kasparnet joined the channel
+2014-11-10T04:05:07 * kasparnet has quit
+2014-11-10T04:19:06 * kasparnet joined the channel
+2014-11-10T04:20:41 * kasparnet has quit
+2014-11-10T06:56:57 * the-t-in-rtf joined the channel
+2014-11-10T07:16:17 * jhernandez joined the channel
+2014-11-10T08:03:29 * jhernandez has quit
+2014-11-10T11:43:45 * heidiv joined the channel
+2014-11-10T11:48:18 * slim_jim joined the channel
+2014-11-10T13:10:08 * heidiv has quit
+2014-11-10T13:26:28 * Justin_o joined the channel
+2014-11-10T13:38:25 * ashgotti joined the channel
+2014-11-10T13:38:39 * ashgotti has quit
+2014-11-10T13:39:26 * jhung joined the channel
+2014-11-10T13:44:02 * cindyli joined the channel
+2014-11-10T13:49:35 * colinclark joined the channel
+2014-11-10T13:57:38 * slim_jim has quit
+2014-11-10T14:01:01 * simonjb joined the channel
+2014-11-10T14:12:07 * heidiv joined the channel
+2014-11-10T14:16:44 * anvk joined the channel
+2014-11-10T14:30:05 * simonjb_ joined the channel
+2014-11-10T14:30:25 * simonjb has quit
+2014-11-10T14:31:02 * simonjb_ is now known as simonjb
+2014-11-10T14:32:22 * anastasiac joined the channel
+2014-11-10T14:42:14 * danaayotte joined the channel
+2014-11-10T14:53:07 <sgithens____> I completely forgot about the sec call this morning.... not sure if it was still going on because of the madrid meetup
+2014-11-10T14:53:30 <sgithens____> I was traveling home over the weekend, and had a biobank thing on Saturday, and have a minor cold.
+2014-11-10T14:53:57 * kasparnet joined the channel
+2014-11-10T14:54:15 <kasparnet> Hello Dr. Dr. Bosmon Bosmodium Explodium
+2014-11-10T14:55:22 <kasparnet> it was awesome to see all the pull request get merged into the fireball branch ovr the weekend
+2014-11-10T14:55:48 <Bosmon> hey there KASPARDNETT!
+2014-11-10T14:55:58 <Bosmon> I\'m just working in VERNANDDEZ recent pul now
+2014-11-10T14:55:58 <kasparnet> hey man
+2014-11-10T14:56:09 <kasparnet> oh cool
+2014-11-10T14:56:10 <Bosmon> And then I will fix the path issue that stops our Integration tests running on Linux
+2014-11-10T14:56:16 <Bosmon> How is your branch doing?
+2014-11-10T14:56:21 <kasparnet> ok - I was actually jsut looking at that
+2014-11-10T14:56:34 <kasparnet> I\'m fully merged with your stuff and everything is passing except for the integration tests
+2014-11-10T14:56:52 <kasparnet> and I was just working on the path thing on the way down here
+2014-11-10T14:56:57 <kasparnet> (madrid)
+2014-11-10T14:57:00 <Bosmon> oh ok
+2014-11-10T14:57:02 <Bosmon> Are you there already?
+2014-11-10T14:57:27 <kasparnet> yeah - flights tomorrow wouldn\'t get me here in time for the meeting, so I had to arrive today
+2014-11-10T14:57:45 <kasparnet> but javi will get to the hotel in about 15 mins or so
+2014-11-10T14:57:51 <Bosmon> oh cool
+2014-11-10T14:57:55 <kasparnet> which is nice
+2014-11-10T14:58:11 <Bosmon> I wonder if you can duplicate the XRANDR test failure I saw
+2014-11-10T14:58:12 <kasparnet> yeah - need some food - but after that I think the plan is to get some hacking done
+2014-11-10T14:58:14 <Bosmon> This blows up in my VM
+2014-11-10T14:58:28 <kasparnet> sure, I can try
+2014-11-10T14:59:45 <kasparnet> Bosmon: should  I just pull down your universal and the linux branch?
+2014-11-10T14:59:50 <kasparnet> master*
+2014-11-10T15:00:09 <kasparnet> ok.. lemme try that again: should I just pull down your GPII-434 universal and the linux master?
+2014-11-10T15:00:11 <Bosmon> kasparnet - yes - there should only be pretty minor changes now
+2014-11-10T15:00:17 <Bosmon> let me just put VANTTUNEZ thing into mine
+2014-11-10T15:00:23 <kasparnet> Bosmon:
+2014-11-10T15:00:24 <kasparnet> ok
+2014-11-10T15:00:41 <kasparnet> should I drop looking at the path thing in universal btw?
+2014-11-10T15:00:59 <Bosmon> Well, not if you\'ve done anything about it : P
+2014-11-10T15:01:03 <Bosmon> I was just about to start
+2014-11-10T15:01:05 <kasparnet> not too far from getting it to work - but can\'t think of any pretty fixes
+2014-11-10T15:01:11 <Bosmon> !
+2014-11-10T15:01:13 <Bosmon> What have you done
+2014-11-10T15:01:15 <kasparnet> hehe or well
+2014-11-10T15:01:23 <kasparnet> I can think of pretty fixes for most of it
+2014-11-10T15:01:40 <kasparnet> but I\'m stuck on fucking mac and windows liking different path-delimiters
+2014-11-10T15:01:53 <Bosmon> They actually don\'t care
+2014-11-10T15:02:03 <Bosmon> And it isn\'t relevant anyway, since it\'s just an integration testing issue
+2014-11-10T15:02:09 <Bosmon> Can you send me the diff of what you have done?
+2014-11-10T15:02:17 <kasparnet> sure, give me a sec
+2014-11-10T15:02:25 <Bosmon> All we really require is that the base path be "any string" in order to get the integration tests to work
+2014-11-10T15:03:07 <cindyli> danaayotte, Justin_o, when you have time, can i show you how infusion demos with removed the overview panel look like on mobile devices so we can decide if we should go ahead with this approach?
+2014-11-10T15:03:54 <Justin_o> cindyli: sure i\'m ready whenever
+2014-11-10T15:08:45 <kasparnet> Bosmon: ok - uploaded my stuff to GPII-941 branch  now
+2014-11-10T15:09:11 <kasparnet> not sure if it\'s particularly correct or useful - so feel free to throw it out :)
+2014-11-10T15:11:17 <Bosmon> kasparnet - how can I "throw it out" : P
+2014-11-10T15:11:23 <Bosmon> I need to merge up with your branch....
+2014-11-10T15:13:29 <kasparnet> oh - yeah - I realized that after committing -- I should probably have pushed to a different branch :)
+2014-11-10T15:14:04 <Bosmon> We can do this a lot more simply with the existing "nameResolver"
+2014-11-10T15:14:21 <Bosmon> Well
+2014-11-10T15:14:24 <Bosmon> Not A LOT more simply...
+2014-11-10T15:16:42 <Bosmon> Why do you call it "failed attempt"?
+2014-11-10T15:17:02 <kasparnet> well - the the thing I ended up with just before pinging you
+2014-11-10T15:17:13 <kasparnet> was that the two paths resolved differently
+2014-11-10T15:17:20 <Bosmon> Which two?
+2014-11-10T15:17:37 <kasparnet> the solution regiwtry on:                     "filename": "${{environment}.APPDATA}\\\
+vda\\\
+vda.ini",
+2014-11-10T15:17:44 <kasparnet> would resolve to:
+2014-11-10T15:18:11 <kasparnet> url/to/my/home/dir/nvda\
+vda.ini
+2014-11-10T15:18:32 <kasparnet> and the one from the test definition would resolve to:
+2014-11-10T15:19:06 <kasparnet> /url/to/my/home/dir\
+vda\
+vda.ini
+2014-11-10T15:19:26 <Bosmon> Oh, I see
+2014-11-10T15:19:30 <Bosmon> It doesn\'t really matter
+2014-11-10T15:21:05 * anastasiac has quit
+2014-11-10T15:21:59 <danaayotte> cindyli justin_o NOW?
+2014-11-10T15:22:16 <cindyli> danaayotte: anytime when you are ready
+2014-11-10T15:23:52 <kasparnet> Bosmon: it screws up the test though - as in the settingsstore, it\'ll look for two different keys
+2014-11-10T15:24:06 <kasparnet> is the linux stuff ready for me to try out, btw?
+2014-11-10T15:24:42 <Bosmon> kasparnet not yet, sorry - just give me a sec
+2014-11-10T15:24:51 <kasparnet> no worries at all
+2014-11-10T15:24:52 <Bosmon> kasparnet - what do you mean, that it will look for two different keys?
+2014-11-10T15:26:37 * anastasiac joined the channel
+2014-11-10T15:27:45 <kasparnet> for the INI handler, the filename is used as key into the settingsStore (line 225 and 256 in Integration.js)
+2014-11-10T15:28:06 <kasparnet> and when the user logs in, the solutionsRegistry entry is used
+2014-11-10T15:28:21 <kasparnet> and hence settings are stored under
+2014-11-10T15:28:22 <kasparnet> :url/to/my/home/dir/nvda\
+vda.ini
+2014-11-10T15:28:25 * clown joined the channel
+2014-11-10T15:29:32 <Bosmon> I\'m completely puzzled
+2014-11-10T15:29:46 * jhernandez joined the channel
+2014-11-10T15:30:43 <Bosmon> What\'s NVDA got to do with this ......
+2014-11-10T15:30:48 <Bosmon> On
+2014-11-10T15:30:49 <Bosmon> oh
+2014-11-10T15:30:50 <Bosmon> Sorry
+2014-11-10T15:30:53 <Bosmon> I am very confused
+2014-11-10T15:30:55 <Bosmon> Just a second
+2014-11-10T15:31:00 <jhernandez> Bosmon: you\'re always confused!
+2014-11-10T15:31:04 <jhernandez> :P
+2014-11-10T15:31:18 <kasparnet> but when the tests checks the settings in gpii.tests.checkConfiguration, it calls the getImpl. with the entry from the testdefinition
+2014-11-10T15:32:15 <kasparnet> jhernandez: what room are you?
+2014-11-10T15:32:45 <jhernandez> 110
+2014-11-10T15:33:47 <Bosmon> kasparnet ok - but we needed to fix the test definitions anyway
+2014-11-10T15:33:50 <Bosmon> Because they are rubbish
+2014-11-10T15:34:11 <Bosmon> Your commit didn\'t seem to do anything to those
+2014-11-10T15:34:34 <kasparnet> nope, not at all
+2014-11-10T15:36:05 <jhernandez> kasparnet: going downstairs - take your time with ANTVANIQ!!!
+2014-11-10T15:36:24 <jhernandez> I\'ll be fogging .... ;)
+2014-11-10T15:36:34 <Bosmon> FOGGING!??!
+2014-11-10T15:36:38 <jhernandez> xDDDD
+2014-11-10T15:36:41 <Bosmon> You will be **MAKING **FOGGE***?
+2014-11-10T15:36:41 <Bosmon> Oh
+2014-11-10T15:36:50 <kasparnet> what the hell is that
+2014-11-10T15:36:51 <kasparnet> ?
+2014-11-10T15:36:52 <Bosmon> You will be causing death to yourself and others with DEATH-STICKS
+2014-11-10T15:37:02 <kasparnet> ahhh - smokes
+2014-11-10T15:37:05 <jhernandez> xDDD
+2014-11-10T15:37:15 <kasparnet> hold on, let me join you in your suicide mission
+2014-11-10T15:37:23 <Bosmon> stupid bastards
+2014-11-10T15:37:24 <jhernandez> xDDD
+2014-11-10T15:37:27 <jhernandez> okay
+2014-11-10T15:37:45 <kasparnet> Bosmon: would you be ok with Javi and I going afk for a while
+2014-11-10T15:37:50 <Bosmon> yes sure
+2014-11-10T15:37:54 <Bosmon> I just need to pop to the post office
+2014-11-10T15:37:55 <kasparnet> need to get some food as well... starving
+2014-11-10T15:37:59 <Bosmon> I\'ll deal with these issues in the meantime
+'
+

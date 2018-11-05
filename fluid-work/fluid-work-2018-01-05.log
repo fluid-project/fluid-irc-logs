@@ -1,0 +1,132 @@
+b'2018-01-05T00:39:33 <ussjoin> https://support.apple.com/en-us/HT208394 -- MacOS 10.13.2 (High Sierra) can defend against Meltdown... but apparently they\'re not releasing a patch for Sierra (!!!!!).
+2018-01-05T00:50:19 * danayo joined the channel
+2018-01-05T01:04:10 <mrtyler> wow, boo to that
+2018-01-05T01:14:33 * yuriy__ has quit
+2018-01-05T03:53:07 <ussjoin> mrtyler: Someone pointed out that https://support.apple.com/en-au/HT208331 says the kernel patches to defend *specifically do include* El Capitan and Sierra, too.
+2018-01-05T03:53:17 <ussjoin> So just the page announcing it doesn\'t include it.
+2018-01-05T07:57:57 * amatas joined the channel
+2018-01-05T08:44:50 * georgitodorov joined the channel
+2018-01-05T09:01:54 * the-t-in-rtf joined the channel
+2018-01-05T09:25:42 * yuriy__ joined the channel
+2018-01-05T09:33:43 <javjarfer[m]> hi stegru_ good morning
+2018-01-05T09:52:48 * stegru joined the channel
+2018-01-05T10:25:26 * kasparnet_ joined the channel
+2018-01-05T10:36:58 * yuriy__ has quit
+2018-01-05T10:37:16 * yuriy__ joined the channel
+2018-01-05T10:38:32 * gtirloni joined the channel
+2018-01-05T11:05:43 <javjarfer[m]> stegru: hi!
+2018-01-05T11:05:48 <javjarfer[m]> are you available?
+2018-01-05T11:08:34 <stegru> hello javjarfer[m]
+2018-01-05T11:08:41 <javjarfer[m]> hey there!
+2018-01-05T11:12:42 <javjarfer[m]> I was just reviewing your PR and I had a few questions about it
+2018-01-05T11:12:51 <stegru> ok
+2018-01-05T11:27:37 <javjarfer[m]> this is https://github.com/GPII/windows/pull/132/files#diff-f183c9185bcdd61677beebd16d9efba2R479
+2018-01-05T11:28:16 <javjarfer[m]> I have only noticed three things but that one is probably the only one that could not be a typo
+2018-01-05T11:30:32 <stegru> yes, i wanted to check if fnStatus is ref.NULL.. but i couldn\'t require the \'ref\' library (I don\'t know why, i didn\'t try harder)
+2018-01-05T11:38:04 <javjarfer[m]> okay, I will try that, but 0 should be okay also
+2018-01-05T11:38:43 <javjarfer[m]> but I was also wondering about this one https://github.com/GPII/windows/pull/132/files#diff-f183c9185bcdd61677beebd16d9efba2R469
+2018-01-05T11:39:18 <javjarfer[m]> modifying the global module teardown from specific tests sound kind of tricky
+2018-01-05T12:08:00 <stegru> sorry javjarfer[m] - my coffee machine decided to explode
+2018-01-05T12:09:51 <stegru> jqUnit accepts 1 teardown function, and i think it can only be set at the start of the tests
+2018-01-05T12:10:00 <stegru> https://github.com/GPII/windows/pull/132/files#diff-f183c9185bcdd61677beebd16d9efba2R46
+2018-01-05T12:11:18 <stegru> i know, it\'s not pretty - but it does the job
+2018-01-05T12:42:38 <javjarfer[m]> sorry here too stegru , I had just received the replacements parts because my main workstation decided to explode also last week
+2018-01-05T12:42:42 <javjarfer[m]> xD
+2018-01-05T12:43:03 <javjarfer[m]> > i know, it\'s not pretty - but it does the job
+2018-01-05T12:43:04 <javjarfer[m]> yes, I was looking into your suggestion in the PR
+2018-01-05T12:45:58 <javjarfer[m]> I have updated my comment there
+2018-01-05T12:46:00 <stegru> another thing, I need to change processHandling to use processesBridge
+2018-01-05T12:46:45 <javjarfer[m]> yes, true, that is another thing
+2018-01-05T12:53:48 <stegru> by the way javjarfer[m], teardown is called when each test has ended
+2018-01-05T13:06:00 <javjarfer[m]> stegru: yes, I know... wouldn\'t be simple if we split tests into to test fixtures?
+2018-01-05T13:06:11 <javjarfer[m]> the ones that needs mocking, and the one that doesn\'t need it?
+2018-01-05T13:06:38 <javjarfer[m]> I think it\'s the main difference that we have there no?
+2018-01-05T13:13:28 * jhernandez has quit
+2018-01-05T13:23:00 <stegru> not sure what you mean, javjarfer[m]
+2018-01-05T13:29:07 <javjarfer[m]> I see that just certain tests from "gpii.tests.windows.processHandling" needs the special teardown because the mocks certain functions
+2018-01-05T13:29:40 <javjarfer[m]> why not split the two set of tests, the one that needs the special teardown because the \'mock componentes\' and the ones that doesn\'t
+2018-01-05T13:29:59 <javjarfer[m]> in that case teardown will remain the same for all the two sets of tests
+2018-01-05T13:36:55 <stegru> ok..
+2018-01-05T13:38:11 <stegru> there\'s only 1 test that adds to the teardowns array, but there can only be 1 global teardown function
+2018-01-05T13:39:49 <stegru> the global function is always the same.. it just pops + calls the functions from the array
+2018-01-05T13:40:04 <stegru> the array will be different for each test
+2018-01-05T13:40:53 <stegru> for every test, apart from the one I .push in, the array is empty when the global teardown function is called
+2018-01-05T13:41:19 <stegru> oh, 2 tests
+2018-01-05T13:50:12 * ussjoin joined the channel
+2018-01-05T13:57:42 * cindyli joined the channel
+2018-01-05T14:03:58 * colinclark joined the channel
+2018-01-05T14:10:35 * michelled joined the channel
+2018-01-05T14:14:01 <javjarfer[m]> stegru: so, what you think about that
+2018-01-05T14:14:03 <javjarfer[m]> ?
+2018-01-05T14:15:31 <stegru> i\'m keeping it as it is, otherwise there would have to be 2 jqUnit.module calls
+2018-01-05T14:16:10 <stegru> keeps it the same as the tests in other places, where I\'ve done similar things
+2018-01-05T14:22:56 * sepidehshahi joined the channel
+2018-01-05T14:40:26 <javjarfer[m]> stegru:  okay I understand, then we can leave it like that, just for consistency with the rest of the tests, maybe we should follow the convention that you have establish now, of registering it inside the namespace with the sufix \'teardown\'
+2018-01-05T14:40:59 <javjarfer[m]> that would at least establish a visual mark to follow
+2018-01-05T14:41:04 <stegru> yeh
+2018-01-05T14:53:43 * georgitodorov has quit
+2018-01-05T15:44:32 * kasparnet_ has quit
+2018-01-05T15:47:25 * grrrero joined the channel
+2018-01-05T16:25:21 * danayo joined the channel
+2018-01-05T16:51:04 * colinclark has quit
+2018-01-05T16:54:23 <gmoss> michelled: I\'m going to pop off to brave the cold and get coffee and a bite to eat, but I\'ll be ready to pair after that :)
+2018-01-05T16:54:57 * stegru has quit
+2018-01-05T16:57:42 <michelled> ping me when you\'re back gmoss
+2018-01-05T17:36:40 * colinclark joined the channel
+2018-01-05T17:51:10 * gtirloni joined the channel
+2018-01-05T18:20:07 <grrrero> Anyone with a minute to spare? Trying to update the SJRK website and docpad gives me this error "notice: 404 Not Found: /lib/infusion/infusion-uiOptions.js.map" -- but it\'s there in the folder
+2018-01-05T18:23:46 * danayo has quit
+2018-01-05T18:28:52 <gtirloni> grrrero: trying to build it from scratch and it works for me
+2018-01-05T18:29:03 <gtirloni> docpad 6.79.4
+2018-01-05T18:29:14 <grrrero> gtirloni: Should I rebuild docpad?
+2018-01-05T18:29:26 <gtirloni> i installed it as `npm i docpad`
+2018-01-05T18:29:30 <grrrero> Ok
+2018-01-05T18:29:57 <grrrero> I still get the same error...
+2018-01-05T18:30:04 <gtirloni> then `$(npm bin)/docpad run`
+2018-01-05T18:30:21 <gtirloni> maybe nuke node_modules and run `npm i` again
+2018-01-05T18:45:02 <grrrero> fluid-everyone: Anyone have the Git powers to update the SJRK development branch from master?
+2018-01-05T18:48:17 <grrrero> Nevermind, got it to work :)
+2018-01-05T18:48:21 <grrrero> Thanks gtirloni
+2018-01-05T18:48:27 <gtirloni> :)
+2018-01-05T18:49:32 * stegru joined the channel
+2018-01-05T19:05:50 * the-t-in-rtf joined the channel
+2018-01-05T19:43:51 * rchain joined the channel
+2018-01-05T19:44:05 * rchain has quit
+2018-01-05T20:18:27 <grrrero> Anybody feel like looking at a Pull Request for SJRK? :3
+2018-01-05T20:19:23 <gmoss> grrrero: i can look at it, but i can\'t do anything with it after that :)
+2018-01-05T20:19:29 <grrrero> That\'s cool!!!
+2018-01-05T20:19:54 <grrrero> https://github.com/fluid-project/sojustrepairit.org/pull/23
+2018-01-05T20:20:17 <grrrero> I\'d mostly jump to here: https://github.com/fluid-project/sojustrepairit.org/pull/23/files#diff-33b2447879e3ff4d5a30ce8384832edd
+2018-01-05T20:20:21 <grrrero> Thanks gmoss!!!
+2018-01-05T20:21:18 <grrrero> I may have forgotten to remove orphaned <ul> tags
+2018-01-05T20:24:03 <gmoss> checking :)
+2018-01-05T20:27:27 * danayo joined the channel
+2018-01-05T20:28:04 <grrrero> danayo: I\'ve got a PR ready for the SJRK website! Just saw you got on :)
+2018-01-05T20:28:40 <gmoss> grrrero: is it just the resources file you need checked, or everything?
+2018-01-05T20:28:55 <gmoss> nm i see your note before the link, now
+2018-01-05T20:29:10 <grrrero> I changed the resources file the most -- but I also made changes to the grid spacing for the rest of the site to make them all uniform
+2018-01-05T20:48:33 <michelled> grrrero: did you mean to make the pull request against the development branch?
+2018-01-05T20:48:46 <grrrero> michelled: Yes :(
+2018-01-05T20:48:48 <grrrero> Sorry
+2018-01-05T20:50:37 <grrrero> Should I re-do this
+2018-01-05T20:51:33 <grrrero> I can close it
+2018-01-05T20:51:39 <grrrero> And make a PR against dev branch
+2018-01-05T20:51:47 <grrrero> Is that okay?
+2018-01-05T20:52:32 <michelled> yeah, that should be fine
+2018-01-05T20:53:36 <michelled> grrrero: you probably can change the base branch directly - I think only the person who opened it can
+2018-01-05T20:54:00 <grrrero> Worked
+2018-01-05T20:54:03 <grrrero> Thanks michelled
+2018-01-05T20:54:06 <michelled> np
+2018-01-05T20:54:32 <michelled> ah, that looks much better :)
+2018-01-05T20:59:37 <gmoss> grrrero: just a couple small small changes https://github.com/grrrero/sojustrepairit.org/pull/2
+2018-01-05T21:07:04 <grrrero> Thanks gmoss, michelled
+2018-01-05T21:07:16 <gmoss> no problem, grrrero!
+2018-01-05T21:25:49 * sepidehshahi joined the channel
+2018-01-05T21:35:31 * sepidehshahi has quit
+2018-01-05T21:46:24 * sepidehshahi joined the channel
+2018-01-05T21:55:38 * sepidehshahi has quit
+2018-01-05T22:29:53 * colinclark has quit
+2018-01-05T22:39:46 * mrtyler joined the channel
+2018-01-05T23:13:48 * stegru has quit
+'
+

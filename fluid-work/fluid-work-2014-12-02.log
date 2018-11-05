@@ -1,0 +1,279 @@
+b'2014-12-02T18:41:37 <Bosmon> Justin_o - I imagine you\'d just serve it up using the standard express middleware for that, for now
+2014-12-02T18:41:48 <Bosmon> We don\'t currently have any particular support in kettle for this
+2014-12-02T18:42:24 <Justin_o> Bosmon: okay, so you think i should serve up the node_modules director?
+2014-12-02T18:42:28 <Bosmon> The next issue is that the filesystem path that infusion appears at may not be predicted in advance, depending on where your module finally ends up in the larger tree of linked node modules
+2014-12-02T18:42:28 <Justin_o> directory
+2014-12-02T18:42:42 <Justin_o> oh :(
+2014-12-02T18:42:52 <Bosmon> You can use the registered path for it which is stored in our new module loader at fluid.module.modules.infusion.baseDir
+2014-12-02T18:43:10 <Bosmon> And once you have that, then you can serve up its "src" directory, yes
+2014-12-02T18:43:38 <Justin_o> hmm so express will serve that up at domiain/src
+2014-12-02T18:43:55 <Justin_o> but i wanted to use that for the actual src of my ui code
+2014-12-02T18:44:11 <Bosmon> Justin_o - I\'m sure you can arrange to mount it at infusion/src or so
+2014-12-02T18:44:25 <cindyli> Bosmon: our current resourceLoader is a fundamental utility that handles file prefix and url transformation etc. both templateLoader and messageLoader are using it as a base grade. The new component in my mind is to reuse both template and message loaders for uiEnhancer. So thinking of creating a wrapper class for them so it\'s easier to be shared
+2014-12-02T18:44:55 <Bosmon> cindyli - but do templateLoader and messageLoader do anything particularly useful, other than wrapping the task of resolving a URL?
+2014-12-02T18:45:22 <Justin_o> cindyli: what\'s the full name of the resourceLoader.. i.e. with the namespacde
+2014-12-02T18:45:40 <cindyli> "fluid.prefs.resourceLoader"
+2014-12-02T18:45:58 <Bosmon> I have a feeling that our resource loading infrastructure is getting a little out of control - given we created some new wrappers to wrap the resourceLoader and are now suggesting making new wrappers to wrap the old wrappers
+2014-12-02T18:47:53 <cindyli> ok. are you thinking to have one component handle both template and message loading, Bosmon
+2014-12-02T18:47:54 <Justin_o> cindyli: maybe that should have just been fluid.resourceLoader
+2014-12-02T18:48:24 <Bosmon> cindyli - well, I think we already have one component handling it.... doesn\'t the fluid.prefs.resourceLoader do it already?
+2014-12-02T18:48:49 <cindyli> not really, templates and messages are usually served from different directories
+2014-12-02T18:49:16 <cindyli> that\'s why we have separate instances for resourceLoader for loading them in
+2014-12-02T18:50:51 <simonjb> Bosmon: I\'ve converted the OAuth userService to an Infusion component: https://github.com/simonbates/gpii-oauth2/blob/master/gpii-oauth2-authorization-server/userService.js
+2014-12-02T18:51:08 <simonjb> Bosmon: it has a datastore subcomponent at the moment which I would like to inject instead
+2014-12-02T18:51:34 <simonjb> Bosmon: would I switch to using a member? as in: https://gist.github.com/simonbates/02f97604979a98d0b648
+2014-12-02T18:51:37 <Bosmon> simonjb - cool!
+2014-12-02T18:51:56 <Bosmon> simonjb - no, in general injecting components as members is hazardous
+2014-12-02T18:52:10 <Bosmon> You should continue to inject it as a component, and just arrange to override the definition you already have there
+2014-12-02T18:52:24 <jhung> ping avtar
+2014-12-02T18:53:38 <simonjb> Bosmon: what would I have in my userService for the components section?
+2014-12-02T18:54:24 <Bosmon> I added a comment to the gist, I\'m not sure whether this is an idiomatic kind of interaction with gists : P
+2014-12-02T18:54:50 <Bosmon> simonjb - in general the entire tree would be configured at once, and there would be a reference to the datastore injected rather than an already constructed one
+2014-12-02T18:55:19 <simonjb> Bosmon: how do I reference the injected component?
+2014-12-02T18:55:36 <Bosmon> If you take control of parts of construction yourself, then the framework becomes unable to reschedule the order of construction as indirect dependencies move about
+2014-12-02T18:56:09 <Bosmon> simonjb - using an IoC reference of the form {context}.datastore for some context where the datastore already exists - or else literal configuration for the datastore if it doesn\'t
+2014-12-02T18:56:57 <simonjb> Bosmon: feel like editing my file for me maybe in piratepad or cloning my gist and fixing? I\'m not quite following
+2014-12-02T18:57:20 <Bosmon> simonjb - sure - although I guess we need to see the whole picture in order to know what to do
+2014-12-02T18:57:31 <Bosmon> What\'s the ultimate site of the usage of the component you are considering?
+2014-12-02T18:58:10 <simonjb> https://github.com/simonbates/gpii-oauth2/blob/master/gpii-oauth2-authorization-server/app.js#L18
+2014-12-02T18:58:11 <Bosmon> Do you see my comment on the gist? I think you need to refresh to see them since it seems the gist interface isn\'t dynamic
+2014-12-02T18:58:51 <simonjb> Bosmon: yes, I see, thanks
+2014-12-02T18:59:41 <simonjb> Bosmon: does my userService component change?
+2014-12-02T19:00:58 <Bosmon> simonjb - your userService stays as it is, but in order to make this work you will need to cascade the IoC-ification down to your "app" next
+2014-12-02T19:01:22 <Bosmon> In order to allow the 3rd-party user of your app to configure the datastore attached to your userService, your app will need itself to become a component too
+2014-12-02T19:01:28 <Bosmon> With the userService as a subcomponent of itself
+2014-12-02T19:01:35 <Bosmon> And then the datastore as a further nested subcomponent
+2014-12-02T19:02:06 <Bosmon> And so rather than manually taking control of construction of the userService at the inclusion point of app.js, this will just itself be configured in the "components" block of your app
+2014-12-02T19:02:29 <Bosmon> And so the framework (and hence the upstream user) can then configure the required datastore when they make the app
+2014-12-02T19:03:04 <simonjb> Bosmon: yes, that makes sense; I was trying to do it step-by-step: componentize the datastore, then the serveices, then the app -- but maybe I just need to do it all now?
+2014-12-02T19:04:29 <Bosmon> simonjb - well, you can stop at any point - but at whatever point you stop, there comes to be a kind of "configuration horizon" beyond which the user can\'t see
+2014-12-02T19:04:44 <Bosmon> But actually this is a classically helpful usecase for IoC so you may as well continue componentizing
+2014-12-02T19:05:04 <Bosmon> Since this is just the kind of issue that IoC solves - since you have the construction point of the datastore currently hardcoded on line 15
+2014-12-02T19:05:18 <Bosmon> And you want instead to expose this construction point to be polymorphic
+2014-12-02T19:05:25 <simonjb> Bosmon: yes, agreed
+2014-12-02T19:06:07 <Bosmon> However, you could get the system up and running in its current form with configuration of the kind I added in my gist comment
+2014-12-02T19:06:07 <simonjb> Bosmon: my hesitation is in my inexperience with infusion and not entirely knowing how to change the app.js into a component quite
+2014-12-02T19:07:07 <simonjb> Bosmon: if we could pair or such, that would really help
+2014-12-02T19:07:14 <Bosmon> simonjb - sure
+2014-12-02T19:07:18 <Bosmon> Let me just shut this window : P
+2014-12-02T19:09:02 <simonjb> Bosmon: do you have time now?
+2014-12-02T19:09:23 <simonjb> Bosmon: we can also do it tomorrow
+2014-12-02T19:09:47 <simonjb> Bosmon: but I\'m thinking it would be good to do it soon -- needs to be done and may as well be sooner
+2014-12-02T19:09:59 <simonjb> Bosmon: and having your assistance would really help
+2014-12-02T19:11:46 <Bosmon> simonjb - sure yes, that would be great
+2014-12-02T19:11:58 <Bosmon> Just give me 5 mins, I need to make a quick phone call
+2014-12-02T19:12:11 <simonjb> Bosmon: thanks! meet you in my "room"?
+2014-12-02T19:12:17 <Bosmon> yup
+2014-12-02T19:13:57 <avtar> jhung: pong
+2014-12-02T19:15:05 <jhung> avtar: any thoughts of what we should do about the mailing list archive that was previously hosted on the fluidproject website?
+2014-12-02T19:23:35 <avtar> jhung: what was the subdirectory?
+2014-12-02T19:25:00 * Bosmon8 joined the channel
+2014-12-02T19:25:53 * Bosmon has quit
+2014-12-02T19:26:04 * Bosmon7 has quit
+2014-12-02T19:30:17 * Bosmon8 has quit
+2014-12-02T19:36:16 * cindyli has quit
+2014-12-02T19:44:26 * clown has quit
+2014-12-02T19:44:47 * Bosmon joined the channel
+2014-12-02T19:44:49 * cindyli joined the channel
+2014-12-02T19:44:53 * Bosmon7 joined the channel
+2014-12-02T19:53:04 * clown joined the channel
+2014-12-02T19:53:19 * clown is now known as clown_mtg
+2014-12-02T20:16:52 <jhung> avtar: the location was fluidproject.org/pipermail/fluid-work/
+2014-12-02T20:19:18 <jhung> we could link to nabble instead avtar. http://fluid.2324889.n4.nabble.com/Fluid-Work-f3.html
+2014-12-02T20:25:38 * jhung has quit
+2014-12-02T20:26:05 <cindyli> Bosmon: continue our conversation, shall i add another set of templateLoader and messageLoader directly into pageEnhancer as subcomponents, without having another layer of wrapper for them?
+2014-12-02T20:27:22 <Bosmon> cindyli - I guess you could make this into a grade which becomes used as a parent grade... but this is probably just what you were intending anyway
+2014-12-02T20:27:44 <cindyli> haha
+2014-12-02T20:28:02 <Bosmon> Perhaps a clue to the name for this could be found in whatever it is you expect is common between all those components which have both templates and messages
+2014-12-02T20:28:09 <Bosmon> What are they all?
+2014-12-02T20:28:48 <cindyli> they are as you said, to load templates and messages
+2014-12-02T20:28:55 <avtar> jhung: that was just a redirect pointing to http://lists.idrc.ocad.ca/pipermail so we should be fine
+2014-12-02T20:30:41 <cindyli> Bosmon: how do you think about what anastasiac has suggested: resourceManager
+2014-12-02T20:30:53 <cindyli> fileLoader
+2014-12-02T20:31:06 <cindyli> resourceManager sounds nice and fancy to me :)
+2014-12-02T20:43:23 * anvk has quit
+2014-12-02T21:10:16 * clown_mtg has quit
+2014-12-02T21:12:45 * cindyli has quit
+2014-12-02T21:20:08 * danaayotte has quit
+2014-12-02T21:31:21 * anvk joined the channel
+2014-12-02T21:32:31 * clown joined the channel
+2014-12-02T21:37:28 * anastasiac has quit
+2014-12-02T21:37:50 * anvk has quit
+2014-12-02T21:46:29 * Sepideh has left the channel
+2014-12-02T22:01:27 * jessm has quit
+2014-12-02T22:02:03 * anastasiac joined the channel
+2014-12-02T22:04:53 * clown has quit
+2014-12-02T22:05:23 * danaayotte joined the channel
+2014-12-02T22:20:02 * slim_jim joined the channel
+2014-12-02T22:22:13 * slim_jim has quit
+2014-12-02T22:22:59 * danaayotte has quit
+2014-12-02T22:23:15 * yzen joined the channel
+2014-12-02T22:30:40 * anastasiac has quit
+2014-12-02T22:32:52 * danaayotte joined the channel
+2014-12-02T22:36:32 * simonjb has quit
+2014-12-02T22:38:11 * yzen is now known as yzen_
+2014-12-02T22:42:13 * yzen_ has quit
+2014-12-02T22:43:04 * michelled has quit
+2014-12-02T23:14:54 * danaayotte has quit
+2014-12-02T23:18:38 * danaayotte joined the channel
+2014-12-02T23:35:12 * danaayotte has quit
+2014-12-02T23:40:00 * danaayotte joined the channel
+2014-12-02T23:40:00 * danaayotte has quit
+'
+
+b'2014-12-02T00:02:50 * colinclark has quit
+2014-12-02T01:58:41 * jhernandez has quit
+2014-12-02T02:05:12 * jhernandez joined the channel
+2014-12-02T03:04:20 * colinclark joined the channel
+2014-12-02T03:04:26 * colinclark has quit
+2014-12-02T07:27:08 * yzen joined the channel
+2014-12-02T08:12:53 * the-t-in-rtf has quit
+2014-12-02T08:16:13 * yzen has quit
+2014-12-02T08:16:59 * yzen joined the channel
+2014-12-02T08:37:27 * the-t-in-rtf joined the channel
+2014-12-02T08:49:50 * yzen is now known as yzen_
+2014-12-02T08:53:52 * yzen_ has quit
+2014-12-02T09:03:08 * the-t-in-rtf has quit
+2014-12-02T09:04:04 * the-t-in-rtf joined the channel
+2014-12-02T09:10:05 * Bosmon has quit
+2014-12-02T09:13:39 * Bosmon joined the channel
+2014-12-02T09:30:53 * the-t-in-rtf has quit
+2014-12-02T09:31:02 * the-t-in-rtf joined the channel
+2014-12-02T09:44:07 * Bosmon has quit
+2014-12-02T09:50:13 * Bosmon joined the channel
+2014-12-02T09:54:39 * the-t-in-rtf has quit
+2014-12-02T09:56:55 * the-t-in-rtf joined the channel
+2014-12-02T10:05:01 * Bosmon has quit
+2014-12-02T10:08:21 * Bosmon joined the channel
+2014-12-02T11:20:31 * Bosmon has quit
+2014-12-02T11:24:24 * Bosmon joined the channel
+2014-12-02T11:35:22 * Bosmon7 joined the channel
+2014-12-02T12:02:23 * the-t-in-rtf has quit
+2014-12-02T13:01:54 * the-t-in-rtf joined the channel
+2014-12-02T13:17:52 * jhung joined the channel
+2014-12-02T13:50:36 * Justin_o joined the channel
+2014-12-02T13:58:51 * danaayotte joined the channel
+2014-12-02T13:59:09 * anvk joined the channel
+2014-12-02T13:59:15 * jessm joined the channel
+2014-12-02T14:05:33 * Sepideh joined the channel
+2014-12-02T14:19:55 * simonjb joined the channel
+2014-12-02T14:29:06 * Nikos_ joined the channel
+2014-12-02T14:52:11 * clown joined the channel
+2014-12-02T14:56:19 <clown> good morning/afternoon jhernandez
+2014-12-02T15:04:44 <clown> jhernandez:  if you see this, and just to keep you informed, I\'m rougly following kasparnet\'s fire ball merge instructions and merging it into my copy of your \'device-reporter-draft2\' branch, and seeing what needs to change.
+2014-12-02T15:05:19 * anastasiac joined the channel
+2014-12-02T15:06:49 <jhernandez> clown: wow, that would be great!
+2014-12-02T15:07:08 <jhernandez> anyhoo, I don\'t think it\'ll require a lot of work
+2014-12-02T15:07:24 <jhernandez> :)
+2014-12-02T15:07:31 <clown> jhernandez, you are an optimist.
+2014-12-02T15:07:38 <jhernandez> as always :)
+2014-12-02T15:07:40 <jhernandez> :P
+2014-12-02T15:08:23 <clown> so far, I\'m on the universal side of things, and there are two conflicts:  DeviceReporter.js and DeviceGet.js.
+2014-12-02T15:08:55 <clown> that is, surprisingly small number of conflicts (so far).
+2014-12-02T15:09:33 <clown> I\'ll let you know how it progresses, jhernandez
+2014-12-02T15:11:25 <jhernandez> ok
+2014-12-02T15:22:07 * simonjb has quit
+2014-12-02T15:36:18 * danaayotte has quit
+2014-12-02T15:36:56 * yzen joined the channel
+2014-12-02T15:41:25 * simonjb joined the channel
+2014-12-02T15:51:34 * andres_malarres joined the channel
+2014-12-02T15:51:44 <andres_malarres> hi
+2014-12-02T15:52:44 <andres_malarres> Bosmon Bosmon7 would you have 5 minutes to tell what i\'m doing wrong?
+2014-12-02T15:53:09 <andres_malarres> when trying to have app-specific settings applied in android
+2014-12-02T16:00:29 * yzen is now known as 
+2014-12-02T16:00:49 * Nikos_ has left the channel
+2014-12-02T16:00:56 <andres_malarres> {
+2014-12-02T16:00:56 <andres_malarres> "http://registry.gpii.org/applications/com.technosite.smarttwitter": [
+2014-12-02T16:00:56 <andres_malarres> \t\t{
+2014-12-02T16:00:56 <andres_malarres> \t\t\t"pref_tam_font": "Enorme"
+2014-12-02T16:00:56 <andres_malarres> }]
+2014-12-02T16:00:56 <andres_malarres> }
+2014-12-02T16:00:56 <andres_malarres> Is this a correct way to express a setting?
+2014-12-02T16:01:43 <andres_malarres> (the normal xml file for preferences in our app is
+2014-12-02T16:01:44 <andres_malarres> <?xml version=\'1.0\' encoding=\'utf-8\' standalone=\'yes\' ?>
+2014-12-02T16:01:44 <andres_malarres> <map>
+2014-12-02T16:01:44 <andres_malarres> <boolean name="prefTTS" value="true" />
+2014-12-02T16:01:44 <andres_malarres> <boolean name="pref_mode_notification" value="false" />
+2014-12-02T16:01:44 <andres_malarres> <boolean name="pref_change_theme" value="true" />
+2014-12-02T16:01:44 <andres_malarres> <string name="pref_notification">3</string>
+2014-12-02T16:01:45 <andres_malarres> <string name="pref_tam_font">Enorme</string>
+2014-12-02T16:01:45 <andres_malarres> <boolean name="pref_change_tam" value="true" />
+2014-12-02T16:01:46 <andres_malarres> <boolean name="prefShake" value="true" />
+2014-12-02T16:01:46 <andres_malarres> <string name="pref_theme">Blanco</string>
+2014-12-02T16:01:47 <andres_malarres> </map>
+2014-12-02T16:01:47 <andres_malarres> )
+2014-12-02T16:02:00 * Nikos_ joined the channel
+2014-12-02T16:05:26 * Nikos_ has quit
+2014-12-02T16:10:24 * yzen joined the channel
+2014-12-02T16:12:07 * yzen is now known as yzen_
+2014-12-02T16:16:09 * yzen_ has quit
+2014-12-02T16:17:19 <andres_malarres> settingsHandlers.setSettings receives an empty solutionEntry.settings [file: sdcard\\gpii\
+ode_modules\\universal\\gpii\
+ode_modules\\settingsHandlers\\src\\js\\settingsHandlerUtilities.js ]
+2014-12-02T16:19:13 <andres_malarres> whereas gpii.request.flowManager.getMatch still has  preferences  { \'http:/
+2014-12-02T16:19:13 <andres_malarres> /registry.gpii.org/applications/com.technosite.smarttwitter\': [ { pref_tam_font:
+2014-12-02T16:19:13 <andres_malarres> \'Enorme\' } ] }
+2014-12-02T16:19:56 <andres_malarres> [file : sdcard\\gpii\
+ode_modules\\universal\\gpii\
+ode_modules\\flowManager\\src\\FlowManagerUtilities.js  ]
+2014-12-02T16:22:21 * danaayotte joined the channel
+2014-12-02T16:26:18 <andres_malarres> Justin_o can you help please?
+2014-12-02T16:26:28 <Justin_o> andres_malarres: hello
+2014-12-02T16:27:12 <andres_malarres> hi
+2014-12-02T16:28:11 <Justin_o> andres_malarres: i guess you question is about your comments from above.
+2014-12-02T16:28:19 <Justin_o> unfortunately i\'m not sure i can help you with that
+2014-12-02T16:29:00 <Justin_o> i\'m not entirely sure what the question is though
+2014-12-02T16:29:05 <andres_malarres> maybe a general help with infusion
+2014-12-02T16:29:18 <andres_malarres> after     gpii.request.flowManager.getPreferences = function (preferencesDataSource, event, token) {
+2014-12-02T16:29:18 <andres_malarres> preferencesDataSource.get({
+2014-12-02T16:29:18 <andres_malarres> token: token
+2014-12-02T16:29:18 <andres_malarres> }, gpii.request.flowManager.logAndNotify("Fetched user preferences: ", event,
+2014-12-02T16:29:18 <andres_malarres> function getPreferences(data) {
+2014-12-02T16:29:18 <andres_malarres> \t\t\t\tfluid.log("chusqui data es ", data);
+2014-12-02T16:29:18 <andres_malarres> \t\t\t\tfluid.log("chusqui data.preferences es ", data.preferences);
+2014-12-02T16:29:19 <andres_malarres> \t\t\t\t
+2014-12-02T16:29:19 <andres_malarres> return data.preferences || data;
+2014-12-02T16:29:19 * danaayotte has quit
+2014-12-02T16:29:20 <andres_malarres> }));
+2014-12-02T16:29:20 <andres_malarres> };
+2014-12-02T16:29:21 <andres_malarres> i\'m lost
+2014-12-02T16:29:38 <andres_malarres> ( the chusqui logs are mine :-$)
+2014-12-02T16:30:06 * danaayotte joined the channel
+2014-12-02T16:35:57 * avtar joined the channel
+2014-12-02T16:39:59 * Sepideh has quit
+2014-12-02T16:42:38 * the-t-in-rtf has quit
+2014-12-02T16:45:02 <andres_malarres> i\'ll have to stop working in about 15 minutes, please if anyone has a suggestion write it here and i will read it tomorrow. thanks
+2014-12-02T16:47:26 * Sepideh joined the channel
+2014-12-02T16:57:20 <andres_malarres> have a nice day
+2014-12-02T16:57:23 * andres_malarres has left the channel
+2014-12-02T17:09:46 * the-t-in-rtf joined the channel
+2014-12-02T17:11:28 * yzen joined the channel
+2014-12-02T17:13:51 * yzen is now known as 
+2014-12-02T17:14:11 <Justin_o> andres_malarres: sorry i didn\'t get back here in time. next time could you also put the code in a pastebin or pastie so that it is easier to read. I\'m not really sure what the exact question is though. If it\'s about "gpii.request.flowManager.getPreferences" then it looks like it just defers to the preferencesDataSource\'s get method. which takes a directModel
+2014-12-02T17:14:11 <Justin_o> "{token: token"}" which is used to find a resource in the dataSource and a callback. In this case it\'s the function returned by the call to gpii.request.flowManager.logAndNotify
+2014-12-02T17:15:04 * cindyli joined the channel
+2014-12-02T17:41:17 * Sepideh has quit
+2014-12-02T17:52:35 * Sepideh joined the channel
+2014-12-02T18:34:47 * michelled joined the channel
+2014-12-02T18:35:51 <cindyli> anastasiac, Justin_o, Bosmon or Bosmon7, i\'m creating a new component for the prefs framework. It has "templateLoader" and "messageLoader" as subcomponents. basically it\'s in charge of all async loadings required by prefs framework. Can you think of a good name for it?
+2014-12-02T18:36:31 <Justin_o> file loader?
+2014-12-02T18:36:31 <anastasiac> cindyli, the name \xe2\x80\x9cresourceLoader\xe2\x80\x9d comes to mind. Do we already have that?
+2014-12-02T18:36:42 <Justin_o> actually i like that better
+2014-12-02T18:36:49 <cindyli> we already have that name
+2014-12-02T18:36:55 <Justin_o> Bosmon7: if you\'re around i have another question for you
+2014-12-02T18:36:57 <anastasiac> what does it do, cindyli?
+2014-12-02T18:37:14 <cindyli> both templateLoader and messageLoader are instances of "resourceLoader"
+2014-12-02T18:37:25 <cindyli> anastasiac: ^
+2014-12-02T18:37:30 <Bosmon> Hi Justin_o
+2014-12-02T18:38:16 <anastasiac> ah. nm
+2014-12-02T18:38:17 <anastasiac> hm
+2014-12-02T18:38:46 <Justin_o> Bosmon: in work on the authorization ui\'s, i\'m using infusion. simonjb is also using infusion for the server part. do we have a strategy to share the instance of infusion. he has it pulled in by npm, mine needs to be served so that it is accessible by the browser
+2014-12-02T18:39:31 <anastasiac> cindyli, it might have to be fileLoader\xe2\x80\xa6 or maybe resourceManager?
+2014-12-02T18:39:46 <Bosmon> cindyli - I\'m wondering why we need a new component for this purpose, when we already have resourceLoader?
+2014-12-02T18:40:08 <Bosmon> Justin_o - yes, we can share the infusion although of course for a real production use we might want a build
+2014-12-02T18:40:17 <Bosmon> But sharing the instance would be very convenient during development
+2014-12-02T18:40:27 <Justin_o> agree to both
+2014-12-02T18:40:36 <Justin_o> but how will i serve up the unbuilt version
+2014-12-02T18:41:00 <Justin_o> or should we add a grunt task to build and extract the one from node_modules
+'
+

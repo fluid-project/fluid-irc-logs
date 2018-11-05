@@ -1,0 +1,110 @@
+b'2015-06-23T01:42:52 * colinclark joined the channel
+2015-06-23T07:31:00 * the-t-in-rtf has quit
+2015-06-23T07:32:54 * the-t-in-rtf joined the channel
+2015-06-23T07:48:36 * the-t-in-rtf has quit
+2015-06-23T08:36:49 * the-t-in-rtf joined the channel
+2015-06-23T08:45:23 * the-t-in-rtf has quit
+2015-06-23T08:47:25 * the-t-in-rtf joined the channel
+2015-06-23T08:57:47 * kasparnet joined the channel
+2015-06-23T08:59:35 * kasparnet has quit
+2015-06-23T09:00:57 * kasparnet joined the channel
+2015-06-23T09:28:33 * the-t-in-rtf has quit
+2015-06-23T10:45:32 * the-t-in-rtf joined the channel
+2015-06-23T10:50:43 * kasparnet has quit
+2015-06-23T10:58:22 * kasparnet joined the channel
+2015-06-23T11:06:02 * Justin_o joined the channel
+2015-06-23T11:19:37 * kasparne_ joined the channel
+2015-06-23T11:23:22 * kasparnet has quit
+2015-06-23T11:45:30 * cindyli joined the channel
+2015-06-23T11:48:20 * cindyli1 joined the channel
+2015-06-23T11:48:27 * cindyli has quit
+2015-06-23T12:21:08 * Jess_ joined the channel
+2015-06-23T12:53:17 <the-t-in-rtf> @bosmon (or anyone), is there a way to fire multiple changes at once using fireChangeRequest?
+2015-06-23T12:56:21 <the-t-in-rtf> I have a case in which I know about a set of changes, I am worried about generating multiple refreshes and other events if I apply each change separately.
+2015-06-23T12:58:58 <Bosmon> hi the-t-in-rtf - yes, you can use transactions
+2015-06-23T12:59:51 <the-t-in-rtf> Ah, I saw that part of the docs.
+2015-06-23T12:59:54 <the-t-in-rtf> I will reread it.
+2015-06-23T13:03:55 <Bosmon> the-t-in-rtf - hopefully this example is clear enough - http://docs.fluidproject.org/infusion/development/ChangeApplierAPI.html#operating-transactions-manually
+2015-06-23T13:04:08 <the-t-in-rtf> Yes.
+2015-06-23T13:04:09 <Bosmon> The API is currently a bit awkward - there will be a more declarative scheme before long
+2015-06-23T13:04:20 <the-t-in-rtf> I have been studying that at length for the last hour or so while working.
+2015-06-23T13:04:49 <the-t-in-rtf> I tried to intuit a new syntax based on the change received by model listeners in the new world\xe2\x80\xa6. ;)
+2015-06-23T13:05:10 <the-t-in-rtf> Anyway, testing now.
+2015-06-23T13:12:59 * maozillah joined the channel
+2015-06-23T13:13:19 <the-t-in-rtf> It doesn\'t seem to work, let me make some coffee just in case.
+2015-06-23T13:22:25 <Bosmon> What do you mean by "doesn\'t seem to work"
+2015-06-23T13:25:21 <the-t-in-rtf> No changes are applied.
+2015-06-23T13:25:51 <the-t-in-rtf> It is most likely my fault as usual.  Sipping coffee and stepping through it.
+2015-06-23T13:26:57 <the-t-in-rtf> I am working on a linkage between the model, the location bar, and the browser history.  I know you are passionate about bookmarkable states and the back button.  This will greatly improve support for both.
+2015-06-23T13:28:59 <the-t-in-rtf> OK, @bosmon, is "requestSpec" in the docs different from the { path: "path", value: "value" } syntax?
+2015-06-23T13:30:00 <the-t-in-rtf> That is the only bit different from the documentation.
+2015-06-23T13:30:30 * colinclark joined the channel
+2015-06-23T13:32:49 * Jess_ has quit
+2015-06-23T13:37:57 <Bosmon> the-t-in-rtf - did you remember to call "commit" on the transaction?
+2015-06-23T13:37:57 <the-t-in-rtf> I found a problem in my transform rules, I will continue with it a bit later and share when I have something worth looking at.
+2015-06-23T13:38:02 <the-t-in-rtf> yes, definitely
+2015-06-23T13:38:04 <Bosmon> ok cool
+2015-06-23T13:38:19 <the-t-in-rtf> I just transformed the data into an object that is nested improperly
+2015-06-23T13:38:27 <the-t-in-rtf> so the paths can never match\xe2\x80\xa6 :|
+2015-06-23T13:38:46 <the-t-in-rtf> Should be easy to fix.
+2015-06-23T13:54:19 * jessm joined the channel
+2015-06-23T14:22:29 * the-t-in-rtf has quit
+2015-06-23T14:24:06 * the-t-in-rtf joined the channel
+2015-06-23T14:25:45 * michelled joined the channel
+2015-06-23T14:48:31 <the-t-in-rtf> @bosmon, the paths were off because of my interpretation of this line in the docs:  var myApplier = fluid.makeChangeApplier(myModel);
+2015-06-23T14:48:40 <the-t-in-rtf> I took that to mean that I should pass that.model
+2015-06-23T14:48:49 <the-t-in-rtf> when in fact it expects to work with something that holds a model.
+2015-06-23T14:48:52 <Bosmon> urg
+2015-06-23T14:49:03 <Bosmon> In fact you must not create your own applier - the docs are only indicative
+2015-06-23T14:49:07 <Bosmon> You must use the one that is there already
+2015-06-23T14:49:24 <the-t-in-rtf> Oh, great, even simpler.
+2015-06-23T14:50:06 <the-t-in-rtf> The docs need to stop being indicative in this manner, then.
+2015-06-23T14:50:16 <the-t-in-rtf> But I am happy to take out the line.
+2015-06-23T14:50:27 <Bosmon> ok
+2015-06-23T14:50:47 <the-t-in-rtf> But wait.
+2015-06-23T14:51:36 <the-t-in-rtf> If I use the existing applier, how does it know not to just apply the change immediately?
+2015-06-23T14:51:52 <the-t-in-rtf> since I am using the applier\'s fireChangeRequest
+2015-06-23T14:52:08 <Bosmon> The rest of the docs should be used as is
+2015-06-23T14:52:21 <Bosmon> In that you are not using the applier\'s fireChangeRequest, but the transaction\'s
+2015-06-23T14:52:33 * clown joined the channel
+2015-06-23T14:52:38 <Bosmon> The first line was only meant to illustrate "some way you could get your hands on an applier"
+2015-06-23T14:53:22 * jessm has quit
+2015-06-23T14:53:25 <the-t-in-rtf> Ah, that was the bit I was missing.
+2015-06-23T15:02:33 * cindyli1 is now known as cindyli
+2015-06-23T15:04:07 * melvin is now known as clown
+2015-06-23T15:10:14 * Jess_ joined the channel
+2015-06-23T15:11:27 * the-t-in-rtf has quit
+2015-06-23T15:14:42 * the-t-in-rtf joined the channel
+2015-06-23T15:21:58 * the-t-in-rtf has quit
+2015-06-23T15:30:16 * cindyli1 joined the channel
+2015-06-23T15:31:13 * the-t-in-rtf joined the channel
+2015-06-23T15:32:09 * the-t-in-rtf has quit
+2015-06-23T15:34:37 * cindyli has quit
+2015-06-23T15:50:33 * michelled has quit
+2015-06-23T15:52:12 * michelled joined the channel
+2015-06-23T15:57:32 * cindyli1 has quit
+2015-06-23T16:48:58 * the-t-in-rtf joined the channel
+2015-06-23T16:49:12 * the-t-in-rtf has quit
+2015-06-23T17:22:45 * the-t-in-rtf joined the channel
+2015-06-23T17:23:58 * michelled has quit
+2015-06-23T17:26:08 * michelled joined the channel
+2015-06-23T17:26:38 * maozillah has quit
+2015-06-23T17:38:24 * the-t-in-rtf has quit
+2015-06-23T18:32:25 * clown has quit
+2015-06-23T18:40:52 * maozillah joined the channel
+2015-06-23T18:43:34 * clown joined the channel
+2015-06-23T18:43:41 * clown is now known as clown_mtg
+2015-06-23T18:54:20 * the-t-in-rtf joined the channel
+2015-06-23T19:00:11 * kasparne_ has quit
+2015-06-23T20:08:00 * Justin_o has quit
+2015-06-23T20:31:59 * colinclark has quit
+2015-06-23T20:44:41 * clown_mtg has quit
+2015-06-23T20:49:29 * the-t-in-rtf has quit
+2015-06-23T21:11:59 * maozillah has quit
+2015-06-23T21:36:56 * michelled has quit
+2015-06-23T22:00:37 * kasparnet joined the channel
+2015-06-23T22:05:29 * kasparnet has quit
+2015-06-23T22:23:32 * Jess_ has quit
+2015-06-23T22:50:16 * colinclark joined the channel
+'
+

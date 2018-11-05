@@ -1,0 +1,283 @@
+b'2018-01-23T16:58:01 <javjarfer[m]> hi Kavya ! Just pinging for knowing if you saw my mail up there, I forgot to mention
+2018-01-23T17:06:42 <Kavya> yes, i just saw thanks for pinging...sent you the license key
+2018-01-23T17:09:16 * clown has quit
+2018-01-23T17:09:18 <javjarfer[m]> Kavya: np! thanks you!
+2018-01-23T17:13:50 <javjarfer[m]> Kavya: hi! Sorry just tested the License key, and it happens to be a license key for Zoomtext Magnifier only
+2018-01-23T17:13:56 <javjarfer[m]> do we have a license key for the upgraded version, Magnifier and Reader?
+2018-01-23T17:18:04 * clown joined the channel
+2018-01-23T17:19:18 * clown has quit
+2018-01-23T17:19:50 * clown joined the channel
+2018-01-23T17:20:20 * danayo has quit
+2018-01-23T17:23:59 * simonjb has quit
+2018-01-23T17:35:31 <ussjoin> https://drive.google.com/file/d/1F9eS2fBcYLlHJ8g6_lyEDHt-tvtqKAwM/view -- relevant to many in here. Study at Carleton needs people who use screenreaders in Ottawa or Toronto to help with a security UX study.
+2018-01-23T17:35:45 <ussjoin> https://twitter.com/DnlaNpli/status/955515440096161792 was the announcement I saw.
+2018-01-23T17:37:46 <jhernandez> stegru: while integrating things, I found that I need to revert your "revert of GPII-2212"
+2018-01-23T17:37:52 <jhernandez> :)
+2018-01-23T17:38:22 <stegru> the language support?
+2018-01-23T17:40:06 * jhung is now known as jhung_away
+2018-01-23T17:40:42 <jhernandez> yup
+2018-01-23T17:40:48 <jhernandez> does this looks good to you? https://github.com/javihernandez/windows/commit/f53a0e4f174e4e9cce0907ef6b3b470edab8a5b7
+2018-01-23T17:42:14 <stegru> that\'s the best code I\'ve had the privilege to read, in my life
+2018-01-23T17:42:53 <jhernandez> hahahaha
+2018-01-23T17:43:17 <stegru> why does this need to be in, anyway?
+2018-01-23T17:43:40 <jhernandez> apparently, it\'s required for the ATIA demo
+2018-01-23T17:44:28 <stegru> oh ok - yeh, Kavya was expecting to test that, but then sandra said no - but that was for the pilot
+2018-01-23T17:44:36 <stegru> makes sense now
+2018-01-23T17:45:19 <jhernandez> and since I took over a branch that gloob created a few days ago. I found that he merged your PILOT2, which was including GPII-2212 and you then  reverted it .... and here I am right now :)
+2018-01-23T17:45:25 <jhernandez> no prob
+2018-01-23T17:45:29 <jhernandez> looks like it\'s there
+2018-01-23T17:45:46 <jhernandez> I\'ll try whether it works
+2018-01-23T17:46:04 <jhernandez> I see that it comes with a couple of NP sets, so I\'ll just test them
+2018-01-23T17:46:56 <stegru> there\'s also some universal code
+2018-01-23T17:48:28 <jhernandez> yup, I already took it
+2018-01-23T17:48:44 * Kavya has quit
+2018-01-23T17:48:51 <jhernandez> didn\'t have that revert problem with the universal branch
+2018-01-23T17:49:31 * gtirloni_ joined the channel
+2018-01-23T18:00:06 * danayo joined the channel
+2018-01-23T18:13:03 * simonjb joined the channel
+2018-01-23T18:29:36 <cindyli> Bosmon, colinclark: the universal repo has some tests that test the production configs:
+2018-01-23T18:29:36 <cindyli> https://github.com/GPII/universal/blob/master/tests/ProductionConfigTests.js
+2018-01-23T18:29:41 <cindyli> https://github.com/GPII/universal/blob/master/scripts/vagrantCloudBasedContainers.sh
+2018-01-23T18:30:07 <cindyli> the latter spins up a docker image using cloudbased production config file - gpii.config.cloudBased.flowManager.production
+2018-01-23T18:30:10 <Bosmon> cindyli - well, in theory it does, yes
+2018-01-23T18:30:29 <cindyli> these tests require http://preferences.gpii.net running alive - https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/configs/gpii.flowManager.config.production.json#L10
+2018-01-23T18:30:58 <cindyli> with my GPII-2630 change, the prefs server is no longer a standalone server. it becomes a subcomponent of the flow manager
+2018-01-23T18:31:26 <cindyli> meaning there would be no https://preferences.gpii.net
+2018-01-23T18:31:37 <cindyli> how do you think we should fix these tests?
+2018-01-23T18:31:55 <cindyli> these tests only assume the prefs server running alive, but still starts the flow manager locally
+2018-01-23T18:32:19 <cindyli> if i remove the use of the live prefs server, these tests become equally as testing the dev congis
+2018-01-23T18:32:24 <cindyli> typo - configs
+2018-01-23T18:33:06 <cindyli> any idea?
+2018-01-23T18:35:52 <cindyli> Bosmon: ^
+2018-01-23T18:42:06 <Bosmon> cindyli - what will there be rather than preferences.gpii.net?
+2018-01-23T18:42:31 <cindyli> Bosmon: there would be only one cloud based flow manager
+2018-01-23T18:42:36 <cindyli> running as a server
+2018-01-23T18:42:44 <Bosmon> cindyli - what is its name?
+2018-01-23T18:42:59 <cindyli> i guess flowmanager.gpii.net
+2018-01-23T18:43:33 <cindyli> are you thinking to deploy the flow manager as a live remote server and have these tests interacting with it?
+2018-01-23T18:43:45 <Bosmon> cindyli - I think that is clearly necessary, right?
+2018-01-23T18:43:51 <Bosmon> These tests must test what we actually plan to deploy
+2018-01-23T18:44:07 <cindyli> i\'m not sure why our current tests are not using the live flow manager but only the live prefs server
+2018-01-23T18:44:20 <Bosmon> cindyli - because they are old and incompletely conceived :)
+2018-01-23T18:44:28 <cindyli> haha ok
+2018-01-23T18:44:35 <Bosmon> It was always the plan, once we mastered the docker configuration, etc., to start writing more tests that tested more servers
+2018-01-23T18:45:47 <cindyli> do you think if I should get the help from the ops team to start to deploy the GPII-2630 version of the flow manager, so I can fix these tests, Bosmon
+2018-01-23T18:45:56 <Bosmon> cindyli - I think you should
+2018-01-23T18:46:10 <cindyli> ok, thanks, Bosmon
+2018-01-23T18:46:54 <cindyli> colinclark: do you think who is the right person from the ops team to pair up with me?
+2018-01-23T18:47:39 <colinclark> i can respond to this in a few minutes, cindyli
+2018-01-23T18:47:45 <cindyli> thanks
+2018-01-23T18:47:46 <colinclark> I\'m just in the midst of the ops team\'s sprint planning
+2018-01-23T18:47:59 <Bosmon> Yes, I definitely agree you should pair up with WHO :)
+2018-01-23T18:48:15 <cindyli> who is WHO
+2018-01-23T18:48:24 <cindyli> is this another joke
+2018-01-23T18:48:34 <Bosmon> The one who you thought was the right person :)
+2018-01-23T18:48:34 <colinclark> can someone provide a one-sentence summary of what the work is that we\'ll need the ops team to help with?
+2018-01-23T18:48:41 <colinclark> and then I\'ll catch up on the whole discussion after the meeting
+2018-01-23T18:49:21 <cindyli> colinclark: deploy the GPII-2630 version of the flow manager, which has the prefs server as a subcomponent
+2018-01-23T18:49:35 <Bosmon> cindyli - the ops team might need a slightly higher-level description than that
+2018-01-23T18:49:45 <Bosmon> E.g. what the purpose of this component is, what endpoints it exposes, etc.
+2018-01-23T18:50:20 <Bosmon> And also expanded for "deployed for what purpose"
+2018-01-23T18:50:31 <cindyli> ok, adding more description:
+2018-01-23T18:50:48 <Bosmon> THat is, what will be the service level of this deployment, its lifecycle, availability, and security status of its persisted data
+2018-01-23T18:51:02 <cindyli> oh man
+2018-01-23T18:51:11 <Bosmon> Yeah
+2018-01-23T18:51:16 <Bosmon> Talking across teams is tough :)
+2018-01-23T18:51:51 <cindyli> i will try but not sure i could answer all these questions, such as the lifecycle
+2018-01-23T18:52:35 <cindyli> 1. with the implementation of the new data model: https://wiki.gpii.net/w/Keys,_KeyTokens,_and_Preferences, GPII will no longer have the prefs server running as a standalone server, instead, it will become a subcomponent of the flow manager
+2018-01-23T18:52:43 <Bosmon> That\'s fine, I\'m sure the ops team can fill in the blanks from partial answers
+2018-01-23T18:53:26 <cindyli> 2. the prefs server will share the same couch db with the auth server, and this new database is called "gpii"
+2018-01-23T18:54:21 <cindyli> 3. https://preferences.gpii.net is no longer needed. in the cloud, GPII only has the cloud based flow manager: https://flowmanager.gpii.net
+2018-01-23T18:55:32 <cindyli> 4. as we talked before, there might be different stage of the cloud based flow manager needed serving different purposes, such as testing, staging, production. of course, there would be different name for them
+2018-01-23T18:57:13 <cindyli> 5. for now, what i need is the live flow manager running for testing purpose, so I can fix the production config tests in my GPII-2630 branch. this flow manager should be deployed using the config file from my GPII-2630 branch and available all the time
+2018-01-23T18:57:52 <cindyli> it only provides secured endpoints such as /untrusted-settings
+2018-01-23T18:59:28 <cindyli> that\'s what i can think of. ask me if anything is unclear
+2018-01-23T19:04:56 * jhung_away is now known as jhung
+2018-01-23T19:22:09 <cindyli> Bosmon: one production config test tests trusted flowmanager config - https://github.com/GPII/universal/blob/master/tests/ProductionConfigTests.js#L75. what is the trusted flow manager?
+2018-01-23T19:22:47 <cindyli> does it run locally?
+2018-01-23T19:23:24 <cindyli> do we need to continue to test its production config?
+2018-01-23T19:35:10 * danayo has quit
+2018-01-23T19:54:46 * amatas_ has quit
+2018-01-23T20:05:38 * kasparnet has quit
+2018-01-23T20:14:51 <Bosmon> cindyli - well, that\'s a fantastic question
+2018-01-23T20:14:54 <Bosmon> I would prefer to keep testing it
+2018-01-23T20:15:03 <Bosmon> But in terms of our recent religion, the suggestion might be to destroy it
+2018-01-23T20:15:22 <Bosmon> Personally, I think that would be terrible, and remove all suggestions that we actually have a flexible architecture
+2018-01-23T20:15:26 <Bosmon> But let\'s talk about that tomorrow
+2018-01-23T20:15:32 <cindyli> ok
+2018-01-23T20:20:33 * danayo joined the channel
+2018-01-23T20:26:01 * sepidehshahi has left the channel
+2018-01-23T20:26:56 * sepidehshahi joined the channel
+2018-01-23T20:37:30 * jhung has quit
+2018-01-23T20:54:32 * jhung joined the channel
+2018-01-23T20:57:33 * kasparnet joined the channel
+2018-01-23T21:26:07 * sepidehshahi has quit
+2018-01-23T21:42:14 * danayo joined the channel
+2018-01-23T21:54:28 * clown has quit
+2018-01-23T22:01:54 * jhung has quit
+2018-01-23T22:09:29 * amatas has quit
+2018-01-23T22:15:33 * simonjb has quit
+2018-01-23T22:22:33 * stegru has quit
+2018-01-23T22:53:26 * mrtyler joined the channel
+2018-01-23T22:57:23 * jhung joined the channel
+2018-01-23T22:59:21 * kasparnet has quit
+2018-01-23T22:59:23 * kasparnet_ joined the channel
+2018-01-23T23:12:04 * danayo joined the channel
+2018-01-23T23:14:50 * colinclark has quit
+2018-01-23T23:37:14 * danayo has quit
+2018-01-23T23:41:16 * danayo joined the channel
+2018-01-23T23:47:04 * Justin_o has quit
+'
+
+b'2018-01-23T01:35:52 * cindyli joined the channel
+2018-01-23T02:28:18 * danayo joined the channel
+2018-01-23T03:30:16 * danayo joined the channel
+2018-01-23T04:42:48 * danayo has quit
+2018-01-23T04:46:18 * danayo joined the channel
+2018-01-23T04:46:18 * danayo has quit
+2018-01-23T06:39:30 * mrtyler has quit
+2018-01-23T07:48:56 * kasparnet joined the channel
+2018-01-23T07:53:46 * amatas joined the channel
+2018-01-23T08:01:50 * georgitodorov joined the channel
+2018-01-23T09:11:39 * stegru joined the channel
+2018-01-23T09:40:54 * kasparnet has quit
+2018-01-23T10:16:15 * kasparnet joined the channel
+2018-01-23T10:39:35 * kasparnet has quit
+2018-01-23T11:21:19 * dandimitrov has quit
+2018-01-23T11:22:00 * dandimitrov joined the channel
+2018-01-23T11:29:25 * kasparnet joined the channel
+2018-01-23T11:52:31 <javjarfer[m]> hi stegru !
+2018-01-23T11:52:38 <stegru> hello!
+2018-01-23T11:54:02 <javjarfer[m]> good morning, I\'m not going to use right now that I was asking you again for the demo, but,  did you know if that strings are in fact being parsed by the \'registrySettingsHandler\'?
+2018-01-23T11:54:27 <javjarfer[m]> because It looks like they receive a special treatment
+2018-01-23T11:54:34 <stegru> oh yeh?
+2018-01-23T11:54:54 <stegru> they\'re just being return as-as, as far as i\'m aware
+2018-01-23T11:55:25 <javjarfer[m]> they are being parsed and returned?
+2018-01-23T11:55:48 <stegru> no parsing, what is it you\'re seeing?
+2018-01-23T11:56:41 <javjarfer[m]> I have modified the gpii.launch.exec for printing me what it\'s receiving and I\'m getting a terrible \'undefined\'
+2018-01-23T11:56:56 <javjarfer[m]> (fear the undef)
+2018-01-23T11:57:07 <stegru> well, does the key exist?
+2018-01-23T11:57:33 <stegru> what happens if you do something like: cmd.exe /k echo ${registry...}
+2018-01-23T11:57:48 <javjarfer[m]> yes, it\'s located in the 64 bit part of the registry, I have check trying to get Narrator one, which for example is inside the WOW folder
+2018-01-23T11:57:56 <javjarfer[m]> and it gets the value
+2018-01-23T11:58:05 <javjarfer[m]> but, I\'m not being able to reproduce with the other key
+2018-01-23T11:58:09 <stegru> what\'s the key?
+2018-01-23T11:59:00 <javjarfer[m]> "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Accessibility\\ATs\\AiSquared_ZoomText_v11\\StartExe"
+2018-01-23T11:59:36 <javjarfer[m]> it\'s the exact same \'location\' until "AiSquared_Zom.." than narrator\'s one, but, narrator ones is duplicated in the 32 bit part of the registry
+2018-01-23T12:00:17 <javjarfer[m]> I\'m launching it directly without getting the key, but would be good being able of doing it from there, it\'s our more standard approach
+2018-01-23T12:00:28 <stegru> yeh
+2018-01-23T12:00:35 <javjarfer[m]> for the demos I\'m skipping it, until we know why isn\'t working
+2018-01-23T12:00:58 <stegru> what if you do 64:SOFTWARE\\Microsoft... ?
+2018-01-23T12:01:09 <javjarfer[m]> undefined
+2018-01-23T12:01:25 <javjarfer[m]> well, without the HKEY_LOCAL_MACHINE?
+2018-01-23T12:01:45 <stegru> it will be HKEY_LOCAL_MACHINE\\64:SOFTWARE\\Microsoft
+2018-01-23T12:01:54 <javjarfer[m]> undefined
+2018-01-23T12:02:55 <stegru> you\'re escaping the back slashes?
+2018-01-23T12:03:26 <javjarfer[m]> yes, I will paste you exactly how I was trying it
+2018-01-23T12:04:10 <stegru> oh wait.. you can try to start is using enableRegisteredAT
+2018-01-23T12:04:42 <stegru> copy the magnifier or onscreen keyboard, and use "AiSquared_ZoomText_v1" for the name
+2018-01-23T12:04:59 <stegru> v11
+2018-01-23T12:05:14 <javjarfer[m]> "command": ""${{registry}.HKEY_LOCAL_MACHINE\\64:SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Accessibility\\ATs\\AiSquared_ZoomText_v11\\StartExe\\}""
+2018-01-23T12:05:25 <javjarfer[m]> that was the exact command
+2018-01-23T12:05:39 <stegru> you need to double the backslashes
+2018-01-23T12:05:56 <javjarfer[m]> > oh wait.. you can try to start is using enableRegisteredAT
+2018-01-23T12:05:57 <javjarfer[m]> I thought about that, but didn\'t knew how to do it, and I need to implement several stuff for today
+2018-01-23T12:06:22 <javjarfer[m]> > you need to double the backslashes
+2018-01-23T12:06:22 <javjarfer[m]> yes they are doubled has been escaped by my IRC client, don\'t know why
+2018-01-23T12:06:27 <stegru> ah ok
+2018-01-23T12:07:24 <stegru> try this: https://pastebin.com/cLwPmW5c
+2018-01-23T12:08:24 <stegru> when you start a program in that registry location, it does some other stuff.. like adding it to the lock-screen
+2018-01-23T12:08:51 <stegru> so when you kill the program, it needs to do some things to remove itself from the lock-screen
+2018-01-23T12:09:42 <javjarfer[m]> mm that looks important even for the demo
+2018-01-23T12:09:50 <javjarfer[m]> but that isn\'t working too
+2018-01-23T12:10:19 <stegru> i don\'t know why the registry value isn\'t being read
+2018-01-23T12:11:20 <javjarfer[m]> enableRegsitryAT takes into account registry address space?
+2018-01-23T12:12:59 * gtirloni joined the channel
+2018-01-23T12:13:59 <javjarfer[m]> stegru: it looks like it doesn\'t
+2018-01-23T12:14:21 <javjarfer[m]> well, maybe making the necessary changes there is more trivial than in the other place  (command parsing stuff)
+2018-01-23T12:14:27 * stegru has quit
+2018-01-23T12:14:34 <javjarfer[m]> will take a look at that this afternoon, and see how it goes
+2018-01-23T12:21:14 * stegru joined the channel
+2018-01-23T12:24:49 <stegru> ok
+2018-01-23T12:26:31 * grrrero has quit
+2018-01-23T13:06:32 * gtirloni joined the channel
+2018-01-23T13:09:52 * grrrero joined the channel
+2018-01-23T13:19:31 * Justin_o joined the channel
+2018-01-23T13:27:31 * jhung joined the channel
+2018-01-23T13:34:50 * cindyli joined the channel
+2018-01-23T14:11:12 * simonjb joined the channel
+2018-01-23T14:14:00 <cindyli> Bosmon: does this pcp client readme (https://github.com/GPII/universal/tree/master/examples/pcpChannelClient) applies to mac OS or it only works on windoes?
+2018-01-23T14:14:04 <cindyli> windows
+2018-01-23T14:14:30 <cindyli> it throws error at running `node pcpChannelClient.js` on mac
+2018-01-23T14:14:38 <cindyli> with the master branch
+2018-01-23T14:17:34 <Bosmon> cindyli - it should work on all platforms
+2018-01-23T14:17:37 <Bosmon> What error does it throw?
+2018-01-23T14:18:19 <cindyli> Bosmon: might because my 8081 port is in use, let me try again
+2018-01-23T14:20:13 <cindyli> works, false alarm, sorry Bosmon
+2018-01-23T14:35:48 * sepidehshahi joined the channel
+2018-01-23T14:36:35 * georgitodorov has quit
+2018-01-23T14:37:25 * amatas_ joined the channel
+2018-01-23T14:43:05 <dandimitrov> Hey, Bosmon! About the dialog topic again - we\'re still missing something about the `isShown` in the model approach. As we discussed there will be a simple `modelListener` on the `isShown` property that will either show or hide the dialog depending on the `isShown` property value.
+2018-01-23T14:43:15 <dandimitrov> But what if we want to have a more generic dialog component, that allows its show and hide functionality to be easily altered (overridden)? In the current implementation, this can happen easily by providing a new implementation for the show/hide invokers. How can this be achieved if we are to use the modelized approach? Shall we override the model listener for the `isShown` property for every descendant?
+2018-01-23T14:43:24 <dandimitrov> Another concern for us in general is that for consistency reason this modification will lead to some significant changes. This applies especially to this component: https://github.com/GPII/gpii-app/pull/27/files#diff-bc658f47466ba31df21972f46d3f02d4R148.
+2018-01-23T14:43:31 <dandimitrov> A possibility would be to keep the current `show` and `hide` invokers [ https://github.com/GPII/gpii-app/pull/27/files#diff-d0ba4867f6caa289ae0e4ae677c8ff75R104 ] and use them in the modelListener for the `isShown` property. However, in this case we would need to always ensure that the proper state of the `isShown` flag is set by changing the flag accordingly in these methods (including their overridden versions).
+2018-01-23T14:50:13 * clown joined the channel
+2018-01-23T14:50:31 <Bosmon> dandimitrov - yes, the benefit of having namespaced modelListeners is that they can be overridden individually, just as with invokers
+2018-01-23T14:51:18 <Bosmon> So the convention that we have in some places is for the modelListener which actually materialises some effect of the model outside the component to be given the namespace "impl"
+2018-01-23T14:52:09 <Bosmon> I think in practice you won\'t need too many changes
+2018-01-23T14:52:27 <Bosmon> What is your concern about the restartWarningController?
+2018-01-23T14:55:15 * avtar joined the channel
+2018-01-23T14:56:44 <jhung> fluid-everyone: the design crit starts in 5 minutes in the fluid_standup Vidyo room. Today we\'re talking about the latest Social Justice Repair Kit storytelling tool designs.
+2018-01-23T14:59:34 * danayo joined the channel
+2018-01-23T14:59:43 * clown joined the channel
+2018-01-23T15:03:31 * gtirloni_ joined the channel
+2018-01-23T15:04:40 * clown joined the channel
+2018-01-23T15:06:26 * gtirloni has quit
+2018-01-23T15:09:22 * gtirloni_ is now known as gtirloni
+2018-01-23T15:25:23 <dandimitrov> Bosmon, is replacing `{dialog}.hide` (or `show`) to something like `{dialog}.change.applier("isShown", false)` (and to `true` for `show` accordingly) the right way of moving to the new approach?
+2018-01-23T15:26:16 <Bosmon> dandimitrov - yes, although there is a dedicated syntax for triggering changes declaratively - https://docs.fluidproject.org/infusion/development/ChangeApplierAPI.html#declarative-style-for-triggering-a-change
+2018-01-23T15:26:27 * mrtyler joined the channel
+2018-01-23T15:26:53 * colinclark joined the channel
+2018-01-23T15:36:09 <dandimitrov> Great, thank you, Bosmon. We were rather unsure of the amount of changes that will be required in general, but we\'ll try to make these namespaced modelListeners work and ask if something else comes up :)
+2018-01-23T15:36:21 <Bosmon> dandimitrov - awesome, thanks
+2018-01-23T15:55:19 * Kavya joined the channel
+2018-01-23T16:06:55 <javjarfer[m]> Kavya: hi there!
+2018-01-23T16:07:16 <Kavya> Hi
+2018-01-23T16:08:21 <javjarfer[m]> Good afternoon, do you know if we have any license key for zoomtext 11?
+2018-01-23T16:08:42 <Kavya> Yes we have
+2018-01-23T16:09:09 <javjarfer[m]> oh, that\'s great, could you please give me one?
+2018-01-23T16:09:21 <Kavya> Will send you an email with the key
+2018-01-23T16:09:44 <javjarfer[m]> It looks like some features are disabled if you don\'t have the full version, but I can\'t really tell, because I don\'t have it xD
+2018-01-23T16:09:54 <javjarfer[m]> thanks you!
+2018-01-23T16:16:15 <jhung> fluid-everyone: planning meeting will be at 11:30a.
+2018-01-23T16:19:43 <Kavya> javjarfer: could you give me your email?
+2018-01-23T16:19:54 * jessm joined the channel
+2018-01-23T16:20:24 <javjarfer[m]> of course, jj@raisingthefloor.org
+2018-01-23T16:22:01 <jhernandez> stegru: I saw that you updated the "lock the icon into the task tray" thing - sweet!!
+2018-01-23T16:22:09 * clown joined the channel
+2018-01-23T16:22:36 <stegru> not yet, jhernandez
+2018-01-23T16:22:44 <jhernandez> not yet?
+2018-01-23T16:22:48 <jhernandez> not working?
+2018-01-23T16:22:53 <stegru> it\'s not perfect
+2018-01-23T16:22:56 <jhernandez> okay
+2018-01-23T16:23:14 <jhernandez> then let me know when it\'s ready to go
+2018-01-23T16:23:35 <jhernandez> or even if it\'s not possible with the new approach
+2018-01-23T16:41:39 <stegru> jhernandez: got it working now.. https://github.com/stegru/gpii-wix-installer/tree/PILOT2
+2018-01-23T16:42:20 <jhernandez> stegru: okay, thanks
+2018-01-23T16:42:35 <stegru> do you have a branch I can point a PR to?
+2018-01-23T16:42:54 <jhernandez> not yet
+2018-01-23T16:43:14 <jhernandez> don\'t worry, I can take it from where it is now
+2018-01-23T16:43:21 <stegru> ok
+2018-01-23T16:43:23 <jhernandez> ;)
+2018-01-23T16:46:19 <stegru> I have a PR for gpii-app that points to the pilot2 branch for the installer, that\'s what I\'m building in CI now
+2018-01-23T16:48:03 <stegru> javjarfer[m]: FYI, here\'s what I\'ve done with your UIA file: https://github.com/stegru/gpii-wix-installer/blob/PILOT2/setup/trayicon-uia.cs
+2018-01-23T16:48:44 <stegru> I don\'t think I had to change anything you wrote
+2018-01-23T16:49:21 <javjarfer[m]> stegru: looks very clean, for the windows hiding part and positioning
+2018-01-23T16:49:40 <javjarfer[m]> looks like something we could do with more applications if we have the need
+2018-01-23T16:50:15 <javjarfer[m]> > I don\'t think I had to change anything you wrote
+2018-01-23T16:50:16 <javjarfer[m]> that is nice, no more freezing?
+2018-01-23T16:50:26 <stegru> yeh, i didn\'t like the look of the automation.. it looks like someone had hacked the computer, or something
+2018-01-23T16:50:40 <stegru> i just added a few Sleeps
+2018-01-23T16:52:25 <stegru> not sure if you see this, but the settings window is blue when it first loads.. your code froze if it ran while it was blue
+'
+

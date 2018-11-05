@@ -1,0 +1,277 @@
+b'2017-03-13T20:26:05 <Justin_o> colinclark: but now i\'m wondering if we could do it automatically without a token..
+2017-03-13T20:27:20 <colinclark> just using some jQuery, you mean, Justin_o? :)
+2017-03-13T20:27:23 <Bosmon> Speaking from our experience, URL rewriting is something that we have been making various passes at for well over 10 years
+2017-03-13T20:27:24 <Justin_o> colinclark: assuming the URL in the template is relative to the template, and we know where the template is relative to the page it is being injected into, so we should be able to infer where the URL is relative to the page
+2017-03-13T20:27:32 <colinclark> yeah
+2017-03-13T20:27:36 <Bosmon> And it\'s something that on the face of it appears as if it should be straightforward, but is in fact profound
+2017-03-13T20:27:39 <Justin_o> this is probably a bit more tricky for the iframe but still possible i\'d think
+2017-03-13T20:27:41 <colinclark> I have some incredibly horrific "automatic" implementation in Flocking, in order to deal with Web Worker script URLs
+2017-03-13T20:27:46 <colinclark> it is awful
+2017-03-13T20:27:54 <colinclark> and it\'s a strangely hard problem
+2017-03-13T20:27:56 <Bosmon> And I do wonder in the end we might not want to just invest in a few simple grunt tasks to help people with icon fonts for the time being :)
+2017-03-13T20:28:18 <Bosmon> It\'s unglamorous, but at least we know we are not trying to eat a horse
+2017-03-13T20:28:25 <colinclark> poor horse
+2017-03-13T20:28:29 <Justin_o> Bosmon: assuming the grunt tasks are good, that would seem to be the more direct path
+2017-03-13T20:28:47 <colinclark> my impression is the same
+2017-03-13T20:28:48 <Bosmon> I forget what the metaphor is actually meant to be
+2017-03-13T20:29:02 <Justin_o> it reminds me of Ikea sadly
+2017-03-13T20:29:13 <Bosmon> Well, we are still living in an Ikea world
+2017-03-13T20:29:39 <Bosmon> Even Rachael bought some Ikea furniture, back in 2014 : P
+2017-03-13T20:30:03 <colinclark> Rachael, who constructed her own bedroom! :)
+2017-03-13T20:30:19 <Bosmon> We discovered that what should be the simplest and most superficial task of writing web applications, which is dealing with markup and URLs, is actually by far the most profound
+2017-03-13T20:30:31 <colinclark> it\'s crazy, isn\'t it?
+2017-03-13T20:30:57 <Justin_o> i\'d guess because it wasn\'t designed to be done dynamically
+2017-03-13T20:31:00 <colinclark> I mean, I still have this impression that we might benefit from a handlebars-based component for (other) rendering tasks, while we wait patiently for the new Renderer\xe2\x80\x94but it sounds like it\'s not going to solve our URL rewriting issues here with any silver bullet
+2017-03-13T20:31:22 <Bosmon> Even after the FLUID-6148 rewrite I\'ve been talking over with simonjb, we still won\'t be ready to start addressing these profound challenges : P
+2017-03-13T20:33:16 <colinclark> So it sounds like, disappointly (to me, anyway), that we should look into build tools for icon fonts?
+2017-03-13T20:33:34 <Justin_o> colinclark: yes, that\'s the impression i got too
+2017-03-13T20:33:38 <colinclark> ok
+2017-03-13T20:33:45 <colinclark> bummer in one sense
+2017-03-13T20:33:50 <colinclark> in another sense i guess it\'s a relief
+2017-03-13T20:33:50 <Justin_o> colinclark: would you mind replying to my fluid-work thread
+2017-03-13T20:34:20 <colinclark> I\'ll do my best
+2017-03-13T20:34:40 <Bosmon> One super-slimy idea occurs to me
+2017-03-13T20:34:42 <Justin_o> colinclark: :) thanks
+2017-03-13T20:34:48 <colinclark> what about a preprocessor?
+2017-03-13T20:35:04 <colinclark> is there some kind of way to inline the icons into the HTML at "build time?"
+2017-03-13T20:35:06 <Bosmon> Which would be to invent some bizarre syntax for packing queries for CSS values into the markup, and then parsing it out using some kind of regexp
+2017-03-13T20:35:13 <colinclark> woah
+2017-03-13T20:35:40 <Bosmon> Well
+2017-03-13T20:35:43 <Bosmon> I guess it would be rubbish
+2017-03-13T20:35:49 <colinclark> and complex
+2017-03-13T20:35:51 <Bosmon> We\'d still need to create a NODE which had the CSS property we were interested in
+2017-03-13T20:35:57 <Bosmon> It would be an atrocious mess
+2017-03-13T20:36:00 <Bosmon> Forget I had this idea :)
+2017-03-13T20:36:16 <colinclark> hahaha
+2017-03-13T20:36:25 <Bosmon> You can blame the people who failed to integrate SVG properly into the HTML spec
+2017-03-13T20:36:41 <colinclark> What about my idea? Couldn\'t we just inline the SVG into the templates as a build step?
+2017-03-13T20:36:46 <Justin_o> colinclark: the pre-processor would technically work, but would remove the browser caching for icons used across templates
+2017-03-13T20:36:55 <colinclark> ahhh
+2017-03-13T20:36:56 <Bosmon> colinclark - you mean, all of it?
+2017-03-13T20:37:03 <Justin_o> it would also make it harder to work with a development time
+2017-03-13T20:37:03 <Bosmon> Right
+2017-03-13T20:37:34 <colinclark> So "<use xlink:href="../icons.svg#fl-icon-contrast" />" guarantees that the browser will cache the SVG fragment?
+2017-03-13T20:37:48 <Justin_o> colinclark: i think it caches the whole svg sprite sheet
+2017-03-13T20:37:55 <colinclark> well
+2017-03-13T20:37:57 <Justin_o> but could be mistaken
+2017-03-13T20:37:58 <colinclark> there you go
+2017-03-13T20:38:01 <Bosmon> I don\'t see why SVG shouldn\'t respond to https://developer.mozilla.org/en-US/docs/Web/CSS/url
+2017-03-13T20:38:07 <Bosmon> But I guess we decided that it doesn\'t
+2017-03-13T20:38:38 <colinclark> It doesn\'t, Justin_o?
+2017-03-13T20:38:54 <Justin_o> Bosmon: it does get added to the document but from what i\'ve seen so far, it\'s more like an image
+2017-03-13T20:38:58 <Justin_o> so you can\'t style the color
+2017-03-13T20:39:01 <Bosmon> yes
+2017-03-13T20:39:09 <Bosmon> So SVG just invented their own "transclusion" model
+2017-03-13T20:39:11 <colinclark> ok
+2017-03-13T20:39:24 <Bosmon> Rather than trying to work with anyone else\'s
+2017-03-13T20:39:35 <Justin_o> Bosmon: yes it\'s weird because it gets treated like a binary in some cases and markup in others
+2017-03-13T20:39:58 <Justin_o> even with <use> in some browsers you only get access to limited styling
+2017-03-13T20:40:17 <colinclark> this is brutal
+2017-03-13T20:41:04 <Justin_o> colinclark: yep, and somewhat confusing
+2017-03-13T20:41:35 <Bosmon> I\'ll bet that the performance of rendering icon fonts will always be better, anyway
+2017-03-13T20:41:52 <colinclark> at the cost of fuzziness :P
+2017-03-13T20:42:03 <Bosmon> Do they not do retina display properly?
+2017-03-13T20:42:20 <colinclark> people report sharper icons with SVG than icon fonts
+2017-03-13T20:42:26 <Bosmon> Interesting
+2017-03-13T20:42:39 <colinclark> let me dig up an article with the specifics
+2017-03-13T20:42:47 <Justin_o> also i think the font size will be smaller than the sprite sheet, so there is a smaller foot print, but that might depend on the complexity of the icons
+2017-03-13T20:42:53 <colinclark> I was very glad to have an afternoon on Friday to quietly skim all this stuff
+2017-03-13T20:42:59 <Justin_o> font size meaning size of the font file
+2017-03-13T20:43:01 <Bosmon> Perhaps because the anti-aliasing code for SVG is poorly developed : P
+2017-03-13T20:43:14 <Bosmon> Speaking as someone who valiantly struggles all the time to turn off his platform\'s anti-aliasing code
+2017-03-13T20:43:21 <colinclark> hahaha
+2017-03-13T20:43:37 <colinclark> This article, I think, was a key one: https://css-tricks.com/icon-fonts-vs-svg/
+2017-03-13T20:43:49 <Bosmon> Oh yes
+2017-03-13T20:43:56 <Bosmon> I was reading this from Justin_o\'s links on Friday
+2017-03-13T20:43:58 <colinclark> along with this one: https://cloudfour.com/thinks/seriously-dont-use-icon-fonts/
+2017-03-13T20:45:45 <Bosmon> "Inline SVG is right in the document. If the browser supports it, it displays it"
+2017-03-13T20:45:49 <Bosmon> This one is a bit disingenuous
+2017-03-13T20:45:59 <Bosmon> Since our main aim was for it *not* to be right in the document : P
+2017-03-13T20:47:19 <Bosmon> The idea that the loading of the icon font might be blocked is certainly worrying
+2017-03-13T20:48:27 <Justin_o> what might block the loading?
+2017-03-13T20:48:32 <Justin_o> i think i missed that
+2017-03-13T20:48:40 <Bosmon> A proxy, or an ad blocker
+2017-03-13T20:49:04 <Justin_o> hmm.. that\'s worrysome but i\'d assume only when they are loaded from a different domain?
+2017-03-13T20:49:28 <Bosmon> Yes, some of the failure causes are tied to that
+2017-03-13T20:53:33 <Bosmon> One commenter on that page suggests that the same icon encoded into a font is 6x smaller than with SVG
+2017-03-13T20:54:02 <Bosmon> And that on IE, it is the SVG that is blurry, not the icon font
+2017-03-13T20:55:54 <colinclark> ok, i\'ve responded with what I hope is a reasonable summary
+2017-03-13T20:56:02 <colinclark> and you both can add or correct anything I\'ve missed
+2017-03-13T20:56:36 <Justin_o> colinclark: thanks :(
+2017-03-13T20:56:39 <Justin_o> oops
+2017-03-13T20:56:41 <Justin_o> :)
+2017-03-13T20:56:42 <colinclark> hahah
+2017-03-13T20:56:44 <colinclark> :) :)
+2017-03-13T20:56:56 <colinclark> you\'re feeling ambivalent today, Justin_o
+2017-03-13T20:56:58 <colinclark> :( :)
+2017-03-13T20:57:06 <Justin_o> :|
+2017-03-13T20:57:12 <colinclark> that\'s how I feel about this very interesting discussion
+2017-03-13T20:57:13 <Bosmon> Another commenter mentions "scroll lag" with SVG compared to icon fonts
+2017-03-13T20:57:16 <colinclark> simultaneously :( :)
+2017-03-13T20:57:19 <colinclark> SCROLL LAG!
+2017-03-13T20:57:29 <Bosmon> And especially given we are targetting mobile platforms, this might be significant
+2017-03-13T20:57:40 <Justin_o> Bosmon: that\'s interesting
+2017-03-13T20:58:05 <Bosmon> "It was noticeable enough that the client commented and complained.
+2017-03-13T20:58:05 <Bosmon> I\xe2\x80\x99ve since switched everything over to a custom icon font and now there is no more scroll lag."
+2017-03-13T20:58:11 <Justin_o> i didn\'t notice any issues on the iPad i tried on. How old are the comments?
+2017-03-13T20:58:16 <Bosmon> 2014
+2017-03-13T20:58:40 <Justin_o> Bosmon: that\'s a long time relative to browser improvements other than maybe IE11
+2017-03-13T20:59:44 <Justin_o> Bosmon: you can try the demo in this repo https://github.com/jobara/svg-icon-spike
+2017-03-13T20:59:44 * alanharnum has quit
+2017-03-13T21:21:51 * the-t-in-rtf has quit
+2017-03-13T21:59:52 * colinclark has quit
+2017-03-13T22:31:51 * gtirloni has quit
+'
+
+b'2017-03-13T00:34:18 * noveens joined the channel
+2017-03-13T01:56:34 * stegru has quit
+2017-03-13T08:00:42 * the-t-in-rtf joined the channel
+2017-03-13T09:45:22 * jhernandez joined the channel
+2017-03-13T09:52:19 * stegru joined the channel
+2017-03-13T10:44:47 * the-t-in-rtf1 joined the channel
+2017-03-13T11:18:25 * gtirloni joined the channel
+2017-03-13T11:43:59 * amatas joined the channel
+2017-03-13T12:26:54 * Justin_o joined the channel
+2017-03-13T12:45:30 * cindyli joined the channel
+2017-03-13T12:53:46 * Jess__ joined the channel
+2017-03-13T13:02:59 * alanharnum joined the channel
+2017-03-13T13:05:48 * colinclark joined the channel
+2017-03-13T13:56:32 * gtirloni_ joined the channel
+2017-03-13T13:59:58 * gtirloni has quit
+2017-03-13T14:00:08 * simonjb joined the channel
+2017-03-13T14:13:09 * mrtyler joined the channel
+2017-03-13T15:07:46 * the-t-in-rtf joined the channel
+2017-03-13T15:17:58 * clown joined the channel
+2017-03-13T15:22:03 * mrtyler joined the channel
+2017-03-13T16:35:53 * javjarfer joined the channel
+2017-03-13T17:53:00 * the-t-in-rtf has quit
+2017-03-13T17:57:28 * the-t-in-rtf joined the channel
+2017-03-13T18:40:29 <gtirloni> mrtyler: https://jira.atlassian.com/browse/JRA-2544 -- if this almost 14 years old ticket gets solved, we can visualize the JIRA tree (what links to what)
+2017-03-13T18:40:48 <gtirloni> well, it\'s solved but not in a way we want :)
+2017-03-13T18:40:56 <mrtyler> great, i\'ll start holding my breath :p
+2017-03-13T18:40:58 <gtirloni> the +1\'s keep piling up
+2017-03-13T18:41:56 <mrtyler> man even trac can visualize a dependency tree
+2017-03-13T18:42:35 <mrtyler> "They don\'t understand the concept of dependencies unless there\'s a picture a 5-year-old could trace with his mucky fingers"
+2017-03-13T18:43:22 <gtirloni> there are certain things they refuse to provide even with a lot of customers requesting it (e.g. sending email to verify account after creation). i guess they are playing into their "marketplace" (since there is a paid add-on for this, they might feel it\'s okay)
+2017-03-13T18:44:00 * cindyli joined the channel
+2017-03-13T18:44:04 <mrtyler> i guess this is why the higher-ups have started using wrike
+2017-03-13T18:46:33 <mrtyler> actually this ranking stuff looks good enough for us, maybe
+2017-03-13T18:46:54 <mrtyler> altho it does not actualyl replace having a dependency tree. in 2017.
+2017-03-13T18:47:06 <mrtyler> srsly i think *bugzilla* can do this
+2017-03-13T19:10:28 * stegru has quit
+2017-03-13T19:29:07 * stegru joined the channel
+2017-03-13T19:33:10 <colinclark> Justin_o: Your standup update today suggested that you were a bit blocked in regards to your next steps with responsive UIO
+2017-03-13T19:33:13 <colinclark> is that right?
+2017-03-13T19:41:02 <Justin_o> colinclark: yes, that\'s correct. Hoping to have some or all of those blocks sorted out at the design crit tomorrow
+2017-03-13T19:41:28 <colinclark> That\'s great
+2017-03-13T19:41:40 <colinclark> I was doing some reading about SVG and font icons and the like
+2017-03-13T19:41:45 <colinclark> and I am curious about it all
+2017-03-13T19:42:05 <colinclark> I have a kind of "gut feeling," not being particularly educated about the issue, that SVG icons would be very nice
+2017-03-13T19:42:18 <colinclark> I wasn\'t able to fully piece together whether they\'re a blocker for making UIO responsive
+2017-03-13T19:42:30 <colinclark> can you give me more of a sense of how all these things interrelate?
+2017-03-13T19:44:43 <colinclark> One of the impressions I have is that the maintenance burden of icon fonts is pretty high\xe2\x80\x94without tooling, anyway
+2017-03-13T19:47:27 <Justin_o> The relation to the responsive UIO is on two fronts. 1) because I\'m blocked on other more direct work, i had time to look at the fonts 2) depending on the specifics of the designs I might need to add additional icons. This looks likely for the new textfield steppers as it\'s probablematic to get the "-" and "+" labels on the buttons at the desired size with
+2017-03-13T19:47:27 <Justin_o> the current styling and using standard characters
+2017-03-13T19:47:42 <Justin_o> and there may be additional icons for other parts of the redesign as well
+2017-03-13T19:47:53 <colinclark> ok, so it\'s mostly the maintenance issues?
+2017-03-13T19:48:05 <colinclark> adding new icons or removing old ones over time
+2017-03-13T19:48:09 <colinclark> that kind of thing?
+2017-03-13T19:48:09 <Justin_o> yes
+2017-03-13T19:48:27 <Justin_o> otherwise we should be able to get the designs to work with the icons as is
+2017-03-13T19:49:33 <Justin_o> colinclark: also the primary issues with font icons are 1) adding/removing 2) avoiding collisions.. the former could potentially be dealt with build tools, the later could potentially be dealt with using aria-hidden and aria-label as needed.. would need to do more testing with that though
+2017-03-13T19:49:52 <colinclark> What kinds of collisions?
+2017-03-13T19:50:32 <Justin_o> colinclark: https://issues.fluidproject.org/browse/FLUID-5225
+2017-03-13T19:50:43 <Justin_o> so basically some OS\'s make assumptions about what the PUA characters are used for
+2017-03-13T19:50:57 <colinclark> Isn\'t that a question of using the correct codes in the PUA?
+2017-03-13T19:50:59 <Justin_o> and in the case here, it was reading off the icons as though they were specific emojis
+2017-03-13T19:51:00 <colinclark> The higher ones?
+2017-03-13T19:51:24 <Justin_o> colinclark: i suppose there\'s no way to guarantee what will get used by something else
+2017-03-13T19:51:33 <Justin_o> or what won\'t
+2017-03-13T19:52:30 <colinclark> So the advice in this article isn\'t stable (i.e. it could change based on a vendor\'s implementation)? https://benfrain.com/seriously-use-icon-fonts/
+2017-03-13T19:52:41 <colinclark> Down in the "PUA and Accessibility" section
+2017-03-13T19:56:41 <Justin_o> colinclark: it looks like we are using ones starting at "e003" https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/css/stylus/PrefsEditor.styl#L351-L368
+2017-03-13T19:57:11 <Justin_o> so perhaps that will address that issue... I don\'t know if it is foolproof but hopefully the OS\'s and screenreader will not over take them
+2017-03-13T19:57:34 <colinclark> ok
+2017-03-13T19:57:46 <colinclark> So some kind of build tooling\xe2\x80\x94could that solve #1?
+2017-03-13T19:57:54 <colinclark> I mean, I\'d still rather use SVG icons, I think
+2017-03-13T19:58:11 <colinclark> but just trying to parse all the details and see if there\'s a path of least resistance
+2017-03-13T19:58:51 <Justin_o> colinclark: should be yes, and we should be able to write config that maps an icon to a PUA code.. although it\'s still going to require someone to look at the config to know what a given code refers to... which is unfortunate.
+2017-03-13T19:59:34 <Justin_o> colinclark: yah.. it\'d be nice to use SVGs directly.. but i\'m not sure how to get around the URLs in our templates
+2017-03-13T20:00:02 <colinclark> I think Bosmon has some pretty raw sketchy code sitting in the new Nexus visualizer
+2017-03-13T20:00:15 <Justin_o> it\'ll also mean that our font will be generated at build time, which means the contents of the font aren\'t going to be "stable"
+2017-03-13T20:00:15 <colinclark> which might allow for rendering of URLs in templates
+2017-03-13T20:00:21 <Bosmon> Yes
+2017-03-13T20:00:24 <colinclark> but I wonder if that won\'t be more burdensome in the long run
+2017-03-13T20:00:32 <colinclark> than using a build tool for icon fonts
+2017-03-13T20:00:41 <colinclark> I really don\'t know
+2017-03-13T20:00:58 <Bosmon> To me it seems a choice between investing in tooling to make working with icon fonts a bit smoother, and trying to invest in my totally untested sketch code
+2017-03-13T20:01:04 <colinclark> ha
+2017-03-13T20:01:25 <Bosmon> Given we\'d already have to do something special for IE11 as long as we continue supporting it, it seems to me that icon fonts have a bit of life left in them yet
+2017-03-13T20:01:26 <Justin_o> Bosmon, colinclark: i guess it also depends if we want to be able to support URLs for other things in the templates
+2017-03-13T20:01:53 <Bosmon> SVG seems uniquely burdensome in its insistence that URLs cannot be embedded in CSS, but must be written literally in markup
+2017-03-13T20:02:22 <colinclark> There\'s a part of me that just wants to insist that we need a sanctioned Handlebars component for Infusion until we have a modern renderer\xe2\x80\x94but of course the prospects for investing in that are even more complex and costly than in some bit of untested sketch code :)
+2017-03-13T20:02:24 <Bosmon> But then it is not really "markup" at all, but some weird remnant from an atavist XML era : P
+2017-03-13T20:02:34 <Justin_o> Bosmon: just to clarify your point about the URLs.. it\'s only because we want to have access to style them with CSS. You can add them via URL but they behave more like standard images then
+2017-03-13T20:02:45 <colinclark> which is not what we want :)
+2017-03-13T20:02:47 <Bosmon> Justin_o - right, defeating our main use case for them
+2017-03-13T20:03:12 <Justin_o> Bosmon: exactly... just making sure the logs are clear for others reading
+2017-03-13T20:03:47 <Bosmon> Yup
+2017-03-13T20:03:53 <Bosmon> Here\'s my new parser btw, fwiw: https://github.com/amb26/fluid-authoring/blob/FLUID-4884/src/shared/js/htmlParser.js
+2017-03-13T20:04:01 <Bosmon> 300 lines of stuff I\'d prefer not to see in trunk for a while
+2017-03-13T20:05:32 <Bosmon> It will be recognisable as a somewhat cleaned-up fork of what we currently have as the so-called "fluidParser.js"
+2017-03-13T20:05:33 <Bosmon> https://github.com/fluid-project/infusion/blob/master/src/framework/renderer/js/fluidParser.js
+2017-03-13T20:06:20 <colinclark> yes
+2017-03-13T20:06:36 <colinclark> So, just to satisfy my curiosity...
+2017-03-13T20:06:58 <Bosmon> The actual work of doing the rewriting looks like this: https://github.com/amb26/fluid-authoring/blob/FLUID-4884/src/server/js/IncludeRewriting.js#L95
+2017-03-13T20:07:10 <colinclark> If we were to say, "hey, we need to be able to render stuff, and until we have a new and awesome Renderer, let\'s just use handlebars," what would be the challenges there?
+2017-03-13T20:07:18 <colinclark> technical or otherwise
+2017-03-13T20:09:21 <Bosmon> Well, we\'d have to deliver handlebars itself, for a start
+2017-03-13T20:09:51 <Bosmon> Looking at the-t-in-rtf \'s packaging, the "dist" looks like about 5000 lines of stuff
+2017-03-13T20:09:54 <Bosmon> Minifies to 75k
+2017-03-13T20:10:40 <Bosmon> I think his work in "gpii-handlebars" largely assumes a compliant server, so we might have to repackage some of that, although we\'d need to consult him about that
+2017-03-13T20:10:49 <Bosmon> We could just drop handlebars into the prefs framework and just get on with it
+2017-03-13T20:11:16 <Justin_o> Bosmon: is there any other issue other than say someone writing fluid.handlebarsComponent and making the dependency available?
+2017-03-13T20:11:25 <Bosmon> Alternatively we could do the "very poor man\'s templating" that I do in my authoring work and just template the markup using fluid.stringTemplate
+2017-03-13T20:11:51 <Justin_o> I\'m thinking that in an ideal case an integrator should be able to use whatever rendering engine they want, provided they have the correct grade, templates, and dependencies.
+2017-03-13T20:11:51 <Bosmon> Justin_o - what would fluid.handlebarsComponent actually do?
+2017-03-13T20:12:54 <Justin_o> Bosmon: probably just pull in the template / find it on the page, run handlebars on it with the data to be interpolated
+2017-03-13T20:13:28 <Bosmon> I guess this is the grade of the-t-in-rtf that we could inherit: https://github.com/GPII/gpii-handlebars/blob/master/src/js/client/templateAware.js
+2017-03-13T20:13:42 <Justin_o> Bosmon: i\'m assuming that the basic structure of a general renderer grade would be that, expect for the specific engine used
+2017-03-13T20:15:05 <Justin_o> this is one of my favourite grade names "gpii.handlebars.templateAware.bornReady"
+2017-03-13T20:15:59 <Justin_o> Bosmon, colinclark: also while we\'re talking about handlebars will it actually solve the URL issue for SVG icons?
+2017-03-13T20:16:29 <Bosmon> Justin_o - I dunno, perhaps you would have to write a "handlebars helper" or some such
+2017-03-13T20:16:40 <colinclark> Yeah, I guess I was asking a "meta question"
+2017-03-13T20:17:04 <colinclark> in that I imagined that "scoping a URL to particular HTML page" was a rendering activity
+2017-03-13T20:17:21 <colinclark> and that our issue here was that we lacked a Renderer that could help with this particular task
+2017-03-13T20:17:31 <colinclark> but I imagined you might be able to answer the specific question
+2017-03-13T20:17:53 <Justin_o> colinclark:  you think it\'s something that should just be done automatically, which would be handy actually
+2017-03-13T20:18:01 <Bosmon> Looks like we need this file too: https://github.com/GPII/gpii-handlebars/blob/master/src/js/client/renderer.js
+2017-03-13T20:19:05 <Bosmon> But both of these files seem to mix "standalone" capabilities together with those that are designed to interact with some kind of cooperating server
+2017-03-13T20:20:58 <Justin_o> Bosmon: i don\'t really know enough about rendering engines, but I\'m wondering why we can\'t have a grade that just fetches a template, feeds it through a rendering engine, and injects the output into the DOM?
+2017-03-13T20:21:18 <Bosmon> I dunno, Justin_o - would you like to take responsibility for writing one :)
+2017-03-13T20:21:27 <Bosmon> the-t-in-rtf has put months of effort into this one
+2017-03-13T20:21:37 <Bosmon> And making sure that it has good docs and good test coverage
+2017-03-13T20:21:54 <Justin_o> Bosmon: i qualified my question as "I don\'t really know enough about rendering engines" ;)
+2017-03-13T20:21:59 <colinclark> hahaha
+2017-03-13T20:22:07 <Bosmon> Well I guess that answers my question then : P
+2017-03-13T20:22:13 <Justin_o> lol
+2017-03-13T20:22:16 <colinclark> I think I\'ve answered my metaquestion, too
+2017-03-13T20:22:29 <colinclark> in that I was sort of abstractly speculating on something that might solve a very concrete problem
+2017-03-13T20:22:39 <colinclark> and it sounds like we don\'t quite know how it would
+2017-03-13T20:22:50 <colinclark> and so we can avoid complex, abstracted solutions
+2017-03-13T20:22:58 <colinclark> :)
+2017-03-13T20:22:58 <Bosmon> Described at the level you just have, perhaps fluid.stringTemplate would do everything we need
+2017-03-13T20:23:29 <Justin_o> Bosmon: that would require tokens in the templates though right?
+2017-03-13T20:23:38 <Bosmon> Justin_o - sure, but all these solutions would
+2017-03-13T20:23:40 <colinclark> yes, that\'s right
+2017-03-13T20:23:48 <Bosmon> There\'s nothing in handlebars that will spontaneously rewrite URLs for you
+2017-03-13T20:23:50 <Bosmon> YOu have to give it a directive
+2017-03-13T20:24:05 <Bosmon> Only the "original renderer", and my sketch, ever promised to do anything different : P
+2017-03-13T20:24:11 <Justin_o> Bosmon: sure, but it\'s still a departure from what we have now.. although i suppose it\'s still valid markup
+2017-03-13T20:24:18 <Bosmon> Yes
+2017-03-13T20:24:33 <colinclark> What process would we use for rebasing the URLs, do you think, Justin_o?
+2017-03-13T20:24:41 <colinclark> how would the algorithm work?
+2017-03-13T20:24:53 <colinclark> using handlebars or fluid.stringTemplate?
+2017-03-13T20:25:39 <Justin_o> colinclark: i don\'t know.. i was thinking it would work like the prefix used for the templates and message bundles.. that is someone would provide the base path to swap the token for
+'
+

@@ -1,0 +1,343 @@
+b'2018-09-26T17:10:19 <Bosmon> Is it possible for the inhabitants of these spaces to determine that they are in them?
+2018-09-26T17:10:36 <Justin_o> hmm.. i\'m not sure
+2018-09-26T17:11:31 <Justin_o> it may be that only the portbinding itself runs in more than one space, but i\'d have to double check that too
+2018-09-26T17:17:30 <Justin_o> Bosmon: I don\'t see an obvious way to ask the extension api where i am
+2018-09-26T17:17:36 <Justin_o> where the code is running
+2018-09-26T17:23:34 <Justin_o> Bosmon: are you thinking that source and destination can refer to the space?
+2018-09-26T17:25:03 <Justin_o> Bosmon: there are cases where we want to send to both the content scripts and the browser action
+2018-09-26T17:25:29 <Justin_o> i wonder if it\'s sufficient to just specify a source
+2018-09-26T17:26:06 <Justin_o> and that source could either be the space or something else.
+2018-09-26T17:26:08 <Justin_o> Bosmon: ^
+2018-09-26T17:29:57 <Bosmon> Justin_o - well, the source is less relevant than the destination
+2018-09-26T17:30:13 <Bosmon> And then the question is, if the sender has specified the destination space, whether the receiver can actually determine that they are in that space
+2018-09-26T17:33:53 <Justin_o> Bosmon: not through any built in mechanism that i can see
+2018-09-26T17:34:39 <Bosmon> Justin_o - I found a partial answer here: https://stackoverflow.com/questions/4456969/how-to-tell-if-a-script-is-run-as-content-script-or-background-script/14866788
+2018-09-26T17:35:02 <Bosmon> Especially the 2nd answer
+2018-09-26T17:36:11 <Bosmon> Justin_o - but perhaps we can skip this part of the filtering for this round of implementation, if we can expect to discriminate source and target based on grade names for the current task?
+2018-09-26T17:43:05 <Justin_o> Bosmon: that second answer does seem to work.
+2018-09-26T17:43:37 <Justin_o> Bosmon: i guess we\'d need to be able to include multiple targets
+2018-09-26T17:43:54 <Justin_o> so an array to handle cases where we broadcast to both the content scripts and the browser action
+2018-09-26T17:49:06 <cindyli> Bosmon, jhernandez, can one of you have a look and merge the pull request we talked earlier - https://github.com/GPII/universal/pull/672
+2018-09-26T17:49:24 <cindyli> i\'ve tested it with QSS
+2018-09-26T17:49:45 <Justin_o> Bosmon: i think i\'ll stick with grade names for now though
+2018-09-26T17:50:52 <the-t-in-rtf> @jhernandez, you mean the "generic term"?
+2018-09-26T17:51:56 <the-t-in-rtf> We might have intended for volumeTTS to be the TTS volume and ham-fistedly tied that to the system volume, but in any case we should be able to split it out, i.e. have one for volume and one for TTS volume.
+2018-09-26T18:00:45 <Justin_o> Bosmon: hmm.. maybe I\'m confusing the message system a bit. We do setup a port which would suggest that it should only be sending messages over that connection. So I don\'t think it\'s broadcast. I think I was getting that confused with the in browser one i had to setup for the captions when messaging between the content script and the web page.
+2018-09-26T18:02:00 <Justin_o> the domSettingsApplier does broadcast to ever tab/window and to the browser action but it should happen on separate ports, which are each in a separate dynamic component
+2018-09-26T18:19:45 <Justin_o> fluid-everyone: at today\'s community meeting Rob Carr will be talking about Documenting Accessibility in Wireframes. The collaborative meeting notes are at https://wiki.fluidproject.org/display/fluid/Community+Meeting+%28September+26%2C+2018%29%3A+Documenting+Accessibility+in+Wireframes
+2018-09-26T18:29:17 * clown joined the channel
+2018-09-26T18:43:16 * danayo joined the channel
+2018-09-26T19:09:41 * avtar joined the channel
+2018-09-26T19:28:04 * avtar1 joined the channel
+2018-09-26T19:51:09 * alanharnum joined the channel
+2018-09-26T19:56:02 * clown joined the channel
+2018-09-26T20:23:34 * avtar joined the channel
+2018-09-26T21:13:11 * alanharnum joined the channel
+2018-09-26T21:15:35 * alanharnum joined the channel
+2018-09-26T22:36:17 * michelled joined the channel
+'
+
+b'2018-09-26T14:13:54 <cindyli> super. thanks, jhernandez
+2018-09-26T14:14:29 <jhernandez> cindyli: just, get rid of these lines: https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L4721-L4723
+2018-09-26T14:14:46 <Justin_o> Bosmon: looking at your comments for https://github.com/GPII/gpii-chrome-extension/pull/14#discussion_r220571724
+2018-09-26T14:15:06 <Justin_o> I believe in our current implementations the store is what holds the data, and the data source is what performs the reads/writes to it.
+2018-09-26T14:15:18 <Bosmon> Justin_o - right
+2018-09-26T14:15:29 <Justin_o> that\'s what this is trying to simulate
+2018-09-26T14:15:46 * colinclark joined the channel
+2018-09-26T14:16:08 <Justin_o> it receives messages from changes to the "shared" model and tracks those for use by the dataSource
+2018-09-26T14:16:11 <Justin_o> Bosmon: ^
+2018-09-26T14:17:26 <Bosmon> Justin_o - so the idea of a "Store" is a kind of localised prefs framework phenomenon, and we should try to move towards the DataSource itself as the primary API which is used for accessing persistence
+2018-09-26T14:17:54 <Bosmon> So in this case there is no real reason for there to actually be a "store" in that we can implement the DataSource API perfectly well on top of the port message backing layer
+2018-09-26T14:18:35 <Justin_o> Bosmon: so your suggestion is to drop the store completely, and have the data source message the "shared" model directly
+2018-09-26T14:18:46 <Justin_o> i think you just summarized that while i was typing ;)
+2018-09-26T14:19:09 <Bosmon> Justin_o - yes, this "keep hold of the last message" business just couples together a bunch of things which we\'d prefer to keep separate
+2018-09-26T14:19:34 <Justin_o> okay.. i\'ll take a look at making that change
+2018-09-26T14:20:05 <Bosmon> Your "gpii.chrome.portBinding" implementation is perfectly capable as acting for the backing of a DataSource in its own right
+2018-09-26T14:20:59 <Bosmon> Without involving the "store" semantics as an intermediary
+2018-09-26T14:21:29 <Bosmon> At some point we should try to axe "store" from the prefs framework, once we get some spare time
+2018-09-26T14:22:34 <Justin_o> okay.. yes, i guess there the dataSource would just access the cookie or memory directly
+2018-09-26T14:22:38 <Justin_o> that seems reasonable
+2018-09-26T14:22:42 <Bosmon> I think we did have some kind of "normalise prefs framework store semantics towards standard" JIRA but I don\'t seem to find it
+2018-09-26T14:23:14 <Justin_o> hmm.. i can\'t recall
+2018-09-26T14:23:21 <Bosmon> As the new renderer gets implemented it will become more and more important to have a standard approach towards persistence
+2018-09-26T14:23:35 <Bosmon> Since we will need to have some way of expressing the fact that "the server and client have done the same persistence"
+2018-09-26T14:24:04 <Bosmon> Or even more importantly, expressing the fact that "the server has expressed no side-effects other than fetching from persistence", etc.
+2018-09-26T14:24:25 <Justin_o> standardizing and simplifying sounds good to me
+2018-09-26T14:25:20 <Bosmon> Justin_o well it\'s interesting, you seem to have already directly implemented the dataSource API in your "gpii.chrome.portBinding.store"
+2018-09-26T14:25:59 <Bosmon> So all that seems to be required is to i) change the name, ii) axe the lastIncomingPayload bypass in favour of just implementing onRead.impl directly in terms of the messages
+2018-09-26T14:26:08 <Justin_o> Bosmon: yes, actually stores are a type of datasource if i\'m now remembering correctly
+2018-09-26T14:27:12 <Justin_o> Bosmon: https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Store.js#L20
+2018-09-26T14:27:42 <Bosmon> Justin_o - I see, ok, that\'s good so it looks like we did this work already
+2018-09-26T14:27:48 <Justin_o> :)
+2018-09-26T14:28:22 <Justin_o> not sure why gpii.chrome.portBinding.store isn\'t a fluid.prefs.store.. might have been an oversight..
+2018-09-26T14:28:54 <Bosmon> OK
+2018-09-26T14:29:03 <Bosmon> Well we should make a general task to eliminate fluid.prefs.store completely
+2018-09-26T14:29:15 <Justin_o> Bosmon: but i think the reason for the lastIncomingPayload is because the messages are more push that pull
+2018-09-26T14:29:46 <Justin_o> i suppose i could re-work things so that i can send a message to something to ask it to send me a message back with the data
+2018-09-26T14:32:19 <Bosmon> Justin_o - how could a read be triggered otherwise!
+2018-09-26T14:32:23 <Bosmon> How are they triggered at the moment?
+2018-09-26T14:32:39 <Justin_o> that\'s what the lastIncomingPayload member handled
+2018-09-26T14:32:49 <Justin_o> it would just read from whatever the last received message had stored
+2018-09-26T14:32:55 <Bosmon> Yes, but what if there wasn\'t one
+2018-09-26T14:33:08 <Bosmon> Or if it was incredibly stale ....
+2018-09-26T14:33:10 <Justin_o> then the model would be empty
+2018-09-26T14:33:50 <Bosmon> Surely a big purpose of this API is to be able to issue a request for an up to date rendition of the remote state?
+2018-09-26T14:34:02 <Justin_o> there are so many messages flying around, i\'m not sure it would happen that it would be stale, but i guess it could be.. in that it might get read while an update was coming in
+2018-09-26T14:35:14 <Bosmon> I\'m surprised this seems to work
+2018-09-26T14:35:19 <Bosmon> What happens at startup?
+2018-09-26T14:35:30 <Bosmon> There doesn\'t seem to be a reason for there to be an update at that point
+2018-09-26T14:37:28 <Justin_o> the domSettingsApplier fires messages whenever its model is changed
+2018-09-26T14:38:46 <Justin_o> Bosmon: ^
+2018-09-26T14:41:59 <Bosmon> Justin_o - I see, that\'s interesting
+2018-09-26T14:44:48 <Bosmon> But what if the port is not connected at the time the most recent model change occurs?
+2018-09-26T14:46:06 <colinclark> hey Justin_o, it\'s sounding like Bosmon and Philip are up for a community meeting on October 3, in which we reprise our presentations at the PPIG conference
+2018-09-26T14:46:19 <colinclark> I wonder what we\'ll call it, specifically
+2018-09-26T14:46:26 <colinclark> but anyway, we can go ahead and schedule it
+2018-09-26T14:49:38 <Justin_o> colinclark: that\'s great thanks.. i\'ll put it on the wiki page. Can you let me know when you have title and maybe short description. I plan on sending those out on Monday morning.
+2018-09-26T14:49:46 <colinclark> yes
+2018-09-26T14:49:53 <Justin_o> Thanks
+2018-09-26T15:01:29 <Justin_o> Bosmon: regarding your question about port connection timing. I\'m not sure. I believe the port will be connected when the popup for the model relay is opened.
+2018-09-26T15:01:57 <Bosmon> Justin_o - and I assume at the time that happens, it will need to issue a read
+2018-09-26T15:04:22 <Justin_o> but the lastIncomingMessage would have been set because the port connection would have fired off its initial model
+2018-09-26T15:04:29 <Justin_o> Bosmon: ^
+2018-09-26T15:05:09 <Justin_o> Bosmon: https://github.com/GPII/gpii-chrome-extension/blob/master/extension/src/lib/domSettingsApplier.js#L75-L81
+2018-09-26T15:05:19 <Justin_o> https://github.com/GPII/gpii-chrome-extension/blob/master/extension/src/lib/domSettingsApplier.js#L46-L55
+2018-09-26T15:14:45 <Bosmon> Justin_o - this seems odd - isn\'t the requirement for the domSettingsApplier to read its model over the port on startup, rather than write it?
+2018-09-26T15:16:09 <Justin_o> Bosmon: it sends it\'s model, mostly it\'s used by the enactors in the content-scripts of the various open tabs/windows
+2018-09-26T15:16:25 <Justin_o> it\'s also used by the prefs editor in the popup, which needs to both get and set the model
+2018-09-26T15:16:41 <Bosmon> Justin_o - ok - well, still this seems somewhat like an accident of usage
+2018-09-26T15:17:05 <Bosmon> To me it seems important that the client has the ability to locally trigger a read without necessarily having to piggy-back it on a write
+2018-09-26T15:17:34 <Justin_o> Bosmon: i\'m trying to think about how to get things to work.. the "store" will now need to both post a message to fetch, and post a message to write.. at the moment it was assumed only one type of message posting would happen, so i\'ll need to modify some things.
+2018-09-26T15:18:18 <Bosmon> Justin_o - yes, I think read + read-receipt, write + write-receipt seem like a reasonable collection of messages
+2018-09-26T15:18:31 <Bosmon> In either direction
+2018-09-26T15:24:57 <Justin_o> Bosmon: yes, that should be enough.. let me   rework the portbinding for that
+2018-09-26T15:25:16 <Bosmon> Justin_o - awesome, thanks
+2018-09-26T15:26:39 * danayo joined the channel
+2018-09-26T15:26:41 <Justin_o> Bosmon: https://github.com/GPII/gpii-chrome-extension/pull/14#discussion_r220587977 regarding this, the issue is that all of the messages are broadcast to everyone
+2018-09-26T15:27:20 <Justin_o> so each component needs to specify exactly which ones it actually wants to listen to
+2018-09-26T15:28:18 <Bosmon> Justin_o - ok, that\'s interesting
+2018-09-26T15:28:40 <Bosmon> I suggest we need to break this down then into two separate fields at the top payload level
+2018-09-26T15:28:57 <Bosmon> i) the message type, ii) the source/destination of message
+2018-09-26T15:29:05 <Bosmon> I guess that is three fields :)
+2018-09-26T15:29:38 <Bosmon> A reasonable choice for source/destination would be the Infusion component id of the components at the two ends of the bridge
+2018-09-26T15:29:58 <Bosmon> And in that way most of the filtering job is just checking that a message is destined for this component
+2018-09-26T15:30:17 <Bosmon> After that, we can then filter on message type in a way based on the "sensible defaults"
+2018-09-26T15:30:20 <Justin_o> Bosmon: so a structure like {type: "read/read-receipt/write/write-receipt",  source: "", destination: "", payload: {}}
+2018-09-26T15:30:40 <Bosmon> Justin_o - yes, I think that makes sense
+2018-09-26T15:30:49 <Justin_o> Bosmon: how would I know the ID ahead of time though?
+2018-09-26T15:31:00 <Justin_o> also these components live in different spaces
+2018-09-26T15:31:07 <Justin_o> hence the need for the messaging
+2018-09-26T15:33:10 <Bosmon> Justin_o - yes, that\'s true - ok instead the "remote ids" should take the form of an IoCSS selector which identifies the component in the remote space
+2018-09-26T15:33:32 <Bosmon> I guess the components at the moment "find each other" by assuming that they are the only ones that deal in a message of a particular type?
+2018-09-26T15:33:56 <Bosmon> We should prepare for a world in which multiple pairs of components can be expected to use the bus at the same time without colliding with each other
+2018-09-26T15:34:03 <Bosmon> Remind me what the names of the different spaces are?
+2018-09-26T15:58:37 * cindyli joined the channel
+2018-09-26T16:00:03 * alanharnum2 joined the channel
+2018-09-26T16:04:37 <cindyli> Bosmon, jhernandez, do you know which solution should be matched for "http://registry.gpii.net/common/volume"? a prefs set example - https://github.com/GPII/universal/blob/master/testData/preferences/multi_context.json5#L14
+2018-09-26T16:04:53 <cindyli> our new flat matchmaker and the previous canopy matchmaker cannot find any match for it
+2018-09-26T16:05:47 <cindyli> i mean the new flat matchmaker when using dynamic device reporter
+2018-09-26T16:08:06 <Justin_o> Bosmon: so at the moment they do use the component type name in the type..
+2018-09-26T16:08:18 <cindyli> when the flat matchmaker is used together with the regular device reporter which returns "com.freedomscientific.jaws" as a potential solution, this com.freedomscientific.jaws will be picked as a match for "volume". And this causes the issue 2 reported by Georgi in this jira - https://issues.gpii.net/browse/GPII-3400
+2018-09-26T16:08:39 <Justin_o> Bosmon: so there is the background page, content script, browser action popup, web page (that uses a different messaging system though).
+2018-09-26T16:12:24 <jhernandez> cindyli: I think that the "multi_context" user was mostly used for demoing the multi context on the PSP - not sure about the right solution to this, but I don\'t see any user keying-in with that user and/or adding the "volume" setting to any pref set
+2018-09-26T16:12:56 <jhernandez> ohh, ok, it\'s JAWS
+2018-09-26T16:13:00 <jhernandez> hmmm
+2018-09-26T16:13:42 <jhernandez> well, it changes nothing, I think
+2018-09-26T16:13:51 <Bosmon> cindyli - ok, that\'s interesting
+2018-09-26T16:14:27 <jhernandez> hmm
+2018-09-26T16:14:35 <jhernandez> shouldn\'t JAWS be following volumeTTS?
+2018-09-26T16:14:48 <jhernandez> rather than the OS volume
+2018-09-26T16:14:50 <jhernandez> =?
+2018-09-26T16:15:36 <cindyli> jhernandez: but JAWs is not installed on the windows that QSS runs on
+2018-09-26T16:15:48 <jhernandez> cindyli: okay
+2018-09-26T16:16:07 <jhernandez> and which config are you using to run the QSS?
+2018-09-26T16:16:39 <jhernandez> I\'m wondering whether it is really being reported as installed - http://localhost:8081/device
+2018-09-26T16:16:42 <cindyli> so it causes all 3 errors that https://issues.gpii.net/browse/GPII-3400 talks about in issue 2 with running config "gpii.config.untrusted.development.all.local.json5", jhernandez
+2018-09-26T16:16:53 <jhernandez> okay
+2018-09-26T16:17:11 <cindyli> as u know, this config returns a static set of detected solutions
+2018-09-26T16:17:58 <cindyli> this problem didn\'t happen before because the canopy matchmaker is smart not to return jaws as a match even when this static set is returned
+2018-09-26T16:18:24 <jhernandez> cindyli: right, you should use "gpii.config.untrusted.development.dynamicDR.all.local" to avoid this stuff
+2018-09-26T16:18:29 <cindyli> the canopy matchmaker simply doesn\'t find any solutions for "volume" no matter which config is used
+2018-09-26T16:19:07 <jhernandez> aha
+2018-09-26T16:19:07 <jhernandez> okay
+2018-09-26T16:20:04 <cindyli> i agree, jhernandez. but it would be nice to have the other config usable by QSS. if we know jaws should not be picked for matching "volume", we probable should fix the flat matchmaker or solution registry to exclude it
+2018-09-26T16:21:24 <jhernandez> okay, I\'d say the flat matchmaker to exclude it
+2018-09-26T16:21:26 <cindyli> another thing is, since there isn\'t a match for "volume" with dynamic DR config, the "Volume" setting will not be shown on PSP
+2018-09-26T16:22:01 <jhernandez> okay, interesting
+2018-09-26T16:24:08 <cindyli> if we expect no match for "volume", shall this preference be removed from our demo data?
+2018-09-26T16:30:26 <cindyli> Bosmon, jhernandez, can we have a short call about this issue? ^
+2018-09-26T16:30:45 <jhernandez> cindyli: sure
+2018-09-26T16:30:59 <jhernandez> do you want me to re-open the room?
+2018-09-26T16:31:03 <Bosmon> !!!
+2018-09-26T16:31:05 <Bosmon> ROOM!
+2018-09-26T16:31:08 <cindyli> yes pls
+2018-09-26T16:31:28 <jhernandez> room 3
+2018-09-26T16:32:00 <cindyli> yes, in
+2018-09-26T16:36:16 <cindyli> Bosmon: where are you
+2018-09-26T16:38:50 <Bosmon> Coming, sorry
+2018-09-26T16:44:53 <jhernandez> the-t-in-rtf: question, is there any reason for not using volumeTTS instead of volume (which is IIRC mostly related OS volume)?
+2018-09-26T16:45:05 <jhernandez> (in jaws)
+2018-09-26T16:45:07 <jhernandez> \xc2\xbf?
+2018-09-26T16:46:43 <stegru> oops, sorry I missed the meeting - I was engrossed in my work
+2018-09-26T16:52:00 <Bosmon> Justin_o - which are the spaces that the current two things which are connected in?
+2018-09-26T16:52:28 <Bosmon> I guess it is browser action popup and content script?
+2018-09-26T17:07:28 * danayo_ joined the channel
+2018-09-26T17:07:43 * danayo_ has quit
+2018-09-26T17:08:29 <Justin_o> it\'s background page and content script
+2018-09-26T17:08:38 <Justin_o> and background page and browser action
+2018-09-26T17:09:08 <Justin_o> Bosmon: ^
+2018-09-26T17:10:03 <Bosmon> Justin_o - ok
+'
+
+b'2018-09-26T00:15:10 * jhernandez has quit
+2018-09-26T00:15:24 * jhernandez joined the channel
+2018-09-26T02:14:23 * alanharnum joined the channel
+2018-09-26T02:29:55 * michelled joined the channel
+2018-09-26T06:16:33 * alanharnum joined the channel
+2018-09-26T07:11:03 * georgitodorov joined the channel
+2018-09-26T07:48:19 <georgitodorov> Bosmon or anyone else: I understand that Cindy had sent an email describing her latest changes to gpii-windows and gpii-universal. Can you please forward it to us as it seems we did not get it? Thank you!
+2018-09-26T07:53:57 <georgitodorov> jhernandez, stegru, the-t-in-rtf ^
+2018-09-26T07:55:09 <jhernandez> georgitodorov: hmm, not sure what\'s the email you\'re talking about - Bosmon ?
+2018-09-26T07:56:30 <georgitodorov> jhernandez: As far as I can tell, it is related to Cindy\'s changes regarding application of QSS settings and the improved "noUser" functionality.
+2018-09-26T07:56:40 <georgitodorov> It was sent on 24th Sept
+2018-09-26T07:56:58 <georgitodorov> or early 25th Sept
+2018-09-26T08:02:15 * georgit joined the channel
+2018-09-26T08:06:31 * georgitodorov has quit
+2018-09-26T08:28:18 * georgit has quit
+2018-09-26T08:28:33 * georgitodorov joined the channel
+2018-09-26T09:35:16 <Bosmon> georgitodorov yes, on the 25th and as far as I see you and Danail were on the CC list
+2018-09-26T09:35:53 <Bosmon> jhernandez it was in reply to your mail of the day before
+2018-09-26T09:36:35 <Bosmon> "Testing Danail\'s feature/QSS1.1 branch of gpii-app with last master"
+2018-09-26T09:38:41 <jhernandez> oh, okay, in that case, Cindy\'s reply doesn\'t include any description or clarification about the changes made on universal
+2018-09-26T09:38:59 <georgitodorov> Bosmon: I see. Indeed there is no description
+2018-09-26T09:39:13 <georgitodorov> Bosmon: Are there any changes that we need to make on our end?
+2018-09-26T09:39:14 <jhernandez> I thought there was another email around
+2018-09-26T09:40:45 <jhernandez> georgitodorov: i.e.: I saw that gpii-app was keying-in/out using http requests and now you\'re safe to use function calls for that purpose
+2018-09-26T09:40:47 <Bosmon> georgitodorov, jhernandez - the main work in cindy\'s updates are described in the following JIRAs:
+2018-09-26T09:40:51 <Bosmon> https://issues.gpii.net/browse/GPII-3378
+2018-09-26T09:41:05 <Bosmon> https://issues.gpii.net/browse/GPII-3388
+2018-09-26T09:41:42 <Bosmon> https://issues.gpii.net/browse/GPII-3393
+2018-09-26T09:42:30 <Bosmon> We also need to check in about https://issues.gpii.net/browse/GPII-2957
+2018-09-26T09:45:59 <jhernandez> Bosmon: and the proper version of the noUser implementation (https://github.com/GPII/universal/pull/653) that is merged into master https://issues.gpii.net/browse/GPII-3193
+2018-09-26T09:46:44 <Bosmon> jhernandez - yes thanks, that was done the previous week I think
+2018-09-26T09:47:02 <Bosmon> So in theory master of universal should now have feature parity with the old feds_audit branch
+2018-09-26T09:47:10 <Bosmon> And we should be able to use it as the basis for integrating everything
+2018-09-26T09:47:38 <jhernandez> yup, just wanted to let georgitodorov know about it, but I don\'t think this needs any tweaking on gpii-app\'s side
+2018-09-26T09:47:55 <Bosmon> ok, but we still have a few integration test failures, right?
+2018-09-26T09:48:12 <jhernandez> yup, I think the missing bits are the language and highContrast themes related prs
+2018-09-26T09:48:17 <georgitodorov> Bosmon: I will start looking into them shortly
+2018-09-26T09:48:34 <Bosmon> great, thanks
+2018-09-26T09:48:40 <georgitodorov> I just wanted to know if there is anything we need to change before that
+2018-09-26T09:48:41 <Bosmon> I wish someone would put my language PR to bed : P
+2018-09-26T09:48:47 <Bosmon> It has been circulating for 1 million years
+2018-09-26T09:48:49 <georgitodorov> And it seems there is not
+2018-09-26T09:49:37 <jhernandez> Bosmon: wait, which one? the PSP language one? or the one that updates the list of supported languages?
+2018-09-26T09:49:45 <Bosmon> jhernandez - the latter
+2018-09-26T09:50:23 <jhernandez> oh, right
+2018-09-26T09:50:30 <jhernandez> merging it right now
+2018-09-26T09:53:26 <Bosmon> awesome, thanks!
+2018-09-26T09:56:26 <georgitodorov> Bosmon: Actually, we have identified some issues with the newest version of gpii-windows
+2018-09-26T09:56:45 <Bosmon> georgitodorov - cool, what kind of problems do we have?
+2018-09-26T09:56:48 <georgitodorov> Related to the "language" and "high contrast" setting mostly
+2018-09-26T09:57:15 <georgitodorov> For example, the values for "language" in the PSP were only 7. Now they are 30 or more
+2018-09-26T09:57:58 <georgitodorov> And the only shared value between the QSS and the PSP is "en-US". I remember that a month or so ago this was also the case but was then modified
+2018-09-26T09:58:26 <Bosmon> georgitodorov - this isn\'t the issue solved by https://github.com/GPII/universal/pull/640 which jhernandez is just merging?
+2018-09-26T09:58:27 <georgitodorov> I guess this is something that still needs to be done by Cindy?
+2018-09-26T09:58:55 <georgitodorov> Bosmon: I seems so
+2018-09-26T09:59:26 <jhernandez> yes, this is exactly what I\'m merging right now
+2018-09-26T09:59:41 <georgitodorov> Bosmon: The other thing about "high contrast" is that it now changes the "High contrast theme" setting in the PSP
+2018-09-26T10:00:02 <georgitodorov> Previously it used to change "Windows high contrast" and "UIO+ High contrast"
+2018-09-26T10:01:00 <georgitodorov> So I am not sure how much remaining work Cindy has and whether it makes sense for us to try to fix the integration tests before she finishes with it
+2018-09-26T10:01:15 <Bosmon> georgitodorov - the work is done from our point of view from this round
+2018-09-26T10:01:32 <Bosmon> It is not terribly easy to accommodate changes at both sets of granularity in the different tools
+2018-09-26T10:01:55 <Bosmon> And we still don\'t have a clear decision from UX about how they imagined that we could change settings at an application level in one tool and at the top level in the QSS
+2018-09-26T10:02:10 <Bosmon> So I think we should go for this model for the time being and await a further round of input from UX in future
+2018-09-26T10:02:30 <georgitodorov> Bosmon: Okay. In that case what else needs to be done by Cindy?
+2018-09-26T10:02:47 <Bosmon> georgitodorov - cindy is now implementing the "reset" functionality which will work the way we discussed last week
+2018-09-26T10:03:00 <Bosmon> By having the PSP/QSS trigger a logon of the "reset" token
+2018-09-26T10:03:10 <Bosmon> which will also have the effect of logging out any currently logged-in user
+2018-09-26T10:04:13 <georgitodorov> Bosmon: Great. And what about the thing that Javi mentioned (and I think that you made a similar comment in one of our PRs) about keying in/out by a function call instead of by issuing and HTTP request?
+2018-09-26T10:04:17 <georgitodorov> Is that implemented?
+2018-09-26T10:06:06 <georgitodorov> Bosmon: Also, would we sync up the values for "high contrast" between the QSS (there are 8 there) and the PSP (there are only 4 there)? And how should we handle the "regular-contrast" value?
+2018-09-26T10:07:15 <jhernandez> georgitodorov: for the function calls, yes, it\'s already implemented, see https://github.com/GPII/universal/blob/master/documentation/LifecycleManager.md#main-functions-of-lifecycle-manager
+2018-09-26T10:08:03 <jhernandez> for the high contrast themes, there\'s a pr in place that still needs to be merged into master (see https://github.com/GPII/universal/pull/667)
+2018-09-26T10:08:33 <Bosmon> Thanks for that, jhernandez - I\'ll merge that in now
+2018-09-26T10:13:00 <Bosmon> georgitodorov, jhernandez - whilst I see that it is now theoretically possible to keyin/out with a function call, I think the mechanism is not terribly easy to use
+2018-09-26T10:13:10 <Bosmon> I\'ll ask cindy to improve it a bit when she appears
+2018-09-26T10:18:25 * alanharnum joined the channel
+2018-09-26T10:20:14 * georgit joined the channel
+2018-09-26T10:20:14 * georgitodorov has quit
+2018-09-26T10:22:39 * georgi_todorov joined the channel
+2018-09-26T10:22:39 * georgit has quit
+2018-09-26T10:25:34 <jhernandez> Bosmon: got it, thanks
+2018-09-26T10:35:22 <Bosmon> jhernandez, ok GPII-3382 is merged
+2018-09-26T10:37:04 <jhernandez> greeat, your GPII-3202 is now merged too
+2018-09-26T10:46:23 <georgi_todorov> Bosmon, jhernandez: I noticed an issue with snapset_4d. Whenever I try to key in with this snapset, I get 3 errors: "A setting was not changed" (I think this is related to the "volume" setting), "Morphic can\'t start app" (I suppose, the magnifier is the problematic one) and the default "Oops, something went wrong" error
+2018-09-26T10:46:52 <georgi_todorov> Then, when I change the "volume" setting, the magnifier is successfully opened but I still get the "A setting was not changed" error
+2018-09-26T10:47:18 <jhernandez> all them in a row?! hmmm
+2018-09-26T10:47:29 <georgi_todorov> jhernandez: yes
+2018-09-26T10:53:18 <jhernandez> hmm, snapset_4d doesn\'t include the "volume" setting
+2018-09-26T10:53:43 <jhernandez> oh, btw, georgi_todorov which config are you using to perform the tests?
+2018-09-26T10:55:45 <georgi_todorov> jhernandez: We are extending "%gpii-universal/gpii/configs/gpii.config.untrusted.development.all.local.json5"
+2018-09-26T10:55:51 <jhernandez> okay
+2018-09-26T10:56:00 <jhernandez> all.local
+2018-09-26T10:57:46 <jhernandez> georgi_todorov: I\'d say you should use "gpii.config.untrusted.development.dynamicDR.all.local"
+2018-09-26T10:58:01 <jhernandez> it\'s the same but it uses the dynamic device reporter
+2018-09-26T10:58:44 <jhernandez> it would be great if you can check whether you\'re getting the same error by using that config
+2018-09-26T10:58:59 <jhernandez> it\'s the same as you mentioned earlier but, it uses the dynamic device reporter
+2018-09-26T10:59:25 <jhernandez> (just in case the static device reporter is messing around)
+2018-09-26T10:59:27 <jhernandez> ;)
+2018-09-26T11:10:08 * georgit joined the channel
+2018-09-26T11:13:48 * georgi_todorov has quit
+2018-09-26T11:17:53 <Bosmon> OK, georgit, jhernandez - I\'ve published a new gpii-windows at  0.3.0-dev.20180926T111640Z.283aa31 which incorporates those fixes to the solutions registry, as well as stegru \'s metrics work
+2018-09-26T12:18:38 <georgit> Bosmon: Thank you!
+2018-09-26T12:18:55 * alanharnum joined the channel
+2018-09-26T12:19:36 <georgit> Bosmon, jhernandez: Things are getting even more interesting. I changed the configuration as Javi suggested and I do not get errors for "snapset_4d" but I started getting the "Morphic can\'t start app" when trying to change "High Contrast" from the QSS
+2018-09-26T12:20:05 <georgit> What is more - whenever I get the "Morphic can\'t start app" error, I can no longer key out...
+2018-09-26T12:20:05 * alanharnum2 joined the channel
+2018-09-26T12:20:46 <georgit> I had the chance to test on a different machine at the office and there were no errors with the all.local configuration and snapset_4d
+2018-09-26T12:21:07 <georgit> But still there were issues with keying out not happening
+2018-09-26T12:22:02 <georgit> Should we still use the /proximityTriggered endpoint (or {lifecycleManager}.performProximityTriggered) or switch back to /login and /logout?
+2018-09-26T12:22:37 * Justin_o joined the channel
+2018-09-26T12:25:23 * michelled joined the channel
+2018-09-26T12:26:13 <Bosmon> georgit - could you write up your experiences in a JIRA, and we can present them to cindyli when she appears
+2018-09-26T12:26:18 <jhernandez> georgit: oops! :/
+2018-09-26T12:26:42 <jhernandez> yup, that\'s what was I going to tell, let\'s wait for Cindy
+2018-09-26T12:27:08 <georgit> Bosmon, jhernandez: Sure, will do that right now
+2018-09-26T12:27:40 <jhernandez> georgit: can you fish up the errors from the log? they might help
+2018-09-26T12:27:42 <jhernandez> thanks
+2018-09-26T12:27:44 <jhernandez> :)
+2018-09-26T12:33:37 <georgit> jhernandez: You mean what I get in the gpii-app console or somewhere else (where should I look for those logs)?
+2018-09-26T12:35:13 <jhernandez> the logs from c:\\Users\\your-user\\AppData\\Local\\Temp\\gpii\\ IIRC
+2018-09-26T12:48:05 * javjarfer[m] sent a long message:  < https://matrix.org/_matrix/media/v1/download/matrix.org/UegEiCTuPVoLWkIrNodAAulJ >
+2018-09-26T12:48:13 <javjarfer[m]> has anyone find himself in this situation?
+2018-09-26T12:49:17 <javjarfer[m]> found himself\x0f
+2018-09-26T12:53:04 * Kavya joined the channel
+2018-09-26T12:57:03 * cindyli joined the channel
+2018-09-26T12:58:11 * simonjb joined the channel
+2018-09-26T13:04:04 <georgit> cindyli: Hey, Cindy! We have been testing the PSP/QSS with the most recent version of `gpii-windows` and came across some interesting issues
+2018-09-26T13:04:22 <georgit> Here is the JIRA ticket where I tried to describe them: https://issues.gpii.net/browse/GPII-3400
+2018-09-26T13:04:43 <georgit> Can you take a look at them? Let me know if you need any further information. Thank you!
+2018-09-26T13:13:52 <cindyli> sure. thanks, georgit
+2018-09-26T13:14:56 * clown joined the channel
+2018-09-26T13:19:55 * sepidehshahi joined the channel
+2018-09-26T13:42:19 * sepidehshahi joined the channel
+2018-09-26T13:45:18 * avtar joined the channel
+2018-09-26T13:54:38 * colinclark joined the channel
+2018-09-26T13:58:31 * Kavya has quit
+2018-09-26T14:03:14 * georgit has quit
+2018-09-26T14:08:18 <cindyli> Bosmon, jhernandez, what is the solution "net.opendirective.maavis" - https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L4617? The dynamic device reporter detects this solution on the windows machine that QSS runs on. this solution is also a match when high contrast is turned on, at line 4672. but its settings handler fails to apply and reports an error to QSS
+2018-09-26T14:09:33 <jhernandez> cindyli: okay, that one was on my list (disable maavis) but before your changes it only the affected the ReadToMe snapset
+2018-09-26T14:09:45 <jhernandez> or by using ReadAloud
+2018-09-26T14:10:05 <jhernandez> *it only affected
+2018-09-26T14:10:40 <cindyli> jhernandez: i believe it\'s because our matchmaker has been switched to use flat matchmaker that only performs a straight match
+2018-09-26T14:11:01 <cindyli> this issue didn\'t happen before because canopy matchmaker will filter it out
+2018-09-26T14:11:18 <jhernandez> yeah, the mm switch
+2018-09-26T14:11:38 <cindyli> can we disable it sooner if it\'s already on your list?
+2018-09-26T14:12:18 <jhernandez> okay - the maavis solution was already in the list of things we don\'t want it to be around
+2018-09-26T14:12:38 <jhernandez> I\'ll do it right away
+2018-09-26T14:13:08 * jhung joined the channel
+2018-09-26T14:13:13 <cindyli> cool. thanks, jhernandez. in the meanwhile, how can i disable it to test? can i simply remove it from win32.json?
+2018-09-26T14:13:45 <jhernandez> cindyli: you can remove "alwaysInstalled" policy
+'
+

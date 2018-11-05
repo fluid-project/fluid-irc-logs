@@ -1,0 +1,549 @@
+b'2016-02-26T22:21:12 <colinclark> You could hack procdaw and listen to Ween all weekend
+2016-02-26T22:21:14 <colinclark> that would be great
+2016-02-26T22:21:20 <simonjb> colinclark: could you send an email to my bitstructures address?
+2016-02-26T22:21:24 <colinclark> yep
+2016-02-26T22:21:31 <simonjb> I don\'t usually check ocadu on the weekend
+2016-02-26T22:21:34 <simonjb> cool
+2016-02-26T22:22:39 <simonjb> ok, bye guys
+2016-02-26T22:22:44 <colinclark> thanks again
+2016-02-26T22:22:45 <colinclark> see you!
+2016-02-26T22:24:03 * simonjb has quit
+2016-02-26T22:24:45 <bens01> hi Bosmon, on gpii-binder, i\'ve been thinking about xss potential w/ use of fluid.html, so i\'ve changed it around to only allow these modes of operation: 1) (default) bidirectional data binding using fluid.value and 2) unidirectional binding using fluid.text
+2016-02-26T22:25:35 <Bosmon> bens01 - sounds reasonable, although fluid.html will be a reasonable choice for some applications
+2016-02-26T22:25:47 <bens01> Bosmon, mode 2 (one way, text) can be configured by specifying method: "text" in the long notation for a binding, or apply to all short notations by specifing method:"text" in the component\'s "bindingOptions"
+2016-02-26T22:25:57 <Bosmon> If a user has write access to a component tree, they will also have write access to the HTML document
+2016-02-26T22:26:34 <Bosmon> fluid.html will correspond to the historical renderer component "UIVerbatim" which did see some use sometimes, especially for outputting styled text etc.
+2016-02-26T22:26:43 <bens01> Bosmon, ah..
+2016-02-26T22:27:17 <bens01> I was thinking.. the configuration could be simplified greatly if the binder just inferred when to use value vs. text and the direction was implicit
+2016-02-26T22:28:32 <bens01> but if html could be reasonable I think it would make sense to leave things the way they are now. It\'ll be easy to extend to support html (or any other function) with the current options users can specify
+2016-02-26T22:28:45 <Bosmon> bens01 - sure
+2016-02-26T22:29:14 <Bosmon> Simply allowing configuration of a global function name will provide most of the facilities we\'d want here
+2016-02-26T22:29:33 <Bosmon> Plus the optional use of templating
+2016-02-26T22:30:08 <bens01> global.. for the component that is using the binder?
+2016-02-26T22:30:43 <Bosmon> bens I just mean the use of a function name which is slung in to "fluid.getGlobalValue"
+2016-02-26T22:31:37 * colinclark has quit
+2016-02-26T22:34:03 * colinclark joined the channel
+2016-02-26T22:34:11 * alanharnum has quit
+2016-02-26T22:34:56 * gtirloni has quit
+2016-02-26T22:50:30 * colinclark has quit
+2016-02-26T22:50:52 * colinclark joined the channel
+2016-02-26T22:57:36 * colinclark has quit
+2016-02-26T22:57:53 * colinclark joined the channel
+2016-02-26T23:02:40 * michelled has quit
+2016-02-26T23:02:51 * colinclark has quit
+2016-02-26T23:11:20 * colinclark joined the channel
+2016-02-26T23:22:44 <colinclark> Bosmon: "Constructs a component instance at a particular path in the component tree"
+2016-02-26T23:22:57 <colinclark> This is the first instance where we meet this term "component tree"
+2016-02-26T23:23:14 <colinclark> also I am interested in unpacking what it means to construct something "at a particular path"
+2016-02-26T23:23:22 <Bosmon> Yes
+2016-02-26T23:23:27 <Bosmon> There are restrictions in the current system
+2016-02-26T23:23:36 <Bosmon> The direct parent path must already contain a component
+2016-02-26T23:24:00 <Bosmon> And the constructed component will become a subcomponent of it, tied to its lifecycle
+2016-02-26T23:24:03 <colinclark> I guess in this case it\'s reasonable to say that the component tree is simply "a tree structure which contains all of the currently-instantiated components running in a Nexus process?"
+2016-02-26T23:24:11 <Bosmon> E.g. it will automatically be destroyed when its parent is destroyed
+2016-02-26T23:24:18 <colinclark> Given a brand new Nexus
+2016-02-26T23:24:26 <colinclark> What is in the component tree?
+2016-02-26T23:24:39 <colinclark> There is presumably a global root component
+2016-02-26T23:24:50 <colinclark> Representing the Nexus itself or something?
+2016-02-26T23:25:16 <Bosmon> Given a brand new nexus, it will contain (as far as the user is concerned) just a single root component, of type fluid.rootComponent, at the global path ""
+2016-02-26T23:25:23 <colinclark> ok
+2016-02-26T23:25:28 <colinclark> that\'s a great start
+2016-02-26T23:25:40 <Bosmon> I mean, naturally there will be the machinery to run the Nexus itself etc. and the Kettle application that corresponds to it
+2016-02-26T23:25:44 <colinclark> and so let\'s say I want to construct a cat component
+2016-02-26T23:25:53 <colinclark> the colin.cat grade has already been defined
+2016-02-26T23:25:56 <Bosmon> But I imagine that this might be one of the first things that we put "off limits" once we construct our security system : P
+2016-02-26T23:26:04 <colinclark> and then I call the construct resource and supply a path such as "hugo?"
+2016-02-26T23:26:14 <colinclark> which will be within the root component?
+2016-02-26T23:26:16 <Bosmon> In future I imagine that each client will be allocated its own "sandbox" area
+2016-02-26T23:26:19 <colinclark> right
+2016-02-26T23:26:22 <colinclark> that makes sense
+2016-02-26T23:26:42 <Bosmon> colinclark - yes, for "hugo"
+2016-02-26T23:26:45 <colinclark> ok
+2016-02-26T23:26:56 <Bosmon> He will become ther... ***WORLDD..... ***CCATTE**** : P
+2016-02-26T23:26:56 <colinclark> great
+2016-02-26T23:26:59 <Bosmon> Sitting at the GLOBAL ROOT
+2016-02-26T23:27:01 <colinclark> :)
+2016-02-26T23:27:10 <Bosmon> Compared to all other CATTES, he will seem **ENTIRELY ENNORMOUS**
+2016-02-26T23:27:13 <colinclark> :)
+2016-02-26T23:27:26 <colinclark> ok, this helps and I can write this up
+2016-02-26T23:27:29 <Bosmon> awesome
+2016-02-26T23:28:22 <colinclark> I think ultimately I will hoist these descriptions up into a definition section
+2016-02-26T23:28:28 <colinclark> grades, component tree, etc.
+2016-02-26T23:28:50 <Bosmon> Yes, like the GLOZARY in our PPIG paper
+2016-02-26T23:29:00 <colinclark> yup
+2016-02-26T23:29:16 <colinclark> Was that Clayton\'s suggestion, or a reviewer\'s?
+2016-02-26T23:29:28 <Bosmon> A reviewer
+2016-02-26T23:29:31 <Bosmon> "the reviewer"
+2016-02-26T23:29:36 <Bosmon> Tom : P
+2016-02-26T23:29:41 <colinclark> hahaha
+2016-02-26T23:30:07 <colinclark> I have cited nearly everything you\'ve written at this point in my own writings
+2016-02-26T23:30:10 <colinclark> it\'s pretty good
+2016-02-26T23:30:17 <Bosmon> Cool
+2016-02-26T23:30:18 <colinclark> only, I think, BEING AND TIME, hasn\'t been referenced
+2016-02-26T23:30:24 <Bosmon> This END OF BEING AND TIME paper is pretty good! : P
+2016-02-26T23:30:28 <Bosmon> I\'d forgotten how much was in it
+2016-02-26T23:30:35 <colinclark> yes, it\'s really substantial
+2016-02-26T23:30:59 <Bosmon> I\'d forgotten I\'d ever read any RICHARD RORTY
+2016-02-26T23:31:08 <Bosmon> So this serves as a useful record of that, at least : P
+2016-02-26T23:32:11 <colinclark> Yes, you had a pretty strong Rorty period
+2016-02-26T23:32:42 <colinclark> I occasionally run into references to him in my own reading, but haven\'t yet had a chance to dig in
+2016-02-26T23:49:44 * jhung has quit
+2016-02-26T23:53:43 * amatas has quit
+'
+
+b'2016-02-26T21:23:58 <simonjb> Bosmon: I\'m just reminding myself of the current state on my nexus repo and parts of it are still a little rough -- I really focused on the \'happy path\' and getting everything lined up for the face-to-face -- should I wait a bit to fill out the implementation or do you want to get it into gpii/nexus sooner?
+2016-02-26T21:24:34 <simonjb> shall I make the pull request and keep working? or wait a bit?
+2016-02-26T21:24:51 * lliskovoi joined the channel
+2016-02-26T21:24:58 * lliskovoi has quit
+2016-02-26T21:25:00 <Bosmon> simonjb - I think it can go in relatively soon since it has adequate tests
+2016-02-26T21:25:06 <Bosmon> I think "pull request and keep working" is good
+2016-02-26T21:25:11 <simonjb> ok, cool
+2016-02-26T21:25:26 <Bosmon> I will throw in some review comments from time to time : P
+2016-02-26T21:25:31 <simonjb> :)
+2016-02-26T21:25:34 * lliskovoi joined the channel
+2016-02-26T21:25:37 <Bosmon> But really I think it meets most of our core criteria already
+2016-02-26T21:25:54 <Bosmon> It\'s not necessary that things are marvellous, secure and universally capable from the get-go
+2016-02-26T21:26:14 <Bosmon> Merely that they are reasonably well documented, have reasonable test cases and reasonable implementation quality
+2016-02-26T21:26:16 <simonjb> sure, of course
+2016-02-26T21:26:47 <simonjb> I think the test coverage is reasonable but I also have a number of TODOs in my tests for other cases I\'d like to cover
+2016-02-26T21:26:52 <Bosmon> cool
+2016-02-26T21:27:48 <Bosmon> Yes, I see that the "write badly-formed defaults" test case is in progress
+2016-02-26T21:28:20 <simonjb> https://github.com/simonbates/nexus/blob/master/tests/WriteDefaultsTests.js#L131
+2016-02-26T21:28:22 <simonjb> this one?
+2016-02-26T21:28:36 <Bosmon> Yup, that one
+2016-02-26T21:28:58 <Bosmon> And once there\'s a pull request there\'ll be places to attach answers to questions like this one: https://github.com/simonbates/nexus/blob/master/tests/BindModelTests.js#L26
+2016-02-26T21:30:37 <Bosmon> Although I\'m not quite clear what is meant "right name to reference the invoker"
+2016-02-26T21:31:35 <simonjb> I have to try to remember too :)
+2016-02-26T21:32:39 <simonjb> I\'ll go ahead and make the pull request -- as you say, that will give us somewhere to attach the conversation
+2016-02-26T21:33:15 <Bosmon> Oh, I think I know what you mean
+2016-02-26T21:33:37 <Bosmon> The issue is what context name to use to refer to the testCaseHolder itself
+2016-02-26T21:33:41 <alanharnum> avtar michelled: talking to myself in the vidyo room ftw
+2016-02-26T21:33:45 <Bosmon> Well
+2016-02-26T21:33:48 <Bosmon> I\'m not sure
+2016-02-26T21:33:52 <Bosmon> You seem to be able to do that already
+2016-02-26T21:34:24 <simonjb> I think I wanted to pass a callable thing into the registerModelListenerForPath
+2016-02-26T21:34:32 <simonjb> that would be instead of the event
+2016-02-26T21:34:43 <michelled> alanharnum: we heard "iz, iz, iz, iz, iz, iz, iz, iz, iz, iz, iz, iz, iz, iz, iz, iz,iz, iz, iz, iz \xe2\x80\xa6\xe2\x80\xa6." so we left :)
+2016-02-26T21:34:49 <alanharnum> hahahaha
+2016-02-26T21:34:49 <avtar> alanharnum: we disconnected after your audio started looping and turned more into a josh wink track
+2016-02-26T21:34:51 <Bosmon> IZ IZ IZ IZ IZ IZ IZ!
+2016-02-26T21:34:59 <alanharnum> listen
+2016-02-26T21:34:59 <simonjb> so I could do addListener(modelPath, *THING*)
+2016-02-26T21:35:05 <alanharnum> if you don\'t wanna buy my new dubstep album
+2016-02-26T21:35:08 <alanharnum> you don\'t have to do
+2016-02-26T21:35:13 <alanharnum> but just be upfront about that :(
+2016-02-26T21:36:08 <avtar> alanharnum: bandcamp page or it never happened
+2016-02-26T21:36:12 <Bosmon> simonjb - to start with I think it could be simplified one step by simply throwing in "event.fire"
+2016-02-26T21:36:48 <simonjb> Bosmon: addListener(modelPath, event.fire) ?
+2016-02-26T21:36:57 <Bosmon> simonjb - yes
+2016-02-26T21:36:59 <simonjb> aha
+2016-02-26T21:37:02 <alanharnum> avtar: http://alan_harnum_dubstep.inlibraries.com/
+2016-02-26T21:37:06 <simonjb> that works, cool
+2016-02-26T21:37:14 <Bosmon> Now given that the other bit of signature is just "componentPath" it seems hard to simplify this much further
+2016-02-26T21:37:27 <Bosmon> Well
+2016-02-26T21:37:31 <Bosmon> I guess you can
+2016-02-26T21:37:43 <gtirloni> thx
+2016-02-26T21:37:51 <gtirloni> oops, wrong win :P
+2016-02-26T21:37:57 <avtar> this is good stuff
+2016-02-26T21:38:05 <Bosmon> Given that you could instead refer to the component using the rather cackhanded syntax "{fluid.rootComponent}<componentPath>.event.fire"
+2016-02-26T21:38:11 <simonjb> gtirloni: you\'re welcome
+2016-02-26T21:38:15 <Bosmon> I think this is probably what you were after?
+2016-02-26T21:38:29 <gtirloni> haha
+2016-02-26T21:38:57 <simonjb> Bosmon: I think yes, but I\'m also happy to use the addListener(..., event.fire)
+2016-02-26T21:39:22 <simonjb> but yes, something like that was what I was originally aiming for I think
+2016-02-26T21:55:09 * lliskovoi_ joined the channel
+2016-02-26T21:55:15 * lliskovoi_ has quit
+2016-02-26T21:57:04 <alanharnum> avtar michelled: https://issues.gpii.net/browse/GPII-1583
+2016-02-26T21:57:18 * sepidehshahi has left the channel
+2016-02-26T21:57:34 <avtar> thanks alanharnum :D
+2016-02-26T21:57:45 * lliskovoi has quit
+2016-02-26T22:00:26 * colinclark joined the channel
+2016-02-26T22:00:52 <colinclark> hey again simonjb
+2016-02-26T22:01:23 <colinclark> can I catch you for one last quick question before you leave?
+2016-02-26T22:02:35 * klown has left the channel
+2016-02-26T22:02:44 <simonjb> sure colinclark
+2016-02-26T22:03:10 <colinclark> Have you written up anything about securing the Nexus?
+2016-02-26T22:03:18 <colinclark> ideas you\'ve tossed around with Bosmon or anything?
+2016-02-26T22:03:19 <simonjb> no not yet
+2016-02-26T22:03:41 <colinclark> If you were to describe a general conceptual approach to it in two sentences or so, could you?
+2016-02-26T22:03:58 <colinclark> Something to do with defining access controls or whitelists for particular grades in the Nexus?
+2016-02-26T22:04:09 <Bosmon> colinclark - I imagine it would proceed in a very similar way to the scheme we use for controlling access to GPII user preferences
+2016-02-26T22:04:27 <Bosmon> We would have "readsets" and "writesets" which were maps of EL paths or global names to true/false
+2016-02-26T22:04:36 <simonjb> colinclark: not just grades but I think names in general
+2016-02-26T22:05:02 <Bosmon> That is, we would need to secure access to the component tree structure (EXTENSA) as well as to anything that can be referred to by global names (POTENTIA I)
+2016-02-26T22:05:12 <Bosmon> Yes
+2016-02-26T22:05:19 <colinclark> "names in general" === EL paths into components instantiated in the Nexus?
+2016-02-26T22:05:32 <Bosmon> It\'s actually the unbounded use of fluid.fetchGlobalValue() which is the greatest current security risk in the system
+2016-02-26T22:05:44 <simonjb> also names not just instantiated by the nexus
+2016-02-26T22:05:49 <Bosmon> For example, simonjb\'s "exploit" based on the use of fluid.fetchGlobalValue("require") : P
+2016-02-26T22:05:55 <colinclark> :)
+2016-02-26T22:05:57 <simonjb> exactly
+2016-02-26T22:07:05 <colinclark> ok
+2016-02-26T22:07:16 <colinclark> I think I at least vaguely can imagine this
+2016-02-26T22:08:40 <simonjb> we need to limit what is reachable from code presented to the nexus over http
+2016-02-26T22:09:13 <simonjb> so that code cannot make use of arbitrary names -- functions, variables, grades
+2016-02-26T22:09:14 <Bosmon> cindyli - http://lists.gpii.net/pipermail/architecture/2016-February/003872.html : P
+2016-02-26T22:09:37 <cindyli> ooohhh\xe2\x80\xa6 thankkkkkksssss, Bosmon
+2016-02-26T22:10:47 <simonjb> Bosmon: I\'ve forked the gpii/nexus and merged in my work -- there\'s some clean up (such as 2 LICENSES) that I will do on Monday and make the pull request https://github.com/simonbates/nexus
+2016-02-26T22:11:11 * jhung joined the channel
+2016-02-26T22:11:12 <colinclark> zomg, Bosmon!
+2016-02-26T22:11:16 <colinclark> I\'m so glad!
+2016-02-26T22:11:22 <simonjb> I was able to preserve history from my repo, Bosmon
+2016-02-26T22:11:24 <colinclark> cindyli: exciting!
+2016-02-26T22:11:37 <simonjb> YAY cindyli !
+2016-02-26T22:11:46 <Bosmon> simonjb - awesome
+2016-02-26T22:11:47 <colinclark> thanks for that, simonjb--I will link to the GPII repository in this deliverable
+2016-02-26T22:11:47 <cindyli> YAY!! i\'m the one who is really really gald
+2016-02-26T22:11:49 <cindyli> glad
+2016-02-26T22:12:00 <Bosmon> simonjb - could you just sketch the steps you went through for anyone here who might be interested? : P
+2016-02-26T22:12:09 <colinclark> I figured it was safer to have a reference to the GPII org, since there were comments about diffuse the Cloud4All repositories were
+2016-02-26T22:12:14 <simonjb> Bosmon: to preserve history?
+2016-02-26T22:12:19 <colinclark> yes please
+2016-02-26T22:12:27 <colinclark> I have regularly wondered about this
+2016-02-26T22:12:51 <simonjb> (1) I renamed my repo from simonbates/nexus to simonbates/simon-nexus
+2016-02-26T22:13:01 <simonjb> (2) forked gpii/nexus to simonbates/nexus
+2016-02-26T22:13:04 <colinclark> maybe that should be its official name
+2016-02-26T22:13:08 <colinclark> The Simon Nexus
+2016-02-26T22:13:26 <simonjb> (3) cloned simonbates/nexus (my fork)
+2016-02-26T22:13:40 <simonjb> (4) added simonbates/simon-nexus as a remote
+2016-02-26T22:13:58 <simonjb> (5) merged simon-nexus/master into nexus/master
+2016-02-26T22:14:11 <simonjb> done
+2016-02-26T22:14:34 <colinclark> man
+2016-02-26T22:14:35 <colinclark> that\'s great
+2016-02-26T22:14:39 <colinclark> thank you for explaining it
+2016-02-26T22:15:41 * cindyli has quit
+2016-02-26T22:16:52 <simonjb> (2a) deleted my local (previous) simonbates/nexus as it still pointed back to the old name
+2016-02-26T22:17:04 <simonjb> to avoid getting confused between repos
+2016-02-26T22:17:13 <simonjb> Bosmon, colinclark ^
+2016-02-26T22:17:33 <colinclark> that makes sense
+2016-02-26T22:17:40 <colinclark> Bosmon: "Followups set to the closed committer list for voting - an update will be given here on the result."
+2016-02-26T22:17:46 <colinclark> I noticed that you didn\'t actually change the reply-to
+2016-02-26T22:17:54 <Bosmon> colinclark - I think this came up last time too :)
+2016-02-26T22:17:57 <colinclark> so maybe a quick email to the committers list, just to start the discussion there?
+2016-02-26T22:18:00 <colinclark> ha!
+2016-02-26T22:18:01 <Bosmon> I have set "followup-to" : p
+2016-02-26T22:18:33 <simonjb> Bosmon, colinclark: I\'m going to head out now -- cool? Jan and a group headed for drinks and I want to join them
+2016-02-26T22:18:34 <colinclark> deja-vu
+2016-02-26T22:18:44 <colinclark> simonjb: thanks for your help
+2016-02-26T22:18:48 <colinclark> I\'ve got everything I need
+2016-02-26T22:18:53 <simonjb> ok, cool
+2016-02-26T22:18:54 <colinclark> I\'ll send the deliverable section to you this weekend
+2016-02-26T22:18:57 <Bosmon> simonjb - thanks for the explanation, it was very helpful
+2016-02-26T22:18:58 <colinclark> and you can read it on Monday
+2016-02-26T22:19:12 <simonjb> will do
+2016-02-26T22:19:31 <colinclark> we\'ll be a little tight on time on Monday
+2016-02-26T22:19:42 <colinclark> so if you can take a peek when you get in in the morning and let me know what you think
+2016-02-26T22:19:48 <colinclark> my bad for taking so long to finish it up
+2016-02-26T22:19:49 <simonjb> we also have the APCP IBM thing
+2016-02-26T22:19:55 <colinclark> yep
+2016-02-26T22:19:57 <colinclark> busy week
+2016-02-26T22:20:30 <simonjb> I can also have a look on the weekend
+2016-02-26T22:20:40 <colinclark> totally up to you
+2016-02-26T22:20:50 <colinclark> you could also hack procdraw all weened instead :)
+2016-02-26T22:20:58 <colinclark> weekend
+'
+
+b'2016-02-26T17:23:06 * [o__o] joined the channel
+2016-02-26T17:23:06 * scott_gonzalez joined the channel
+2016-02-26T17:34:17 * lliskovoi_ joined the channel
+2016-02-26T17:37:22 * lliskovoi has quit
+2016-02-26T17:37:23 * lliskovoi_ is now known as lliskovoi
+2016-02-26T17:39:59 * lliskovoi has quit
+2016-02-26T17:43:11 * sepidehshahi joined the channel
+2016-02-26T17:47:55 * lliskovoi joined the channel
+2016-02-26T17:50:53 * lliskovoi has quit
+2016-02-26T17:50:55 * jessm has quit
+2016-02-26T17:52:49 * sepidehshahi has quit
+2016-02-26T17:53:04 * sepidehshahi joined the channel
+2016-02-26T17:53:21 * lliskovoi joined the channel
+2016-02-26T17:57:06 * lliskovoi has quit
+2016-02-26T17:58:28 * lliskovoi joined the channel
+2016-02-26T18:00:15 * lliskovoi has quit
+2016-02-26T18:01:17 * lliskovoi joined the channel
+2016-02-26T18:03:19 * lliskovoi has quit
+2016-02-26T18:05:58 * lliskovoi joined the channel
+2016-02-26T18:07:39 * lliskovoi has quit
+2016-02-26T18:15:49 * lliskovoi joined the channel
+2016-02-26T18:17:50 * lliskovoi has quit
+2016-02-26T18:18:29 * lliskovoi joined the channel
+2016-02-26T18:20:24 * lliskovoi has quit
+2016-02-26T18:22:45 * lliskovoi joined the channel
+2016-02-26T18:24:51 * lliskovoi has quit
+2016-02-26T18:26:32 * lliskovoi joined the channel
+2016-02-26T18:29:09 * lliskovoi has quit
+2016-02-26T18:30:40 * lliskovoi joined the channel
+2016-02-26T18:34:52 * lliskovoi has quit
+2016-02-26T18:35:32 * lliskovoi joined the channel
+2016-02-26T18:37:33 * lliskovoi has quit
+2016-02-26T18:38:00 * lliskovoi joined the channel
+2016-02-26T18:41:58 * lliskovoi has quit
+2016-02-26T18:42:15 * lliskovoi joined the channel
+2016-02-26T18:48:25 * lliskovoi has quit
+2016-02-26T18:49:33 * lliskovoi joined the channel
+2016-02-26T18:51:35 * lliskovoi has quit
+2016-02-26T18:52:33 * lliskovoi joined the channel
+2016-02-26T18:54:35 * lliskovoi has quit
+2016-02-26T18:56:25 * lliskovoi joined the channel
+2016-02-26T18:58:20 * lliskovoi has quit
+2016-02-26T19:00:38 * lliskovoi joined the channel
+2016-02-26T19:02:41 * lliskovoi has quit
+2016-02-26T19:11:15 * sepidehshahi has quit
+2016-02-26T19:11:38 * sepidehshahi joined the channel
+2016-02-26T19:14:42 * cindyli has quit
+2016-02-26T19:17:44 * Justin_o has quit
+2016-02-26T19:32:04 * lliskovoi joined the channel
+2016-02-26T19:35:30 * cindyli joined the channel
+2016-02-26T19:36:14 * lliskovoi joined the channel
+2016-02-26T19:38:00 * lliskovoi has quit
+2016-02-26T19:39:32 * lliskovoi joined the channel
+2016-02-26T19:47:14 * lliskovoi joined the channel
+2016-02-26T19:49:18 * lliskovoi has quit
+2016-02-26T19:54:18 * colinclark joined the channel
+2016-02-26T19:54:33 <colinclark> hey simonjb
+2016-02-26T19:54:48 <simonjb> hey colinclark
+2016-02-26T19:54:53 <colinclark> how\'s it going?
+2016-02-26T19:55:28 <simonjb> good, I\'ve been reviewing the face-to-face SP2 and SP3 presentations
+2016-02-26T19:55:43 * jhernandez has quit
+2016-02-26T19:55:49 <colinclark> awesome
+2016-02-26T19:55:53 <colinclark> that\'s actually what I wanted to ask you about
+2016-02-26T19:56:07 <colinclark> can you fire me a link to the latest copy of your Nexus presentation?
+2016-02-26T19:57:14 <simonjb> colinclark: for the face-to-face they were collected together into 1 powerpoint file
+2016-02-26T19:57:16 <simonjb> https://drive.google.com/folderview?id=0B8XrUmV1-meGcEk0ZDZlSnNRa00&usp=drive_web&tid=0BzZg46bX_4YWY0x5NHQtaVJsNzg#list
+2016-02-26T19:57:23 <colinclark> aha
+2016-02-26T19:57:26 <simonjb> number 4
+2016-02-26T19:58:01 <simonjb> I can also send you the nexus one directly, if you just want that one
+2016-02-26T19:58:46 <colinclark> I think I\'ve got it here
+2016-02-26T19:58:52 <simonjb> P4A_SP2_Pitch_Presentations.pptx
+2016-02-26T19:59:00 <colinclark> this is great, thank you
+2016-02-26T19:59:14 <colinclark> I listened to the Julia Holter album again this morning when I woke up
+2016-02-26T19:59:23 <simonjb> nice
+2016-02-26T19:59:25 <colinclark> I have to admit it hadn\'t caught me in the way that her older ones did
+2016-02-26T19:59:29 <colinclark> but today it really did
+2016-02-26T19:59:32 <colinclark> for the first time
+2016-02-26T19:59:33 <simonjb> interesting
+2016-02-26T19:59:46 <simonjb> I really like it a lot
+2016-02-26T20:00:06 <colinclark> it\'s very very good
+2016-02-26T20:00:51 <simonjb> I got Loud City Song and I\'m liking it a lot also -- definitely some differences with the latest one
+2016-02-26T20:01:28 <colinclark> yes
+2016-02-26T20:01:48 <colinclark> that\'s the one I\'m most familiar with
+2016-02-26T20:01:55 <colinclark> Ekstasis, too
+2016-02-26T20:02:04 <simonjb> I don\'t have that one yet
+2016-02-26T20:02:27 * lliskovoi joined the channel
+2016-02-26T20:03:04 <simonjb> colinclark: we were talking earlier in the week about partners using mobile and there are a number
+2016-02-26T20:03:24 <colinclark> oh good
+2016-02-26T20:03:26 <simonjb> I hadn\'t remembered but I see now going back and checking the presentations
+2016-02-26T20:03:29 <colinclark> anything very cool?
+2016-02-26T20:04:31 <simonjb> there are a couple of KIT projects -- "Spatial Interaction BB" and "Sensing BB" that look interesting
+2016-02-26T20:05:03 <colinclark> ah, fascinating
+2016-02-26T20:05:11 <colinclark> That\'s Till\'s group, right?
+2016-02-26T20:05:12 * lliskovoi has quit
+2016-02-26T20:05:13 <simonjb> and I noticed something else perhaps worthy of exploration -- 2 different presentations mentioned Eclipse SmartHome
+2016-02-26T20:05:19 <colinclark> ah
+2016-02-26T20:05:25 <colinclark> yes, there\'s a lot of activity related to smarthomes
+2016-02-26T20:05:29 <simonjb> yeah
+2016-02-26T20:05:39 <colinclark> I\'m sure Till would be delighted to help us do an integration
+2016-02-26T20:05:53 <colinclark> I\'m not sure if the Smarthome folks will be as much so, but it\'s possible
+2016-02-26T20:07:56 * lliskovoi joined the channel
+2016-02-26T20:10:36 * lliskovoi has quit
+2016-02-26T20:13:30 * lliskovoi joined the channel
+2016-02-26T20:17:05 * Yan_Hu has quit
+2016-02-26T20:17:39 * lliskovoi has quit
+2016-02-26T20:21:32 * lliskovoi joined the channel
+2016-02-26T20:22:12 * colinclark has quit
+2016-02-26T20:24:31 * lliskovoi has quit
+2016-02-26T20:25:22 * lliskovoi joined the channel
+2016-02-26T20:27:28 * lliskovoi has quit
+2016-02-26T20:29:19 * lliskovoi joined the channel
+2016-02-26T20:31:34 * lliskovoi joined the channel
+2016-02-26T20:41:39 * lliskovoi has quit
+2016-02-26T20:43:20 * lliskovoi joined the channel
+2016-02-26T20:52:01 * lliskovoi joined the channel
+2016-02-26T20:55:40 * lliskovoi has quit
+2016-02-26T20:56:39 <avtar> alanharnum, michelled: are we checking in today?
+2016-02-26T20:57:12 <michelled> yes!
+2016-02-26T20:59:02 <alanharnum> i\'m good w/that
+2016-02-26T21:00:31 <alanharnum> gimme like 5 & I\'ll be good to check in
+2016-02-26T21:00:36 <avtar> ok
+2016-02-26T21:01:00 * lliskovoi joined the channel
+2016-02-26T21:01:28 <Bosmon> Hi there simonjb - I just created https://github.com/GPII/nexus
+2016-02-26T21:01:39 <Bosmon> Would you like to attach your current repo and work to it as a pull request?
+2016-02-26T21:01:55 <simonjb> will do, thanks Bosmon
+2016-02-26T21:02:02 <Bosmon> simonjb - awesome!
+2016-02-26T21:02:23 <Bosmon> It\'s brilliant work, by the way... I\'m amazed how smooth this cycle of specification and implementation actually turned out
+2016-02-26T21:02:29 <Bosmon> It\'s actually like we are some mature kind of organisation : P
+2016-02-26T21:02:41 <simonjb> :)
+2016-02-26T21:02:46 * lliskovoi has quit
+2016-02-26T21:02:57 <Bosmon> Rather than merely a loose aggregation of exploratory bumblers
+2016-02-26T21:03:26 <simonjb> Bosmon: really you and Colin had it all figured out, the implementation has been quite straightforward
+2016-02-26T21:03:49 <Bosmon> simonjb - I don\'t think anyone else would have found it straightforward :)
+2016-02-26T21:05:19 <alanharnum> avtar michelled: ok, am good
+2016-02-26T21:05:46 <avtar> my room is unlocked
+2016-02-26T21:08:33 * lliskovoi joined the channel
+2016-02-26T21:11:18 * lliskovoi has quit
+2016-02-26T21:15:17 <Bosmon> Hi there cindyli - I\'ve merged in your "add-preferences" endpoint into my branch now from https://github.com/amb26/universal/pull/3
+2016-02-26T21:15:32 <Bosmon> Thanks so much for the work on that, it has improved the factoring of the architecture significantly
+2016-02-26T21:15:42 <cindyli> YAY! thanks, Bosmon
+2016-02-26T21:15:48 <Bosmon> I even just referred to this pull on a comment to jhernandez about his architecture diagrams
+2016-02-26T21:16:02 <Bosmon> Since it\'s important that we see the "preferences server" as something which is broadly autonomous
+2016-02-26T21:17:00 <Bosmon> I just made one tiny grammar fix - the test case comments referred to "the access token whose owner..." which should be "an access token whose owner ... "
+2016-02-26T21:18:03 * yzen joined the channel
+2016-02-26T21:18:41 <cindyli> haha. thanks for the correction, Bosmon. i also learnt a lot by implementing this end point
+2016-02-26T21:20:49 <Bosmon> Oh yes, so you did!
+2016-02-26T21:20:55 <Bosmon> That reminds me now, as a result of this
+2016-02-26T21:21:01 <Bosmon> That it is time to propose you for commit access : P
+2016-02-26T21:21:03 * yzen_ has quit
+2016-02-26T21:21:19 * jhung has quit
+'
+
+b'2016-02-26T00:11:21 * alanharnum joined the channel
+2016-02-26T00:59:53 * kasparnet joined the channel
+2016-02-26T01:05:22 * kasparnet has quit
+2016-02-26T02:02:16 * kasparnet joined the channel
+2016-02-26T02:06:49 * kasparnet has quit
+2016-02-26T03:06:06 * michelled joined the channel
+2016-02-26T06:03:52 * kasparnet joined the channel
+2016-02-26T06:07:59 * kasparnet has quit
+2016-02-26T06:34:25 * the-t-in-rtf has quit
+2016-02-26T06:35:06 * the-t-in-rtf joined the channel
+2016-02-26T07:02:19 * the-t-in-rtf has quit
+2016-02-26T07:53:03 * amatas joined the channel
+2016-02-26T08:12:08 * bens01 has quit
+2016-02-26T08:45:02 * kasparnet joined the channel
+2016-02-26T10:08:56 * jhernandez joined the channel
+2016-02-26T10:22:53 <gloob> hi
+2016-02-26T10:23:07 <gloob> so which is the ideal lower version of Windows we could target?
+2016-02-26T10:23:27 <gloob> sgithens: did you have minimal version in LGS?
+2016-02-26T10:24:27 <gloob> from gpii/windows README:
+2016-02-26T10:24:28 <gloob> Note that tests and function involving the High Contrast setting will fail on all current versions of Windows (including Windows 7 SP1 and Windows 8 SP2) unless the following hotfix from Microsoft is applied: http://support.microsoft.com/kb/2516889
+2016-02-26T10:24:44 <gloob> so Windows 7 is a no-go, right?
+2016-02-26T10:25:03 <gloob> ah ok, it\'s supported
+2016-02-26T10:26:32 <gloob> I will use Windows 7-SP1 as minimal
+2016-02-26T10:41:44 * mbrenn_iskme joined the channel
+2016-02-26T10:42:45 * mbrenn_iskme has quit
+2016-02-26T11:21:28 * kasparne_ joined the channel
+2016-02-26T11:24:04 * kasparnet has quit
+2016-02-26T11:31:58 * kasparnet joined the channel
+2016-02-26T11:34:45 * kasparne_ has quit
+2016-02-26T12:05:10 * Justin_o joined the channel
+2016-02-26T12:19:39 * amatas joined the channel
+2016-02-26T12:44:13 * kasparnet has quit
+2016-02-26T12:56:47 * jhung joined the channel
+2016-02-26T13:07:58 * bens01 joined the channel
+2016-02-26T13:09:33 * kasparnet joined the channel
+2016-02-26T13:28:42 * kasparnet has quit
+2016-02-26T13:31:18 * michelled joined the channel
+2016-02-26T13:36:09 * alanharnum joined the channel
+2016-02-26T13:37:00 * gtirloni joined the channel
+2016-02-26T13:40:22 <bens01> hi Justin_o, is it possible to nest transformations in a model relay? I am trying to linear scale a value and feed it into another transformation to discard any decimal places.
+2016-02-26T13:40:39 <bens01> Justin_o, https://github.com/pga03/first-discovery/blob/confirmation-panel-updates/src/js/panels.js#L1266-L1278
+2016-02-26T13:55:00 * lliskovoi joined the channel
+2016-02-26T14:01:37 <michelled> jhung: do you have a few minutes to meet?
+2016-02-26T14:02:30 <jhung> michelled:  sure give me a sec.
+2016-02-26T14:02:39 * cindyli joined the channel
+2016-02-26T14:04:27 <jhung> call me when ready michelled.
+2016-02-26T14:05:29 * the-t-in-rtf joined the channel
+2016-02-26T14:15:44 * sepidehshahi joined the channel
+2016-02-26T14:16:04 * jessm joined the channel
+2016-02-26T14:21:14 * simonjb joined the channel
+2016-02-26T14:28:35 * Yan_Hu joined the channel
+2016-02-26T14:38:21 * klown joined the channel
+2016-02-26T14:40:15 <Justin_o> bens01: sorry, i just saw your message
+2016-02-26T14:41:19 <Justin_o> bens01: i believe you can do that, but i don\'t think you can use singleTransform for that.. let me see if i can find you some information
+2016-02-26T14:41:59 <Justin_o> http://docs.fluidproject.org/infusion/development/ModelRelay.html#explicit-model-relay-style
+2016-02-26T14:42:08 <Justin_o> bens01:  you\'d use transform instead of singleTransform
+2016-02-26T14:43:31 <bens01> i see... would that be transform on the nested one, or both?
+2016-02-26T14:43:43 <Justin_o> bens01: both
+2016-02-26T14:44:11 <Justin_o> bens01: here\'s an example of a nested transform... https://github.com/fluid-project/infusion/blob/master/tests/framework-tests/core/js/ModelTransformationTests.js#L1156-L1171
+2016-02-26T14:45:46 <Justin_o> bens01: it\'s also possible to write your own transformations, if that\'s more appropriate.
+2016-02-26T14:45:59 <bens01> ah thank you.. i couldn\'t find a example anywhere
+2016-02-26T14:46:41 <bens01> Justin_o, i\'ve created two of my own.. they\'re just wrappers for .toFixed and fluid.stringTemplate, but very nice to have
+2016-02-26T14:47:07 <Justin_o> bens01: cool, i think we might already have a stringTemplate one...
+2016-02-26T14:47:35 <bens01> could be.. maybe in a later version? I did not find one in the infusion bundled in FD
+2016-02-26T14:48:09 <Justin_o> bens01: https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/ModelTransformationTransforms.js#L667-L669
+2016-02-26T14:49:10 <Justin_o> That was added mid last year, so you should have it. There may be some other transforms in there that you could use that may or may not be documented yet.
+2016-02-26T14:53:04 <bens01> hm.. seems to be in a  newer version
+2016-02-26T14:53:09 <bens01> we have this: https://github.com/fluid-project/infusion/blob/9cd0887c677fd00d28f148777a928823ec2e1416/src/framework/core/js/ModelTransformationTransforms.js
+2016-02-26T14:53:46 <bens01> also, correction, i didn\'t create a stringTemplate transformer.. i used fluid.transforms.free to call fluid.stringTemplate
+2016-02-26T14:54:05 * yzen joined the channel
+2016-02-26T15:12:08 <Justin_o> bens01: ah okay
+2016-02-26T15:18:57 * jhung1 joined the channel
+2016-02-26T15:21:42 * jhung has quit
+2016-02-26T15:34:13 * lliskovoi_ joined the channel
+2016-02-26T15:37:04 * lliskovoi has quit
+2016-02-26T15:41:59 * kasparnet joined the channel
+2016-02-26T15:48:42 <Justin_o> bens01: have there been any changes to the deployed instance of the FD Tool since you redeployed yesterday morning?
+2016-02-26T15:49:42 <bens01> Justin_o, no
+2016-02-26T15:49:53 <bens01> Justin_o, actually, stand by
+2016-02-26T15:50:46 <Justin_o> bens01: okay, i\'ll only be around for about another hour today. Please let me know if there is anything you\'d like me to test. I\'ve sent you and John and e-mail regarding the launcher installation; which seems to be working well.
+2016-02-26T15:51:23 <bens01> Justin_o, OK. we are hitting retests as well
+2016-02-26T15:51:55 <bens01> Justin_o, the one outstanding items is voicing of confirmation panel, that should be ready sometime late afternoon
+2016-02-26T15:52:46 <Justin_o> bens01: that\'ll be awesome to have in
+2016-02-26T15:53:01 <bens01> that also includes many changes to the confirmation panel in favor of using model relays w/ transforms and data binding
+2016-02-26T15:53:25 <Justin_o> bens01: i also added a few more issues to the First Discovery tab of the spreadsheet yesterday, don\'t know if you saw those yet.
+2016-02-26T15:53:48 <Justin_o> bens01: oh cool, were you able to get the nested transforms working?
+2016-02-26T15:53:53 * sepidehshahi has quit
+2016-02-26T15:55:13 <bens01> Justin_o, didn\'t see those yet will take a look. The nested transform is sort of working. I\'m experimenting with getting the value output in the place i want it to be. There seems to be a slight difference between a "regular" transform (not sure what the word for this is) like in the example you linked and inside a model relay doc
+2016-02-26T15:55:16 <Justin_o> avtar: thanks for the community meeting boilerplate invitation. https://wiki.fluidproject.org/display/fluid/Community+meeting+boilerplate+invitation
+2016-02-26T15:55:58 <bens01> Justin_o, this is the plan to get voicing of the panel contents if you want to take a look: http://pastebin.com/v89Yms64
+2016-02-26T15:56:16 <Justin_o> avtar: do you have any recommendation for the subject line to use with those e-mails... i was thinking something like "Invitiation to speak on (topic)" but am afraid it will sound like spam.
+2016-02-26T15:56:50 * sepidehshahi joined the channel
+2016-02-26T15:57:34 * lliskovoi has quit
+2016-02-26T15:59:27 <avtar> Justin_o: i guess it\'s probably best to verify beforehand if the text will agitate spam filters
+2016-02-26T15:59:56 <avtar> maybe using something like this? http://spamcheck.postmarkapp.com/
+2016-02-26T16:00:47 <Justin_o> avtar: thanks, didn\'t know they had tools for that
+2016-02-26T16:01:37 * lliskovoi joined the channel
+2016-02-26T16:02:21 <avtar> http://isnotspam.com/
+2016-02-26T16:02:40 <avtar> i haven\'t used either of those :P
+2016-02-26T16:03:45 * sepidehshahi has quit
+2016-02-26T16:03:54 * lliskovoi joined the channel
+2016-02-26T16:04:18 <Justin_o> bens01: thanks for sharing... in terms of the upstream fluid.textToSpeech.queueSpeech function, it should handle queueing by default, if the interrupt argument isn\'t set. What you might be able to do instead is in your getCurrentPanelContent method is to fire off request to queueSpeech for each element it finds.
+2016-02-26T16:06:15 <bens01> Justin_o, i retested that yesterday after you mentioned it on the stand up. it does in fact queue up when interrupt is false
+2016-02-26T16:06:19 <Justin_o> bens01: However, an issue you might run into with the queueing is that you may still be adding to the queue in one method when a user action triggers one of the tooltips. Which might clear the current queue, but if there are still items being added they may be read after... so you might have a situation like "Language English Select to go to next step
+2016-02-26T16:06:19 <Justin_o> Onscreen Keyboard Off ..."
+2016-02-26T16:07:11 * lliskovoi joined the channel
+2016-02-26T16:11:21 <bens01> Justin_o, i don\'t suppose there is any concept of a locking mechanism in infusion is there?
+2016-02-26T16:13:14 <Justin_o> bens01: hmm... not that i can think of, but you\'d still then have an issue of the nav buttons not self voicing while the confirmation was being read.
+2016-02-26T16:14:49 <Justin_o> bens01: i think you\'d still want the tooltip to interrupt, and whatever method is adding items to the queue to stop...
+2016-02-26T16:18:37 * jhung1 is now known as jhung
+2016-02-26T16:23:24 * sepidehshahi joined the channel
+2016-02-26T16:23:45 <jhernandez> simonjb: hey
+2016-02-26T16:23:54 <jhernandez> did you take a look at the diagrams?
+2016-02-26T16:25:17 <simonjb> hey, yeah jhernandez
+2016-02-26T16:25:27 <simonjb> they look really good
+2016-02-26T16:25:43 <simonjb> jhernandez: I was wondering though maybe about the lines and not having arrows
+2016-02-26T16:26:10 <simonjb> the numbers give a sense of order of operations
+2016-02-26T16:26:32 <simonjb> but without the arrows, we don\'t know who initiates communication
+2016-02-26T16:27:48 <jhernandez> well, the thing is that some communications are bi-directional and others not, that added some confusion when I tried to put them
+2016-02-26T16:28:08 <simonjb> jhernandez: minor formatting thing -- the line coming out of 6 on the overall architecture is curved the wrong way I think?
+2016-02-26T16:29:13 <jhernandez> right, I fixed it but didn\'t save it in pdf format
+2016-02-26T16:29:19 <simonjb> :)
+2016-02-26T16:30:56 <simonjb> for the cases, where the communication is bi-directional, one side always initiates, right? or are there cases where we have both sides able to initiate?
+2016-02-26T16:31:45 <simonjb> jhernandez: I have a meeting now, back in 15
+2016-02-26T16:36:26 <jhernandez> simonjb: exactly, ie, the context manager receives data from the flowManager, but the context manager also sends data back to the flowManager to trigger changes
+2016-02-26T16:37:38 <jhernandez> so yeah, in some cases we have situations where both sides initiate the communication
+2016-02-26T16:38:05 <jhernandez> and in order to keep it as simple as possible we decided to drop the arrows
+2016-02-26T16:39:44 * mbrenn_iskme joined the channel
+2016-02-26T16:40:14 * mbrenn_iskme has quit
+2016-02-26T16:41:11 * kasparnet has quit
+2016-02-26T16:44:15 * sepidehshahi joined the channel
+2016-02-26T16:45:10 <simonjb> ok, got it jhernandez
+2016-02-26T16:45:14 * michelled joined the channel
+2016-02-26T16:47:37 * kasparnet joined the channel
+2016-02-26T16:48:17 <simonjb> jhernandez: I think, for me, I would be interested in seeing what it looks like with arrows as I think it adds important information (and in the case that 2 sides can initiate communication, make the arrow double headed)
+2016-02-26T16:48:17 <Justin_o> bens01: i\'m heading offline for the day. I plan on going through another round of testing on Monday. Please let me know if there are any changes to be aware of. Also if you have more questions about Infusion you should be able to contact cindyli or Bosmon here in the channel.
+2016-02-26T16:48:46 <bens01> Justin_o, have a great weekend ttyl
+2016-02-26T16:48:50 <bens01> thanks for all the help!
+2016-02-26T16:50:51 * sepidehshahi joined the channel
+2016-02-26T16:51:33 <bens01> Bosmon, i\'ve updated gpii-binder to specify default unidirectional and method values using bindingOptions on the component and added tests using long & short form with fluid.text and fluid.html
+2016-02-26T16:52:16 <bens01> Bosmon, is there a utility like fluid.attr(element) which would set an attribute value on an element?
+2016-02-26T16:53:26 <Justin_o> bens01: np, have a great weekend too.
+2016-02-26T16:53:27 <Bosmon> bens01 - $.attr() is fine
+2016-02-26T16:53:36 <Bosmon> We tend not to duplicate jQuery methods when they already work correctly
+2016-02-26T16:54:56 <Bosmon> We only made passthroughs for $.html and $.text because they broke their API contract in an older version
+2016-02-26T17:06:28 <jhernandez> simonjb: sure, I can make a version with arrows and show it to you
+2016-02-26T17:07:07 <simonjb> thanks jhernandez
+2016-02-26T17:14:26 * -- BotBot disconnected, possible missing messages --
+2016-02-26T17:17:40 * -- BotBot disconnected, possible missing messages --
+2016-02-26T17:21:03 * -- BotBot disconnected, possible missing messages --
+'
+

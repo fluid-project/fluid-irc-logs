@@ -1,0 +1,125 @@
+b'2017-09-29T00:25:22 * mrtyler joined the channel
+2017-09-29T01:36:32 * mrtyler joined the channel
+2017-09-29T02:47:25 * mrtyler joined the channel
+2017-09-29T06:05:29 * georgitodorov joined the channel
+2017-09-29T06:20:56 * amatas joined the channel
+2017-09-29T07:55:14 * javjarfer joined the channel
+2017-09-29T07:55:41 * stegru joined the channel
+2017-09-29T08:27:56 * javjarfer_ joined the channel
+2017-09-29T08:30:23 * javjarfer has quit
+2017-09-29T08:32:21 * javjarfer joined the channel
+2017-09-29T08:35:20 * javjarfer_ has quit
+2017-09-29T08:54:22 * javjarfer has quit
+2017-09-29T09:20:10 * gtirloni joined the channel
+2017-09-29T10:51:18 * the-t-in-rtf has quit
+2017-09-29T10:51:45 * the-t-in-rtf joined the channel
+2017-09-29T12:13:27 * michelled joined the channel
+2017-09-29T12:16:01 <Bosmon> Hi there georgitodorov - I\'ve made an update to my PCP API branch
+2017-09-29T12:16:46 <Bosmon> With some corresponding updates to the docs document
+2017-09-29T12:33:07 * simonjb joined the channel
+2017-09-29T12:34:03 * cindyli joined the channel
+2017-09-29T12:35:26 <cindyli> hi Bosmon, can you fill up this doodle when you have a chance - https://beta.doodle.com/poll/q6ydr7f2i7q2p5eh#table
+2017-09-29T12:35:44 <cindyli> it\'a about the meeting of our testing environments
+2017-09-29T12:38:02 <Bosmon> cindyli - sure, done
+2017-09-29T12:38:13 <cindyli> thanks, Bosmon
+2017-09-29T12:55:51 * Jess_ joined the channel
+2017-09-29T13:13:55 * sepidehshahi joined the channel
+2017-09-29T13:19:03 * michelled has quit
+2017-09-29T13:34:24 * kavya joined the channel
+2017-09-29T13:45:20 <georgitodorov> Bosmon: Thank you! I will take a look at the changes first thing on Monday morning.
+2017-09-29T13:50:48 <simonjb> cindyli: can you remind me what we decided on regarding retrieval of untrusted settings for gpii tokens not in the auth database?
+2017-09-29T13:51:37 <cindyli> simonjb: non existent gpii tokens would receive "unauthorized" error
+2017-09-29T13:51:49 <simonjb> is that change in GPII-2435
+2017-09-29T13:51:51 <simonjb> ?
+2017-09-29T13:51:52 <cindyli> when requesting an access token
+2017-09-29T13:51:53 <cindyli> yes
+2017-09-29T13:52:07 <cindyli> actually not
+2017-09-29T13:52:19 <cindyli> let me check
+2017-09-29T13:52:23 <simonjb> thanks
+2017-09-29T13:52:40 <simonjb> this change will impact deployment at the AJCs
+2017-09-29T13:53:01 <simonjb> and we will need to manage that
+2017-09-29T13:53:33 <cindyli> agree
+2017-09-29T13:53:35 <simonjb> because it will cause tokens to stop working
+2017-09-29T13:53:47 <simonjb> unless they are added to the auth database
+2017-09-29T13:53:52 <cindyli> that\'s where our talk of "keys and keytokens" was initiated
+2017-09-29T13:54:00 <simonjb> right
+2017-09-29T13:54:23 <cindyli> it was all from how to keep track of keys in the database, then got expanded.\xe2\x80\xa6
+2017-09-29T13:54:52 <simonjb> but if we merge GPII-2435 it might be deployed before the full Keys and KeyTokens reworking is
+2017-09-29T13:56:37 <cindyli> i think we are talking about making the document structure change for supporting PCP with memory
+2017-09-29T13:56:50 <cindyli> which should include this change
+2017-09-29T13:56:57 <cindyli> but we better make sure before the merge
+2017-09-29T13:57:22 <cindyli> the check of the existence of gpii token is in GPII-2435 branch - https://github.com/cindyli/universal/blob/GPII-2435/gpii/node_modules/gpii-oauth2/gpii-oauth2-authz-server/src/AuthorizationService.js#L222
+2017-09-29T13:58:33 <simonjb> cindyli: but that code won\'t be hit if we use the existing (non-oauth) untrusted-settings, right?
+2017-09-29T13:59:00 <simonjb> because we don\'t need an access token
+2017-09-29T13:59:02 <cindyli> simonjb: yes
+2017-09-29T13:59:45 <simonjb> is the existence check for the token only done for the oauth2 projected version of untrusted-settings?
+2017-09-29T13:59:47 <cindyli> good point, we need to be careful with merging GPII-2538, not with GPII-2435
+2017-09-29T14:00:06 <cindyli> yes
+2017-09-29T14:00:44 <cindyli> it will also be used for the update of preference sets endpoint, which i haven\'t yet started to work on
+2017-09-29T14:01:27 <cindyli> simonjb: i\'m looking into the issue you discovered with login error not being displayed inline
+2017-09-29T14:04:46 <simonjb> cindyli: this test should verify that \'anonymous\' tokens still work as before https://github.com/cindyli/universal/blob/GPII-2435/tests/platform/cloud/AcceptanceTests_untrustedSettings.js#L118
+2017-09-29T14:05:49 <cindyli> yes
+2017-09-29T14:06:41 <simonjb> if I\'m reading the code correctly, it should be testing not only without a user account as the test name says but also without a gpii token entry
+2017-09-29T14:06:50 * michelled joined the channel
+2017-09-29T14:07:44 <simonjb> https://github.com/cindyli/universal/blob/GPII-2435/gpii/node_modules/testing/src/CloudBasedOAuth2TestsUtils.js#L78
+2017-09-29T14:09:25 <cindyli> yes, this function is untouched in this branch
+2017-09-29T14:09:36 <cindyli> it\'s only modified in GPII-2538 branch
+2017-09-29T14:10:11 <cindyli> with GPII-2538, the gpii token must exist to query untrusted settings - https://github.com/cindyli/universal/blob/GPII-2538/gpii/node_modules/testing/src/CloudBasedOAuth2TestsUtils.js#L84-L91
+2017-09-29T14:12:44 <simonjb> ok, cool
+2017-09-29T14:16:31 * georgitodorov has quit
+2017-09-29T14:25:45 * grrrero joined the channel
+2017-09-29T14:35:44 * mrtyler joined the channel
+2017-09-29T14:49:34 <cindyli> simonjb: i just pushed into GPII-2435 to fix the issue about the login error display you discovered
+2017-09-29T14:50:51 <simonjb> ah, great cindyli, I will verify now
+2017-09-29T14:51:00 <cindyli> thanks
+2017-09-29T14:55:09 * danayo_ joined the channel
+2017-09-29T14:55:37 <grrrero> michelled: Got time for a quick pair up?
+2017-09-29T14:56:42 <michelled> grrrero: just in the middle of something - I\'ll ping you when I\'m free
+2017-09-29T14:56:48 <grrrero> Ok michelled
+2017-09-29T15:16:24 * gtirloni_ joined the channel
+2017-09-29T15:44:41 * stegru has quit
+2017-09-29T15:46:47 * michelled has quit
+2017-09-29T15:59:48 * michelled joined the channel
+2017-09-29T16:00:08 * simonjb has quit
+2017-09-29T16:24:09 <gmoss> the-t-in-rtf: I\'m currently trying to work gpii-handlebars into the SJRK storytelling tool, but I\'m having some trouble; it\'s entirely possible I\'ve misunderstood how to integrate it. I\'d like to use gpii.handlebars.renderer, but I\'m getting the error "Uncaught ReferenceError: Markdown is not defined at gpii.handlebars.helper.md.client.initConverter". I see that GPII-2616 may fix things for me, but that it\'s waiting
+2017-09-29T16:24:09 <gmoss> for Antranig to review. Do you have a few minutes to help me with this? I realize it\'s after business hours for you :)
+2017-09-29T16:33:13 <michelled> jhernandez: I\'m not sure if you\'re still working, but if so, I have a question for you about the hst branch
+2017-09-29T17:37:28 <gmoss> the-t-in-rtf: I seem to have sorted myself out. cheers!
+2017-09-29T17:56:46 * michelled joined the channel
+2017-09-29T18:14:54 * amatas has quit
+2017-09-29T18:16:40 * amatas joined the channel
+2017-09-29T18:25:39 * Bosmon joined the channel
+2017-09-29T18:39:38 <jhernandez> michelled: sorry, I missed your ping
+2017-09-29T18:39:41 <jhernandez> I\'m here now, how can I help you?
+2017-09-29T18:43:01 * colinclark joined the channel
+2017-09-29T18:45:18 <michelled> oh hi jhernandez - I just wanted to check my understanding against your knowledge :) Is the gpii-app hst branch currently being used for the pilots?
+2017-09-29T18:48:01 * stegru joined the channel
+2017-09-29T18:48:45 <jhernandez> yes
+2017-09-29T18:50:14 <jhernandez> everything is going into the hst branch
+2017-09-29T18:51:15 <jhernandez> in fact, it won\'t make any sense to keep it once everything is in master
+2017-09-29T18:54:06 * Jess_ joined the channel
+2017-09-29T18:57:40 <michelled> cool, thanks. in that case I don\'t think I\'m going to merge any of the pull requests that introduce partial UI functionality
+2017-09-29T18:58:32 <jhernandez> oh right, at least until we decide so, yes
+2017-09-29T19:04:07 <jhernandez> michelled: btw, what\'s the kind of UI changes do you have?
+2017-09-29T19:05:38 <michelled> it was actually a pull request for the PCP
+2017-09-29T19:05:48 <michelled> it introduces a blank window :)
+2017-09-29T19:05:55 <jhernandez> I\'m wondering whether those changes can be hidden by using a particular configuration (such as the one we use for not showing the "exit" menu item)
+2017-09-29T19:05:59 <michelled> which is a placeholder for things to come
+2017-09-29T19:06:20 <michelled> well, I guess we can ask the PCP folks whether they want to do that
+2017-09-29T19:06:44 <michelled> but I think it would be better for them to make pull requests with small pieces of complete functionality.
+2017-09-29T19:07:05 <michelled> meaning, we can slowly grow the PCP, but at all points it shoudl work and not look broken
+2017-09-29T19:07:18 <jhernandez> I agree with that
+2017-09-29T19:07:29 <michelled> great!
+2017-09-29T19:08:50 <jhernandez> but yeah, if the functionalities are incomplete, we don\'t have to get them merged yet
+2017-09-29T19:09:15 <jhernandez> I totally agree with that
+2017-09-29T19:22:28 * colinclark joined the channel
+2017-09-29T19:49:16 * colinclark joined the channel
+2017-09-29T20:00:42 * stegru has quit
+2017-09-29T20:06:11 * stegru joined the channel
+2017-09-29T20:07:15 * colinclark joined the channel
+2017-09-29T22:40:34 * stegru has quit
+2017-09-29T23:30:15 * amatas has quit
+2017-09-29T23:33:33 * stegru joined the channel
+2017-09-29T23:42:25 * stegru has quit
+'
+

@@ -1,0 +1,280 @@
+b'2014-07-28T14:33:31 <amilchev> and perhaps shouldn\'t
+2014-07-28T14:34:55 <amilchev> quoting danaayotte on this "The plan for the PCP is that it is intended for local changes only - in order to save a user would go to the PMT where they could create a preference set (changes made in PCP are available in PMT)."
+2014-07-28T14:36:40 <Justin_o> amilchev: i wonder how this works "(changes made in PCP are available in PMT)"
+2014-07-28T14:37:36 <amilchev> Justin_o: my point was that currently PCP doensn\'t make any call to gpiiStore\'s get. Should it?
+2014-07-28T14:39:45 <amilchev> Justin_o: "(changes made in PCP are available in PMT)" - this was true for the pilots but only because "full editor" link to PMT made a gpiiStore set
+2014-07-28T14:39:57 <amilchev> Justin_o: so this is no longer true I think.
+2014-07-28T14:40:51 <Justin_o> amilchev: i guess i\'m wondering what the mechanism for this would be.. could be another web socket call or from some other persistence (i\'d assume the former)
+2014-07-28T14:41:05 <Justin_o> but probably something we should look into, to make sure we don\'t need to save anything somewhere else.
+2014-07-28T14:41:37 <Justin_o> amilchev: i guess that question about all this is what does the store point at..
+2014-07-28T14:41:53 <Justin_o> so you may end up having to write a new store or reconfiguring the current one for PCP.
+2014-07-28T14:41:54 <amilchev> (05:37:36 PM) amilchev: Justin_o: my point was that currently PCP doensn\'t make any call to gpiiStore\'s get. Should it?       - "set" instead of "get"
+2014-07-28T14:42:32 <Justin_o> amilchev: yes.. so you use "get" for something?
+2014-07-28T14:43:04 <Justin_o> but you don\'t use "set"
+2014-07-28T14:43:54 <Justin_o> amilchev: i think from the way your conversation was going with colinclark that you won\'t be using the gpiiStore to point at the prefsServer at all.
+2014-07-28T14:44:09 <amilchev> Justin_o: User clicks "save" in PMT - his token is created. User opens PCP - a get is made to the prefsServer with this token and thus the adjusters in PCP have values corresponding to what the user had just saved
+2014-07-28T14:45:06 <amilchev> so get is used with PCP\'s rendering, set is never used by pcp (currently)
+2014-07-28T14:45:13 <Justin_o> amilchev: don\'t you get this information from the FM though.. from that object that you linked to
+2014-07-28T14:47:04 <amilchev> Justin_o: what I just described is how PCP was working for the pilots. Yes, in near future the PCP should understand what to render from the FM, not prefsServer
+2014-07-28T14:47:25 <Justin_o> amilchev: okay.. so in the future it will use neither the get or the set then?
+2014-07-28T14:48:34 <amilchev> Justin_o that\'s what I was asking initially..
+2014-07-28T14:48:56 * colinclark joined the channel
+2014-07-28T14:49:35 <Justin_o> amilchev: okay.. if this is the case, then you may want to just create a new datasource.. that is a different store that communicates with the FM in the appropriate manner.
+2014-07-28T14:49:39 <Justin_o> does that make sense?
+2014-07-28T14:49:53 <Justin_o> so it could be a web socket based store for example
+2014-07-28T14:50:45 <Justin_o> amilchev: honestly this isn\'t fully clear to me yet though.. we should probably talk more with colinclark before making any specific decisions though
+2014-07-28T14:51:18 <colinclark> Keep in mind the idea is that the Flow Manager contacts the PCP
+2014-07-28T14:51:22 <colinclark> not vice versa
+2014-07-28T14:51:34 <colinclark> so what we should presumably do is have the PCP make a persistent connection to the Flow Manager at startup
+2014-07-28T14:51:57 <colinclark> Ideally, we should wire up the Flow Manager so that it starts the PCP on user key-in
+2014-07-28T14:52:11 <colinclark> provides a URL to make a persistent web socket connection
+2014-07-28T14:52:26 <colinclark> the PCP can render a default UI based on whatever is in the user\'s preference set
+2014-07-28T14:52:39 <colinclark> and then if the matchmaking process is invoked, it will be called to re-render its adjusters if necessary
+2014-07-28T14:55:49 <amilchev> colinclark "can we schedule it for discussion at one of the meetings and I will attend?" - we\'ve already scheduled tomorrow (29th), 3 PM (regular PCP/PMT meeting)
+2014-07-28T15:01:34 <colinclark> ok
+2014-07-28T15:01:40 <colinclark> let\'s talk about it then :)
+2014-07-28T15:02:05 <colinclark> I end up with a lot of meetings, amilchev, so it\'s easy to forget ;)
+2014-07-28T15:04:19 <Justin_o> colinclark: that\'s 9am EDT
+2014-07-28T15:04:42 <colinclark> yup
+2014-07-28T15:09:22 * michelled has quit
+2014-07-28T15:11:23 * michelled joined the channel
+2014-07-28T15:11:56 * anastasiac has quit
+2014-07-28T15:12:07 * anastasiac joined the channel
+2014-07-28T15:12:10 <michelled> cindyli, Justin_o: floe meeting
+2014-07-28T15:12:16 <cindyli> coming
+2014-07-28T15:12:20 <Justin_o> michelled: okay.. coming.
+2014-07-28T15:38:15 * cindyli has quit
+2014-07-28T15:40:15 * amilchev has quit
+2014-07-28T15:51:36 * anastasiac has quit
+2014-07-28T15:52:08 * michelled has quit
+2014-07-28T15:52:24 * cindyli joined the channel
+2014-07-28T15:53:11 * michelled joined the channel
+2014-07-28T15:53:14 * anastasiac joined the channel
+2014-07-28T16:17:22 * avtar joined the channel
+2014-07-28T16:30:14 * danaayotte has quit
+2014-07-28T16:33:47 * kasparnet has quit
+2014-07-28T16:37:11 * kasparnet joined the channel
+2014-07-28T16:50:18 * clown has quit
+2014-07-28T16:55:45 * clown joined the channel
+2014-07-28T16:56:05 * clown is now known as clown_mtg
+2014-07-28T17:50:54 * cindyli1 joined the channel
+2014-07-28T17:50:56 * cindyli has quit
+2014-07-28T17:57:19 <Justin_o> cindyli1: i\'ve filed a pull request for FLOE-206. Could you please take a look at it when you have a chance https://github.com/fluid-project/metadata/pull/31
+2014-07-28T17:57:30 <cindyli1> sure, Justin_o
+2014-07-28T17:57:40 <Justin_o> cindyli1: also i can pickup the styling work ing FLOE-207 when it\'s ready
+2014-07-28T18:07:08 <Justin_o> cindyli1: i\'m going to make another change to FLOE-206 so that it can handle posts.. I\'ll let you know when that is in
+2014-07-28T18:07:29 <cindyli1> ok, thanks, Justin_o
+2014-07-28T18:08:04 * michelled has quit
+2014-07-28T18:08:20 <cindyli1> Justin_o: for FLOE-207 - https://github.com/cindyli/metadata/tree/FLOE-207, the tooltip is created but not styled as u know
+2014-07-28T18:09:02 * michelled joined the channel
+2014-07-28T18:09:14 <Justin_o> cindyli1: thanks, i\'ll start working on the styling for that as soon as I finish up with FLOE-206
+2014-07-28T18:09:37 <cindyli1> sure, thanks, Justin_o
+2014-07-28T18:16:51 * danaayotte_ joined the channel
+2014-07-28T18:22:35 <Justin_o> cindyli1: FLOE-206 is ready for review
+2014-07-28T18:52:02 * clown_mtg has quit
+2014-07-28T18:56:04 * kasparnet has quit
+2014-07-28T19:03:39 * slim_ joined the channel
+2014-07-28T19:07:34 * slim__ has quit
+2014-07-28T19:14:39 * kasparnet joined the channel
+2014-07-28T19:18:46 * kasparnet has quit
+2014-07-28T19:18:48 * slim_ has quit
+2014-07-28T19:45:35 <Bosmon> Hi cindyli1 - I\'ve given a round of feedback on the metadata pull
+2014-07-28T19:45:49 <Bosmon> It is mostly minor stuff and requests for more commenting
+2014-07-28T19:45:52 <cindyli1> cool. thanks, Bosmon, will take a look soon
+2014-07-28T19:55:49 * danaayotte_ has quit
+2014-07-28T20:02:16 * kasparnet joined the channel
+2014-07-28T20:07:02 <cindyli1> Bosmon: all ur comments have been addressed
+2014-07-28T20:27:13 * colinclark has quit
+2014-07-28T20:31:04 * cindyli1 has quit
+2014-07-28T20:31:40 * clown joined the channel
+2014-07-28T20:33:13 * colinclark joined the channel
+2014-07-28T20:33:40 * danaayotte_ joined the channel
+2014-07-28T20:34:02 * anvk has quit
+2014-07-28T20:37:49 * yzen_ joined the channel
+2014-07-28T20:40:25 * michelled has quit
+2014-07-28T20:40:43 * yzen has quit
+2014-07-28T20:57:15 * clown has quit
+2014-07-28T21:06:09 * yzen_ has quit
+2014-07-28T21:07:15 * yzen joined the channel
+2014-07-28T21:13:46 * yzen has quit
+2014-07-28T21:16:48 * anastasiac has quit
+2014-07-28T21:16:52 * kasparnet has quit
+2014-07-28T21:32:24 * kasparnet joined the channel
+2014-07-28T21:43:25 * yzen joined the channel
+2014-07-28T21:45:56 * Justin_o has quit
+2014-07-28T21:48:00 * yzen has quit
+2014-07-28T22:00:15 * jessm has quit
+2014-07-28T22:07:31 * danaayotte_ has quit
+2014-07-28T22:15:11 * kasparnet has quit
+2014-07-28T22:23:31 * yzen joined the channel
+2014-07-28T22:35:44 * kasparnet joined the channel
+2014-07-28T22:35:50 * kasparnet has quit
+2014-07-28T22:36:23 * kasparnet joined the channel
+2014-07-28T22:36:53 * kasparnet has quit
+2014-07-28T22:38:12 * yzen_ joined the channel
+2014-07-28T22:40:28 * yzen has quit
+2014-07-28T22:40:35 * kasparnet joined the channel
+2014-07-28T22:41:39 * kasparnet has quit
+2014-07-28T22:51:44 * colinclark has quit
+2014-07-28T22:51:52 * kasparnet joined the channel
+2014-07-28T22:52:12 * yzen_ has quit
+2014-07-28T22:52:49 * colinclark joined the channel
+2014-07-28T22:52:49 * colinclark has quit
+2014-07-28T22:53:37 * colinclark joined the channel
+2014-07-28T22:53:37 * colinclark has quit
+2014-07-28T22:56:31 * kasparnet has quit
+2014-07-28T23:14:36 * avtar has quit
+'
+
+b'2014-07-28T00:02:42 * yzen joined the channel
+2014-07-28T00:11:03 * yzen has quit
+2014-07-28T02:10:10 * jhernandez has quit
+2014-07-28T07:21:34 * kasparnet joined the channel
+2014-07-28T08:18:21 * amilchev joined the channel
+2014-07-28T08:41:21 * slim_ joined the channel
+2014-07-28T08:56:18 * jhernandez joined the channel
+2014-07-28T10:30:46 <jhernandez> Bosmon: morning
+2014-07-28T10:36:03 <jhernandez> JFYI, rebasing https://github.com/GPII/linux/pull/49 on top of current master and including it as a new grunt task
+2014-07-28T11:14:52 * slim__ joined the channel
+2014-07-28T11:16:32 * slim_ has quit
+2014-07-28T12:29:53 * cindyli joined the channel
+2014-07-28T12:39:14 * anvk joined the channel
+2014-07-28T12:43:32 * cindyli has quit
+2014-07-28T12:43:44 * cindyli joined the channel
+2014-07-28T12:46:03 * colinclark joined the channel
+2014-07-28T12:53:10 * kasparnet has quit
+2014-07-28T12:53:41 * kasparnet joined the channel
+2014-07-28T13:12:20 * Justin_o joined the channel
+2014-07-28T13:13:23 <amilchev> hi Justin_o
+2014-07-28T13:14:44 <Justin_o> amilchev: hello, hope you had a good vacation
+2014-07-28T13:15:16 <amilchev> heh yes, thx
+2014-07-28T13:15:31 <amilchev> Justin_o: following up on a question I had at the last telco I went to (pre-previous week :)) I think I never managed to ask it well enough so that you understand what I mean
+2014-07-28T13:16:43 <Justin_o> amilchev: okay.. i honestly don\'t remember what that question was.. could you please remind me?
+2014-07-28T13:18:20 * jessm joined the channel
+2014-07-28T13:20:35 <amilchev> Justin_o: ok, well currently the PCP puts the values of its adjusters by making a GET to the prefs server (this is done by gpiiStore\'s get invoker), right?
+2014-07-28T13:21:09 <Justin_o> amilchev: okay
+2014-07-28T13:21:53 <amilchev> Justin_o: if we decide that the PCP shouldn\'t make a get request to become aware of the preferences, but rather receive them from the FM
+2014-07-28T13:22:36 <amilchev> Justin_o: from PCP side, how can I surround the get request and use the preferences received by the FM instead
+2014-07-28T13:23:18 <amilchev> Justin_o: and (still) put the values corresponding to these preferences
+2014-07-28T13:23:34 <amilchev> put the values of the adjusters*
+2014-07-28T13:24:05 <Justin_o> amilchev: are you still going to use the set from the gpiiStore?
+2014-07-28T13:24:53 * yzen joined the channel
+2014-07-28T13:24:56 <amilchev> Justin_o: I don\'t know.. what do you suggest? and by the way, don\'t you mean "get"?
+2014-07-28T13:25:10 <Justin_o> amilchev: no i mean set :)
+2014-07-28T13:25:20 <Justin_o> amilchev: i\'m wondering if you are going to be using the current gpiiStore at all
+2014-07-28T13:25:40 <Justin_o> if not then it should be easy enough to make a new store that interacts with the data you receive from the FM
+2014-07-28T13:26:36 <colinclark> What does the gpiiStore actually do?
+2014-07-28T13:27:10 <colinclark> Presumably if you\'re going to move to a connection with the Flow Manager instead of the Preferences Server, the semantics are still the same
+2014-07-28T13:27:47 <colinclark> i.e. when you make a GET request with a particular user token, you get a preferences set back, and when you make a POST request, you update theose preferences
+2014-07-28T13:27:50 <amilchev> Justin_o: oh I thought get was used for this functionality, and set when creating a new token and posting its prefs.. I guess I could use some more explanation here
+2014-07-28T13:28:35 <Justin_o> amilchev: it\'s basically what colinclark said above
+2014-07-28T13:29:27 <Justin_o> colinclark, amilchev: Honestly i\'m not exactly sure what you guys mean by receiving the preferences from the flow manager
+2014-07-28T13:29:57 <colinclark> What don\'t you understand, Justin_o?
+2014-07-28T13:30:02 <Justin_o> i\'m a bit confused as to whether this means we communicate with the flow manager as we had with the preferences server, so just an URL change. Or do we mean something else?
+2014-07-28T13:30:13 <amilchev> but why would the pcp want to update these prefs? I thought it should only get them and render its adjusters correspondingly (+ applying them live, that\'s it)
+2014-07-28T13:30:51 <colinclark> lol
+2014-07-28T13:30:53 <colinclark> this is hilarious
+2014-07-28T13:31:00 <colinclark> Okay, I think Justin_o\'s on the right track here :)
+2014-07-28T13:31:22 <colinclark> So, amilchev, can you step back a bit and explain what it is you\'re trying to do, and what the purpose of the change is?
+2014-07-28T13:32:10 <colinclark> and then we\'ll be on the same page and can think through the API a bit more clearly
+2014-07-28T13:32:25 <amilchev> colinclark perhaps I\'ve been misinformed of what I am supposed to do
+2014-07-28T13:33:50 <colinclark> ok, so it would be helpful if you can explain what you think you are supposed to do, and why
+2014-07-28T13:34:03 <amilchev> colinclark briefly my understanding is that the MM should suggest a preferences set for PCP to render
+2014-07-28T13:34:53 <colinclark> yes
+2014-07-28T13:35:25 <amilchev> and PCP should show the specific adjusters with the suggested values, thus the changes are applied to the system, and the user can give feedback to MM of what he/she is seeing
+2014-07-28T13:35:57 <colinclark> Yes, that\'s broadly correct
+2014-07-28T13:36:17 <colinclark> though I think there was still some discussion about exactly how the feedback user interfaces should look, so you\'ll probably not be implementing that right away
+2014-07-28T13:37:03 <amilchev> yeah, the feedback has been discussed for more than a month I think :)
+2014-07-28T13:37:21 <amilchev> so what else am I missing?
+2014-07-28T13:37:31 <colinclark> I can\'t think of anything at the high level
+2014-07-28T13:37:47 <colinclark> I\'m not clear on how this relates to getting preferences from the Flow Manager instead of the Preferences Server
+2014-07-28T13:39:26 <amilchev> well the pcp should show whatever MM suggests (through FM), instead of what is stored for the user in the prefs server?
+2014-07-28T13:39:33 <amilchev> right or wrong
+2014-07-28T13:40:03 <colinclark> Well, I guess we should unpack what that means
+2014-07-28T13:41:42 <colinclark> So I think what you\'re saying is that the idea is to have the PCP show adjusters that allow the user to edit the application specific-settings that were produced as a result of the matchmaking process?
+2014-07-28T13:41:45 <colinclark> Is that right?
+2014-07-28T13:43:12 <amilchev> colinclark yes, that\'s what I was thinking
+2014-07-28T13:43:37 <amilchev> only not sure what "application specific" stands for here
+2014-07-28T13:43:56 <colinclark> amilchev: Are you familiar with how a Matchmaker works in the system?
+2014-07-28T13:45:01 * michelled joined the channel
+2014-07-28T13:45:38 <amilchev> colinclark I\'ve read the explanation in the wiki 1 year ago and never had to do anything even remotely related to it.. I guess this sums it up
+2014-07-28T13:45:44 <colinclark> ok, no problem
+2014-07-28T13:45:53 <colinclark> So a Matchmaker takes a preferences set
+2014-07-28T13:46:09 <colinclark> along with the list of solutions that are installed on the system
+2014-07-28T13:46:10 <colinclark> and other device information
+2014-07-28T13:46:35 <colinclark> and it produces, as its output, a list of applications that should be launched
+2014-07-28T13:46:56 <colinclark> for each application, it specifies a list of settings that should be configured for it
+2014-07-28T13:47:25 <colinclark> these are "application-specific" because they reference the particular settings that are actually stored and understood by the application
+2014-07-28T13:47:40 <amilchev> by the way can you explain with an example what\'s the difference between solution and application
+2014-07-28T13:47:50 <amilchev> to make sure I get it right
+2014-07-28T13:47:53 <colinclark> They\'re the same thing in this case
+2014-07-28T13:48:08 <colinclark> "Solution" is a more general term that can include things that are, say, built into the operating system
+2014-07-28T13:48:17 <amilchev> ok ok
+2014-07-28T13:48:25 <colinclark> so a "Solution" might be JAWS, or NVDA, or the high contrast feature of Windows
+2014-07-28T13:48:35 <colinclark> when I say "application" here, I mean "solution"
+2014-07-28T13:48:43 <amilchev> ok thanks
+2014-07-28T13:48:59 <colinclark> So, as it stands today, I don\'t think any existing Matchmakers can really produce what you want
+2014-07-28T13:49:36 <colinclark> and if we were to use the output we currently get from a Matchmaker, there would be some very complex questions about how you would take a list of Solutions and their settings and determine which adjusters to show
+2014-07-28T13:49:55 <colinclark> but let\'s imagine, hypothetically, that there was a Matchmaker capable of informing the PCP of what to show
+2014-07-28T13:50:03 <colinclark> since apparently we will need this functionality soon
+2014-07-28T13:50:19 <colinclark> So the key issue is, "How does the PCP get informed about which adjusters to show?"
+2014-07-28T13:50:54 <colinclark> And I think I had a half-finished draft of an email to you when my computer crashed
+2014-07-28T13:51:07 <colinclark> explaining that we need to "invert control" from how you were thinking
+2014-07-28T13:51:19 <colinclark> It\'s not the PCP who is in charge of really even knowing there is a Matchmaker
+2014-07-28T13:51:40 <colinclark> the PCP\'s job should be simple and clear: it renders adjusters and, when the user has made a change, posts those changes to the Flow Manager
+2014-07-28T13:51:43 <colinclark> that\'s it\'s job
+2014-07-28T13:51:49 <colinclark> its
+2014-07-28T13:52:15 <colinclark> So, the Flow Manager is the component that orchestrates the whole process of setting up the system
+2014-07-28T13:52:52 <colinclark> it gathers the device and solution information, fetches the preferences from the preferences server, invokes the matchmaker, passes the results of the matchmaker to the lifecycle manager, and so on
+2014-07-28T13:53:28 <colinclark> As part of that "flow," the PCP should be notified if it needs to render some new adjusters
+2014-07-28T13:53:43 <colinclark> "Don\'t call us, we\'ll call you," as they say
+2014-07-28T13:54:09 <colinclark> http://en.wikipedia.org/wiki/Hollywood_principle
+2014-07-28T13:54:18 <amilchev> yeah I\'ve read that
+2014-07-28T13:54:25 <colinclark> Good
+2014-07-28T13:55:17 <amilchev> so how the PCP will know which adjusters to render? what type of data will it receive from FM?
+2014-07-28T13:55:21 <colinclark> So one of the reasons I suggested we use Web Sockets as a communications bus, despite how much of a problem it\'s been for us, is to enable bi-directional communication like this between a PCP and a Flow Manager
+2014-07-28T13:56:09 <colinclark> amilchev: Well, this is one of the reasons we designed the schemas for the Preferences Framework in the way that we did
+2014-07-28T13:56:31 <colinclark> the ideal case is that a Matchmaker would provide the appropriate primary and/or secondary schema that could be directly used by the PCP to render its interface
+2014-07-28T13:56:53 <colinclark> or, perhaps more realistically, a simplified format that could be, with some JavaScript code, expanded into the appropriate schemas
+2014-07-28T13:57:02 <colinclark> Justin_o: Am I making some sense here?
+2014-07-28T13:59:15 <amilchev> colinclark the simplified format I\'ve been expecting PCP to receive is a preferences set (like http://preferences.gpii.net/user/c8be6b69-c560-405a-8e1e-f49525b93395) - that\'s what Andreas Stiegler mentioned that MM will send to FM a one of the meetings
+2014-07-28T13:59:21 <amilchev> at one of the meetings*
+2014-07-28T14:00:39 <colinclark> Well, Andreas Stiegler doesn\'t get to decide on archtectural payloads by himself, I\'m afraid
+2014-07-28T14:00:56 <colinclark> so if that\'s a discussion we need to have, can we schedule it for discussion at one of the meetings and I will attend?
+2014-07-28T14:01:27 <amilchev> and I have let\'s say 80% progress with expanding a prefs set like this into an auxiliary schema
+2014-07-28T14:01:35 <colinclark> that\'s awesome
+2014-07-28T14:01:55 <colinclark> By what means do you correspond a list of preferences with the available adjusters?
+2014-07-28T14:02:15 <colinclark> how do you accomplish this technically?
+2014-07-28T14:03:14 <amilchev> these are just values for a subset of all adjusters we\'re having at the moment in PMT
+2014-07-28T14:03:40 <colinclark> right, but how do you do it?
+2014-07-28T14:04:04 <amilchev> I don\'t correspond to what is available on the machine, only show whatever adjuster is mentioned in the prefs set
+2014-07-28T14:04:20 * danaayotte joined the channel
+2014-07-28T14:04:54 <colinclark> Right, but how do you do that?
+2014-07-28T14:06:07 <amilchev> well just each setting corresponds to an adjuster value, e.g. "http://registry.gpii.org/common/fontSize" tells me that I should render fontSize adjuster
+2014-07-28T14:06:57 <jhernandez> hey guys, is the "mention" feature working for you in JIRA? looks like it stopped working (or at least to me) :/
+2014-07-28T14:07:51 <colinclark> I\'ve got to run, but hopefully I\'ll be back soon
+2014-07-28T14:08:15 * colinclark has quit
+2014-07-28T14:08:24 <amilchev> I just transform the preferences set, see which adjusters need to be shown and show only them (each adjusters represents a component with auxSchema data and they all get merged by grade merging)
+2014-07-28T14:08:59 <amilchev> https://github.com/radmanovi4/prefsEditors/blob/gpii-543/src/shared/schemas/js/pcpSchema.js
+2014-07-28T14:09:14 * clown joined the channel
+2014-07-28T14:09:57 <amilchev> colinclark tell me if you want more explanation on my work so far or you\'re asking for sth else
+2014-07-28T14:17:35 <amilchev> colinclark "so if that\'s a discussion we need to have, can we schedule it for discussion at one of the meetings and I will attend?" - we\'ve already scheduled tomorrow (29th), 3 PM (regular PCP/PMT meeting)
+2014-07-28T14:19:15 <Justin_o> jhernandez: simon and I noticed that issue as well
+2014-07-28T14:19:58 <jhernandez> Justin_o: ok, thanks for the double-check
+2014-07-28T14:19:58 <jhernandez> :)
+2014-07-28T14:20:09 <Justin_o> amilchev: sorry i had stepped away for a bit there.. seems like you and colinclark have most of things sorted out for now.. i guess the rest will be for discussion at the meeting?
+2014-07-28T14:21:05 * anastasiac joined the channel
+2014-07-28T14:22:36 <amilchev> Justin_o: one thing I still didn\'t understand
+2014-07-28T14:24:03 <amilchev> Justin_o: for what should the PCP use gpiiStore\'s set invoker at all?
+2014-07-28T14:24:15 <jhernandez> Justin_o: JFYI - for now, and as a workaround, I\'ve used the "Share" option to ping people from a JIRA
+2014-07-28T14:24:55 <Justin_o> jhernandez: thanks for the tip
+2014-07-28T14:25:30 <Justin_o> amilchev: can you remind me how the web sockets are used?
+2014-07-28T14:25:59 <Justin_o> do we have a special store that\'s built with web sockets?
+2014-07-28T14:26:43 * simonjb joined the channel
+2014-07-28T14:26:48 <amilchev> Justin_o: PCP just sends out any adjuster change made by the user to the local FM
+2014-07-28T14:27:32 <amilchev> Justin_o: FM is responsible for applying the setting (by calling LM\'s update)
+2014-07-28T14:28:38 <amilchev> one second
+2014-07-28T14:29:56 <Justin_o> amilchev: so if there is no save function in PCP, then maybe the web socket should be part of the set.. i\'m not entirely sure at the moment.. that\'s just a thought.. it could also be that the set never gets used.
+2014-07-28T14:33:11 <amilchev> Justin_o: during the websocket live updates, nothing gets updated in the prefs server
+'
+

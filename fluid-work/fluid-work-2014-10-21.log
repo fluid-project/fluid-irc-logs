@@ -1,0 +1,271 @@
+b'2014-10-21T19:14:46 * cindyli has quit
+2014-10-21T19:15:09 <kasparnet> you can see I\'ve updated the pull request with a new testcase
+2014-10-21T19:15:09 <kasparnet> https://github.com/kaspermarkus/universal/tree/GPII-784
+2014-10-21T19:15:28 <kasparnet> (scroll down to the savetests.js function)
+2014-10-21T19:16:09 <kasparnet> but I realized that it\'s wrong
+2014-10-21T19:16:35 <kasparnet> in that it doesn\'t check what event is fired from the requestProxy
+2014-10-21T19:16:36 <Bosmon> hmm... looks like it didn\'t reach your pull request?
+2014-10-21T19:16:45 <Bosmon> https://github.com/GPII/universal/pull/279
+2014-10-21T19:16:48 <Bosmon> I guess you have two branches
+2014-10-21T19:16:52 <Bosmon> 941 and 784
+2014-10-21T19:17:08 <kasparnet> yeah - so 784 is the work related to prefs/ontology server
+2014-10-21T19:17:13 <kasparnet> it\'s a subset of 941
+2014-10-21T19:17:23 <Bosmon> ugg
+2014-10-21T19:17:39 <kasparnet> I can just do the one pull request
+2014-10-21T19:17:44 <Bosmon> We may as well just consolidate everything
+2014-10-21T19:17:48 <kasparnet> ok cool
+2014-10-21T19:17:51 <Bosmon> Given we are just going to have a big "fireball merge"
+2014-10-21T19:18:03 <kasparnet> I was only keeping them separate to make things simpler for the reviewer
+2014-10-21T19:18:19 <kasparnet> so I\'ll do the merge with my latest changes once I\'ve adressed all your comments from GPII-784
+2014-10-21T19:18:31 <Bosmon> ah well
+2014-10-21T19:18:44 <Bosmon> Who knows what kind of review process this stuff could possibly go through : P
+2014-10-21T19:18:56 <Bosmon> We might have to adopt an innovative process of "collective review".......
+2014-10-21T19:19:43 <kasparnet> yeah
+2014-10-21T19:20:01 <Bosmon> Ok, so SaveTests.js
+2014-10-21T19:20:14 <kasparnet> yes
+2014-10-21T19:20:23 <kasparnet> so I realize the link I sent is horrific
+2014-10-21T19:20:29 <kasparnet> I was attempting to link a commit
+2014-10-21T19:20:32 <Bosmon> Yes
+2014-10-21T19:20:40 <Bosmon> I ignored your link and went to your pull request instead : P
+2014-10-21T19:20:45 <Bosmon> but this might not have helped
+2014-10-21T19:20:58 <Bosmon> Is it "PreferencesDataSource promise rejection"?
+2014-10-21T19:21:06 <kasparnet> yes, exactly
+2014-10-21T19:21:08 <Bosmon> ok
+2014-10-21T19:21:12 * cindyli joined the channel
+2014-10-21T19:21:13 <kasparnet> so I tried checking for rejected promises
+2014-10-21T19:21:24 <kasparnet> or well
+2014-10-21T19:21:40 <kasparnet> I tried rejecting the promise and then checking that the error was indeed sent
+2014-10-21T19:21:49 <Bosmon> ok
+2014-10-21T19:21:52 <kasparnet> which it is - even with my current faulty userSave.js implementation
+2014-10-21T19:21:59 <kasparnet> (the one that always fires onSuccess
+2014-10-21T19:22:03 <Bosmon> Seems promising, at least : P
+2014-10-21T19:22:07 <Bosmon> ah
+2014-10-21T19:22:15 <Bosmon> ok
+2014-10-21T19:22:17 <Bosmon> So what\'s going on there
+2014-10-21T19:22:23 <kasparnet> so what I guess I should do, is to check for the onError vs. onSuccess of requestProxy
+2014-10-21T19:22:32 <kasparnet> but I\'m not sure how to do that
+2014-10-21T19:22:40 <Bosmon> Well
+2014-10-21T19:22:49 <Bosmon> I think checking that the overall response from the server is correct is adequate
+2014-10-21T19:22:50 <kasparnet> unless I construct the { isError: true }
+2014-10-21T19:22:55 <kasparnet> object in the userSave file
+2014-10-21T19:23:05 <Bosmon> requestProxy is just one of a zillion possible routes to making the request fail
+2014-10-21T19:23:27 <kasparnet> but it seems a sensible one
+2014-10-21T19:23:29 <Bosmon> But what\'s this about the faulty userSave.js?
+2014-10-21T19:23:46 <Bosmon> Sure, it\'s a sensible way of triggering it - but there\'s no point for checking for the failure using the particular triggering mechanism
+2014-10-21T19:23:54 <Bosmon> When what you are interested in is the overall result
+2014-10-21T19:24:21 <kasparnet> so usersave currently does this: promise.then(event.fire, event.fire);
+2014-10-21T19:24:28 <kasparnet> where event is always "onSuccess"
+2014-10-21T19:24:30 <Bosmon> oh I see
+2014-10-21T19:24:35 <kasparnet> that should be changed to onError
+2014-10-21T19:24:39 <Bosmon> So how do you get an error response out of this faulty impl?
+2014-10-21T19:25:16 <kasparnet> saveTests.js line 105
+2014-10-21T19:25:25 <kasparnet> ... but I guess that might be my problem
+2014-10-21T19:25:36 <Bosmon> Well right
+2014-10-21T19:25:45 <kasparnet> that the {isError} object creation is the responsibility of the userSave.js file
+2014-10-21T19:25:48 <Bosmon> but what I mean is, how is it that the server actually produces a failure response?
+2014-10-21T19:25:53 <Bosmon> WHen you actually fired the onSuccess event?
+2014-10-21T19:26:23 * jhung has quit
+2014-10-21T19:26:54 * anastasiac has quit
+2014-10-21T19:27:20 <kasparnet> well, it just passes whatever it gets from the promise to the event
+2014-10-21T19:27:38 * cindyli has quit
+2014-10-21T19:27:41 * cindyli1 joined the channel
+2014-10-21T19:28:00 <kasparnet> so whatever is generated in saveTests.js:106 is what\'s received from the HTTP call
+2014-10-21T19:28:09 <Bosmon> Oh, I see
+2014-10-21T19:28:13 <Bosmon> A cheat
+2014-10-21T19:28:23 <Bosmon> One possible scheme could be to verify the HTTP return code
+2014-10-21T19:28:45 <Bosmon> That should really reflect the actual error status of the request
+2014-10-21T19:29:21 * michelled has quit
+2014-10-21T19:29:39 * anastasiac joined the channel
+2014-10-21T19:30:23 <kasparnet> yeah, ok
+2014-10-21T19:31:46 <Bosmon> And if it doesn\'t, it should :)
+2014-10-21T19:32:14 <kasparnet> yup
+2014-10-21T19:32:43 <kasparnet> ok - well - I\'ll look at it tomorrow and hopefully have managed to adress all your comments by the arch. meeting
+2014-10-21T19:34:15 <kasparnet> thanks for all your help on this Dr. Nig
+2014-10-21T19:34:54 <Bosmon> kasparnet - thanks for your endless trudging up the long hill
+2014-10-21T19:35:08 <Bosmon> And for me, I have just run my first test case executing a real asynchronous settings handler : P
+2014-10-21T19:38:59 <kasparnet> yay!!!
+2014-10-21T19:41:23 * danaayotte_ joined the channel
+2014-10-21T19:42:08 * michelled joined the channel
+2014-10-21T19:55:34 * cindyli1 has quit
+2014-10-21T19:55:48 * cindyli joined the channel
+2014-10-21T20:01:52 <Bosmon> Hey cindyli - congrats on the giant merge!
+2014-10-21T20:01:56 <Bosmon> This is a great piece of progress
+2014-10-21T20:02:06 <cindyli> YAY!
+2014-10-21T20:20:27 * avtar has quit
+2014-10-21T20:20:43 * avtar joined the channel
+2014-10-21T20:28:55 * kasparnet has quit
+2014-10-21T20:29:23 * cindyli has quit
+2014-10-21T20:31:13 * michelled has quit
+2014-10-21T20:31:52 * michelled joined the channel
+2014-10-21T20:33:35 * clown_mgtg has quit
+2014-10-21T20:36:41 * jhernandez joined the channel
+2014-10-21T20:40:00 * kasparnet joined the channel
+2014-10-21T20:48:22 * anvk has quit
+2014-10-21T20:51:52 * colinclark joined the channel
+2014-10-21T20:52:17 * Bosmon has quit
+2014-10-21T20:54:19 * colinclark has quit
+2014-10-21T20:56:43 * Bosmon joined the channel
+2014-10-21T21:00:19 * kasparnet has quit
+2014-10-21T21:04:52 * yzen has quit
+2014-10-21T21:20:37 * jessm has quit
+2014-10-21T21:24:27 * anastasiac has quit
+2014-10-21T21:28:16 * simonjb has quit
+2014-10-21T21:33:34 * danaayotte_ has quit
+2014-10-21T21:41:00 * michelled has quit
+2014-10-21T22:11:18 * [o__o] joined the channel
+2014-10-21T23:11:31 * Bosmon has quit
+2014-10-21T23:17:45 * Bosmon joined the channel
+'
+
+b"2014-10-21T02:17:27 * yzen has quit
+2014-10-21T02:17:43 * colinclark joined the channel
+2014-10-21T02:22:06 * yzen joined the channel
+2014-10-21T02:26:49 * yzen has quit
+2014-10-21T02:28:27 * yzen joined the channel
+2014-10-21T02:54:24 * yzen has quit
+2014-10-21T03:22:57 * yzen joined the channel
+2014-10-21T04:40:43 * colinclark has quit
+2014-10-21T05:37:52 * kasparnet joined the channel
+2014-10-21T05:45:23 * kasparnet has quit
+2014-10-21T06:11:20 * yzen has quit
+2014-10-21T07:59:20 * Bosmon7 joined the channel
+2014-10-21T08:04:39 * Bosmon7 has quit
+2014-10-21T08:12:30 * jhernandez joined the channel
+2014-10-21T08:16:56 * Bosmon7 joined the channel
+2014-10-21T09:35:20 * Bosmon7 has quit
+2014-10-21T10:39:47 * kasparnet joined the channel
+2014-10-21T10:43:29 * Bosmon7 joined the channel
+2014-10-21T10:54:39 * Bosmon8 joined the channel
+2014-10-21T10:56:56 * Bosmon7 has quit
+2014-10-21T11:04:02 <jhernandez> Bosmon8: http://issues.gpii.net/browse/GPII-1001
+2014-10-21T11:04:36 <jhernandez> will start working on it by the end of today/tomorrow
+2014-10-21T11:04:38 <jhernandez> ANTVANIQ!!!
+2014-10-21T11:29:53 * Bosmon8 has quit
+2014-10-21T11:38:27 * yzen joined the channel
+2014-10-21T11:43:08 * yzen has quit
+2014-10-21T11:53:17 * jhung joined the channel
+2014-10-21T12:27:23 * Justin_o joined the channel
+2014-10-21T12:54:42 * danaayotte joined the channel
+2014-10-21T12:56:54 * cindyli joined the channel
+2014-10-21T13:02:01 * anvk joined the channel
+2014-10-21T13:04:46 * jessm joined the channel
+2014-10-21T13:07:34 * anastasiac joined the channel
+2014-10-21T13:09:06 <jhung> anastasiac: If linking to Infusion documentation - is it better to link to https://github.com/fluid-project/infusion-docs/blob/master/src/documents/README.md or to its root?
+2014-10-21T13:10:26 <anastasiac> good question, jhung. Ideally, we would link to the generated html that somonjb is working on :-) But since that\xe2\x80\x99s not yet available\xe2\x80\xa6 Where is the link, jhung? What\xe2\x80\x99s the context? FYI, I\xe2\x80\x99m leaning toward the link you\xe2\x80\x99ve pasted, and not toward the github repo root
+2014-10-21T13:11:01 <jhung> The link is coming from the fluidproject website and from the build site.
+2014-10-21T13:12:21 <anastasiac> Ok, I say link to the link you\xe2\x80\x99ve pasted, and file a JIRA to the effect that those links need to be updated to reference the generated html once it\xe2\x80\x99s available. The JIRA can be used to keep track of anywhere that will need updating
+2014-10-21T13:12:29 <anastasiac> what do you think?
+2014-10-21T13:13:12 <jhung> anastasiac: sounds good. I'll do that.
+2014-10-21T13:17:12 * yzen joined the channel
+2014-10-21T13:38:50 * jhung has quit
+2014-10-21T13:56:40 <jessm> hey folks, i have a question re: our github repo
+2014-10-21T13:57:50 <jessm> we\xe2\x80\x99re using it as a place to handle stuff we\xe2\x80\x99re actively working on (e.g. websites) but it also our proper repo for folks to come in and see and \xe2\x80\x9cget\xe2\x80\x9d our work (like UIO). How are we making it clear what\xe2\x80\x99s what?
+2014-10-21T13:59:28 * clown joined the channel
+2014-10-21T14:03:48 <anastasiac> jessm, not quite sure about the nature of your question. Are you talking about this list: https://github.com/fluid-project/ and trying to figure out what\xe2\x80\x99s what?
+2014-10-21T14:13:03 * jhung joined the channel
+2014-10-21T14:13:04 <Justin_o> cindyli: I have master merged
+2014-10-21T14:13:16 <Justin_o> for the FLUID-5469 pull request
+2014-10-21T14:17:00 <cindyli> thanks, Justin_o, having a look
+2014-10-21T14:17:07 <Justin_o> cindyli: thanks
+2014-10-21T14:17:40 * simonjb joined the channel
+2014-10-21T14:41:28 <jessm> anastasiac: yes
+2014-10-21T14:41:53 <jessm> anastasiac: more specifically, if potential users are pointed to our github repo and told they might like to integrate our work, where would they go from that list?
+2014-10-21T14:43:18 <anastasiac> jessm, each repo has a description that displays on this page. Ideally, that would be filled in with enough info to help them figure that out. Clearly, some of our repos are missing that. It would be nice if we could group them somehow, to make it easier\xe2\x80\xa6 I don\xe2\x80\x99t know if github has provisions for that
+2014-10-21T14:43:46 <anastasiac> I\xe2\x80\x99m not sure how github decides to order the repos
+2014-10-21T14:44:04 <anastasiac> probably activity...
+2014-10-21T14:45:19 <anastasiac> yes, activity
+2014-10-21T14:54:11 <jhung> anastasiac: I did a small tweak to my FLUID-5451 branch.
+2014-10-21T14:54:21 <anastasiac> ok, thanks jhung
+2014-10-21T14:54:25 <jhung> also I am starting work on updating the Fluid build site anastasiac
+2014-10-21T14:54:39 <anastasiac> oh, excellent, jhung
+2014-10-21T14:57:34 <Justin_o> cindyli: i fixed the issue with my pull request
+2014-10-21T14:57:43 <cindyli> thanks
+2014-10-21T15:01:15 <cindyli> not sure if you see the other comment about the demos link at https://github.com/jobara/infusion/blob/FLUID-5469/src/components/reorderer/css/ImageReorderer.css#L7
+2014-10-21T15:01:18 <cindyli> can you fix that too
+2014-10-21T15:01:19 <cindyli> thanks
+2014-10-21T15:01:49 <Justin_o> cindyli: sorry missed that.. i'll take a look
+2014-10-21T15:02:04 <cindyli> np and thanks
+2014-10-21T15:02:37 <Justin_o> hmm.. i didn't realize we deprecated the image reorderer
+2014-10-21T15:03:04 <Justin_o> oh.. sorry, this file itself has been deprecated
+2014-10-21T15:03:36 <Justin_o> maybe i should just try to change the stylesheet to the one from the demo
+2014-10-21T15:03:44 <Justin_o> cindyli: ^
+2014-10-21T15:04:45 <cindyli> oh ok
+2014-10-21T15:11:45 <Justin_o> anastasiac: do you know why this comment is here https://github.com/jobara/infusion/blob/FLUID-5469/src/components/reorderer/css/ImageReorderer.css#L2-L7
+2014-10-21T15:12:39 <anastasiac> Justin_o, no idea. 1.1.2 was a long time ago :-) I\xe2\x80\x99m guessing we were planning to re-do it, obviously
+2014-10-21T15:12:53 <Justin_o> anastasiac: okay.. i tried switching it and it breaks the styling
+2014-10-21T15:14:51 <Justin_o> anastasiac: ah.. i don't think the original was being used in the demo..
+2014-10-21T15:29:20 * danaayotte has quit
+2014-10-21T15:30:43 * danaayotte_ joined the channel
+2014-10-21T16:12:06 * cindyli has quit
+2014-10-21T16:15:02 * cindyli joined the channel
+2014-10-21T16:22:47 * clown has left the channel
+2014-10-21T16:31:38 * clown joined the channel
+2014-10-21T16:48:27 * jhernandez has quit
+2014-10-21T16:51:26 <kasparnet> Bosmon: So I'm adding a test for the rejected promise in my GPII-784 pull request
+2014-10-21T16:51:53 <Bosmon> kasparnet - cool
+2014-10-21T16:51:53 <kasparnet> and I have set up a datasource that will get called instead of the prefs server datasource
+2014-10-21T16:52:02 <kasparnet> I'm doing the following in that function:    process.nextTick(kettle.wrapCallback(promise.reject));
+2014-10-21T16:52:12 <Bosmon> Why are you deferring it?
+2014-10-21T16:52:34 <kasparnet> I figured I'd have to retrun the promise before returning it
+2014-10-21T16:52:42 <kasparnet> .. sorry  - it was taken a bit out of context
+2014-10-21T16:52:44 <Bosmon> no, it's always fine
+2014-10-21T16:52:46 <kasparnet> full function is:
+2014-10-21T16:52:57 <kasparnet> gpii.tests.userSave.rejectedPromise.set = function () {
+2014-10-21T16:52:57 <kasparnet> // This method is made asynchronous on purpose, to try to evade the
+2014-10-21T16:52:57 <kasparnet> // exception handler inside route.js in connect.
+2014-10-21T16:52:58 <Bosmon> The whole point of promises is that the operations can be done on them in any order, and it will all work out
+2014-10-21T16:52:59 <kasparnet> var promise = fluid.promise();
+2014-10-21T16:53:01 <kasparnet> process.nextTick(kettle.wrapCallback(promise.reject));
+2014-10-21T16:53:03 <kasparnet> return promise;
+2014-10-21T16:53:05 <kasparnet> };
+2014-10-21T16:53:07 <kasparnet> ah nice
+2014-10-21T17:02:09 <kasparnet> cool, it's working now! Cheers Bosmon
+2014-10-21T17:02:31 <Bosmon> cool, KASPARRENTT!
+2014-10-21T17:11:41 * colinclark joined the channel
+2014-10-21T17:27:44 * avtar joined the channel
+2014-10-21T17:41:12 * colinclark has quit
+2014-10-21T17:44:39 * michelled joined the channel
+2014-10-21T17:46:38 * danaayotte_ has quit
+2014-10-21T17:49:20 * danaayotte_ joined the channel
+2014-10-21T18:17:36 * colinclark joined the channel
+2014-10-21T18:25:02 <kasparnet> Bosmon: ping
+2014-10-21T18:25:24 <kasparnet> I'm looking at your comment for the preferencesServer.js
+2014-10-21T18:25:31 <kasparnet> in my GPII-748 pull request
+2014-10-21T18:26:04 <kasparnet> the event in both cases where the setRawPreferences function is used is not a request or requestProxy, but instead a regular infusion event
+2014-10-21T18:27:45 <Bosmon> kasparnet - right
+2014-10-21T18:27:53 <Bosmon> You will need to dig up the correct error target from somewhere
+2014-10-21T18:27:55 <kasparnet> so I'm not sure how to best handle this.. One option would be to always pass two events, one for failure and one for success to the function, and fire the appropriate one (ie. add a new event and listener to the component)
+2014-10-21T18:28:11 <Bosmon> kasparnet - you can just inject it into the invoker if you like
+2014-10-21T18:28:22 <Bosmon> {requestProxy} ought to be resolvable from just about anywhere
+2014-10-21T18:28:41 * michelled has quit
+2014-10-21T18:28:47 <kasparnet> yeah ok.. so I would fire the {requestProxy}.onError in case it fails
+2014-10-21T18:29:02 <kasparnet> and the rgular onRawPreferences event in case it's successful
+2014-10-21T18:29:03 <kasparnet> ?
+2014-10-21T18:29:14 <kasparnet> s/rgular/regular/
+2014-10-21T18:29:59 <kasparnet> THat seems to make sense to me
+2014-10-21T18:31:57 * clown has quit
+2014-10-21T18:32:33 * anastasiac has quit
+2014-10-21T18:32:35 * danaayotte_ has quit
+2014-10-21T18:34:29 * anastasiac joined the channel
+2014-10-21T18:34:33 * cindyli has quit
+2014-10-21T18:35:24 * cindyli joined the channel
+2014-10-21T18:35:57 * jhung has quit
+2014-10-21T18:35:58 <Justin_o> fluid-everyone: would anyone like to join the community meeting remotely today. we'll be brainstorming badging
+2014-10-21T18:36:24 <Bosmon> kasparnet - that's right
+2014-10-21T18:36:27 <Bosmon> Justin_o - what is badging?
+2014-10-21T18:39:53 * jhung joined the channel
+2014-10-21T18:40:17 <kasparnet> Bosmon: I was just wondering about that as well
+2014-10-21T18:40:17 * michelled joined the channel
+2014-10-21T18:42:00 <Justin_o> Bosmon: that's sort of what we're going to talk about :)
+2014-10-21T18:42:02 <Justin_o> i'm not sure yet
+2014-10-21T18:45:48 * clown joined the channel
+2014-10-21T18:45:51 * clown is now known as clown_mgtg
+2014-10-21T18:47:18 * colinclark_ joined the channel
+2014-10-21T18:48:37 * cindyli has quit
+2014-10-21T18:48:49 * colinclark has quit
+2014-10-21T18:48:50 * colinclark_ is now known as colinclark
+2014-10-21T18:48:51 * cindyli joined the channel
+2014-10-21T18:53:52 * colinclark has quit
+2014-10-21T19:14:30 <kasparnet> Bosmon: quick question
+"
+

@@ -1,0 +1,241 @@
+b'2015-08-06T18:36:36 <kasparnet> jesus -- still got it in me to ping you and totally miss your answers
+2015-08-06T18:36:37 <kasparnet> sorry
+2015-08-06T18:37:11 <kasparnet> I wanted to ask you about how to retrieve the flowmanager from within the test environment, but found an example of it in the contextintegration
+2015-08-06T19:07:04 <Bosmon> cool :)
+2015-08-06T19:09:35 * alanharnum joined the channel
+2015-08-06T19:27:28 * alanharnum has quit
+2015-08-06T19:29:55 * alanharnum joined the channel
+2015-08-06T19:30:44 * alanharn_ joined the channel
+2015-08-06T19:30:44 * alanharnum has quit
+2015-08-06T19:31:07 * alanharn_ has quit
+2015-08-06T19:48:08 * alanharnum joined the channel
+2015-08-06T19:50:14 * alanharnum has quit
+2015-08-06T19:51:04 * alanharnum joined the channel
+2015-08-06T19:59:59 * colinclark has quit
+2015-08-06T20:00:35 * cindyli joined the channel
+2015-08-06T20:01:12 * alanharnum joined the channel
+2015-08-06T20:01:22 * alanharn_ joined the channel
+2015-08-06T20:04:43 * sepideh joined the channel
+2015-08-06T20:05:19 * anastasiac joined the channel
+2015-08-06T20:05:46 * alanharn_ has quit
+2015-08-06T20:09:24 * colinclark joined the channel
+2015-08-06T20:09:27 * yzen_ joined the channel
+2015-08-06T20:12:24 * gtirloni has quit
+2015-08-06T20:12:24 * yzen has quit
+2015-08-06T20:13:25 * gtirloni joined the channel
+2015-08-06T20:32:28 * cindyli has quit
+2015-08-06T20:33:37 * anvk has quit
+2015-08-06T20:36:12 * the-t-in-rtf has quit
+2015-08-06T20:38:49 * kasparnet has quit
+2015-08-06T21:08:10 * yzen_ has quit
+2015-08-06T21:08:29 * kasparnet joined the channel
+2015-08-06T21:11:52 * sepideh has left the channel
+2015-08-06T21:16:29 <simonjb> hey Bosmon, are you available for a question?
+2015-08-06T21:16:54 <Bosmon> Hey simonjb
+2015-08-06T21:17:50 <simonjb> Bosmon: I\'ve been refactoring CloudBasedFlowManager.js so that I can test using browser-based testing
+2015-08-06T21:18:20 <simonjb> I\'ve been pulling out the code that I want to test and putting into a separate file
+2015-08-06T21:18:33 <simonjb> but I\'ve hit something that I\'m not sure how to handle
+2015-08-06T21:18:35 <simonjb> https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/CloudBasedFlowManager.js#L170
+2015-08-06T21:18:45 <simonjb> a fluid.require for a json file
+2015-08-06T21:18:51 <Bosmon> ah dear
+2015-08-06T21:18:53 <Bosmon> How awkward
+2015-08-06T21:19:09 <Bosmon> In so many ways : P
+2015-08-06T21:21:16 <simonjb> any ideas on that to make this browser-friendly?
+2015-08-06T21:22:06 <Bosmon> It\'s hard to think of a decent way out
+2015-08-06T21:23:50 <simonjb> One idea: change to a JS file that assigns the object to a suitable global value
+2015-08-06T21:24:26 <simonjb> then var suitableName = suitableName || require("...")
+2015-08-06T21:24:44 <simonjb> then it isn\'t a JSON file
+2015-08-06T21:24:49 <Bosmon> Yes
+2015-08-06T21:24:57 <Bosmon> That seems like one of the slightly more awful ways out
+2015-08-06T21:25:08 <Bosmon> Although this file isn\'t used as a proper "ontology" anyway
+2015-08-06T21:25:52 <simonjb> I\'m open to suggestions on less awful ways out :)
+2015-08-06T21:26:07 <Bosmon> Ok : P
+2015-08-06T21:26:11 <Bosmon> How about this : P
+2015-08-06T21:26:41 <Bosmon> Turn the "require" statement instead into an invocation of "a suitably named global function" which executes the require as it is
+2015-08-06T21:28:00 <Bosmon> Then - move the blind references to these globals into arguments, which are supplied by the component which is orchestrating it
+2015-08-06T21:28:22 <Bosmon> Then - bind invokers of that component onto the global function
+2015-08-06T21:28:23 * anastasiac has quit
+2015-08-06T21:28:38 <Bosmon> THen - monkey-patch the global function in your test driver so that it instead loads the same JSON file via synchronous AJAX ............
+2015-08-06T21:29:03 * Bosmon is standing back to a safe distance
+2015-08-06T21:29:23 <simonjb> yeah, that is definitely doable
+2015-08-06T21:29:35 <simonjb> and it\'s reasonable to include AJAX in the test code?
+2015-08-06T21:29:39 <alanharnum> based on my experience with ruby, anytime you use the word "monkey-patch" you\'re in for a good time & an excellent programming experience
+2015-08-06T21:30:18 <Bosmon> simonjb - I think it\'s acceptable in a test driver, yes
+2015-08-06T21:30:41 <Bosmon> simonjb - actually, no monkey-patching is necessary
+2015-08-06T21:30:42 <simonjb> I think I can get away without the monkey-patching
+2015-08-06T21:30:47 <Bosmon> I keep forgetting how the framework works :)
+2015-08-06T21:30:57 <Bosmon> You can just override the invoker definition in the test driver arguments
+2015-08-06T21:31:08 <simonjb> right
+2015-08-06T21:31:27 <simonjb> or... just hit the functions directly with the suitable rule object
+2015-08-06T21:31:34 <Bosmon> I was just momentarily pitched into complete desperation by the prospect of getting "fluid.require" to work in the browser
+2015-08-06T21:31:49 <Bosmon> simonjb - sure - it depends on how your refactoring comes out for the test
+2015-08-06T21:31:53 <simonjb> yeah
+2015-08-06T21:32:00 <Bosmon> That is, whether it ends up splitting off a recognisable component or not
+2015-08-06T21:32:04 <Bosmon> Hopefully it does : P
+2015-08-06T21:32:05 <simonjb> but either way this seems doable
+2015-08-06T21:32:08 <Bosmon> great
+2015-08-06T21:32:16 <simonjb> thanks very much
+2015-08-06T21:32:28 <Bosmon> Glad to help... after my momentary panic : P
+2015-08-06T21:32:36 <Bosmon> There is a TODO on this dodgy construction in any case
+2015-08-06T21:32:50 <Bosmon> So we may as well take the opportunity to clean up the idiom at the same time as improving the tests
+2015-08-06T21:39:31 * danayo has quit
+2015-08-06T21:49:54 * simonjb has quit
+2015-08-06T22:09:05 * Justin_o has quit
+2015-08-06T22:17:01 * colinclark has quit
+2015-08-06T22:49:52 * kasparnet has quit
+2015-08-06T22:59:37 * maozillah has quit
+2015-08-06T23:06:26 * murilocrivellari has quit
+'
+
+b'2015-08-06T01:40:17 * colinclark has quit
+2015-08-06T06:03:59 * slim_ joined the channel
+2015-08-06T06:28:37 * slim_ has quit
+2015-08-06T06:29:20 * slim_ joined the channel
+2015-08-06T06:32:05 * slim_ has quit
+2015-08-06T06:55:06 * slim_ joined the channel
+2015-08-06T06:58:04 * slim_ has quit
+2015-08-06T07:14:59 * the-t-in-rtf joined the channel
+2015-08-06T07:15:09 * the-t-in-rtf has left the channel
+2015-08-06T07:15:18 * the-t-in-rtf joined the channel
+2015-08-06T09:21:34 * kasparnet joined the channel
+2015-08-06T09:33:09 * kasparnet has quit
+2015-08-06T10:34:43 * slim_ joined the channel
+2015-08-06T10:49:47 * slim_ has quit
+2015-08-06T11:34:20 * slim_ joined the channel
+2015-08-06T11:37:36 * kasparnet joined the channel
+2015-08-06T11:39:17 * slim__ joined the channel
+2015-08-06T11:43:01 * slim__ has quit
+2015-08-06T11:43:12 * slim_ has quit
+2015-08-06T11:48:19 * slim_ joined the channel
+2015-08-06T11:54:09 * gtirloni has quit
+2015-08-06T11:54:25 * gtirloni joined the channel
+2015-08-06T12:19:40 * Justin_o joined the channel
+2015-08-06T12:34:16 * cindyli joined the channel
+2015-08-06T13:07:00 * anvk joined the channel
+2015-08-06T13:17:01 * Jess_ joined the channel
+2015-08-06T13:28:29 * sepideh joined the channel
+2015-08-06T13:36:35 * colinclark joined the channel
+2015-08-06T13:47:10 * alanharnum joined the channel
+2015-08-06T14:04:16 * maozillah joined the channel
+2015-08-06T14:05:44 * murilocrivellari joined the channel
+2015-08-06T14:09:15 * simonjb joined the channel
+2015-08-06T14:17:43 * anastasiac joined the channel
+2015-08-06T14:18:26 <colinclark> kasparnet, Bosmon: Your Kettle hotfix is in now
+2015-08-06T14:18:36 * danayo joined the channel
+2015-08-06T14:18:39 <Bosmon> colinclark - awesome!
+2015-08-06T14:18:42 <Bosmon> Thanks so much
+2015-08-06T14:18:53 <Bosmon> I\'ll convert it into a proper fix once this giant KEttle branch is ready
+2015-08-06T14:18:54 <kasparnet> thank you so much, colinclark! Updating my GPII-641 pull accordingly as we speak (type)
+2015-08-06T14:20:42 <Justin_o> Bosmon, cindyli: could you please take a look at this pull request from maozillah. I\'m wondering if you might have any thoughts on it before it gets merged in https://github.com/fluid-project/infusion/pull/618
+2015-08-06T14:21:28 <colinclark> kasparnet: Anything else helpful I can do to make my morning feel full of accomplishments?
+2015-08-06T14:21:42 <colinclark> Justin_o: How did it go with testing Bosmon\'s latest round of fixes for the giant framework pull?
+2015-08-06T14:22:05 <Justin_o> colinclark: we\'re still working on that.. I need to recruit more people for that
+2015-08-06T14:22:13 <colinclark> no worries, just curious
+2015-08-06T14:22:16 <Justin_o> colinclark: so far i haven\'t found anything new though
+2015-08-06T14:22:53 <colinclark> Sounds like we\'re getting close
+2015-08-06T14:23:13 <colinclark> Bosmon: Can I get you to help me upgrade Flocking next week sometime?
+2015-08-06T14:23:35 <Bosmon> colinclark - absolutely
+2015-08-06T14:23:56 <Bosmon> Justin_o - thanks for the pointer to maozillah\'s pull - this seems interesting
+2015-08-06T14:24:09 <colinclark> I think it\'s probably just the lingering demands blocks, which are a very simple case
+2015-08-06T14:24:11 <Bosmon> Justin_o - can I try to make my guess about what this pull is, and you can tell me if I am right :)
+2015-08-06T14:24:20 <Justin_o> Bosmon:  sure
+2015-08-06T14:24:38 <Bosmon> Justin_o - it seems to me that "automate the test cases" refers to the fact that we had markup that was already present in standalone template files, that was duplicated in our test case markup - is this right?
+2015-08-06T14:25:15 <Justin_o> Bosmon: essentially, although it was a bit worse, in that the markup in the tests were rather out of date
+2015-08-06T14:25:15 * maozillah has quit
+2015-08-06T14:25:23 <Bosmon> oh dear
+2015-08-06T14:25:30 <Bosmon> The standard penalty of a cut n paster : p
+2015-08-06T14:25:36 <Justin_o> yep
+2015-08-06T14:26:40 <Justin_o> i figure these types of things will be easier with the async ginger world and maybe the new renderer but it\'s nice to have something in place between now and then, especially for such a key part of our framework/components
+2015-08-06T14:26:55 <Bosmon> Justin_o - I think the pull looks pretty good - I guess there\'s no standard way with our current prefs framework for a panel to know what the default filename of its template is?
+2015-08-06T14:26:59 <kasparnet> kasparnet: Not at the moment, but cheers for the offer
+2015-08-06T14:27:28 <Bosmon> Justin_o - exactly, yes - whatever awkwardness we currently have with "resources" at the moment isn\'t worth spending too much more effort on since we plan to do away with it all
+2015-08-06T14:27:30 <Justin_o> Bosmon: sadly no, because they expect to be getting them from the parent
+2015-08-06T14:27:38 <Bosmon> Justin_o - ok, that\'s fine then
+2015-08-06T14:27:44 <Bosmon> I think this pull request is as good as it can be
+2015-08-06T14:28:38 <Justin_o> Bosmon: thanks :) glad to get your sign off on it. I\'ll probably merge it in soon, just waiting on a minor change to remove a comment and then will need to double check if it actually has to wait for the FLUID-5678 pull request.
+2015-08-06T14:30:20 <colinclark> kasparnet mumbling to himself :)
+2015-08-06T14:30:46 <kasparnet> hahaha, shit man
+2015-08-06T14:32:00 <kasparnet> colinclark: was out for a really nice, but also quite late sail yesterday, and it ended up involving quite a few beers.. So am not at my sharpest today
+2015-08-06T14:32:14 <colinclark> lol
+2015-08-06T14:32:16 <colinclark> sounds amazing to me
+2015-08-06T14:32:20 <kasparnet> it was
+2015-08-06T14:32:26 <kasparnet> but more so yesterday than today :)
+2015-08-06T14:32:29 <colinclark> I skipped sailing last night, sadly
+2015-08-06T14:32:32 <colinclark> but the GPII wiki is better for it
+2015-08-06T14:32:56 <kasparnet> both glad and sorry to hear that :)
+2015-08-06T14:33:08 <kasparnet> will you have time to go out this weekend?
+2015-08-06T14:33:27 <colinclark> Probably not--possibly on Sunday
+2015-08-06T14:33:34 <colinclark> That poor boat has barely been sailed
+2015-08-06T14:33:58 <colinclark> things are so busy with work and then trying to wrangle my thesis right now
+2015-08-06T14:34:02 <colinclark> but soon enough :)
+2015-08-06T14:34:59 <colinclark> Justin_o, cindyli: I wonder what it might mean logistically if we were to contribute the First Discovery Tool to the GPII?
+2015-08-06T14:35:42 <colinclark> Would anything need to be done to it in order to do so?
+2015-08-06T14:36:03 <Justin_o> colinclark: i guess it depends on how we do that.. the version of Infusion used in GPII for the UI right now is quite old compared to what is in First Discovery, unless it was changed recently.
+2015-08-06T14:36:57 <colinclark> I was thinking maybe we wouldn\'t continue with the monolithic GPII prefsEditors repository...
+2015-08-06T14:37:09 <colinclark> I think that was largely a kind of "teaching tool," if that makes sense
+2015-08-06T14:37:15 <colinclark> but rather separate repositories per tool
+2015-08-06T14:37:24 <colinclark> in that case, is there a versioning issue still?
+2015-08-06T14:37:27 <Justin_o> colinclark: we\'d probably also have to change things up so that the first discovery could communicate with prefs server. And there were other things we didn\'t implement yet like a proper summary page
+2015-08-06T14:38:02 <Justin_o> colinclark: no, i guess it would just be forking or moving it to the gpii space on github
+2015-08-06T14:38:10 <colinclark> Justin_o: Yes, simonjb and Bosmon and I have been planning the security work required to support preferences editors using the Preferences Server. The actual work to do so will be done by IBM as part of PGA 3
+2015-08-06T14:38:13 <Justin_o> and then the tying things together bit
+2015-08-06T14:38:24 <colinclark> Bosmon: Do you see any complications in this regard?
+2015-08-06T14:40:10 <Bosmon> colinclark - with which proposal specifically?
+2015-08-06T14:40:59 <colinclark> Contributing the First Discovery Tool to the GPII org
+2015-08-06T14:41:51 <Bosmon> colinclark - I guess we\'d run into a version of our standard problem relating to the mismatch of committer status between fluid and GPII
+2015-08-06T14:43:05 <colinclark> It\'s probably something we can live with
+2015-08-06T14:43:18 <colinclark> but I don\'t know for sure
+2015-08-06T14:43:21 <Justin_o> Bosmon: that\'s interesting.. i wonder how we can fix that.. is the issue that there aren\'t enough people with push access to the GPII repos, or that there aren\'t enough that are familiar with Infusion components?
+2015-08-06T14:44:08 <Bosmon> Justin_o - it\'s just that they are different people
+2015-08-06T14:44:25 <Bosmon> For example, I don\'t think you and cindy would then have push access?
+2015-08-06T14:44:30 <colinclark> that\'s right
+2015-08-06T14:44:34 <colinclark> I think it\'s less an issue of experience
+2015-08-06T14:44:53 <Justin_o> Bosmon:  i guess i mean that "they are different people" isn\'t necessarily a problem. If there is someone who could review our stuff and merge it as it\'s ready
+2015-08-06T14:45:27 <colinclark> kasparnet, Bosmon, and I are all available to review and merge, especially when it\'s gone through a rigorous code review process already
+2015-08-06T14:46:18 <Justin_o> I think that\'s okay, just don\'t all go vacation together :)
+2015-08-06T14:48:19 <colinclark> lol
+2015-08-06T15:08:44 <cindyli> Bosmon: when you have time, can u take a look at my early pull request that adds wrapper components for creating pie charts using d3 library - https://github.com/fluid-project/chartAuthoring/pull/4
+2015-08-06T15:14:02 <cindyli> anastasiac: do you have a link to the tech doc for first discovery tool
+2015-08-06T15:14:29 <anastasiac> cindyli, when you say \xe2\x80\x9cthe tech doc for first discovery tool\xe2\x80\x9d what do you mean?
+2015-08-06T15:14:33 <anastasiac> the architecture report?
+2015-08-06T15:14:36 <anastasiac> or something else?
+2015-08-06T15:14:50 <cindyli> yes, architecture report
+2015-08-06T15:15:08 <anastasiac> cindyli: https://docs.google.com/document/d/16L2p5PVIU3FH1Sd9nG7hogqXi3NyFccqz8pprgYuesY/edit
+2015-08-06T15:15:47 <cindyli> thanks, anastasiac
+2015-08-06T15:23:31 * Jess_ has quit
+2015-08-06T15:26:39 * Jess_ joined the channel
+2015-08-06T15:31:44 <anastasiac> fluid-everyone: stand-up will be in the Collab room today
+2015-08-06T15:48:25 <kasparnet> sgithens: helloooooo
+2015-08-06T15:48:57 * sepideh joined the channel
+2015-08-06T16:23:08 * the-t-in-rtf has quit
+2015-08-06T16:24:08 * slim_ has quit
+2015-08-06T16:26:41 * avtar joined the channel
+2015-08-06T16:31:33 * cindyli has quit
+2015-08-06T16:39:40 * yzen joined the channel
+2015-08-06T16:39:40 * anastasiac has quit
+2015-08-06T16:48:06 * cindyli joined the channel
+2015-08-06T16:49:18 * anastasiac joined the channel
+2015-08-06T16:51:40 * the-t-in-rtf joined the channel
+2015-08-06T16:51:40 * the-t-in-rtf has quit
+2015-08-06T16:55:55 * kasparnet has quit
+2015-08-06T17:19:04 * sepideh has quit
+2015-08-06T17:19:21 * sepideh joined the channel
+2015-08-06T17:22:37 * kasparnet joined the channel
+2015-08-06T17:25:05 * maozillah joined the channel
+2015-08-06T17:27:10 * colinclark has quit
+2015-08-06T17:34:31 * the-t-in-rtf joined the channel
+2015-08-06T17:49:43 * kasparnet has quit
+2015-08-06T17:54:43 * gtirloni has quit
+2015-08-06T18:00:01 * kasparnet joined the channel
+2015-08-06T18:09:23 * gtirloni joined the channel
+2015-08-06T18:09:32 * alanharnum has quit
+2015-08-06T18:10:50 * anastasiac_ joined the channel
+2015-08-06T18:12:27 * colinclark joined the channel
+2015-08-06T18:13:09 * anastasiac has quit
+2015-08-06T18:14:13 * sepideh has quit
+2015-08-06T18:23:10 <kasparnet> Bosmon: would you happen to still be around?
+2015-08-06T18:23:17 <Bosmon> hi
+2015-08-06T18:31:52 * the-t-in-rtf has quit
+2015-08-06T18:33:54 * the-t-in-rtf joined the channel
+'
+

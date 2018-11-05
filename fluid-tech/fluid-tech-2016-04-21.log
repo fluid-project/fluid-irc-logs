@@ -1,0 +1,102 @@
+b'2016-04-21T00:35:14 * Jess__ joined the channel
+2016-04-21T00:36:47 * Jess___ joined the channel
+2016-04-21T02:08:40 * alanharnum joined the channel
+2016-04-21T07:20:50 * the-t-in-rtf joined the channel
+2016-04-21T07:29:49 * kasparnet joined the channel
+2016-04-21T07:54:42 * kasparnet has quit
+2016-04-21T10:46:03 * the-t-in-rtf has quit
+2016-04-21T11:01:50 * the-t-in-rtf joined the channel
+2016-04-21T11:05:03 * the-t-in-rtf has quit
+2016-04-21T11:07:02 * the-t-in-rtf joined the channel
+2016-04-21T11:08:01 * 16WAABHHG joined the channel
+2016-04-21T11:08:01 * 16WAABHHG has quit
+2016-04-21T11:09:38 * the-t-in-rtf1 joined the channel
+2016-04-21T11:10:26 * the-t-in-rtf has quit
+2016-04-21T12:33:34 * kasparnet joined the channel
+2016-04-21T12:52:50 * kasparnet has quit
+2016-04-21T12:53:58 * kasparnet joined the channel
+2016-04-21T12:56:30 * jessm joined the channel
+2016-04-21T12:57:39 * Bosmon joined the channel
+2016-04-21T13:06:44 * cindyli joined the channel
+2016-04-21T13:23:33 * kasparnet has quit
+2016-04-21T13:25:19 * alanharnum joined the channel
+2016-04-21T13:31:28 * the-t-in-rtf joined the channel
+2016-04-21T13:32:10 * michelled joined the channel
+2016-04-21T13:33:14 * the-t-in-rtf1 has quit
+2016-04-21T13:34:35 * the-t-in-rtf1 joined the channel
+2016-04-21T13:36:33 * the-t-in-rtf has quit
+2016-04-21T13:37:32 * simonjb joined the channel
+2016-04-21T13:48:20 * the-t-in-rtf joined the channel
+2016-04-21T13:48:22 * the-t-in-rtf1 has quit
+2016-04-21T13:48:34 * kasparnet joined the channel
+2016-04-21T13:52:13 * gtirloni joined the channel
+2016-04-21T13:55:29 * kasparnet has quit
+2016-04-21T13:55:46 * kasparnet joined the channel
+2016-04-21T13:59:22 * clown joined the channel
+2016-04-21T14:10:30 * kasparnet has quit
+2016-04-21T14:13:54 * gtirloni_ joined the channel
+2016-04-21T14:14:06 * gtirloni has quit
+2016-04-21T14:49:46 * gtirloni_ has quit
+2016-04-21T14:50:21 <the-t-in-rtf> So, I have long had a use case where I used distributeOptions to give a parent component a chance to do something special with each of its descendants.
+2016-04-21T14:50:40 <the-t-in-rtf> Namely giving routers a chance to add their child middleware to their routing stack.
+2016-04-21T14:51:15 <the-t-in-rtf> The problem we\'ve had is that if you nest a grade within itself, you lose the ability to use a particular means of distributing functions.
+2016-04-21T14:51:33 <the-t-in-rtf> Here\'s the meat of the distributeOptions block:
+2016-04-21T14:52:49 <the-t-in-rtf> {
+2016-04-21T14:52:49 <the-t-in-rtf> record: {
+2016-04-21T14:52:49 <the-t-in-rtf> "funcName": "gpii.express.container.registerWithContainer",
+2016-04-21T14:52:49 <the-t-in-rtf> "args": ["{arguments}.0", "{that}"] // direct child component, us.
+2016-04-21T14:52:49 <the-t-in-rtf> },
+2016-04-21T14:52:49 <the-t-in-rtf> target: "{that > gpii.express.middleware}.options.listeners.onReady"
+2016-04-21T14:52:49 <the-t-in-rtf> }
+2016-04-21T14:53:15 <the-t-in-rtf> If you use {that} in this example, you end up with the component you distributed it to rather than the {that} in the target.
+2016-04-21T14:53:23 <the-t-in-rtf> You have to use a named grade to work around this, as in.
+2016-04-21T14:53:53 <the-t-in-rtf> "args": ["{arguments}.0", "{gpii.express.container}"]
+2016-04-21T14:54:13 <the-t-in-rtf> The problem is when a gpii.express.container instance has an immediate child that is also a gpii.express.container instance
+2016-04-21T14:54:47 <the-t-in-rtf> instead of wiring the child ({arguments}.0) to the parent, we end up attempting to wire the child to the CHILD.
+2016-04-21T14:55:16 <the-t-in-rtf> i.e. the fact that the child itself is a `gpii.express.container` results in it satisfying the IoC reference first.
+2016-04-21T14:56:11 <the-t-in-rtf> To work around this, I moved away from using distributeOptions in favor of having each container inspect its own component options.
+2016-04-21T14:56:57 <the-t-in-rtf> Anyway, I don\'t know if anyone has encountered a similar use case, just thought I\'d share.
+2016-04-21T14:58:14 <the-t-in-rtf> I think this is down to needing to use `record` to bypass the restrictions on what you can distribute via the `source` option, as that content is interpreted in the context of the `target`.
+2016-04-21T14:58:37 <the-t-in-rtf> i.e. of course the target will say "hey, I\'m a container" before looking any further.
+2016-04-21T14:59:20 <the-t-in-rtf> Our previous approach was to only have a single instance of a named top-level grade, which could be cleanly referred to.
+2016-04-21T15:00:37 <the-t-in-rtf> as in:
+2016-04-21T15:01:05 <the-t-in-rtf> args: ["{arguments}.0", "{top.level.grade.of.doom}"] // the child, the completely unique ancestor
+2016-04-21T15:02:09 <the-t-in-rtf> even though the child is still evaluating the reference, it can pick up the single instance of the named grade from its ancestry.
+2016-04-21T15:02:43 <the-t-in-rtf> where it couldn\'t possibly sensibly figure out that {that} or {gpii.express.container} refers to someone else.
+2016-04-21T15:23:29 * gtirloni joined the channel
+2016-04-21T15:25:39 * simonjb joined the channel
+2016-04-21T15:43:55 * the-t-in-rtf has quit
+2016-04-21T16:17:16 * the-t-in-rtf joined the channel
+2016-04-21T16:27:04 * simonjb joined the channel
+2016-04-21T16:27:33 * the-t-in-rtf has quit
+2016-04-21T16:55:39 * simonjb joined the channel
+2016-04-21T17:10:40 * Bosmon2 joined the channel
+2016-04-21T17:19:13 * Bosmon has quit
+2016-04-21T17:27:06 * avtar joined the channel
+2016-04-21T17:33:09 * cindyli joined the channel
+2016-04-21T18:08:28 * clown joined the channel
+2016-04-21T18:25:02 * michelled1 joined the channel
+2016-04-21T18:39:42 * the-t-in-rtf joined the channel
+2016-04-21T18:52:39 * the-t-in-rtf has quit
+2016-04-21T18:53:20 * the-t-in-rtf joined the channel
+2016-04-21T19:03:35 * kasparnet joined the channel
+2016-04-21T19:09:59 * the-t-in-rtf has quit
+2016-04-21T19:10:30 * the-t-in-rtf joined the channel
+2016-04-21T19:13:59 * the-t-in-rtf has quit
+2016-04-21T19:15:29 * the-t-in-rtf joined the channel
+2016-04-21T19:21:09 * kasparnet has quit
+2016-04-21T19:21:47 * the-t-in-rtf has quit
+2016-04-21T19:42:17 * michelled joined the channel
+2016-04-21T20:04:02 * simonjb joined the channel
+2016-04-21T20:07:29 * colinclark joined the channel
+2016-04-21T20:13:14 * the-t-in-rtf joined the channel
+2016-04-21T20:15:11 * the-t-in-rtf has quit
+2016-04-21T20:21:42 * kasparnet joined the channel
+2016-04-21T20:25:39 * cindyli has quit
+2016-04-21T20:49:35 * kasparnet has quit
+2016-04-21T21:05:26 * alanharnum has quit
+2016-04-21T21:12:47 * simonjb joined the channel
+2016-04-21T21:27:41 * kasparnet joined the channel
+2016-04-21T22:10:53 * kasparnet has quit
+'
+

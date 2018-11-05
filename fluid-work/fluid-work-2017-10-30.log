@@ -1,0 +1,214 @@
+b'2017-10-30T18:06:30 <Bosmon> Or perhaps a futher variant which through some bizarre form of guarantee assures us that noone could possibly have written data other than us, and which therefore makes a read unnecessary
+2017-10-30T18:06:42 <Bosmon> But that sounds like a pretty useless kind of system : P
+2017-10-30T18:07:06 <Bosmon> I guess the Couch model is one which requires a "read before write" rather than a "read after write" ....
+2017-10-30T18:07:30 <Justin_o> Bosmon: okay... any chance we could draw that in a diagram
+2017-10-30T18:07:49 <Bosmon> Justin_o - well, these are just implementation options : P
+2017-10-30T18:08:01 <Bosmon> We just need to design this component so that they are at least possible options
+2017-10-30T18:08:18 <Bosmon> Rather than impossible ones as they are currently
+2017-10-30T18:10:39 <Justin_o> okay.. i\'ll give it another go
+2017-10-30T18:10:55 <Bosmon> Let\'s get debounce out of the way first, since it is making it hard to think about the basic algorithm
+2017-10-30T18:11:48 <Bosmon> Once you have modelised this component, the "diff" algorithm will then be triggered by a model listener - and the basic configuration of the component will trigger a write whenever the localModel and remoteModel disagree
+2017-10-30T18:13:47 <Justin_o> Bosmon: you mean add a model listener to "localModel" that calls fluid.model.diff between it and the remoteModel, if it returns false we issue a write
+2017-10-30T18:13:55 <Bosmon> Justin_o - exactly, yes
+2017-10-30T18:14:26 <Justin_o> does that mean we should also have one direction modelRelay between the remoteModel and localModel so that when a fetch happens, it will automatically update the localModel?
+2017-10-30T18:15:09 <Bosmon> Justin_o - no, we need to be more open about the results of a fetch
+2017-10-30T18:15:23 <Bosmon> Remember the issue above about the user possibly modifying the localModel when a fetch is in flight
+2017-10-30T18:15:45 <Bosmon> The actual action when a fetch resolves should itself be another configuration point of the component
+2017-10-30T18:16:20 <Bosmon> It is also possible that some sources of remote changes will trigger updates to the remoteModel spontaneously, etc.
+2017-10-30T18:16:51 <Justin_o> you mean if it\'s a socket connection for example
+2017-10-30T18:17:01 <Bosmon> Justin_o - exactly, yes
+2017-10-30T18:17:12 <Bosmon> In this case "read" is a no-op since the remoteModel is always live
+2017-10-30T18:17:23 <Bosmon> I mean, "readRequest"
+2017-10-30T18:17:35 <Bosmon> But this is yet another reason why remoteModel needs to be modelised
+2017-10-30T18:18:41 <Justin_o> okay
+2017-10-30T18:29:21 * stegru has quit
+2017-10-30T18:37:38 * michelled joined the channel
+2017-10-30T18:41:23 * javjarfer has quit
+2017-10-30T18:58:25 * the-t-in-rtf joined the channel
+2017-10-30T19:20:27 * sepidehshahi has quit
+2017-10-30T19:22:02 * amatas_ has quit
+2017-10-30T19:28:56 * clown joined the channel
+2017-10-30T19:33:14 * javjarfer joined the channel
+2017-10-30T19:53:35 * michelled joined the channel
+2017-10-30T19:54:32 * javjarfer has quit
+2017-10-30T19:54:58 * javjarfer joined the channel
+2017-10-30T20:16:42 * javjarfer has quit
+2017-10-30T20:17:02 * javjarfer joined the channel
+2017-10-30T20:38:07 * cindyli has quit
+2017-10-30T20:39:07 * Justin_o has quit
+2017-10-30T20:42:48 * sepidehshahi joined the channel
+2017-10-30T20:46:14 * sepidehshahi has quit
+2017-10-30T20:49:59 * jhung has quit
+2017-10-30T20:54:05 * javjarfer has quit
+2017-10-30T21:05:03 * alanharnum has quit
+2017-10-30T21:22:00 * stegru joined the channel
+2017-10-30T22:05:01 * amatas has quit
+2017-10-30T22:05:50 * alanharnum joined the channel
+2017-10-30T22:10:37 * alanharnum has quit
+2017-10-30T22:13:05 * danayo has quit
+2017-10-30T22:24:52 * colinclark_ joined the channel
+2017-10-30T22:25:25 * colinclark_ has quit
+2017-10-30T22:27:35 * michelled has quit
+2017-10-30T22:27:43 * colinclark has quit
+2017-10-30T22:39:34 * danayo joined the channel
+2017-10-30T23:06:39 * alanharnum joined the channel
+2017-10-30T23:08:57 * stegru has quit
+2017-10-30T23:11:14 * alanharnum has quit
+2017-10-30T23:15:36 * grrrero has quit
+2017-10-30T23:19:52 * stegru joined the channel
+2017-10-30T23:27:27 * stegru has quit
+2017-10-30T23:57:01 * michelled joined the channel
+'
+
+b'2017-10-30T07:28:36 * javjarfer joined the channel
+2017-10-30T08:03:27 * javjarfer has quit
+2017-10-30T08:25:18 * amatas joined the channel
+2017-10-30T08:41:41 * the-t-in-rtf joined the channel
+2017-10-30T08:50:11 * georgitodorov joined the channel
+2017-10-30T08:53:38 * dandimitrov joined the channel
+2017-10-30T08:55:08 * kasparnet joined the channel
+2017-10-30T08:57:04 * dandimitrov has quit
+2017-10-30T09:09:08 * javjarfer joined the channel
+2017-10-30T09:16:23 * amatas has quit
+2017-10-30T09:22:59 * amatas joined the channel
+2017-10-30T09:53:50 * stegru joined the channel
+2017-10-30T10:05:49 * grrrero joined the channel
+2017-10-30T11:07:08 * Justin_o joined the channel
+2017-10-30T11:52:51 * amatas_ joined the channel
+2017-10-30T12:06:18 * jhung joined the channel
+2017-10-30T12:34:34 <Justin_o> amatas: hello, i\'m getting that IP address blocked issue on the gpii wiki
+2017-10-30T12:35:48 <Justin_o> amatas: also of note, my IP address doesn\'t actually match the one that it\'s complaining about in the error
+2017-10-30T12:36:11 <amatas_> Justin_o: let me check
+2017-10-30T12:39:17 <amatas_> Justin_o: try again
+2017-10-30T12:39:44 <Justin_o> amatas_: seems better now, thanks
+2017-10-30T12:45:01 * amatas_ has quit
+2017-10-30T12:45:57 * amatas_ joined the channel
+2017-10-30T12:48:17 * cindyli joined the channel
+2017-10-30T12:51:35 * clown joined the channel
+2017-10-30T13:14:15 * sepidehshahi joined the channel
+2017-10-30T13:17:37 * michelled joined the channel
+2017-10-30T13:18:28 * simonjb joined the channel
+2017-10-30T13:22:42 * cindyli joined the channel
+2017-10-30T13:40:09 * alanharnum joined the channel
+2017-10-30T13:55:59 <Justin_o> Bosmon: wondering if you\'d have time to review https://github.com/fluid-project/infusion/pull/853 today. I think it should be relatively self contained at this point.
+2017-10-30T14:05:30 * colinclark joined the channel
+2017-10-30T14:10:31 * colinclark joined the channel
+2017-10-30T14:15:11 <Bosmon> Justin_o - sure, I\'ll take a llok
+2017-10-30T14:15:18 <Justin_o> Bosmon: thanks :)
+2017-10-30T14:16:52 * mrtyler joined the channel
+2017-10-30T14:17:30 <Justin_o> Bosmon: did you have a chance to look over my summary of our conversation regarding debouncing https://issues.fluidproject.org/browse/FLUID-6209?focusedCommentId=37438&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-37438
+2017-10-30T14:17:53 <Justin_o> I want to make sure my understanding is correct
+2017-10-30T14:26:17 * kasparnet has quit
+2017-10-30T14:27:44 * kasparnet joined the channel
+2017-10-30T14:32:48 * kasparnet has quit
+2017-10-30T14:39:18 * Jess_ joined the channel
+2017-10-30T15:01:05 * the-t-in-rtf joined the channel
+2017-10-30T15:01:18 <the-t-in-rtf> @cindyli and @Bosmon, I\'m opening my Vidyo room now.
+2017-10-30T15:01:30 <cindyli> ok. on my way
+2017-10-30T15:02:17 <cindyli> simonjb: if you are interested ^
+2017-10-30T15:03:31 <simonjb> thanks cindyli, just in the middle of something, think I will skip
+2017-10-30T15:04:02 <cindyli> ok
+2017-10-30T15:07:19 * georgitodorov has quit
+2017-10-30T15:09:51 <Bosmon> Hi I am here
+2017-10-30T15:25:10 <grrrero> fluid-everyone: On the phone with the bank... this is going to take a while so just going to type here in case I don\'t make standup: Friday I made a PR to add a meta viewport tag so that the responsiveness appears on mobile; got that one merged thanks alanharnum! Also sent Jutta the paper I wrote. Reading up on Wordpress. Meeting today with sepidehshahi for some UI/UX stuff!
+2017-10-30T15:25:48 <Jess_> grrrero: paper=platform coop work?
+2017-10-30T15:26:03 <grrrero> Jess_: Yep
+2017-10-30T15:26:29 <Jess_> grrrero: mind sending it to me too?
+2017-10-30T15:26:38 <Jess_> grrrero: for P4A future work?
+2017-10-30T15:26:38 <grrrero> Jess_ sure!
+2017-10-30T15:30:49 <grrrero> Jess_ sent! Let me know if I can help out with that as well :)
+2017-10-30T15:31:07 <Jess_> grrrero: thanks! will do
+2017-10-30T15:32:46 <michelled> jhung: https://github.com/fluid-project/floeproject.org/pull/60
+2017-10-30T15:33:27 <jhung> michelled: Oh yeah. Thanks!
+2017-10-30T15:34:07 <jhung> merged
+2017-10-30T15:36:19 * colinclark joined the channel
+2017-10-30T15:43:19 <ussjoin> Hello, world.
+2017-10-30T15:49:36 * stegru is now known as world
+2017-10-30T15:49:40 <world> ussjoin: hi!
+2017-10-30T15:49:45 * world is now known as stegru
+2017-10-30T15:55:40 * jessm joined the channel
+2017-10-30T15:57:08 <michelled> yay, clickable arrows on the responsive UIO on the floeproject site! thanks Justin_o and jhung
+2017-10-30T15:57:44 <Justin_o> :)
+2017-10-30T15:57:56 * ussjoin slow claps for stegru
+2017-10-30T16:00:15 <colinclark> michelled, Justin_o, jhung: Wow, this really does look and work great!
+2017-10-30T16:00:17 <colinclark> nice job
+2017-10-30T16:00:28 <colinclark> and grrrero! :)
+2017-10-30T16:01:33 <grrrero> :D
+2017-10-30T16:03:29 <michelled> colinclark: check it out on the SJRK site too
+2017-10-30T16:03:33 <colinclark> I just did
+2017-10-30T16:03:37 <colinclark> really awesome
+2017-10-30T16:03:45 <colinclark> the sites feel great on my iPhone
+2017-10-30T16:03:49 <colinclark> like they were made for it
+2017-10-30T16:04:00 * the-t-in-rtf joined the channel
+2017-10-30T16:26:12 <colinclark> Justin_o: Reading the very interesting Mike Bostock essay that you sent to the fluid-work list reminded me of this tweet by Jonathan Edwards, referring to a different project but I think nonetheless related: https://twitter.com/jonathoda/status/912752577586003969
+2017-10-30T16:26:55 <colinclark> The key feature being "we need to redesign programming languages and environments from the ground up rather than simply building atop"
+2017-10-30T16:27:33 <colinclark> I think d3.express looks amazing, for sure
+2017-10-30T16:27:52 <colinclark> but looking at all the examples it really highlights that basic Cartesianism in programming
+2017-10-30T16:28:20 <colinclark> where the way it composes data is so fundamentally split from the way it composes the program
+2017-10-30T16:28:48 <Justin_o> yes that would help, in d3.express Mike Bostok had to make some changes like assignments of variable expressions instead of values, and adding things like generators
+2017-10-30T16:31:29 <Justin_o> hmm.. right...
+2017-10-30T16:33:32 <colinclark> The key contrast being, for example, Bostock\'s generators and your model transformations
+2017-10-30T16:33:40 <colinclark> quite a difference in how they are expressed
+2017-10-30T16:33:55 <colinclark> and thus what kind of tooling one could create in order to visualize their effects
+2017-10-30T16:34:03 <colinclark> not to mention modify them in that kind of an environment
+2017-10-30T16:34:07 <colinclark> if you see what I mean
+2017-10-30T16:36:34 <colinclark> I love that he\'s given a name to something that\'s really important to us\xe2\x80\x94"passive reusability"
+2017-10-30T16:39:07 <alanharnum> colinclark Justin_o: It\'s a really good post
+2017-10-30T16:40:08 <Justin_o> colinclark: that\'s a good point, we really do want to be able to visualize/instrument all aspects.
+2017-10-30T16:41:04 <alanharnum> that tweet thread is really interesting as well - "scaling is a UI problem... but first we need principled solutions in the small"
+2017-10-30T16:42:00 <alanharnum> this project also looks interesting (from the tweets): http://www.lamdu.org/
+2017-10-30T16:42:32 <colinclark> yeah, there\'s a lot in here
+2017-10-30T16:42:37 <colinclark> "Sketching and gesture are more effective for teaching and learning in STEM than diagrams and visualizations. "
+2017-10-30T16:49:18 * sepidehshahi joined the channel
+2017-10-30T16:50:56 <alanharnum> on a somewhat related note, since the post is about changing programming practice, Mark Guzdial on that iffy "Coming Software Apocalypse" article is really good: https://computinged.wordpress.com/2017/10/30/lamport-doesnt-understand-education-the-coming-software-apocalypse/
+2017-10-30T17:02:42 <Justin_o> cindyli: do you know if we have function for comparing to models?
+2017-10-30T17:03:08 <cindyli> checking..
+2017-10-30T17:04:28 <Justin_o> cindyli: it\'s okay, just tracked it down fluid.model.diff
+2017-10-30T17:04:39 <cindyli> right
+2017-10-30T17:30:15 <Justin_o> Bosmon: how does this look for the bufferedModelComponent
+2017-10-30T17:30:32 <Justin_o> https://www.irccloud.com/pastebin/fZbKKc8x/
+2017-10-30T17:43:50 <Bosmon> Justin_o - i) why would we debounce in addition to ensuring that just one request was in flight?
+2017-10-30T17:45:11 <Justin_o> Bosmon: we debounce writes and reads so that only the latest is done, and we also have to prevent from running writes and reads at the same time
+2017-10-30T17:45:27 <Bosmon> ii) I think that we should modelise "requestInFlight" and store the local model within a nested path
+2017-10-30T17:45:41 <Bosmon> Justin_o - I don\'t think that is correct - since we can\'t afford to simply throw away reads or writes
+2017-10-30T17:46:06 <Bosmon> Justin_o - the point is that this component ALWAYS applies incoming reads and writes to the local model, and then only decides to forward them based on mismatch between local and remote
+2017-10-30T17:46:28 <Justin_o> Bosmon: yes, the writes come from the model listener, so it should all be stored in the local model
+2017-10-30T17:46:39 <Bosmon> Justin_o - also, the idea of "debouncing a read" is rather contradictory since the user will always want a response from a read
+2017-10-30T17:46:40 <Justin_o> meaning that the remote should be applying the latest model value
+2017-10-30T17:49:19 <Bosmon> Justin_o - so yes, for a step 1 refactoring let\'s put remoteModel, localModel, and requestInFlight as paths within the component\'s model
+2017-10-30T17:50:02 <Justin_o> Bosmon: i was assuming that the components model was the local model
+2017-10-30T17:50:13 <Bosmon> Justin_o, yes, I can see that
+2017-10-30T17:50:16 <Bosmon> But let\'s not use it all up : P
+2017-10-30T17:50:35 <Justin_o> okay
+2017-10-30T17:51:28 <Justin_o> Bosmon: okay, here\'s an update
+2017-10-30T17:51:37 <Bosmon> Then, firstly I think the read debounce should be eliminated completely as per earlier discussion
+2017-10-30T17:51:40 <Justin_o> https://www.irccloud.com/pastebin/61gq44mT/
+2017-10-30T17:51:53 <Bosmon> And if we want a write debounce, let\'s express this in a more reusable way by applying some explicit interception point
+2017-10-30T17:52:02 <Bosmon> Such as a separate invoker named "writeWrap" or so
+2017-10-30T17:52:50 <Bosmon> Your implementation of "read" needs some work since right now it circularly dispatches to itself if there is a request in flight : P
+2017-10-30T17:53:09 <Bosmon> Similarly for "write"
+2017-10-30T17:53:10 <Justin_o> Bosmon: yes, same with write, so that it gets put back in the debounce queue
+2017-10-30T17:54:05 <Justin_o> Bosmon: any suggestions on that
+2017-10-30T17:54:08 <Bosmon> Justin_o - yes, in the case a request in flight, the read implementation should return immediately as per our discussion before
+2017-10-30T17:54:30 <Justin_o> Bosmon: ah from the local model
+2017-10-30T17:54:42 <Justin_o> ?
+2017-10-30T17:54:59 <Bosmon> Well, I guess there\'s a confusion of role here.... the thing called "read" is actually the thing that triggers a read from the backing store, right?
+2017-10-30T17:55:03 <Bosmon> The thing we had decided to call "fetch"?
+2017-10-30T17:55:07 <Justin_o> yes
+2017-10-30T17:55:38 <Bosmon> The current architecture is far too coupled to the semantics of the "debounce" function
+2017-10-30T17:55:42 <Justin_o> so i guess it would have to come from the remote model, and yes.. i should put it back to fetch.. that is less ambiguous.. i had made it read to be more similar to write,
+2017-10-30T17:56:10 <Bosmon> In practice we want the component to schedule calls to "write" automatically as its model changes
+2017-10-30T17:56:17 <Bosmon> But it should be possible for this to be configuration-driven
+2017-10-30T17:57:41 <Bosmon> The way the invokers are expressed now, it would be virtually impossible for the user to express that they didn\'t want any debouncing at all
+2017-10-30T17:58:13 <Bosmon> So, let\'s make a "minimum viable" impl that has the debouncing totally removed
+2017-10-30T17:58:25 <Bosmon> And then work from there step by step to refactor gracefully to put it back in
+2017-10-30T18:00:35 <Justin_o> Bosmon: just for understanding, i wonder where the line would be between this and a modelComponent  paired with a datasource
+2017-10-30T18:01:07 <Bosmon> Justin_o - then, you need to decide how to handle the following scenario: i) the user requests a read, ii) the user then changes the local model, iii) the read then resolves, obliterating their changes
+2017-10-30T18:02:00 <Bosmon> Justin_o - well, as we decided, backing this component with a dataSource was just one of many options for implementing what you\'ve currently called readRequest/writeRequest
+2017-10-30T18:03:12 <Bosmon> This is why it\'s important for "remoteModel" to go into a model
+2017-10-30T18:03:28 * danayo joined the channel
+2017-10-30T18:03:48 <Bosmon> Another possibility would be for this component to be backed by some other kind of ChangeApplier bus - for example, a Nexus WebSockets bus
+2017-10-30T18:05:13 <Bosmon> Oh yes, the other part missing from this impl is how the remoteModel gets updated following a write
+2017-10-30T18:05:46 <Bosmon> As we discussed, we might have two varieties of write backing, one which supplies a read model as it resolves, and another one which doesn\'t, which requires us to schedule a read ourselves
+'
+

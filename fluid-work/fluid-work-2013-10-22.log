@@ -1,0 +1,243 @@
+b'2013-10-22T19:09:32 * kasparnet joined the channel
+2013-10-22T19:30:42 <Justin_o> Bosmon: i have a renderer question for you related to the composite panel work
+2013-10-22T19:36:46 <Bosmon> Hi Justin_o
+2013-10-22T19:38:31 <Justin_o> Bosmon: hello.. so i realized that i missed something in the protoTree rebasing which is to handle repeatingSelectors
+2013-10-22T19:39:01 <Justin_o> Bosmon: so I\'ve fixed up the tree rebasing and etc. but the repeatingSelectors aren\'t showing up in my cutPoints
+2013-10-22T19:39:23 <Justin_o> Bosmon: i\'m assuming this is because the flud.renderer.selectorsToCutpoints function is only run once during component initialization
+2013-10-22T19:39:30 <Bosmon> Justin_o - can you explain the problem further?
+2013-10-22T19:39:42 <Justin_o> but that\'s before i can move the repeatingSelectors from the subpanels up to the parent
+2013-10-22T19:39:47 <Justin_o> which i\'m doing onCreate
+2013-10-22T19:39:51 <Justin_o> does that make sense
+2013-10-22T19:40:15 <Justin_o> basically i want to surface the repeatingSelectors option from the subPanels to the compositePanel and have it used for generating cutpoints
+2013-10-22T19:40:20 <Justin_o> Bosmon: ^
+2013-10-22T19:40:40 <Bosmon> Justin_o - in general doing anything useful during an onCreate method will be too late
+2013-10-22T19:40:44 * kasparnet has quit
+2013-10-22T19:41:03 <Bosmon> Anything related to a component\'s initialisation process should be expressed in a ginger way
+2013-10-22T19:41:07 <Bosmon> Increasingly in the future
+2013-10-22T19:41:19 <Bosmon> And the future is really sort of dating from now : P
+2013-10-22T19:41:21 <Justin_o> Bosmon: but if i make it an expander, you wouldn\'t be able to set the repeatingSelectors of the compostiePanel if it needs it\'s own rendering
+2013-10-22T19:41:39 <Bosmon> I already made some improvements to the RendererComponent workflow so that crucial things happen "on time"
+2013-10-22T19:41:51 <Bosmon> For example the fabrication of the "refreshView" method which used to be the source of numerous problems
+2013-10-22T19:41:53 <Justin_o> Bosmon: any suggestions for when to do this?
+2013-10-22T19:42:00 <Bosmon> You and cindyli may remember that we had to patch over this for some years
+2013-10-22T19:42:16 <Bosmon> Justin_o - nothing prevents the user from overriding your configuration
+2013-10-22T19:42:22 <Bosmon> But you will need to write it using an expander, yes
+2013-10-22T19:42:25 <Justin_o> Bosmon: yes.. much nicer now that the craziness i employed for decapod
+2013-10-22T19:42:30 * kasparnet joined the channel
+2013-10-22T19:42:46 <Justin_o> Bosmon: but if i put an expander there and the user overrides it, wont the expander be removed
+2013-10-22T19:42:51 <Bosmon> Justin_o - yes, it will
+2013-10-22T19:43:02 <kasparnet> Jess_, michelled: cool - talk to you tomorrow
+2013-10-22T19:43:04 <Justin_o> Bosmon: so that\'s the problem
+2013-10-22T19:43:13 <Bosmon> Justin_o - can you explain the usage model a bit further?
+2013-10-22T19:43:29 <Bosmon> You want to be able to get your cutpoints, but you want the user to be able to add further to them?
+2013-10-22T19:43:34 <Justin_o> Bosmon: i want to both be able to surface the repeatingSelectors from the subPanels and supply ones at the compositePanel level as well
+2013-10-22T19:43:56 <Bosmon> In that case you can write an invoker that computes the ones from the subpanels and call it from your expander
+2013-10-22T19:43:59 <Justin_o> Bosmon: pretty much yes.. other than this, you can specify rendering values at both levels
+2013-10-22T19:44:00 <Bosmon> And the user can too
+2013-10-22T19:44:11 <Bosmon> This will be a bit clunky, but this isn\'t "permanent infrastructure" anyway
+2013-10-22T19:44:27 <Bosmon> We can\'t really afford to engineer this solution better than we need :)
+2013-10-22T19:44:37 <Justin_o> Bosmon: that\'s true i guess.. it will be a hassle as you won\'t be able to just have it work like others
+2013-10-22T19:45:21 <Justin_o> Bosmon: would it be better to create my own cutpoint generation function that pulls values from both the repeatingSelectors field and some other option, like subPanelRepeatingSelectors
+2013-10-22T19:45:24 <Justin_o> ?
+2013-10-22T19:46:53 <Bosmon> Justin_o yes, you could do that
+2013-10-22T19:47:14 <Bosmon> It would be slightly less messy to have a new strangely named option that it would be to explain to users that they should write an expander that calls an invoker...
+2013-10-22T19:47:15 <Justin_o> okay.. let me give that a go and if it doesn\'t work i\'ll fall back to just using the expander
+2013-10-22T19:47:31 <Justin_o> cool
+2013-10-22T20:04:03 <Justin_o> Bosmon: looks like it worked, thanks
+2013-10-22T20:09:52 <Bosmon> Justin_o - good job :)
+2013-10-22T20:11:00 <Justin_o> Bosmon:  thanks
+2013-10-22T20:11:22 <Justin_o> cindyli: i\'ve updated my FLUID-5131 branch. It now supports repeatedSelectors
+2013-10-22T20:11:38 <cindyli> thanks, Justin_o, will merge in
+2013-10-22T20:11:59 <cindyli> Justin_o: i\'ve fixed 5187 in my branch and pushed up
+2013-10-22T20:16:56 * clown_mtg has quit
+2013-10-22T20:30:15 * jhernandez has quit
+2013-10-22T20:40:31 * clown joined the channel
+2013-10-22T20:44:15 * cindyli has quit
+2013-10-22T20:44:23 * jhung has quit
+2013-10-22T20:52:46 * anastasiac has quit
+2013-10-22T20:58:32 * greggy has quit
+2013-10-22T21:02:58 * colinclark joined the channel
+2013-10-22T21:06:15 * anvk has quit
+2013-10-22T21:12:37 * Jess_ has quit
+2013-10-22T21:13:55 * clown has left the channel
+2013-10-22T21:21:29 * michelled has quit
+2013-10-22T21:47:57 * thealphanerd joined the channel
+2013-10-22T21:56:17 * yzen has quit
+2013-10-22T22:22:06 * mrvisser has quit
+2013-10-22T22:31:48 * jhernandez joined the channel
+2013-10-22T22:39:08 <jhernandez> colinclark: btw
+2013-10-22T22:39:15 <colinclark> hey
+2013-10-22T22:39:20 <jhernandez> how\'s that nexus?
+2013-10-22T22:39:47 <colinclark> I haven\'t made it much further yet
+2013-10-22T22:39:56 <colinclark> Travelling without much of an internet connection
+2013-10-22T22:39:59 <colinclark> I\'m just about to get back to it
+2013-10-22T22:40:21 <jhernandez> ok ok
+2013-10-22T22:41:12 <jhernandez> so, when do you have to demo it?
+2013-10-22T22:41:22 <colinclark> tomororw
+2013-10-22T22:41:24 <colinclark> so I better get on it
+2013-10-22T22:41:45 <jhernandez> heh
+2013-10-22T22:42:52 <jhernandez> just in case that you don\'t succeed on building the apk
+2013-10-22T22:43:17 <colinclark> Yes, I\'m a bit freaked out about it
+2013-10-22T22:43:46 <jhernandez> as an emergency plan, I can pass the apk and the js code to you
+2013-10-22T22:44:16 <jhernandez> ;)
+2013-10-22T22:49:32 * colinclark has quit
+2013-10-22T22:53:18 * colinclark joined the channel
+2013-10-22T23:05:41 * kasparnet has quit
+2013-10-22T23:24:06 * avtar has quit
+2013-10-22T23:32:54 * mrvisser joined the channel
+2013-10-22T23:40:55 * mrvisser has quit
+2013-10-22T23:47:17 * sgithens joined the channel
+'
+
+b'2013-10-22T00:05:00 * yzen joined the channel
+2013-10-22T00:08:38 * thealphanerd has quit
+2013-10-22T00:59:31 * yzen has quit
+2013-10-22T01:08:06 * colinclark has quit
+2013-10-22T03:20:14 * yzen joined the channel
+2013-10-22T03:40:50 * colinclark joined the channel
+2013-10-22T03:40:50 * colinclark has quit
+2013-10-22T06:19:57 * yzen has quit
+2013-10-22T07:17:03 * kasparnet joined the channel
+2013-10-22T07:17:22 * kasparnet has quit
+2013-10-22T09:18:07 * kasparnet joined the channel
+2013-10-22T09:31:55 * kasparnet has quit
+2013-10-22T09:36:18 * kasparnet joined the channel
+2013-10-22T09:37:12 * kasparnet has quit
+2013-10-22T09:40:36 * kasparnet joined the channel
+2013-10-22T10:45:52 * kasparnet has quit
+2013-10-22T10:52:21 * mrvisser joined the channel
+2013-10-22T10:59:46 * kasparnet joined the channel
+2013-10-22T12:21:44 * jhung joined the channel
+2013-10-22T12:30:07 * kasparne_ joined the channel
+2013-10-22T12:30:11 * kasparne_ has quit
+2013-10-22T12:30:11 * kasparnet has quit
+2013-10-22T12:30:42 * kasparnet joined the channel
+2013-10-22T12:45:34 * mrvisser has quit
+2013-10-22T12:51:39 * cindyli joined the channel
+2013-10-22T12:53:37 * anvk joined the channel
+2013-10-22T13:00:18 * mrvisser joined the channel
+2013-10-22T13:14:58 * yzen joined the channel
+2013-10-22T13:16:46 * greggy joined the channel
+2013-10-22T13:17:10 * greggy has quit
+2013-10-22T13:17:30 * greggy joined the channel
+2013-10-22T13:19:29 * amilchev has left the channel
+2013-10-22T13:39:36 * cindyli has quit
+2013-10-22T13:41:18 * cindyli joined the channel
+2013-10-22T14:02:25 * greggy has quit
+2013-10-22T14:03:47 * greggy joined the channel
+2013-10-22T14:04:49 * kasparne_ joined the channel
+2013-10-22T14:04:49 * kasparnet has quit
+2013-10-22T14:08:47 * avtar joined the channel
+2013-10-22T14:31:02 * kasparne_ has quit
+2013-10-22T14:31:40 * mrvisser has quit
+2013-10-22T14:36:50 * kasparnet joined the channel
+2013-10-22T14:44:33 * mrvisser joined the channel
+2013-10-22T15:12:18 * anastasiac joined the channel
+2013-10-22T15:12:18 * anastasiac has quit
+2013-10-22T15:12:37 * anastasiac joined the channel
+2013-10-22T15:13:34 <anastasiac> cindyli, I found out why my enactor was complaining that a container was specified when it wasn\'t supposed to be: I had NOT declared it to be a viewComponent. Is it a requirement that enactors are viewComponents, and if so, should that be encompassed by the enactor grade?
+2013-10-22T15:15:41 <cindyli> anastasiac: it\'s great you found out why. I don\'t think it\'s a requirement that enactors are viewComponents since enactors can do more than applying changes to containers.
+2013-10-22T15:16:00 <anastasiac> well, then there\'s a bug somewhere if it\'s not a requirement :-)
+2013-10-22T15:17:16 <cindyli> yes, anastasiac. i will take a look on why viewComponent declaration is required once i\'m done with 5181
+2013-10-22T15:17:43 <anastasiac> thanks, cindyli. Should I file a JIRA?
+2013-10-22T15:17:57 <cindyli> yes pls, anastasiac
+2013-10-22T15:18:02 <anastasiac> k
+2013-10-22T15:22:43 <anastasiac> cindyli: http://issues.fluidproject.org/browse/FLUID-5187  I\'ve added it to the iteration page
+2013-10-22T15:22:58 <cindyli> thanks, anastasiac
+2013-10-22T17:04:52 * jhung has quit
+2013-10-22T17:06:29 * Jess_ joined the channel
+2013-10-22T17:06:52 * greggy has quit
+2013-10-22T17:09:42 * colinclark joined the channel
+2013-10-22T17:13:44 * jhung joined the channel
+2013-10-22T17:13:54 * jhung has quit
+2013-10-22T17:14:05 * jhung joined the channel
+2013-10-22T17:30:29 * greggy joined the channel
+2013-10-22T17:39:12 * yzen has quit
+2013-10-22T17:40:01 <colinclark> Hey kasparnet, are you around?
+2013-10-22T18:05:14 <kasparnet> colinclark: I am
+2013-10-22T18:12:39 <colinclark> hey dude
+2013-10-22T18:13:05 <colinclark> So, I\'m finding myself struggling a bit to review your GPII-260 pull request
+2013-10-22T18:14:57 <Jess_> anastasiac: ping
+2013-10-22T18:15:07 <anastasiac> Jess_: polo
+2013-10-22T18:15:24 * yzen joined the channel
+2013-10-22T18:15:26 <kasparnet> colinclark: cause it\'s all nonsense to you
+2013-10-22T18:15:33 <kasparnet> or cause my solution is crazy
+2013-10-22T18:15:45 <colinclark> No, because your JIRA sucks :P
+2013-10-22T18:15:46 <Jess_> sorry, i don\'t have you on IM right now -- i think i don\'t have the password for one of my accts. anyway, i\'m going to skip the question about #9 in the space list since we won\'t get to it
+2013-10-22T18:16:06 <kasparnet> arh - that\'s the second time you\'ve said that today
+2013-10-22T18:16:13 <colinclark> Soryr
+2013-10-22T18:16:13 <anastasiac> Jess_, I guess that sounds reasonable
+2013-10-22T18:16:19 <colinclark> I don\'t mean to be mean, kasparnet
+2013-10-22T18:16:29 <colinclark> The JIRA doesn\'t really describe what "failure" is, tangibly
+2013-10-22T18:16:38 <kasparnet> hahaha, no no worries :D
+2013-10-22T18:16:44 <colinclark> or if there are other preference sets aside from Timothy\'s that I should test with
+2013-10-22T18:17:07 <colinclark> or what the actual relationship between GPII-260 and GPII-243 and GPII-192 are
+2013-10-22T18:17:11 <kasparnet> colinclark: yeah - I\'ve been slacking on the JIRAs lately
+2013-10-22T18:17:22 <kasparnet> so let me add some more details to it
+2013-10-22T18:17:25 <colinclark> This is what we\'ve called in the past a TLJ
+2013-10-22T18:17:31 <colinclark> yzen can tell you all about them ;)
+2013-10-22T18:22:06 <yzen> colinclark: well there\'s not much to say, kasparnet found those and lifecycle manager does not handle exceptions if anything fails that it tries to apply
+2013-10-22T18:22:33 <colinclark> Well, I think there\'s probably a lot left unsaid
+2013-10-22T18:22:37 <colinclark> like WHAT ACTUALLY HAPPENS
+2013-10-22T18:22:49 <colinclark> Even if the Flow Manager doesn\'t handle exceptions
+2013-10-22T18:23:01 <colinclark> 1. Where in the process does the failure occur?
+2013-10-22T18:23:14 <colinclark> 2. Have any assistive technologies been configured by the time it fails?
+2013-10-22T18:23:18 <colinclark> 3. Are any messages logged?
+2013-10-22T18:23:42 <colinclark> These are, you might remember, the very questions you asked me last night when you helped me debug my problem
+2013-10-22T18:23:44 <colinclark> ;)
+2013-10-22T18:24:25 <colinclark> Not to mention the questions I asked kasparnet above
+2013-10-22T18:24:28 <colinclark> including
+2013-10-22T18:24:37 <colinclark> 4. Are any other preference sets affected?
+2013-10-22T18:24:43 <colinclark> 5. How does this issue relate to similar issues?
+2013-10-22T18:28:36 <yzen> 1. happens on the actual call to the exec or something similar
+2013-10-22T18:29:11 <yzen> 2. yes or no, depending where in order the failure happened, nothing happens after as you might suspec
+2013-10-22T18:29:11 <yzen> t
+2013-10-22T18:29:20 <yzen> 3. nothing helpful is logged
+2013-10-22T18:29:36 <yzen> 4 and 5 I\'m not sure
+2013-10-22T18:29:39 <kasparnet> colinclark, yzen: so trying out the bug again, I realize it doesn\'t actually explode.. server is still running.. it\'s just that the login caller gets a (nonsense) error back and that\'s it
+2013-10-22T18:29:43 <yzen> i think kasparnet would be best to know
+2013-10-22T18:29:53 <colinclark> I didn\'t say "helpful" for #3.
+2013-10-22T18:30:01 <yzen> kasparnet: well yes, you can\'t keel the server :)
+2013-10-22T18:30:04 <yzen> it\'s invincible
+2013-10-22T18:30:08 <yzen> like a boss
+2013-10-22T18:31:06 <colinclark> The point about #3 is subtle
+2013-10-22T18:31:22 <colinclark> helpful isn\'t necessarily the point
+2013-10-22T18:31:22 <colinclark> though helpful messages would be great
+2013-10-22T18:31:27 <kasparnet> yzen: ... *cough* GPII-243 *cough* ,.. you said what, yura?
+2013-10-22T18:31:57 <colinclark> But you need to keep in mind people who might encounter this issue who have never have experienced a failure like this
+2013-10-22T18:32:05 <colinclark> Absolutely anything will help in this case
+2013-10-22T18:32:07 <kasparnet> colinclark: I\'ve added comments as to #4 and #5 in the JIRA
+2013-10-22T18:32:11 <colinclark> cool, kasparnet
+2013-10-22T18:33:02 <kasparnet> colinclark: along with the errors I see when running it
+2013-10-22T18:33:27 <kasparnet> colinclark: Sorry for being so sloppy with them
+2013-10-22T18:33:31 <colinclark> no worries
+2013-10-22T18:33:36 <colinclark> I\'m not trying to smack you down
+2013-10-22T18:34:14 <colinclark> I just want to avoid situations that cause people to waste time and hate the GPII
+2013-10-22T18:34:29 <colinclark> I can say from experience that I hated the GPII last night
+2013-10-22T18:34:56 <kasparnet> haha yeah
+2013-10-22T18:35:38 <colinclark> yzen: Do you see where I\'m coming from with this?
+2013-10-22T18:38:27 * michelled joined the channel
+2013-10-22T18:39:36 <colinclark> So kasparnet, is the idea that we won\'t use any font size-related preferences for the pilots?
+2013-10-22T18:39:40 <colinclark> Is everyone cool with that?
+2013-10-22T18:41:50 <michelled> kasparnet: maybe I misunderstood, but I thought there were a couple JIRAs on the pilots todo list to fix the font size related issues
+2013-10-22T18:41:53 <michelled> am I wrong?
+2013-10-22T18:42:00 <michelled> or are they different issues?
+2013-10-22T18:43:57 * colinclark has quit
+2013-10-22T18:43:59 <kasparnet> colinclark, michelled: yeah, there are three issues related to font-size right now.. I\'ll talk with Eleni about the NOT having any font-size JIRAs fixed for pilots (ie. windows)
+2013-10-22T18:45:18 <kasparnet> michelled, colinclark: I guess alternatively to adding in my pull request for v0.2, we could completely remove everything font-size from our windows solutions registry, but that\'d require us to fix acceptance tests, etc as well (perhaps both in linux and windows)
+2013-10-22T18:50:47 <jhernandez> heh, jhernandez won\'t remove anything! :P
+2013-10-22T18:50:56 <jhernandez> kasparnet: ^
+2013-10-22T18:52:41 * clown joined the channel
+2013-10-22T18:52:51 * clown is now known as clown_mtg
+2013-10-22T18:55:47 <Jess_> michelled: kasparnet: i\'m hoping we can connect tomorrow to get clarity on tasks related to design. the JIRAs help, but i see lots of questions floating around.
+2013-10-22T18:56:27 <kasparnet> jhernandez: awesome -- then you\'re gonna be my excuse for arguing that colin should just merge my pull request and when call it that (shifting the two other font-size issues to post v0.2)
+2013-10-22T18:56:47 <jhernandez> xDDDDDDDD
+2013-10-22T18:57:05 <kasparnet> Jess_: 8-9am or 10am-12 are free for me
+2013-10-22T18:57:24 <kasparnet> michelled: ^
+2013-10-22T18:57:33 <michelled> they work for me too
+2013-10-22T18:58:24 <kasparnet> michelled, Jess_: I was hoping we weren\'t gonna need to meet for all those three hours :D
+2013-10-22T19:00:30 <Jess_> michelled: kasparnet: how about we reserve some time from 10 on? and JV and I can ask lots of questions and hopefully not take up the whole 2 hrs ;)
+2013-10-22T19:02:13 <michelled> sounds good
+2013-10-22T19:07:51 * kasparnet has quit
+'
+

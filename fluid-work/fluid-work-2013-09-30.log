@@ -1,0 +1,517 @@
+b'2013-09-30T19:29:42 <jhernandez> but this could be improved ofc
+2013-09-30T19:32:44 <clown> sure, jehernandez
+2013-09-30T19:32:53 <clown> *jhernandez
+2013-09-30T19:33:29 * yzen_ joined the channel
+2013-09-30T19:35:15 <Justin_o> Bosmon: is there a proper way to have regex in json
+2013-09-30T19:35:40 <Bosmon> Justin_o - no
+2013-09-30T19:35:49 <Bosmon> Justin_o - can you describe your use case?
+2013-09-30T19:35:57 <Justin_o> Bosmon: for the string replacement
+2013-09-30T19:36:18 <Bosmon> Justin_o - that seems a little insane
+2013-09-30T19:36:21 <Justin_o> i was hoping to also support regex but you can\'t specify them in transformation spec
+2013-09-30T19:36:27 <Bosmon> I thought you were going to use Fluid\'s string templater
+2013-09-30T19:37:23 <Justin_o> Bosmon: lneresting.. how would that work for transformations though.. since they won\'t be tokenized.. or is there a generic form of the stringTemplate i can use
+2013-09-30T19:38:17 <Bosmon> Justin_o - can you describe which part of the system requires general string replacement?
+2013-09-30T19:38:35 <Bosmon> Isn\'t it just a matter of adding prefixes? Plus the use of your existing "." to "_" replacement?
+2013-09-30T19:40:02 <Justin_o> Bosmon: so this is for rebasing the protoTrees.. for change to handle the new selectors.. i\'ve done that with the standard value transform... but I\'ll also have to change the model paths, and IoC references in the prototrees as well
+2013-09-30T19:40:34 <Bosmon> Justin_o - can\'t you use model relay to take care of the model paths? And arrange for the IoC references to remain stable?
+2013-09-30T19:40:43 <Justin_o> since the old prototree will have refered to model values in the subPanel, which have different paths in the parent.. and similarly references to {that} will need to be rebound to the correct component
+2013-09-30T19:41:05 <Bosmon> I see
+2013-09-30T19:41:11 <Bosmon> Why is {that} no longer the correct component?
+2013-09-30T19:41:21 <Bosmon> Surely all panels still mean themselves when they refer to themselves :)
+2013-09-30T19:41:48 <Justin_o> Bosmon: it wont\' be correct in the parentPanel which is the one doing the rendering
+2013-09-30T19:42:22 <Bosmon> Justin_o - you will have to "make it correct" - what\'s the alternative?
+2013-09-30T19:42:30 <Justin_o> {that} will need to be changed to refer to the subPanel instead, or else it will reference the parent panel
+2013-09-30T19:42:49 <Bosmon> Justin_o - I suggest you deal with this issue by expanding the protoTrees by hand
+2013-09-30T19:43:19 <Justin_o> Bosmon: hmm.. what does that mean exactly.. changing them into the fully hydrated form?
+2013-09-30T19:43:28 <Bosmon> There\'s no need to pervert the meaning of the configuration because we have a broken Renderer : P
+2013-09-30T19:44:13 <Justin_o> how would i go about expanding the prototree manually?
+2013-09-30T19:44:16 <Bosmon> Justin_o - well, all you really need to do is just call the "produceTree" member of the subcoponents by hand
+2013-09-30T19:44:30 <Bosmon> And then collect the results together
+2013-09-30T19:45:23 <Bosmon> Optionally calling the results of "expander" on the output
+2013-09-30T19:45:45 <Bosmon> Just follow the workflow of fluid.renderer.createRendererSubcomponent, after all you wrote most of it yourself : P
+2013-09-30T19:46:55 <Justin_o> :) okay.. and then i\'d just change the selectors to use those from the parent instead
+2013-09-30T19:47:08 <Bosmon> yes
+2013-09-30T19:47:18 <Bosmon> And that should just be a matter of adding scoping to them
+2013-09-30T19:48:27 <Justin_o> okay great thanks.. i\'ve been stumbling over this for a bit.. i\'ll do this instead now
+2013-09-30T20:05:32 * jhernandez has quit
+2013-09-30T20:10:50 * anastasiac_ joined the channel
+2013-09-30T20:11:18 * anastasiac has quit
+2013-09-30T20:11:18 * anastasiac_ is now known as anastasiac
+2013-09-30T20:15:21 * anastasiac has quit
+2013-09-30T20:18:25 * jhung joined the channel
+2013-09-30T20:35:00 * cindyli has quit
+2013-09-30T20:38:20 * mrvisser has quit
+2013-09-30T20:41:28 * Bosmon7 joined the channel
+2013-09-30T20:41:46 * Bosmon8 has quit
+2013-09-30T20:42:08 * Bosmon has quit
+2013-09-30T20:42:09 * anvk has quit
+2013-09-30T20:45:46 * Bosmon joined the channel
+2013-09-30T20:51:00 * colinclark has quit
+2013-09-30T20:52:29 * jhung has quit
+2013-09-30T21:07:36 * greggy has quit
+2013-09-30T21:10:54 * clown has left the channel
+2013-09-30T21:26:31 * sgithens has quit
+2013-09-30T22:01:05 * jessm has quit
+2013-09-30T22:02:06 * danaayotte has quit
+2013-09-30T22:07:49 * michelled has quit
+2013-09-30T23:04:30 * mrvisser joined the channel
+2013-09-30T23:05:07 * sgithens joined the channel
+2013-09-30T23:50:19 * jhernandez joined the channel
+'
+
+b'2013-09-30T17:51:50 <jhernandez> yes, you can install any package
+2013-09-30T17:52:03 <jhernandez> first, you have to retrieve its id
+2013-09-30T17:52:54 <clown> yes.
+2013-09-30T17:53:06 <jhernandez> from your pastebin:
+2013-09-30T17:53:08 <jhernandez> {
+2013-09-30T17:53:08 <jhernandez> "id": "gnome-shell-extension-alternative-status-menu;3.8.4-1.fc19;noarch;updates",
+2013-09-30T17:53:11 <jhernandez> "name": "gnome-shell-extension-alternative-status-menu",
+2013-09-30T17:53:14 <jhernandez> "version": "3.8.4-1.fc19",
+2013-09-30T17:53:17 <jhernandez> "data": "updates"
+2013-09-30T17:53:19 <jhernandez> }
+2013-09-30T17:53:25 <clown> yup.
+2013-09-30T17:53:35 <jhernandez> if you want to install it, just add into your test file something like
+2013-09-30T17:53:52 <jhernandez> packagekit.installPackage("gnome-shell-extension-alternative-status-menu;3.8.4-1.fc19;noarch;updates");
+2013-09-30T17:54:29 <jhernandez> in my case, I have to run it twice before getting the "enter admin password" dialog
+2013-09-30T17:55:43 <clown> but, I could call packagekit.installPackage(\xe2\x80\xa6) inside my node interptretter, right?  (after the necessary require(\'./build/Release/nodepackagekit.node\'\') ).
+2013-09-30T17:55:51 <jhernandez> we can also add a statuscallback and logging what\'s happening
+2013-09-30T17:56:57 <jhernandez> but it\'s ok as it is right now
+2013-09-30T17:57:29 <clown> rats!  My Vm just crashed.  Hang on...
+2013-09-30T17:58:21 <jhernandez> heh! that\'s the reason I always use my own system before trying it on Fedora :P
+2013-09-30T18:01:26 <jhernandez> clown: sorry, and yes, you can also call it from the node interpreter
+2013-09-30T18:02:41 <jhernandez> btw, when uninstalling, you should search again for the package because the id will be different this time
+2013-09-30T18:03:13 <clown> why is the id different (vm is back, trying the install command out).
+2013-09-30T18:04:04 <jhernandez> \'id\' and \'data\' now should reflect that the package is already installed
+2013-09-30T18:05:01 <jhernandez> insteadof updates, they will contain "installed:updates"
+2013-09-30T18:05:02 <clown> right.  data either says "installed" or something else if not installed.
+2013-09-30T18:05:12 * jhernandez nods
+2013-09-30T18:05:30 <clown> okay, I\'ve run the package.installPackage (\xe2\x80\xa6) once so far.
+2013-09-30T18:05:37 <jhernandez> so, what about the bug
+2013-09-30T18:05:38 * clown checking to see if anything installed.
+2013-09-30T18:05:46 <jhernandez> is the same under fedora?
+2013-09-30T18:06:00 <jhernandez> ok ok
+2013-09-30T18:07:02 <clown> it says it is installed  (I did a "yum info gnome-shell-extension-alternative-status-menu") before and after running packagekit.installedPackage().
+2013-09-30T18:07:36 <jhernandez> so ... does it means that it worked the first time?
+2013-09-30T18:07:40 <clown> yes.
+2013-09-30T18:07:42 <jhernandez> nice!
+2013-09-30T18:07:44 <clown> I presume
+2013-09-30T18:08:06 * jhernandez grabs a beer ...
+2013-09-30T18:08:15 <jhernandez> :P
+2013-09-30T18:08:16 <clown> step 1.  yum info gnome-shell-extension-alternative-status-menu =>  "Available packages\xe2\x80\xa6."
+2013-09-30T18:09:01 <clown> step 2.  node; packagekit.installPackage(\'gnome-shell-extension-alternative-status-menu;3.8.4-1.fc19;noarch;updates\') ==>  "true".
+2013-09-30T18:09:20 <clown> step 3.  yum info gnome-shell-extension-alternative-status-menu ==> "Installed packages \xe2\x80\xa6".
+2013-09-30T18:09:34 <jhernandez> yay!
+2013-09-30T18:09:39 * clown grabs his mug and toasts jhernandez.
+2013-09-30T18:09:50 <jhernandez> now, it\'s time to remove it
+2013-09-30T18:09:56 <jhernandez> xDD
+2013-09-30T18:10:00 <clown> step 4, coming up...
+2013-09-30T18:11:06 * greggy has quit
+2013-09-30T18:11:07 <jhernandez> search for the package again, and call packagekit.removePackage("the-new-id");
+2013-09-30T18:11:40 * sgithens joined the channel
+2013-09-30T18:11:45 <clown> how do I search?  Use packagekit.searchPackage()?
+2013-09-30T18:11:52 * jhernandez nods
+2013-09-30T18:12:17 <jhernandez> packagekit.searchPackage("gnome-shell-extension-alternative-status-menu")
+2013-09-30T18:12:32 <jhernandez> you\'ll get a shorter list :P
+2013-09-30T18:12:42 <clown> I did something wrong:  got "Segmentation fault (core dumped)"
+2013-09-30T18:12:59 <clown> node just blew up and went away.
+2013-09-30T18:13:13 <jhernandez> clown: you bad guy! xDDD
+2013-09-30T18:13:17 * clown tries again.
+2013-09-30T18:13:17 * greggy joined the channel
+2013-09-30T18:13:35 * clown is actually snidely whiplash
+2013-09-30T18:14:17 * clown wonders why we chose a package with such a looooooong name.
+2013-09-30T18:14:24 <jhernandez> haha
+2013-09-30T18:14:56 <clown> this time, no core dump, and got the package id.
+2013-09-30T18:15:10 <jhernandez> cool!
+2013-09-30T18:15:35 <jhernandez> packagekit.removePackage("the-new-package-id");
+2013-09-30T18:15:42 <clown> and up pops a dialog asking for my password.
+2013-09-30T18:15:48 <jhernandez> nice!
+2013-09-30T18:15:59 <clown> "Authentication is required to remove packages"
+2013-09-30T18:16:04 <clown> I\'m not sure that\'s nice.
+2013-09-30T18:16:22 <clown> I see the reason, but if you a fully automated system, ...
+2013-09-30T18:16:46 <clown> hmmm\xe2\x80\xa6.  I entered my password, and hit return.  And, my VM died.
+2013-09-30T18:16:56 <clown> *sigh*
+2013-09-30T18:17:00 <jhernandez> crap
+2013-09-30T18:17:28 <jhernandez> but, who died? the VM, or just the viewer?
+2013-09-30T18:17:32 * clown thinks it has to do with the fancy opengl overlays and transparencies with thes dialogs.
+2013-09-30T18:17:36 <clown> the entire VM.
+2013-09-30T18:17:42 <jhernandez> :(
+2013-09-30T18:17:46 <clown> ditto.
+2013-09-30T18:18:04 * clown blames virtual box.
+2013-09-30T18:18:30 * jhernandez ++
+2013-09-30T18:18:32 * clown blames virtual box\'es virtual video driver
+2013-09-30T18:18:47 * jhernandez ++
+2013-09-30T18:18:57 <jhernandez> btw, I use qemu/kvm
+2013-09-30T18:18:59 <jhernandez> :P
+2013-09-30T18:20:13 * clown will look into qemu/kvm to see if it\'s more stable.
+2013-09-30T18:23:23 <clown> well, it killed the VM again, right after I entered my password and hit return.
+2013-09-30T18:23:44 <clown> I am going to set this up on a real machine, jhernandez
+2013-09-30T18:24:05 <clown> But that will take a few minutes.  About 15 or so.
+2013-09-30T18:24:12 <clown> I\'ll let you know\xe2\x80\xa6.
+2013-09-30T18:25:30 <jhernandez> ok
+2013-09-30T18:25:31 <jhernandez> meanwhile, could you check if the package was removed (before your VM crash)?
+2013-09-30T18:27:24 * clown1 joined the channel
+2013-09-30T18:27:37 <jhernandez> clown1: ok, no prob
+2013-09-30T18:28:28 <clown1> wow, now my connections are flakey too.
+2013-09-30T18:28:49 * clown has quit
+2013-09-30T18:28:55 * clown1 is now known as clown
+2013-09-30T18:28:59 <jhernandez> bad weather too?
+2013-09-30T18:29:16 <clown> not that bad \xe2\x80\x94 it\'s raining a bit.
+2013-09-30T18:29:20 <jhernandez> here (in Sevilla) it\'s raining cats & dogs
+2013-09-30T18:29:58 <jhernandez> (as always when it rains)
+2013-09-30T18:33:21 * yzen__ has quit
+2013-09-30T18:44:24 <Justin_o> Bosmon: hello, what do you think of what i have so far for FLUID-5131 https://github.com/jobara/infusion/compare/FLUID-5131
+2013-09-30T18:47:42 <Bosmon> Justin_o - looking reasonable so far, at a quick look
+2013-09-30T18:49:05 <Justin_o> Bosmon: thanks.. i\'m trying to use model transformations for rebasing the prototrees from the subpanels to the parent panel
+2013-09-30T18:49:29 <Bosmon> Justin_o - it would be ok to do that for hand by now
+2013-09-30T18:49:36 <Bosmon> This code won\'t have an extremely long lifetime
+2013-09-30T18:50:01 <Justin_o> for that i\'m trying to write a new transformation that just does a simple string replacement.. i couldn\'t find one that did this already, is there one? also are there any docs on how to write a transformation?
+2013-09-30T18:50:15 * jhung has quit
+2013-09-30T18:50:45 <Justin_o> i wonder if it would be easier to write with the model transformation though?
+2013-09-30T18:51:08 <Justin_o> since i\'ll have to rebase the selector names used in the protoTree, the model paths, and IoC references
+2013-09-30T18:51:47 <Justin_o> Bosmon: ^
+2013-09-30T18:52:43 <Bosmon> Justin_o - a string replacement transformation could be interesting
+2013-09-30T18:53:07 <clown> jhernandez:  yes:  La lluvia en Sevilla es una pura maravilla
+2013-09-30T18:53:28 <Justin_o> Bosmon: i figure it would have to be really simple as the inverse would be difficult to perform if it accepted regexp
+2013-09-30T18:53:31 <Bosmon> clown - marvellous :)
+2013-09-30T18:53:40 * clown blushes
+2013-09-30T18:53:50 <Bosmon> Justin_o - no need to make it invertible
+2013-09-30T18:53:58 <Bosmon> There can be such a thing as "doing a job too thoroughly"
+2013-09-30T18:54:04 <Bosmon> I can refer you to colinclark here
+2013-09-30T18:54:10 <Bosmon> Who has a particular slogan that covers these things : P
+2013-09-30T18:54:11 <Justin_o> :)
+2013-09-30T18:54:25 <colinclark> SHIP. IT.
+2013-09-30T18:55:16 <clown> jhernandez:  I set it all up on a real machine.  It installed with one call.  And the one call to removePackage() removed it.
+2013-09-30T18:57:22 <Justin_o> Bosmon: i don\'t suppose there are docs on how to write the transformations?
+2013-09-30T18:57:39 <clown> brb
+2013-09-30T19:05:44 <cindyli> hi Bosmon
+2013-09-30T19:06:10 <Bosmon> Justin_o - there is only this http://wiki.gpii.net/index.php/Architecture_-_Available_transformation_functions
+2013-09-30T19:06:16 <Bosmon> Written by **KASPPARNETT**
+2013-09-30T19:06:30 <Bosmon> Hi there cindyli!
+2013-09-30T19:06:36 <cindyli> not sure if you paid attention to an issue that Chris sent to the gpii architecture list regarding the dynamic language switching.
+2013-09-30T19:06:44 <cindyli> this is the email: http://lists.gpii.net/pipermail/architecture/2013-September/001375.html
+2013-09-30T19:07:04 <cindyli> in specific from line "All message .json files will be grouped in locale-specific folders named.." onwards
+2013-09-30T19:07:15 * clown is back
+2013-09-30T19:07:54 <Bosmon> What totally hideous code Chris is writing
+2013-09-30T19:07:58 <Bosmon> Isn\'t anyone looking after him? : P
+2013-09-30T19:08:22 <cindyli> Justin_o started refractoring his code
+2013-09-30T19:08:33 <Bosmon> Sure, but talking to him would be a help too :)
+2013-09-30T19:09:06 <cindyli> ya, we can do that. hopfully Chris can refer to Justin_o\'s code for some improvements
+2013-09-30T19:11:20 <cindyli> Bosmon: i don\'t think our current UIO design supports dynamic message bundle re-loading. any suggestions to help Chris with this language switching issue?
+2013-09-30T19:11:36 <Bosmon> cindyli - the approach seems fine - the entire component will need to be re-rendered
+2013-09-30T19:12:12 <cindyli> Bosmon: you mean Chris\' approach to passing a global variable into the aux schema?
+2013-09-30T19:12:32 <Bosmon> No, not that part :)
+2013-09-30T19:12:44 <Bosmon> global variable indeed ....
+2013-09-30T19:20:32 <jhernandez> clown: re "La lluvia en Sevilla es una pura maravilla" LOL
+2013-09-30T19:20:58 <jhernandez> re "installed with one call.  And the one call to removePackage() removed it" awesome!!!
+2013-09-30T19:21:24 <cindyli> Bosmon: do you mean "the re-rendering of the entire component" is to re-run the uio builder with the another message prefix that points to the switched language message files?
+2013-09-30T19:22:03 <Bosmon> cindyli - it shouldn\'t be necessary to rebuild the component
+2013-09-30T19:22:13 <Bosmon> Simply reinstantiating it with different options should be sufficient
+2013-09-30T19:22:48 <clown> jhernandez:  I think I should try again with another package.  Sample size of 1 is not definitive.
+2013-09-30T19:24:49 <cindyli> ah ok, i think now i have some clues. thanks, Bosmon
+2013-09-30T19:26:13 <jhernandez> clown: btw, right now, we can just deal with one package at a time
+'
+
+b'2013-09-30T16:26:57 <jhernandez> xDD
+2013-09-30T16:27:11 <clown> I use F19 these days, jhernandez.
+2013-09-30T16:27:18 <jhernandez> clown: let me push it to Github
+2013-09-30T16:27:20 <clown> for the GPII stuff, anyhow.
+2013-09-30T16:27:33 <clown> sure jhernandez.  Push away.  I can look at it.
+2013-09-30T16:40:01 * clown goes to get his lunch\xe2\x80\xa6brb
+2013-09-30T16:47:24 * mrvisser has quit
+2013-09-30T16:50:44 <jhernandez> clown: https://github.com/javihernandez/linux/tree/packagekitBridge
+2013-09-30T16:54:14 <jhernandez> the issue is that I have to call \'installPackage\' twice to get it working, the same for \'removePackage\' method
+2013-09-30T16:56:48 * clown is back.
+2013-09-30T16:56:54 <clown> jhernandez:  *looking*
+2013-09-30T16:57:03 <jhernandez> clown: super-fast lunch!?
+2013-09-30T16:58:04 <clown> jhernandez:   no, I was getting my lunch.  It is sitting beside me here.  I plan to eat and look at your stuff at the same time.
+2013-09-30T16:58:10 * mrvisser joined the channel
+2013-09-30T17:02:43 <jhernandez> clown: no prob, I can wait
+2013-09-30T17:03:50 <jhernandez> I\'ll be here for a couple of hours more or less
+2013-09-30T17:04:15 <jhernandez> anyway, if you want to put your hands on it, it\'s easy
+2013-09-30T17:04:34 <jhernandez> build it -> node-gyp configure build
+2013-09-30T17:04:51 <clown> jhernandez:  remind me of the git commands to download it.
+2013-09-30T17:04:56 <jhernandez> heh
+2013-09-30T17:04:58 <clown> please.
+2013-09-30T17:05:24 <jhernandez> git remote add javihernandez git://github.com/javihernandez/linux.git
+2013-09-30T17:05:31 <jhernandez> git fetch -a -v javihernandez
+2013-09-30T17:05:57 <jhernandez> git checkout javihernandez/packagekitBridge -b packagekitBridge
+2013-09-30T17:05:58 <clown> I already have (based on git config):  remote.origin.url=git://github.com/javihernandez/linux/
+2013-09-30T17:06:03 <jhernandez> ok
+2013-09-30T17:06:22 <jhernandez> then, update it by using fetch
+2013-09-30T17:06:23 <clown> is that the same thing as what you wrote above?  (git remote add ...)
+2013-09-30T17:06:29 <jhernandez> yup
+2013-09-30T17:06:44 <clown> okay.  fetching\xe2\x80\xa6.
+2013-09-30T17:08:30 <clown> "fatal: \'javihernandez\' does not appear to be a git repository
+2013-09-30T17:08:30 <clown> fatal: Could not read from remote repository.
+2013-09-30T17:08:30 <clown> Please make sure you have the correct access rights
+2013-09-30T17:08:30 <clown> and the repository exists."
+2013-09-30T17:08:52 <clown> weird...
+2013-09-30T17:10:33 <clown> okay, the fetch works now.  I *did* have to do the \'git remote add\' above.
+2013-09-30T17:10:57 * jhernandez has quit
+2013-09-30T17:12:29 * jhernandez joined the channel
+2013-09-30T17:12:45 <jhernandez> clown: connection issues ... :/
+2013-09-30T17:13:12 <jhernandez> fetched it?
+2013-09-30T17:14:12 <clown> yes, jhernandez, I fetched it.
+2013-09-30T17:14:33 <clown> I did have to add the remote \xe2\x80\x94 the \'git add remote \xe2\x80\xa6\' you suggested above.
+2013-09-30T17:14:40 <jhernandez> ok
+2013-09-30T17:15:41 <clown> jhernandez:  looks like it built.
+2013-09-30T17:15:45 <jhernandez> change into packagekitBridge branch
+2013-09-30T17:15:58 <jhernandez> cd into node_modules/packagekit
+2013-09-30T17:16:07 <clown> did that a while ago (while you were disconnected). :-)
+2013-09-30T17:16:09 <jhernandez> node-gyp configure build
+2013-09-30T17:16:33 <jhernandez> ok ok
+2013-09-30T17:16:34 <clown> oh, okay.  I just ran build.sh from the main linux directory.  Was that wrong?
+2013-09-30T17:17:10 <jhernandez> stop it
+2013-09-30T17:17:24 <clown> it finshed a while ago.
+2013-09-30T17:17:34 <jhernandez> we\'d like to use the node module directly
+2013-09-30T17:17:53 <clown> actually, no, it isn\'t finished.  It\'s waiting for my password.  Time for cntl-c.
+2013-09-30T17:18:11 <jhernandez> yup, we just want to deal with the module itself
+2013-09-30T17:19:14 <clown> gyp: binding.gyp not found (cwd: /home/joseph/Development/GPII/DeviceReporter/linux/node_modules/packagekit) while trying to load binding.gyp
+2013-09-30T17:19:14 <clown> gyp ERR! configure error
+2013-09-30T17:19:14 <clown> gyp ERR! stack Error: `gyp` failed with exit code: 1
+2013-09-30T17:19:14 <clown> gyp ERR! stack     at ChildProcess.onCpExit (/usr/lib/node_modules/node-gyp/lib/configure.js:428:16)
+2013-09-30T17:19:14 <clown> gyp ERR! stack     at ChildProcess.EventEmitter.emit (events.js:98:17)
+2013-09-30T17:19:15 <clown> gyp ERR! stack     at Process.ChildProcess._handle.onexit (child_process.js:789:12)
+2013-09-30T17:19:32 <clown> there\'s more, if you want...
+2013-09-30T17:19:37 <jhernandez> sure!
+2013-09-30T17:19:50 <clown> gyp ERR! System Linux 3.10.10-200.fc19.x86_64
+2013-09-30T17:19:50 <clown> gyp ERR! command "node" "/usr/bin/node-gyp" "configure" "build"
+2013-09-30T17:19:50 <clown> gyp ERR! cwd /home/joseph/Development/GPII/DeviceReporter/linux/node_modules/packagekit
+2013-09-30T17:19:50 <clown> gyp ERR! node -v v0.10.16
+2013-09-30T17:19:50 <clown> gyp ERR! node-gyp -v v0.10.6
+2013-09-30T17:19:51 <clown> gyp ERR! not ok
+2013-09-30T17:19:51 <Justin_o> yzen: do you know if we have a function to tell if something is a plain js object and not an array
+2013-09-30T17:20:09 * clown loves the final gyp error:  "not ok".
+2013-09-30T17:20:32 <clown> but, the culprit is no build.gyp.
+2013-09-30T17:20:43 <jhernandez> oh! crap!
+2013-09-30T17:20:43 <jhernandez> wait
+2013-09-30T17:21:36 <clown> pardon me "binding.gyp".
+2013-09-30T17:21:40 <jhernandez> clown: heh, cd into nodepackagekit
+2013-09-30T17:21:42 <clown> but there is one...
+2013-09-30T17:21:46 <jhernandez> xD
+2013-09-30T17:21:48 * jhernandez nods
+2013-09-30T17:21:51 <clown> yup, I\'m there.
+2013-09-30T17:22:37 * clown takes bite of sandwich.
+2013-09-30T17:25:27 <jhernandez> gyp info ok ?
+2013-09-30T17:25:51 <clown> dunno \xe2\x80\x94 the last thing you asked me to do was cd into nodepackagekit.
+2013-09-30T17:25:56 <jhernandez> good sandwich?
+2013-09-30T17:25:57 <jhernandez> heh
+2013-09-30T17:25:58 <jhernandez> ok
+2013-09-30T17:26:04 <jhernandez> build it
+2013-09-30T17:26:04 <clown> yes, It is delicious.  Want a bite?
+2013-09-30T17:26:41 <jhernandez> node-gyp configure build and enjoy another bite xDDD
+2013-09-30T17:26:42 <clown> okay, it\'s built!  Why did it work this time?
+2013-09-30T17:27:04 <clown> oh, I was in the wrong directory.
+2013-09-30T17:27:08 <clown> before.
+2013-09-30T17:27:17 * jhernandez nods
+2013-09-30T17:27:28 * clown looks at the js test file.
+2013-09-30T17:27:53 * clown tries to run test file.
+2013-09-30T17:28:26 <jhernandez> clown: nice! let me see the output, please
+2013-09-30T17:29:36 <clown> [
+2013-09-30T17:29:36 <clown> {
+2013-09-30T17:29:36 <clown> "id": "orca;3.8.1-1.fc19;x86_64;installed:koji-override-0",
+2013-09-30T17:29:36 <clown> "name": "orca",
+2013-09-30T17:29:36 <clown> "version": "3.8.1-1.fc19",
+2013-09-30T17:29:37 <clown> "data": "installed:koji-override-0"
+2013-09-30T17:29:37 <clown> }
+2013-09-30T17:29:38 <clown> ]
+2013-09-30T17:30:03 <clown> jhernandez ^
+2013-09-30T17:30:14 <jhernandez> cool!
+2013-09-30T17:30:21 <clown> I ran it just once.
+2013-09-30T17:30:30 <jhernandez> I\'m wondering if there\'s a orca-lang package for Fedora
+2013-09-30T17:30:35 * jhernandez looks
+2013-09-30T17:30:40 <clown> there was about a 5 sec delay before the answer came back.
+2013-09-30T17:31:27 <clown> I assume the delay is because package-kit is asking for info from a remote repository (via yum) ?
+2013-09-30T17:31:39 <jhernandez> clown: you\'re right
+2013-09-30T17:31:50 * clown looks at .cc file.
+2013-09-30T17:32:06 <jhernandez> ok, orca-lang seems to be specific for openSUSE
+2013-09-30T17:32:32 <clown> okay, so we have init(), install(), and remove().  But, no "what is available?" type commands.
+2013-09-30T17:32:40 <jhernandez> heh
+2013-09-30T17:32:54 <jhernandez> "data": "installed:koji-override-0"
+2013-09-30T17:33:07 <clown> yes?
+2013-09-30T17:33:12 <clown> what about that line?
+2013-09-30T17:33:33 <jhernandez> if you replace orca by another word, ie: gnome-shell
+2013-09-30T17:33:40 * clown tries that...
+2013-09-30T17:34:27 <jhernandez> you\'ll see how you can differ from installed and not-installed packages
+2013-09-30T17:35:05 <clown> you get a whole pile of info.
+2013-09-30T17:36:17 <clown> pastebin.ca/2460210
+2013-09-30T17:36:36 <clown> jhernandez ^
+2013-09-30T17:37:07 <jhernandez> cool!
+2013-09-30T17:37:19 <clown> you appear to get all the infomation about the gnome-extensions.
+2013-09-30T17:37:23 <clown> is that what we want?
+2013-09-30T17:37:28 <jhernandez> there, you have all installed and available packages
+2013-09-30T17:38:21 <jhernandez> installed ones are those who have the \'installed\' word on \'data\' field
+2013-09-30T17:38:31 * clown nods
+2013-09-30T17:39:42 <clown> uninstalled ones give the name of the repository?  example:  "updates"  or "fedora".
+2013-09-30T17:40:45 <jhernandez> the \'id\' is the id you have to pass to  installPackage and removePackage methods
+2013-09-30T17:41:06 * clown nods  (I actually knew that).
+2013-09-30T17:41:18 <jhernandez> so by having this module, we can return customized JSON objects to the deviceReporter about a certain package
+2013-09-30T17:41:25 * clown sighs because he has run out of sandwich.
+2013-09-30T17:41:38 <clown> yes, it is good.
+2013-09-30T17:41:39 <jhernandez> install and remove packages
+2013-09-30T17:42:40 * jhernandez nods
+2013-09-30T17:43:03 <clown> but what about the "you have to call it twice" bug?  Is that just on openSuse?
+2013-09-30T17:43:21 <jhernandez> re the bug, if you can, go and install one package
+2013-09-30T17:43:43 <jhernandez> that was the next stop ;)
+2013-09-30T17:43:43 <jhernandez> *step
+2013-09-30T17:44:04 <clown> can it be any package?
+2013-09-30T17:46:06 <clown> is there a yum command to ask for the dependencies on a package?  I want to try install out on something that has little or no dependencies.
+2013-09-30T17:46:21 <jhernandez> go into a node interactive console
+2013-09-30T17:46:21 <jhernandez> (by running: node)
+2013-09-30T17:47:40 <clown> ok, I\'m there.
+2013-09-30T17:51:13 <jhernandez> sorry, lot of lag here ...
+2013-09-30T17:51:18 <clown> no problem.
+'
+
+b'2013-09-30T04:51:11 * yzen_ joined the channel
+2013-09-30T04:56:05 * yzen has quit
+2013-09-30T04:56:06 * yzen_ is now known as yzen
+2013-09-30T06:58:10 * SonicX joined the channel
+2013-09-30T08:02:37 * SonicX has quit
+2013-09-30T09:10:42 * jhernandez has quit
+2013-09-30T09:40:57 * amilchev joined the channel
+2013-09-30T10:43:02 * jhernandez joined the channel
+2013-09-30T10:47:30 * jhernandez has quit
+2013-09-30T10:48:02 * jhernandez joined the channel
+2013-09-30T11:29:05 * jhernandez has quit
+2013-09-30T11:29:24 * jhernandez joined the channel
+2013-09-30T11:40:36 * mrvisser joined the channel
+2013-09-30T12:14:08 * mrvisser has quit
+2013-09-30T12:20:25 * jhernandez has quit
+2013-09-30T12:21:38 * jhernandez joined the channel
+2013-09-30T12:25:15 * jhung joined the channel
+2013-09-30T12:32:19 * Justin_o joined the channel
+2013-09-30T12:35:06 * mrvisser joined the channel
+2013-09-30T12:42:14 * anvk joined the channel
+2013-09-30T12:49:28 * jhernandez has quit
+2013-09-30T12:53:29 * jhernandez joined the channel
+2013-09-30T12:54:01 * cindyli joined the channel
+2013-09-30T13:02:47 * greggy joined the channel
+2013-09-30T13:18:27 * yzen_ joined the channel
+2013-09-30T13:19:04 * clown joined the channel
+2013-09-30T13:19:12 * jessm joined the channel
+2013-09-30T13:23:07 * jhernandez has quit
+2013-09-30T13:23:45 * Justin_o_ joined the channel
+2013-09-30T13:30:51 * anastasiac joined the channel
+2013-09-30T13:36:17 <Justin_o> cindyli: i\'m reading through the docs that anastasiac updated on the fluid.messageResolver and am wondering if we really wanted to use the resolve function instead of lookup
+2013-09-30T13:37:08 <cindyli> Justin_o: do you mean for UIO message bundle? It is using lookup.
+2013-09-30T13:38:58 <Justin_o> cindyli: yes. wondering if we should have used resolve instead.. for things like sliding panel where it does a straight lookup.. so that we don\'t have to do all the conditional checks\xe2\x80\xa6 i suppose we\'d still need it for converting the namespaces values to arrays though
+2013-09-30T13:39:00 * danaayotte joined the channel
+2013-09-30T13:39:22 <Justin_o> unless we can use the parse func for that
+2013-09-30T13:39:33 <Justin_o> what do you think?
+2013-09-30T13:39:38 <Justin_o> cindyli: ^
+2013-09-30T13:39:44 <cindyli> Justin_o: good idea. worth to give a try
+2013-09-30T13:42:07 * jhernandez joined the channel
+2013-09-30T13:56:34 * clown has quit
+2013-09-30T14:03:38 * clown joined the channel
+2013-09-30T14:03:50 * clown is now known as clown_mtg
+2013-09-30T14:09:31 * Justin_o has quit
+2013-09-30T14:09:32 * Justin_o_ is now known as Justin_o
+2013-09-30T14:12:29 * jhung is now known as jhung_away
+2013-09-30T14:18:17 * Justin_o_ joined the channel
+2013-09-30T14:29:57 * Justin_o_ has quit
+2013-09-30T14:30:50 * jhung_away is now known as jhung
+2013-09-30T14:32:47 <yzen_> Justin_o:
+2013-09-30T14:36:53 * michelled joined the channel
+2013-09-30T14:40:14 <Justin_o> yzen_: can you remind me what the ${} means in renderer proto trees
+2013-09-30T14:40:27 <yzen_> valuebinding afaik
+2013-09-30T14:40:46 <Justin_o> yzen_: okay.. and can you just do {} or that\'s not accepted?
+2013-09-30T14:40:50 <yzen_> so resolves to {value binding: path } ?
+2013-09-30T14:41:01 <yzen_> {} all just get expanded as ioc ?
+2013-09-30T14:41:04 <yzen_> will
+2013-09-30T14:41:38 <Justin_o> so something like ${value} points to a model value.. and ${{value}} would try to valuebind an IoC reference
+2013-09-30T14:41:44 <Justin_o> yzen_: ^
+2013-09-30T14:42:32 <yzen_> Justin_o: hmm i might be confused but i think the latter expression actually resolves to value somehow in the tree
+2013-09-30T14:43:00 <Justin_o> yzen_: in the proto tree.. you mean? like for a pathas or valueas
+2013-09-30T14:43:23 <yzen_> Justin_o: yes
+2013-09-30T14:43:53 <Justin_o> yzen_: okay thanks.. i think that\'s cleared things up for me.. by the way, do you know much about how the model transformations work?
+2013-09-30T14:44:24 <yzen_> Justin_o: well i know a little, but in the gpii world kasper is the exper
+2013-09-30T14:44:25 <yzen_> t
+2013-09-30T14:45:40 <Justin_o> yzen_: ah right
+2013-09-30T14:54:08 <jhernandez> clown_mtg: ping
+2013-09-30T14:54:53 <jhernandez> yzen_: hey!
+2013-09-30T15:03:59 * avtar joined the channel
+2013-09-30T15:09:11 <Justin_o> cindyli: here\'s a test branch for changing from the lookup function to resolve https://github.com/jobara/infusion/compare/resolve
+2013-09-30T15:09:22 <Justin_o> i\'m not sure if there is a performance hit by doing this or not
+2013-09-30T15:10:15 <cindyli> thanks, Justin_o, it looks good
+2013-09-30T15:16:10 <Justin_o> cindyli: hmm.. now that i\'m thinking about it, maybe it\'s wrong.. since it resolves it in place.. we wouldn\'t want a string template resolved into the strings object of a component as it may need to be resolved where it\'s used.. so perhpas it\'s not correct to attach this to the strings block but to use the call to resolve where the string is actually used.
+2013-09-30T15:16:10 <Justin_o> What do you think?
+2013-09-30T15:21:54 <clown_mtg> jhernandez:  sorry in a meeting, right now.  I\'ll be in touch later.  In about 45 minutes.  Ok?
+2013-09-30T15:22:01 <cindyli> Justin_o: seems to me that the places where string templates are resolved are where they are actually used.
+2013-09-30T15:24:07 <Justin_o> cindyli: okay.. so it would make sense to use the resolve function where they are used then.. but i\'m wondering what the effect will be if something is in the strings block and also in the parent bundle
+2013-09-30T15:26:07 <cindyli> Justin_o: what do you mean "something is in the strings block and also in the parent bundle"? what\'s the conflict?
+2013-09-30T15:27:34 <Justin_o> so lets say for the sliding panel we have a default value in the strings block.. and then we want to override it from UIO
+2013-09-30T15:28:45 <cindyli> ok, i see. in that case we need a pre-handling on "strings" before the rendering
+2013-09-30T15:29:04 <cindyli> depending on the existence of the parent bundle
+2013-09-30T15:31:25 <cindyli> Justin_o: is there a way to re-boil an event with a different argument? for example, this line defines "onReady: https://github.com/fluid-project/infusion/blob/master/src/components/uiOptions/js/FatPanelUIOptions.js#L139
+2013-09-30T15:31:41 <cindyli> sorry, didn\'t finish the typing
+2013-09-30T15:32:02 <cindyli> this line defines the "onReady" event in uiOptions and fatPanel are equivalent
+2013-09-30T15:32:35 <cindyli> so when I hook up a listener for fatPenal -> onReady: https://github.com/fluid-project/infusion/blob/master/src/components/uiOptions/js/FatPanelUIOptions.js#L38
+2013-09-30T15:34:04 <cindyli> the argument I get is "uiOptions". so I want to re-boil fatPanel -> onReady to retrieve a "fatPanel" object
+2013-09-30T15:34:38 <cindyli> Justin_o: can we do that?
+2013-09-30T15:36:38 <jhernandez> clown_mtg: sure! ;)
+2013-09-30T15:48:33 <Justin_o> cindyli: hmm.. where did you want to do the boiling?
+2013-09-30T15:48:47 <Justin_o> or you want to change how line 139 of FatPanelUIOptions is written
+2013-09-30T15:49:18 <cindyli> Justin_o: i\'m thinking to change line 38: https://github.com/fluid-project/infusion/blob/master/src/components/uiOptions/js/FatPanelUIOptions.js#L38
+2013-09-30T15:49:53 <cindyli> of course, if changing 139 achieves the goal, let\'s do it
+2013-09-30T15:50:21 <Justin_o> cindyli: yes.. i think changing it on line 139 would be better since you can just add in the arg you want there..
+2013-09-30T15:50:33 * jhung is now known as jhung_away
+2013-09-30T15:50:41 <cindyli> ah. ok. trying
+2013-09-30T15:51:26 * yzen__ joined the channel
+2013-09-30T15:51:55 * clown_mtg has quit
+2013-09-30T15:52:33 * yzen_ has quit
+2013-09-30T15:59:37 <Justin_o> yzen: do you know if there is way to do string manipulation in model transformations?
+2013-09-30T16:12:14 * clown joined the channel
+2013-09-30T16:12:43 <clown> jhernandez:  my meeting is done.  what\'s up?
+2013-09-30T16:15:15 <jhernandez> clown: here!
+2013-09-30T16:15:28 <clown> hi jhernandez!
+2013-09-30T16:15:51 <jhernandez> hi!
+2013-09-30T16:16:27 <jhernandez> just wanted to give you an update about the packagekit stuff
+2013-09-30T16:16:34 * amilchev has left the channel
+2013-09-30T16:16:36 <clown> okay, thanks.
+2013-09-30T16:16:39 <clown> much appreciated.
+2013-09-30T16:17:57 <jhernandez> i read your mails and after reading (and playing) a bit with packagekit through dbus
+2013-09-30T16:18:15 <clown> yes? ...
+2013-09-30T16:20:14 <jhernandez> seems that we need to call pk\'s system interface, create a transaction (with a private and unique object id) and then use this to call our session interface
+2013-09-30T16:20:55 <jhernandez> I got it working, but it\'s very confusing
+2013-09-30T16:20:58 <jhernandez> so
+2013-09-30T16:21:01 <clown> aha.  Makes sense \xe2\x80\x94 you don\'t get access to the Transaction dbus interface unless you create an instance of a Transaction?
+2013-09-30T16:21:07 <jhernandez> yup
+2013-09-30T16:21:16 * colinclark joined the channel
+2013-09-30T16:21:33 <jhernandez> so I decided to stop using dbus and use libpackagekit instead
+2013-09-30T16:22:00 <clown> actually, that\'s similar to the magnifier dbus interface.  There are ZoomRegion dbus objects, but unless you ask the magnfier dbus object to creat one, you can\'t access it.
+2013-09-30T16:22:13 <jhernandez> yep
+2013-09-30T16:22:28 <clown> www.packagekit.org/gtk-doc/libpackagekit-gobject.html?
+2013-09-30T16:22:35 <jhernandez> so about using libpackagekit, it sounds creepy, but sgithens already started working on it
+2013-09-30T16:22:39 <jhernandez> AND
+2013-09-30T16:23:07 <jhernandez> I took his work and finished it
+2013-09-30T16:23:09 <jhernandez> :]
+2013-09-30T16:23:24 <clown> why is that creepy?
+2013-09-30T16:23:27 <clown> :-)
+2013-09-30T16:23:55 <jhernandez> because we need to write our own node.js module
+2013-09-30T16:24:01 <michelled> colinclark: I just found out from yzen that the things that are holding up the GPII 0.2 release are two pull requests to Infusion. One is from Bosmon for FLUID-5089 and the other is from Kasper
+2013-09-30T16:24:22 <colinclark> looking up FLUID-5089
+2013-09-30T16:24:30 <michelled> given that Kasper isn\'t back until next week, we probably aren\'t in any huge rush
+2013-09-30T16:24:30 <clown> jhernandez:  by "module" you mean node.js add-on?  Add-ons are written in C++ and extend the functionality of node.js
+2013-09-30T16:24:34 <colinclark> oh yes, that one
+2013-09-30T16:24:38 <jhernandez> clown: yup
+2013-09-30T16:24:44 <colinclark> How is that one a blocker, michelled
+2013-09-30T16:24:45 <colinclark> ?
+2013-09-30T16:24:46 <michelled> but it would be good to get these in so when he\'s back we can do the release
+2013-09-30T16:24:51 <clown> s\'okay with me, jhernandez.
+2013-09-30T16:24:52 <jhernandez> but it\'s already written
+2013-09-30T16:25:02 <michelled> yzen: do you know why the release is blocked on those pulls?
+2013-09-30T16:25:02 * jhung_away is now known as jhung
+2013-09-30T16:25:03 <jhernandez> that\'s the good news
+2013-09-30T16:25:10 <colinclark> I would have thought "making it work on Windows" might be part of the requirements for 0.2
+2013-09-30T16:25:16 <clown> jhernandez:  sounds like there is bad  news.
+2013-09-30T16:25:18 <jhernandez> so right now we can search, install and uninstall packages :]
+2013-09-30T16:25:19 <colinclark> but perhaps our Windows ThinkPad just sucks
+2013-09-30T16:26:03 <clown> go on, jhernandez.
+2013-09-30T16:26:04 <jhernandez> clown: heh
+2013-09-30T16:26:25 <jhernandez> it doesn\'t works always :S
+2013-09-30T16:26:26 <jhernandez> xDD
+2013-09-30T16:26:50 <jhernandez> but seems to be a packagekit issue (at least under opensuse 12.3)
+2013-09-30T16:26:51 <clown> jhernandez:  that\'s something for me to work on!  Maybe I can fix it?  (and maybe not...)
+'
+

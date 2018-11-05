@@ -1,0 +1,95 @@
+b'2017-02-06T07:50:34 * amatas joined the channel
+2017-02-06T08:46:54 * the-t-in-rtf joined the channel
+2017-02-06T09:23:02 * stegru joined the channel
+2017-02-06T09:25:45 * kasparnet joined the channel
+2017-02-06T12:26:12 * gtirloni joined the channel
+2017-02-06T12:41:31 * kasparnet has quit
+2017-02-06T12:42:46 * kasparnet joined the channel
+2017-02-06T12:52:26 * Justin_o joined the channel
+2017-02-06T13:29:29 * Jess_ joined the channel
+2017-02-06T14:11:25 * cindyli joined the channel
+2017-02-06T14:30:16 * kasparnet has quit
+2017-02-06T14:30:49 * kasparnet joined the channel
+2017-02-06T14:35:01 * kasparnet has quit
+2017-02-06T14:49:13 * alanharnum joined the channel
+2017-02-06T14:53:16 * colinclark joined the channel
+2017-02-06T14:53:58 * mrtyler joined the channel
+2017-02-06T14:58:59 * avtar joined the channel
+2017-02-06T15:04:58 * michelled joined the channel
+2017-02-06T15:06:03 * kasparnet joined the channel
+2017-02-06T15:28:39 * kasparnet has quit
+2017-02-06T15:52:32 * kasparnet joined the channel
+2017-02-06T15:54:45 * kasparnet has quit
+2017-02-06T16:30:09 * clown joined the channel
+2017-02-06T16:30:16 * simonjb joined the channel
+2017-02-06T16:32:16 * jhernandez joined the channel
+2017-02-06T17:01:06 <gtirloni> mrtyler alanharnum: what\'s this molecule thing you were talking about? the name is familiar, i think you mentioned it here before.. do you have a url?
+2017-02-06T17:01:20 <alanharnum> gtirloni: https://github.com/metacloud/molecule
+2017-02-06T17:01:41 <alanharnum> I haven\'t tried it myself, but it\'s designed to aid development and testing of Ansible roles
+2017-02-06T17:02:00 <gtirloni> ah cool, i\'ll check that later. thanks!
+2017-02-06T17:02:09 <gtirloni> it got me confused with \'nulecule\': http://www.projectatomic.io/docs/nulecule/
+2017-02-06T17:02:46 <gtirloni> i think this is what openshift uses (is aspiring to use)
+2017-02-06T17:11:51 * alanharnum joined the channel
+2017-02-06T17:34:57 <gtirloni> amatas: the docker 1.12 upgrade causes running containers to get stopped.. which would be fine if they could be started again. so it depends on which version of docker they were created (pre- or post-runC adoption), they can\'t be started any longer and need to be created from scratch.
+2017-02-06T17:35:30 <gtirloni> amatas: i don\'t know how much of a problem that will be for i-0026.. but i\'m thinking we can expect to have to create them from scratch
+2017-02-06T17:36:12 <gtirloni> if the container was create pre-runC adoption, `docker start` worked, on my tests.
+2017-02-06T17:37:04 <gtirloni> ah, and fetching new images was also broken :(
+2017-02-06T17:37:49 <gtirloni> i had to delete all images (`docker rmi $(docker images -q -a)`).. or it wouldn\'t fetch new ones
+2017-02-06T17:43:03 <mrtyler> gtirloni: i\'m done with meetings for the day (tho i will break for lunch at some point) so we can chat whenever you are free
+2017-02-06T17:43:38 <gtirloni> mrtyler: cool! after your lunch, please ping me
+2017-02-06T17:44:00 <mrtyler> ok
+2017-02-06T17:46:17 <amatas> gtirloni, right about the docker update
+2017-02-06T17:46:42 <amatas> in my small server case, I had to remove all the containers and all the images and download/build again
+2017-02-06T17:46:55 <amatas> I\'m using an updated centos in that server
+2017-02-06T17:47:27 <amatas> so I guess that the transition from docker 1.10 to 1.12 involves the clean and build again all the containers
+2017-02-06T17:48:07 <mrtyler> something something immutable architecture ;)
+2017-02-06T17:48:25 <amatas> all the containers in i-0026 are built using ansible. BUT I had to test them first because I have seen some caveats with every ansible/docker update
+2017-02-06T17:50:53 <amatas> yes mrtyler, I remember that magic sentence "Build once deploy everywhere"
+2017-02-06T17:51:16 <gtirloni> from what i can tell, it\'s the first version where they have "containerd" as the supervisor process, i think that explains most of these issues
+2017-02-06T17:52:43 <gtirloni> 1.12 was the big version they announced during dockercon, with all bells and whistles.. it has Swarm built-in so I\'m guessing the changes are extensive
+2017-02-06T17:54:07 <gtirloni> i don\'t know if you noticed but the process is named "dockerd-current" ... red hat created a ingenious way of updating docker in the future, where rollbacks wouldn\'t be so destructive
+2017-02-06T17:55:03 <amatas> oh, those are good news
+2017-02-06T17:55:39 <gtirloni> our issue (one of them, at least): https://access.redhat.com/solutions/2876431
+2017-02-06T17:56:30 <gtirloni> that might allow some containers to start :)
+2017-02-06T17:56:36 <gtirloni> ln -s /usr/libexec/docker/docker-runc-current /usr/libexec/docker/docker-runc
+2017-02-06T17:57:19 <mrtyler> SUBSCRIBER EXCLUSIVE CONTENT
+2017-02-06T17:57:39 <mrtyler> iow i can\'t read the whole thing
+2017-02-06T17:57:40 <amatas> :D ok, anyway I think that the rebuild of the containers is not a big issue.
+2017-02-06T17:57:45 <mrtyler> fyi
+2017-02-06T17:59:16 <gtirloni> my memory is fuzzy about this but i think the red hat developer subscription is now free
+2017-02-06T17:59:22 <gtirloni> you may have to register at https://developers.redhat.com
+2017-02-06T18:02:20 <amatas> https://developers.redhat.com/blog/2016/03/31/no-cost-rhel-developer-subscription-now-available/
+2017-02-06T18:06:27 * colinclark joined the channel
+2017-02-06T18:24:47 * cindyli has quit
+2017-02-06T18:25:34 * kasparnet joined the channel
+2017-02-06T18:28:56 * cindyli joined the channel
+2017-02-06T18:30:01 * alanharnum joined the channel
+2017-02-06T19:22:59 * mrtyler joined the channel
+2017-02-06T19:45:51 * the-t-in-rtf joined the channel
+2017-02-06T20:02:45 * kasparnet has quit
+2017-02-06T20:13:47 <mrtyler> gtirloni: hi :)
+2017-02-06T20:14:08 <gtirloni> hey
+2017-02-06T20:14:28 <mrtyler> are you still free?
+2017-02-06T20:14:52 <gtirloni> yep, got about 45min until EOD
+2017-02-06T20:15:18 <mrtyler> ok i will skype you?
+2017-02-06T20:15:59 <gtirloni> ok!
+2017-02-06T20:31:50 * stegru has quit
+2017-02-06T20:35:11 * kasparnet joined the channel
+2017-02-06T20:35:21 * kasparnet has quit
+2017-02-06T21:04:28 * stegru joined the channel
+2017-02-06T21:34:14 * stegru has quit
+2017-02-06T21:34:40 * stegru joined the channel
+2017-02-06T21:34:49 * colinclark has quit
+2017-02-06T21:35:52 * colinclark joined the channel
+2017-02-06T21:46:35 * colinclark joined the channel
+2017-02-06T22:07:09 * alanharnum joined the channel
+2017-02-06T22:15:07 * alanharn_ joined the channel
+2017-02-06T22:15:41 * Jess_ joined the channel
+2017-02-06T22:28:59 * stegru has quit
+2017-02-06T22:41:41 * colinclark joined the channel
+2017-02-06T23:26:32 * colinclark_ joined the channel
+2017-02-06T23:43:48 * colinclark_ joined the channel
+2017-02-06T23:45:10 * colinclark_ is now known as colinclark
+2017-02-06T23:48:52 * colinclark has quit
+'
+

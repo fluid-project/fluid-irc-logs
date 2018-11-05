@@ -1,0 +1,202 @@
+b'2016-08-12T19:56:53 <Bosmon7> This seems like a fault in the design of the CouchDB dataSource
+2016-08-12T19:57:02 <Bosmon7> It was never really designed, you know :)
+2016-08-12T19:57:29 <cindyli> is there a better way than converting the empty object?
+2016-08-12T19:57:50 <Bosmon7> Also, the "readPayload" rule seems to be implemented in a faulty way
+2016-08-12T19:58:01 <Bosmon7> I guess it assumed that there is going to be exactly one document returned
+2016-08-12T19:58:22 <cindyli> nah
+2016-08-12T19:58:31 <Bosmon7> Well, this is all mistake piled on mistake
+2016-08-12T19:58:49 <cindyli> i can use rows.0 to retrieve the first returned doc. and "rows" to return the array of all docs
+2016-08-12T19:58:49 <Bosmon7> The CouchDB datasource misunderstands CouchDB, and the readPayload transform misunderstands CouchDB
+2016-08-12T19:59:07 <Bosmon7> cindyli - quite - but what do you do if you want to run a transform on each returned doc?
+2016-08-12T19:59:19 <Bosmon7> Which is in fact the "natural" result
+2016-08-12T19:59:21 <cindyli> need to loop thru the array
+2016-08-12T19:59:28 <cindyli> that\'s the not nice part
+2016-08-12T20:00:14 <Bosmon7> It\'s all the not nice part :)
+2016-08-12T20:00:49 <cindyli> nah, readPayload is cool and handy
+2016-08-12T20:01:18 <Bosmon7> How about we design a new CouchDB dataSource that actually understands CouchDB?
+2016-08-12T20:01:34 <cindyli> that would be awesome
+2016-08-12T20:02:26 <Bosmon7> It seems that it needs an analogue to "readPayload" which might be called "readRows"
+2016-08-12T20:02:45 <Bosmon7> And then to interpret the "notFoundIsEmpty" directive properly
+2016-08-12T20:05:17 <Bosmon7> This "rows.0" business is clearly a bad smell
+2016-08-12T20:05:50 <Bosmon7> The fact that a dataSource expects exactly 1 or 0 results should be built into the grade, rather than the transform rule
+2016-08-12T20:06:22 <cindyli> built into the grade?
+2016-08-12T20:09:40 <Bosmon7> Ok actually here is a more fundamental question
+2016-08-12T20:10:01 <Bosmon7> WHY, when acting on [], is the return value of the transform "rows.0.value" equal to the empty object?
+2016-08-12T20:10:04 <Bosmon7> Rather than undefined?
+2016-08-12T20:11:29 <cindyli> that\'s how the current implementation works. i can double check
+2016-08-12T20:13:27 <cindyli> oh, btw, not returning 404 is when querying a couchdb view. if the query is directly by id, it\'s a different story
+2016-08-12T20:13:37 <Bosmon7> ok
+2016-08-12T20:13:48 <Bosmon7> Well, this, I think, is how the CouchDB dataSource scheme is broken
+2016-08-12T20:13:54 <Bosmon7> In that it can\'t distinguish these two situations
+2016-08-12T20:14:04 <Bosmon7> The behaviour of returning {} from "rows.0.value" is also broken
+2016-08-12T20:14:13 <Bosmon7> Even if it is "how the current implementation works" : P
+2016-08-12T20:17:57 * lliskovoi joined the channel
+2016-08-12T20:30:22 * yzen_ has quit
+2016-08-12T20:31:06 * yzen joined the channel
+2016-08-12T20:52:52 * cindyli has quit
+2016-08-12T20:57:23 * clown has quit
+2016-08-12T20:59:15 * yzen is now known as yzen_
+2016-08-12T20:59:45 * yzen_ is now known as yzen
+2016-08-12T21:00:15 * yzen is now known as yzen_
+2016-08-12T21:00:52 * yzen_ is now known as yzen
+2016-08-12T21:00:58 * yzen is now known as yzen_
+2016-08-12T21:05:48 * yzen_ has quit
+2016-08-12T22:03:01 * michelled has quit
+2016-08-12T22:35:13 * colinclark has quit
+2016-08-12T23:07:35 * colinclark joined the channel
+2016-08-12T23:44:48 * stegru has quit
+2016-08-12T23:58:40 * colinclark has quit
+'
+
+b'2016-08-12T06:52:07 * amatas joined the channel
+2016-08-12T07:05:12 * the-t-in-rtf joined the channel
+2016-08-12T07:33:55 * stegru joined the channel
+2016-08-12T07:43:53 * stegru has quit
+2016-08-12T07:47:58 * the-t-in-rtf has quit
+2016-08-12T07:53:46 * stegru joined the channel
+2016-08-12T08:23:16 * the-t-in-rtf joined the channel
+2016-08-12T08:26:52 * the-t-in-rtf has quit
+2016-08-12T08:54:32 * the-t-in-rtf joined the channel
+2016-08-12T09:06:12 * the-t-in-rtf has quit
+2016-08-12T09:07:56 * kasparnet joined the channel
+2016-08-12T09:10:03 * kasparnet has quit
+2016-08-12T09:11:11 * the-t-in-rtf joined the channel
+2016-08-12T09:12:26 * the-t-in-rtf has quit
+2016-08-12T10:36:36 * Bosmon7 joined the channel
+2016-08-12T11:12:06 * Justin_o joined the channel
+2016-08-12T11:16:50 * dinuka joined the channel
+2016-08-12T11:38:10 * dinuka joined the channel
+2016-08-12T11:42:01 * dinuka_ joined the channel
+2016-08-12T12:12:28 * godfrey_ joined the channel
+2016-08-12T12:31:02 * the-t-in-rtf joined the channel
+2016-08-12T12:48:22 * cindyli joined the channel
+2016-08-12T12:50:35 * jhernandez has quit
+2016-08-12T13:20:02 <stegru> Bosmon: ?
+2016-08-12T13:20:07 <stegru> or Bosmon7
+2016-08-12T13:27:44 <Justin_o> cindyli:  could you please review https://github.com/fluid-project/infusion/pull/733
+2016-08-12T13:28:20 <cindyli> sure, Justin_o
+2016-08-12T13:28:25 <Justin_o> cindyli: thanks
+2016-08-12T13:28:28 <cindyli> np
+2016-08-12T13:31:15 * lliskovoi joined the channel
+2016-08-12T13:36:30 * clown joined the channel
+2016-08-12T13:37:59 <Bosmon7> Hey there stegru
+2016-08-12T13:38:29 <stegru> hello!
+2016-08-12T13:39:42 <stegru> I\'m thinking of scrapping this child process thing now, and just making it poll (with a recursive setTimeout)
+2016-08-12T13:40:02 <stegru> i\'m talking about waiting for a process to die
+2016-08-12T13:41:05 <Bosmon7> stegru - right
+2016-08-12T13:41:12 <Bosmon7> It\'s a possibility
+2016-08-12T13:41:35 <Bosmon7> Also we have some code in this area already, so possibly we could consolidate it
+2016-08-12T13:41:43 <Bosmon7> What made you think of scrapping the child process thing?
+2016-08-12T13:41:45 <stegru> so instead of starting the child node and \'waiting\', it just keeps checking for the tasks existance
+2016-08-12T13:42:59 <Justin_o> cindyli: I have another one for you when you have time. https://github.com/fluid-project/infusion/pull/734
+2016-08-12T13:43:11 <stegru> well, i\'ve started to make a "process handling" api, which combines the killProcess - and it\'s just the awkwardness of ensuring it doesn\'t require fluid, while still making it useful
+2016-08-12T13:43:26 <cindyli> ok, Justin_o
+2016-08-12T13:43:45 <Bosmon7> Yes, I see
+2016-08-12T13:43:47 <stegru> like the WindowsUtilities and WindowsUtilitiesCore I\'ve just made.
+2016-08-12T13:44:49 <stegru> there\'s no technical reason for my change of heart, just the looks of the code
+2016-08-12T13:44:57 <Bosmon7> stegru - so we have this code in the test cases for our existing killProcess handler:
+2016-08-12T13:44:57 <Bosmon7> https://github.com/GPII/windows/blob/master/gpii/node_modules/killProcess/test/testKillProcess.js#L31
+2016-08-12T13:45:03 <Bosmon7> It would be very good if we could consolidate with this
+2016-08-12T13:45:22 <stegru> yes, that was the code what dragged me out of this rabbit hole!
+2016-08-12T13:45:27 <Bosmon7> ah ok
+2016-08-12T13:45:29 <Bosmon7> cool
+2016-08-12T13:45:39 <Bosmon7> Well elevating this into a core utility would be great
+2016-08-12T13:46:09 <Bosmon7> And if we\'re getting serious about this, we could just adopt a stopgap scheme for loading infusion that we just revisit when we move to npm 3
+2016-08-12T13:46:47 <Bosmon7> If you just issue a "blind require" for require("universal/node_modules/infusion") and stick a huge comment warning on it, that\'ll be fine for this pull
+2016-08-12T13:46:59 <stegru> yeh
+2016-08-12T13:47:21 * yzen joined the channel
+2016-08-12T13:47:21 * yzen is now known as yzen_
+2016-08-12T13:47:23 * colinclark joined the channel
+2016-08-12T13:48:03 <stegru> I was making it generic and re-usable, but then I had to think about not requiring fluid (for load speed)..
+2016-08-12T13:49:09 * jhernandez joined the channel
+2016-08-12T13:49:10 <Bosmon7> stegru - another route would be to just explicitly introduce infusion as a top-level dependence of windows
+2016-08-12T13:49:16 <Bosmon7> Which is what it should be anyway
+2016-08-12T13:49:44 <Bosmon7> You will then run in to https://issues.fluidproject.org/browse/FLUID-5940 which michelled/simonjb should have a fix for soon
+2016-08-12T13:49:50 <Bosmon7> So I think the "blind require" is fine for the time being
+2016-08-12T13:51:52 <stegru> well, to be honest it was in the back of my mind why it was being \'required\' for every script
+2016-08-12T13:51:56 * yzen_ is now known as yzen
+2016-08-12T13:53:26 * jhung joined the channel
+2016-08-12T13:54:23 * jhung has quit
+2016-08-12T13:56:15 <Bosmon7> Yes
+2016-08-12T13:56:20 <Bosmon7> yzen can tell you about this :)
+2016-08-12T13:56:39 <Bosmon7> In the ancient days, we considered it might be "cute" to consolidate on the core dependencies of the architecture
+2016-08-12T13:56:59 <yzen> hah
+2016-08-12T13:57:02 <Bosmon7> And we never considered the case of wanting to start a lightweight process that just depended on Infusion
+2016-08-12T13:57:17 <Bosmon7> Hey yzen - meet Steve Grundell, our new WINDOWS PROGRAMMER EXTRAORDINAIRE : P
+2016-08-12T13:57:43 <Bosmon7> Steve, this is Yura Zene\'evich who was responsible for a lot of our core architecture in the first years of the GPII
+2016-08-12T13:57:51 * yzen waves
+2016-08-12T13:57:58 <Bosmon7> he\'s now an accessibility engineer at Mozilla but he\'s still gracious enough to hang out here :)
+2016-08-12T13:58:21 <yzen> how can i not
+2016-08-12T13:58:56 <Bosmon7> Also in the early days we had horrific issues that would be precipitated by depending on mismatched versions of infusion in different projects in the tree
+2016-08-12T13:59:07 <stegru> hi, yzen !
+2016-08-12T13:59:23 <yzen> stegru hi
+2016-08-12T13:59:30 <Bosmon7> These are gone now, as a result of the code which is being talked about in FLUID-5940 which "very nearly always" now works : P
+2016-08-12T13:59:44 <Bosmon7> The so-called "auto-self-deduping" of Infusion
+2016-08-12T14:00:07 <Bosmon7> Infusion itself of course needs to be massively better modularised
+2016-08-12T14:00:27 <Bosmon7> But I think we\'ll turn the GPII into a monorepo first to get our feet wet before tackling something as tangled as GPII
+2016-08-12T14:00:29 <Bosmon7> er Infusion
+2016-08-12T14:00:52 <stegru> i think that problem has something to do with it resolving the canonical or absolute paths - I\'ve had an issue similar to that a while ago
+2016-08-12T14:00:56 <Bosmon7> yzen, weren\'t you the originator of the original "near-monorepo" structure of universal? : P
+2016-08-12T14:01:18 <yzen> likely
+2016-08-12T14:01:44 <Bosmon7> Back then we considered it a near-heresy, but the rest of the world has caught up now :)
+2016-08-12T14:02:17 <Bosmon7> Thankfully we restrained you when you were eager to go in the other direction and turn universal into 20 git repositories : P
+2016-08-12T14:02:39 * clown has quit
+2016-08-12T14:02:48 <yzen> haha yes
+2016-08-12T14:02:58 * clown joined the channel
+2016-08-12T14:03:09 <Bosmon7> Instead we need to improve on the original idea and turn universal, windows and linux into a single giant monorepo
+2016-08-12T14:04:05 <clown> Bosmon7, is the weekly windows summit on for today?
+2016-08-12T14:04:08 <stegru> let me know when it\'s done
+2016-08-12T14:04:17 <Bosmon7> It is on
+2016-08-12T14:04:29 <clown> thanks Bosmon7.  On my way.
+2016-08-12T14:04:30 <Bosmon7> NOW!
+2016-08-12T14:05:49 * TPark joined the channel
+2016-08-12T14:15:16 * jhung joined the channel
+2016-08-12T14:24:50 * michelled joined the channel
+2016-08-12T14:36:19 * jhung has quit
+2016-08-12T14:53:04 * kavyak joined the channel
+2016-08-12T14:53:56 * the-t-in-rtf has quit
+2016-08-12T14:54:43 * PaliwalSparsh joined the channel
+2016-08-12T14:58:18 <PaliwalSparsh> Justin_o: Hi
+2016-08-12T15:17:48 * the-t-in-rtf joined the channel
+2016-08-12T15:24:53 <Justin_o> PaliwalSparsh: hello
+2016-08-12T15:33:17 * danayo joined the channel
+2016-08-12T15:34:27 * danayo has quit
+2016-08-12T15:47:54 <PaliwalSparsh> Justin_o: I made the changes in the doc, hope they now are clearer than before
+2016-08-12T15:48:08 <Justin_o> PaliwalSparsh: thanks
+2016-08-12T15:50:57 <Justin_o> Bosmon: do you think this is needed for an Infusion 2.0 release https://issues.fluidproject.org/browse/FLUID-4982
+2016-08-12T15:51:24 * PaliwalSparsh1 joined the channel
+2016-08-12T15:55:13 * PaliwalSparsh has quit
+2016-08-12T16:12:53 * PaliwalSparsh1 has quit
+2016-08-12T16:15:27 * colinclark joined the channel
+2016-08-12T16:16:33 * colinclark has quit
+2016-08-12T16:42:21 * the-t-in-rtf has quit
+2016-08-12T16:57:12 * colinclark joined the channel
+2016-08-12T17:07:57 <colinclark> Justin_o: jQuery\'s 3.x upgrade guide: https://jquery.com/upgrade-guide/3.0/
+2016-08-12T17:09:50 <colinclark> Amazingly, the 3.x line seems to support IE back to version 9
+2016-08-12T17:20:06 * jhernandez has quit
+2016-08-12T19:24:39 * amatas joined the channel
+2016-08-12T19:25:17 * yzen_ joined the channel
+2016-08-12T19:25:45 * amatas has quit
+2016-08-12T19:28:40 * yzen has quit
+2016-08-12T19:32:19 * TPark has quit
+2016-08-12T19:32:59 * godfrey_ has quit
+2016-08-12T19:35:48 * jhernandez joined the channel
+2016-08-12T19:40:44 * Justin_o has quit
+2016-08-12T19:47:52 <cindyli> hi Bosmon & Bosmon7, i\'d like to consult you regarding how to improve the code for this comment - https://github.com/GPII/universal/pull/464#diff-for-comment-73398363
+2016-08-12T19:48:25 <cindyli> the code comment here as u said is unclear. I will try to explain it first. let me know if anywhere still seems unclear
+2016-08-12T19:49:23 <cindyli> the use of the kettle option of "notFoundIsEmpty" is when receiving 404 http status code, kettle returns a value of undefined
+2016-08-12T19:49:55 <cindyli> but, when querying a document in the couchdb, the returned structure is like
+2016-08-12T19:50:23 <cindyli> { total_rows: 1, offset: 0, rows: [here is the actual data, an array of objects] }
+2016-08-12T19:51:05 <cindyli> when there\'s no matching doc, the "rows" array would be empty, so 404 would never be returned
+2016-08-12T19:52:14 <cindyli> so i used kettle readPayload option to parse the returned couchdb structure - https://github.com/cindyli/universal/blob/855e8402091d27c0d23df144f506b66691332e67/gpii/node_modules/gpii-oauth2/gpii-oauth2-datastore/src/DbDataStore.js#L98-L100
+2016-08-12T19:52:48 <cindyli> after going thru the readPayload transformation, the returned value is an empty object
+2016-08-12T19:53:52 <cindyli> that\'s why the code is in place to convert the empty object to undefined
+2016-08-12T19:53:59 <Bosmon7> cindyli - can you fill in the gap between "kettle returns a value of undefined" and "but, when querying a document in the couchdb"?
+2016-08-12T19:54:08 <Bosmon7> I\'m not sure how we get from one step to the next
+2016-08-12T19:54:14 <cindyli> sure
+2016-08-12T19:55:19 <cindyli> the way that notFoundIsEmpty is implemented in kettle is that, it returns undefined when encountering a 404 response
+2016-08-12T19:55:51 <cindyli> however, when querying couchdb, the returned value would not be a 404 value even when the doc is not found
+2016-08-12T19:56:13 <cindyli> the response would still be an object but with an empty "rows" array
+2016-08-12T19:56:42 <Bosmon7> I see
+'
+

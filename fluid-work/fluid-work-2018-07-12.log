@@ -1,0 +1,170 @@
+b'2018-07-12T19:50:42 * alanharnum joined the channel
+2018-07-12T20:22:38 * jhung has quit
+2018-07-12T20:37:25 * alanharnum joined the channel
+2018-07-12T20:38:21 * g2szeto has quit
+2018-07-12T20:42:25 * Hassany2 has quit
+2018-07-12T20:42:48 * g2szeto joined the channel
+2018-07-12T20:43:08 * cindyli has quit
+2018-07-12T20:49:27 * Hassany2 joined the channel
+2018-07-12T20:49:48 * Hassany2 has quit
+2018-07-12T20:53:15 * g2szeto has quit
+2018-07-12T21:00:52 * michelled joined the channel
+2018-07-12T21:13:33 * alanharnum has quit
+2018-07-12T21:17:23 * alanharnum joined the channel
+2018-07-12T21:22:00 * alanharnum has quit
+2018-07-12T22:38:58 * Justin_o has quit
+2018-07-12T23:05:05 * mrtyler has quit
+'
+
+b'2018-07-12T01:42:01 * danayo joined the channel
+2018-07-12T02:21:56 * mrtyler has quit
+2018-07-12T02:49:22 * danayo has quit
+2018-07-12T02:54:49 * gtirloni has quit
+2018-07-12T02:58:32 * danayo joined the channel
+2018-07-12T03:20:07 * mrtyler joined the channel
+2018-07-12T07:27:20 * georgitodorov joined the channel
+2018-07-12T07:51:33 * dandimitrov joined the channel
+2018-07-12T08:33:48 * dandimitrov has quit
+2018-07-12T08:35:55 * dandimitrov joined the channel
+2018-07-12T08:45:41 <javjarfer[m]> Good morning Bosmon !
+2018-07-12T08:46:06 <Bosmon> Hi there javjarfer[m]
+2018-07-12T08:46:36 <javjarfer[m]> I have recently pushed a branch to a fork of infusion, with the test that you requested, which is currently failing https://github.com/JavierJF/infusion/tree/GPII-3201
+2018-07-12T08:47:04 <Bosmon> javjarfer[m] - that\'s excellent
+2018-07-12T08:47:07 <Bosmon> Can raise a PR from it too?
+2018-07-12T08:47:25 <javjarfer[m]> of course
+2018-07-12T09:59:49 <Bosmon> javjarfer[m] - that\'s awesome, thanks!
+2018-07-12T09:59:58 <Bosmon> If you happen to have a moment, you could try to look into a fix
+2018-07-12T10:00:04 <Bosmon> Otherwise I will take a look later on ....
+2018-07-12T10:07:24 <javjarfer[m]> Oh, I would like, but I\'m afraid that I have received even more settings for the first wave, and that I also need to prepare several snapsets for Kavya
+2018-07-12T10:07:51 <javjarfer[m]> If the issue still continues after I have attended this priorities I will take a look to it of course! Thanks Bosmon
+2018-07-12T10:08:06 <Bosmon> Sure, no worries
+2018-07-12T10:45:27 * kasparnet has quit
+2018-07-12T10:51:39 <georgitodorov> Bosmon: Hey, Antranig! I managed to fix the broken PSP tests. However, I ran into another issue that we\'ve had before and I am not sure what is causing it this time
+2018-07-12T10:51:48 * dandimitrov has quit
+2018-07-12T10:52:25 <georgitodorov> We have 9 sets of integration tests and every set completes successfully when run on its own. If we run two or more sets of integration tests together, they fail
+2018-07-12T10:53:21 <georgitodorov> Do we need to do something special at the end of each integration tests set so that we close any open connections or clear up resources or something else?
+2018-07-12T11:02:03 * dandimitrov joined the channel
+2018-07-12T11:07:09 <Bosmon> georgitodorov - nothing that I can specially think of
+2018-07-12T11:07:14 <Bosmon> What kind of failure do you get?
+2018-07-12T11:07:25 <Bosmon> georgitodorov - ah actually I think I know what is happening
+2018-07-12T11:07:38 <Bosmon> I had exactly the same issue when I upgraded to cindyli\'s new work
+2018-07-12T11:08:02 <Bosmon> There are two flavours of the "configs" now, one which cleans up the pouchDB database after a test, and one which doesn\'t
+2018-07-12T11:08:14 <Bosmon> And I suspect you have ended up with the wrong one
+2018-07-12T11:10:44 <Bosmon> Well, at least this is a possibility
+2018-07-12T11:10:50 <Bosmon> What does the failure look like?
+2018-07-12T11:11:58 * dandimitrov has quit
+2018-07-12T11:25:29 * dandimitrov joined the channel
+2018-07-12T11:32:33 <georgitodorov> Bosmon: This is the weird part - the error occurs in the PSP code itself
+2018-07-12T11:32:46 <georgitodorov> But it is not present when running a single set of tests
+2018-07-12T11:33:07 <georgitodorov> Can you tell me the configuration I should be using so that the database is cleared?
+2018-07-12T11:35:16 <Bosmon> Hi georgitodorov - yes, the difference should be explained in the README in this directory: https://github.com/GPII/universal/tree/master/gpii/configs
+2018-07-12T11:35:45 <Bosmon> The grades which have simply "local" rather than "all.local" should be the ones which perform the cleanup
+2018-07-12T11:35:52 <Bosmon> georgitodorov - but what error occurs in the PSP code?
+2018-07-12T11:37:20 <georgitodorov> Bosmon: This is it: https://pastebin.com/icnRLPL1
+2018-07-12T11:37:44 <Bosmon> Oh wow
+2018-07-12T11:37:50 <Bosmon> No, this is certainly a different kind of problem
+2018-07-12T11:38:38 <Bosmon> Is this from the code in your current pull #48?
+2018-07-12T11:39:46 <Bosmon> https://github.com/GPII/gpii-app/pull/48/files#diff-03e7589bd3d53554dc562cc2581c3597R97
+2018-07-12T11:39:48 <Bosmon> THis line?
+2018-07-12T11:41:58 <Bosmon> Well, that\'s pretty funky - I wonder what has ended up in "events" without a "fire" method
+2018-07-12T11:42:56 <Bosmon> Next step is to check on line 73 what the eventName is and then what its value is
+2018-07-12T11:43:23 <georgitodorov> Bosmon: It might be a different issue but isn\'t it strange that there is no error when running the tests one by one?
+2018-07-12T11:43:45 <georgitodorov> I am trying to use the configuration that you suggested now to see what will happen
+2018-07-12T11:43:47 <Bosmon> georgitodorov - it is certainly strange yes
+2018-07-12T11:44:26 <Bosmon> It will most likely be some cleanup issue caused by some shared reference between the components which are being destroyed by the previous test and the ones created by the new test
+2018-07-12T11:45:38 * dandimitrov has quit
+2018-07-12T11:48:21 <georgitodorov> Bosmon: Maybe, I need to investigate further...
+2018-07-12T11:48:50 <georgitodorov> Bosmon: https://github.com/danailbd/gpii-app/blob/master/tests/IntegrationTests.js#L93 should be substituted with this: gpii.test.bootstrapServer
+2018-07-12T11:49:02 <Bosmon> georgitodorov - your "propertyHistoryManager" is nice
+2018-07-12T11:49:05 <Bosmon> georgitodorov - I think so, yes
+2018-07-12T11:50:02 <georgitodorov> Bosmon: And I changed this https://github.com/danailbd/gpii-app/blob/master/tests/SettingsBrokerTestDefs.js#L142 gradeName with "gpii.test.pouch.pouchTestCaseHolder"
+2018-07-12T11:50:12 <georgitodorov> And the configuration also...but still errors
+2018-07-12T11:50:27 <Bosmon> georgitodorov - yes, I wouldn\'t expect those changes to make any difference to a problem of the kind you\'re facing
+2018-07-12T11:50:45 <Bosmon> Best to investigate what the event is, which should give a clue about the situation
+2018-07-12T11:51:38 <georgitodorov> Bosmon: Will do, thanks
+2018-07-12T12:14:52 * alanharnum joined the channel
+2018-07-12T12:19:55 * Justin_o joined the channel
+2018-07-12T12:32:20 <Bosmon> javjarfer[m] - well, I have issued a fix before CI has finished running on your pull : P
+2018-07-12T12:32:40 <javjarfer[m]> Bosmon: wow, that was fast
+2018-07-12T12:32:53 <javjarfer[m]> I\'m still with user testing work xD
+2018-07-12T12:49:46 * alanharnum has quit
+2018-07-12T12:55:06 * gtirloni joined the channel
+2018-07-12T13:04:07 * cindyli joined the channel
+2018-07-12T13:09:23 * neuralmilkhotel joined the channel
+2018-07-12T13:13:52 * jhung joined the channel
+2018-07-12T13:22:03 * simonjb joined the channel
+2018-07-12T13:22:52 * dandimitrov joined the channel
+2018-07-12T13:23:37 * sepidehshahi joined the channel
+2018-07-12T13:27:16 * simonjb has quit
+2018-07-12T13:27:30 <cindyli> hi georgitodorov, sorry that i gave you the wrong production cloud url yesterday. the correct ones are here - https://botbot.me/freenode/fluid-work/2018-07-11/?msg=101985348&page=2
+2018-07-12T13:30:04 * simonjb joined the channel
+2018-07-12T13:34:10 * alanharnum joined the channel
+2018-07-12T13:44:23 * mrtyler joined the channel
+2018-07-12T13:45:02 * g2szeto joined the channel
+2018-07-12T13:46:20 * michelled joined the channel
+2018-07-12T13:46:52 * simonjb has quit
+2018-07-12T13:49:03 * simonjb joined the channel
+2018-07-12T13:49:46 * michelled has quit
+2018-07-12T14:01:02 * michelled joined the channel
+2018-07-12T14:01:07 * Hassany2 joined the channel
+2018-07-12T14:04:06 * dandimitrov has quit
+2018-07-12T14:06:22 * georgitodorov has quit
+2018-07-12T14:11:57 * colinclark joined the channel
+2018-07-12T14:14:09 * mrtyler has quit
+2018-07-12T14:56:49 * danayo joined the channel
+2018-07-12T15:19:35 <Hassany2> g2szeto sepidehshahi the one you just sent Gillian, it looks good!
+2018-07-12T15:20:17 <sepidehshahi> g2szeto: it looks good on my end as well. let\xe2\x80\x99s use that
+2018-07-12T15:22:37 <Hassany2> g2szeto sepidehshahi are we using OCAD and not OCAD university?
+2018-07-12T15:23:36 <sepidehshahi> let\xe2\x80\x99s replace Ontario College of Art and Design (OCADU) witht OCAD University Hassany2
+2018-07-12T15:24:09 <Hassany2> sepidehshahi Okay!
+2018-07-12T15:24:29 <sepidehshahi> thanks
+2018-07-12T15:31:04 * alanharnum has quit
+2018-07-12T15:31:30 * alanharnum joined the channel
+2018-07-12T15:32:28 * mrtyler joined the channel
+2018-07-12T15:52:50 * alanharnum joined the channel
+2018-07-12T15:53:55 * sepidehshahi joined the channel
+2018-07-12T15:54:01 <Bosmon> Hey javjarfer[m], stegru - any interest in a Windows meeting or are you all happily working away?
+2018-07-12T15:54:17 <stegru> must I pick one?
+2018-07-12T15:54:41 * michelled has quit
+2018-07-12T15:54:42 <Bosmon> No, I am really only asking the former question :)
+2018-07-12T15:54:50 <stegru> oh, it\'s been moved until next week
+2018-07-12T15:54:59 <Bosmon> ok
+2018-07-12T15:59:30 <Bosmon> Hey there cindyli
+2018-07-12T15:59:36 <Bosmon> How is it going :)
+2018-07-12T16:00:19 * alanharnum has quit
+2018-07-12T16:00:45 * alanharnum joined the channel
+2018-07-12T16:05:08 * alanharnum joined the channel
+2018-07-12T16:06:24 <stegru> amatas[m]: the installer download is amazing! is it possible to include more info in the filename, such as the PR or build number?
+2018-07-12T16:10:03 * colinclark has quit
+2018-07-12T16:10:44 <amatas[m]> stegru: I think it\'s possible, but we have to figure out how to pass that info from the host to the VM. And then take that info into account when the installer is built.
+2018-07-12T16:11:24 <stegru> oh no it\'s ok then, I thought it might have been easier
+2018-07-12T16:11:43 <stegru> of course, the filename is from the build script
+2018-07-12T16:12:09 <stegru> at least it\'s not "latest-build.zip", like I\'ve had in the past.
+2018-07-12T16:35:04 <Bosmon> Hey jhernandez - could you give https://github.com/GPII/windows/pull/166 a dusting off?
+2018-07-12T16:36:24 <Bosmon> stegru - the Wix installer compiler was the thing that changed the CompletionChar?
+2018-07-12T16:52:28 <jhernandez> Bosmon: sure, will do ASAP and let you know when it is ready again
+2018-07-12T16:52:31 * danayo joined the channel
+2018-07-12T16:55:46 * michelled joined the channel
+2018-07-12T16:56:30 * sepidehshahi joined the channel
+2018-07-12T16:56:37 * alanharnum has quit
+2018-07-12T16:57:03 * alanharnum joined the channel
+2018-07-12T17:01:42 * alanharnum has quit
+2018-07-12T17:01:50 * alanharnum joined the channel
+2018-07-12T17:02:17 * alanharnum has quit
+2018-07-12T17:02:43 * alanharnum joined the channel
+2018-07-12T17:02:51 * sepidehshahi has quit
+2018-07-12T17:04:06 * sepidehshahi joined the channel
+2018-07-12T17:12:41 <stegru> yes Bosmon - or at least I think so.
+2018-07-12T17:14:01 <stegru> if you look at the failure before that commit: https://ci.gpii.net/job/windows-unit-tests/481/console
+2018-07-12T17:14:15 <stegru> 08:52:05.890:  gpii.deviceReporter.registryKeyExists:HKEY_CURRENT_USER Software\\Microsoft\\Command Processor CompletionChar REG_DWORD
+2018-07-12T17:14:15 <stegru> 08:52:05.890:  jq: FAIL: Module "Registry Resolver" Test name "Test Boolean Registry Lookups" - Message: Testing a registry key that always exists.
+2018-07-12T17:44:13 * alanharnum joined the channel
+2018-07-12T17:46:24 * sepidehshahi joined the channel
+2018-07-12T17:52:48 * alanharnum has quit
+2018-07-12T17:52:54 * alanharnum joined the channel
+2018-07-12T18:06:58 * simonjb has quit
+2018-07-12T18:15:57 <Bosmon> It\'s a pretty weird thing for a compipler installer to do
+2018-07-12T18:22:13 * simonjb joined the channel
+2018-07-12T19:46:27 * alanharnum has quit
+'
+

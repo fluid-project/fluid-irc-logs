@@ -1,0 +1,309 @@
+b'2015-10-17T23:21:12 <colinclark> just that it fails to log more than one argument
+2015-10-17T23:21:28 <colinclark> and so use of fluid.log ends up just logging the timestamp and nothing else :)
+2015-10-17T23:43:15 * kasparnet has quit
+'
+
+b'2015-10-17T17:58:37 <colinclark> Bosmon: ok, that\'s good to know
+2015-10-17T17:58:54 <colinclark> but if someone makes a change to just one dimension, will I get notified with a listener to just "dimensions"?
+2015-10-17T17:59:23 <colinclark> I was aware of the transactional issue, but wasn\'t sure how to resolve this with the case where a user just changes one dimension
+2015-10-17T18:00:47 <Bosmon> colinclark - you\'re not making use of any of the arguments of the change event anyway, so the difference doesn\'t matter
+2015-10-17T18:01:00 <Bosmon> But the new framework does take care of this properly
+2015-10-17T18:01:12 <Bosmon> THat is, if you bind to {change}.value, you will get the current value of "dimensions" in all cases
+2015-10-17T18:01:17 <colinclark> ah, yes
+2015-10-17T18:01:26 <colinclark> ok
+2015-10-17T18:01:29 <colinclark> that makes sense
+2015-10-17T18:01:55 <colinclark> so, just to be very sure
+2015-10-17T18:02:16 <colinclark> if I were to post {changePath: "dimensions.width", value: 1280}
+2015-10-17T18:02:28 <colinclark> and if my listener were simply to listen to "dimensions"
+2015-10-17T18:02:33 <colinclark> I would indeed get a notification?
+2015-10-17T18:02:38 <Bosmon> Yes, certainly
+2015-10-17T18:02:41 <colinclark> ok
+2015-10-17T18:03:06 <Bosmon> I was going to say "even the old framework had as much brains as that"
+2015-10-17T18:03:12 <Bosmon> But I think I am starting to suspect that it hadn\'t : P
+2015-10-17T18:03:16 <colinclark> hahaha
+2015-10-17T18:03:42 <Bosmon> It had a truly ridiculous algorithm for matching changes, based on trying to match paths between changeRequests and "guards"
+2015-10-17T18:03:49 <Bosmon> Irrespective of what had actually happened in the model
+2015-10-17T18:04:28 <Bosmon> Finally, after many years of fanaticism, I came to realise that "noone is interested in what changeRequests there originally were"
+2015-10-17T18:04:36 <Bosmon> I mean, what might they be expected to do with them
+2015-10-17T18:04:44 <Bosmon> The old framework used to supply them all in a pile as a final argument
+2015-10-17T18:05:04 <Bosmon> In that traditional nerdish model of "You have all the information you need at your disposal" : P
+2015-10-17T18:05:53 <Bosmon> The new framework considers "all means of getting the model from its initial to its final state must be considered equivalent"
+2015-10-17T18:06:08 <Bosmon> Which is rather more "git-ish", certainly
+2015-10-17T18:06:52 <colinclark> I really can\'t wait until the Node.js world settles the fuck down a bit
+2015-10-17T18:07:11 <colinclark> Once again, I\'m facing the case where a somewhat optional module is breaking in Node 4.x
+2015-10-17T18:07:28 <colinclark> The midi library that Flocking depends on, this time
+2015-10-17T18:07:43 <colinclark> I really thought native modules were a real strength of Node.js
+2015-10-17T18:07:56 <colinclark> but the problem is that they just have zero isolation from V8 changes
+2015-10-17T18:08:08 <colinclark> everyone absolutely must use NAN
+2015-10-17T18:08:11 <colinclark> ABSOLUTELY MUST
+2015-10-17T18:08:25 <colinclark> but even then, NAN broke prior to 4.x
+2015-10-17T18:08:31 <Bosmon> wow, amazing
+2015-10-17T18:08:52 <Bosmon> The progress of history really is mostly random
+2015-10-17T18:09:10 <Bosmon> I mean, for every gigantic design blunder in Java, we can recognise a few very substantial things that they got right
+2015-10-17T18:09:18 <colinclark> yes
+2015-10-17T18:09:24 <Bosmon> Which are now being liberally fucked up in modern environments
+2015-10-17T18:09:31 <colinclark> I really, really thought when I first met Node.js
+2015-10-17T18:09:36 <colinclark> "Ah, this will be so much better than JNI!"
+2015-10-17T18:09:45 <colinclark> "It\'s just so much simpler and closer to the metal"
+2015-10-17T18:09:57 <colinclark> I guess Node.js is perhaps uniquely very complicated
+2015-10-17T18:10:01 <Bosmon> Rock-solid elements of Java were, i) that it had an ABI specified right up front, and ii) that its memory usage at runtime was designed to be tightly constrained
+2015-10-17T18:10:06 <colinclark> in that they consume a core dependency...
+2015-10-17T18:10:18 <colinclark> that was never really ultimately designed to be used outside of one product at one corporation
+2015-10-17T18:10:28 <Bosmon> It\'s true
+2015-10-17T18:10:37 <Bosmon> Google never intended for V8 to be the JVM
+2015-10-17T18:10:40 <Bosmon> But it is
+2015-10-17T18:10:45 <colinclark> yes
+2015-10-17T18:11:15 <colinclark> Flocking 0.1.x now exclusively consumes git-based dependencies for various reasons
+2015-10-17T18:11:31 <colinclark> 1. Because Infusion 1.9.x was never released to npm
+2015-10-17T18:11:39 <Bosmon> Ah, well I guess that is what npm -/|\\- spends all its time on then
+2015-10-17T18:11:43 <colinclark> 2. Because node-speaker is HORRIBLE and I had to fork it
+2015-10-17T18:11:52 <Bosmon> I really do HOPE once we get rid of git-based dependencies that it will start to be slightly less shit
+2015-10-17T18:11:54 <colinclark> 3. Because the node-midi guy didn\'t bother to release the fix for Node 4.x to npm
+2015-10-17T18:12:30 <colinclark> Flocking, sadly, is really not sufficiently "agile"
+2015-10-17T18:12:38 <colinclark> I need to start cutting releases far more often
+2015-10-17T18:12:38 <Bosmon> I think I often seem to see it mismanaging its cache of git repos and cloning the thing all over again when it finds a git dependency
+2015-10-17T18:12:47 <colinclark> even if, like in Infusion, version numbers increase wildly
+2015-10-17T18:14:15 <colinclark> I really also wish that the developers of vagrant had realized that if their command to start something was "up," that the reciprocal command should have been "down"
+2015-10-17T18:20:43 <colinclark> okay, I\'m doing it
+2015-10-17T18:20:57 <colinclark> It\'s easier at this point to run older versions of Node.js in a vagrant VM
+2015-10-17T18:21:04 <colinclark> I\'m going to 4.2.0 locally
+2015-10-17T18:21:10 <colinclark> 4.2.1
+2015-10-17T19:11:56 * the-t-in-rtf has quit
+2015-10-17T19:12:05 * the-t-in-rtf joined the channel
+2015-10-17T19:14:16 * the-t-in-rtf1 joined the channel
+2015-10-17T19:15:55 * the-t-in-rtf has quit
+2015-10-17T19:28:43 * the-t-in-rtf1 has quit
+2015-10-17T19:33:41 * colinclark has quit
+2015-10-17T19:47:46 * colinclark joined the channel
+2015-10-17T19:49:12 * kasparnet has quit
+2015-10-17T19:51:36 * the-t-in-rtf joined the channel
+2015-10-17T20:02:50 <colinclark> Bosmon: I made this thing: https://github.com/colinbdclark/infusion-electron/pull/1
+2015-10-17T20:03:07 <colinclark> I owe you quite a lot of code reviews, so I feel bad to ask :)
+2015-10-17T20:03:26 <Bosmon> Hi colinclark
+2015-10-17T20:03:30 <Bosmon> Always happy to oblige
+2015-10-17T20:04:37 <colinclark> There are still several issues that keep it from being Fluid-calibre
+2015-10-17T20:04:47 <colinclark> unit tests, plus a few of the comments that are marked as TODOs
+2015-10-17T20:05:00 <colinclark> but I thought I\'d start the process off right
+2015-10-17T20:19:58 <Bosmon> Cheers, colinclark - it\'s all yours
+2015-10-17T20:20:07 <colinclark> Tons of great feedback, thank you so much!
+2015-10-17T20:20:12 <Bosmon> I guess several of my comments betray my total ignorance of how the electron environment works
+2015-10-17T20:20:20 <Bosmon> And this seems like a brilliant opportunity to find out :)
+2015-10-17T20:20:34 <Bosmon> Given my sense of how important it\'s going to be for our tooling over the next.... say.... decade
+2015-10-17T20:20:59 <colinclark> :)
+2015-10-17T20:21:24 <colinclark> It\'s likely that the areas that are confusing are in fact the worst parts of Electron\'s API
+2015-10-17T20:21:30 <colinclark> such as it\'s global "app" module
+2015-10-17T20:21:33 <colinclark> its
+2015-10-17T20:40:33 <Bosmon> colinclark - amazing: https://code.google.com/p/chromium/issues/detail?id=365427
+2015-10-17T20:40:39 <Bosmon> It looks like it\'s just on the shelf
+2015-10-17T20:40:42 <colinclark> yes
+2015-10-17T20:40:55 <colinclark> it is, I can tell you from experience, rather annoying :)
+2015-10-17T20:41:18 <colinclark> "You never know if someone has a bit of free time to contribute"
+2015-10-17T20:41:46 <Bosmon> Absurd that every new environment has to solve such problems from scratch.....
+2015-10-17T20:41:55 * kasparnet joined the channel
+2015-10-17T20:52:56 * kasparnet has quit
+2015-10-17T20:55:23 * kasparnet joined the channel
+2015-10-17T21:16:54 <Bosmon> colinclark - the "should exit when all windows are closed" issue is interesting
+2015-10-17T21:16:58 <Bosmon> What\'s the UX behind this?
+2015-10-17T21:17:50 <colinclark> Ah
+2015-10-17T21:17:53 <colinclark> Well
+2015-10-17T21:18:02 <colinclark> If you remember, the Mac menu bar is global
+2015-10-17T21:18:25 <colinclark> A window doesn\'t represent a "self-contained application" in the way they do on Windows
+2015-10-17T21:18:47 <Bosmon> I see
+2015-10-17T21:18:49 <colinclark> So when you open an application, it tends to open a window along with
+2015-10-17T21:19:03 <colinclark> In the "task bar" equivalent, you see an icon for the app as a whole
+2015-10-17T21:19:07 <colinclark> not one for each window
+2015-10-17T21:19:11 <Bosmon> But what condition is a Mac application in, when it has no open windows, separately from when it is not running at all?
+2015-10-17T21:19:15 <colinclark> you, of course, would find this awful
+2015-10-17T21:19:24 <colinclark> It is simply in the condition of having no open windows
+2015-10-17T21:19:56 <colinclark> When you click on an application\'s icon in the Dock and the app currently has no windows open, it is supposed to open a new instance of its "default" window
+2015-10-17T21:20:05 <Bosmon> Can it ever quietly transition from one state to the other (not running, and having no open windows), or is explicit user action required?
+2015-10-17T21:20:18 <colinclark> no, it doesn\'t ever quietly transition
+2015-10-17T21:20:31 <colinclark> A user must either open a new window or click on its dock icon
+2015-10-17T21:20:58 <colinclark> It\'s probably the most fundamental difference between the two platforms
+2015-10-17T21:21:05 <colinclark> and has always been this way, if I remember
+2015-10-17T21:21:23 <Bosmon> Yes
+2015-10-17T21:21:26 <colinclark> I couldn\'t deal with the alternative, and I imagine you couldn\'t either :)
+2015-10-17T21:21:55 <Bosmon> There are SOME precedents for windows apps with zero top-level windows
+2015-10-17T21:22:01 <Bosmon> Given we have this funny little "tray" area
+2015-10-17T21:22:04 <colinclark> oh yes!
+2015-10-17T21:22:06 <colinclark> the tray
+2015-10-17T21:22:29 <colinclark> I guess a Mac app can have a further state
+2015-10-17T21:22:33 <Bosmon> Although in practice, the things that behave in this way aren\'t really "proper applications"
+2015-10-17T21:22:37 <Bosmon> For example Google Drive is one like this
+2015-10-17T21:22:38 <colinclark> essentially the same as a tray showing only in an application
+2015-10-17T21:22:47 <colinclark> sorry, an application showing only in the try :)
+2015-10-17T21:22:49 <Bosmon> It does have a top level window which in theory morally exists but is often closed
+2015-10-17T21:22:50 <colinclark> tray!
+2015-10-17T21:22:59 <colinclark> yeah, we have things like this
+2015-10-17T21:23:02 <Bosmon> And TrueCrypt is another
+2015-10-17T21:23:08 <colinclark> Google Drive shows up in my menu bar
+2015-10-17T21:23:14 <Bosmon> Vidyo also
+2015-10-17T21:23:20 <colinclark> and does not have a Dock icon, nor does it appear to actually be running
+2015-10-17T21:23:30 <Bosmon> Skype COULD behave like this but in practice I never close its windows
+2015-10-17T21:24:12 <Bosmon> I was always very disturbed to find it still running even when I had closed its main window : P
+2015-10-17T21:24:16 <colinclark> yes
+2015-10-17T21:24:25 <colinclark> It\'s terrible in that regard
+2015-10-17T21:24:38 <colinclark> on iOS, that is
+2015-10-17T21:24:45 <colinclark> on the Mac, its behaviour is actually quite consistent :)
+2015-10-17T21:24:50 <Bosmon> Right
+2015-10-17T21:25:18 <colinclark> Man, your feedback has been so awesome
+2015-10-17T21:25:30 <colinclark> I feel like "one of the team" :)
+2015-10-17T22:50:04 * colinclark has quit
+2015-10-17T23:17:37 * colinclark joined the channel
+2015-10-17T23:19:10 <Bosmon> colinclark - there\'s actually a "fluid.renderLoggingArg" function ready built ....
+2015-10-17T23:20:59 <colinclark> For the Electron library, you mean?
+2015-10-17T23:21:05 <colinclark> I haven\'t noticed problems with logging objects
+'
+
+b'2015-10-17T08:36:58 * kasparnet joined the channel
+2015-10-17T09:00:34 * slim_ joined the channel
+2015-10-17T09:06:38 * kasparnet has quit
+2015-10-17T10:42:28 * kasparnet joined the channel
+2015-10-17T10:45:17 * kasparnet has quit
+2015-10-17T13:54:20 * slim_ has quit
+2015-10-17T14:54:13 * colinclark joined the channel
+2015-10-17T15:25:47 <colinclark> Bosmon: Can I ask you a quick work question?
+2015-10-17T15:25:51 <colinclark> on a sunny Saturday
+2015-10-17T15:26:00 <Bosmon> Hey there colinclark
+2015-10-17T15:26:04 <Bosmon> I wish it was a bit colder : P
+2015-10-17T15:26:08 <colinclark> hahaha
+2015-10-17T15:26:09 <colinclark> It is here
+2015-10-17T15:26:20 <Bosmon> I can still keep the windows open a bit all day
+2015-10-17T15:26:20 <colinclark> http://weather.gc.ca/city/pages/on-143_metric_e.html
+2015-10-17T15:26:31 <Bosmon> yow
+2015-10-17T15:26:33 <colinclark> Not quite like when you were last here
+2015-10-17T15:26:33 <Bosmon> Pretty fierce
+2015-10-17T15:26:40 <colinclark> yes
+2015-10-17T15:26:48 <colinclark> I hope it\'s nice next weekend
+2015-10-17T15:26:54 <colinclark> when the mast comes off the boat
+2015-10-17T15:27:00 <Bosmon> Do you need to get your LUGGNUTTE off this time?
+2015-10-17T15:27:08 <colinclark> I\'m going to have to just leave it, sadly
+2015-10-17T15:27:19 <colinclark> The boat sits on the cradle, but somewhat awkwardly
+2015-10-17T15:27:28 <Bosmon> ah
+2015-10-17T15:27:32 <colinclark> I will try find a piece of wood that is thinner to put under the keel
+2015-10-17T15:27:35 <colinclark> that should help a bit
+2015-10-17T15:27:40 <Bosmon> cool
+2015-10-17T15:27:50 <colinclark> but I expect I\'m going to need to find a friend who is good at cutting and welding steel
+2015-10-17T15:28:01 <Bosmon> wow
+2015-10-17T15:28:13 <colinclark> I bought a big pair of channel lock pliers, but I don\'t think it\'s going to budge
+2015-10-17T15:28:55 <Bosmon> No HULK SMASH this time
+2015-10-17T15:29:10 <colinclark> Sadly it just didn\'t work
+2015-10-17T15:29:16 <colinclark> I now own a sledgehammer :)
+2015-10-17T15:29:21 <colinclark> despite its ineffectiveness in this case
+2015-10-17T15:29:44 <Bosmon> I think I have one in the attic too
+2015-10-17T15:30:06 <colinclark> Sledgehammer, propane torch, freezing liquid, penetrating oil, and a 50/50 mix of automatic transmission fluid and acetone
+2015-10-17T15:30:12 <colinclark> none of these techniques worked
+2015-10-17T15:30:29 <colinclark> Fortunately I managed to avoid setting anything on fire, including myself
+2015-10-17T15:30:47 <colinclark> So I just tested avtar\'s lateset version of his quality infrastructure development environment provisioning scripts
+2015-10-17T15:30:50 <colinclark> and they\'re working pretty nicely for me
+2015-10-17T15:30:55 <Bosmon> ah cool
+2015-10-17T15:31:06 <colinclark> you, of course, are a little further ahead than me
+2015-10-17T15:31:27 <colinclark> There were enough positive votes that I think we should at least set up a GPII org repo for avtar to make pull requests to
+2015-10-17T15:31:40 <colinclark> it sounds like he may have a bit more work with you, troubleshooting on Windows
+2015-10-17T15:31:51 <colinclark> Now, I\'ve watched you do this recently, but just want to confirm the process
+2015-10-17T15:32:15 <colinclark> Well, hmm
+2015-10-17T15:32:20 <colinclark> Maybe this is in fact different
+2015-10-17T15:32:29 <colinclark> One typically transfers ownership in this case, I guess?
+2015-10-17T15:32:43 <Bosmon> It sounds reasonable
+2015-10-17T15:32:47 <Bosmon> I don\'t think I\'ve done it before
+2015-10-17T15:32:50 <colinclark> ok
+2015-10-17T15:33:01 <colinclark> It\'ll be the same for Cindy and her FD Tool request
+2015-10-17T15:33:29 <colinclark> So I guess we just have to agree on a point when the repo is "ready" and then have them transfer ownership
+2015-10-17T15:33:36 <colinclark> and then fork it themselves and carry on
+2015-10-17T15:33:51 <colinclark> Bosmon: Are you comfortable with that point being now for avtar\'s repository?
+2015-10-17T15:34:08 <colinclark> assuming he\'ll continue to work on the lingering Windows issues?
+2015-10-17T15:36:28 <Bosmon> colinclark, sure
+2015-10-17T15:46:53 <colinclark> cool, thanks
+2015-10-17T16:40:11 * kasparnet joined the channel
+2015-10-17T17:23:29 <colinclark> Bosmon: got another sec?
+2015-10-17T17:24:36 <Bosmon> Hi ther eco
+2015-10-17T17:24:38 <Bosmon> er colinclark
+2015-10-17T17:25:02 <colinclark> So this is a file
+2015-10-17T17:25:05 <colinclark> and it contains a component
+2015-10-17T17:25:07 <colinclark> https://github.com/colinbdclark/lou/blob/master/js/app/audio-window.js
+2015-10-17T17:25:16 <colinclark> or rather, the definition of a component
+2015-10-17T17:26:11 <colinclark> Now I have an application that depends on this component
+2015-10-17T17:26:23 <colinclark> Which you can see is loaded here: https://github.com/colinbdclark/lou/blob/master/main.js#L3
+2015-10-17T17:26:23 <Bosmon> I see this file
+2015-10-17T17:26:34 <Bosmon> Your registerNamespace call is unnecessary, btw, as it standards
+2015-10-17T17:26:34 <colinclark> Since I clearly do not understand what fluid.require() is for
+2015-10-17T17:26:42 <Bosmon> Ah
+2015-10-17T17:26:47 <Bosmon> You\'ll understand what it is for once I document it
+2015-10-17T17:27:14 <Bosmon> I don\'t see what the "electron" path is referring to
+2015-10-17T17:27:15 <colinclark> Ok, so no registerNamespace call in the audio-window.js file
+2015-10-17T17:27:35 <Bosmon> At least, it\'s nothing in github
+2015-10-17T17:27:37 <colinclark> It is loading this file: https://github.com/colinbdclark/lou/blob/master/js/electron/window.js
+2015-10-17T17:27:48 <Bosmon> Oh yes, sorry
+2015-10-17T17:27:58 <colinclark> which is also just a component definition
+2015-10-17T17:28:05 <Bosmon> Perhaps in future you\'d like "electron" to be a micromodule
+2015-10-17T17:28:08 <colinclark> What is the appropriate way to laod these things?
+2015-10-17T17:28:14 <colinclark> yes, I mentioned that yesterday
+2015-10-17T17:28:21 <colinclark> sadly I didn\'t quite get to doing it yesterday
+2015-10-17T17:28:28 <colinclark> but everything in the "electron" directory will become a module
+2015-10-17T17:28:30 <Bosmon> What you\'ve done is perfectly appropriate, assuming that these things lie within the same module
+2015-10-17T17:28:37 <Bosmon> And fluid.require doesn\'t do anything extra
+2015-10-17T17:28:42 <colinclark> Must I use fluid.require()?
+2015-10-17T17:28:45 <Bosmon> No
+2015-10-17T17:28:50 <colinclark> Should I instead use require()?
+2015-10-17T17:28:51 <Bosmon> A plain "require" will be just fine
+2015-10-17T17:28:53 <Bosmon> Yes
+2015-10-17T17:28:53 <colinclark> ok
+2015-10-17T17:29:13 <Bosmon> Also your "__dirname" is unnecessary
+2015-10-17T17:29:18 <colinclark> ok
+2015-10-17T17:29:24 <Bosmon> You can simply issue require("../electron/window.js")
+2015-10-17T17:29:27 <colinclark> ok
+2015-10-17T17:29:48 <colinclark> in this case, I do need the registerNamespace call, right?  https://github.com/colinbdclark/lou/blob/master/js/electron/window.js#L8
+2015-10-17T17:29:59 <colinclark> since I was receiving errors about "colin" being undefined otherwise
+2015-10-17T17:30:09 <colinclark> welcome to my continual identity crisis :P
+2015-10-17T17:30:17 <Bosmon> Yes, here you need it since you need to introduce "colin" as a resolvable variable to code
+2015-10-17T17:30:23 <colinclark> ok
+2015-10-17T17:30:40 <colinclark> I don\'t know how I picked up all this junk
+2015-10-17T17:30:50 <colinclark> I\'m quite certain, to be honest, that it was from reading early Kettle examples :(
+2015-10-17T17:30:50 <Bosmon> TIME
+2015-10-17T17:30:56 <Bosmon> TIME ==> JUNK
+2015-10-17T17:31:03 <Bosmon> Yes, I wouldn\'t be surprised
+2015-10-17T17:31:10 <colinclark> bloody hell
+2015-10-17T17:31:13 <colinclark> it\'s so frustrating
+2015-10-17T17:31:19 <Bosmon> They were all over the place as we tried to determine what fluid.require was actually meant for
+2015-10-17T17:31:32 <colinclark> largely because of the accumulation of unexamined convention
+2015-10-17T17:31:35 <Bosmon> Yes
+2015-10-17T17:31:38 <Bosmon> This is what TIME is :)
+2015-10-17T17:32:01 <Bosmon> Without constant re-reflection, we simply become encrusted
+2015-10-17T17:32:14 <Bosmon> As we are unable to determine what the ACTUAL PURPOSE OF ANYTHING WE HAVE DONE is ........
+2015-10-17T17:32:28 <Bosmon> I imagine your /*jshint node: true*/ can also go into a .jshintrc
+2015-10-17T17:32:37 <Bosmon> Along with various other bits of stuff
+2015-10-17T17:33:07 <Bosmon> I finally found this ORIGINAL WIKI page that had already moved away when I was trying to refer to it in 2008
+2015-10-17T17:33:08 <Bosmon> http://c2.com/cgi/wiki?CheckedExceptionsAreOfDubiousValue
+2015-10-17T17:33:26 <Bosmon> These old-timers were so sharp
+2015-10-17T17:33:33 <colinclark> I was just looking at that
+2015-10-17T17:33:44 <Bosmon> It\'s a shame that there is absolutely no continuity between them and the bunch of whipper-snappers we are surrounded by
+2015-10-17T17:33:53 <Bosmon> No continuity, that is, unless it is represented by US : P
+2015-10-17T17:33:59 <Bosmon> Really? How did you get to it
+2015-10-17T17:34:08 <colinclark> well, I just saw that it was empty
+2015-10-17T17:34:17 <colinclark> and your footnote about its emptiness
+2015-10-17T17:34:18 <colinclark> and the link to the Eckel article
+2015-10-17T17:34:21 <Bosmon> Oh right
+2015-10-17T17:34:22 <Bosmon> yes
+2015-10-17T17:34:31 <Bosmon> Of course, I had pasted you the precursor, I forgot
+2015-10-17T17:34:43 <Bosmon> I am just writing up our "accumulateRejectionReason" API
+2015-10-17T17:34:50 <Bosmon> So it\'s bizarrely time to go over all this terrain yet again
+2015-10-17T17:35:53 <Bosmon> The current generation doesn\'t even succeed in reproducing the wisdom of the old, let alone exceeding it
+2015-10-17T17:41:02 <colinclark> OH NPM, WHAT ARE YOU DOING
+2015-10-17T17:41:11 <colinclark> WHAT ARE YOU DOING WHEN YOU PRINT OUT THIS
+2015-10-17T17:41:13 <colinclark> \\
+2015-10-17T17:41:16 <colinclark> -
+2015-10-17T17:41:20 <Bosmon> !!!!!!!
+2015-10-17T17:41:22 <colinclark> etc.
+2015-10-17T17:41:30 <Bosmon> Oh yes
+2015-10-17T17:41:40 <Bosmon> I\'ve fruitlessly tried to find where it is wasting all its time
+2015-10-17T17:41:45 <colinclark> you could sing that to a preferred melody if you want
+2015-10-17T17:41:49 <colinclark> OH NPM!
+2015-10-17T17:41:55 <colinclark> WHAT ARE YOU DOING?
+2015-10-17T17:42:16 <Bosmon> You can run it with --verbose but when you do that I\'ve never caught it in the act of obviously hanging anywhere
+2015-10-17T17:42:54 <Bosmon> I thought it was hilarious to see the npm@3 people crowing about their "enormous speedups"
+2015-10-17T17:43:14 <Bosmon> But it turns out that all they suceeded in doing was removing again a 10x slowdown that they had recently put in relative to npm@2 : P
+2015-10-17T17:43:45 <colinclark> ha!
+2015-10-17T17:44:31 <Bosmon> I think you probably didn\'t want the "*" here: https://github.com/colinbdclark/lou/blob/master/js/electron/window.js#L33
+2015-10-17T17:44:46 <Bosmon> This syntax means that you will get two separate notifications if both the width and height change in a single transaction
+'
+

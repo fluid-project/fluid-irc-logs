@@ -1,0 +1,167 @@
+b"2018-10-12T22:34:29 <jhernandez> had a nice dinner here at home
+2018-10-12T22:34:43 <jhernandez> Sara's family is here vissitting us
+2018-10-12T22:35:28 <jhernandez> I'm in the middle of building an installer to test stuff
+2018-10-12T22:36:25 <jhernandez> and yeah, the gpii-app with electron 3 is not gonna happen today
+2018-10-12T22:36:37 <jhernandez> :(
+2018-10-12T22:37:49 <jhernandez> there's something really wrong going on
+2018-10-12T22:39:58 <jhernandez> had to do the same as in windows with the build script to avoid the problems in npm install, but now there's something going wrong with electron
+2018-10-12T22:44:24 <Bosmon> Glad you had a great dinner
+2018-10-12T22:44:28 <Bosmon> No hurry with electron 3
+2018-10-12T22:44:34 <Bosmon> It was just an aspirational thing : P
+2018-10-12T22:44:52 <Bosmon> Fantastic that you and stegru got ffi-napi sorted out so quickly
+2018-10-12T23:13:47 <jhernandez> yes, glad to have stegru with us, he figured out the problem with the callback so fast
+"
+
+b'2018-10-12T00:15:02 * colinclark joined the channel
+2018-10-12T06:42:22 * dandimitrov joined the channel
+2018-10-12T06:56:28 * dandimitrov has quit
+2018-10-12T07:06:05 * dandimitrov joined the channel
+2018-10-12T07:06:12 * georgitodorov joined the channel
+2018-10-12T07:34:35 <georgitodorov> Hello, Bosmon, the-t-in-rtf! Should we / can we do something about generating a code coverage report for the renderer part of the GPII app code?
+2018-10-12T08:49:32 <the-t-in-rtf> I guess the only thing I haven\'t bothered with is code in something other than json(5), javascript, or markdown.
+2018-10-12T08:49:42 <the-t-in-rtf> but in principle we will need an approach for that as well.
+2018-10-12T08:50:15 <the-t-in-rtf> all of the "big four" should definitely be tested and have coverage tests wherever possible.
+2018-10-12T08:59:37 <jhernandez> stegru: oh, stegru the wizard! I wouldn\'t have found that fast
+2018-10-12T08:59:44 <jhernandez> thanks a lot
+2018-10-12T09:00:00 <stegru> ;)
+2018-10-12T09:14:14 <georgitodorov> the-t-in-rtf: Well, for the renderer code we are using javascript files but the code there is executed in a separate BrowserWindow process
+2018-10-12T09:14:34 <georgitodorov> Can the currently employed mechanism for code coverage track such code execution?
+2018-10-12T09:17:04 <the-t-in-rtf> it will require some small effort on your part
+2018-10-12T09:17:16 <the-t-in-rtf> first you\'ll have to make sure your browser window process loads instrumented source
+2018-10-12T09:17:27 <the-t-in-rtf> you\'ll then need to use the "coverage reporter" from gpii-testem to send the results somewhere
+2018-10-12T09:17:31 <the-t-in-rtf> and then to save that to a file
+2018-10-12T09:17:55 <the-t-in-rtf> and you\'ll also need to collect coverage reports in stages, i.e. get all the data from each run, and generate a report only after all the test suites are done.
+2018-10-12T09:18:17 <the-t-in-rtf> If you create a ticket on the topic, I am very happy to repeat all of that in a nicely bullet pointed fashion with links... ;)
+2018-10-12T09:18:49 <the-t-in-rtf> at this point we have a lot of examples of how to do this kind of thing
+2018-10-12T09:19:40 <the-t-in-rtf> link to the test in question in the description and I\'ll read up on what it uses so I can give you specifics.
+2018-10-12T09:20:07 <the-t-in-rtf> at this point I\'ve written a reusable instrumenter, a code coverage sender, and a code coverage receiver, so hopefully most of the work is just configuration.
+2018-10-12T09:25:43 <georgitodorov> the-t-in-rtf: Providing examples would be great! I have just created a JIRA ticket: https://issues.gpii.net/browse/GPII-3446
+2018-10-12T09:25:54 <georgitodorov> Please fill it in when you can
+2018-10-12T09:27:35 <the-t-in-rtf> I hope someone already has a pull to get rid of the package-lock.json in that repo.
+2018-10-12T09:27:41 <the-t-in-rtf> (just looking at it now)
+2018-10-12T09:29:34 <the-t-in-rtf> so, I\'m tracking back through the current setup, I assume tests.ps1 is build somehow: https://github.com/GPII/gpii-app/blob/master/package.json#L41
+2018-10-12T09:30:31 <the-t-in-rtf> ah, there we go: https://github.com/GPII/gpii-app/blob/master/provisioning/Build.ps1#L57
+2018-10-12T09:35:08 <the-t-in-rtf> so, to save me a bit of time in picking this apart further, where are the actual tests that are run?
+2018-10-12T09:35:26 <the-t-in-rtf> I need to look at what runs them to advise on how to hook into the test lifecycle and send coverage reports after test completion.
+2018-10-12T09:37:21 <georgitodorov> the-t-in-rtf: Some of the renderer code is tested as part of the main process tests
+2018-10-12T09:37:52 <georgitodorov> https://github.com/danailbd/gpii-app/tree/feature/QSS1.1/tests
+2018-10-12T09:38:08 <the-t-in-rtf> can you be a bit more specific?
+2018-10-12T09:38:25 <georgitodorov> Especially in the qss tests (https://github.com/danailbd/gpii-app/blob/feature/QSS1.1/tests/QssTestDefs.js) we have some heavy testing logic for the interaction between the main and the renderer processes
+2018-10-12T09:38:33 <the-t-in-rtf> ok, that\'s good.
+2018-10-12T09:41:31 <georgitodorov> the-t-in-rtf: We also have some dedicated renderer process tests here: https://github.com/danailbd/gpii-app/tree/feature/QSS1.1/src/renderer/psp/tests
+2018-10-12T09:45:21 <the-t-in-rtf> So, we may have less to do then.
+2018-10-12T09:49:16 <the-t-in-rtf> as you use QUnit, I think the hooks we already have in the coverage sender will work.
+2018-10-12T09:49:43 <the-t-in-rtf> just to confirm, these are run within the electron run, or within the Tests.ps1 run?
+2018-10-12T09:59:08 <dandimitrov> the-t-in-rtf: I\xe2\x80\x99m not sure whether the Tests.ps1 is still used. I think we removed it some time ago as it wasn\xe2\x80\x99t needed anymore
+2018-10-12T09:59:29 <the-t-in-rtf> OK, then you probably just need to figure out setting up a coverage receiver.
+2018-10-12T09:59:55 <the-t-in-rtf> I commented on the ticket with an example of such a setup, there\'s a router that serves up a preconfigured coverage client.
+2018-10-12T10:00:07 <the-t-in-rtf> and then you just source the coverage client in your browser tests.
+2018-10-12T10:00:25 <the-t-in-rtf> and it sends coverage data to the coverage server once QUnit finishes a test suite.
+2018-10-12T10:00:50 <the-t-in-rtf> take a look at that example, happy to answer any questions
+2018-10-12T10:06:23 <Bosmon> Hey there jhernandez - great pull :)
+2018-10-12T10:08:00 <jhernandez> heh, all crredits go to stegru, who provided a fix for the NAPI
+2018-10-12T10:08:40 <stegru> it was a nice distraction from the other crap I\'m doing
+2018-10-12T10:11:06 <Bosmon> I\'ve added a Q on the JIRA and minor comment
+2018-10-12T10:11:16 <Bosmon> I assume this work is backwards compatible with node 8.x and can be merged immediately?
+2018-10-12T10:22:32 <jhernandez> Bosmon: I think so, if you want, we can make the ffi-napi update to pass through CI with node 8.x
+2018-10-12T10:23:13 <Bosmon> jhernandez - awesome, I\'ll test it locally as well
+2018-10-12T10:33:29 <stegru> I\'ve been using 8.9.4
+2018-10-12T10:36:22 <jhernandez> stegru: okay, thanks for confirming
+2018-10-12T10:36:48 <jhernandez> also, did you also get into the "napi.h not found" error?
+2018-10-12T10:37:03 <jhernandez> stegru: https://github.com/GPII/windows/pull/208#issuecomment-429282327
+2018-10-12T10:37:27 <jhernandez> the-t-in-rtf: ^ - v for victory xDDD
+2018-10-12T10:37:39 <stegru> never
+2018-10-12T10:38:20 <stegru> yes, I get as far as typing "cd \\vag" then I can imagine tony\'s disapproval in the back of my mind
+2018-10-12T10:39:29 <jhernandez> hahah
+2018-10-12T10:40:04 <jhernandez> but I\'m wondering what kind of black magic is that?!!
+2018-10-12T10:40:17 <stegru> a tear runs down his cheek each time we use it
+2018-10-12T10:42:59 <jhernandez> xDD
+2018-10-12T10:43:05 <jhernandez> stegru: https://bit.ly/2PvTX4P
+2018-10-12T10:57:23 <the-t-in-rtf> I\'m just going to replace it with a disguised pit
+2018-10-12T10:57:26 <the-t-in-rtf> there will be snakes
+2018-10-12T10:57:40 <the-t-in-rtf> the second person to go there again will know to avoid it.
+2018-10-12T10:58:12 <jhernandez> hahaha
+2018-10-12T11:02:40 <georgitodorov> Bosmon: To continue our discussion from a few days ago: https://github.com/GPII/gpii-app/pull/62#discussion_r223697719
+2018-10-12T11:02:45 <georgitodorov> Locally I created a profile with no preferences and ran `npm run postinstall` in gpii-universal\'s folder
+2018-10-12T11:02:56 <georgitodorov> But I still can\'t key in with this newly created profile
+2018-10-12T11:05:57 <georgitodorov> Bosmon: This is odd. Once I used the /login route in the browser to key in the newly created profile, it started working in the GPII app as well
+2018-10-12T11:06:10 <georgitodorov> Never mind, ignore what I just wrote
+2018-10-12T11:22:31 <stegru> npm install
+2018-10-12T11:22:38 <stegru> oops
+2018-10-12T11:34:54 * dandimitrov has quit
+2018-10-12T12:05:44 <georgitodorov> Bosmon: I have just created a PR for the addition of a snapset without any preferences to "gpii-universal"
+2018-10-12T12:05:49 <georgitodorov> It is available here: https://github.com/GPII/universal/pull/689
+2018-10-12T12:07:15 * dandimitrov joined the channel
+2018-10-12T12:07:16 <georgitodorov> And one more thing - can you roll out new versions of universal and windows once this PR is merged? So that we can test with the latest code.
+2018-10-12T12:13:48 <jhernandez> stegru: default: npm WARN enoent ENOENT: no such file or directory, open \'package.json\'
+2018-10-12T12:13:52 <jhernandez> :P
+2018-10-12T12:15:51 <stegru> what\'s that from, jhernandez?
+2018-10-12T12:16:08 <stegru> oh i see
+2018-10-12T12:16:11 <stegru> haha
+2018-10-12T12:16:41 <jhernandez> xDDD
+2018-10-12T12:17:02 <stegru> gamberro
+2018-10-12T12:26:44 * dandimitrov has quit
+2018-10-12T12:28:47 * dandimitrov joined the channel
+2018-10-12T12:54:52 * dandimitrov has quit
+2018-10-12T13:17:15 * georgitodorov has quit
+2018-10-12T13:40:30 * clown joined the channel
+2018-10-12T13:49:25 * cindyli joined the channel
+2018-10-12T13:52:12 * michelled joined the channel
+2018-10-12T14:30:45 * jhernandez has quit
+2018-10-12T14:31:01 * jhernandez joined the channel
+2018-10-12T14:42:06 * cindyli joined the channel
+2018-10-12T15:06:00 * danayo joined the channel
+2018-10-12T15:09:13 <jhernandez> Bosmon: NAPI requires more time - can\'t get it to build in CI due to the "napi.h not found" thing
+2018-10-12T15:09:32 <Bosmon> jhernandez - can\'t we just set CI to build from V: ?
+2018-10-12T15:10:06 <jhernandez> I tried, but the provisioning says "V: not found"
+2018-10-12T15:10:14 <jhernandez> :)
+2018-10-12T15:10:23 <Bosmon> NUTS!
+2018-10-12T15:10:47 <jhernandez> brb, in a call with Gregg right now
+2018-10-12T15:30:12 * clown_mtg has quit
+2018-10-12T15:34:24 * cindyli has quit
+2018-10-12T15:38:21 * cindyli joined the channel
+2018-10-12T15:43:49 * danayo has quit
+2018-10-12T15:53:03 * clown joined the channel
+2018-10-12T15:53:15 * clown is now known as clown_mtg
+2018-10-12T15:54:53 <stegru> jhernandez, try adding `net use v: \\\\vboxsvr\\vagrant` to the start of the provisioning script - I think it might be because the provisioning scripts are being ran as administrator, which doesn\'t have access to the normal user\'s drives
+2018-10-12T15:55:00 <stegru> I know how stupid that sounds
+2018-10-12T15:55:25 <jhernandez> yeah, trying that now
+2018-10-12T15:55:41 <stegru> alfredo added that command to the startup scripts, but that\'s ran as the vagrant user
+2018-10-12T15:57:18 <jhernandez> stegru: https://paste.gnome.org/pq62jztu2
+2018-10-12T15:58:17 <stegru> what\'s your change?
+2018-10-12T15:58:30 <stegru> i mean, what did you update the script to
+2018-10-12T15:59:04 <stegru> oh nevermind
+2018-10-12T16:02:57 <stegru> yes, do tell me how you\'re issuing the pushd command, jhernandez
+2018-10-12T16:04:59 * cindyli has quit
+2018-10-12T16:06:01 <stegru> btw, filebeat can accept logs via tcp
+2018-10-12T16:06:22 <jhernandez> stegru: invoke-command "pushd" "V:"
+2018-10-12T16:06:30 <stegru> <cue Gregg riding on the pig with a bottle of beer>
+2018-10-12T16:06:39 <jhernandez> hahaha
+2018-10-12T16:07:25 <jhernandez> now used just "pushd v:" and then npm install
+2018-10-12T16:07:29 <jhernandez> no complains so far
+2018-10-12T16:07:34 <stegru> oh ok
+2018-10-12T16:07:36 <jhernandez> leet\'s see where it is building from
+2018-10-12T16:07:53 <stegru> ah yes, pushd is a built-in command
+2018-10-12T16:09:08 <jhernandez> ok, now we\'re building from the victory place
+2018-10-12T16:09:12 <jhernandez> default: V:\
+ode_modules\\ref-napi>if not defined npm_config_node_gyp
+2018-10-12T16:09:26 * kasparnet joined the channel
+2018-10-12T16:09:28 * kasparnet has quit
+2018-10-12T16:29:08 <stegru> great
+2018-10-12T16:41:54 * clown_mtg has quit
+2018-10-12T16:44:51 * cindyli joined the channel
+2018-10-12T16:59:35 * danayo joined the channel
+2018-10-12T17:14:22 * danayo has quit
+2018-10-12T17:21:35 * cindyli joined the channel
+2018-10-12T17:30:45 * jhernand_ joined the channel
+2018-10-12T17:39:00 * jhernand_ has quit
+2018-10-12T19:54:28 * danayo joined the channel
+2018-10-12T20:47:20 * cindyli joined the channel
+2018-10-12T20:57:16 * michelled joined the channel
+2018-10-12T21:00:22 * michelled has quit
+2018-10-12T22:33:42 <Bosmon> jhernandez - A great evening\'s work!
+2018-10-12T22:33:47 <Bosmon> I assume that https://github.com/GPII/gpii-app/pull/53 can be axed as well?
+2018-10-12T22:33:53 <jhernandez> haha
+2018-10-12T22:33:56 <jhernandez> yes
+'
+

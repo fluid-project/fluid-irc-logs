@@ -1,0 +1,175 @@
+b'2018-09-27T17:33:22 * alanharnum joined the channel
+2018-09-27T17:33:50 * michelled joined the channel
+2018-09-27T18:02:20 * simonjb joined the channel
+2018-09-27T18:08:22 <sgithens> Bosmon stegru: Should I take an initial stab at writign up that document with the reasoning and scenerios for the SSO/security token stuff?
+2018-09-27T18:17:27 <stegru> yes sgithens - actually, i started, but I got as far as "Do nothing"
+2018-09-27T18:18:25 <sgithens> HAHAHAHAHAHAHAHAH
+2018-09-27T18:18:58 <stegru> Do nothing
+2018-09-27T18:18:58 <stegru> Effort
+2018-09-27T18:18:58 <stegru> None
+2018-09-27T18:18:58 <stegru> Risks
+2018-09-27T18:18:58 <stegru> High
+2018-09-27T18:19:09 <stegru> :)
+2018-09-27T18:19:28 <sgithens> :p
+2018-09-27T18:19:46 <sgithens> I was thinking about actually making some diagrams for all the situations in hopes of not always having to start the converstation from scratch
+2018-09-27T19:13:58 <stegru> woah... the "I\'m feeling lucky" button is back on Google!!
+2018-09-27T20:06:33 * cindyli joined the channel
+2018-09-27T20:07:08 * colinclark joined the channel
+2018-09-27T20:44:27 <Bosmon> sgithens, stegru - yes please do write up anything you can think of :)
+2018-09-27T22:06:56 * alanharnum joined the channel
+2018-09-27T22:18:16 * sepidehshahi joined the channel
+2018-09-27T23:33:39 * avtar has left the channel
+'
+
+b'2018-09-27T00:31:11 * danayo joined the channel
+2018-09-27T01:39:33 * jhernandez has quit
+2018-09-27T04:06:26 * yzen has quit
+2018-09-27T04:17:12 * yzen joined the channel
+2018-09-27T07:56:57 * georgitodorov joined the channel
+2018-09-27T08:16:49 <georgitodorov> Bosmon: Hey, Antranig! I see that both PRs for the issues described in https://issues.gpii.net/browse/GPII-3400 have been merged into master
+2018-09-27T08:17:14 <georgitodorov> Can you create a new version of gpii-windows so that we can continue testing it and fixing the failing integration tests? Thank you!
+2018-09-27T09:09:04 <Bosmon> georgitodorov - sure, doing it now
+2018-09-27T09:14:27 <Bosmon> georgitodorov - it\'s 0.3.0-dev.20180927T091203Z.59d05c1
+2018-09-27T09:48:04 <georgitodorov> Bosmon: Thanks!
+2018-09-27T09:52:26 * dandimitrov joined the channel
+2018-09-27T09:53:32 <dandimitrov> Hey, Bosmon, regarding the link for the user errors - how should we proceed? Should we go ahead with the rich text messages approach? If that\xe2\x80\x99s the case, I can open a PR to universal with the simple changes that are required to be made to the user errorr messages bundle.
+2018-09-27T09:53:58 <Bosmon> dandimitrov - sure - by "rich text messages" you mean HTML snippets, right?
+2018-09-27T09:54:19 <dandimitrov> yep, exactly
+2018-09-27T09:56:04 <dandimitrov> Bosmon, and one other thing, I\xe2\x80\x99ve noticed that there are user error messages that expect interpolation to be done such as the \xe2\x80\x9cWriteSettingFail\xe2\x80\x9d which expects \xe2\x80\x9c%appName\xe2\x80\x9d to be replaced. I believe the most convenient way for inserting these variables would be on our side but from what I\xe2\x80\x99ve tested before I believe no such information is passed with the current user error object. Should the User Error be enhanced to provide a map of all
+2018-09-27T09:56:05 <dandimitrov> variables for interpolation?
+2018-09-27T10:19:18 <Bosmon> dandimitrov - certainly, yes, although there seems to be a mixture of these kinds of variables
+2018-09-27T10:20:40 <Bosmon> It does seem that we\'ve failed to include the proper fields at this firing point: https://github.com/GPII/universal/blob/master/gpii/node_modules/lifecycleManager/src/LifecycleManager.js#L625
+2018-09-27T10:23:46 <Bosmon> I guess SaveToCloudFail doesn\'t take any further variables
+2018-09-27T10:40:49 <georgitodorov> Bosmon: Can we now go back to using the standard /login and /logout routes instead of /proximityTriggered?
+2018-09-27T10:41:17 <georgitodorov> (Or the function calls once Cindy revises their implementation as per your comment from yesterday)
+2018-09-27T10:41:19 <Bosmon> georgitodorov - "I can\'t see why not" : P
+2018-09-27T10:41:31 <Bosmon> I looked again and saw that the function calls are better than I thought
+2018-09-27T10:41:53 <georgitodorov> Bosmon: Okay, so we can use them now
+2018-09-27T10:41:59 <Bosmon> That is, the "performLogin" and "performLogout" function calls should be functional
+2018-09-27T10:42:19 <georgitodorov> Bosmon: I saw that some of the tests were failing because we were logging out using the /proximityTriggered endpoint
+2018-09-27T10:42:32 <georgitodorov> Which was returning a status code of 429 - too many requests
+2018-09-27T10:42:59 <georgitodorov> When I switched back to /logout, the test that was failing completed successfully
+2018-09-27T10:43:39 <georgitodorov> And, as usual, this was not happening when I tested the app manually...
+2018-09-27T11:00:55 <georgitodorov> Bosmon: Another thing - currently we are handling manually the case when an error occurs during the key in process
+2018-09-27T11:01:21 <georgitodorov> i.e. we fire the `flowManager.userErrors.events.userError` event ourselves
+2018-09-27T11:01:52 <georgitodorov> I noticed that this portion of the code on our end is still necessary
+2018-09-27T11:02:18 <georgitodorov> Are there any plans for firing this error by the Core?
+2018-09-27T11:17:23 * dandimitrov has quit
+2018-09-27T11:19:34 <Bosmon> georgitodorov - which event do you fire yourselves?
+2018-09-27T11:19:43 <Bosmon> I mean, in which situation, at what site
+2018-09-27T11:24:20 * jhernandez joined the channel
+2018-09-27T11:26:38 <georgitodorov> Bosmon: We fire the `userError` event whenever an attempt to key in with an invalid user token is made
+2018-09-27T11:28:32 * jhernandez has quit
+2018-09-27T11:28:43 * jhernandez joined the channel
+2018-09-27T11:29:55 * the-t-in-rtf joined the channel
+2018-09-27T11:30:46 <the-t-in-rtf> Hi, @Bosmon, @sgithens and I will be in my Vidyo room in about five minutes.
+2018-09-27T11:37:10 <jhernandez> the-t-in-rtf: sorry, yesterday I left earlier and I\'m just sitting down in front of the computer
+2018-09-27T11:37:39 <jhernandez> in relation to the volume thing, I\'ve just created this JIRA https://issues.gpii.net/browse/GPII-3404
+2018-09-27T11:38:54 <jhernandez> let me know if you have any objections to it, meanwhile, I\'ll implement the changes and submit a pr
+2018-09-27T11:40:07 <jhernandez> oops, just realized that Cindy already included it in universal/pull/672
+2018-09-27T11:40:15 <jhernandez> then I\'ll close the JIRA
+2018-09-27T11:40:34 <jhernandez> Bosmon: thanks for taking care of merging it
+2018-09-27T11:45:37 <georgitodorov> jhernandez: I need some help about the configuration that I should use for the GPII tests
+2018-09-27T11:45:58 <jhernandez> georgitodorov: sure, what\'s up?
+2018-09-27T11:46:55 <georgitodorov> Currently, we are using \'gpii.config.development.all.local.json5" but there is an issue there when we try to key out - it says that we are trying to invoke "performLogout" function on a `null` object
+2018-09-27T11:47:19 <jhernandez> hmmm
+2018-09-27T11:47:22 <georgitodorov> When using the "gpii.config.untrusted.development.all.local.json5" for running the app, we can key out just fine
+2018-09-27T11:47:37 <jhernandez> oh
+2018-09-27T11:47:40 <georgitodorov> But this configuration is not suitable for tests because of another error that we get
+2018-09-27T11:47:54 <georgitodorov> " selector {that gpii.app}.events.onPSPReady matched more than one component during unbind"
+2018-09-27T11:48:09 <jhernandez> ok
+2018-09-27T11:49:19 <georgitodorov> jhernandez: So I am a little (or actually not so little) confused about all the available configurations and why they lead to totally different erros when running the tests
+2018-09-27T11:51:10 <jhernandez> georgitodorov: you should use the gpii.config.untrusted.development.dynamicDR.all.local config
+2018-09-27T11:51:24 <georgitodorov> jhernandez: What is more - if I stick to making an HTTP request to the /logout endpoint instead of using {lifecycleManager}.performLogout, tests run fine...
+2018-09-27T11:51:25 <jhernandez> this runs all in local and uses the dynamic device reporter
+2018-09-27T11:52:46 <jhernandez> the thing is that, using the static device reporter leads to problems when trying to configure solutions that aren\'t really installed
+2018-09-27T11:53:27 <georgitodorov> jhernandez: Okay, I see. So now we have to deal with the " selector {that gpii.app}.events.onPSPReady matched more than one component during unbind" error which was not present before
+2018-09-27T11:53:34 <georgitodorov> Any ideas what might be causing it?
+2018-09-27T11:54:08 <jhernandez> before switching to the flat mm, the canopy matchmaker used to filter out solutions, so now we have to avoid extra noise in the mm step
+2018-09-27T11:54:44 <jhernandez> in any case, our system will use the dynamic device reporter in production, so we\'re just fine to stick to that config
+2018-09-27T11:55:07 <jhernandez> no idea why this is happening
+2018-09-27T11:55:26 <jhernandez> do you have a WIP branch that I can just pull and test?
+2018-09-27T11:57:57 <jhernandez> Bosmon: any ideas on georgitodorov\'s "selector .... matched more tthan one component" thing?
+2018-09-27T11:58:14 <georgitodorov> jhernandez: I have just pushed the `fix/qssTests` branch
+2018-09-27T11:58:20 <jhernandez> ok
+2018-09-27T11:58:23 <jhernandez> pulling now
+2018-09-27T11:58:24 <Bosmon> jhernandez - sounds like some kind of race condition with one instance of the app firing up before the previous one has been destroyed
+2018-09-27T11:58:25 <georgitodorov> I have a lot of code that is commented out
+2018-09-27T11:58:51 <jhernandez> georgitodorov: it\'s fine
+2018-09-27T11:59:10 <georgitodorov> jhernandez, Bosmon: The problem is that I am starting just a single bunch of tests
+2018-09-27T11:59:21 <georgitodorov> And the app should be instantiated only once
+2018-09-27T11:59:40 <Bosmon> Although there have been some bugs recently fixed in the IoC Testing framework in Infusion, I don\'t think we really have time to make an update in the next couple of days
+2018-09-27T12:00:39 <Bosmon> georgitodorov - which test are you running?
+2018-09-27T12:02:09 <georgitodorov> Bosmon: The `gpii.tests.dev.testDefs` integration tests only
+2018-09-27T12:05:02 * dandimitrov joined the channel
+2018-09-27T12:05:09 <Bosmon> georgitodorov - in your pull? Can you link me?
+2018-09-27T12:06:43 <georgitodorov> Bosmon: https://github.com/danailbd/gpii-app/blob/fix/qssTests/tests/IntegrationTestDefs.js#L240
+2018-09-27T12:07:11 <georgitodorov> The link is to the branch which I have just created which contains the usage of direct function calls for key in/out
+2018-09-27T12:07:12 <Bosmon> Oh yes, got it
+2018-09-27T12:07:29 <Bosmon> georgitodorov - does the problem go away if you go back to HTTP endpoints?
+2018-09-27T12:12:04 <georgitodorov> Bosmon: I was just tripple checking again
+2018-09-27T12:12:09 <georgitodorov> No, it doesn\'t go away
+2018-09-27T12:12:29 <Bosmon> georgitodorov ok, that\'s awkward
+2018-09-27T12:12:34 <Bosmon> I was hoping we\'d have a workaround : P
+2018-09-27T12:12:51 <Bosmon> Could you check in all your WIP into a branch and give me instructions how to reproduce the problem?
+2018-09-27T12:12:58 <georgitodorov> If I change the configuration back to "gpii.config.development.all.local.json5" and go back to the HTTP endpoints, it goes away
+2018-09-27T12:13:26 <Bosmon> georgitodorov - ok, so the problem occurs with either i) dynamic DR, OR ii) direct function calls?
+2018-09-27T12:13:54 <Bosmon> Hopefully we can continue to produce some kind of working demo build for Monday even if it takes us a little longer to get the tests working
+2018-09-27T12:15:17 <Bosmon> Also on another track, I notice that the current version of electron is now 3.0.1 : P
+2018-09-27T12:15:52 <Bosmon> We should make some engineering time for this update as well
+2018-09-27T12:16:03 <georgitodorov> Bosmon: Actually, if I use the direct function calls for the tests and the "gpii.config.development.all.local.json5" config, the error is not present but the tests hang and the app is in a half keyed-in state - i.e. the context menu is fine but the PSP is in a not keyed-in state
+2018-09-27T12:16:52 <Bosmon> OK, well let\'s try to concentrate on the dynamic DR + function call version and try to make it work
+2018-09-27T12:17:02 <Bosmon> if you can check in a config like that, I will take a look at it
+2018-09-27T12:17:06 <georgitodorov> Bosmon: All the work is in the fix/qssTests branch. I have commented out all other tests with the exceptions of the ones in question. So simply run `npm run test:noCoverage`
+2018-09-27T12:19:06 <georgitodorov> Bosmon: yup, everything is as you requested it in that branch
+2018-09-27T12:19:11 <georgitodorov> Test config is available here: https://github.com/danailbd/gpii-app/blob/fix/qssTests/tests/configs/gpii.tests.all.config.json#L32
+2018-09-27T12:19:34 <Bosmon> georgitodorov - how much has this diverged from the version in https://github.com/GPII/gpii-app/pull/48 ?
+2018-09-27T12:19:37 <georgitodorov> I guess that the missing "json5" extension there is not an issue
+2018-09-27T12:20:38 <georgitodorov> Bosmon: Well, this branch includes all the QSS 1.1 work. So it has diverged to some extent
+2018-09-27T12:23:41 * michelled joined the channel
+2018-09-27T12:32:11 <Bosmon> Hi georgitodorov - I can reproduce this error, but I also see an earlier one -
+2018-09-27T12:32:48 <Bosmon> 05:30:26.384:  ASSERTION FAILED: Failed to resolve reference {lifecycleManager} - could not match context with name lifecycleManager from component { typeName: "gpii.app" gradeNames: ["{that}.options.messageDistributorGrade","gpii.app.messageBundles","gpii.app","gpii.app.messageDistributor"]
+2018-09-27T12:32:53 <Bosmon> Have you seen this one before?
+2018-09-27T12:35:21 <georgitodorov> Bosmon: Ohh, right, I have missed that one. Let me see if it appears without using the direct function calls
+2018-09-27T12:37:18 * alanharnum joined the channel
+2018-09-27T12:40:05 * cindyli joined the channel
+2018-09-27T12:40:07 <georgitodorov> Bosmon: So, even if I do not use the function calls BUT use the dynamic DR configuration, I get the lifecycleManager error
+2018-09-27T12:40:33 <georgitodorov> However, if I use the "gpii.config.development.all.local.json5" and the HTTP endpoints, the lifecycleManager error is gone
+2018-09-27T12:43:41 <jhernandez> georgitodorov, Bosmon: remember that gpii.config.development.all.local and gpii.config.untrusted.development.all.local are different
+2018-09-27T13:19:07 * sepidehshahi joined the channel
+2018-09-27T13:22:23 * Jess_ joined the channel
+2018-09-27T13:27:05 * simonjb joined the channel
+2018-09-27T13:49:54 * colinclark joined the channel
+2018-09-27T14:07:18 * clown joined the channel
+2018-09-27T14:09:59 * michelled joined the channel
+2018-09-27T14:11:57 * georgitodorov has quit
+2018-09-27T14:12:18 * avtar joined the channel
+2018-09-27T14:21:37 * alanharnum joined the channel
+2018-09-27T14:41:54 * sepidehshahi joined the channel
+2018-09-27T14:56:59 * danayo joined the channel
+2018-09-27T14:57:22 <stegru> During installation, a (per machine?) secret is installed, which is also known to the cloud.
+2018-09-27T14:57:49 <stegru> the secret is stored on the coputer where only admin can access it... considering users can\'t install software, that should be enough
+2018-09-27T14:58:13 <stegru> GPII service can access the secret, and hashes it with the user name/id  - that is the user\'s UUID
+2018-09-27T15:02:31 * michelled joined the channel
+2018-09-27T15:03:29 <Bosmon> stegru - so how does this allow us to share these ids between machines?
+2018-09-27T15:03:49 <stegru> if the same secret is used, yes
+2018-09-27T15:03:57 <Bosmon> Oh I see
+2018-09-27T15:04:09 <Bosmon> a secret shared across the campus
+2018-09-27T15:04:19 <stegru> the purpose of the secret is to prove that it\'s really coming from an authorised machine on their network
+2018-09-27T15:04:21 <Bosmon> Sounds risky
+2018-09-27T15:04:28 <stegru> yes
+2018-09-27T15:23:21 <sgithens> stegru: The only real way to change that secret would be to install a new version of the gpii, or to have some smaller installer package that would just update it right?
+2018-09-27T15:25:22 <stegru> yes, sgithens - or, the service we have running on the machines could do it
+2018-09-27T15:25:37 <stegru> it would have to be performed on every machine
+2018-09-27T15:34:32 <jhernandez> dandimitrov: question, are you going to merge GPII-3302 at some point into the feature/QSS1.1 branch?
+2018-09-27T15:36:51 * jhernandez has quit
+2018-09-27T15:37:16 * jhernandez joined the channel
+2018-09-27T16:25:28 * cindyli joined the channel
+2018-09-27T16:38:15 <dandimitrov> Hey, jhernandez, oh, we\xe2\x80\x99ll try merging it tomorrow. I can try it out with the changes you\xe2\x80\x99ve made to the wix installer :?
+2018-09-27T17:01:10 * dandimitrov has quit
+2018-09-27T17:20:45 * alanharnum joined the channel
+2018-09-27T17:21:08 * cindyli joined the channel
+2018-09-27T17:28:27 * sepidehshahi joined the channel
+2018-09-27T17:32:35 * avtar joined the channel
+'
+

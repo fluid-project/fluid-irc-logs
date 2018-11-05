@@ -1,0 +1,290 @@
+b'2014-12-11T19:22:53 <Bosmon> cindyli - no, we can never support that
+2014-12-11T19:23:04 <Bosmon> The system must always be able to schedule the application of the constraints how it likes
+2014-12-11T19:26:51 <cindyli> ok
+2014-12-11T19:29:04 * nikos_ has quit
+2014-12-11T19:30:33 * kasparnet joined the channel
+2014-12-11T19:31:37 * kasparnet has quit
+2014-12-11T19:32:19 * clown has quit
+2014-12-11T19:33:11 <cindyli> Bosmon: in terms of your pull request for valueMapper, can you address this comment when you have time - https://github.com/fluid-project/infusion/pull/572#diff-for-comment-21116047
+2014-12-11T19:33:14 <cindyli> then we can merge it
+2014-12-11T19:33:54 <Bosmon> cindyli - yes, I am looking at this collection of issues now
+2014-12-11T19:34:06 <cindyli> thanks, Bosmon
+2014-12-11T19:34:09 <Bosmon> Wondering whether we should do anything about this insufferable "defaultOutputValue" issue
+2014-12-11T19:34:35 <Bosmon> I am thinking this has always been an unhelpful and misleading feature and we should just withdraw it
+2014-12-11T19:35:59 <Bosmon> You may remember that earlier we dealt with http://issues.fluidproject.org/browse/FLUID-5473
+2014-12-11T19:37:51 <Bosmon> Well
+2014-12-11T19:38:08 <Bosmon> I guess if we withdraw "defaultOutputValue" we would need to withdraw "defaultInputValue" too
+2014-12-11T19:38:11 <Bosmon> Which seems a step too far
+2014-12-11T19:38:42 <Bosmon> But I think your experience is going to be typical of everyone who uses the valueMapper
+2014-12-11T19:39:08 <Bosmon> In that they will interpret "defaultOutputValue" as "a value to be used when no case matches" rather than "a value which should be supplied for outputValue if none was specified"
+2014-12-11T19:40:29 <Bosmon> Hi michelled - you assigned https://github.com/fluid-project/infusion/pull/566 to me?
+2014-12-11T19:44:26 <michelled> only because it looked like you were the reviewer Bosmon
+2014-12-11T19:44:36 <michelled> should it be assigned to someone else?
+2014-12-11T19:45:03 <Bosmon> michelled - I\'m not sure what the "assigned" status of a pull request means, in terms of workflow
+2014-12-11T19:46:31 <michelled> that\'s a good question - I was thinking it made sense for the person reviewing to have the pull request assigned to them since the person doing the work opened the pull request
+2014-12-11T19:46:57 <michelled> but we can pass the assigned back and forth as we work on them, if that\'s clearer
+2014-12-11T19:50:27 * kasparnet joined the channel
+2014-12-11T19:51:03 * Sepideh joined the channel
+2014-12-11T19:54:00 * slim_jim joined the channel
+2014-12-11T19:57:55 <slim_jim> is this right channel for GPII arch discussions? I just notice the wiki home page also mentions  #fluid-tech but that seems pretty quiet
+2014-12-11T20:00:05 * Sepideh has quit
+2014-12-11T20:02:15 <Bosmon> You can ask in either, slim_jim
+2014-12-11T20:03:34 <slim_jim> Bosmon: OK. SO I guess I need to lurk in both too.
+2014-12-11T20:10:28 <Bosmon> We\'ve tended on rare occasions to overflow into #fluid-tech if i) this channel was very busy and ii) we were having a particularly technical and long-wided discussion
+2014-12-11T20:11:40 * clown joined the channel
+2014-12-11T20:28:44 <cindyli> hi Bosmon, created a standard transform component, but seems still having the same issue that returning "undefined" doesn\'t prevent the undesired input from being populated into the model - http://pastebin.com/dXDWhmty
+2014-12-11T20:28:54 <cindyli> also tried returning false, same issue
+2014-12-11T20:29:06 <cindyli> no, not same, false actually gets returned
+2014-12-11T20:29:23 <cindyli> did i miss something?
+2014-12-11T20:32:41 <Bosmon> cindyli - when you say "the undesired input is populated into the model"
+2014-12-11T20:32:46 <Bosmon> What actually appears there?
+2014-12-11T20:33:11 * yzen joined the channel
+2014-12-11T20:35:09 <cindyli> Bosmon: the source and target of the transformation is {that}.model.value, if this value === "aaa", I expect the model value won\'t be changed and still have the old value, however, the new model.value becomes "aaa"
+2014-12-11T20:35:33 <Bosmon> Ah, sorry, I misunderstood your setup, cindyli
+2014-12-11T20:35:42 <cindyli> ok
+2014-12-11T20:35:57 <Bosmon> This procedure is only possible if there are two separate model paths - it\'s impossible that the same slot could hold BOTH a string and a converted number
+2014-12-11T20:36:12 <cindyli> ah. ok
+2014-12-11T20:36:15 <cindyli> try again
+2014-12-11T20:36:17 <Bosmon> You need to set up a relay with your string converted between one path, stringValue, and another one, value
+2014-12-11T20:36:25 <Bosmon> And the limit range, naturally, is only applied to "value"
+2014-12-11T20:37:23 <cindyli> ok
+2014-12-11T20:40:09 <Bosmon> Hi cindyli - I\'ve updated my pull request at https://github.com/fluid-project/infusion/pull/572 - thanks for looking at it
+2014-12-11T20:40:13 <Justin_o> michelled: good idea about the "Needs a fix" label
+2014-12-11T20:40:43 <Bosmon> I\'ve also added a comment on FLUID-5512 itself and some more notes at http://wiki.fluidproject.org/display/fluid/Notes+on+valueMapper+Requirements
+2014-12-11T20:40:52 <cindyli> thanks, Bosmon
+2014-12-11T20:44:03 <cindyli> Bosmon: in "a relay with your string converted between one path, stringValue, and another one, value", how can I prevent the target "value" being populated when stringValue === "aaa"? by returning undefined?
+2014-12-11T20:44:12 <Bosmon> cindyli - right
+2014-12-11T20:44:17 <cindyli> ok, trying
+2014-12-11T20:50:20 <cindyli> works like a charm, Bosmon
+2014-12-11T20:50:26 <cindyli> THANKS!!
+2014-12-11T20:50:31 <Bosmon> no problem
+2014-12-11T20:50:34 <Bosmon> Sorry it took so long
+2014-12-11T20:50:52 <Bosmon> This should really be a standard part of the framework, but even this pretty standard kind of work is pretty new...
+2014-12-11T20:51:21 <cindyli> nah, that\'s fine, I learned new things by going thru this route :)
+2014-12-11T21:04:21 * anvk has quit
+2014-12-11T21:05:34 * Bosmon7 joined the channel
+2014-12-11T21:14:32 * michelled has quit
+2014-12-11T21:15:16 * michelled joined the channel
+2014-12-11T21:25:23 * michelled has quit
+2014-12-11T21:29:36 * cindyli has quit
+2014-12-11T21:32:49 * slim_jim has quit
+2014-12-11T21:42:59 * simonjb has quit
+2014-12-11T21:55:04 * yzen is now known as 
+2014-12-11T22:01:33 * danaayotte has quit
+2014-12-11T22:05:00 * danaayotte joined the channel
+2014-12-11T22:17:02 * danaayotte has quit
+2014-12-11T22:19:04 * Sepideh joined the channel
+2014-12-11T22:26:22 * Sepideh has left the channel
+2014-12-11T23:07:19 <jhernandez> Bosmon7: Bosmon why?
+2014-12-11T23:08:33 <Bosmon> jhernandez - I think it makes no sense to have 1 model per browser
+2014-12-11T23:08:43 <Bosmon> The idea is that the model is attached to the SETTINGS
+2014-12-11T23:08:47 <Bosmon> THE SETTINGS!
+2014-12-11T23:08:50 <jhernandez> hahaha
+2014-12-11T23:09:07 <jhernandez> ok
+2014-12-11T23:09:25 <jhernandez> but, WHAT SETTINGS - ALL THEM?!?
+2014-12-11T23:09:48 <Bosmon> Your settings handler is the handler.... for a particular "application"
+2014-12-11T23:10:09 <jhernandez> I mean, if I\'m chrome, I want my settings, not firefox\'
+2014-12-11T23:10:14 <Bosmon> Quite
+2014-12-11T23:10:27 <Bosmon> Your job is to maintain settings PER APPLICATION
+2014-12-11T23:10:32 <Bosmon> Not PER CLIENT
+2014-12-11T23:10:58 <jhernandez> oh
+2014-12-11T23:10:59 <Bosmon> PER APPLICATION, VVANTTUNNEZZ!
+2014-12-11T23:11:01 <jhernandez> right
+2014-12-11T23:11:05 <jhernandez> RIGHT!!!!!
+2014-12-11T23:12:28 <jhernandez> initially i put the id
+2014-12-11T23:12:51 <jhernandez> BUT
+2014-12-11T23:13:19 <jhernandez> ok
+2014-12-11T23:14:09 * jessm has quit
+2014-12-11T23:14:49 <jhernandez> ok, I was thinking about the possibility to have conflicts between multiple instances of the same browser
+2014-12-11T23:16:51 <jhernandez> but OFC, looking at it from other perspective, the browser can make just a little bit more of effort to keep itself in sync with the requested settings
+2014-12-11T23:17:27 <Bosmon> Well it\'s the browser\'s business if it wants to keep itself connected or not
+2014-12-11T23:20:18 <avtar> hey collaborators
+2014-12-11T23:21:13 <avtar> amatas said that kasparnet said that the hosted prefs server and flow manager should be using the latest master
+2014-12-11T23:23:18 <avtar> my question is do the docs https://github.com/GPII/universal/blob/master/gpii/node_modules/preferencesServer/README.md need to be updated or am i dealing with a case of user error?
+2014-12-11T23:24:09 <avtar> the node process fails with http://pastie.org/pastes/9774982/text?key=jrgag4cdyslcytjuz5la
+2014-12-11T23:38:48 <jhernandez> Bosmon: right
+2014-12-11T23:38:50 <jhernandez> avtar: hey
+2014-12-11T23:39:10 <avtar> jhernandez: hiii
+2014-12-11T23:39:16 <jhernandez> weird problem
+2014-12-11T23:41:06 <Bosmon> Preferences server readme is wrong
+2014-12-11T23:42:00 <Bosmon> Well worse than that
+2014-12-11T23:42:05 <Bosmon> preferences server config is wrong
+2014-12-11T23:42:19 <Bosmon> it refers to "OntologyServer" which no longer exists
+2014-12-11T23:42:28 <Bosmon> Damn that KASPERNETT : P
+2014-12-11T23:42:30 <jhernandez> hahaha
+2014-12-11T23:43:10 <Bosmon> Trying fixing the preferencesServer.json to refer to ontologyHandler and see if it works
+2014-12-11T23:43:13 <jhernandez> it\'s ontologyHandler
+2014-12-11T23:43:22 <jhernandez> in any case
+2014-12-11T23:43:59 <jhernandez> Bosmon: kasparnet did well, all tests are green
+2014-12-11T23:44:01 <jhernandez> xDDDDD
+2014-12-11T23:50:31 <jhernandez> Bosmon: isn\'t just a matter of adding a fluid.require into prefServer.js?
+2014-12-11T23:51:19 <Bosmon> Just fix the file, VVERNNDDEZZ!
+2014-12-11T23:51:33 * kasparnet has quit
+2014-12-11T23:51:47 <Bosmon> https://github.com/GPII/universal/blob/master/gpii/configs/preferencesServer.json#L17
+2014-12-11T23:52:14 <Bosmon> The thing should throw an error on startup of course
+2014-12-11T23:56:16 <avtar> sorry, i was at another computer
+2014-12-11T23:56:33 <jhernandez> here it\'s working again
+2014-12-11T23:57:17 <jhernandez> by removing that reference and adding the fluid.require in prefsServer.js
+2014-12-11T23:57:27 <avtar> Bosmon: i\'m setting the node_env env variable to \'production\'
+2014-12-11T23:57:55 <Bosmon> avtar - this is best not to do without kasparnet around
+2014-12-11T23:57:57 <avtar> does it matter that the file you\'re referring to is including development.json files?
+2014-12-11T23:58:01 <Bosmon> I wouldn\'t waste your time on it now
+2014-12-11T23:58:03 <avtar> fair enough
+2014-12-11T23:58:12 <Bosmon> Make sure you collar him before you try starting this
+2014-12-11T23:58:22 <avtar> kinky :|
+2014-12-11T23:58:25 <Bosmon> The production configs have not been tested since the big merge, and will almost certainly break
+2014-12-11T23:59:28 <avtar> ok i\'ll hold off until tomorrow
+'
+
+b'2014-12-11T00:03:33 <Bosmon> Your vote is noted
+2014-12-11T00:03:37 <Bosmon> But the requirement remains :)
+2014-12-11T00:03:52 <Bosmon> This is what the GPII is for.... in order to verify that solutions actually work : P
+2014-12-11T00:04:03 <Bosmon> Someday, somehow, by hook or by crook, we will have to find a way to have to deal with this issue
+2014-12-11T00:05:00 <Bosmon> It sounds like we can get output-only audio on Windows without huge problems at least using RDP
+2014-12-11T00:05:09 <Bosmon> Which might solve a lot of our immediate problems
+2014-12-11T00:05:22 <Bosmon> I assume JAWS will not install or start without detecting some kind of sound card present
+2014-12-11T00:08:39 <avtar> i agree the requirement is very valid
+2014-12-11T00:09:11 <avtar> i\'ll get us to a point where we have some sort of tests being run everyday
+2014-12-11T00:09:23 <avtar> and then we\'ll take it from there :)
+2014-12-11T00:11:28 <avtar> we originally started this task by aiming to use a mac mini and virtualbox to run windows VMs because that was closer to simon\'s set up but getting everything on the cluster was the final goal
+2014-12-11T00:12:28 <avtar> now it\'s starting to look like the mac mini and virtualbox approach will meet more of these requirements
+2014-12-11T00:14:58 <avtar> the drawback is that relying on a certain class of hardware, as opposed to VMs running on this cluster or a public cloud, means that even a small number of hardware failures will have a great impact
+2014-12-11T00:28:35 * Bosmon7 has quit
+2014-12-11T01:56:43 * avtar has left the channel
+2014-12-11T02:25:11 * michelled joined the channel
+2014-12-11T02:54:19 * Bosmon has quit
+2014-12-11T02:57:55 * Bosmon joined the channel
+2014-12-11T02:57:56 * kasparnet joined the channel
+2014-12-11T03:02:29 * kasparnet has quit
+2014-12-11T03:23:49 * michelled has quit
+2014-12-11T06:06:58 * Justin_o has quit
+2014-12-11T08:31:39 * kasparnet joined the channel
+2014-12-11T08:31:55 * kasparnet has quit
+2014-12-11T09:00:19 * kasparnet joined the channel
+2014-12-11T12:17:41 * kasparnet has quit
+2014-12-11T13:02:09 * jhung joined the channel
+2014-12-11T13:19:25 * Justin_o joined the channel
+2014-12-11T13:21:44 * yzen joined the channel
+2014-12-11T13:24:48 * kasparnet joined the channel
+2014-12-11T13:36:20 * yzen is now known as 
+2014-12-11T13:46:59 * anvk joined the channel
+2014-12-11T14:01:58 * michelled joined the channel
+2014-12-11T14:03:05 * michelled has quit
+2014-12-11T14:07:06 * yzen joined the channel
+2014-12-11T14:07:21 * danaayotte joined the channel
+2014-12-11T14:08:03 * michelled joined the channel
+2014-12-11T14:12:54 * Sepideh joined the channel
+2014-12-11T14:15:29 * slim_jim joined the channel
+2014-12-11T14:29:21 * yzen_ joined the channel
+2014-12-11T14:31:11 * cindyli joined the channel
+2014-12-11T14:31:44 * yzen has quit
+2014-12-11T14:36:24 * jessm joined the channel
+2014-12-11T14:45:33 * simonjb joined the channel
+2014-12-11T15:02:02 * kasparnet has quit
+2014-12-11T15:02:29 * clown joined the channel
+2014-12-11T15:02:59 * clown is now known as clown_mtg
+2014-12-11T15:06:07 * kasparnet joined the channel
+2014-12-11T15:26:30 * clown_mtg is now known as clown
+2014-12-11T15:29:58 * Sepideh has quit
+2014-12-11T15:31:09 * Sepideh joined the channel
+2014-12-11T15:36:01 * Sepideh has quit
+2014-12-11T15:44:19 <jhernandez> hey guys, where and how should I file a bug against infusion-docs?
+2014-12-11T15:44:53 <jhernandez> I guess that half of the answer is http://issues.fluidproject.org/
+2014-12-11T15:45:46 <jhernandez> but, when reporting a problem in the documentation, which project/component should I use?
+2014-12-11T15:47:25 * Kostas joined the channel
+2014-12-11T15:49:25 * Sepideh joined the channel
+2014-12-11T15:52:28 * danaayotte has quit
+2014-12-11T16:03:05 * nikos_ joined the channel
+2014-12-11T16:04:13 * slim_jim has quit
+2014-12-11T16:07:07 * Sepideh has quit
+2014-12-11T16:28:40 * anvk has quit
+2014-12-11T16:42:51 * danaayotte joined the channel
+2014-12-11T16:44:43 <Bosmon> jhernandez - http://issues.fluidproject.org/browse/FLUID/component/10060
+2014-12-11T16:44:48 <Bosmon> VVERNNANDDEZZ!!
+2014-12-11T16:45:05 * anvk joined the channel
+2014-12-11T16:46:31 * Kostas has quit
+2014-12-11T16:58:41 <jhernandez> Bosmon: thanks, there are a lot of components and was hard to find it, I was expecting ~Doc or ~InfusionDoc or the like
+2014-12-11T16:58:51 <jhernandez> AANTVVANIG!!
+2014-12-11T17:23:20 * slim_jim joined the channel
+2014-12-11T17:29:00 * kasparnet has quit
+2014-12-11T17:31:22 * kasparnet joined the channel
+2014-12-11T17:43:48 * clown has quit
+2014-12-11T17:50:26 * clown joined the channel
+2014-12-11T18:17:32 <jhernandez> Bosmon: around?
+2014-12-11T18:17:40 * Sepideh joined the channel
+2014-12-11T18:22:02 <Bosmon> VVERNNANDDEZ!
+2014-12-11T18:24:19 * Sepideh has quit
+2014-12-11T18:24:57 <jhernandez> does this mocked model make any sense to you? https://code.stypi.com/cg9gdfdv
+2014-12-11T18:25:15 * avtar joined the channel
+2014-12-11T18:30:36 <avtar> Bosmon, kasparnet, michelled, simonjb: hi hi
+2014-12-11T18:30:59 <simonjb> hey
+2014-12-11T18:31:10 <michelled> hey there
+2014-12-11T18:32:35 <avtar> if you would like to read up on gpii acceptance tests, hard requirement to test screen readers, lack of sound cards on VMs, british tv, all that AND more then please check out this log https://botbot.me/freenode/fluid-work/2014-12-10/?msg=27265558&page=3
+2014-12-11T18:39:57 * slim_jim has quit
+2014-12-11T18:47:26 <cindyli> hi Bosmon
+2014-12-11T18:48:53 <Bosmon> jhernandez - no, it makes absolutely no sense at all! : P
+2014-12-11T18:49:09 <Bosmon> Hi there cindyli
+2014-12-11T18:50:14 <cindyli> Bosmon: i\'m using "fluid.transforms.free" to transform a string to a number, such as "1.5" -> 1.5
+2014-12-11T18:50:47 <cindyli> the requirement is, if the input string somehow cannot be converted to a number, for example, when the input is "alsdjfaslj"
+2014-12-11T18:51:00 <cindyli> we placed the old value back
+2014-12-11T18:51:27 <cindyli> btw, this all happens in "modelRelay" block
+2014-12-11T18:51:28 <Bosmon> cindyli - typically for a transform which receives an inadmissible value, the convention is for it to output "undefined"
+2014-12-11T18:52:14 * kasparnet has quit
+2014-12-11T18:52:31 <cindyli> Bosmon: so if returned "undefined", the model value would stay as the old value?
+2014-12-11T18:52:40 <Bosmon> cindyli - yes
+2014-12-11T18:52:47 <cindyli> cool. thanks, Bosmon
+2014-12-11T18:55:54 <michelled> Justin_o: what does it mean if a pull request is labelled
+2014-12-11T18:55:57 <michelled> mothballed?
+2014-12-11T18:56:31 <avtar> Bosmon, kasparnet, michelled, simonjb: the reason i mentioned that is because i was wondering if you all had time for a 15ish min call at some point today or tomorrow so that i can propose a solution that may have some drawbacks
+2014-12-11T18:56:52 <michelled> I have time both days
+2014-12-11T18:57:28 <simonjb> avtar: I have time both days also
+2014-12-11T18:58:24 <Justin_o> michelled: where did you see that?
+2014-12-11T18:58:39 <michelled> https://github.com/fluid-project/infusion/labels/Mothballed
+2014-12-11T18:59:24 <Justin_o> michelled: i think we can define whatever labels we want https://github.com/fluid-project/infusion/labels
+2014-12-11T18:59:31 <Justin_o> so i\'m not sure what this one means or who made it
+2014-12-11T18:59:48 <Justin_o> maybe Bosmon might know
+2014-12-11T18:59:49 <michelled> Bosmon: it looks like you made the mothballed label
+2014-12-11T19:00:05 <michelled> what does it mean for a pull request to be mothballed?
+2014-12-11T19:02:26 <Bosmon> It means that we don\'t consider it a candidate to be merged for a while, but it contains an issue or some code that we need to keep aware of as we do other work
+2014-12-11T19:02:34 <avtar> michelled, simonjb, and maybe Bosmon: how about today for that call? 15:00PM EST?
+2014-12-11T19:02:37 <Bosmon> For example I\'ve written some discussion on http://issues.fluidproject.org/browse/FLUID-5510
+2014-12-11T19:02:56 <Bosmon> I\'d prefer tomorrow, I\'m really pretty ill today still
+2014-12-11T19:03:06 <avtar> how about tomorrow 15:00PM EST?
+2014-12-11T19:03:13 <Bosmon> ok
+2014-12-11T19:03:43 <simonjb> sure
+2014-12-11T19:04:49 <michelled> fine for me
+2014-12-11T19:07:35 <cindyli> Bosmon: the model is still changed to the new value when "undefined" is returned - http://pastebin.com/Vn9ZgU43
+2014-12-11T19:08:16 <cindyli> i\'ve traced and ensured "undefined" is returned in the case of having an input of "aaa"
+2014-12-11T19:08:31 <cindyli> however, the transformed model still have a new value of "aaa", Bosmon
+2014-12-11T19:09:21 <michelled> Justin_o, Bosmon: I created another label "Needs a fix" for pull requests that have only a test case to prove that an issue exists.
+2014-12-11T19:10:03 <cindyli> oh, the definition of "fluid.textfieldSlider.textfield.stringToNumber" was pasted twice. ignore one of those, Bosmon.
+2014-12-11T19:10:31 <Bosmon> cindyli - this is probably a misuse of the "free" transform
+2014-12-11T19:10:57 <Bosmon> You should get the standard semantics if you write this as a standard transformer which has (at least) the fluid.standardOutputTransformFunction grade
+2014-12-11T19:11:24 <cindyli> ok
+2014-12-11T19:11:31 <Bosmon> Although I think to be honest the default behaviour should be correct if you just avoid "free" entirely and claim that the function already represents a transform by using it with "type"
+2014-12-11T19:11:47 <Bosmon> Since I think the default for any unrecognised function is fluid.standardTransformFunction
+2014-12-11T19:12:39 <cindyli> just curious, is it possible to pass in the old model value to a "free" transform function, Bosmon?
+2014-12-11T19:12:53 <Bosmon> fluid.transforms.free is only useful where the function signature is nonstandard in some way
+2014-12-11T19:12:59 <Bosmon> For example if it accepts multiple arguments etc.
+2014-12-11T19:13:11 <cindyli> i see
+2014-12-11T19:13:17 <Bosmon> cindyli - I\'m not sure what is meant by "the old model value"
+2014-12-11T19:13:45 <cindyli> Bosmon: in this example, i\'m passing "{that}.model.value" as an argument into the "free" func
+2014-12-11T19:13:58 <cindyli> is it possible to pass like "{change}.oldValue"
+2014-12-11T19:14:11 <Bosmon> cindyli - no
+2014-12-11T19:14:18 <cindyli> ok
+2014-12-11T19:14:21 <Bosmon> With relay you are not setting up a function call as such, but a permanent relationship
+2014-12-11T19:15:10 <Bosmon> So when you say "you are passing {that}.model.value as an argument" this isn\'t precisely what is happening
+2014-12-11T19:15:17 <Bosmon> Although the value is indeed from time to time supplied to the function
+2014-12-11T19:15:35 <Bosmon> What you\'re really doing is setting up a constraint involving the input model material and the output model material
+2014-12-11T19:16:07 <Bosmon> And the system will keep applying the constraint until the model as a whole stabilises
+2014-12-11T19:17:18 <Bosmon> If you were able to pass arbitrary bits of stateful stuff from outside the model ({change} or any other such thing) the system wouldn\'t be able to know when the model might stabilise
+2014-12-11T19:17:38 <cindyli> i see ur point
+2014-12-11T19:18:03 <Bosmon> Although I think there is a use case coming up for being able to use such things for notifications shown to the user in a UI, e.g.
+2014-12-11T19:18:14 <Bosmon> That is, for diagnostics and feedback, rather than as constraint material
+2014-12-11T19:19:39 <cindyli> if we can set up the order of the relay, since it\'s often there are multiple transforms defined in modelRelay, would the passing of the stateful stuff become possible, Bosmon?
+2014-12-11T19:20:02 <Bosmon> cindyli - can you explain that further?
+2014-12-11T19:20:21 <cindyli> Bosmon: let me pastebin some code
+2014-12-11T19:21:58 <cindyli> Bosmon: http://pastebin.com/njp7zirZ, see the added "priority" key
+2014-12-11T19:22:14 * yzen_ has quit
+'
+

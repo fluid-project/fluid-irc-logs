@@ -1,0 +1,593 @@
+b'2017-10-05T18:37:52 <Bosmon> Justin_o - well, hopefully none right now since I imagine noone makes any use of the return value :)
+2017-10-05T18:37:56 <Bosmon> Since to date it has always been undefined
+2017-10-05T18:38:17 <Justin_o> Bosmon:  but won\'t it have to care about the return value now
+2017-10-05T18:38:21 <Justin_o> if we use a promise
+2017-10-05T18:38:58 <Bosmon> Justin_o - yes, but we can always just grandfather in any existing DataSource by treating undefined as an instantly resolved promise
+2017-10-05T18:38:59 * amatas_ has quit
+2017-10-05T18:39:01 <Justin_o> which is to say, that UIO+ would diverge in how it interacts with the store
+2017-10-05T18:39:08 <Bosmon> But it will be very little work to just retrofit this into the prefs framework
+2017-10-05T18:39:14 <Justin_o> okay
+2017-10-05T18:39:15 <Bosmon> All our existing stores are synchronous I imagine
+2017-10-05T18:39:30 <Justin_o> at least supplied in UIO
+2017-10-05T18:39:40 <Justin_o> temp store and cookie store are it, i think
+2017-10-05T18:39:45 <Bosmon> For reference here are the docs for Kettle datasource set - https://github.com/fluid-project/kettle/blob/master/lib/dataSource-core.js#L251
+2017-10-05T18:40:03 <Bosmon> We don\'t need anything like this complexity or this impl for now
+2017-10-05T18:40:19 <Bosmon> But as a reference point, we need to make sure we end up working like this one from the point of view of users
+2017-10-05T18:40:43 <Bosmon> I guess prefs framework "stores" are also missing the directModel argument, which is another annoyance
+2017-10-05T18:41:43 <Bosmon> If we retrofit in the promise return value, at the same time we can retrofit in this parameter as "null"
+2017-10-05T18:41:48 <Bosmon> We probably even have a 5 year old JIRA about this :)
+2017-10-05T18:43:31 <Justin_o> Bosmon: do we have a datasource grade in infusion yet
+2017-10-05T18:43:45 <Justin_o> if not should we do that and make the stores a type of it?
+2017-10-05T18:43:54 <Bosmon> Justin_o - no, but this file has been factored off ready for when it is appropriate
+2017-10-05T18:43:57 * amatas__ has quit
+2017-10-05T18:44:03 <Bosmon> I\'m not convinced it is yet appropriate : P
+2017-10-05T18:44:08 <Justin_o> okay
+2017-10-05T18:44:19 <Bosmon> It will make a bit of a mess of the various projects and require us to push updates through our entire stack again
+2017-10-05T18:44:37 <Bosmon> Which is an annoyance I don\'t feel like having for the 4th time in the last month :)
+2017-10-05T18:44:58 <Justin_o> well if the need arises for a 4th please add this to it :)
+2017-10-05T18:45:59 <Justin_o> Bosmon: so the other thing i\'m trying to discover, which i haven\'t noticed yet is a way in the chrome api to know that a message has gone through
+2017-10-05T18:46:13 <Bosmon> Justin_o - well, there isn\'t
+2017-10-05T18:46:16 <Justin_o> we are only sort of getting updates now because of model relays and messages back from both sides that I\'ve wired up manually
+2017-10-05T18:46:18 <Bosmon> That\'s what will make this task so fruity :)
+2017-10-05T18:46:45 <Justin_o> so there\'s a chance that a promise won\'t resolve ever because the model in the background script is already the same
+2017-10-05T18:46:59 <Justin_o> i suppose that\'s not too likely, but it is theoretically possible
+2017-10-05T18:48:31 <Bosmon> Justin_o - well it\'s highly possible, yes
+2017-10-05T18:49:04 <Bosmon> Especially if you are racing against an enemy preference editor ....
+2017-10-05T18:51:38 <Justin_o> :( hmm
+2017-10-05T18:51:47 <Bosmon> Justin_o - don\'t worry, it will all be fine
+2017-10-05T18:51:58 <Bosmon> This is a highly relevant task that we had meant to get to for a long while
+2017-10-05T18:52:26 <Bosmon> You could say it forms a piece of the "Chrome messaging Nexus connector"
+2017-10-05T18:53:06 <Justin_o> i assume you\'re on the nexus call that i\'m overhearing in the office ;)
+2017-10-05T18:53:12 <Bosmon> Justin_o actually no
+2017-10-05T18:53:22 <Bosmon> I missed this as a result of not having the Fluid Team Calendar enabled : P
+2017-10-05T18:53:30 <Justin_o> oh really.. that\'s funny.. how coincidental
+2017-10-05T18:53:31 <Bosmon> But I am hearing some backscatter from it from colinclark : P
+2017-10-05T18:53:37 <Justin_o> ah
+2017-10-05T18:53:38 <Bosmon> The Nexus is never coincidental :)
+2017-10-05T18:53:51 <Justin_o> deterministic?
+2017-10-05T18:53:51 <Bosmon> Given it is an entirely universal integration technology
+2017-10-05T18:54:22 <Bosmon> One should never be surprised to find the Nexus anywhere :)
+2017-10-05T18:54:26 <Bosmon> Unlike the Spanish Inquisition
+2017-10-05T18:54:40 <colinclark> sounds like a programming language
+2017-10-05T18:54:46 <Bosmon> shush, fiend : P
+2017-10-05T18:54:53 <colinclark> hahaha
+2017-10-05T18:55:03 <gloob> the spanish inquisition was present all around the world :D
+2017-10-05T18:55:20 <Bosmon> gloob - sure, it was - but this fact was somehow always thought to be surprising :)
+2017-10-05T18:55:49 <gloob> well, when in the spanish empire never had a sunset
+2017-10-05T18:55:52 <gloob> or something like that in english
+2017-10-05T18:56:56 <gloob> where I can learn about the nexus? any entry point?
+2017-10-05T18:57:26 <Justin_o> simonjb: ^
+2017-10-05T18:57:29 <colinclark> gloob: This is as good a starting point as any: https://wiki.gpii.net/w/The_Nexus
+2017-10-05T18:57:33 <Bosmon> Bah gloob, the plans for the Nexus have been available in your local Galactic Hyperspace Planning Council for the last 50 years :)
+2017-10-05T18:57:44 <gloob> mine?
+2017-10-05T18:58:12 <gloob> you know, that council are pretty galactic sometimes or quiet often
+2017-10-05T18:58:18 <Bosmon> sorry I meant to say ON DISPLAY
+2017-10-05T18:58:43 <colinclark> if you want a more academic view of some of the ideas behind the Nexus, there\'s this paper: https://github.com/colinbdclark/papers/blob/master/sdr-2017/sdr-2017.pdf
+2017-10-05T18:58:53 <gloob> thanks
+2017-10-05T18:59:40 <Justin_o> Bosmon: so i\'m a bit unsure of where exactly to start with all this.. 1) are we doing this in infusion or UIO+ 2) how do we determine when a set has completed to resolve the promise
+2017-10-05T19:00:39 <Bosmon> Justin_o - 1) let\'s do this in UIO+ now to avoid making a mess (although we will retrofit Infusion with the basic expectation that there is a promise, as well as the throttling algorithm) 2) we will have to implement a form of "global message broker"
+2017-10-05T19:01:37 <Justin_o> Bosmon: so 1) will involve work in both infusion and UIO+
+2017-10-05T19:01:49 <Justin_o> Bosmon:  also here\'s the information about the message i\'m using in the extension https://developer.chrome.com/apps/messaging#connect
+2017-10-05T19:01:56 <Bosmon> Justin_o - right, but we\'ll try to keep the infusion work as light as possible
+2017-10-05T19:02:36 <Justin_o> Bosmon:  and here\'s some of my usage of it https://github.com/jobara/gpii-chrome-extension/blob/GPII-2424/extension/src/lib/portBinding.js#L74
+2017-10-05T19:03:02 <Justin_o> and here https://github.com/jobara/gpii-chrome-extension/blob/GPII-2424/extension/src/lib/portBinding.js#L43-L46
+2017-10-05T19:03:27 <Bosmon> Thanks Justin_o, very helpful
+2017-10-05T19:04:22 <Bosmon> Justin_o - so my suggestion for now is that we adopt a protocol somewhat similar to the one in https://wiki.gpii.net/w/Nexus_API#Bind_Model
+2017-10-05T19:04:45 <Bosmon> Although we will want a few differences, some to be forward-looking to expected changes in the protocol, and some to adapt to our particular problem
+2017-10-05T19:05:15 <Bosmon> To start with, I suggest that you escape these message with an outer level of packaging, for a start holding a type field
+2017-10-05T19:06:16 <Bosmon> In this case, "type": "modelChanged"
+2017-10-05T19:07:24 <Bosmon> I suggest actually that you use this message sent by the "visible Nexus" as a prototype for your payload: https://github.com/amb26/fluid-authoring/blob/FLUID-4884/src/server/js/VisibleNexus.js#L230
+2017-10-05T19:08:38 <Bosmon> Only instead of "messageGeneration" you should put in a constantly increasing unique id "messageId"
+2017-10-05T19:08:52 <Bosmon> Then, in the other direction, you will send messages of type "modelChangedAck"
+2017-10-05T19:08:59 <Bosmon> Whose payload just consists of the id
+2017-10-05T19:09:03 <Bosmon> I think you can see where this is going :)
+2017-10-05T19:11:53 * alanharnum joined the channel
+2017-10-05T19:12:12 <Bosmon> One end of the bus will then maintain a hash of messaged, index by id, holding the unresolved promise corresponding to the model change
+2017-10-05T19:12:40 <Bosmon> The other end of the bus, once it has honoured the change, will send back a "modelChangedAck" back along the bus, and the corresponding promise will then get resolved and removed from the hash
+2017-10-05T19:13:54 <Bosmon> I expect this machinery won\'t in itself be sufficient to get rid of all of our races, but I think it is an essential part of it
+2017-10-05T19:15:37 <Bosmon> Well, perhaps this doesn\'t need to be as complex as this - it looks like a "port" probably guarantees that there can be at most one outstanding message at any time
+2017-10-05T19:15:55 <Bosmon> Although I don\'t so far see any written form of this guarantee : P
+2017-10-05T19:17:25 <Bosmon> These are the kinds of details which nerds never feel really necessary to write in their APIs
+2017-10-05T19:17:33 <Bosmon> Mainly because they have no idea how to express the types of them
+2017-10-05T19:17:56 <Bosmon> And if you can\'t express the type of something, it doesn\'t exist, right? : P
+2017-10-05T19:19:27 <Bosmon> I guess there\'s no reason to assume that at most one message can be outstanding
+2017-10-05T19:27:36 * alanharnum joined the channel
+2017-10-05T19:37:12 * alanharnum joined the channel
+2017-10-05T19:43:35 * grrrero joined the channel
+2017-10-05T19:44:09 * alanharnum joined the channel
+2017-10-05T20:03:00 * danayo joined the channel
+2017-10-05T20:11:09 * danayo_ joined the channel
+2017-10-05T20:28:26 <colinclark> alanharnum: In case you\'re curious, here\'s where I\'m at with the audio story components we wrote: https://github.com/colinbdclark/transcribingRecorder/tree/componentization
+2017-10-05T20:28:40 <alanharnum> colinclark: thanks!
+2017-10-05T20:28:46 <colinclark> I still want to write a Web Audio implementation for the story recorder component
+2017-10-05T20:28:55 <colinclark> since now even Safari supports media streams
+2017-10-05T20:29:15 <colinclark> but only Chrome and Firefox support MediaRecorder, and not very compatibly
+2017-10-05T20:29:32 <colinclark> and my Flocking back end is an insult to the universe :(
+2017-10-05T20:30:44 <simonjb> colinclark, Justin_o: https://botbot.me/freenode/fluid-work/2016-02-26/?msg=61001564&page=3
+2017-10-05T20:31:04 <colinclark> simonjb: I quote, again
+2017-10-05T20:31:14 <colinclark> "that\'s great. thank you for explaining it"
+2017-10-05T20:31:14 <colinclark> :P
+2017-10-05T20:31:22 <colinclark> thank goodness for channel logs
+2017-10-05T20:31:29 <colinclark> I have literally zero memory of that conversation
+2017-10-05T20:31:49 <simonjb> yes, channel logs are great
+2017-10-05T20:32:00 <simonjb> though, I could also write up a wiki page
+2017-10-05T20:32:12 <colinclark> which will be CC-BY 4.0 licensed
+2017-10-05T20:32:18 <simonjb> :)
+2017-10-05T20:32:18 <colinclark> by virtue of you putting it in the wiki page :)
+2017-10-05T20:32:50 * mrtyler joined the channel
+2017-10-05T20:33:22 * stegru has quit
+2017-10-05T20:34:49 <Justin_o> simonjb:  you could add something to the git tips and tricks https://wiki.fluidproject.org/display/fluid/GIT+Tips+and+Tricks
+2017-10-05T20:35:11 <Justin_o> or https://wiki.fluidproject.org/display/fluid/Github+Tips+and+Tricks
+2017-10-05T20:35:14 <Justin_o> or there abouts
+2017-10-05T20:36:55 * danayo joined the channel
+2017-10-05T20:41:59 * amatas has quit
+2017-10-05T20:44:43 * alanharnum joined the channel
+2017-10-05T20:54:28 * clown has quit
+2017-10-05T21:08:19 * alanharnum joined the channel
+2017-10-05T21:08:49 * stegru joined the channel
+2017-10-05T21:12:40 * alanharnum joined the channel
+2017-10-05T21:21:00 * danayo_ joined the channel
+2017-10-05T21:24:22 * stegru has quit
+2017-10-05T22:23:47 * Jess_ joined the channel
+2017-10-05T22:24:10 * stegru joined the channel
+2017-10-05T22:32:18 * danayo joined the channel
+2017-10-05T22:33:39 * alanharnum joined the channel
+2017-10-05T23:31:02 * stegru has quit
+'
+
+b'2017-10-05T16:20:12 <colinclark> ok
+2017-10-05T16:20:33 <colinclark> well, when i get time to finish the last few changes I want to make, I guess we can come up with an approach
+2017-10-05T16:21:03 <Justin_o> sure
+2017-10-05T16:23:13 <Bosmon> Hi there Justin_o - I just merged https://github.com/fluid-project/infusion/pull/844, congrats to you and grrrero :)
+2017-10-05T16:23:27 <Bosmon> I see that https://github.com/fluid-project/infusion/pull/853 contains a lot of material from this branch, do you think you could regenerate it against current master?
+2017-10-05T16:23:42 * amatas_ has quit
+2017-10-05T16:24:34 <Justin_o> Bosmon: YEAH!!! thanks
+2017-10-05T16:24:43 <Justin_o> Bosmon: and yes, i\'ll update that other PR as well
+2017-10-05T16:24:49 <Bosmon> Justin_o - awesome, thanks :)
+2017-10-05T16:25:03 * sepidehshahi joined the channel
+2017-10-05T16:25:16 <Justin_o> Bosmon: I think i\'m going to also need to talk to you more about how to actually address FLUID-6209
+2017-10-05T16:26:35 <Bosmon> Justin_o - sure
+2017-10-05T16:26:42 <Bosmon> Do you have a moderately reliable way to reproduce the problem yet?
+2017-10-05T16:26:52 <Bosmon> Or do you have a trace from an occasion where you did reproduce it?
+2017-10-05T16:26:56 <Justin_o> Bosmon: only in UIO+ so far
+2017-10-05T16:27:07 <Justin_o> on a Windows 10 machine
+2017-10-05T16:27:15 <Justin_o> and specifically here it\'s the surface pro we have
+2017-10-05T16:27:41 <Justin_o> i\'m not sure if it depends on the machine\'s resources
+2017-10-05T16:30:50 <Bosmon> Justin_o - yes, it stands to reason it\'s most likely to reproduce in UIO+ since that is the only environment in which we have asynchrony
+2017-10-05T16:31:15 <Justin_o> yes true..
+2017-10-05T16:31:40 <Justin_o> i wish i could reproduce it on my machine, it would be easier to test
+2017-10-05T16:32:21 <Justin_o> Bosmon: i\'ve updated the other PR
+2017-10-05T16:32:48 <Justin_o> Bosmon: a couple notes, you\'ll need to do a page reload to really test that the adjuster persists in the responsive view..
+2017-10-05T16:33:03 <Justin_o> also it should work when using the arrows, mouse scrolling, or keyboard
+2017-10-05T16:36:22 <Justin_o> Bosmon: regarding FLUID-6209, i\'m assuming it\'s something I should be trying to fix in infusion even though it only happens in UIO+
+2017-10-05T16:40:27 <Bosmon> Justin_o - yes, we should make a general fix
+2017-10-05T16:40:35 <Bosmon> Depending on our understanding of the fine detail about how the issue happens
+2017-10-05T16:40:57 <Justin_o> Bosmon: I do this in UIO+ which may be contributing to the issue https://github.com/jobara/gpii-chrome-extension/blob/GPII-2424/extension/src/lib/PrefsEditor.js#L80-L90
+2017-10-05T16:41:51 <Bosmon> Justin_o - it may
+2017-10-05T16:42:02 <Bosmon> We really need to build up a detailed understanding of how the race works
+2017-10-05T16:42:03 <Justin_o> where as in infusion it is only called on cancel and  init
+2017-10-05T16:42:58 <Justin_o> i\'ll go grab the other machine and try to do some debugging.. if you\'re interested in can send you a crx file for UIO+ that you can install
+2017-10-05T16:43:04 <Justin_o> Bosmon: ^
+2017-10-05T16:43:13 <Bosmon> Well, I may actually be able to get this monitor to work....
+2017-10-05T16:43:28 <Bosmon> I now have a funny situation where it is connected via both the HDMI and DisplayPort outputs at the same time
+2017-10-05T16:43:40 <Justin_o> the same monitor?
+2017-10-05T16:43:44 <Justin_o> to the the same machine?
+2017-10-05T16:43:45 <Bosmon> And I have a single, seamless desktop at 60Hz, only the right hand half of it is distinctly paler than the left half : P
+2017-10-05T16:43:46 <Bosmon> Yes
+2017-10-05T16:43:58 <Bosmon> The DisplayPort input on the monitor failed at the weekend
+2017-10-05T16:44:05 <Bosmon> And Asus refused to fix it since I bought it in the US
+2017-10-05T16:44:19 <Justin_o> :( that\'s annoying.. their warranty is region based?
+2017-10-05T16:44:33 <Bosmon> But I\'ve been reading up about this monitor\'s unusual architecture, and it seems like it will be possible to bypass the broken DisplayPort input by connecting to TWO HDMI INPUTS AT THE SAME TIME!
+2017-10-05T16:44:46 <Bosmon> Yes, it seems that Asus warranty is region-based for all products except laptops
+2017-10-05T16:45:11 <Bosmon> So, I bought two DisplayPort to HDMI cables, and I have plugged one of them in
+2017-10-05T16:45:29 <Bosmon> I believe if I now plug in the 2nd one, everything will be fine : P
+2017-10-05T16:45:31 <Justin_o> why doesn\'t it work with just one hdmi? is the resolution too high?
+2017-10-05T16:45:49 <Bosmon> Yes, this monitor was one of the first decent 4K monitors that was made
+2017-10-05T16:46:02 <Bosmon> And so it stretched the existing connectors and scalers to their limits, and sometimes beyond : P
+2017-10-05T16:46:43 * dandimitrov has quit
+2017-10-05T16:47:09 <Bosmon> It only does HDMI 1.4, which is only capable of displaying 4K at 30Hz
+2017-10-05T16:47:27 <Bosmon> But it has two independent HDMI 1.4 ports which may be in use AT THE SAME TIME!
+2017-10-05T16:47:57 <Bosmon> Amazingly the drivers in my graphics card are new enough that they recognised this bizarre situation instantly
+2017-10-05T16:49:17 <Justin_o> Bosmon: i\'ve never heard of that before, but it\'s amazing that it works
+2017-10-05T16:49:26 <Bosmon> WOW YES HERE IT IS!!!
+2017-10-05T16:49:33 <Bosmon> BOTH HALVES OF THE SCREEN ARE NOW THE SAME!!!!!
+2017-10-05T16:49:55 <alanharnum> Bosmon: what monitor is this?
+2017-10-05T16:50:53 <Bosmon> alanharnum - here is the writeup of its strange architecture: http://www.tomshardware.co.uk/asus-pq321q-4k-monitor-review,review-32869-4.html
+2017-10-05T16:51:05 <Bosmon> At the time of writing you needed either special converters, special drivers, or both
+2017-10-05T16:51:17 <Bosmon> But nowadays, uncharacteristically, it seems like "it just works"
+2017-10-05T16:52:55 <the-t-in-rtf> You could try taking one lens out of a pair of 3d glasses to make the light side match the dark better.
+2017-10-05T16:53:51 <Bosmon> Yes, or I could go around like this guy: https://vignette4.wikia.nocookie.net/fringe/images/7/7f/DrJacoby.jpg/revision/latest?cb=20170408113233
+2017-10-05T16:54:25 <stegru> very posh.. i\'m still on VGA
+2017-10-05T16:56:28 <colinclark> I still use a Hercules graphics card, myself
+2017-10-05T16:56:39 <the-t-in-rtf> @colinclark, it apparently can be done, but it\'s one of those customisations you have to manage each time you upgrade: https://community.atlassian.com/t5/Jira-questions/How-do-you-customize-the-sign-up-page-in-Jira/qaq-p/448378
+2017-10-05T16:56:52 <colinclark> eek
+2017-10-05T16:56:54 <colinclark> i hate those :)
+2017-10-05T16:57:28 <the-t-in-rtf> I have several friends whose whole business is making a theming plugin for Confluence, it\'s a business because no one wants to custom develop templates for each release.
+2017-10-05T16:57:31 <colinclark> Is there a header or footer or something we could customize instead?
+2017-10-05T16:58:05 <the-t-in-rtf> Possibly, I\'d have to look at that file to see what it pulls from, it may be that we can make sensible use of a site description or something that already exists.
+2017-10-05T16:58:17 <the-t-in-rtf> I\'ll put a note on my calendar for tomorrow to look into it.
+2017-10-05T16:58:35 <colinclark> that\'s really nice of you, thanks the-t-in-rtf
+2017-10-05T16:58:40 <the-t-in-rtf> I\'m actually meeting the themers for sushi and Nintendo switch, I can ask if they have an opinion.
+2017-10-05T16:58:47 <the-t-in-rtf> (for lunch tomorrow, I mean)
+2017-10-05T16:58:57 <colinclark> :)
+2017-10-05T17:03:46 * alanharnum joined the channel
+2017-10-05T17:04:06 * alanharnum joined the channel
+2017-10-05T17:09:24 * dandimitrov joined the channel
+2017-10-05T17:19:55 * alanharnum joined the channel
+2017-10-05T17:23:12 * javjarfer has quit
+2017-10-05T17:26:32 * the-t-in-rtf joined the channel
+2017-10-05T17:26:59 * mrtyler joined the channel
+2017-10-05T17:27:05 * alanharnum joined the channel
+2017-10-05T17:33:45 <cindyli> simonjb: i looked into Stebve Githen\'s PMT work. it seems at an early dev stage, reading/writing data from json files in the file system. i doubt if its deployment is ever thought about at this stage. I\'m thinking to send an email to the arch list to find out.
+2017-10-05T17:34:17 * colinclark joined the channel
+2017-10-05T17:35:29 <simonjb> sounds reasonable cindyli, thanks for investigating
+2017-10-05T17:35:34 <cindyli> In the email, one question I\'ll ask to determine if PMT or other GPII websites would use oauth2 authorization code grant in the future is, are they considered to be deployed as GPII hosted centralized website, running behind GPII firewalls, acting as a part of GPII Cloud. Or, they might be deployed separately from GPII Cloud, and will access GPII Cloud APIs to read/write to GPII cloud data
+2017-10-05T17:36:14 <cindyli> simonjb: do you think if this question is enough?
+2017-10-05T17:36:24 <cindyli> anything else you wanna add?
+2017-10-05T17:37:48 <simonjb> cindyli: perhaps, if there could be multiple, at different locations
+2017-10-05T17:38:05 <cindyli> multiple instance of PMT?
+2017-10-05T17:38:20 <simonjb> yes, and if they could be managed by different people
+2017-10-05T17:38:27 <cindyli> and one commonly shared GPII Cloud?
+2017-10-05T17:38:39 <Justin_o> Bosmon: so i added some console logs. Interestingly, when i\'m going at a slower rate there are no fetches occurring. But when I make the changes rapidly it gets caught in a cycle of fetching and savings
+2017-10-05T17:38:45 <simonjb> cindyli: yes
+2017-10-05T17:38:54 * the-t-in-rtf has left the channel
+2017-10-05T17:38:59 * the-t-in-rtf joined the channel
+2017-10-05T17:39:05 <cindyli> simonjb: why would being managed by different people matter
+2017-10-05T17:39:41 <cindyli> they could all have a special role like PMT manager and login in with their own username/pwd
+2017-10-05T17:41:07 <simonjb> cindyli: because I think that multiple instances managed by different people puts us into a good case supported by OAuth2 -- being able to revoke instances and offering each user to opportunity to trust them individually
+2017-10-05T17:45:46 * alanharnum joined the channel
+2017-10-05T17:49:50 <cindyli> simonjb: is the case you are thinking like, when there are multiple PMTs deployed on servers at different locations, they all need to access APIs provided by the one single GPII Cloud. using OAuth is able to revoke individual PMT instance and allow GPII users to define which PMT instance can access which part of their preferences?
+2017-10-05T17:51:29 <cindyli> i\'m still not clear why this is related to ppl who manage PMT instances
+2017-10-05T17:51:43 <cindyli> those ppl are not the owner of GPII data
+2017-10-05T17:53:41 <cindyli> what they can manage on different PMT instances might be controlled using PMT roles. but why that is related to oauth?
+2017-10-05T17:55:37 <simonjb> cindyli: my thinking is that oauth2 is a good solution to support deployments of PMT and PMT-like editing tools that are managed outside of the GPII org
+2017-10-05T17:55:53 <cindyli> ya, makes sense
+2017-10-05T17:56:32 <simonjb> cindyli: whether we need to support such things, I don\'t know...
+2017-10-05T17:58:08 <cindyli> ok, i think we are on the same page
+2017-10-05T17:58:21 <Bosmon> Justin_o - that\'s very interesting
+2017-10-05T18:01:51 * danayo joined the channel
+2017-10-05T18:03:26 <Justin_o> Bosmon: i would have though that this would have caused it to fetch after every change https://github.com/jobara/gpii-chrome-extension/blob/GPII-2424/extension/src/lib/PrefsEditor.js#L80-L90
+2017-10-05T18:04:08 <Justin_o> and set in the store does seem to be called on every change with the correct value
+2017-10-05T18:04:13 <Bosmon> Justin_o - well it would SAVE after every change
+2017-10-05T18:04:22 <Bosmon> But perhaps this is indeed the source of the race
+2017-10-05T18:04:24 <Justin_o> and the model of the store does seem to be updating accordingly
+2017-10-05T18:04:47 <Bosmon> Because if the value in the store is the same as the local value, then there will be no further update
+2017-10-05T18:05:08 <Bosmon> Actually I\'m a bit puzzled by the 2nd rule
+2017-10-05T18:05:43 <Bosmon> But I guess "fetch" just means a local fetch, from the store\'s local modelised value?
+2017-10-05T18:06:26 <Justin_o> Bosmon: in the prefs framework there isn\'t a real model relay between the store and the prefs editor. It is handled via fetch and save from the store.
+2017-10-05T18:06:43 <Bosmon> But yes, it\'s well worth understanding in detail why there is no fetch
+2017-10-05T18:06:56 <Justin_o> I think because this predates model relays, and some of our stores, like the cookie store don\'t have a model, they just set and get the values from the storage mechanism
+2017-10-05T18:07:20 <Bosmon> Justin_o - line 86 seems to imply that every store has a model
+2017-10-05T18:07:36 <Justin_o> Bosmon: well the store i wrote here does
+2017-10-05T18:07:42 <Justin_o> this is in UIO+
+2017-10-05T18:07:48 <Justin_o> ah maybe that\'s the problem
+2017-10-05T18:08:35 <Justin_o> it should probably be using "gpii.chrome.portBinding.store" or "gpii.chrome.prefs.extensionPanel.store" but i\'m not sure that would really matter
+2017-10-05T18:15:31 <Justin_o> changing the IoC reference to the store didn\'t make a difference
+2017-10-05T18:20:54 <Bosmon> Justin_o - no, I don\'t imagine it would
+2017-10-05T18:21:55 <Bosmon> Issue 1 is to find out why there is no fetch at all when you change the UI slowly
+2017-10-05T18:24:40 * dandimitrov has quit
+2017-10-05T18:27:18 <Justin_o> Bosmon: okay so some further investigation, i\'m not sure of the answer about fetch at the moment, but i\'ve found some more information out
+2017-10-05T18:27:26 <Justin_o> Bosmon: okay, so workflow is as follows.
+2017-10-05T18:29:42 <Justin_o> Bosmon: change ui -> prefs editor model changes -> save -> store\'s set function is triggered -> posts message via chrome api -> updates model in background script -> sends message of model change -> store receives message background script model change -> updates store model
+2017-10-05T18:29:50 <Justin_o> hopefully that makes some sense
+2017-10-05T18:30:04 <Justin_o> so in the case where we are changing things slowly that all completes in order
+2017-10-05T18:31:09 <Bosmon> ok
+2017-10-05T18:31:33 <Justin_o> however when making the change quickly, we get  multiple saves the store receives the message back from the background script
+2017-10-05T18:31:36 <Bosmon> So it seems like the first thing to arrange is that the store\'s "set" method behaves more like that of a standard DataSource, and returns a promise for its action rather than returning immediately
+2017-10-05T18:31:50 <Bosmon> Once we have that as a building block, we can use that to construct the throttling mechanism
+2017-10-05T18:32:53 * amatas_ joined the channel
+2017-10-05T18:33:06 <Justin_o> Bosmon: should that be done in UIO+ or in the prefs framework directly?
+2017-10-05T18:33:37 <Bosmon> That part belongs in UIO since the mechanism is specific to the Chrome API
+2017-10-05T18:33:49 <Bosmon> Although there\'s an argument for saying that it is general enough to be part of Infusion
+2017-10-05T18:35:30 * amatas__ joined the channel
+2017-10-05T18:36:32 <Justin_o> Bosmon: currently for stores the implementation of the set and get are all supplied by the specific store.. there\'s no "framework" for them outside of an expectation that they exist
+2017-10-05T18:36:47 <Bosmon> Justin_o - right
+2017-10-05T18:37:04 <Bosmon> Well, this belongs wherever the store currently is
+2017-10-05T18:37:28 <Justin_o> Bosmon: however i wonder what the effect of having a promise returned will have o the prefsframework as a whole
+2017-10-05T18:37:39 <Justin_o> especially if we have cases where it may get a promise or not
+'
+
+b'2017-10-05T15:02:55 <colinclark> So if you want to take a work that is, say, CC-BY 3.0 and upgrade it to CC-BY 4.0, the rights holder must do so
+2017-10-05T15:03:13 <colinclark> In a community environment, a given work may be an aggregate from several rights holders
+2017-10-05T15:03:26 <colinclark> they\'d all have to get together in some fashion and agree to re-license the work
+2017-10-05T15:03:44 <colinclark> Whereas a license like our 3-Clause BSD is so permissive that it includes the ability to relicense the work
+2017-10-05T15:04:06 <colinclark> similary, our ECL 2.0 license includes the additional patent protections I mentioned above, for whatever they\'re worth
+2017-10-05T15:04:39 <colinclark> so in a situation where your license provides you with all the necessary rights\xe2\x80\x94particularly, to sublicense or "upgrade" to a newer version of a license, you really don\'t need a CLA
+2017-10-05T15:05:25 <colinclark> So interestingly enough, the one value our CLA has, in my mind, is that it provides a very broad license of copyright to OCAD University, so that we have the ability to relicense the work as a whole
+2017-10-05T15:06:03 <colinclark> There is some minor advantage to this, just in terms of being able to periodically "tidy up" our mixed-license works, like, say, the Infusion documentation
+2017-10-05T15:06:22 <colinclark> but again, to put this into perspective, it\'s really only about "tidiness" and not much else
+2017-10-05T15:06:28 <Justin_o> okay, so when you say work as a whole you mean code plus doc and etc.
+2017-10-05T15:06:39 <Justin_o> but if it\'s just code, we could do that already based on the licences
+2017-10-05T15:06:44 <colinclark> well, I meant the docs as a whole in this case
+2017-10-05T15:06:48 <colinclark> for exactly the reason you state, yes
+2017-10-05T15:07:04 <Justin_o> okay, cool i think i understand
+2017-10-05T15:07:07 <colinclark> we already have a license to Infusion under BSD, which allows us to relicense
+2017-10-05T15:07:15 <colinclark> that\'s actually why we introduced it, way back in the day
+2017-10-05T15:07:35 <colinclark> so that GPL types could integrate our code and relicense it according to their principles
+2017-10-05T15:07:39 <colinclark> anyway
+2017-10-05T15:08:03 <colinclark> So, if it were a new community, I think I would advocate for simply removing CLAs altogether, and just going with a simple DCO
+2017-10-05T15:08:07 <colinclark> Developer Certificate of Origin
+2017-10-05T15:08:26 <colinclark> which is basically just the "This is totally my own unique work" statement
+2017-10-05T15:08:40 <colinclark> The real weakness of a CLA is that it\'s a legal contract
+2017-10-05T15:08:55 <colinclark> and like any other legal contrat, it shifts the burden of liability to one party or the other
+2017-10-05T15:09:13 <colinclark> in this case, a CLA shifts some legal burden onto an individual contributor
+2017-10-05T15:09:18 <colinclark> which in practice is really not a problem
+2017-10-05T15:09:29 <colinclark> but just in principle, it\'s not a particularly welcoming way to start the contribution process
+2017-10-05T15:09:53 <colinclark> "Thanks for helping us out! Here, sign this confusing legal document." :)
+2017-10-05T15:10:23 <colinclark> This article by Bradley M. Kuhn summarizes the issues quite well: http://ebb.org/bkuhn/blog/2014/06/09/do-not-need-cla.html
+2017-10-05T15:10:24 <Bosmon> Justin_o - does prepublish run on npm install?
+2017-10-05T15:10:43 <colinclark> And most of the counter arguments I\'ve read in support fo CLAs boil down to "it makes your community look more serious"
+2017-10-05T15:10:59 <colinclark> which I don\'t think is an argument with any inherent merit :)
+2017-10-05T15:11:12 <Justin_o> Bosmon: for now anyways, but it has been deprecated as of npm 4
+2017-10-05T15:11:30 <Justin_o> but the new facilities were only added in 4 so hard to guarantee that they are in use
+2017-10-05T15:11:35 <colinclark> Justin_o: So if I were to shift from opinion to proposal, here\'s roughly what I\'m thinking...
+2017-10-05T15:11:45 <colinclark> Let\'s go in baby steps
+2017-10-05T15:11:45 * amatas_ joined the channel
+2017-10-05T15:11:56 <colinclark> Continue to use the CLAs we do
+2017-10-05T15:12:18 <colinclark> but switch to something like CLAHub to help reduce the administrative overhead for contirbutors
+2017-10-05T15:12:42 <colinclark> to try to summarize the meaning of the CLA in a few sentences so contributors don\'t feel too put off by the CLAs
+2017-10-05T15:12:54 <colinclark> and to continue to consider the possibility of phasing them out entirely in the future
+2017-10-05T15:13:31 <colinclark> Literally the only thing stopping me from advocating discontinuing their use now is the issue of relicensing "documentation," due to the limits of the CC license
+2017-10-05T15:14:07 <colinclark> And I use the word "documentation" here as defined on this wiki page: https://wiki.fluidproject.org/display/fluid/Fluid+Licensing#FluidLicensing-DocumentationLicenses
+2017-10-05T15:14:19 * georgitodorov_ has quit
+2017-10-05T15:14:25 <colinclark> Justin_o: So, what do you think so far? :)
+2017-10-05T15:15:00 <Justin_o> colinclark: so question.. it seems that the CLA is mostly needed for our non-code work.. in terms of infusion-docs it\'s in github so should work fine.. but what about the design artifacts and wiki contributions that aren\'t...
+2017-10-05T15:15:25 <Justin_o> in those cases the contributor may not be using github or anything like it or even know what it is
+2017-10-05T15:15:29 <colinclark> If we receive contributions to things that aren\'t in Github, we\'ll still need a CLA
+2017-10-05T15:15:46 <colinclark> and presumably we\'ll have to administer these in some kind of less streamlined way
+2017-10-05T15:15:50 <colinclark> which sucks
+2017-10-05T15:16:00 <Justin_o> yep ;(
+2017-10-05T15:16:27 <colinclark> this does raise some interesting issues, the more I think of it
+2017-10-05T15:16:33 <colinclark> I have updated the wiki to be a bit more clear about what we\'ve always imagined we were doing
+2017-10-05T15:16:39 <colinclark> but maybe weren\'t appropriately explicit
+2017-10-05T15:16:54 <colinclark> https://wiki.fluidproject.org/display/fluid/Get+Involved
+2017-10-05T15:16:57 <colinclark> Under "this wiki"
+2017-10-05T15:17:07 <Justin_o> i saw you added a CC section there
+2017-10-05T15:17:09 <colinclark> yup
+2017-10-05T15:17:34 <colinclark> if we were really pedantic, we\'d want some way for everyone who creates a wiki account to also sign a CLA
+2017-10-05T15:17:44 <colinclark> I think, though, that this speaks to the barrier to contribution issue again
+2017-10-05T15:17:55 <colinclark> so my impression is that we should keep CLAs around for now
+2017-10-05T15:18:07 <colinclark> and gather them for formalized contributions
+2017-10-05T15:18:15 <Justin_o> colinclark: is that possible to have it as part of the TOC when signing up?
+2017-10-05T15:18:38 <colinclark> I was going to ask you or maybe the-t-in-rtf if there is a way to modify the template for the page when people create an account
+2017-10-05T15:18:45 <colinclark> that would be a good idea
+2017-10-05T15:18:54 <Justin_o> it is a good idea
+2017-10-05T15:19:02 <Justin_o> also for JIRA i guess
+2017-10-05T15:19:06 <colinclark> yup
+2017-10-05T15:19:07 <colinclark> but I think for general wiki contributions, we needn\'t gather CLAs at all
+2017-10-05T15:19:12 <Justin_o> although i don\'t know about the code snippets there.. if they should be BSD-3
+2017-10-05T15:19:22 <colinclark> well
+2017-10-05T15:19:44 <colinclark> We can modify the text to that effect
+2017-10-05T15:19:45 <Justin_o> speaking of the wiki, based on what you\'ve said about the CLAs, can we just upgrade everything to CC-BY-4/
+2017-10-05T15:19:46 <Justin_o> ?
+2017-10-05T15:19:53 <colinclark> Well, sadly, no
+2017-10-05T15:20:01 <colinclark> I had a moment of extreme optimism while reading last night
+2017-10-05T15:20:22 <colinclark> but remember that any CLA signed prior to 2010 has been licensed to University of Toronto
+2017-10-05T15:20:41 <colinclark> Anything after 2010, the answer to your questoin is yes, definitely
+2017-10-05T15:20:51 <colinclark> in the end, though, all of this is academic
+2017-10-05T15:20:52 <colinclark> no pun intended
+2017-10-05T15:21:02 <colinclark> There\'s nothing wrong with having a mixed-license work
+2017-10-05T15:21:14 * amatas_ has quit
+2017-10-05T15:21:19 <colinclark> it doesn\'t limit what we can do with it, how we can publish it, whether people can modify it, etc.
+2017-10-05T15:21:36 * amatas_ joined the channel
+2017-10-05T15:21:36 <Justin_o> okay, so in theory we could ask UofT if we can change the license, but it\'s not really worth the effort?
+2017-10-05T15:21:39 <colinclark> In practice, my sense is that all of this really doesn\'t matter much at all :)
+2017-10-05T15:21:44 <colinclark> correct
+2017-10-05T15:21:59 <colinclark> In theory we could, in practice it would be an immense amount of effort and not worth it
+2017-10-05T15:22:08 <colinclark> so I think there\'s still a valid argument to be made regarding CLAs
+2017-10-05T15:22:15 <colinclark> that they don\'t really give us anything of significant value
+2017-10-05T15:22:38 <colinclark> I think the proposal I\'m working out here tentatively is just the most conservative one :)
+2017-10-05T15:22:39 * alanharnum joined the channel
+2017-10-05T15:24:04 <Justin_o> colinclark: https://confluence.atlassian.com/confkb/how-to-customize-the-sign-up-page-318670012.html
+2017-10-05T15:24:15 <colinclark> oh cool
+2017-10-05T15:24:51 <Justin_o> colinclark: https://community.atlassian.com/t5/Jira-questions/How-do-you-customize-the-sign-up-page-in-Jira/qaq-p/448378
+2017-10-05T15:24:57 <Justin_o> sounds like more of a hassle in JIRA
+2017-10-05T15:25:38 <Justin_o> colinclark: is it sufficient to add the license to the footer or something like that?
+2017-10-05T15:26:56 <Justin_o> colinclark: by the way, i may have forgotten to mention https://github.com/fluid-project/infusion-icons/pull/2
+2017-10-05T15:31:03 <colinclark> Justin_o: I think our ideal case is to add a statement to the wiki footer explaining the licenses under which it is published
+2017-10-05T15:31:16 <colinclark> and a statement as in the Get Involved page to the account creation page
+2017-10-05T15:31:19 <colinclark> that should be plenty
+2017-10-05T15:32:11 <Justin_o> colinclark: okay
+2017-10-05T15:32:16 <colinclark> if we find that someone has made a substantive contribution to a "long term" piece of documentation\xe2\x80\x94say, a major new set of design wireframes, or a big tutorial contribution or something\xe2\x80\x94then we\'ll ask them to fill out a CLA in some form
+2017-10-05T15:32:16 <Justin_o> colinclark: also updated the PR
+2017-10-05T15:32:30 <colinclark> assuming there isn\'t a general desire to dispense with CLAs entirely
+2017-10-05T15:32:31 <Justin_o> okay
+2017-10-05T15:32:34 <colinclark> cool, thanks Justin_o
+2017-10-05T15:55:33 * alanharnum joined the channel
+2017-10-05T15:59:12 * alanharnum joined the channel
+2017-10-05T16:00:05 * dandimitrov joined the channel
+2017-10-05T16:05:52 <Justin_o> colinclark: here\'s another option for the CLA on github https://github.com/cla-assistant/cla-assistant
+2017-10-05T16:06:01 <colinclark> yes
+2017-10-05T16:06:27 <colinclark> this and CLAHub seem to be the only two options available
+2017-10-05T16:06:35 <colinclark> all the big companies have written their own apps, for themselves
+2017-10-05T16:06:44 <colinclark> I think we\'ll have to assess the two options and decide
+2017-10-05T16:07:15 <colinclark> setting aside user experience, I think I probably have a bit more faith in the one operated by the Berkman Center rather than the one provided by SAP
+2017-10-05T16:07:21 <colinclark> but it\'s hard to know
+2017-10-05T16:08:15 <colinclark> Justin_o: Can I ask you an "adoption" workflow question?
+2017-10-05T16:09:14 <Justin_o> colinclark: sure
+2017-10-05T16:09:38 <colinclark> So what\'s the best way you can think of to accommodate this situation
+2017-10-05T16:09:42 <colinclark> developer gets an idea
+2017-10-05T16:09:49 <colinclark> hacks up some code in a personal repository
+2017-10-05T16:09:53 <colinclark> slowly chips away at improving it
+2017-10-05T16:10:00 <colinclark> eventually wants to contribute it to Fluid
+2017-10-05T16:10:21 <colinclark> when it\'s in good shape, she would like to have a round of code review
+2017-10-05T16:10:25 <colinclark> and then to contribute the repo
+2017-10-05T16:11:14 <colinclark> in cases where we\'ve anticipated that a project will eventually become suitably stable, on GPII, we\'ve created a repo in the organization first, and then the developer forks that and works away
+2017-10-05T16:11:25 <colinclark> and when she\'s ready, makes a PR
+2017-10-05T16:11:40 <colinclark> but if you don\'t have that foresight, what\'s the best approach?
+2017-10-05T16:12:12 <colinclark> to put this in concrete terms, I\'m thinking of the work that alanharnum and I have done on the audio storytelling components
+2017-10-05T16:12:32 <colinclark> which started simply as a crazy idea that alanharnum decided to prototype to determine its viability
+2017-10-05T16:13:01 <colinclark> I\'m nearing the point where I\'d like to get some thorough code review on my version of it, and then to have it adopted as an sjrk- repository in the fluid project org
+2017-10-05T16:13:37 <Justin_o> good question, i don\'t really know anything about that repo, so my answers may not be fully applicable..
+2017-10-05T16:13:46 <Justin_o> i think in the general case the hardest part of that is the code review..
+2017-10-05T16:14:12 <Justin_o> the contribution we can talk about over the channel and the location could start in fluid-lab or go directly to fluid-project for example
+2017-10-05T16:14:27 <Justin_o> but there aren\'t really facilities in github for doing code review without the pull request.. that i can think of anyways
+2017-10-05T16:14:46 <Justin_o> i suppose you could have a make a branch and do a PR there in your own repo and orchestrate code review there
+2017-10-05T16:15:02 <Justin_o> for example create a branch off of the initial commit to master
+2017-10-05T16:15:12 <Justin_o> and call it something like contribution or something
+2017-10-05T16:15:20 <Justin_o> and then do a PR against that from the projects master
+2017-10-05T16:15:29 <Justin_o> it\'s a bit contrived but it might work
+2017-10-05T16:15:32 <Justin_o> what do you think?
+2017-10-05T16:15:35 <colinclark> I think I see what you mean
+2017-10-05T16:15:43 <colinclark> But if the initial prototype was developed directly in master?
+2017-10-05T16:15:49 <Justin_o> or go the other way and create a new master and move your other stuff into a branch
+2017-10-05T16:16:04 <Justin_o> then you could merge in the initial commit from that master and do a big PR for the contribution
+2017-10-05T16:16:13 <colinclark> ah, ok
+2017-10-05T16:16:14 <colinclark> wow
+2017-10-05T16:16:31 <colinclark> :)
+2017-10-05T16:17:08 <Justin_o> colinclark: it shouldn\'t be too difficult to do that.. you just rename your master and then branch from the initial commit and call that master.. i think then you\'d just force push your master to overwrite github
+2017-10-05T16:17:10 <Justin_o> something like that
+'
+
+b'2017-10-05T07:20:02 * javjarfer_ joined the channel
+2017-10-05T07:20:55 * jhernandez has quit
+2017-10-05T07:21:12 * jhernandez joined the channel
+2017-10-05T07:42:23 * javjarfer_ has quit
+2017-10-05T08:02:04 * javjarfer_ joined the channel
+2017-10-05T08:12:21 * stegru joined the channel
+2017-10-05T08:17:50 * javjarfer_ has quit
+2017-10-05T08:25:46 * yuriy__ joined the channel
+2017-10-05T08:32:18 * amatas joined the channel
+2017-10-05T08:37:51 * georgitodorov_ joined the channel
+2017-10-05T08:40:26 * jhernandez has quit
+2017-10-05T08:40:43 * jhernandez joined the channel
+2017-10-05T09:09:03 * javjarfer_ joined the channel
+2017-10-05T09:16:31 * javjarfer joined the channel
+2017-10-05T09:17:17 * javjarfer_ has quit
+2017-10-05T10:02:54 * Jess_ joined the channel
+2017-10-05T10:32:31 * the-t-in-rtf has quit
+2017-10-05T10:33:32 * Jess_ has quit
+2017-10-05T10:49:09 * gtirloni joined the channel
+2017-10-05T11:10:43 * the-t-in-rtf joined the channel
+2017-10-05T11:24:40 * amatas_ joined the channel
+2017-10-05T11:34:36 * amatas_ has quit
+2017-10-05T11:35:26 * Jess_ joined the channel
+2017-10-05T11:38:54 * javjarfer has quit
+2017-10-05T11:48:38 * jhung joined the channel
+2017-10-05T12:29:03 * Justin_o joined the channel
+2017-10-05T12:31:11 * cindyli joined the channel
+2017-10-05T12:31:19 <Justin_o> Bosmon: hello, regarding the builds, I think we may want to move away from expecting the prepublish on install... and to rather have separate prepare and prepublishonly steps
+2017-10-05T12:44:51 * alanharnum joined the channel
+2017-10-05T12:45:28 * grrrero joined the channel
+2017-10-05T13:03:35 <Bosmon> Justin_o - cool
+2017-10-05T13:03:41 <Bosmon> Is there something simple we can do now to make it work?
+2017-10-05T13:04:31 <Justin_o> Bosmon: i can try to split those out and look at not doing the cleanup as well.. i suppose we could still run the same task but under the two scripts if necessary.. although it might be enough to just run a build and not a dist
+2017-10-05T13:08:03 * amatas_ joined the channel
+2017-10-05T13:08:30 * clown joined the channel
+2017-10-05T13:09:10 * javjarfer joined the channel
+2017-10-05T13:16:22 * simonjb joined the channel
+2017-10-05T13:16:39 * michelled joined the channel
+2017-10-05T13:20:50 * sepidehshahi joined the channel
+2017-10-05T13:23:12 * sepidehshahi joined the channel
+2017-10-05T13:39:55 * Jess_ joined the channel
+2017-10-05T13:43:15 * colinclark joined the channel
+2017-10-05T13:47:58 * avtar joined the channel
+2017-10-05T13:57:37 <Justin_o> Bosmon: i\'m looking at the prepare and prepublishonly events in npm .. so they were added in npm 4
+2017-10-05T13:58:04 <Justin_o> i\'m not sure how likely people are to be using npm 4 at this point.. i\'m on it, but not sure what the adoption is like
+2017-10-05T14:01:36 <cindyli> Bosmon, jhernandez, ready to meet? in my vidyo room
+2017-10-05T14:02:00 * mrtyler joined the channel
+2017-10-05T14:10:05 * amatas_ has quit
+2017-10-05T14:11:11 <Bosmon> cindyli - coming, sorry to be late
+2017-10-05T14:11:25 <cindyli> great
+2017-10-05T14:11:27 <Bosmon> Justin_o - I mean just to fix it :)
+2017-10-05T14:11:44 <Bosmon> We don\'t need to worry about any subtleties right now
+2017-10-05T14:11:58 <Bosmon> And we\'re certainly not moving to npm 4 any time soon, it is more likely we\'ll skip straight to 5 as soon as they can make it work
+2017-10-05T14:12:32 <Justin_o> Bosmon: i think for now i\'m just going to remove https://github.com/fluid-project/infusion/blob/master/Gruntfile.js#L436
+2017-10-05T14:13:02 <Bosmon> Justin_o - sounds plausible
+2017-10-05T14:13:02 <Justin_o> we\'ll need to update all of this in time though, as at some point you won\'t get any builds on install
+2017-10-05T14:13:14 <Bosmon> What else will that leave behind in addition to the CSS?
+2017-10-05T14:13:56 <Bosmon> Justin_o - it looks like we already have the correct entries for the CSS file in our .gitignore
+2017-10-05T14:14:06 <Bosmon> Is there anything else we might need to add?
+2017-10-05T14:15:33 <Justin_o> Bosmon: build, products, and dist are all included in the gitignore
+2017-10-05T14:16:01 <Bosmon> Justin_o - right - but are there any other files in addition to the CSS which will get left behind outside those directories now?
+2017-10-05T14:16:07 <Justin_o> so i tested this out and the css files are still cleaned out, possibly related to https://github.com/fluid-project/infusion/blob/master/Gruntfile.js#L418
+2017-10-05T14:16:13 <Bosmon> Ah ok
+2017-10-05T14:16:17 <Justin_o> Bosmon: i don\'t think so
+2017-10-05T14:16:44 <Bosmon> Justin_o - well, line 418 is a pre-clean which should be ok.....
+2017-10-05T14:18:09 <Justin_o> Bosmon: yes, but line 419 seems to just run a the stylus:dist command so it\'s probably only generating the one that\'s in dist, and not the one we use under css
+2017-10-05T14:18:27 <Bosmon> Justin_o - ah, I see
+2017-10-05T14:18:41 <Bosmon> I always assumed that they were generated in place and then copied into dist
+2017-10-05T14:18:44 <Justin_o> so i can maybe remove the clean:stylus in the task
+2017-10-05T14:19:09 <Justin_o> there was a reason i didn\'t do that, i can\'t recall exactly but i think it copied over extra paths or folders
+2017-10-05T14:19:12 <Justin_o> or something like that
+2017-10-05T14:21:27 <Justin_o> okay, so of course just removing the clean:stylus task from cleanForDist doesn\'t work because we don\'t actually build the stylus files in the css director anyways
+2017-10-05T14:27:53 <Justin_o> Bosmon: ^
+2017-10-05T14:28:10 <Bosmon> Justin_o - ok, that\'s interesting
+2017-10-05T14:28:15 <Justin_o> Bosmon: so i\'m going to setup extra npm scripts for buildDists and buildStylus and then call both of these in prepublish
+2017-10-05T14:28:24 <Bosmon> We must have done at some time otherwise the .gitignore line wouldn\'t be there :)
+2017-10-05T14:28:28 <Bosmon> But perhaps it has been many years ago
+2017-10-05T14:28:32 <Justin_o> "prepublish": "npm run buildDists && npm run buildStylus"
+2017-10-05T14:29:08 <Justin_o> Bosmon: for non-npm builds we need the stylus in place, but for the dists in npm modules we put it in the dist directory
+2017-10-05T14:29:22 <Bosmon> Justin_o - did we use some CSS building tool before Stylus?
+2017-10-05T14:29:39 <Justin_o> not that i can think of
+2017-10-05T14:29:53 <Justin_o> well actually a long time ago i think there was jscss or something like that
+2017-10-05T14:30:05 <Justin_o> for something to do with the prefs framework, can\'t quite recall
+2017-10-05T14:30:36 <Justin_o> Bosmon: another option would be to re-jig our node module
+2017-10-05T14:30:57 <Justin_o> i think it\'s kind of confusing to have a some stuff in assets and other stuff sourced from src
+2017-10-05T14:31:11 <Justin_o> currently only generated things go in assets and also the things they depend on
+2017-10-05T14:31:16 <Bosmon> Ok
+2017-10-05T14:31:21 <Bosmon> Well, we could JIRA that
+2017-10-05T14:31:22 <Justin_o> so basically just the stylus files and maybe images they use
+2017-10-05T14:31:32 <Justin_o> yes, i think that would be separate work
+2017-10-05T14:31:42 <Bosmon> Let\'s just do the minimum for now to get the CSS files in place
+2017-10-05T14:31:57 <Justin_o> Bosmon: so my npm scripts solution seems to work.. but i haven\'t actually tried to publish anything
+2017-10-05T14:32:42 <Bosmon> Justin_o - I guess users of CSS from a the published module will expect to use them from dist?
+2017-10-05T14:33:59 <Justin_o> i guess so.. i don\'t use enough npm packages to know for sure, but that\'s what it sounded like when we were talking about it before
+2017-10-05T14:34:27 * alanharnum has quit
+2017-10-05T14:34:50 <Bosmon> Justin_o - I guess we should just look at the usage that GPII universal makes of Infusion
+2017-10-05T14:34:59 <Bosmon> Although I don\'t believe it uses any of the prefs framework currently
+2017-10-05T14:35:06 <Justin_o> :(
+2017-10-05T14:35:15 <Justin_o> i guess pcp would
+2017-10-05T14:35:18 <Bosmon> The OAuth privacy pages use a fair amount of Infusion and some widgets
+2017-10-05T14:35:40 <Justin_o> i wonder if that\'s been updated recently or still uses what we had there from a while ago
+2017-10-05T14:35:40 <Bosmon> Justin_o - it\'s not clear they will use our prefs framework CSS, although we need to talk with them about that
+2017-10-05T14:35:47 <Justin_o> okay
+2017-10-05T14:35:54 <Bosmon> Would you have time to come to our next status update meeting on Monday?
+2017-10-05T14:35:57 <Bosmon> 9am for you I think
+2017-10-05T14:36:29 <Bosmon> We kicked around CSS issues a little bit this week, but not with much enlightenment
+2017-10-05T14:36:43 <Bosmon> It seems that the wireframes specify a Windows 10-like look and feel
+2017-10-05T14:36:52 <Bosmon> Since this will be integrated as a task tray popup on Windows
+2017-10-05T14:37:20 <Bosmon> We weren\'t clear what the best way was to achieve this, whilst retaining the responsiveness of the existing styling that we have within the prefs framework
+2017-10-05T14:37:56 <Justin_o> Bosmon: sorry, i won\'t be able to make it on Monday. It\'s a holiday in Canada
+2017-10-05T14:38:09 <Bosmon> ah ok cool
+2017-10-05T14:38:52 <Justin_o> i\'d have to look into what they are doing more to know for sure what they want. But they should be able to restyle the panels I think.. but not sure of how much work it would be.
+2017-10-05T14:40:34 <Justin_o> grrrero: could you please take a look at this PR i sent for FLUID-5534 https://github.com/grrrero/infusion/pull/9
+2017-10-05T14:40:54 <grrrero> Justin_o: Got it
+2017-10-05T14:40:57 <Justin_o> it\'s to update some build steps so that all the requirements for the test are in place
+2017-10-05T14:40:59 <Justin_o> grrrero: thanks
+2017-10-05T14:41:03 <grrrero> np
+2017-10-05T14:45:04 * michelled1 joined the channel
+2017-10-05T14:49:11 <Justin_o> grrrero: thanks
+2017-10-05T14:49:25 <grrrero> Justin_o: np
+2017-10-05T14:49:50 <Justin_o> Bosmon: https://github.com/fluid-project/infusion/pull/844 has been updated to include changes to the prepublish so the stylus files should be processed and in place on install
+2017-10-05T14:53:15 * jhung_away is now known as jhung
+2017-10-05T14:56:37 <Justin_o> colinclark: i\'m looking into the License for the infusion-icons repo
+2017-10-05T14:56:51 <colinclark> oh great
+2017-10-05T14:57:03 <colinclark> how is it going, Justin_o?
+2017-10-05T14:57:51 <Justin_o> I think it\'s going okay.. i\'m going to file a PR soon, would you be able to take a look at it?
+2017-10-05T14:58:01 <colinclark> for sure
+2017-10-05T14:58:15 <colinclark> Justin_o: So I was able to complete my research into CLAs last night
+2017-10-05T14:58:28 <colinclark> I have an opinion now, if not quite a proposal yet :)
+2017-10-05T14:58:29 <Justin_o> awesome
+2017-10-05T14:58:32 <Justin_o> okay
+2017-10-05T14:58:45 <Justin_o> that\'s cool.. so a step away
+2017-10-05T14:58:51 <Justin_o> how are things looking?
+2017-10-05T14:58:57 <colinclark> I think, in general, it\'s roughly right to consider CLAs as a barrier to contribution
+2017-10-05T14:59:05 <colinclark> and largely unncessary
+2017-10-05T14:59:19 <colinclark> there is one unique characteristic of our CLA, though, that we may want to preserve
+2017-10-05T14:59:52 <colinclark> So, you remember our discussion about the Creative Commons license yesterday?
+2017-10-05T14:59:59 <Justin_o> yes
+2017-10-05T15:00:04 <colinclark> It has what I think is a significant weakness
+2017-10-05T15:00:11 <colinclark> and one I\'d like to learn more about
+2017-10-05T15:00:15 <colinclark> But let me back up
+2017-10-05T15:00:36 <colinclark> The most significant argument against CLAs, I think, is that "your license itself should provide you with the necessary protections"
+2017-10-05T15:00:50 <colinclark> So CLAs, including ours, provide a couple of unique things
+2017-10-05T15:01:08 <colinclark> Aside from just the explicit statement of "This really is my work," which I don\'t think is worth much in a pragmatic or in a legal sense
+2017-10-05T15:01:34 <colinclark> Our CLA provides a) some additional patent protections and b) enables us to relicense the work
+2017-10-05T15:02:02 <colinclark> I\'m going to set aside a), because it\'s complex and probably not particularly relevant to Infusion
+2017-10-05T15:02:05 <colinclark> b) is interesting
+2017-10-05T15:02:31 <colinclark> So, Creative Commons, as we talked about yesterday, doesn\'t provide any method of "upgrading"
+2017-10-05T15:02:36 <colinclark> most open source licenses do
+2017-10-05T15:02:54 * danayo joined the channel
+'
+

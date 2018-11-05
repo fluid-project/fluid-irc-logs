@@ -1,0 +1,286 @@
+b'2013-11-14T18:47:09 <Bosmon7> So you mentioned that the current behaviour does actually seem to "accidentally" be what you want?
+2013-11-14T18:47:18 <Bosmon7> That the model relay happens first and change listeners happen afterwards?
+2013-11-14T18:47:51 <Justin_o> Bosmon7: i believe so.. let me test that out again
+2013-11-14T18:48:19 <Justin_o> Bosmon7: it could also just be that they happen to get attached after
+2013-11-14T18:48:26 <Bosmon7> Given how complex this is seeming, it may well be better to just "depend on the accident" for as long as it seems to be working, and for me to try to get the new impl working as quickly as possible
+2013-11-14T18:48:31 <Bosmon7> Although this can\'t happen before next week
+2013-11-14T18:49:17 * mrvisser has quit
+2013-11-14T18:51:06 <Justin_o> Bosmon7: i see.. yes.. i can understand that this would take time.. the sad news is that i\'m not sure i can actually rework the code to use the current style. I don\'t know if i can convert this https://github.com/jobara/infusion/blob/ecd1475ed32437d14b00c171cbb77a675d76e3f8/src/framework/preferences/js/Panels.js#L322-L330
+2013-11-14T18:51:56 <Bosmon7> Justin_o - ah, you\'re saying that the sequencing works if the listeners are added manually, but not through the declarative system?
+2013-11-14T18:52:03 <Justin_o> the main problem being that addListener takes a function and you can see here i am relying on IoC to get values
+2013-11-14T18:52:10 <Justin_o> Bosmon7: yep
+2013-11-14T18:52:17 <Bosmon7> Justin_o - urgh
+2013-11-14T18:52:30 <Justin_o> yes.. exactly :(
+2013-11-14T18:52:42 <Justin_o> Bosmon7: i also have another strange issue to talk to you about after this one
+2013-11-14T18:53:16 <Bosmon7> Justin_o - it doesn\'t seem like it would be too hard to massage this block so that it became a traditional crummy onCreate block that calls "addListener" ......
+2013-11-14T18:54:18 <Justin_o> Bosmon7: where i\'m getting stumped is that i don\'t know ahead of time what the values are and i\'m constructing IoC declarations to get the values
+2013-11-14T18:54:36 <Justin_o> addListener would take a function
+2013-11-14T18:55:28 <Justin_o> i figure i could get around that reasonably with an invoker, except for the componentNames
+2013-11-14T18:55:45 <Bosmon7> Justin_o - fine...... you can generate a thing which calls addListener on the configuration after it has manually supplied it to fluid.expandOptoins
+2013-11-14T18:55:48 <Justin_o> unless i put that into the components options
+2013-11-14T18:55:48 <Bosmon7> expandOptions
+2013-11-14T18:56:04 <Bosmon7> This will certainly stand out as a piece of flimsy rubbish to be replaced when the new framework arrives : P
+2013-11-14T18:58:06 <Justin_o> Bosmon7: where would i put that in the component tree?
+2013-11-14T18:59:29 <Bosmon7> Justin_o - you will make some standalone utility function, and generate a call to it in the onCreate block of the component
+2013-11-14T18:59:48 <Bosmon7> One of the arguments to it will be the component\'s "that" which can then be used to call fluid.expandOptions to generate the model listener
+2013-11-14T19:01:16 <Justin_o> Bosmon7: you mean modify the listeners after the fact
+2013-11-14T19:01:28 <Justin_o> ?
+2013-11-14T19:02:18 <Bosmon7> Justin_o - yes, you will generate an onCreate listener which will just call "addListener" in the old conventional way which you have found to work
+2013-11-14T19:02:34 <Bosmon7> And you will expand the IoC configuration supplied in order to generate the listener by hand
+2013-11-14T19:02:47 <Justin_o> Bosmon7: sure i\'ll do that.. i might just put an object in the options that has the info i need to generate it
+2013-11-14T19:03:11 <anastasiac> say, yzen, can you give me an ETA on CSpace information, so that I can do some planning of my time?
+2013-11-14T19:03:26 <Justin_o> Bosmon7: oh i see
+2013-11-14T19:03:38 <yzen> anastasiac: eod today
+2013-11-14T19:03:52 <anastasiac> ok, thanks yzen
+2013-11-14T19:03:59 <Justin_o> Bosmon7: okay.. i\'ll get to that then..
+2013-11-14T19:04:25 <Bosmon7> Justin_o - good luck!
+2013-11-14T19:04:26 <Justin_o> Bosmon7: do you have time to hear the second problem?
+2013-11-14T19:04:27 * mrvisser joined the channel
+2013-11-14T19:04:28 <Bosmon7> Justin_o - yes
+2013-11-14T19:06:24 <Justin_o> Bosmon7: so the second issue is regarding the rendering of the sub panels.. i\'m not really sure what\'s causing this as my unit tests were passing... but what it looks like is that if the conditional sub panel is created on initialization of the composite panel, it creates and destroys fine, but for those that are not created yet.. they don\'t get created
+2013-11-14T19:06:25 <Justin_o> afterwards...
+2013-11-14T19:07:25 * greggy has quit
+2013-11-14T19:07:36 <Justin_o> Bosmon7: that\'s not quite correct.. the sub panels are created, but their markup isn\'t properly rendered out
+2013-11-14T19:08:02 <Justin_o> but if they are created on init, they do work properly even after being destroyed and recreated
+2013-11-14T19:08:25 <Justin_o> and there are no errors being thrown
+2013-11-14T19:08:26 <Bosmon7> What do you mean by "don\'t work properly"
+2013-11-14T19:08:39 <Bosmon7> It\'s not a very good bug report :)
+2013-11-14T19:10:11 * colinclark joined the channel
+2013-11-14T19:10:30 <Justin_o> yes.. sorry.. i\'m still trying to get a grasp on this one...
+2013-11-14T19:11:16 <Justin_o> Bosmon7: it might be easier to try this example from anastasiac\'s branch https://github.com/acheetham/infusion/blob/PFID/src/instructionalDemos/framework/preferences/compositeSchemas/conditional.html
+2013-11-14T19:11:45 <Justin_o> Bosmon7: but it looks like just the template is getting rendered for sub panels
+2013-11-14T19:12:32 <Justin_o> Bosmon7: however, if those sub panels are shown when the composite panel is created.. that is, if the model value they are dependent on is true when the composite panel is created, they render correctly
+2013-11-14T19:13:11 <Bosmon7> Justin_o - I might have to leave you to debug that one for yourself :)
+2013-11-14T19:13:16 <Bosmon7> Since I am a bit running out of time ....
+2013-11-14T19:14:56 <Justin_o> Bosmon7: yah no problem.. i get the first part fixed up and try to come back to this one
+2013-11-14T19:15:23 <Justin_o> Bosmon7: the strange thing though is that the produce tree seems to be the same in both cases.. so i\'m not really sure what could be going wrong
+2013-11-14T19:15:39 <Justin_o> hmm.. i wonder if it might have to do with cutpoints
+2013-11-14T19:15:46 <Justin_o> anyways.. i\'ll keep trying
+2013-11-14T19:16:19 <Justin_o> Bosmon7: thanks for the help
+2013-11-14T19:27:38 * vjoanna has quit
+2013-11-14T19:30:37 * colinclark has quit
+2013-11-14T19:32:21 * colinclark joined the channel
+2013-11-14T19:36:42 * vjoanna joined the channel
+2013-11-14T19:40:10 * colinclark has quit
+2013-11-14T19:45:14 * colinclark joined the channel
+2013-11-14T19:58:30 * colinclark has quit
+2013-11-14T19:59:45 * colinclark joined the channel
+2013-11-14T20:05:43 * Aver joined the channel
+2013-11-14T20:05:53 <Aver> Can anyone tell me if the FLOE video player is able to handle and play FLV flash videos?
+2013-11-14T20:06:12 * jhung has quit
+2013-11-14T20:06:23 <Aver> The documentation is lacking any instructions but mediaelementjs falls back properly and I am unable to find out how to make that work..
+2013-11-14T20:12:57 * colinclark_ joined the channel
+2013-11-14T20:13:57 <Aver> Hello?
+2013-11-14T20:15:05 * colinclark has quit
+2013-11-14T20:15:05 * colinclark_ is now known as colinclark
+2013-11-14T20:16:52 * greggy joined the channel
+2013-11-14T20:18:20 <colinclark> Hi Aver
+2013-11-14T20:18:27 <colinclark> I\'m not sure the answer to your question off the top of my head
+2013-11-14T20:18:36 <colinclark> but anastasiac might know, she\'s used it quite a bit
+2013-11-14T20:19:05 <Aver> Ok
+2013-11-14T20:19:26 <Aver> We are trying to integrate the FLOE player and was hoping that because it used MediaElementJS it would handle FLV files nicely..
+2013-11-14T20:19:37 <colinclark> But you\'re right, our use of MediaElement.js should ensure FLV playback, yes
+2013-11-14T20:19:38 <Aver> however, we are unable to determine how to play FLV (can\'t find any documentation)
+2013-11-14T20:19:49 <colinclark> Have you tried it yet?
+2013-11-14T20:20:01 <Aver> BTW great job on the accessibility of the video player :) Its very impressive
+2013-11-14T20:20:10 <colinclark> Oh, thanks!
+2013-11-14T20:20:28 <colinclark> What project will you be using the Video Player in?
+2013-11-14T20:21:31 <Aver> Were evaluating it to be the standard video player for our LMS :)
+2013-11-14T20:22:28 <colinclark> ah, cool
+2013-11-14T20:22:30 <colinclark> Which LMS?
+2013-11-14T20:25:58 <anastasiac> hi, Aver. I apologize for the lack of documentation for the video player. It\'s still in its relatively early stages. We haven\'t tested with FLV, but as colinclark said, it should work. I\'m guessing you\'ve tried it and it doesn\'t?
+2013-11-14T20:26:24 <Aver> Ya
+2013-11-14T20:26:53 <Aver> There doesn\'t seem to be a source renderer for video/flv
+2013-11-14T20:27:03 <Aver> Were evaluating it for D2L
+2013-11-14T20:27:09 <colinclark> Aha
+2013-11-14T20:27:34 <colinclark> Say hi to all my friends there for me :)
+2013-11-14T20:27:52 <Aver> I will Sandra introduced us to this lovely player :)
+2013-11-14T20:28:00 <colinclark> awesome
+2013-11-14T20:28:04 <colinclark> Do you work with Sean Yo as well?
+2013-11-14T20:28:10 <Aver> hes on my team
+2013-11-14T20:28:21 <Aver> :)
+2013-11-14T20:28:58 <anastasiac> Aver, cindyli may be able to correct me if I\'m wrong, but I believe the source renderer might be pluggable, which means if it should be straightforward to add a flash renderer
+2013-11-14T20:28:58 <Aver> Anastasiac do you know where we could look to fix the flash support ? We could look at contributing a fix but were not entirely sure where to look..
+2013-11-14T20:29:06 * greggy has quit
+2013-11-14T20:29:21 * colinclark has quit
+2013-11-14T20:30:48 <anastasiac> Aver, I\'ll have a look into it, refresh my memory regarding the source renderer. Thanks for the offer :-)
+2013-11-14T20:31:42 <Aver> ok perfect
+2013-11-14T20:31:53 * vsumner joined the channel
+2013-11-14T20:32:02 <Aver> In the meantime well hammer you guys with questions :P
+2013-11-14T20:50:08 * greggy joined the channel
+2013-11-14T20:53:51 <Justin_o> Bosmon7: sadly it seems i was wrong.. even adding the listeners with a call to addListener happens before the model relay
+2013-11-14T21:17:16 * cindyli has quit
+2013-11-14T21:24:00 <anastasiac> Aver, the video player has no trouble with flv, you just need to set an option to help it recognize the type of "video/flv"; the default source renderer will work
+2013-11-14T21:25:03 <anastasiac> Aver, this gist shows you what the option should look like: https://gist.github.com/acheetham/7474477
+2013-11-14T21:25:26 <anastasiac> just add that to the options block passed as the second argument to fluid.videoPlayer()
+2013-11-14T21:25:30 <anastasiac> Aver, does that make sense?
+2013-11-14T21:27:00 <anastasiac> alternatively, the actual fix to the video player itself would be done in VIdeoPlayer_media.js, in the sourceRenderers block defined at line 109 or thereabouts
+2013-11-14T21:29:05 <anastasiac> Aver, I\'ve filed an issue for this: http://issues.fluidproject.org/browse/VP-320
+2013-11-14T21:51:35 * greggy has quit
+2013-11-14T21:52:54 * anvk has quit
+2013-11-14T21:58:51 * sgithens has quit
+2013-11-14T22:27:24 * anastasiac has quit
+2013-11-14T22:58:19 * mrvisser has quit
+2013-11-14T22:58:55 * mrvisser joined the channel
+2013-11-14T23:03:04 * mrvisser has quit
+2013-11-14T23:07:10 <Aver> Hey anastasiac - Thanks for thos updates
+2013-11-14T23:07:15 <Aver> sorry I was away for a second :P
+2013-11-14T23:23:35 * Bosmon7 has quit
+2013-11-14T23:24:08 * vjoanna has quit
+2013-11-14T23:26:28 * avtar has quit
+2013-11-14T23:47:39 * vjoanna joined the channel
+2013-11-14T23:50:57 * vjoanna has left the channel
+'
+
+b'2013-11-14T00:34:34 * mrvisser joined the channel
+2013-11-14T00:39:54 * mrvisser has quit
+2013-11-14T00:58:55 * jhung has quit
+2013-11-14T01:03:50 * danaayotte joined the channel
+2013-11-14T01:03:59 * danaayotte has left the channel
+2013-11-14T01:21:21 * thealphanerd has quit
+2013-11-14T01:38:10 * danaayotte joined the channel
+2013-11-14T01:45:17 * thealphanerd joined the channel
+2013-11-14T01:45:20 * jhung joined the channel
+2013-11-14T01:48:00 * colinclark has quit
+2013-11-14T02:17:31 * danaayotte has quit
+2013-11-14T03:00:37 * jhung has quit
+2013-11-14T04:08:49 * yzen joined the channel
+2013-11-14T04:13:11 * thealphanerd has quit
+2013-11-14T06:36:58 * yzen has quit
+2013-11-14T06:37:01 * JASIGLogBot has quit
+2013-11-14T06:37:01 * scott_gonzalez has quit
+2013-11-14T06:37:01 * Justin_o has quit
+2013-11-14T06:37:13 * sgithens has quit
+2013-11-14T06:37:15 * nanook has quit
+2013-11-14T08:53:15 * jhernandez joined the channel
+2013-11-14T08:53:15 * sgithens joined the channel
+2013-11-14T08:53:15 * Justin_o joined the channel
+2013-11-14T08:53:15 * nanook joined the channel
+2013-11-14T08:53:15 * JASIGLogBot joined the channel
+2013-11-14T08:53:15 * scott_gonzalez joined the channel
+2013-11-14T08:53:56 * sgithens has quit
+2013-11-14T09:00:12 * sgithens joined the channel
+2013-11-14T09:52:44 * thealphanerd joined the channel
+2013-11-14T10:01:45 * thealphanerd has quit
+2013-11-14T11:54:50 * mrvisser joined the channel
+2013-11-14T12:03:00 * danaayotte joined the channel
+2013-11-14T12:04:22 * jhernandez has quit
+2013-11-14T12:09:10 * jhernandez joined the channel
+2013-11-14T12:36:12 * jhung joined the channel
+2013-11-14T12:48:52 * SonicX joined the channel
+2013-11-14T12:50:15 * mrvisser has quit
+2013-11-14T12:50:24 * mrvisser joined the channel
+2013-11-14T13:16:23 * danaayotte has quit
+2013-11-14T13:22:25 * anvk joined the channel
+2013-11-14T13:24:21 * SonicX has quit
+2013-11-14T13:39:11 * yzen joined the channel
+2013-11-14T13:40:51 * mrvisser has quit
+2013-11-14T13:41:04 * mrvisser joined the channel
+2013-11-14T13:49:03 * mrvisser has quit
+2013-11-14T13:49:38 * mrvisser joined the channel
+2013-11-14T13:51:30 * michelled joined the channel
+2013-11-14T13:54:10 * mrvisser has quit
+2013-11-14T13:56:17 * mrvisser joined the channel
+2013-11-14T14:03:34 * yzen has quit
+2013-11-14T14:11:43 * cindyli joined the channel
+2013-11-14T14:17:38 * greggy joined the channel
+2013-11-14T14:28:09 * mrvisser has quit
+2013-11-14T14:28:43 * mrvisser joined the channel
+2013-11-14T14:28:45 * vjoanna joined the channel
+2013-11-14T14:33:22 * mrvisser has quit
+2013-11-14T14:34:03 * yzen joined the channel
+2013-11-14T15:00:18 * sgithens has quit
+2013-11-14T15:04:32 * clown joined the channel
+2013-11-14T15:04:51 * clown is now known as clown_mtg
+2013-11-14T15:09:02 * avtar joined the channel
+2013-11-14T15:17:03 * anastasiac joined the channel
+2013-11-14T15:20:47 * mrvisser joined the channel
+2013-11-14T15:32:12 <yzen> jhernandez: yo
+2013-11-14T15:32:13 <yzen> :)
+2013-11-14T15:32:34 <yzen> so the original pull before the last change was exactly like the one that we had for v0.1
+2013-11-14T15:38:13 * mrvisser has quit
+2013-11-14T15:38:45 * mrvisser joined the channel
+2013-11-14T15:43:29 <anastasiac> Justin_o, I\'ve pushed my PFID branch
+2013-11-14T15:43:32 * mrvisser has quit
+2013-11-14T15:45:10 * sgithens joined the channel
+2013-11-14T15:49:44 * mrvisser joined the channel
+2013-11-14T15:54:51 * michelled has quit
+2013-11-14T16:06:15 * clown_mtg is now known as clown
+2013-11-14T16:07:12 * avtar has quit
+2013-11-14T16:13:19 * colinclark joined the channel
+2013-11-14T16:15:31 * avtar joined the channel
+2013-11-14T16:53:03 * yzen has quit
+2013-11-14T17:40:53 * SonicX joined the channel
+2013-11-14T17:47:08 * cindyli has quit
+2013-11-14T17:50:16 * michelled joined the channel
+2013-11-14T17:52:24 * yzen joined the channel
+2013-11-14T18:01:11 * michelled has quit
+2013-11-14T18:02:47 * mrvisser has quit
+2013-11-14T18:03:21 * mrvisser joined the channel
+2013-11-14T18:08:03 * mrvisser has quit
+2013-11-14T18:08:58 * Bosmon7 joined the channel
+2013-11-14T18:09:11 <Justin_o> Bosmon7: hello
+2013-11-14T18:11:57 <Bosmon7> hi Justin_o
+2013-11-14T18:13:23 <Justin_o> Bosmon7: i\'m trying to fix up some issues that anastasiac has found with the FLUID-5205 branch.. The first issue is that you need to toggle the value for a controlling adjuster (one that will change a model value and control the creation/destruction of other adjusters)
+2013-11-14T18:13:47 <Justin_o> the issue is that for the conditional panels.. we rerender the panel on certain model changes.. the problem though is that this refreshing happens before the  model relay takes place.. the result is that the control that triggered the model change is rerendered with its old value
+2013-11-14T18:14:38 <Justin_o> if there was a way to set the priority of the modelListeners i could probably get around the issue.. do you know of any other alternative if this isn\'t possible?
+2013-11-14T18:20:00 <Bosmon7> Ok, fine
+2013-11-14T18:20:22 <Bosmon7> I can reveal that under the current ChangeApplier implementation, priorities for modelListeners "probably" work
+2013-11-14T18:20:29 <Bosmon7> Although I had been planning to abolish this facility
+2013-11-14T18:21:51 <Justin_o> Bosmon7: does that mean i\'ll have to switch back to the old style?
+2013-11-14T18:22:14 <Justin_o> Bosmon7: or can we expect priorities to come back shortly?
+2013-11-14T18:23:10 * mrvisser joined the channel
+2013-11-14T18:24:16 * SonicX_ joined the channel
+2013-11-14T18:24:29 <Bosmon7> Justin_o - sorry, it appears that priorities are not available even with the old impl
+2013-11-14T18:24:37 <Bosmon7> Even though it would have been easy in theory for it to support them
+2013-11-14T18:24:42 * SonicX has quit
+2013-11-14T18:24:45 * SonicX_ has quit
+2013-11-14T18:24:50 <Bosmon7> The relevant part of the record is not passed through in the ChangeApplier\'s "addListener" function
+2013-11-14T18:25:19 <Bosmon7> It should be in the 4th argument position, but the ChangeApplier hardwires it to null
+2013-11-14T18:25:51 <Justin_o> Bosmon7: i see... is there a change in when these things are fired.. i think i did make a quick test and it seemed that listers bound to the changeApplier would fire after the source guard that the model relay uses
+2013-11-14T18:26:36 <Bosmon7> Justin_o - this kind of thing shouldn\'t be depended on
+2013-11-14T18:27:30 <Justin_o> Bosmon7: right.. any suggestions on what to do about it, in this case?
+2013-11-14T18:28:59 <Bosmon7> Justin_o - it\'s disagreeable, but I would suggest setting up a "bottling relay"
+2013-11-14T18:29:13 <Bosmon7> That is, something which collects up change events in batches and then refires them at a particular lifecycle point
+2013-11-14T18:29:14 <Justin_o> "bottling relay" ?
+2013-11-14T18:29:52 <Justin_o> i\'m not really sure where to begin with that :)
+2013-11-14T18:30:07 <Justin_o> Bosmon7: one thing is that the listeners are bound from different components
+2013-11-14T18:31:18 <Bosmon7> Justin_o - it will be relatively easy, given the facilities in JavaScript :)
+2013-11-14T18:31:24 <Justin_o> Bosmon7: if you have time and are interested, you can try out the case that anastasia came up with https://github.com/acheetham/infusion/blob/PFID/src/instructionalDemos/framework/preferences/compositeSchemas/conditional.html
+2013-11-14T18:31:40 <Bosmon7> All you need to do is to create a "thing" that has the same addListener/removeListener signature as the changeApplier\'s modelChanged event
+2013-11-14T18:31:52 <Bosmon7> But which wraps all the listeners supplied with the "bottling logic"
+2013-11-14T18:33:40 <Justin_o> Bosmon7: do you mean to create another thing like the modelRelay?
+2013-11-14T18:34:13 <Bosmon7> Justin_o - very similar, yes, although not as complex
+2013-11-14T18:34:21 <Bosmon7> Since it won\'t do any "rebasing" of the changes or model structure
+2013-11-14T18:34:33 <Bosmon7> It will just store the arguments that are supplied to the listeners and reproduce them later
+2013-11-14T18:34:46 * cindyli joined the channel
+2013-11-14T18:36:43 <Justin_o> Bosmon7: how would i know when to reproduce them?
+2013-11-14T18:37:08 <Bosmon7> Justin_o - they would be triggered by a "conventional event"
+2013-11-14T18:37:54 <Justin_o> Bosmon7: i guess i actually mean "when" since i\'ve been waiting for the model change event.. i\'m not sure what else to wait for :)
+2013-11-14T18:38:19 <Justin_o> Bosmon7: in the end i guess it would be easier just to listen to the sub panel\'s model change event instead of the composite panel\'s
+2013-11-14T18:38:38 * Bosmon7 has quit
+2013-11-14T18:38:55 <Justin_o> but the path is different :(
+2013-11-14T18:39:01 <Justin_o> model path that is
+2013-11-14T18:39:09 * Bosmon7 joined the channel
+2013-11-14T18:39:15 <Bosmon7> It\'s the whole fact that there is a conventional event which creates the seequence point
+2013-11-14T18:39:28 <Bosmon7> So you may as well turn it into an advantage : P
+2013-11-14T18:40:28 <Justin_o> Bosmon7: sadly i\'m not following.. the start of the change is triggered by a model change event as a result of value binding from the renderer
+2013-11-14T18:41:16 <Bosmon7> Justin_o - yes
+2013-11-14T18:41:34 <Bosmon7> This model change event apparently is geared into a re-rendering event and via the creation and destruction of some components
+2013-11-14T18:41:43 <Justin_o> Bosmon7: yes
+2013-11-14T18:42:06 <Bosmon7> So this re-rendering then creates a "conventional sequence point" - or if it doesn\'t, you could easily create one
+2013-11-14T18:42:28 <Bosmon7> Oh, I see.... it is the rendering activity itself which you want to sequence
+2013-11-14T18:42:30 <Justin_o> Bosmon7: but it\'s precisely this binding that is the problem since the model relay that is also waiting on it
+2013-11-14T18:42:35 <Bosmon7> yes, ok
+2013-11-14T18:42:51 <Bosmon7> Well, model relay, as in the "new framework", needs to get fast-tracked relative to everything else
+2013-11-14T18:42:56 <Bosmon7> ok
+2013-11-14T18:43:11 <Bosmon7> So this actually suggests that we should fix up cindyli\'s modelRelay to act more similarly to the upcoming one
+2013-11-14T18:43:25 <Bosmon7> In fact, the videoPlayer\'s relay does indeed do this kind of "bottling"
+2013-11-14T18:43:37 <Bosmon7> So our "temporary impl" is starting to become more and more similar to our other "temporary impl"
+2013-11-14T18:44:32 * mrvisser has quit
+2013-11-14T18:45:08 * mrvisser joined the channel
+2013-11-14T18:45:31 * colinclark has quit
+2013-11-14T18:46:41 <Justin_o> Bosmon7: what\'s next?
+2013-11-14T18:46:57 <Bosmon7> Justin_o - ok
+'
+

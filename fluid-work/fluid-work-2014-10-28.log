@@ -1,0 +1,278 @@
+b'2014-10-28T17:02:31 <kasparnet> I\'m fine with that... one could just get "all" and then extract settings afterwards,  if they wanted to
+2014-10-28T17:02:34 <Bosmon> Well
+2014-10-28T17:02:41 <Bosmon> yes
+2014-10-28T17:03:21 <Bosmon> Certainly we don\'t have an expectation that if a settings handler is called in GET mode with an empty settings block, it will return nothing
+2014-10-28T17:03:29 <Bosmon> Which I imagine is what the current "spec" implies : P
+2014-10-28T17:03:50 <Bosmon> Where this "spec" consists of a bunch of payloads written in a wiki page without any explanation of what they mean : P
+2014-10-28T17:04:33 <kasparnet> lol
+2014-10-28T17:05:07 <Bosmon> ok, well I tell a lie
+2014-10-28T17:05:17 <Bosmon> It appears that the Windows Registry settings handler does implement this behaviour
+2014-10-28T17:06:03 <Bosmon> Well, we may as well keep it then
+2014-10-28T17:06:06 <Bosmon> No point disturbing anything
+2014-10-28T17:06:13 <Bosmon> everything
+2014-10-28T17:06:29 <Bosmon> Clearly in 2012 this was much clearer in my memory than it is now
+2014-10-28T17:07:35 <Bosmon> kasparnet - the majority of the "duff" settings handlers seem to be your ones : P
+2014-10-28T17:07:42 <Bosmon> e.g. the JSON settings handler simply reads and writes everything
+2014-10-28T17:07:48 <Bosmon> It doesn\'t care what payloads you give it
+2014-10-28T17:08:54 <Bosmon> Ah, I tell a lie again
+2014-10-28T17:08:59 <Bosmon> I see this "transformFilePayload" method
+2014-10-28T17:10:27 <kasparnet> Bosmon: and actually the JSON settings handler is mostly slim_\'s work.. though I WILL take the credit for everything that\'s wrong with the XML and INI settingshandler (which I\'m sure is significantly more than the JSON handler :) )
+2014-10-28T17:10:53 <Bosmon> kasparnet - well, they all factor through the same utilities in the end
+2014-10-28T17:11:21 <Bosmon> In particular this poorly-named "gpii.settingsHandlers.getSettings" which unfortunately I didn\'t read carefully enough before to find out what it did
+2014-10-28T17:11:46 <Bosmon> As it turns out, it is outrageously broken... and in something like the same way the ORCA settings handler is
+2014-10-28T17:12:41 <Bosmon> urghhhhhhhhh
+2014-10-28T17:12:43 <kasparnet> Bosmon: oh no
+2014-10-28T17:12:52 <kasparnet> So does it make sense for me to take some of this stuff on?
+2014-10-28T17:13:01 <kasparnet> to allow you to focus on something else?
+2014-10-28T17:13:05 <Bosmon> Well, we\'ll have to have a big call about it
+2014-10-28T17:13:11 <Bosmon> Let\'s put it head of the agenda for tomorrow
+2014-10-28T17:13:42 <Bosmon> I really wish I had read any of this stuff more carefully
+2014-10-28T17:16:17 <Bosmon> Looking at the JSONSettingsHandler tests.......
+2014-10-28T17:16:23 <Bosmon> This is nothing like the model I thought we had implemented : P
+2014-10-28T17:17:03 * anastasiac_ joined the channel
+2014-10-28T17:17:44 * anastasiac has quit
+2014-10-28T17:17:50 * anastasiac_ is now known as anastasiac
+2014-10-28T17:19:01 <Bosmon> What\'s astounding is that the integration tests that I wrote actually work
+2014-10-28T17:19:14 <Bosmon> Which proves that nothing in the system currently actually cares what settings values become set
+2014-10-28T17:19:33 <Bosmon> ugggg
+2014-10-28T17:19:56 <Bosmon> Anyway, the answer to VANTUNEZ is the same - if a setting has no value, eliminate the key from the return payload from GET
+2014-10-28T17:20:13 <Bosmon> And if it is a SET request, eliminate the "oldValue" element from the structure which belongs to it
+2014-10-28T17:20:29 <Bosmon> We never specified or thought about this behaviour before, but now is the time to do it
+2014-10-28T17:20:31 <Bosmon> jhernandez ^
+2014-10-28T17:20:51 <kasparnet> Bosmon: btw, do you have time for a skype chat at some point today/tonight?
+2014-10-28T17:20:57 <Bosmon> kasparnet - sure
+2014-10-28T17:21:04 <kasparnet> I have a bunch of annoying questions for you :)
+2014-10-28T17:21:04 <Bosmon> I am available - when do your metings end?
+2014-10-28T17:21:10 <kasparnet> they just ended
+2014-10-28T17:21:18 <kasparnet> I have to eat in 40 mins
+2014-10-28T17:21:34 <kasparnet> so it should either be before then, or in 1h30m plus
+2014-10-28T17:21:38 <Bosmon> ok
+2014-10-28T17:21:40 <Bosmon> Let\'s DO IT NOW
+2014-10-28T17:21:43 <kasparnet> cool
+2014-10-28T17:22:07 <Bosmon> kasparnet - http://lucidity.com/nasrudin/nasrudin34.html
+2014-10-28T17:25:36 <jhernandez> Bosmon: got it, thanks!
+2014-10-28T17:28:02 * danaayotte_ joined the channel
+2014-10-28T17:50:49 * jhung_away is now known as jhung
+2014-10-28T17:56:03 * jessm has quit
+2014-10-28T18:00:16 * anastasiac has quit
+2014-10-28T18:02:00 * anastasiac joined the channel
+2014-10-28T18:05:37 <slim_> kasparnet: Bosmon: is there a problem with the JSON settings handler? I have had a mind to optimize it at some point
+2014-10-28T18:06:08 <slim_> Oh I see you\'r finally looking at wha twe return when setting? :)
+2014-10-28T18:06:36 <Bosmon> slim_ - perhaps a less serious one than I thought - but we should certainly normalise its behaviour with respect to missing values in the same way I\'m suggesting to jhernandez
+2014-10-28T18:06:38 <slim_> I think I never did as wasn\'t actually used yet. Can easily do. Just give me a bug
+2014-10-28T18:06:49 <Bosmon> Although it\'s natural behaviour is probably reasonable
+2014-10-28T18:07:08 <Bosmon> I expect it will probably return payloads filled with "undefined"
+2014-10-28T18:07:49 <slim_> Bosmon: soz I have to go. Feel free to assign a jira to me.
+2014-10-28T18:07:55 * slim_ is now known as slee_away
+2014-10-28T18:07:55 <Bosmon> Cheers, slim_
+2014-10-28T18:12:26 <jhung> anastasiac: I noticed that a line-height of 1.25 is set on the body of the fluid website. Where does this value get set? I would like to increase it a little.
+2014-10-28T18:13:34 * kasparnet has quit
+2014-10-28T18:15:04 <anastasiac> jhung, checking
+2014-10-28T18:15:47 <Justin_o> cindyli: i\'ve got a working implementation for iOS based on option 2 from this blog http://techiepulkit.blogspot.ca/2014/09/iframe-ios-7-safari-issues-workarounds.html
+2014-10-28T18:16:11 <Justin_o> cindyli: it\'s not completely ideal but here\'s what I have so far to get it to work. We\'ll probably need to fix this up a bit more though.
+2014-10-28T18:16:51 <anastasiac> ah, jhung, that\xe2\x80\x99s something added by UIO, obviously.. I don\xe2\x80\x99t actually know why it\xe2\x80\x99s default line-height is 1.25 and not 1, but that should be overridable\xe2\x80\xa6 checking how
+2014-10-28T18:17:21 <cindyli> cool. thanks, Justin_o
+2014-10-28T18:17:46 <Justin_o> cind on the flc-prefsEditor-iframe div set the following styles "height: 165px; width 402px; overflow: scroll; -webkit-overflow-scrolling: touch;"
+2014-10-28T18:17:48 <Justin_o> cindyli:
+2014-10-28T18:18:42 <Justin_o> cindyli:  on the iframe itself set the scrolling attribute to "no" and the styles "width: 402px; height: 100%;"
+2014-10-28T18:19:35 <Justin_o> cindyli: that should work, but it will require some code changes to set the height on the div instead of the iframe, and to add the scrolling="no" attribute to the iframe, the rest could be done with media quieres although we seem to have to know the width the px
+2014-10-28T18:28:41 * danaayotte_ has quit
+2014-10-28T18:32:42 <jhung> anastasiac: I pushed up changes to my FLUID-5451 branch.
+2014-10-28T18:33:15 <jhung> I will look at the comments you and Justin_o left on build site pull request now
+2014-10-28T18:33:34 <anastasiac> jhung, it looks like you have inadvertently discovered a bug in our documentation :-) I don\xe2\x80\x99t know how to override the defaults anymore. I checked our API docs, and they say how to do it, but what they say doesn\xe2\x80\x99t work!
+2014-10-28T18:34:03 <jhung> anastasiac: Oh! yay I guess? :)
+2014-10-28T18:34:48 <anastasiac> jhung, I\xe2\x80\x99ll have to look into this, probably check in with cindyli on the correct way to override the enhancer defaults for UIO, and I\xe2\x80\x99ll file a JIRA about fixing the docs
+2014-10-28T18:35:18 <jhung> sounds good. Let me know what jira # so I can make a comment too anastasiac
+2014-10-28T18:38:48 <anastasiac> ok, jhung, I will still do as I said, but: The default linespace in the code is \xe2\x80\x9c1\xe2\x80\x9d so I have no idea where the 1.25 is coming from!! And obviously, overriding the default isn\xe2\x80\x99t what\xe2\x80\x99s required :-(
+2014-10-28T18:39:58 <jhung> Ok. It\'s not super critical to fix right now anastasiac - the text is legible\xe2\x80\xa6 just a little squishy.
+2014-10-28T18:40:25 <anastasiac> ok, jhung, good to know
+2014-10-28T18:45:19 <anastasiac> jhung: http://issues.fluidproject.org/browse/FLUID-5543
+2014-10-28T19:10:53 * danaayotte_ joined the channel
+2014-10-28T19:11:48 * kasparnet joined the channel
+2014-10-28T19:13:12 <kasparnet> Bosmon, slim_: ah, I think that\'s perhaps why the JSON settings handler was ringing some bells.. I think I implemented the get functionality when doing the snapshotting functionality
+2014-10-28T19:16:24 <slee_away> kasparnet: Yes I think the code changed at some point. So all the problems are yours then :)
+2014-10-28T19:16:34 <kasparnet> indeed :D
+2014-10-28T19:16:54 <slee_away> so does anything need changing now? Sorry I\'ve lost the thread above
+2014-10-28T19:18:42 * slee_away is now known as slim_jim
+2014-10-28T19:19:13 <slim_jim> kasparnet: ^^
+2014-10-28T19:21:22 <kasparnet> slim_jim: I\'m not sure.. I think perhaps when reading non-existing values it needs to leave that out of the NP set
+2014-10-28T19:21:31 <kasparnet> sorry, the return payload that is
+2014-10-28T19:21:44 <kasparnet> so eg. if you do a get for settings A, B, and C
+2014-10-28T19:21:51 <kasparnet> and only A and C exist in the NP set
+2014-10-28T19:22:07 <kasparnet> goddammit.. keep saying NP set... should\'ve been settings file
+2014-10-28T19:22:27 <kasparnet> you should only get the A and C returned with their values
+2014-10-28T19:22:32 <kasparnet> (ie. leaving B out)
+2014-10-28T19:24:08 <slim_jim> kasparnet: That does indeed make sense. So the systems only persists and restores those that change. That is good in case there are sie effects to changing a setting
+2014-10-28T19:24:15 <slim_jim> *side
+2014-10-28T19:25:58 <slim_jim> kasparnet: However I think that at one point there was talk about the desire to grab all current settings from a solution and the Get was not really implemented other than what comes back from a Set
+2014-10-28T19:26:01 <slim_jim> has that changed?
+2014-10-28T19:26:26 <slim_jim> Anyway - if you want me to fix something just bug me :)
+2014-10-28T19:57:14 * heidiv has quit
+2014-10-28T20:01:04 * jhung has quit
+2014-10-28T20:10:26 * slim_jim has quit
+2014-10-28T20:34:54 * cindyli has quit
+2014-10-28T20:36:08 * anvk has quit
+2014-10-28T20:36:31 * yzen has quit
+2014-10-28T20:41:52 * anastasiac has quit
+2014-10-28T21:40:54 * kasparnet has quit
+2014-10-28T21:41:58 * kasparnet joined the channel
+2014-10-28T21:49:52 * simonjb has quit
+2014-10-28T21:50:36 * michelled joined the channel
+2014-10-28T21:51:59 * danaayotte_ has quit
+2014-10-28T22:27:15 * avtar has quit
+2014-10-28T23:45:11 * michelled has quit
+2014-10-28T23:59:00 * kasparnet has quit
+'
+
+b'2014-10-28T01:03:45 * kasparnet joined the channel
+2014-10-28T01:04:50 * jhernand1z has quit
+2014-10-28T01:07:08 * jhernandez joined the channel
+2014-10-28T01:08:18 * kasparnet has quit
+2014-10-28T01:13:28 * jhernandez has quit
+2014-10-28T03:48:32 * yzen joined the channel
+2014-10-28T03:54:06 * yzen has quit
+2014-10-28T03:57:31 * yzen joined the channel
+2014-10-28T05:23:45 * yzen has quit
+2014-10-28T05:24:14 * yzen joined the channel
+2014-10-28T07:09:52 * yzen has quit
+2014-10-28T08:11:39 * kasparnet joined the channel
+2014-10-28T09:19:34 * jhernandez joined the channel
+2014-10-28T09:57:27 * kasparne_ joined the channel
+2014-10-28T10:01:08 * kasparnet has quit
+2014-10-28T10:30:44 * kasparne_ has quit
+2014-10-28T11:05:47 * Justin_o joined the channel
+2014-10-28T11:44:51 * jhung joined the channel
+2014-10-28T12:09:03 * kasparnet joined the channel
+2014-10-28T12:59:02 * kasparnet has quit
+2014-10-28T12:59:32 * kasparnet joined the channel
+2014-10-28T13:04:43 * anastasiac joined the channel
+2014-10-28T13:09:45 * cindyli joined the channel
+2014-10-28T13:14:40 * heidiv joined the channel
+2014-10-28T13:15:37 * jessm joined the channel
+2014-10-28T13:18:28 * yzen joined the channel
+2014-10-28T13:27:58 * simonjb joined the channel
+2014-10-28T13:40:40 * danaayotte joined the channel
+2014-10-28T13:58:45 * clown joined the channel
+2014-10-28T14:02:50 * yzen has quit
+2014-10-28T14:24:25 * yzen joined the channel
+2014-10-28T14:27:47 <Justin_o> amilchev: the ux meeting is on now
+2014-10-28T14:29:55 <anastasiac> good morning, jhung. I\xe2\x80\x99m spending some time trying to get the EPUB work tied up as much as possible, e.g. getting any notes into the handbook, commenting on JIRAs, etc. I\xe2\x80\x99m seeing information on the wiki (e.g. this page: http://wiki.fluidproject.org/display/fluid/Inclusive+EPUB+3+Ongoing+Research ) and wondering if some of it might belong in our Case Study page in the handbook in some form. For example, some version of our assessment
+2014-10-28T14:29:56 <anastasiac> readers, something about which readers we tested in and what variations we found (e.g. rendering of math formulas) etc. What do you think?
+2014-10-28T14:31:16 <anastasiac> http://handbook.floeproject.org/index.php/Case_study:_Exemplar
+2014-10-28T14:34:00 <jhung> anastasiac: Are you thinking of adding something to the EPUB itself or to the Handbook\xe2\x80\xa6 or both? I think an introduction would serve us well.
+2014-10-28T14:35:10 <anastasiac> jhung, to the handbook. I\xe2\x80\x99m thinking that the \xe2\x80\x9cCase Study\xe2\x80\x9d page in the handbook could contain some of the information about our experiences, research, findings, etc. that is currently on the wiki. I don\xe2\x80\x99t think that should be in the epub itself.
+2014-10-28T14:35:19 <anastasiac> jhung, what are you thinking of when you say \xe2\x80\x9cintroduction\xe2\x80\x9d ?
+2014-10-28T14:36:37 <jhung> I was thinking of an introduction to the exemplar - whether it be on the handbook or in the EPUB itself. Just some context about the work we did and how we did it?
+2014-10-28T14:40:10 <anastasiac> jhung, we have that, in a sense, in the Case Study page. Were you thinking of something different, and if so, how?
+2014-10-28T14:41:37 * yzen has quit
+2014-10-28T14:42:04 * yzen joined the channel
+2014-10-28T14:48:09 <jhung> anastasiac: I was thinking of adding something to the PDF itself, but I think at this point not necessary. Perhaps if we move / summarize some of the ongoing research areas and put that on the handbook, that would be useful.
+2014-10-28T14:48:36 <anastasiac> ok, jhung, sounds good
+2014-10-28T14:49:25 <amilchev> Justin_o: had to leave office
+2014-10-28T14:55:46 * amilchev has quit
+2014-10-28T15:05:38 * danaayotte has quit
+2014-10-28T15:13:37 <anastasiac> jhung, I\xe2\x80\x99m doing a final review of the language on the fluidproject.org site so we can hopefully close FLUID-5515 off. I\xe2\x80\x99m working with your latest FLUID-5451 branch. On the Projects page, I notice that the \xe2\x80\x9cInfusion Framework and Components\xe2\x80\x9d heading is \xe2\x80\x9cdeemphasized\xe2\x80\x9d instead of emphasized as in the designs. Is there a reason for this?
+2014-10-28T15:13:44 * anvk joined the channel
+2014-10-28T15:14:16 <anastasiac> I find those de-emphasized headings rather hard to notice
+2014-10-28T15:19:25 * avtar joined the channel
+2014-10-28T16:00:22 * slim_ joined the channel
+2014-10-28T16:17:05 <cindyli> Justin_o: in the infusion master branch, these css files should not be there: https://github.com/fluid-project/infusion/tree/master/src/framework/preferences/css, we decided to only keep the stylus files. do you think if we should file a separate jira for it or I just remove them in my UIO mobile branch?
+2014-10-28T16:17:49 <cindyli> the only issue with having it in my branch is it needs to wait till my branch gets into the master
+2014-10-28T16:26:24 <Justin_o> cindyli: any idea how those got in?
+2014-10-28T16:26:33 <Justin_o> i would have though the .gitignore would have prevented that
+2014-10-28T16:26:39 <Justin_o> is there something wrong with the setup?
+2014-10-28T16:26:44 <Bosmon> jhernandez - VERNANNDDEZ :)
+2014-10-28T16:27:12 <jhernandez> Bosmon: ANTVANIG!!!
+2014-10-28T16:27:20 <Bosmon> Do you want me to SHINE A TORCH ONTO YOU?
+2014-10-28T16:27:35 <jhernandez> not literally, but yeah!
+2014-10-28T16:27:36 <jhernandez> :P
+2014-10-28T16:27:39 <Bosmon> haha
+2014-10-28T16:27:55 <Bosmon> So - can you tell me - why do we need to create a new profile and delete it?
+2014-10-28T16:28:39 <Bosmon> And - can you also tell me - why do we fill the default profile with null values?
+2014-10-28T16:28:43 <Bosmon> That seems like a very destructive thing to do
+2014-10-28T16:28:56 <jhernandez> yeah
+2014-10-28T16:29:23 <jhernandez> when you get ie: voices.default.rate, you get nothing
+2014-10-28T16:29:33 <Bosmon> nothing is not null
+2014-10-28T16:29:35 <Bosmon> Nothing is undefined
+2014-10-28T16:29:36 <jhernandez> there\'s no key in the config file
+2014-10-28T16:29:45 <Bosmon> It sounds to me that there is more than one bug in this settings handler : P
+2014-10-28T16:29:50 <jhernandez> heh
+2014-10-28T16:29:56 <jhernandez> you bet
+2014-10-28T16:29:59 <jhernandez> :P
+2014-10-28T16:30:19 <jhernandez> let me return undefined ...
+2014-10-28T16:30:31 <Bosmon> Well, return undefined to who?
+2014-10-28T16:30:54 <Bosmon> undefined is not a valid value within a JSON structure
+2014-10-28T16:33:04 <jhernandez> nope
+2014-10-28T16:33:04 <jhernandez> I see
+2014-10-28T16:33:24 <Bosmon> All you need to do is fix the settings handler so that it works :)
+2014-10-28T16:33:34 <Bosmon> And so that the payload returned by get is the same one accepted by set
+2014-10-28T16:33:40 <Bosmon> And this payload has a JSON form
+2014-10-28T16:33:50 <Bosmon> And not to corrupt the profile by filling it with "null" : P
+2014-10-28T16:34:36 <jhernandez> and what should I return for a key that doesn\'t exist yet
+2014-10-28T16:34:43 <jhernandez> ?
+2014-10-28T16:34:43 <Bosmon> You are never asked for keys
+2014-10-28T16:34:51 <Bosmon> You are only asked for the return value of the settings handler : P
+2014-10-28T16:34:56 <Bosmon> Who is asking you for keys? : P
+2014-10-28T16:35:35 <jhernandez> in the payload, the get method is asking for { "setting": null }
+2014-10-28T16:35:53 * jhung is now known as jhung_away
+2014-10-28T16:35:56 <jhernandez> and my settings handler returns { "setting": value }
+2014-10-28T16:36:00 <jhernandez> isn\'t it?
+2014-10-28T16:36:39 <jhernandez> what should I return when a setting doesn\'t have a value? literally, it doesn\'t exist in the user-settings.conf file
+2014-10-28T16:38:10 <Bosmon> That is not how the settings handlers work
+2014-10-28T16:38:19 <Bosmon> The only "coordinate" information is present within the "options" block
+2014-10-28T16:38:27 <Bosmon> Other than that, the settings handlers just read and write entire documents
+2014-10-28T16:39:51 <Bosmon> kasparnet - are you there?
+2014-10-28T16:39:58 <jhernandez> yeah, but the "document" here does not contain some of the information we need
+2014-10-28T16:40:19 <Bosmon> which information does it not contain?
+2014-10-28T16:40:26 <kasparnet> Bosmon, jhernandez: 4th hour meeting, 2nd of which is with gregg and Manuel
+2014-10-28T16:40:48 <Bosmon> kasparnet - very sorry
+2014-10-28T16:41:09 <jhernandez> Bosmon: ie: the voices.default.rate setting
+2014-10-28T16:41:14 <jhernandez> kasparnet: courage!
+2014-10-28T16:41:58 <Bosmon> jhernandez - as you said, this setting has no value
+2014-10-28T16:42:02 <Bosmon> So it does not appear in the document
+2014-10-28T16:43:15 <Bosmon> kasparnet - perhaps you can just confirm a quick question - we never implied a model for settings handlers where they just return the subset of the settings under their control, which are referenced in the input payload, did we?
+2014-10-28T16:43:37 <Bosmon> That is, in particular, the "get" mode of a settings handler doesn\'t pay any attention to any "settings" value in its input payload, right?
+2014-10-28T16:46:29 <kasparnet> Bosmon: I remember that this was in our original description of the payloads to and from the settings handlers
+2014-10-28T16:46:46 <kasparnet> but I\'m not sure whether this is implemented in any (or all) of the settingshandlers
+2014-10-28T16:47:14 <Bosmon> kasparnet - is that description written up anywhere?
+2014-10-28T16:47:24 <kasparnet> Bosmon: lemme check
+2014-10-28T16:47:29 <Bosmon> I don\'t seem to find it in any of the central stuff on settings handlers in the wiki
+2014-10-28T16:48:59 <kasparnet> Bosmon: http://wiki.gpii.net/w/Settings_Handler_Payload_Examples
+2014-10-28T16:49:46 <Bosmon> kasparnet - I see
+2014-10-28T16:51:24 <Bosmon> It looks like, annoyingly, that the Linux settings handlers we have, are operating this semantic - but none of the Windows ones are
+2014-10-28T16:51:38 <Bosmon> And I believe we have no part of our infrastructure which is currently relying on this behaviour
+2014-10-28T16:51:49 <kasparnet> Bosmon: crap
+2014-10-28T16:51:58 <Bosmon> In fact, until this week, we had no part of our infrastructure relying on the behaviour of GET settings handlers at all
+2014-10-28T16:54:58 <Bosmon> jhernandez - anyway, the short answer is, if you find that a setting has no value, you should remove it from the returned payload entirely
+2014-10-28T16:55:03 <Bosmon> Rather than return it with a value of "null"
+2014-10-28T16:55:15 <jhernandez> Bosmon: ACK
+2014-10-28T16:55:34 <Bosmon> I assume that there is no way in gsettings to "query all keys that are part of a schema"?
+2014-10-28T16:55:53 <kasparnet> I think there is
+2014-10-28T16:55:53 <jhernandez> Bosmon: it is
+2014-10-28T16:55:58 <kasparnet> list-keys
+2014-10-28T16:56:00 <Bosmon> For example, if we wanted all data in the schema org.gnome.desktop.a11y.magnifier - could we get it, without already having foreknowledge of all the subkeys?
+2014-10-28T16:56:00 <kasparnet> or something
+2014-10-28T16:56:02 <Bosmon> ok
+2014-10-28T16:56:07 <jhernandez> yes
+2014-10-28T16:56:17 <Bosmon> Is there a good reason that we shouldn\'t use this, rather than rely on the user to come up with all the keys they want?
+2014-10-28T16:57:09 <Bosmon> Can you remember what we were trying to achieve when we decide on this peculiar use of "null" to represent a query point?
+2014-10-28T16:57:29 <Bosmon> I\'m guessing that in theory, I was part of this conversation since I presume we had it at that ancestral meeting in Boulder during 2012
+2014-10-28T16:57:35 <Bosmon> But I certainly don\'t remember any of it : P
+2014-10-28T16:57:42 <Bosmon> I mean, for all I know, this might have been my idea
+2014-10-28T16:57:51 <Bosmon> But we certainly have precious little written down about it
+2014-10-28T16:58:03 <Bosmon> And noone afaik outside the Linux settings handlers has tried to implement it
+2014-10-28T16:58:13 <Bosmon> of course, since the architecture never tested or used GET methods before, noone has noticed
+2014-10-28T16:58:20 <Bosmon> Unfortunately it is now time to start using them
+2014-10-28T17:01:12 <kasparnet> Bosmon: I\'m not sure what the reason was... I think perhaps it was as simple as: in some cases one might want to get all the relevant settings, in other cases one might one to get specific settings, so let\'s ensure support for both styles
+2014-10-28T17:01:15 <kasparnet> but not sure
+2014-10-28T17:01:30 <Bosmon> It would probably be simpler if we just eliminated this behaviour
+2014-10-28T17:01:36 <Bosmon> Since I can\'t see a use for it in the current architecture
+2014-10-28T17:01:43 <kasparnet> the ability to get individual settings
+2014-10-28T17:01:49 <kasparnet> or the ability to get all settings
+2014-10-28T17:01:51 <kasparnet> ?
+2014-10-28T17:01:57 <Bosmon> And it actually makes it much harder to i) write mocks, ii) implement the "automated retry" behaviour we need to get Windows working
+2014-10-28T17:02:02 <Bosmon> The ability to get individual settings
+2014-10-28T17:02:11 <Bosmon> The main use we have for getting settings is for "snapshotting"
+2014-10-28T17:02:20 <Bosmon> Which I think generally implies we want everything
+'
+

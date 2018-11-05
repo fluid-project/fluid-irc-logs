@@ -1,0 +1,444 @@
+b'2015-01-09T20:19:49 <Bosmon> It looks basically good - can you point out a site where you would like to propagate some errors from?
+2015-01-09T20:20:35 <Bosmon> Perhaps in "getSelectedPreferences"
+2015-01-09T20:20:52 <Bosmon> In general the framework is exception-free - the standard means of signalling an error is to return a rejected promise
+2015-01-09T20:21:26 <simonjb> Bosmon: yes getSelectedPreferences or setSelectedPreferences
+2015-01-09T20:22:15 <simonjb> Bosmon: do we have an example of signalling an error somewhere that I could have a look at?
+2015-01-09T20:23:51 <Bosmon> In general most places in universal itself represent sites where rejections are propagated, rather than generated or handled
+2015-01-09T20:24:03 <Bosmon> Since the actual generation or handling code tends to be within Kettle
+2015-01-09T20:24:28 <Bosmon> You can see an example of generation here: https://github.com/fluid-project/kettle/blob/master/lib/dataSource.js#L363
+2015-01-09T20:24:38 <Bosmon> And several others within the same file
+2015-01-09T20:25:34 <Bosmon> You can see the handling code at the far end here:
+2015-01-09T20:25:35 <Bosmon> https://github.com/fluid-project/kettle/blob/master/lib/request.js#L99
+2015-01-09T20:25:55 <Bosmon> Which eventually punches through to here: https://github.com/fluid-project/kettle/blob/master/lib/request.js#L207
+2015-01-09T20:27:39 <Bosmon> I imagine we should probably standardise somewhat on "rejection payloads" - our current standard is for it to have a field holding isError: true, and a string member named message holding some error text
+2015-01-09T20:28:23 <Bosmon> Of course you\'re free to add whatever other fields you like that would help with signalling via the API
+2015-01-09T20:29:34 <simonjb> Bosmon: ok, will take a look
+2015-01-09T20:30:05 <simonjb> Bosmon: I\'d also like to write acceptance tests for this new API and am feeling a little unsure where to start
+2015-01-09T20:30:46 <simonjb> Bosmon: I\'d need to login, authorize, and then call this api
+2015-01-09T20:30:53 <Bosmon> simonjb - sure
+2015-01-09T20:31:14 <Bosmon> A reasonable model for "manual" kinds of server tests is probably https://github.com/fluid-project/kettle/blob/master/tests/CrossServerRequestTests.js
+2015-01-09T20:31:37 <Bosmon> It constructs all of its servers by hand rather than using the automated Kettle definitions
+2015-01-09T20:31:53 <Bosmon> So you could just replace subcomponents such as this one, for example https://github.com/fluid-project/kettle/blob/master/tests/CrossServerRequestTests.js#L141 with your own server component which is under test
+2015-01-09T20:32:12 <Justin_o> cindyli: I\'ve set cacheing for the selection tree template
+2015-01-09T20:32:27 <Justin_o> it\'s pushed up to my GPII-1033 and GPII-1051 branches
+2015-01-09T20:32:31 <Bosmon> And then you can embed this tree inside a "testEnvironment" like so: https://github.com/fluid-project/kettle/blob/master/tests/CrossServerRequestTests.js#L246
+2015-01-09T20:33:20 <Bosmon> This has one subcomponent for each kind of HTTP request you would like to issue, and then one called "fixtures" holding each of the various sequences you want to test
+2015-01-09T20:33:51 <simonjb> Bosmon: ok, thanks, will take a look
+2015-01-09T20:34:02 <cindyli> ok, thanks, Justin_o
+2015-01-09T20:34:17 <Bosmon> The only dependence on Kettle you\'d need would be for the HTTP request components of type "kettle.test.request.http"
+2015-01-09T20:34:37 <Bosmon> Everything else would be just a dependence on Infusion
+2015-01-09T20:37:42 <simonjb> thanks Bosmon, while I have you how is it going with the preferences filtering?
+2015-01-09T20:38:07 <Bosmon> One aspect that might be awkward is ensuring that your server is properly shut down between fixtures - eventually we will be able to want these to run in sequence and it can be very hazardous is a server is left lingering listening on a port when the next fixture is running
+2015-01-09T20:38:27 <Bosmon> And there seem to be some oddities with express that sometimes it doesn\'t shut servers down very cleanly
+2015-01-09T20:38:49 * yzen is now known as yzen_
+2015-01-09T20:38:57 <Bosmon> So you might just design your tests to be run in isolation for now - that is, with just one server per run from the command line
+2015-01-09T20:39:31 <Bosmon> simonjb - moderately well, unfortunately I am needing to do a lot of refactoring in order to get the filtering code introduced in the right place
+2015-01-09T20:39:41 <Bosmon> The matchmaker workflow has become rather tangled over time
+2015-01-09T20:40:04 <simonjb> ok, I\'m glad it\'s you doing it :)
+2015-01-09T20:40:14 <Bosmon> So I am basically discarding the old workflow and replacing it with an instance of our promise sequence transformer instead
+2015-01-09T20:40:45 <Bosmon> As well as changing the format of all the payloads that the old functions handed around in order to make them a bit more stable and predictable...
+2015-01-09T20:41:14 <Bosmon> There were plenty of instances where the same arguments were referred to by several different names in different functions, which made understanding the workflow extremely confusing
+2015-01-09T20:42:28 <Bosmon> For example the same member referred to as "device", "deviceContext", "deviceReporter", etc.
+2015-01-09T20:42:52 <Bosmon> In the new model, every function accepts and returns exactly one argument, which has the useful effect of forcing everyone to agree on all the names : P
+2015-01-09T20:43:27 <cindyli> simon, i\'ve pushed all the changes to my 1060 branch
+2015-01-09T20:43:34 <simonjb> thanks cindyli
+2015-01-09T20:43:39 <cindyli> np
+2015-01-09T20:48:06 <Bosmon> I had been expecting to be done today, but in the end I launched into a rather more ambitious refactoring than I\'d been expecting
+2015-01-09T20:48:12 <Bosmon> It should be running by tomorrow I think
+2015-01-09T20:49:05 <simonjb> Bosmon: by tomorrow, that\'s great -- it\'s all coming together
+2015-01-09T20:49:26 <cindyli> simonjb: i\'ve fixed styling of the privacy settings page and pushed up to my 1060 branch
+2015-01-09T20:53:01 <cindyli> hi Bosmon, if i\'m using new relay components for a parent and a child components, can i still in one component, manually call applier.change() to request model changes on another component? or it can only be done via model relay?
+2015-01-09T20:53:31 <Bosmon> cindyli - you shouldn\'t call methods on another component\'s applier, no
+2015-01-09T20:53:50 <cindyli> no success. that\'s true
+2015-01-09T20:54:31 <Bosmon> Can you give me an example of the situation?
+2015-01-09T20:55:08 <cindyli> digging example code
+2015-01-09T20:56:21 <cindyli> Bosmon: https://github.com/cindyli/universal/blob/GPII-1060/gpii/node_modules/gpii-oauth2/gpii-oauth2-authz-server/public/src/components/privacySettings/js/EditPrivacySettings.js#L220-L229
+2015-01-09T20:56:50 <cindyli> the model listener converts every model change on the selection tree to a format that can be accepted by the server
+2015-01-09T20:57:16 <cindyli> this converted value needs to be escalated to the parent component for sending server requests
+2015-01-09T20:57:46 <Bosmon> cindyli - this is a very strange definition : P
+2015-01-09T20:58:13 <Bosmon> Why is "toServerModel" held within an expander?
+2015-01-09T20:58:54 <Bosmon> And why are you ignoring the actual model value which is supplied to the listener?
+2015-01-09T20:59:28 <Bosmon> typo on line 202
+2015-01-09T21:00:00 <cindyli> sharp eyes
+2015-01-09T21:00:08 <Bosmon> Also line 73
+2015-01-09T21:00:19 <cindyli> the actual model value is automatically passed into the toServerModel
+2015-01-09T21:00:46 <Bosmon> cindyli - this will never work
+2015-01-09T21:00:58 <cindyli> what??!!
+2015-01-09T21:00:59 <Bosmon> expanders are evaluated only once in general
+2015-01-09T21:01:08 <cindyli> it works
+2015-01-09T21:01:13 <Bosmon> You should just use the model value that you have already got supplied as an argument
+2015-01-09T21:01:21 <Bosmon> Well if it does, it shouldn\'t : P
+2015-01-09T21:01:31 <cindyli> haha
+2015-01-09T21:02:22 <Bosmon> Future versions of the framework will consider they are entitled to cache IoC-resolved values after the first call
+2015-01-09T21:02:42 <Bosmon> You may actually find that this listener only works the first time
+2015-01-09T21:03:30 <Bosmon> cindyli - you should source all the model values that you use from the arguments to the listener function
+2015-01-09T21:03:55 <cindyli> ok, i see what u mean
+2015-01-09T21:05:38 <Bosmon> cindyli - this function is also faulty - https://github.com/cindyli/universal/blob/GPII-1060/gpii/node_modules/gpii-oauth2/gpii-oauth2-authz-server/public/src/components/privacySettings/js/EditPrivacySettings.js#L180
+2015-01-09T21:06:15 <Bosmon> The component should be using a model, rather than setting material on the instance directly using fluid.set
+2015-01-09T21:06:50 <cindyli> i totally agree, i was using model, but having issues that mentioned earlier. this is the work around
+2015-01-09T21:07:07 * yzen_ is now known as yzen
+2015-01-09T21:07:32 <cindyli> maybe it was the expander issue causing problem. in the middle of fixing expander first, will try switch to using model after that, Bosmon
+2015-01-09T21:15:58 <cindyli> Bosmon: made the change where the manual applier change issue is successfully reproduced. the new model listener: https://github.com/cindyli/universal/blob/GPII-1060/gpii/node_modules/gpii-oauth2/gpii-oauth2-authz-server/public/src/components/privacySettings/js/EditPrivacySettings.js#L224-L227
+2015-01-09T21:16:34 <Bosmon> cindyli - still very puzzled by the {that}.toServerModel reference
+2015-01-09T21:16:34 <cindyli> in the model listener function, the converted value for server is fired via https://github.com/cindyli/universal/blob/GPII-1060/gpii/node_modules/gpii-oauth2/gpii-oauth2-authz-server/public/src/components/privacySettings/js/EditPrivacySettings.js#L253
+2015-01-09T21:17:23 <cindyli> toServerModel is the function provided by the selectionTree component to convert its internal model structure to the format that can be accepted by the server
+2015-01-09T21:18:14 <Bosmon> cindyli - ok - surely that is your job, rather than the component\'s job
+2015-01-09T21:18:31 <Bosmon> Your component is the one which deals with communication with the server
+2015-01-09T21:19:11 <Bosmon> So I don\'t see any reason for that function to be defined with the selection tree and defined as its member
+2015-01-09T21:19:17 <cindyli> yes, but selectionTree component is also suppose to accept and OUTPUT the server format data
+2015-01-09T21:19:27 <Bosmon> cindyli - who said that it was? : P
+2015-01-09T21:19:36 <Bosmon> It\'s job is just to be a selection tree
+2015-01-09T21:20:04 <Bosmon> So, in any case - what are you observing now
+2015-01-09T21:20:21 <cindyli> the line 253 never triggers the model change
+2015-01-09T21:20:46 <Bosmon> cindyli - how do you know?
+2015-01-09T21:20:50 <cindyli> i have a "console.log" at line 208
+2015-01-09T21:20:58 <cindyli> it\'s never triggered
+2015-01-09T21:21:00 <Bosmon> ok
+2015-01-09T21:21:11 <Bosmon> Do the preferences actually differ from the values which existed before?
+2015-01-09T21:21:26 <cindyli> not never, it\'s triggered at initializing, not afterwards from the sub component
+2015-01-09T21:21:32 <cindyli> different
+2015-01-09T21:21:48 <Bosmon> You should try logging that.model.selectedPrefs on line 252
+2015-01-09T21:21:54 <Bosmon> As well as the ones which you convert
+2015-01-09T21:22:05 <cindyli> ok
+2015-01-09T21:22:59 <cindyli> tracked, different values, Bosmon
+2015-01-09T21:23:17 <Bosmon> ok
+2015-01-09T21:24:00 <Bosmon> I guess it isn\'t possible to try this component out without running a server :(
+2015-01-09T21:24:41 <cindyli> i tried using non relay components, it worked
+2015-01-09T21:24:56 <cindyli> with server of course
+2015-01-09T21:25:26 <Bosmon> cindyli - ok - it\'s fine to convert to non-relay components for now
+2015-01-09T21:25:43 <cindyli> well, i was using model relay somewhere else
+2015-01-09T21:25:52 <Bosmon> Can you produce a JIRA for the issue, and perhaps when we have time after the review, produce a standalone test case?
+2015-01-09T21:26:00 <cindyli> sure
+2015-01-09T21:26:28 <cindyli> i should have some time to create both next Monday
+2015-01-09T21:28:23 <Bosmon> Cool
+2015-01-09T21:28:36 <Bosmon> Perhaps we can get by without relay in this tree for now, if we can\'t deal with it quickly
+2015-01-09T21:28:40 <Bosmon> I would suspect that http://issues.fluidproject.org/browse/FLUID-5498 is related
+2015-01-09T21:29:22 <cindyli> ah ha
+2015-01-09T21:29:57 * Sepideh has quit
+2015-01-09T21:31:35 <cindyli> Bosmon: i\'m thinking to use the relay components with the work around of saving as a member options instead of a model value. I\'m using model relay in btw the edit component and the privacy page. what do you think?
+2015-01-09T21:33:37 <Bosmon> cindyli - ok...
+2015-01-09T21:33:45 <cindyli> cool. thanks, Bosmon
+2015-01-09T21:33:53 <Bosmon> If you can write up the JIRA, you can add the reference to the affected code in a comment
+2015-01-09T21:35:32 <cindyli> Bosmon: i will try to create a test case to go along with the jira. the affected code i guess is being removed right now since it doesn\'t work ;)
+2015-01-09T21:35:46 <Bosmon> cindyli - cheers
+2015-01-09T21:35:55 <Bosmon> We\'ll have a lot of model relay work to pick up after the review...
+2015-01-09T21:36:05 <Bosmon> cindyli - I meant as a comment applied to the workaround code
+2015-01-09T21:36:44 <cindyli> sure
+2015-01-09T21:37:01 * slim_jim has quit
+2015-01-09T21:41:28 * slim_jim joined the channel
+2015-01-09T21:46:24 * cindyli has quit
+2015-01-09T22:05:47 * michelled has quit
+2015-01-09T22:06:38 * clown has left the channel
+2015-01-09T22:08:19 * slim_jim has quit
+2015-01-09T22:10:18 * simonjb has quit
+2015-01-09T22:13:44 * Jess_ has quit
+2015-01-09T22:21:27 * anvk has quit
+2015-01-09T22:32:59 * avtar has quit
+2015-01-09T22:37:07 * Justin_o has quit
+2015-01-09T23:42:22 * michelled joined the channel
+'
+
+b'2015-01-09T15:15:30 * the-t-in-rtf joined the channel
+2015-01-09T15:15:39 * michelled has quit
+2015-01-09T15:16:01 * the-t-in-rtf has quit
+2015-01-09T15:16:16 * the-t-in-rtf joined the channel
+2015-01-09T15:16:48 * the-t-in-rtf has quit
+2015-01-09T15:17:02 * the-t-in-rtf joined the channel
+2015-01-09T15:17:35 * the-t-in-rtf has quit
+2015-01-09T15:17:46 * michelled joined the channel
+2015-01-09T15:17:53 * the-t-in-rtf joined the channel
+2015-01-09T15:18:23 * the-t-in-rtf has quit
+2015-01-09T15:18:38 * the-t-in-rtf joined the channel
+2015-01-09T15:19:11 * the-t-in-rtf has quit
+2015-01-09T15:19:27 * the-t-in-rtf joined the channel
+2015-01-09T15:19:58 * the-t-in-rtf has quit
+2015-01-09T15:20:16 * the-t-in-rtf joined the channel
+2015-01-09T15:20:46 * the-t-in-rtf has quit
+2015-01-09T15:21:02 * the-t-in-rtf joined the channel
+2015-01-09T15:21:34 * the-t-in-rtf has quit
+2015-01-09T15:21:47 * the-t-in-rtf joined the channel
+2015-01-09T15:22:21 * the-t-in-rtf has quit
+2015-01-09T15:22:38 * the-t-in-rtf joined the channel
+2015-01-09T15:23:09 * the-t-in-rtf has quit
+2015-01-09T15:23:23 * the-t-in-rtf joined the channel
+2015-01-09T15:23:56 * the-t-in-rtf has quit
+2015-01-09T15:24:11 * the-t-in-rtf joined the channel
+2015-01-09T15:24:44 * the-t-in-rtf has quit
+2015-01-09T15:24:57 * the-t-in-rtf joined the channel
+2015-01-09T15:25:32 * the-t-in-rtf has quit
+2015-01-09T15:25:46 * the-t-in-rtf joined the channel
+2015-01-09T15:26:19 * the-t-in-rtf has quit
+2015-01-09T15:26:37 * the-t-in-rtf joined the channel
+2015-01-09T15:27:07 * the-t-in-rtf has quit
+2015-01-09T15:27:25 * the-t-in-rtf joined the channel
+2015-01-09T15:27:55 * the-t-in-rtf has quit
+2015-01-09T15:28:11 * the-t-in-rtf joined the channel
+2015-01-09T15:28:16 * the-t-in-rtf has quit
+2015-01-09T15:28:31 * cindyli joined the channel
+2015-01-09T15:31:55 <Justin_o> cindyli: i pushed up the changes we paired on for GPII-1033
+2015-01-09T15:43:29 <cindyli> thanks, Justin_o
+2015-01-09T15:47:58 <Bosmon> Hey kasparne_ - I\'ve started my refactoring now so do ping me if you are starting any contextManager work
+2015-01-09T15:48:09 <Bosmon> I\'ll ping you with my updated branch once I have the changes working again
+2015-01-09T15:49:20 <Bosmon> I\'ve successfully removed the "matchmakingRequest" grade from UserUpdate and combined the argument fired from matchMakerDispatcher into a single object
+2015-01-09T15:49:33 <Bosmon> And everything is working for now, just light refactoring and renaming so far
+2015-01-09T15:53:17 <kasparne_> hey Bosmon
+2015-01-09T15:53:30 <kasparne_> I have indeed started some context work
+2015-01-09T15:53:34 <kasparne_> (a while back actually)
+2015-01-09T15:53:57 <kasparne_> (just looking for the branch)
+2015-01-09T15:54:36 <kasparne_> https://github.com/kaspermarkus/universal/tree/GPII-795
+2015-01-09T15:55:04 <kasparne_> but it\'s quite limited in testcases - I have some more in a branch, but am having some issues with it
+2015-01-09T15:55:11 <kasparne_> ... anyway, I dont think it affects the flow too much
+2015-01-09T15:55:26 <kasparne_> it mostly changes the current placeholder function
+2015-01-09T15:55:40 <kasparne_> so I think you can just go ahead with the filtering functionality
+2015-01-09T15:57:56 * anastasiac joined the channel
+2015-01-09T16:05:23 <Bosmon> kasparne_ - looks like quite a few changes
+2015-01-09T16:05:30 <Bosmon> What kind of problems did you run into?
+2015-01-09T16:05:45 <Bosmon> Let me know when you are planning to work on this again and we can look at it
+2015-01-09T16:15:46 * anvk joined the channel
+2015-01-09T16:26:27 * clown joined the channel
+2015-01-09T16:31:23 * michelled has quit
+2015-01-09T16:31:52 * michelled joined the channel
+2015-01-09T16:38:20 * Sepideh has quit
+2015-01-09T16:47:26 * Sepideh joined the channel
+2015-01-09T16:53:03 * avtar joined the channel
+2015-01-09T17:06:57 * Jess_ has quit
+2015-01-09T17:14:58 * kasparnet joined the channel
+2015-01-09T17:17:19 * kasparne_ has quit
+2015-01-09T17:20:16 * kasparnet has quit
+2015-01-09T17:29:29 * Sepideh has quit
+2015-01-09T17:30:37 * michelled has quit
+2015-01-09T17:31:03 * michelled joined the channel
+2015-01-09T17:31:58 * Sepideh joined the channel
+2015-01-09T17:32:58 * michelled has quit
+2015-01-09T17:33:27 * michelled joined the channel
+2015-01-09T17:34:41 * michelled has quit
+2015-01-09T17:35:09 * michelled joined the channel
+2015-01-09T17:36:24 * michelled has quit
+2015-01-09T17:36:54 * michelled joined the channel
+2015-01-09T17:38:07 * michelled has quit
+2015-01-09T17:38:36 * michelled joined the channel
+2015-01-09T17:39:50 * michelled has quit
+2015-01-09T17:40:16 * michelled joined the channel
+2015-01-09T17:41:34 * michelled has quit
+2015-01-09T17:42:00 * michelled joined the channel
+2015-01-09T17:43:13 * slim_jim joined the channel
+2015-01-09T17:44:16 * michelled has quit
+2015-01-09T17:44:43 * michelled joined the channel
+2015-01-09T17:46:00 * michelled has quit
+2015-01-09T17:46:29 * michelled joined the channel
+2015-01-09T17:48:34 * michelled has quit
+2015-01-09T17:49:01 * michelled joined the channel
+2015-01-09T17:50:17 * michelled has quit
+2015-01-09T17:50:46 * michelled joined the channel
+2015-01-09T17:52:00 * michelled has quit
+2015-01-09T17:52:26 * michelled joined the channel
+2015-01-09T17:52:34 <Justin_o> cindyli: I\'ve updated the authorization page to use the template fetched by the selection tree component
+2015-01-09T17:52:39 <Justin_o> did you need to pair on anything?
+2015-01-09T17:53:27 * slim_jim_ joined the channel
+2015-01-09T17:54:29 * michelled has quit
+2015-01-09T17:54:55 * michelled joined the channel
+2015-01-09T17:56:04 * slim_jim has quit
+2015-01-09T17:56:08 * slim_jim_ is now known as slim_jim
+2015-01-09T17:56:11 <cindyli> thanks, Justin_o, we\'ll merge in. did you split out the selection tree styling for overriding foundation stuff?
+2015-01-09T17:56:50 <Justin_o> cindyli: oh right.. i forgot about that.. i\'ll do that now
+2015-01-09T17:57:04 <cindyli> thanks, Justin_o
+2015-01-09T17:57:04 * michelled has quit
+2015-01-09T17:57:31 * michelled joined the channel
+2015-01-09T17:58:48 * michelled has quit
+2015-01-09T17:59:39 * michelled joined the channel
+2015-01-09T18:00:59 <cindyli> Justin_o: i noticed the first letter of selectionTreeTemplate.html is in lower case. is that intentional? all our css and js files are in capitals
+2015-01-09T18:01:02 * michelled has quit
+2015-01-09T18:01:12 <Justin_o> :(
+2015-01-09T18:01:27 <Justin_o> i should fix that too
+2015-01-09T18:01:29 * michelled joined the channel
+2015-01-09T18:02:46 * michelled has quit
+2015-01-09T18:03:15 * michelled joined the channel
+2015-01-09T18:04:44 * michelled has quit
+2015-01-09T18:05:10 * michelled joined the channel
+2015-01-09T18:06:27 * michelled has quit
+2015-01-09T18:06:53 * michelled joined the channel
+2015-01-09T18:08:10 * michelled has quit
+2015-01-09T18:08:40 * michelled joined the channel
+2015-01-09T18:09:53 * michelled has quit
+2015-01-09T18:10:20 * michelled joined the channel
+2015-01-09T18:13:05 <Justin_o> cindyli: i fixed the name and pushed up
+2015-01-09T18:13:30 * michelled_ joined the channel
+2015-01-09T18:13:42 <cindyli> nice, thanks, Justin_o
+2015-01-09T18:14:43 * michelled has quit
+2015-01-09T18:14:43 * michelled_ is now known as michelled
+2015-01-09T18:18:08 * slim_jim has quit
+2015-01-09T18:34:30 * slim_jim joined the channel
+2015-01-09T18:39:39 * Jess_ joined the channel
+2015-01-09T18:43:57 * michelled has quit
+2015-01-09T18:45:07 * michelled joined the channel
+2015-01-09T18:47:45 * kasparnet joined the channel
+2015-01-09T18:50:52 * cindyli has quit
+2015-01-09T18:51:01 * cindyli joined the channel
+2015-01-09T19:01:23 * rk29 joined the channel
+2015-01-09T19:05:09 * slim_jim has quit
+2015-01-09T19:27:51 <Jess_> Sepideh: ping
+2015-01-09T19:28:12 <Sepideh> yes Jess_
+2015-01-09T19:28:45 <Jess_> sorry to have to ask\xe2\x80\xa6 that one page doc from the P4A mtg. that you copied yesterday \xe2\x80\x94 do you have a digital pic of it you could send me? if not, don\xe2\x80\x99t worry
+2015-01-09T19:32:08 <Sepideh> give me a sec, I\xe2\x80\x99ll take a photo and send it to you
+2015-01-09T19:43:41 <Justin_o> cindyli: i\'ve pushed up the css changes for GPII-1033
+2015-01-09T19:44:40 <cindyli> thanks, Justin_o, merging...
+2015-01-09T20:04:27 * rk29 has quit
+2015-01-09T20:12:06 <simonjb> Bosmon: I have a new ajax api for the OAuth2 work that I\'d love to get input on https://github.com/simonbates/universal/compare/simonbates:GPII-17...GPII-1057 if you have some time
+2015-01-09T20:12:48 <simonjb> Bosmon: I want to write acceptance tests and to ask the best mechanism to return error conditions from lower layers
+2015-01-09T20:12:55 * slim_jim joined the channel
+2015-01-09T20:13:53 * anastasiac has quit
+2015-01-09T20:18:45 <Bosmon> Thanks, simonjb
+'
+
+b'2015-01-09T00:07:06 * Justin_o has quit
+2015-01-09T01:32:22 * avtar has quit
+2015-01-09T04:02:37 * colinclark joined the channel
+2015-01-09T04:07:34 * colinclark has quit
+2015-01-09T04:22:11 * colinclark joined the channel
+2015-01-09T04:22:11 * colinclark has quit
+2015-01-09T07:41:56 * kasparnet joined the channel
+2015-01-09T08:07:44 * kasparnet has quit
+2015-01-09T09:12:41 * slim_jim joined the channel
+2015-01-09T09:37:23 * kasparnet joined the channel
+2015-01-09T09:39:46 * slim_jim_ joined the channel
+2015-01-09T09:40:41 * kasparne_ joined the channel
+2015-01-09T09:42:03 * slim_jim has quit
+2015-01-09T09:44:11 * kasparnet has quit
+2015-01-09T09:44:34 * slim_jim_ has quit
+2015-01-09T09:46:49 * kasparnet joined the channel
+2015-01-09T09:47:44 * kasparne_ has quit
+2015-01-09T11:03:14 * slim_jim joined the channel
+2015-01-09T11:16:34 * kasparnet has quit
+2015-01-09T11:22:57 * kasparnet joined the channel
+2015-01-09T11:29:58 * slim_jim has quit
+2015-01-09T11:42:05 * kasparnet has quit
+2015-01-09T12:41:15 * jhung joined the channel
+2015-01-09T12:56:55 * kasparnet joined the channel
+2015-01-09T12:57:08 <Bosmon> Hey there KASPARDNEITT!
+2015-01-09T12:57:11 <Bosmon> kasparnet
+2015-01-09T12:57:25 <kasparnet> Bosmon\'nnnn
+2015-01-09T12:57:32 <kasparnet> nananananananana
+2015-01-09T12:57:34 <kasparnet> BOSMON!
+2015-01-09T12:57:46 <Bosmon> dinnerdinnerdinnerdinner : P
+2015-01-09T12:57:53 <kasparnet> nananananananananananananananana bosmon
+2015-01-09T12:57:58 <kasparnet> heh ok
+2015-01-09T12:58:05 <kasparnet> I\'ll still be around when you get back
+2015-01-09T12:58:14 <Bosmon> no I was just making this noise
+2015-01-09T12:58:16 <Bosmon> It is not dinnertime
+2015-01-09T12:58:21 <kasparnet> haha ok
+2015-01-09T12:58:21 <Bosmon> It\'s not even breakfast time yet : P
+2015-01-09T12:58:25 <kasparnet> lol
+2015-01-09T12:58:40 <Bosmon> So I wanted to give you a headsup that I am going to be refactoring the architecture to support the preferences filtering a bit
+2015-01-09T12:58:58 <kasparnet> oh cool
+2015-01-09T12:59:08 <Bosmon> We have this very tangled workflow that starts with the call mysteriously called "matchMaker.preProcess"
+2015-01-09T12:59:13 <kasparnet> (and "oooooh scary" as well)
+2015-01-09T12:59:21 <Bosmon> Which of course is the thing that in fact initiates the entire process
+2015-01-09T12:59:30 <Bosmon> And ends with the mysterious dispatch in and out of the contextManager
+2015-01-09T12:59:46 <Bosmon> I am going to flatten this out so that it all gets operated by a single event
+2015-01-09T13:00:01 <Bosmon> because otherwise it will make too much of a shitheap inserting an extra filtering process in the middle of it
+2015-01-09T13:00:28 <Bosmon> Hopefully it won\'t make too much of a mess, but I know you\'ll be working on the context-aware server this week so we should be aware there might be conflicts
+2015-01-09T13:01:48 <Bosmon> But I\'ll also have to change the signature of the argument fired by gpii.matchMakerFramework.matchMakerDispatcher so that it just consists of a single object rather than two
+2015-01-09T13:07:19 <kasparnet> Bosmon: I think that should be ok - as long as we dont change the API the faces the MMs (within the matchMakerDispatcher functioN), ie. whatever is sent in the .set and expected back from it -
+2015-01-09T13:14:53 <Bosmon> cheers kasparnet - yes, we\'ll keep all the external APIs the same
+2015-01-09T13:15:06 <kasparnet> awesome! Thanks antranig
+2015-01-09T13:15:24 <Bosmon> You may have noticed this USEFUL API appearing in Infusion
+2015-01-09T13:15:25 <Bosmon> https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/FluidPromises.js#L225
+2015-01-09T13:15:32 <Bosmon> Which at the moment is used to operate our dataSources
+2015-01-09T13:15:51 <Bosmon> My plan is to use it to organise our filtering chain for the matchmaking process too
+2015-01-09T13:16:05 <Bosmon> Using a new "pseudoevent" called something like "processMatch"
+2015-01-09T13:20:19 * Justin_o joined the channel
+2015-01-09T13:23:31 <kasparnet> Bosmon: that\'s awesome
+2015-01-09T13:23:34 <kasparnet> and really fancy
+2015-01-09T13:24:22 <Bosmon> Although calling it an "event" might be a bit confusing, I think it will make our control flow a lot easier to understand
+2015-01-09T13:24:35 <Bosmon> Right now you have to hop back and forth between half a dozen files and see what calls what
+2015-01-09T13:24:56 <Bosmon> As well as making it easier for people to add and remove optional parts of the processing such as filtering....
+2015-01-09T13:38:47 <Bosmon> Oh kasparnet... one other thing
+2015-01-09T13:38:53 <Bosmon> I was looking at the UserUpdate request handler
+2015-01-09T13:38:54 <Bosmon> https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/FluidPromises.js#L225
+2015-01-09T13:39:05 <Bosmon> And I noticed it had the so-called grade "userToken"
+2015-01-09T13:39:49 <Bosmon> So in our current OAauth2-aware branch this grade got renamed to "matchMakingRequest"
+2015-01-09T13:39:50 <Bosmon> https://github.com/amb26/universal/blob/GPII-17/gpii/node_modules/flowManager/src/UserUpdate.js#L26
+2015-01-09T13:40:01 <Bosmon> Which made it a little clearer to me that this grade actually isn\'t used by the request at all
+2015-01-09T13:40:16 <Bosmon> because we don\'t (any longer?) do any matchMaking during the update request
+2015-01-09T13:40:29 <Bosmon> So one would think it would be ok to remove this grade
+2015-01-09T13:40:35 <Bosmon> Does that seem reasonable?
+2015-01-09T14:00:01 * cindyli joined the channel
+2015-01-09T14:01:01 * Jess_ joined the channel
+2015-01-09T14:02:43 * simonjb joined the channel
+2015-01-09T14:04:59 * Sepideh joined the channel
+2015-01-09T14:32:16 * yzen joined the channel
+2015-01-09T14:47:27 * the-t-in-rtf joined the channel
+2015-01-09T14:50:42 * the-t-in-rtf has quit
+2015-01-09T14:51:32 * the-t-in-rtf joined the channel
+2015-01-09T14:52:13 * the-t-in-rtf has quit
+2015-01-09T14:52:29 * the-t-in-rtf joined the channel
+2015-01-09T14:53:00 * the-t-in-rtf has quit
+2015-01-09T14:53:14 * the-t-in-rtf joined the channel
+2015-01-09T14:53:48 * the-t-in-rtf has quit
+2015-01-09T14:54:01 * the-t-in-rtf joined the channel
+2015-01-09T14:54:36 * the-t-in-rtf has quit
+2015-01-09T14:54:53 * the-t-in-rtf joined the channel
+2015-01-09T14:55:23 * the-t-in-rtf has quit
+2015-01-09T14:55:41 * the-t-in-rtf joined the channel
+2015-01-09T14:56:11 * the-t-in-rtf has quit
+2015-01-09T14:56:24 * the-t-in-rtf joined the channel
+2015-01-09T14:56:59 * the-t-in-rtf has quit
+2015-01-09T14:57:14 * the-t-in-rtf joined the channel
+2015-01-09T14:57:46 * the-t-in-rtf has quit
+2015-01-09T14:58:01 * the-t-in-rtf joined the channel
+2015-01-09T14:58:34 * the-t-in-rtf has quit
+2015-01-09T14:58:50 * the-t-in-rtf joined the channel
+2015-01-09T14:59:06 * kasparne_ joined the channel
+2015-01-09T14:59:21 * the-t-in-rtf has quit
+2015-01-09T14:59:38 * the-t-in-rtf joined the channel
+2015-01-09T14:59:53 * kasparnet has quit
+2015-01-09T15:00:09 * the-t-in-rtf has quit
+2015-01-09T15:00:24 * the-t-in-rtf joined the channel
+2015-01-09T15:00:56 * the-t-in-rtf has quit
+2015-01-09T15:01:14 * the-t-in-rtf joined the channel
+2015-01-09T15:01:44 * the-t-in-rtf has quit
+2015-01-09T15:01:57 * the-t-in-rtf joined the channel
+2015-01-09T15:02:32 * the-t-in-rtf has quit
+2015-01-09T15:02:47 * the-t-in-rtf joined the channel
+2015-01-09T15:03:19 * the-t-in-rtf has quit
+2015-01-09T15:03:34 * the-t-in-rtf joined the channel
+2015-01-09T15:04:07 * the-t-in-rtf has quit
+2015-01-09T15:04:24 * the-t-in-rtf joined the channel
+2015-01-09T15:04:54 * the-t-in-rtf has quit
+2015-01-09T15:05:12 * the-t-in-rtf joined the channel
+2015-01-09T15:05:42 * the-t-in-rtf has quit
+2015-01-09T15:05:59 * the-t-in-rtf joined the channel
+2015-01-09T15:06:30 * the-t-in-rtf has quit
+2015-01-09T15:06:45 * the-t-in-rtf joined the channel
+2015-01-09T15:07:18 * the-t-in-rtf has quit
+2015-01-09T15:07:34 * the-t-in-rtf joined the channel
+2015-01-09T15:07:37 * cindyli has quit
+2015-01-09T15:07:40 * michelled joined the channel
+2015-01-09T15:08:05 * the-t-in-rtf has quit
+2015-01-09T15:08:22 * the-t-in-rtf joined the channel
+2015-01-09T15:08:53 * the-t-in-rtf has quit
+2015-01-09T15:09:08 <Jess_> Sepideh: ping
+2015-01-09T15:09:09 * the-t-in-rtf joined the channel
+2015-01-09T15:09:27 <Sepideh> Hi Jess
+2015-01-09T15:09:40 * the-t-in-rtf has quit
+2015-01-09T15:09:56 * the-t-in-rtf joined the channel
+2015-01-09T15:09:59 <Jess_> good morning! just wanted to check in and make sure you\xe2\x80\x99re squared away well enough wrt the P4A next steps with use cases?
+2015-01-09T15:10:28 * the-t-in-rtf has quit
+2015-01-09T15:10:44 * the-t-in-rtf joined the channel
+2015-01-09T15:11:15 * the-t-in-rtf has quit
+2015-01-09T15:11:30 * the-t-in-rtf joined the channel
+2015-01-09T15:11:34 <Sepideh> Jess_ I am working on 2 more usecses for automated scenarios and 1 for an unsuccessful situation. I also want go over our other usecase and highlight areas that can be automated. Hopefully I can get this done by noon
+2015-01-09T15:12:00 <Jess_> oh wow. that sounds great :)
+2015-01-09T15:12:03 * the-t-in-rtf has quit
+2015-01-09T15:12:20 * the-t-in-rtf joined the channel
+2015-01-09T15:12:21 <Sepideh> please let me know if there is anything else you want me to work on
+2015-01-09T15:12:51 * the-t-in-rtf has quit
+2015-01-09T15:13:05 * the-t-in-rtf joined the channel
+2015-01-09T15:13:37 <Jess_> Sepideh: sounds good
+2015-01-09T15:13:38 * the-t-in-rtf has quit
+2015-01-09T15:13:55 * the-t-in-rtf joined the channel
+2015-01-09T15:14:26 * the-t-in-rtf has quit
+2015-01-09T15:14:41 * the-t-in-rtf joined the channel
+2015-01-09T15:15:13 * the-t-in-rtf has quit
+'
+

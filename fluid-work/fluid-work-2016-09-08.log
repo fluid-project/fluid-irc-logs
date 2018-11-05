@@ -1,0 +1,250 @@
+b'2016-09-08T17:44:34 * danayo_ has quit
+2016-09-08T17:46:44 * michelled joined the channel
+2016-09-08T17:47:06 * jhung joined the channel
+2016-09-08T17:47:10 * jhung has quit
+2016-09-08T17:47:59 * jhung joined the channel
+2016-09-08T17:55:14 * lliskovoi joined the channel
+2016-09-08T18:03:24 <Justin_o> gtirloni: yes, some of those tests require focus so when i run the all-tests.. i take a few minutes to think or stair out the window
+2016-09-08T18:04:57 <gtirloni> make sense, good approach. the good thing is that when they run inside the VM, the browser has focus (even if the VM window is not on focus)
+2016-09-08T18:05:19 <Justin_o> gtirloni: yah, that is really convenient
+2016-09-08T18:05:48 <Justin_o> gtirloni, avtar: by the way on my 10 runs i had failures on 3, 5, 8, and 9
+2016-09-08T18:07:31 <gtirloni> i\'m running a bunch of tests here with some settings changed to see if i can pinpoint where it starts to break. still downloading the f23 box to test on it too
+2016-09-08T18:08:27 <Justin_o> gtirloni: thanks
+2016-09-08T18:29:18 * kasparnet joined the channel
+2016-09-08T18:30:04 * kavya has quit
+2016-09-08T18:49:08 * clown has quit
+2016-09-08T18:54:21 * alanharnum joined the channel
+2016-09-08T19:02:49 * stegru joined the channel
+2016-09-08T19:06:50 * danayo joined the channel
+2016-09-08T19:11:05 * yzen_ joined the channel
+2016-09-08T19:14:07 * yzen has quit
+2016-09-08T19:24:35 * jhung has quit
+2016-09-08T19:40:33 * clown joined the channel
+2016-09-08T19:48:08 * kavya joined the channel
+2016-09-08T19:51:49 * stegru has quit
+2016-09-08T19:52:29 * cindyli has quit
+2016-09-08T19:58:05 * cindyli joined the channel
+2016-09-08T19:58:56 * alanharnum joined the channel
+2016-09-08T19:59:09 <avtar> gtirloni: the infusion test failures with firefox don\'t seem to be fedora related
+2016-09-08T20:00:20 <avtar> Justin_o and i ran the tests a few times using firefox 48 on windows 10 with similar results
+2016-09-08T20:00:22 <gtirloni> avtar: almost finished here but i guess the breakage started on ff46
+2016-09-08T20:00:39 <gtirloni> good results with ff45 and ff44
+2016-09-08T20:01:13 <gtirloni> f23 comes with ff41 so that might explain it
+2016-09-08T20:04:10 <Justin_o> gtirloni, avtar: interesting.. i wonder if we should fix the issue before upgrading to fedora 24, or it is useful to see the breakage.. i wonder what caused it in the newer firefox though
+2016-09-08T20:05:54 <gtirloni> https://www.pastery.net/nhneam/raw/
+2016-09-08T20:12:00 <michelled> danayo, colinclark: are you ready to meet now?
+2016-09-08T20:12:46 <colinclark> michelled: I am
+2016-09-08T20:12:48 <colinclark> sorry for the delay
+2016-09-08T20:12:54 <colinclark> how about you, danayo?
+2016-09-08T20:13:04 <danayo> yep
+2016-09-08T20:13:58 <michelled> my room?
+2016-09-08T20:13:58 <danayo> fluid_standup colinclark michelled?
+2016-09-08T20:14:12 <colinclark> sure!
+2016-09-08T20:14:52 <michelled> standup is good danayo
+2016-09-08T20:21:51 <gtirloni> Justin_o avtar: running all-tests.html manually with FF48.. it consistently fails on "Build Test Suite" -- https://www.pastery.net/sahent/raw/
+2016-09-08T20:22:09 <gtirloni> Justin_o avtar: I think FF48 will have to be tackled before we can start using F24
+2016-09-08T20:23:25 <gtirloni> (both inside and outside the VM)
+2016-09-08T20:25:18 <avtar> gtirloni: Justin_o left for the week
+2016-09-08T20:25:26 <gtirloni> and for the "SeparatedPanel Preferences Editor Test Suite", i can\'t replicate the issue manually when running just that test (within and outside the VM)..
+2016-09-08T20:25:27 <gtirloni> ah ok
+2016-09-08T20:25:37 <avtar> just to confirm, are you serving those tests using a web server?
+2016-09-08T20:25:48 <gtirloni> no, i tried locally..
+2016-09-08T20:26:20 * alanharnum joined the channel
+2016-09-08T20:26:57 <avtar> for best results you\'ll need to access them over http
+2016-09-08T20:27:03 <avtar> python3 -m http.server 8081
+2016-09-08T20:27:12 <gtirloni> ok, let me try that
+2016-09-08T20:27:22 <gtirloni> is that what is does with testem?
+2016-09-08T20:27:51 <avtar> yup
+2016-09-08T20:28:37 <gtirloni> where should i run python3? tests/ ? that\'s failing for all tests ("global failure: ReferenceError: jQuery is not defined")
+2016-09-08T20:28:57 * sgithens has quit
+2016-09-08T20:29:18 <gtirloni> ah infusion root
+2016-09-08T20:29:18 <gtirloni> ok
+2016-09-08T20:29:39 * sgithens joined the channel
+2016-09-08T20:33:01 <gtirloni> looks like this one will be tricky
+2016-09-08T20:33:16 <gtirloni> manually it works fine (20x), hitting refresh on ff48
+2016-09-08T20:35:19 <gtirloni> avtar: do you know of i quick way to retrive the error output like we see on the browser?
+2016-09-08T20:35:22 <gtirloni> (from testem)
+2016-09-08T20:37:31 <avtar> gtirloni: sorry, was lost in another window
+2016-09-08T20:37:35 <avtar> not that i know of
+2016-09-08T20:38:41 <gtirloni> np
+2016-09-08T20:40:20 <gtirloni> if you run it not in \'ci\' mode and connect to the page, then press enter and immediately switch focus to the browser, you can see where it failed (if it failed)
+2016-09-08T20:40:33 <gtirloni> also the console window shows something (not touching it right now until it finishes)
+2016-09-08T20:41:36 <gtirloni> awesome, got it to fail
+2016-09-08T20:41:58 <gtirloni> i\'ll open a JIRA
+2016-09-08T20:42:54 <gtirloni> https://www.pastery.net/pjyqxs/
+2016-09-08T20:45:18 <gtirloni> https://issues.fluidproject.org/browse/FLUID-5952
+2016-09-08T20:55:17 * lliskovoi has quit
+2016-09-08T21:13:29 * yzen_ has quit
+2016-09-08T21:20:01 * clown has left the channel
+2016-09-08T21:21:01 * lliskovoi joined the channel
+2016-09-08T21:25:29 <avtar> gtirloni: thanks!
+2016-09-08T21:26:17 * kasparnet has quit
+2016-09-08T21:26:40 * michelled has quit
+2016-09-08T21:26:41 * lliskovoi has quit
+2016-09-08T21:26:53 * simonjb has quit
+2016-09-08T21:49:23 <danayo> colinclark: please add/edit as needed https://docs.google.com/document/d/1ez1YkdkcNGVFbChzbM5dI0Cr7II5Cy3ufcCIZhF_eoA/edit?usp=sharing
+2016-09-08T21:50:11 <colinclark> oh, this is awesome, danayo
+2016-09-08T21:50:13 <colinclark> thanks for compiling these!
+2016-09-08T21:50:23 <danayo> no sweat :)
+2016-09-08T21:59:50 * kavya has quit
+2016-09-08T22:11:37 * gtirloni has quit
+2016-09-08T22:21:18 * jhernandez has quit
+2016-09-08T22:30:56 * alanharnum joined the channel
+2016-09-08T22:59:40 * sgithens has quit
+2016-09-08T23:16:48 * Jess_ joined the channel
+2016-09-08T23:18:48 * sgithens joined the channel
+2016-09-08T23:24:26 * Jess_ has quit
+'
+
+b'2016-09-08T00:03:51 * colinclark joined the channel
+2016-09-08T00:04:02 * colinclark has quit
+2016-09-08T00:23:09 * lliskovoi_ joined the channel
+2016-09-08T00:27:16 * yzen joined the channel
+2016-09-08T00:28:30 * yzen is now known as yzen_
+2016-09-08T00:33:27 * yzen_ has quit
+2016-09-08T01:12:36 * michelled joined the channel
+2016-09-08T01:30:50 * yzen joined the channel
+2016-09-08T01:35:23 * yzen has quit
+2016-09-08T01:58:23 * kavya has quit
+2016-09-08T04:32:38 * yzen joined the channel
+2016-09-08T04:36:52 * yzen has quit
+2016-09-08T06:01:12 * kasparnet joined the channel
+2016-09-08T06:20:58 * kasparnet has quit
+2016-09-08T06:32:05 * kasparnet joined the channel
+2016-09-08T06:41:02 * the-t-in-rtf has quit
+2016-09-08T06:50:10 * kasparnet has quit
+2016-09-08T06:51:08 * kasparnet joined the channel
+2016-09-08T07:21:49 * stegru joined the channel
+2016-09-08T10:43:50 * kasparnet has quit
+2016-09-08T10:48:08 * kasparnet joined the channel
+2016-09-08T10:56:18 * kasparne_ joined the channel
+2016-09-08T10:57:48 * kasparn__ joined the channel
+2016-09-08T10:57:48 * kasparne_ has quit
+2016-09-08T10:58:32 * kasparne_ joined the channel
+2016-09-08T10:59:34 * kasparnet has quit
+2016-09-08T11:02:16 * kasparn__ has quit
+2016-09-08T11:22:03 * the-t-in-rtf joined the channel
+2016-09-08T11:28:11 * the-t-in-rtf has quit
+2016-09-08T11:28:45 * the-t-in-rtf joined the channel
+2016-09-08T11:59:58 * michelled joined the channel
+2016-09-08T12:20:59 * Justin_o joined the channel
+2016-09-08T12:26:08 * kasparne_ has quit
+2016-09-08T12:27:01 * cindyli joined the channel
+2016-09-08T12:48:53 * jhung joined the channel
+2016-09-08T12:50:23 * gtirloni joined the channel
+2016-09-08T13:04:54 * kasparnet joined the channel
+2016-09-08T13:11:06 * clown joined the channel
+2016-09-08T13:16:33 * kasparne_ joined the channel
+2016-09-08T13:19:12 * kasparnet has quit
+2016-09-08T13:23:25 * Jess_ joined the channel
+2016-09-08T13:25:21 * kasparnet joined the channel
+2016-09-08T13:28:32 * kasparne_ has quit
+2016-09-08T13:34:46 * colinclark joined the channel
+2016-09-08T13:36:07 * michelled has quit
+2016-09-08T13:39:24 * Yan_Hu joined the channel
+2016-09-08T13:41:27 <gtirloni> for reference only: today I learned that the vagrant installer is missing a dependency on the c++ redist x86 package and causes curl.exe to fail (which is used to download new boxes). this happened on a fresh install of a win10 host (not guest). looks like the latest changes to the installer did not fix this. if you\'re on fresh install of windows, you\'ll need to download this: https://www.microsoft.com/en-us/download/details.aspx?id=8328
+2016-09-08T13:41:27 <gtirloni> (this may already be in your machine, installed by some other app that needed it)
+2016-09-08T13:46:30 * danayo joined the channel
+2016-09-08T13:55:33 * kavya joined the channel
+2016-09-08T13:57:50 * gtirloni has quit
+2016-09-08T14:02:37 * danayo_ joined the channel
+2016-09-08T14:06:13 * lliskovoi joined the channel
+2016-09-08T14:07:36 * gtirloni joined the channel
+2016-09-08T14:09:06 * simonjb joined the channel
+2016-09-08T14:27:06 * michelled joined the channel
+2016-09-08T14:27:06 <Justin_o> gtirloni: hello, is this ready to be reviewed https://github.com/fluid-project/infusion/pull/722
+2016-09-08T14:27:57 <gtirloni> Justin_o: hi, yes
+2016-09-08T14:30:17 * michelled joined the channel
+2016-09-08T14:30:28 <Justin_o> gtirloni: thanks, i\'ll try to take a look at it shortly
+2016-09-08T14:42:31 <Justin_o> gtirloni: how do i verify that it\'s the correct version of fedora running
+2016-09-08T14:44:24 <gtirloni> you can run `vagrant ssh -c "cat /etc/fedora-release"`
+2016-09-08T14:45:02 <Justin_o> gtirloni: thanks
+2016-09-08T14:45:37 <Justin_o> gtirloni: :( still at 23
+2016-09-08T14:46:03 <Justin_o> is there something i need to do to make is use 24
+2016-09-08T14:46:52 <Justin_o> gtirloni: maybe i had an old vm still around.. i just did a vagrant destroy and will try again
+2016-09-08T14:47:28 <gtirloni> you can double check that the Vagrantfile you have is pointing to inclusivedesign/fedora24
+2016-09-08T14:59:39 <Justin_o> gtirloni: the vagrant destroy seemed to take care of things.. although the initial vagrant up took a long time
+2016-09-08T15:01:11 <gtirloni> cool. yeah, i think that makes sense if the box already existed, vagrant won\'t check if the box source image changed or not.. just starts it up. glad it worked now.
+2016-09-08T15:03:17 <Justin_o> gtirloni: have you run the tests with Fedora 24?
+2016-09-08T15:03:21 <gtirloni> yep
+2016-09-08T15:03:31 <Justin_o> i\'m getting an error with Firefox, but the error seems strange
+2016-09-08T15:03:34 <Justin_o> did you get any errors?
+2016-09-08T15:03:47 <gtirloni> no errors, it passed clean for me
+2016-09-08T15:03:57 <gtirloni> could you upload it somewhere so we can take a look?
+2016-09-08T15:04:00 <Justin_o> gtirloni: this is the error i\'m getting
+2016-09-08T15:04:08 <gtirloni> for reference, i was using virtualbox 5.0.26 and vagrant 1.8.4
+2016-09-08T15:04:14 <Justin_o> https://www.irccloud.com/pastebin/RyEVblIm/
+2016-09-08T15:04:44 * alanharnum has quit
+2016-09-08T15:04:50 <Justin_o> gtirloni: i\'m using the same versions of virtualbox and vagrant
+2016-09-08T15:05:01 <gtirloni> ok 24 Firefox 48.0 - Framework Tests: ./framework-tests/preferences/html/SeparatedPanelPrefsEditor-test.html
+2016-09-08T15:05:14 <gtirloni> hmm interesting
+2016-09-08T15:05:48 <jhung> Justin_o: I\'ve updated the IDI theme pull request https://github.com/inclusive-design/idi-theme/pull/78
+2016-09-08T15:09:40 * alanharnum joined the channel
+2016-09-08T15:10:37 <gtirloni> Justin_o: i\'m going to have lunch now and i\'ll be back in one hour. i have only tested this on a fedora 24 host with the vbox/vagrant versions i mentioned. when i get back, i\'ll test on a win10 host and see how it goes.
+2016-09-08T15:13:27 <Justin_o> gtirloni: thanks
+2016-09-08T15:14:33 * alanharnum has quit
+2016-09-08T15:14:34 <avtar> Justin_o: which shell are you using?
+2016-09-08T15:15:49 <Justin_o> avtar: i\'m just using the terminal on mac if that\'s what you mean
+2016-09-08T15:16:15 <avtar> Justin_o: yup, what does the following command return: echo $SHELL
+2016-09-08T15:16:33 <jhung> cindyli: do you have time to look at the PR I mentioned above because it has some PHP?
+2016-09-08T15:16:37 <Justin_o> avtar: bash 3.2
+2016-09-08T15:17:05 <cindyli> sure, jhung
+2016-09-08T15:17:14 <jhung> thanks cindyli
+2016-09-08T15:17:18 <cindyli> np
+2016-09-08T15:17:57 <avtar> Justin_o: could you try running these tests a few times? i\'m curious about the results
+2016-09-08T15:18:14 <Justin_o> avtar: i tried it a second time just now and same results
+2016-09-08T15:18:21 <Justin_o> is there a way i can manually run it in the vm?
+2016-09-08T15:18:37 <avtar> something like this will work:   for n in {1..10}; do echo "${n}th run: "; grunt tests | grep SeparatedPanelPrefsEditor; done
+2016-09-08T15:18:46 <avtar> from your os x terminal and not in the vm
+2016-09-08T15:19:03 * alanharnum joined the channel
+2016-09-08T15:24:22 <Justin_o> avtar: actually it worked on the third try already, would you still like me to run it 10 times?
+2016-09-08T15:24:35 <avtar> might as well :P
+2016-09-08T15:24:42 <avtar> for science
+2016-09-08T15:25:10 <Justin_o> :)
+2016-09-08T15:25:37 <alanharnum> blog post on mob programming (I believe colinclark has mentioned it in the past) from the UK GDS: https://gdstechnology.blog.gov.uk/2016/09/08/our-top-12-mob-programming-tips-and-thoughts/
+2016-09-08T15:26:50 <Justin_o> alanharnum: i was sort of hoping it would be like a flash mob hack-a-thon where hundreds of random programs meet somewhere
+2016-09-08T15:27:07 <alanharnum> Justin_o: it\'s not entirely dissimilar :)
+2016-09-08T15:27:25 * simonjb has quit
+2016-09-08T15:30:08 * alanharnum has quit
+2016-09-08T15:39:54 * kasparnet has quit
+2016-09-08T15:40:46 * the-t-in-rtf has quit
+2016-09-08T15:42:32 * kasparnet joined the channel
+2016-09-08T15:49:43 * alanharnum joined the channel
+2016-09-08T15:50:11 <michelled> avtar: I forgot to mention that at the dspace meeting this morning, Till said they\'d be contacting you in the next few days with information on how to integrate the QI with dspace.
+2016-09-08T15:50:25 <michelled> it sounds like the expectation is that we would do the integration
+2016-09-08T15:50:37 <michelled> colinclark: you might find that interesting ^
+2016-09-08T15:50:58 <colinclark> I think we can do our best to help with integration
+2016-09-08T15:51:07 <colinclark> we won\'t probably be able to do much in the way of Drupal programming for them
+2016-09-08T15:51:22 <michelled> yes, that makes sense.
+2016-09-08T15:51:31 <colinclark> but we can definitely provide simply-embeddable widgets of the sort that alanharnum  and avtar worked on for the quicker integration
+2016-09-08T15:51:35 <michelled> also, I suspect there will be an effort at the f2f to complete these integrations
+2016-09-08T15:53:04 <Justin_o> gtirloni, avtar: so the science experiment is still running, it\'s completed 5 runs so far, with a failure on the 3 and 5th run
+2016-09-08T15:58:53 <avtar> colinclark, michelled, Justin_o: i\'m en route to the office so i\'ll be able to chat soon
+2016-09-08T16:00:08 <Justin_o> avtar: see you soon
+2016-09-08T16:06:48 * alanharnum has quit
+2016-09-08T16:08:47 * michelled has quit
+2016-09-08T16:13:15 * colinclark joined the channel
+2016-09-08T16:16:12 * michelled joined the channel
+2016-09-08T16:39:47 <gtirloni> Justin_o avtar: I\'m running the 10 tests and will report once they complete. However, I\'m also running the tests locally outside Vagrant and I\'ve already found 3 issues on Firefox 48
+2016-09-08T16:40:17 <gtirloni> HTML5UploaderSupport-test.html - gets stuck - workaround :click the \'Browse\' button on the test page, cancel file selection dialog. tests continue.
+2016-09-08T16:40:43 <gtirloni> PagedTable-test.html - "ager tooltip tests: Tooltip visibility and contents: The tooltip of page link 1, in top page bar is visible - at sequence position 4 of 15"
+2016-09-08T16:41:28 * cindyli has quit
+2016-09-08T16:41:32 <gtirloni> ImageReordererTestSuite - stuck in "ItemFocusBlur: with click" if browser doesn\'t have focus. once focus is back, tests continue
+2016-09-08T16:41:47 * jhung has quit
+2016-09-08T16:41:55 <gtirloni> same thing with other tests.. focus seems mandatory
+2016-09-08T16:43:33 <gtirloni> the issue with PagedTable-test.html also happens on Chrome 53.0
+2016-09-08T16:47:55 * lliskovoi has quit
+2016-09-08T16:52:06 <gtirloni> looks like all issues are related to browser focus, please ignore if that\'s expect.
+2016-09-08T16:53:28 <gtirloni> +ed
+2016-09-08T17:01:55 * kasparnet has quit
+2016-09-08T17:05:52 * stegru has quit
+2016-09-08T17:06:52 <gloob> node7
+2016-09-08T17:07:02 <gloob> marvellous
+2016-09-08T17:08:28 * sgithens joined the channel
+2016-09-08T17:15:32 * the-t-in-rtf joined the channel
+2016-09-08T17:29:01 * alanharnum joined the channel
+2016-09-08T17:30:08 * cindyli joined the channel
+2016-09-08T17:31:46 * simonjb joined the channel
+2016-09-08T17:40:09 * yzen joined the channel
+'
+

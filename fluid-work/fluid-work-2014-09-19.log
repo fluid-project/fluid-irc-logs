@@ -1,0 +1,123 @@
+b'2014-09-19T00:21:05 * colinclark has quit
+2014-09-19T01:22:47 * jhernandez has quit
+2014-09-19T01:40:29 * danaayotte has quit
+2014-09-19T04:13:24 * Bosmon7 has quit
+2014-09-19T06:47:11 * kasparnet joined the channel
+2014-09-19T06:48:37 * the-t-in-rtf has quit
+2014-09-19T06:48:57 * the-t-in-rtf joined the channel
+2014-09-19T08:17:15 * slim joined the channel
+2014-09-19T09:13:14 * jhernandez joined the channel
+2014-09-19T09:45:30 * amilchev has left the channel
+2014-09-19T09:50:24 * slim has quit
+2014-09-19T12:12:51 * jhung joined the channel
+2014-09-19T12:26:03 * Justin_o joined the channel
+2014-09-19T12:55:12 * anvk joined the channel
+2014-09-19T13:04:58 * heidiv joined the channel
+2014-09-19T13:07:33 * slim joined the channel
+2014-09-19T13:13:30 * cindyli joined the channel
+2014-09-19T13:13:53 * yzen joined the channel
+2014-09-19T13:19:48 * Bosmon7 joined the channel
+2014-09-19T13:32:21 * jessm joined the channel
+2014-09-19T14:05:45 * jhung1 joined the channel
+2014-09-19T14:10:16 * jhung has quit
+2014-09-19T14:11:55 * anastasiac joined the channel
+2014-09-19T14:13:58 * Bosmon8 joined the channel
+2014-09-19T14:14:02 * Bosmon7 has quit
+2014-09-19T14:25:05 * kasparnet has quit
+2014-09-19T14:30:26 * simonjb joined the channel
+2014-09-19T14:41:20 <cindyli> hi Bosmon8
+2014-09-19T14:43:22 <cindyli> in the model relay "fluid.transforms.free" function, seems calling component invokers are not allowed. code:
+2014-09-19T14:43:42 <cindyli> modelRelay: [{
+2014-09-19T14:43:43 <cindyli> source: "isTooltipOpen",
+2014-09-19T14:43:43 <cindyli> target: "isShareTarget",
+2014-09-19T14:43:43 <cindyli> forward: "liveOnly",
+2014-09-19T14:43:43 <cindyli> singleTransform: {
+2014-09-19T14:43:43 <cindyli> type: "fluid.transforms.free",
+2014-09-19T14:43:43 <cindyli> args: {
+2014-09-19T14:43:44 <cindyli> "that": "{that}"
+2014-09-19T14:43:44 <cindyli> },
+2014-09-19T14:43:45 <cindyli> func: "gpii.metadata.feedback.isShareTarget"
+2014-09-19T14:43:45 <cindyli> }
+2014-09-19T14:43:46 <cindyli> }, {\xe2\x80\xa6}]
+2014-09-19T14:44:03 <cindyli> gpii.metadata.feedback.isShareTarget = function (that) {
+2014-09-19T14:44:03 <cindyli> var dialogOpener = that.getDialogOpener();
+2014-09-19T14:44:03 <cindyli> \xe2\x80\xa6};
+2014-09-19T14:45:04 <cindyli> getDialogOpener() is an invoker defined for "that". console.log(that) shows
+2014-09-19T14:45:08 <cindyli> getDialogOpener  invokeInvoker()
+2014-09-19T14:45:31 <cindyli> The error from this line:
+2014-09-19T14:45:31 <cindyli> TypeError: that.getDialogOpener is not a function
+2014-09-19T14:45:44 <cindyli> is this expected behavior?
+2014-09-19T14:48:14 * jessm has quit
+2014-09-19T14:48:54 <Justin_o> cindyli: i submitted a pull request for FLOE-227. I\'ll start looking at FLOE-230 today.
+2014-09-19T14:49:21 <cindyli> cool. thanks, Justin_o
+2014-09-19T14:58:10 * simonjb has quit
+2014-09-19T14:59:12 * simonjb joined the channel
+2014-09-19T15:01:11 <Justin_o> cindyli: i\'m looking at FLOE-230 now.. what was the reason for the in transit.opinion model value
+2014-09-19T15:03:58 * Bosmon7 joined the channel
+2014-09-19T15:04:41 <cindyli> Justin_o: transit.opinion is an intermediate value to translate the states of match and mismatch to the feedback central model
+2014-09-19T15:05:27 <cindyli> the states of match and mismatch come from subcomponents bindMatchConfirmation & bindMismatchDetails
+2014-09-19T15:05:37 <cindyli> the translation includes:
+2014-09-19T15:05:48 * Bosmon8 has quit
+2014-09-19T15:06:02 <cindyli> if bindMatchConfirmation.model.isActive is true, central model match === true
+2014-09-19T15:06:34 <cindyli> if bindMismatchDetails.model.isActive is true, central model match === false && mismatch === true
+2014-09-19T15:07:04 <Justin_o> how does it set match to false?
+2014-09-19T15:07:26 <cindyli> using "fluid.transforms.arrayToSetMembership"
+2014-09-19T15:07:44 <cindyli> the source array only has one element at any time
+2014-09-19T15:08:10 <cindyli> one of these values: like, dislike, none
+2014-09-19T15:09:23 <cindyli> in the first "if bindMatchConfirmation.model.isActive is true", as well, central model not only has match === true, also should have mismatch === false
+2014-09-19T15:11:32 <Justin_o> okay, so if it doesn\'t match it will set the value to false, and true if it does
+2014-09-19T15:25:12 <Justin_o> cindyli: what does forward: liveOnly mean
+2014-09-19T15:25:16 <Justin_o> and is there docs for that somewhere
+2014-09-19T15:29:17 <cindyli> Justin_o: means ignore "init
+2014-09-19T15:29:19 <cindyli> "
+2014-09-19T15:29:49 <Justin_o> cindyli:  thanks
+2014-09-19T15:30:10 <cindyli> not sure if there\'s a doc for this, but certainly has a jira with explanations, Justin_o. looking up..
+2014-09-19T15:30:35 <Justin_o> cindyli: thanks
+2014-09-19T15:30:58 <cindyli> Justin_o: http://issues.fluidproject.org/browse/FLUID-5371
+2014-09-19T15:31:22 <Justin_o> cindyli: great thanks
+2014-09-19T15:31:27 <cindyli> np
+2014-09-19T15:38:54 * slim_ joined the channel
+2014-09-19T15:41:29 * slim has quit
+2014-09-19T15:41:34 * slim_ is now known as slim
+2014-09-19T16:03:59 * jhung1 has quit
+2014-09-19T16:25:59 <Justin_o> cindyli: i\'m trying to do a transformation. i want it to replace an array in the model, but it seems to be merging instead. have you encountered that before?
+2014-09-19T16:27:27 <cindyli> Justin_o: how do you replace it?
+2014-09-19T16:27:53 <cindyli> i\'m coming
+2014-09-19T16:53:40 <anastasiac> Justin_o, I updated my DOM Binder docs pull request based on today\xe2\x80\x99s feedback, and my Testing Framework docs pull request is ready for another review
+2014-09-19T16:53:56 <Justin_o> anastasiac: thanks i\'ll take a look at those
+2014-09-19T17:01:43 * slim has quit
+2014-09-19T17:14:36 * jhung joined the channel
+2014-09-19T17:33:58 * jhernandez has quit
+2014-09-19T18:15:52 * heidiv has quit
+2014-09-19T18:20:25 * heidiv joined the channel
+2014-09-19T18:20:32 * cindyli has quit
+2014-09-19T18:36:06 * yzen has quit
+2014-09-19T18:44:53 * danaayotte joined the channel
+2014-09-19T18:49:31 * anastasiac has quit
+2014-09-19T19:02:45 * Bosmon7 has quit
+2014-09-19T19:05:55 * cindyli joined the channel
+2014-09-19T19:06:02 * anastasiac joined the channel
+2014-09-19T19:06:51 * danaayotte has quit
+2014-09-19T19:14:16 * yzen joined the channel
+2014-09-19T19:14:53 * yzen_ joined the channel
+2014-09-19T19:18:27 * yzen has quit
+2014-09-19T19:20:21 * danaayotte joined the channel
+2014-09-19T19:20:43 * danaayotte has quit
+2014-09-19T19:57:39 * heidiv has quit
+2014-09-19T19:58:04 * jhung has quit
+2014-09-19T19:59:25 * jhung joined the channel
+2014-09-19T20:22:37 * anvk has quit
+2014-09-19T20:26:27 * cindyli has quit
+2014-09-19T20:42:43 * yzen joined the channel
+2014-09-19T20:44:12 * yzen_ has quit
+2014-09-19T20:59:18 * yzen has quit
+2014-09-19T20:59:24 * yzen_ joined the channel
+2014-09-19T21:11:28 * yzen_ has quit
+2014-09-19T21:43:06 * jhernandez joined the channel
+2014-09-19T21:46:08 * Justin_o has quit
+2014-09-19T21:51:58 * anastasiac has quit
+2014-09-19T22:20:42 * simonjb has quit
+2014-09-19T23:44:35 * jhernandez has quit
+2014-09-19T23:57:08 * jhernandez joined the channel
+'
+

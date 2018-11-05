@@ -1,0 +1,131 @@
+b'2017-08-24T00:06:25 * koo5 has quit
+2017-08-24T00:48:26 * mrtyler joined the channel
+2017-08-24T01:07:01 * koo5 joined the channel
+2017-08-24T02:09:50 * koo5 has quit
+2017-08-24T02:24:07 * koo5 joined the channel
+2017-08-24T05:55:13 * koo5 has quit
+2017-08-24T06:02:43 * amatas joined the channel
+2017-08-24T06:25:27 * koo5 joined the channel
+2017-08-24T07:53:15 * amatas has quit
+2017-08-24T08:19:46 * stegru joined the channel
+2017-08-24T09:02:58 * kasparnet joined the channel
+2017-08-24T10:07:33 * kasparnet has quit
+2017-08-24T10:24:53 * kasparnet joined the channel
+2017-08-24T10:31:18 * jhung joined the channel
+2017-08-24T11:01:39 * jhung has quit
+2017-08-24T11:08:10 * jhung joined the channel
+2017-08-24T11:23:13 * koo5 has quit
+2017-08-24T11:48:55 * cindyli joined the channel
+2017-08-24T12:27:44 * Justin_o joined the channel
+2017-08-24T12:59:48 * jhung joined the channel
+2017-08-24T13:02:22 * simonjb joined the channel
+2017-08-24T13:09:59 * kasparnet has quit
+2017-08-24T13:11:44 * kasparnet joined the channel
+2017-08-24T13:12:29 * kasparnet has quit
+2017-08-24T13:13:04 * kasparnet joined the channel
+2017-08-24T13:17:18 * kasparnet has quit
+2017-08-24T13:22:30 * grrrero joined the channel
+2017-08-24T13:40:26 * alanharnum joined the channel
+2017-08-24T13:44:52 <alanharnum> hey look, it\'s the collaboration room! https://www.thestar.com/news/gta/2017/08/23/qualtrough-wants-to-make-history-with-federal-accessibility-laws.html
+2017-08-24T13:46:39 <Justin_o> alanharnum: that\'s cool, unfortunately the link to the youtube video doesn\'t work
+2017-08-24T13:47:01 <Justin_o> maybe that was just for the live stream
+2017-08-24T14:04:05 * kasparnet joined the channel
+2017-08-24T14:04:22 * kasparnet has quit
+2017-08-24T14:11:29 * gtirloni joined the channel
+2017-08-24T14:14:12 * koo5 joined the channel
+2017-08-24T14:26:41 * michelled joined the channel
+2017-08-24T14:32:57 * javjarfer_ joined the channel
+2017-08-24T14:32:57 * javjarfer_ is now known as javjarfer
+2017-08-24T14:54:15 * alanharnum joined the channel
+2017-08-24T15:04:06 * danayo joined the channel
+2017-08-24T15:04:09 * avtar joined the channel
+2017-08-24T15:13:27 * mrtyler joined the channel
+2017-08-24T15:24:35 * clown joined the channel
+2017-08-24T15:26:09 * danayo_ joined the channel
+2017-08-24T15:30:04 * alanharnum joined the channel
+2017-08-24T15:30:57 <ussjoin> "federal minister of sport and persons with disabilities" -- interesting combination of duties....
+2017-08-24T15:50:34 <Bosmon> michelled, cindyli - I am on the trail of your test problems
+2017-08-24T15:51:00 <michelled> what have you found?
+2017-08-24T15:51:07 <Bosmon> Well I have found quite a number of things
+2017-08-24T15:51:14 <Bosmon> The situation is really rather complicated
+2017-08-24T15:51:48 <Bosmon> Firstly i) the console.write callback in node-jqunit is indeed the cause of the failure to detect 0 fixtures queued -> error at the OS
+2017-08-24T15:53:28 <Bosmon> ii) The corresponding qUnit.onAllTestsDone.addListener in your tests.js needs to be removed
+2017-08-24T15:53:47 <Bosmon> iii) You have caused some problems by using a mismatched version of node-jqunit in your app to the one used by the rest of the system
+2017-08-24T15:54:01 <Bosmon> iv) Unfortunately, bringing these versions into line exposes some yet further horrific problem
+2017-08-24T15:54:23 <Bosmon> That I think I have eventually tracked down to there somehow being two different QUnit object instances in the system, even though there is only one library
+2017-08-24T15:55:15 <Bosmon> My suspicion is that this is being caused by there being more than one call, in the end, to fluid.loadTestingSupport
+2017-08-24T15:55:25 <Bosmon> I\'m now going to test this idea
+2017-08-24T15:55:54 <Bosmon> I assigned random ids to each QUnit instance and here is the current trace I am looking at:
+2017-08-24T15:55:59 <Bosmon> QUnit id pmevzzxc0gmowq3kgldi config.current [object Object]
+2017-08-24T15:55:59 <Bosmon> Now executing testFunc for gpii.tests.acceptance.cloudBased.config.base tests config.current is undefined
+2017-08-24T15:55:59 <Bosmon> QUnit id 417hj4ih7rav9hir7ldi config.current undefined
+2017-08-24T15:55:59 <Bosmon> 08:50:15.173:  jq: FAIL: Module "gpii.tests.acceptance.cloudBased.config.base tests" Test name "Acceptance test for empty preferences in Chrome" - Message: Died on test #1     at Object.asyncTest (C:\\gpii-app\
+ode_modules\\infusion\\tests\\lib\\qunit\\js\\qunit.js:411:9)
+2017-08-24T15:56:10 <Bosmon> One of the QUnits believes it is in the middle of a test, and the other one doesn\'t
+2017-08-24T16:00:01 <Bosmon> YAY YAY YAY tests are running
+2017-08-24T16:00:09 <michelled> :D
+2017-08-24T16:00:32 <Bosmon> OK, so this requires me to make updates to both node-jqUnit as well as Infusion itself
+2017-08-24T16:00:45 <Bosmon> Which I unfortunately can\'t do now because we now have a Windows meeting and then I am going .... OUTT
+2017-08-24T16:01:00 <Bosmon> But hopefully you and cindyli have something else to crack on with in the meantime
+2017-08-24T16:01:10 <michelled> for sure - you know how it is :)
+2017-08-24T16:01:18 <michelled> thanks so much for your help Bosmon!
+2017-08-24T16:01:20 <Bosmon> Yes, it\'s insane
+2017-08-24T16:01:27 <Bosmon> I should have been spending this time fixing the PCP API
+2017-08-24T16:01:47 <Bosmon> But I noticed that kasparnet is AWOL and without him I can\'t do anything practical anyway
+2017-08-24T16:02:01 * cindyli has quit
+2017-08-24T16:02:18 <Bosmon> Actually I inserted the duplicate call to fluid.loadTestingSupport into your AppTests.js myself
+2017-08-24T16:02:38 <Bosmon> Since I noticed it was incapable of running its own tests as a standalone file without it
+2017-08-24T16:06:06 * danayo_ has quit
+2017-08-24T16:08:39 <gtirloni> oh
+2017-08-24T16:09:42 <gtirloni> Bosmon: thanks for investigating that. the most i could do yesterday was to look for signs of life from the OS side but i exhausted my knowledge of node.js at that point :)
+2017-08-24T16:10:26 * cindyli joined the channel
+2017-08-24T16:17:19 <cindyli> gtirloni: Justin_o\'s pull request for fixing GPII-2524 has been merged into the master. you may wanna try another deployment
+2017-08-24T16:17:31 <gtirloni> sure, let me check
+2017-08-24T16:28:42 * michelled has quit
+2017-08-24T16:40:15 * kasparnet joined the channel
+2017-08-24T16:40:29 * alanharnum has quit
+2017-08-24T16:40:55 * alanharnum joined the channel
+2017-08-24T16:44:57 * alanharnum has quit
+2017-08-24T16:53:26 * simonjb joined the channel
+2017-08-24T17:00:36 * kasparnet has quit
+2017-08-24T17:08:36 * alanharnum joined the channel
+2017-08-24T17:16:25 * alanharnum has quit
+2017-08-24T17:22:48 * cindyli joined the channel
+2017-08-24T17:30:36 * kasparnet joined the channel
+2017-08-24T17:42:55 * alanharnum joined the channel
+2017-08-24T17:43:02 * alanharnum joined the channel
+2017-08-24T17:46:20 * kasparnet has quit
+2017-08-24T17:51:56 * michelled joined the channel
+2017-08-24T17:53:46 * kasparnet joined the channel
+2017-08-24T17:56:10 * koo5 has quit
+2017-08-24T18:02:03 * kasparnet has quit
+2017-08-24T18:10:07 * koo5 joined the channel
+2017-08-24T18:11:49 * stegru has quit
+2017-08-24T18:14:36 * alanharnum joined the channel
+2017-08-24T18:18:41 * alanharnum has quit
+2017-08-24T18:39:08 * kasparnet joined the channel
+2017-08-24T18:44:49 * javjarfer has quit
+2017-08-24T18:47:23 * kasparnet has quit
+2017-08-24T18:58:46 * stegru joined the channel
+2017-08-24T19:24:48 * kasparnet joined the channel
+2017-08-24T19:26:54 * kasparnet has quit
+2017-08-24T19:37:41 * kasparnet joined the channel
+2017-08-24T19:39:48 * kasparnet has quit
+2017-08-24T19:46:42 * Jess_ joined the channel
+2017-08-24T20:16:31 * alanharnum joined the channel
+2017-08-24T20:18:12 * stegru has quit
+2017-08-24T20:18:16 * simonjb has quit
+2017-08-24T20:24:01 * alanharnum has quit
+2017-08-24T20:56:57 * avtar joined the channel
+2017-08-24T21:33:07 * alanharnum joined the channel
+2017-08-24T22:03:29 * Jess_ has quit
+2017-08-24T22:04:10 * Jess_ joined the channel
+2017-08-24T22:04:33 * Jess_ has quit
+2017-08-24T22:09:02 * koo5 has quit
+2017-08-24T22:35:47 * Justin_o has quit
+2017-08-24T22:42:32 * avtar joined the channel
+2017-08-24T22:56:10 * avtar has quit
+2017-08-24T23:07:01 * danayo has quit
+2017-08-24T23:10:21 * grrrero has quit
+'
+

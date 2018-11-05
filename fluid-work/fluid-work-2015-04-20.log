@@ -1,0 +1,249 @@
+b'2015-04-20T18:38:50 <Bosmon> We\'ll invent a dedicated syntax for this before long
+2015-04-20T18:39:10 <Justin_o> Bosmon: thanks
+2015-04-20T18:39:21 <Justin_o> Bosmon, simonjb: is there a link to the code where this was done?
+2015-04-20T18:39:41 <colinclark> Can I ask, only just out of curiosity, what the use case is where you want a uni-directional relay?
+2015-04-20T18:39:56 <Justin_o> colinclark: :) i was wondering if someone would ask that
+2015-04-20T18:40:04 <simonjb> looking...
+2015-04-20T18:40:08 <Justin_o> simonjb: thanks
+2015-04-20T18:40:21 <colinclark> Justin_o: I\'m just trying to learn more about how people are actually using model relay in practice
+2015-04-20T18:40:25 <colinclark> having not used it a ton myself yet
+2015-04-20T18:40:26 <Justin_o> colinclark: so for the keyboard panel in the first discovery tool, we have a keyboardInput component which is created after render
+2015-04-20T18:40:36 <colinclark> ok
+2015-04-20T18:40:39 <jhung> anastasiac: I merged your pull req.
+2015-04-20T18:40:46 <anastasiac> yay!
+2015-04-20T18:40:48 <anastasiac> thanks
+2015-04-20T18:41:34 <Justin_o> colinclark:  we also have an "assistance" component which is created when we need to offer the user some assistance (i.e. sticky keys).
+2015-04-20T18:41:41 <simonjb> Justin_o, Bosmon, colinclark: https://github.com/GPII/universal/blob/master/gpii/node_modules/gpii-oauth2/gpii-oauth2-authz-server/public/src/components/privacySettings/js/EditPrivacySettings.js#L218-L225
+2015-04-20T18:41:47 <Justin_o> simonjb: thanks
+2015-04-20T18:42:23 <Justin_o> colinclark: when this is created we need to relay the adjuster value from the "assistance" to the keyboardInput component to enabled/disable the stickyKey feature
+2015-04-20T18:42:37 <colinclark> ok
+2015-04-20T18:43:23 <Justin_o> colinclark: specifically in my case i\'m finding that if it is bi-directional the initial model value from the keyboardInput is overriding the default value of the adjuster, however I\'d want it to be the other way around
+2015-04-20T18:43:43 <colinclark> aha, ok
+2015-04-20T18:43:44 <colinclark> that makes sense
+2015-04-20T18:43:52 <Bosmon> Justin_o - if it\'s just an initial value problem, you should make sure to reflect that in the relay definition
+2015-04-20T18:44:15 <Justin_o> Bosmon: sure.. backward: liveOnly for example?
+2015-04-20T18:44:25 <Bosmon> Justin_o - exactly
+2015-04-20T18:44:54 <Bosmon> It\'s funny, all these wierd hedges about init and live semantics I had thought were just an annoyance when they were implemented
+2015-04-20T18:45:00 <Bosmon> But they have turned out to be absolutely essential
+2015-04-20T18:45:06 * danaayotte has quit
+2015-04-20T18:46:38 <Justin_o> Bosmon:  :) it\'s a good thing you put all these features in
+2015-04-20T18:46:42 <Bosmon> Justin_o, simonjb - I wrote an example at the end of the "Nexus API" page over the weekend: http://wiki.gpii.net/w/Nexus_API
+2015-04-20T18:46:51 <Bosmon> Where the relay requires "liveOnly" in one direction and "initOnly" in the other
+2015-04-20T18:47:03 <Bosmon> Because you could say that "the two integral models differ by a constant of integration" : P
+2015-04-20T18:47:43 <Bosmon> I had a good chat with a fine chap here, KELLS, who is cited on that page, in which it came out that this relationship between "integral models" and "integration" is more than just an analogy
+2015-04-20T18:48:36 <Bosmon> In that to an FRP enthusiast, they might say that "the integral of an event stream is a behaviour"
+2015-04-20T18:48:51 <Bosmon> And what we call "models" are what they would call "behaviours"
+2015-04-20T18:49:10 <Bosmon> So, say you have a stream of "click" events which have been integrated into an integer count
+2015-04-20T18:49:21 <Bosmon> And then you have a toggle switch which just has boolean values
+2015-04-20T18:49:44 <Bosmon> The two models are clearly related by a very straighforward relay rules - that just says that toggle = count % 2
+2015-04-20T18:49:52 <Bosmon> But what is unknown is the PHASE which links the models together
+2015-04-20T18:50:18 <Bosmon> And, you certainly don\'t want a toggle switch with the very unwelcome "behaviour" that it toggles itself as soon as someone starts attaching to it
+2015-04-20T18:50:51 <Bosmon> So we need an "initOnly" relationship going OUT to the click stream that lets it acquire the correct initial phase
+2015-04-20T18:51:03 <Bosmon> And then a "liveOnly" relationship going BACK to the toggle switch that lets it react to the clicks
+2015-04-20T18:51:36 <Bosmon> So our relationship ACTUALLY reads...... toggle = count % 2 + c
+2015-04-20T18:51:45 <Bosmon> Where c is an "unknown constant of integration" just in the classical sense
+2015-04-20T18:52:21 <Justin_o> Bosmon: interesting
+2015-04-20T18:56:02 <jhung> anastasiac: I added a new pull req for that styling issue. https://github.com/fluid-project/infusion-docs/pull/60
+2015-04-20T18:58:24 * sepideh has quit
+2015-04-20T19:04:40 <Bosmon> Sorry, make that toggle = (count + c) % 2  :)
+2015-04-20T19:04:46 <anastasiac> jhung, I think we\xe2\x80\x99re good to go!
+2015-04-20T19:05:07 <jhung> anastasiac: yay!
+2015-04-20T19:05:20 <jhung> I\'m just doing some clean-up of jiras now anastasiac.
+2015-04-20T19:10:53 * sepideh joined the channel
+2015-04-20T19:12:11 * colinclark joined the channel
+2015-04-20T19:14:46 * danaayotte joined the channel
+2015-04-20T19:26:12 <anastasiac> danaayotte, jessm: When would you be available this afternoon to chat about PGA?
+2015-04-20T19:30:07 <danaayotte> anastasiac I can meet anytime
+2015-04-20T19:38:21 * sepideh joined the channel
+2015-04-20T19:38:47 <jessm> start without me and i\xe2\x80\x99ll join
+2015-04-20T19:43:23 <anastasiac> danaayotte, jessm is in a meeting right now. Why don\xe2\x80\x99t we get started? I\xe2\x80\x99ll unlock my vidyo room and jess can join when she\xe2\x80\x99s available
+2015-04-20T19:49:58 <danaayotte> sure anastasiac
+2015-04-20T19:55:52 <Justin_o> cindyli: could you please take a look at my pull request for FLOE-303 https://github.com/fluid-project/first-discovery/pull/32
+2015-04-20T19:56:17 <Justin_o> also, i didn\'t get a chance to look at your pull request, but it seems that Bosmon left a bunch of comments. I can take a look at it on wednesday if needed.
+2015-04-20T19:56:40 <cindyli> ok, Justin_o
+2015-04-20T20:01:31 * jhung has quit
+2015-04-20T20:02:13 * jhung joined the channel
+2015-04-20T20:06:59 * jhung has quit
+2015-04-20T20:21:23 <cindyli> hi Bosmon
+2015-04-20T20:21:32 <Bosmon> Hi there cindyli
+2015-04-20T20:21:55 <cindyli> a big question is, how can i use fluid.selectable()
+2015-04-20T20:21:57 <cindyli> what i did
+2015-04-20T20:22:13 <cindyli> i placed "selectable" selector on all the inputs
+2015-04-20T20:22:51 <cindyli> and passing the parent div selector of all these inputs as the first argument to fluid.selectable()
+2015-04-20T20:23:03 <cindyli> with the 2nd argument {noWrap: true}
+2015-04-20T20:23:17 <cindyli> the result is, all inputs become unselectable
+2015-04-20T20:24:42 <cindyli> if I change the first argument to all these inputs, these inputs cannot use arrow keys to navigate thru
+2015-04-20T20:25:14 <cindyli> it seems the first method makes more sense
+2015-04-20T20:25:34 <cindyli> do you have an idea where I did wrong, Bosmon
+2015-04-20T20:26:18 <Bosmon> Justin_o, anastasiac - perhaps you can help
+2015-04-20T20:26:28 <Bosmon> I\'m sure you\'re familiar with the selectable plugin :)
+2015-04-20T20:26:48 <cindyli> ok, i will check with them first
+2015-04-20T20:27:06 <cindyli> or create a simple test page to play with
+2015-04-20T20:27:41 <Bosmon> We really need to turn this into a proper Fluid component at some point
+2015-04-20T20:27:47 <Bosmon> Rather than a jQuery UI plugin
+2015-04-20T20:27:51 <Bosmon> but it should at least work : P
+2015-04-20T20:28:28 <cindyli> agree :)
+2015-04-20T20:29:01 <Bosmon> we even have a tutorial :)
+2015-04-20T20:29:02 <Bosmon> http://wiki.fluidproject.org/display/docs/Tutorial+-+Keyboard+Accessibility+Plugin
+2015-04-20T20:29:21 <cindyli> nice. thanks
+2015-04-20T20:29:53 <Bosmon> Thank anastasiac :)
+2015-04-20T20:31:38 <cindyli> that\'s true
+2015-04-20T20:48:23 * anvk has quit
+2015-04-20T21:15:24 * jessm has quit
+2015-04-20T21:35:47 * colinclark joined the channel
+2015-04-20T21:35:54 * anastasiac has quit
+2015-04-20T23:04:35 * sepideh has left the channel
+'
+
+b'2015-04-20T07:12:40 * the-t-in-rtf joined the channel
+2015-04-20T07:26:07 * jhernandez joined the channel
+2015-04-20T08:50:28 * slim_jim joined the channel
+2015-04-20T10:13:18 * gtirloni joined the channel
+2015-04-20T12:20:20 * the-t-in-rtf has quit
+2015-04-20T12:20:34 * the-t-in-rtf joined the channel
+2015-04-20T12:26:29 * yzen joined the channel
+2015-04-20T12:29:56 * Justin_o joined the channel
+2015-04-20T12:38:18 * jhung joined the channel
+2015-04-20T12:50:11 * michelled joined the channel
+2015-04-20T12:53:21 * cindyli joined the channel
+2015-04-20T13:00:34 * simonjb joined the channel
+2015-04-20T13:10:38 * jessm joined the channel
+2015-04-20T13:12:22 * yzen is now known as yzen_
+2015-04-20T13:13:29 * anastasiac joined the channel
+2015-04-20T13:15:44 * anvk joined the channel
+2015-04-20T13:16:11 * sepideh joined the channel
+2015-04-20T13:19:50 * yzen joined the channel
+2015-04-20T13:26:52 <jhung> anastasiac: I\'m going to look at your pull req this morning.
+2015-04-20T13:27:01 <anastasiac> thanks, jhung
+2015-04-20T13:47:55 <simonjb> Justin_o: I just pushed a change to add a userInput model property to the keyboardInput component https://github.com/simonbates/first-discovery/tree/FLOE-301
+2015-04-20T13:48:23 <Justin_o> simonjb: cool, thanks.. i\'ll try that out today
+2015-04-20T13:48:32 <simonjb> the manual test hooks up a change listener and logs the changes
+2015-04-20T13:48:47 <simonjb> https://github.com/simonbates/first-discovery/blob/FLOE-301/tests/manualTests/html/keyboardInput-manualTests.html
+2015-04-20T13:48:50 <simonjb> Justin_o ^
+2015-04-20T13:50:11 <Justin_o> simonjb: great, thanks
+2015-04-20T13:58:12 <jhung> anastasiac: I merged your pull req. Should I fix the 404 page?
+2015-04-20T14:01:24 <anastasiac> jhung, thanks
+2015-04-20T14:01:54 * lliskovoi joined the channel
+2015-04-20T14:07:27 * clown joined the channel
+2015-04-20T14:07:43 * danaayotte joined the channel
+2015-04-20T14:27:59 * michelled has quit
+2015-04-20T14:31:17 * sepideh has quit
+2015-04-20T14:31:21 * michelled joined the channel
+2015-04-20T14:31:30 * sepideh joined the channel
+2015-04-20T14:44:40 * michelled has quit
+2015-04-20T14:52:06 <anastasiac> jhung, great work fixing all those links in the FLUID-5628 branch. I\xe2\x80\x99ve found a few small things you missed and made comments on the pull request
+2015-04-20T14:52:28 <jhung> thanks anastasiac I\'ll take a look at that in a bit.
+2015-04-20T14:58:36 * michelled joined the channel
+2015-04-20T15:00:59 * simonjb has quit
+2015-04-20T15:01:00 * anvk has quit
+2015-04-20T15:01:24 * simonjb joined the channel
+2015-04-20T15:01:41 * anvk joined the channel
+2015-04-20T15:05:29 * lliskovoi has quit
+2015-04-20T15:05:50 * avtar joined the channel
+2015-04-20T15:07:34 <michelled> anastasiac, jhung, Justin_o, cindyli, simonjb: let\'s have a quick planning meeting in the video room
+2015-04-20T15:07:45 <jhung> ok michelled
+2015-04-20T15:07:46 <cindyli> sure
+2015-04-20T15:07:53 * lliskovoi joined the channel
+2015-04-20T15:08:00 <Justin_o> michelled: okay
+2015-04-20T15:20:44 <cindyli> Justin_o: i sent a pull request for implementing the language panel - https://github.com/fluid-project/first-discovery/pull/31 can you review it?
+2015-04-20T15:21:11 <Justin_o> cindyli: sure, i\'ll try to take a look at that today
+2015-04-20T15:38:01 * the-t-in-rtf has quit
+2015-04-20T15:40:34 * the-t-in-rtf joined the channel
+2015-04-20T15:42:16 * sepideh has quit
+2015-04-20T15:43:56 * the-t-in-rtf has quit
+2015-04-20T15:47:57 * sepideh joined the channel
+2015-04-20T15:49:15 <Justin_o> danaayotte: sorry i missed your updated designs, would you be able to send me the link again?
+2015-04-20T15:49:39 <danaayotte> for sure Justin_o, one sec
+2015-04-20T15:49:50 <Justin_o> danaayotte: thanks
+2015-04-20T15:49:56 * yzen joined the channel
+2015-04-20T15:51:16 <danaayotte> Justin_o: I\'m thinking something like this https://www.dropbox.com/s/7k0s992lcajj83f/stick...
+2015-04-20T15:51:44 <Bosmon> cindyli - don\'t feel you need to address all the review points since I know we are in a rush for the demo
+2015-04-20T15:51:50 <Bosmon> But I have left them there for future reference :)
+2015-04-20T15:51:53 <Justin_o> danaayotte: i think something happened to the url
+2015-04-20T15:51:57 <Justin_o> it\'s missing the end
+2015-04-20T15:52:02 <danaayotte> ok, hang on
+2015-04-20T15:52:23 <danaayotte> https://www.dropbox.com/s/7k0s992lcajj83f/stick%20key%20shift%20on.pdf?dl=0
+2015-04-20T15:52:37 <cindyli> thanks for taking a look on it, Bosmon, will try to address as many as I can
+2015-04-20T15:52:40 <danaayotte> does that work Justin_o?
+2015-04-20T15:52:54 <Justin_o> danaayotte: yep, that worked, thanks
+2015-04-20T15:53:09 <Justin_o> simonjb: ^
+2015-04-20T15:53:11 <Bosmon> I think the modelising ones are reasonably straightforward
+2015-04-20T15:53:28 <Bosmon> It would be nice to gain a general "scrollIntoView" operation out of this at some point since I know we need one for our documentation site
+2015-04-20T15:54:17 <Bosmon> cindyli - had you experimented with the https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView operation?
+2015-04-20T15:54:45 <Bosmon> I guess it\'s the animation in particular that we\'re after, which seems to be nonportable
+2015-04-20T15:57:38 * jhernandez has quit
+2015-04-20T15:58:00 <cindyli> Bosmon: yes, i had a look on that. it doesn\'t seem to be able to achieve the design scrolling behavior. The design requires when buttons are scrolled into the view, they must be at the proper positions to avoid the top or bottom buttons to be shown in partial. So basically buttons need to be scrolled to very precise positions
+2015-04-20T16:02:52 <Bosmon> ok, cool
+2015-04-20T16:03:03 <Bosmon> It sounds like there is a good opportunity for a generic plugin then
+2015-04-20T16:09:42 * colinclark joined the channel
+2015-04-20T16:26:39 * slim_jim has quit
+2015-04-20T16:35:49 <cindyli> Bosmon: I suspect there\'s a bug in "fluid.transforms.binaryOp": when it\'s used in model relay, the model relay is never triggered
+2015-04-20T16:35:57 <cindyli> my unit test - http://pastebin.com/rZK4rFsZ
+2015-04-20T16:36:31 * sepideh joined the channel
+2015-04-20T16:36:34 <cindyli> in the test, that.model.englishSelected stays as null, never changed
+2015-04-20T16:36:48 <cindyli> does the test look ok to you?
+2015-04-20T16:37:11 <Bosmon> cindyli - we can\'t use "paths" in relay documents
+2015-04-20T16:37:18 <Bosmon> You just need to embed a reference to the argument
+2015-04-20T16:37:33 <cindyli> ah ok
+2015-04-20T16:37:35 <Bosmon> e.g. left: "{that}.model.value" etc
+2015-04-20T16:37:41 <cindyli> trying
+2015-04-20T16:39:25 <cindyli> Bosmon: modified - http://pastebin.com/8vfkJ78j, same issue
+2015-04-20T16:39:48 <Bosmon> cindyli - you still called it "leftPath"
+2015-04-20T16:39:59 <Bosmon> None of the options named "xxxPath" can be used with relay documents
+2015-04-20T16:40:06 <Bosmon> YOu just have to treat them as actual values
+2015-04-20T16:40:32 <cindyli> ok, i see, left and right
+2015-04-20T16:40:40 <cindyli> without the keyword "path"
+2015-04-20T16:40:44 <Bosmon> yup
+2015-04-20T16:41:15 <cindyli> super, that works. thanks, Bosmon
+2015-04-20T16:41:19 <Bosmon> great :)
+2015-04-20T16:42:57 <cindyli> Bosmon: either we need a documentation for it, or use consistent keywords for regular transformation and model relay transformation
+2015-04-20T16:43:47 <Bosmon> cindyli - certainly
+2015-04-20T16:44:44 <Bosmon> In theory we could eliminate all the xxxPath stuff, and use a form of IoC to resolve references of the form {document}.path
+2015-04-20T16:44:48 <Bosmon> But that would be quite a rewrite
+2015-04-20T16:45:13 <Bosmon> Another option is to have the relay system detect and reject any attempt to refer to xxxPath
+2015-04-20T16:45:32 <Bosmon> And better documentation, of course, is never bad to have
+2015-04-20T16:59:12 <colinclark> When are the xxxPath properties used, if not in relay?
+2015-04-20T16:59:33 <Bosmon> colinclark - they are used in standard model transformations
+2015-04-20T16:59:39 <Bosmon> That transform documents to documents
+2015-04-20T17:00:08 <colinclark> and they refer to there to paths into the source document?
+2015-04-20T17:00:15 <Bosmon> colinclark - yes
+2015-04-20T17:00:32 <colinclark> but then the relay system functions differently enough that they can\'t be used?
+2015-04-20T17:00:36 <colinclark> or rather, it seems like, needn\'t be used?
+2015-04-20T17:00:44 <Bosmon> Mustn\'t be used
+2015-04-20T17:01:03 <Bosmon> The relay system causes the transform to believe that everything consists of directly supplied values
+2015-04-20T17:02:10 * sepideh has quit
+2015-04-20T17:03:19 <colinclark> right
+2015-04-20T17:07:28 <anastasiac> jhung, I\xe2\x80\x99ve issued a pull request for the hover and focus styling for the docs: https://github.com/fluid-project/infusion-docs/pull/59
+2015-04-20T17:07:39 <anastasiac> that\xe2\x80\x99s for the high-contrast themes
+2015-04-20T17:08:23 <anastasiac> jhung, the 404 page is ready for a review, right?
+2015-04-20T17:13:14 <jhung> anastasiac: yes it is. I\'ll look at your pull in a few minutes
+2015-04-20T17:18:01 <anastasiac> jhung, I\xe2\x80\x99ve made some comments on your FLUID-5618 pull request
+2015-04-20T17:23:01 * michelled joined the channel
+2015-04-20T17:23:15 * cindyli has quit
+2015-04-20T17:33:27 * lliskovoi joined the channel
+2015-04-20T17:39:01 <jhung> anastasiac:  I updated https://github.com/fluid-project/infusion-docs/pull/56
+2015-04-20T17:39:23 <anastasiac> thanks, jhung, I\xe2\x80\x99ll have a look
+2015-04-20T17:41:33 <jhung> I\'ll look at your pull req now anastasiac
+2015-04-20T17:51:02 * colinclark joined the channel
+2015-04-20T17:56:03 <jhung> one minor comment to your pull req anastasiac.
+2015-04-20T17:56:21 <anastasiac> thanks, jhung, I\xe2\x80\x99ll have a look in a bit
+2015-04-20T17:57:34 <anastasiac> jon, I\xe2\x80\x99m seeing two 5628 branches in your repo, one FLUID the other FLUId
+2015-04-20T17:57:39 <anastasiac> which should I use?
+2015-04-20T17:57:44 <anastasiac> jhung: ^
+2015-04-20T18:08:01 * sepideh joined the channel
+2015-04-20T18:08:45 * cindyli joined the channel
+2015-04-20T18:10:36 * yzen joined the channel
+2015-04-20T18:12:44 <anastasiac> jhung, I\xe2\x80\x99ve updated my FLUID-5637 pull request
+2015-04-20T18:13:19 <jhung> anastasiac: ok. I\'ll take a look
+2015-04-20T18:21:31 <jhung> anastasiac: updated the FLUID-5618 pull req, https://github.com/fluid-project/infusion-docs/pull/58
+2015-04-20T18:22:36 * sepideh joined the channel
+2015-04-20T18:36:16 <Justin_o> Bosmon: hello, do you have a minute for a modelRelay question?
+2015-04-20T18:36:33 <Bosmon> Hi there Justin_o
+2015-04-20T18:36:47 <Justin_o> Bosmon: thanks
+2015-04-20T18:37:10 <Justin_o> so i have something like this
+2015-04-20T18:37:30 <Justin_o> https://www.irccloud.com/pastebin/6SM1nOEJ
+2015-04-20T18:38:09 <Justin_o> however, i only want this to work in one direction
+2015-04-20T18:38:32 <Bosmon> Justin_o - currently the only way to achieve this is to turn it into an explicit relay using fluid.identity
+2015-04-20T18:38:38 <Bosmon> simonjb had just the same issue last week
+'
+

@@ -1,0 +1,184 @@
+b'2018-09-18T17:20:48 * cindyli1 is now known as cindyli
+2018-09-18T17:28:43 <Bosmon> cindyli - you can supply the source as the 2nd argument to initiate on line 1
+2018-09-18T17:29:02 <Bosmon> The docs are not great but it looks like you should write var transaction = applier.initiate(null, .... sources..... )
+2018-09-18T17:30:10 <Bosmon> https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/DataBinding.js#L1684
+2018-09-18T17:30:58 <Bosmon> The transaction should properly accumulate sources from individual changes but it seems there may be a hole in the implementation
+2018-09-18T17:31:50 <Bosmon> Actually applier.initiate("local", ..sources..) is probably clearer
+2018-09-18T17:35:16 <cindyli> seems this will accumulate all change requests in this transaction into the specified source?
+2018-09-18T17:35:47 <cindyli> is there a way to specify the source on only one change request within this transaction
+2018-09-18T17:37:02 <cindyli> Bosmon: ^ if not, i will make use of the existing implementation and figure out a way around it
+2018-09-18T17:39:00 <Bosmon> cindyli - change requests should glob onto a whole transaction - it can only accumulate change sources, and never lose them
+2018-09-18T17:39:14 <Bosmon> At the point of committing, it will commit with all changes sources it accumulated
+2018-09-18T17:39:35 <Bosmon> You can\'t disentangle any of the individual changes, that is the whole point of there being a transaction
+2018-09-18T17:39:43 <cindyli> ok
+2018-09-18T18:43:46 * jhernandez has quit
+2018-09-18T18:57:35 * simonjb has quit
+2018-09-18T19:01:43 * jhernandez joined the channel
+2018-09-18T19:03:40 * simonjb joined the channel
+2018-09-18T19:47:27 * michelled joined the channel
+2018-09-18T20:00:14 <michelled> simonjb: I merged your cities pull request
+2018-09-18T20:00:33 <simonjb> awesome, thanks michelled
+2018-09-18T20:00:44 <michelled> np
+2018-09-18T20:01:14 * jhernandez has quit
+2018-09-18T20:30:36 * danayo joined the channel
+2018-09-18T20:30:56 * danayo_ joined the channel
+2018-09-18T20:34:30 * jhung has quit
+2018-09-18T20:49:50 * jhung joined the channel
+2018-09-18T21:29:37 * colinclark has quit
+2018-09-18T21:31:52 * jhernandez joined the channel
+2018-09-18T21:34:56 * jhernandez has quit
+2018-09-18T21:35:07 * jhernandez joined the channel
+'
+
+b'2018-09-18T01:35:34 * jhernandez has quit
+2018-09-18T02:36:28 * danayo joined the channel
+2018-09-18T02:51:48 * danayo has quit
+2018-09-18T06:44:46 * dandimitrov joined the channel
+2018-09-18T06:58:29 * georgitodorov joined the channel
+2018-09-18T07:25:21 * dandimitrov has quit
+2018-09-18T07:29:33 * dandimitrov joined the channel
+2018-09-18T07:41:06 <georgitodorov> Bosmon: Hey, Antranig! Regarding the "Reset All to Standard" functionality, do you think that it makes sense for us to start working on it even before it is ready on the Core\'s end? We could use some mock data so that we can implement the features necessary on the QuickStrip\'s end.
+2018-09-18T07:42:13 <georgitodorov> But I guess that first we should define the format of the messages that will be exchanged between the QSS and the Core before moving forward.
+2018-09-18T07:42:41 <georgitodorov> Let us know what you think about this. Perhaps, we can discuss it further on a brief call when you have time.
+2018-09-18T08:08:29 * dandimitrov has quit
+2018-09-18T08:39:24 <Bosmon> georgitodorov - sure, but wouldn\'t you just use the existing "reset" protocol?
+2018-09-18T08:40:57 <georgitodorov> Bosmon: I think that some changes may be necessary given what we discussed yesterday on the status call
+2018-09-18T08:41:23 <Bosmon> Certainly it will need to be reimplemented
+2018-09-18T08:41:44 <Bosmon> But I assumed no changes would be needed in order to connect to it
+2018-09-18T08:43:45 <georgitodorov> Bosmon: So, we should continue using the existing mechanism of keying out the current user and the Core will take care of restoring the settings in accordance with the standards file?
+2018-09-18T08:44:07 <Bosmon> georgitodorov - oh, I see - I assumed you had been using the "reset" token
+2018-09-18T08:55:22 <georgitodorov> Bosmon: There was such an idea before but it was decided that we would simply key out the user
+2018-09-18T08:55:28 <georgitodorov> Will this still do the trick?
+2018-09-18T08:55:56 <Bosmon> No, we can\'t have it that a keyout of the current user will always reset the whole system : P
+2018-09-18T08:56:01 <Bosmon> There will have to be an explicit protocol
+2018-09-18T08:56:09 <Bosmon> We may as well reuse the existing "reset" token
+2018-09-18T08:57:47 <georgitodorov> Bosmon: Was this actually keying in the "reset" user?
+2018-09-18T08:58:11 <Bosmon> yes
+2018-09-18T09:00:25 * dandimitrov joined the channel
+2018-09-18T09:00:45 <georgitodorov> Bosmon: So, whenever a reset is necessary, we should in addition to keying out also key in the "reset" token?
+2018-09-18T09:04:27 <Bosmon> georgitodorov - we will arrange for the keyin of "reset" to also do a keyout, so you should only need to do that part
+2018-09-18T09:05:12 <georgitodorov> Bosmon: Okay, so our key out now will be a keyin of "reset"
+2018-09-18T10:33:02 * jhernandez joined the channel
+2018-09-18T10:37:09 * jhernandez has quit
+2018-09-18T10:37:20 * jhernandez joined the channel
+2018-09-18T11:01:06 * dandimitrov has quit
+2018-09-18T11:57:19 * dandimitrov joined the channel
+2018-09-18T12:16:16 * Justin_o joined the channel
+2018-09-18T12:32:23 * dandimitrov has quit
+2018-09-18T12:45:24 * dandimitrov joined the channel
+2018-09-18T12:49:54 * dandimitrov has quit
+2018-09-18T12:50:32 * jhung joined the channel
+2018-09-18T12:50:52 * cindyli joined the channel
+2018-09-18T13:02:54 <cindyli> Bosmon: regarding MM not dispatching high contrast to both windows and UIO+, it seems MM has been designed to only return one solution if there are more than one solutions are ranked same and have same depth at canopy disposal calculation
+2018-09-18T13:02:57 <cindyli> this line - https://github.com/GPII/universal/blob/master/gpii/node_modules/canopyMatchMaker/src/CanopyMatchMakerUtilities.js#L113
+2018-09-18T13:03:08 <cindyli> uses ">" rather than ">="
+2018-09-18T13:03:19 <Bosmon> cindyli - I see, yes
+2018-09-18T13:03:31 <Bosmon> Well discovered
+2018-09-18T13:03:52 <cindyli> how shall we work around it?
+2018-09-18T13:04:01 * georgitodorov has quit
+2018-09-18T13:04:08 <Bosmon> cindyli - just fix it to >=, I expect
+2018-09-18T13:04:33 <Bosmon> If we get any unwanted duplicates, we can hopefully filter them out by adding further elements to the apptology
+2018-09-18T13:04:37 <cindyli> i tried, but it will break another disposal solution test
+2018-09-18T13:04:48 <cindyli> finding out
+2018-09-18T13:04:55 <Bosmon> cindyli - well then we can fix that test : P
+2018-09-18T13:05:03 <Bosmon> The canopy algorithm was always just a wild guess
+2018-09-18T13:05:40 <cindyli> haha. ok. working on it
+2018-09-18T13:14:02 * simonjb joined the channel
+2018-09-18T13:14:04 <cindyli> Bosmon: just to double check before fixing the other test to make sure i won\'t break the canopy matchmaking too badly. if I fix this problem using ">=", this test fails - https://github.com/GPII/universal/blob/master/gpii/node_modules/canopyMatchMaker/test/web/js/CanopyMatchMakerUtilitiesTests.js#L156
+2018-09-18T13:14:27 <Bosmon> cindyli - sure, just fix it up
+2018-09-18T13:14:33 <cindyli> how canopy matchmaking works is, it first calculates ranking for all solutions and create an array
+2018-09-18T13:14:35 <Bosmon> I think we will need to axe the canopy matchmaker before long anyway
+2018-09-18T13:14:44 <Bosmon> It doesn\'t really solve any real problem that we have
+2018-09-18T13:15:14 <Bosmon> In practice people never want "partial" matches into solutions that solve some weaker version of a problem that they have
+2018-09-18T13:15:17 <cindyli> my fix will make the ranking calculation useless
+2018-09-18T13:15:42 <Bosmon> cindyli - ok well even better :)
+2018-09-18T13:15:58 <Bosmon> It is in effect useless anyway
+2018-09-18T13:16:17 <cindyli> ok. a bit surprising tho.
+2018-09-18T13:16:56 <Bosmon> I mean, say someone really wanted "display.screenEnhancement.fontSize" - they\'re very unlikely to be satisfied with a solution which does display.screenEnhancement.somethingElse
+2018-09-18T13:21:23 <Bosmon> I don\'t think changing > to >= makes the ranking completely useless though
+2018-09-18T13:21:28 <Bosmon> It will still reject irrelevant solutions
+2018-09-18T13:24:07 * alanharnum joined the channel
+2018-09-18T13:29:43 <Bosmon> cindyli - about https://github.com/fluid-project/infusion/pull/935 - I assume it\'s not because you didn\'t sign the CLA, but that those commits from 2014 were somehow from a different email address?
+2018-09-18T13:30:01 * sepidehshahi joined the channel
+2018-09-18T13:30:27 <cindyli> Bosmon: i guess so, i\'ve double checked this morning i\'ve signed CLA with the email used for my github account
+2018-09-18T13:30:39 <cindyli> need to find out which email i used for those commits
+2018-09-18T13:30:50 <cindyli> likely gmail
+2018-09-18T13:31:29 <Justin_o> cindyli: you might be able to bind multiple e-mail addresses to your github account.
+2018-09-18T13:32:04 <cindyli> good idea
+2018-09-18T13:32:36 * michelled joined the channel
+2018-09-18T13:33:28 * clown joined the channel
+2018-09-18T13:34:09 <Bosmon> Looks like your normal email address :(
+2018-09-18T13:34:55 <cindyli> Bosmon: the pull request for MM fix - https://github.com/GPII/universal/pull/659
+2018-09-18T13:35:49 <Bosmon> cindyli - looks great to me!
+2018-09-18T13:36:37 <cindyli> thanks, Bosmon
+2018-09-18T13:37:51 <cindyli> i clicked on the pending warning on the commit - https://github.com/fluid-project/infusion/pull/935/commits, it brought me to a signing CLA page that shows the CLA has been signed. interesting. asking google ...
+2018-09-18T13:40:52 <Bosmon> Ah I know
+2018-09-18T13:41:01 <Bosmon> One of the emails is at ocad.ca and the other is at ocadu.ca
+2018-09-18T13:41:12 <Bosmon> I think you just need to add the first one to the account?
+2018-09-18T13:48:31 * colinclark joined the channel
+2018-09-18T13:50:13 <cindyli> added. pending is still showing :(
+2018-09-18T13:50:38 <cindyli> it probably needs some time
+2018-09-18T13:50:49 <jhung> fluid-everyone: The design crit will be starting in 10 minutes. We\'ll be talking about preparing for the DEEP conference today.
+2018-09-18T13:59:06 * cindyli1 joined the channel
+2018-09-18T14:01:24 * cindyli has quit
+2018-09-18T14:02:13 * danayo joined the channel
+2018-09-18T14:03:21 <jhung> fluid-everyone: The design crit is starting.
+2018-09-18T14:08:40 * michelled joined the channel
+2018-09-18T14:08:58 * cindyli1 is now known as cindyli
+2018-09-18T14:14:58 <Bosmon> Cheers cindyli - your early commits are now showing up as a CHRISTMASSE..... *CATE* :)
+2018-09-18T14:15:14 <cindyli> YAY!
+2018-09-18T14:15:18 <Bosmon> I\'m glad we got FLUID-5193 fixed after slightly less than 5 years
+2018-09-18T14:15:37 <cindyli> good work, Bosmon
+2018-09-18T14:16:09 <Bosmon> cindyli - is your https://github.com/GPII/universal/pull/659 enough to get the high contrast sent to both UIO+ and Windows as expected?
+2018-09-18T14:16:29 <cindyli> yes, i tried with my test.
+2018-09-18T14:16:33 <Bosmon> excellent
+2018-09-18T14:47:40 <Bosmon> cindyli - awesome, so that\'s in
+2018-09-18T14:47:55 <Bosmon> I guess the next bit is "allow system to act on new settings from QSS via fake matchmaker"?
+2018-09-18T14:48:22 <cindyli> yes and thanks, Bosmon
+2018-09-18T14:48:31 <jhernandez> Bosmon: I\'m seeing that you just merged pull/659
+2018-09-18T14:48:43 <Bosmon> jhernandez - you see it!
+2018-09-18T14:50:24 <stegru> jhernandez, are we able to get any versioning info via code yet?
+2018-09-18T14:50:39 <Bosmon> stegru - we can\'t look at our own package.json?
+2018-09-18T14:50:44 <jhernandez> can we have a dev release of universal? I would like to push the update through gpii-app and check how master looks like, mostly, want to check what bits from feds-audit need to be pulled into master
+2018-09-18T14:50:59 <jhernandez> stegru: yup, package.json is your friend
+2018-09-18T14:51:02 <stegru> isn\'t that always 0.3.0?
+2018-09-18T14:51:05 <Bosmon> jhernandez - cindyli still has one more round of work to do before we have feature parity with feds-audit
+2018-09-18T14:51:21 <Bosmon> stegru - for a dev release from npm it will include commit hash, date and branch
+2018-09-18T14:51:31 <Bosmon> jhernandez - so let\'s hold off a day or so
+2018-09-18T14:51:48 <jhernandez> Bosmon: okay, then I\'ll leave all the highContrast and MM related issues on hold until everything is in place
+2018-09-18T14:51:51 <stegru> o i c
+2018-09-18T14:52:25 <Bosmon> jhernandez - do we now roll our installers from dev npm releases of gpii-app?
+2018-09-18T14:52:49 <Bosmon> stegru - at the very least you should always be able to get proper release info for gpii-windows
+2018-09-18T14:52:54 <Bosmon> Which is better than a poke in the eye
+2018-09-18T14:53:03 <jhernandez> Bosmon: not yet, as we don\'t have gpii-app on npm
+2018-09-18T14:53:17 <Bosmon> jhernandez - but no reason why we can\'t?
+2018-09-18T14:53:46 <jhernandez> but I\'m bumping the version in package.json (according to our standard versioning) to create the installers
+2018-09-18T14:54:20 <jhernandez> I can happily start doing it - can\'t see anything blocking us from doing that
+2018-09-18T14:54:49 <Bosmon> stegru - do you want to put the version in a dialog or something?
+2018-09-18T14:57:45 <Justin_o> michelled: https://cdn.knightlab.com/libs/timeline3/latest/embed/index.html?source=1eX4CsZErPdnwdOiUpfLRpyTTpNZnPKt5Hcoz1Gv_jpY&font=Default&lang=en&initial_zoom=2&height=650
+2018-09-18T14:57:50 <Justin_o> https://docs.google.com/document/d/1svElHVYRrTc8PFKHuoQUlB0o4gBZofiUo9DjUs0GTlU/edit#heading=h.3qb1hzp7224c
+2018-09-18T14:57:56 <Justin_o> https://docs.google.com/spreadsheets/d/1eX4CsZErPdnwdOiUpfLRpyTTpNZnPKt5Hcoz1Gv_jpY/edit#gid=0
+2018-09-18T14:58:20 <stegru> no Bosmon, I\'m making changes to the metrics logging, and will like to know the version
+2018-09-18T14:59:01 <stegru> and package.json is enough
+2018-09-18T14:59:07 <Bosmon> stegru - ok - yeah, that sounds good
+2018-09-18T14:59:18 <Bosmon> Your own artefact at least is going to get released from npm
+2018-09-18T14:59:22 <Bosmon> Even if the top-level one isn\'t yet
+2018-09-18T15:00:14 <michelled> fluid-everyone: IDRC planning will be in 10 minutes
+2018-09-18T15:00:18 <stegru> yes, just looked at both from gpii-app and windows on an install... and they\'re good enough
+2018-09-18T15:50:46 * clown has quit
+2018-09-18T15:51:17 * cindyli1 joined the channel
+2018-09-18T15:51:17 * cindyli has quit
+2018-09-18T15:57:17 * jhung is now known as jhung_away
+2018-09-18T16:06:22 * michelled joined the channel
+2018-09-18T16:08:14 * michelled has quit
+2018-09-18T16:18:54 * clown joined the channel
+2018-09-18T16:38:02 * jhung joined the channel
+2018-09-18T16:41:05 * michelled joined the channel
+2018-09-18T17:10:02 <cindyli1> Bosmon: my code to use change applier transaction - https://pastebin.com/Fx6Dj7uf
+2018-09-18T17:10:29 <cindyli1> at line 7, i\'d like to attach a transactionSource for this single request
+2018-09-18T17:10:32 <cindyli1> it doesn\'t work
+2018-09-18T17:11:03 <cindyli1> what\'s the proper way to do it?
+2018-09-18T17:11:19 <cindyli1> line 17, not 7
+2018-09-18T17:20:42 <cindyli1> the request change does occur but {change}.transaction.sources is empty instead of the expected value - "userUpdate"
+'
+

@@ -1,0 +1,347 @@
+b'2014-08-22T19:28:11 <Bosmon> [20:22] <Bosmon> All the "different" dialogs actually share the same markup, right?
+2014-08-22T19:28:37 <cindyli> if the same markup you meant for the dialog content. no for sure
+2014-08-22T19:29:36 <cindyli> we can re-render the content anyway
+2014-08-22T19:29:40 <Bosmon> ok
+2014-08-22T19:29:51 <Bosmon> cindyli - well, this sounds like the case that fetchResources was designed for
+2014-08-22T19:29:57 <Bosmon> Unfortunately it is still just as hard to use as it was in 2010
+2014-08-22T19:30:11 <cindyli> it\'s pretty handy :)
+2014-08-22T19:30:14 <Bosmon> You\'ll need to make sure that all of the markup is available in a root component
+2014-08-22T19:30:20 <Bosmon> That is, all of the URLs
+2014-08-22T19:30:26 <Bosmon> Just as we did for the UIOptionsTemplateLoader
+2014-08-22T19:30:29 <cindyli> i see, something like UIO
+2014-08-22T19:30:32 <cindyli> right
+2014-08-22T19:30:34 <Bosmon> Then after that everything will be synchronous
+2014-08-22T19:30:35 <Bosmon> Right
+2014-08-22T19:31:31 <cindyli> well, it might be easier to make this big change at this moment since we haven\'t gone very far
+2014-08-22T19:31:40 <Bosmon> cool
+2014-08-22T19:33:52 <cindyli> you make me cry\xe2\x80\xa6. :\'( Bosmon, as always!!
+2014-08-22T19:34:17 <cindyli> ;)
+2014-08-22T19:35:06 <Bosmon> I hope you are not too unhappy
+2014-08-22T19:35:17 <Bosmon> This stuff is always a little more complex than it first appears........
+2014-08-22T19:35:58 * slim joined the channel
+2014-08-22T19:35:58 <cindyli> we deal with it
+2014-08-22T20:02:46 <cindyli> hi Bosmon
+2014-08-22T20:02:53 * anastasiac has quit
+2014-08-22T20:02:56 <cindyli> i\'m thinking how we re-render the view component
+2014-08-22T20:03:00 <Bosmon> hi cindyli
+2014-08-22T20:03:16 <cindyli> the createOnEvent only creates the component at the first time it\'s fired, right?
+2014-08-22T20:03:39 <Bosmon> cindyli - actually it will recreate it every time
+2014-08-22T20:03:40 <cindyli> when this event is fired again, the component won\'t be destoyed and re-create, right?
+2014-08-22T20:03:45 <cindyli> oh, really
+2014-08-22T20:03:49 <Bosmon> It will be destroyed and re-created
+2014-08-22T20:03:51 <cindyli> ok. i will try
+2014-08-22T20:18:48 * michelled has quit
+2014-08-22T20:19:44 * michelled joined the channel
+2014-08-22T20:21:09 * slim has quit
+2014-08-22T20:40:54 * cindyli has quit
+2014-08-22T20:44:01 * anvk has quit
+2014-08-22T20:50:10 * michelled has quit
+2014-08-22T21:06:56 * clown has quit
+2014-08-22T21:22:15 * simonjb has quit
+2014-08-22T22:36:51 * jhernandez joined the channel
+'
+
+b'2014-08-22T15:48:09 <Bosmon> Including this one :)
+2014-08-22T15:54:37 <Bosmon> cindyli - ok, I\'m sorry, there is still a bug
+2014-08-22T15:55:24 <cindyli> Bosmon: i was looking at TestingTests.js. both listener and listenerMaker are supported, right?
+2014-08-22T15:55:35 <Bosmon> cindyli - both will still be supported, yes
+2014-08-22T15:55:41 <Bosmon> But people will mostly now use the former
+2014-08-22T15:55:49 <cindyli> if I used listener, is "spec" supported?
+2014-08-22T15:56:05 <cindyli> don\'t see an example with listener and spec
+2014-08-22T15:56:13 <Bosmon> Well, the framework is expecting the "spec" fields to appear at top level
+2014-08-22T15:56:16 <Bosmon> Maybe it is not a bug
+2014-08-22T15:56:34 <Bosmon> Just a documentation fault : P
+2014-08-22T15:56:48 <cindyli> at top level?
+2014-08-22T15:56:53 <cindyli> is this valid:
+2014-08-22T15:56:53 <cindyli> listener: "gpii.tests.feedback.checkInitModel",
+2014-08-22T15:56:53 <cindyli> args: ["{feedback}.model"],
+2014-08-22T15:56:53 <cindyli> spec: {priority: "last"},
+2014-08-22T15:56:53 <cindyli> event: "{verifyDialogs feedback}.events.afterMarkupReady"
+2014-08-22T15:57:29 <Bosmon> No, it is not
+2014-08-22T15:57:33 <Bosmon> it is working by sheer luck : P
+2014-08-22T15:57:40 <Bosmon> "spec" is applied only for changeEvents
+2014-08-22T15:57:48 <Bosmon> So it is really a bug, I guess
+2014-08-22T15:57:52 <Bosmon> In that this is a blatant inconsistency
+2014-08-22T15:58:28 <Bosmon> For plain listeners, you need to write "priority" and "namespace" at top level in the record
+2014-08-22T15:59:00 <Bosmon> for change listeners, the "spec" stupidly goes into its own field
+2014-08-22T15:59:17 <Bosmon> But we will change the syntax for change listeners anyway, once we get rid of the old ChangeApplier
+2014-08-22T15:59:25 <Bosmon> So perhaps we should leave this fix until then
+2014-08-22T15:59:42 <cindyli> where\'s "the top level in the record"?
+2014-08-22T16:00:00 <Bosmon> cindyli - next to "listener", "args" etc.
+2014-08-22T16:00:13 <Bosmon> The same place you would have written it in a "listener" record
+2014-08-22T16:00:23 <cindyli> ok
+2014-08-22T16:00:58 <Bosmon> I\'ll update our wiki page at http://wiki.fluidproject.org/display/docs/The+IoC+Testing+Framework
+2014-08-22T16:01:06 <Bosmon> Looks like this was not yet converted to markdown
+2014-08-22T16:02:03 <cindyli> thanks.
+2014-08-22T16:02:28 <cindyli> i can do the conversion for sure
+2014-08-22T16:09:07 <cindyli> Bosmon: your pull request works perfectly!!! MY SAVER!!!
+2014-08-22T16:12:05 * michelled has quit
+2014-08-22T16:14:08 <Bosmon> cindyli - I\'m glad it\'s working
+2014-08-22T16:14:12 <Bosmon> I updated our docs at http://wiki.fluidproject.org/display/docs/The+IoC+Testing+Framework
+2014-08-22T16:17:48 <cindyli> Great! Thanks!
+2014-08-22T16:19:23 <Bosmon> I\'m glad there isn\'t a "bug" at least
+2014-08-22T16:19:44 <Bosmon> I have the UI for a new JIRA half-populated : P
+2014-08-22T16:22:00 <cindyli> :)
+2014-08-22T16:23:08 * Jess_ has quit
+2014-08-22T16:30:28 * michelled joined the channel
+2014-08-22T16:37:24 * slim_ has quit
+2014-08-22T17:24:04 <cindyli> hi Bosmon
+2014-08-22T17:25:32 * the-t-in-rtf has quit
+2014-08-22T17:35:26 * the-t-in-rtf joined the channel
+2014-08-22T17:36:11 <Bosmon> hi cindyli
+2014-08-22T17:37:02 <michelled> cindyli: I just pushed Bosmon\'s pull if you want to update to master instead of his branch
+2014-08-22T17:37:21 <Bosmon> thanks, michelled!
+2014-08-22T17:38:19 <cindyli> ha Bosmon, model relay. one sec, pushing up my branch
+2014-08-22T17:38:36 <cindyli> thanks, michelled. will update the version
+2014-08-22T17:40:30 <cindyli> Bosmon: https://github.com/cindyli/metadata/blob/FLOE-195/src/components/feedback/js/feedback.js#L47-L60
+2014-08-22T17:40:33 <cindyli> how does it look like
+2014-08-22T17:41:18 <cindyli> i think it looks pretty good. the only problem is - it doesn\'t work ;)
+2014-08-22T17:41:52 <Bosmon> cindyli - looks like a really suspicious transform
+2014-08-22T17:42:00 <cindyli> why
+2014-08-22T17:42:46 <Bosmon> all the restrictions..... the fact it just deals with one case.... the fact it is on the wrong component
+2014-08-22T17:42:49 <cindyli> the theory is, change the partner\'s state to false if the source is true, otherwise, do nothing
+2014-08-22T17:43:10 <cindyli> well, i switch the source, target into another component, same effect
+2014-08-22T17:43:18 <Bosmon> ok
+2014-08-22T17:43:25 <Bosmon> So what is the required interaction here?
+2014-08-22T17:43:34 <Bosmon> I guess it is meant to be the same one that is naturally operated by radio buttons?
+2014-08-22T17:43:48 <cindyli> smart. yes
+2014-08-22T17:43:51 <Bosmon> That is, that there are two permitted conditions, i) no members are selected, ii) exactly one member is selected?
+2014-08-22T17:44:04 <cindyli> true
+2014-08-22T17:47:53 <Bosmon> At this moment sgithens is going to appear
+2014-08-22T17:48:06 <Bosmon> And he is going to say, just as he said 9 years ago..... "What do you mean, it can\'t do RADIO BUTTONS?!"
+2014-08-22T17:49:52 * yzen has quit
+2014-08-22T17:51:33 <cindyli> lol. why?
+2014-08-22T17:52:24 <Bosmon> Well, this is what he said
+2014-08-22T17:52:50 <Bosmon> Ok
+2014-08-22T17:52:50 <cindyli> the requirement is more than what radio buttons do. With radio buttons, once one button is selected, you cannot deselect all buttons, there must be one that is on. In our case, this is required. turn on one or turn off both
+2014-08-22T17:53:06 <Bosmon> ok
+2014-08-22T17:53:15 <Bosmon> So what I suggest is this
+2014-08-22T17:53:52 <Bosmon> Unfortunately i) return to the implementation you had before, and ii) let us start working on the throttling implementation
+2014-08-22T17:55:11 <cindyli> **thumb up**
+2014-08-22T18:09:13 <Bosmon> cindyli - one of the algorithms you will need is actually called "debounce"
+2014-08-22T18:09:22 <Bosmon> There is a standalone implementation for jQuery here - https://github.com/cowboy/jquery-throttle-debounce
+2014-08-22T18:10:56 <cindyli> nice
+2014-08-22T18:11:47 <Bosmon> This will deal with half of your problem - sending updates to the server when updates are still propagating on the client
+2014-08-22T18:12:23 <Bosmon> You will need to deal with the other half of the problem yourself - that is, ensuring that there is never more than one active update request
+2014-08-22T18:24:52 * jhernandez has quit
+2014-08-22T18:24:53 <cindyli> Bosmon: in terms of the first half, shouldn\'t we send the next update after ensuing the previous one completes? why do we send updates while they are still propagating?
+2014-08-22T18:25:55 <Bosmon> cindyli - we don\'t send them while they are still propagating
+2014-08-22T18:26:00 <Bosmon> I said that we shouuld not do that
+2014-08-22T18:26:23 <cindyli> ah. ok. make sense :)
+2014-08-22T18:58:09 <cindyli> hi Bosmon
+2014-08-22T18:58:27 <Bosmon> hi cindyli
+2014-08-22T18:58:31 <cindyli> in IoC testing framework, can i do this:
+2014-08-22T18:58:32 <cindyli> event: "{feedback bindMatchConfirmation}.events.onDialogReady"
+2014-08-22T18:58:40 <cindyli> it\'s not recognized
+2014-08-22T18:58:43 <cindyli> but is there a way to do it
+2014-08-22T19:02:07 <Bosmon> cindyli - sadly it is not possible
+2014-08-22T19:02:14 <Bosmon> But what you can do is broadcast down multiple listeners
+2014-08-22T19:02:31 <Bosmon> That is, you can write a distributeOptions block at the head component which adds a listener to every such event
+2014-08-22T19:02:51 <cindyli> oh
+2014-08-22T19:03:04 <Bosmon> Unfortunately, I suspect the next thing you\'re going to ask it - "but how can I wait for the LAST such event firing"?
+2014-08-22T19:03:15 <cindyli> smart YOU!
+2014-08-22T19:03:18 <Bosmon> To which the answer is that there is no current scheme for this
+2014-08-22T19:03:31 <Bosmon> The framework currently does not support "indefinite boiling"
+2014-08-22T19:03:34 <Bosmon> HOWEVER
+2014-08-22T19:03:42 <Bosmon> At the Kebab Shop last week I had an important insight : P
+2014-08-22T19:03:49 <Bosmon> Which is that we can use model relay to achieve this
+2014-08-22T19:04:20 <Bosmon> What you can do, is map the firing of each of these events into a model field which holds "0" or "1"
+2014-08-22T19:04:32 <Bosmon> THEN you can set up a relay rule from each of these into elements of a parent array
+2014-08-22T19:05:05 <Bosmon> Actually "false" and "true" would be better
+2014-08-22T19:05:14 <Bosmon> THEN you can set up a relay rule which applies AND to each of the flags in this array
+2014-08-22T19:05:26 <Bosmon> And then you can set up an event which listens to thec changed value
+2014-08-22T19:06:18 <Bosmon> It will be a useful basic transform in any case - fluid.model.transforms.and etc.
+2014-08-22T19:06:29 <cindyli> so winding\xe2\x80\xa6
+2014-08-22T19:06:44 <Bosmon> That said, if you only plan to have 2 of these fields, you could just give them different event names
+2014-08-22T19:06:51 <Bosmon> And then do traditional boiling from these events
+2014-08-22T19:07:05 <cindyli> and still, how does it control priorities?
+2014-08-22T19:07:11 <Bosmon> But why do all these components have dialogs?
+2014-08-22T19:07:25 <Bosmon> It seems much more sane to have just a single dialog component for the entire application
+2014-08-22T19:07:38 <Bosmon> Since exactly one dialog can be showing at any time
+2014-08-22T19:07:52 <Bosmon> You will make yourself insane by housing a fresh dialog on top of every icon
+2014-08-22T19:08:00 * anastasiac has quit
+2014-08-22T19:08:24 <cindyli> umm\xe2\x80\xa6 that\'s an important insight too!
+2014-08-22T19:09:59 <Bosmon> Sure
+2014-08-22T19:10:12 <Bosmon> Always simplify the problem first, before applying elaborate solution techniques....
+2014-08-22T19:10:15 <cindyli> oh, man.. this requires quite a bit change. oh no :\'(
+2014-08-22T19:10:46 <Bosmon> Should be pretty easy to just move all the components and their bindings about
+2014-08-22T19:10:52 <Bosmon> And luckily you have good test cases :)
+2014-08-22T19:16:27 * anastasiac joined the channel
+2014-08-22T19:16:57 <cindyli> Bosmon: the position of the dialog is specified when the dialog is instantiated. This makes it hard to reuse one dialog i think
+2014-08-22T19:17:07 <Bosmon> cindyli - it makes it incredibly easy
+2014-08-22T19:17:12 <Bosmon> Well, it doesn\'t by itself
+2014-08-22T19:17:23 <Bosmon> But the jQuery UI dialog is designed to be at least slightly usable
+2014-08-22T19:17:32 <Bosmon> You can supply fresh parameters every time you call dialog.open
+2014-08-22T19:17:40 <cindyli> ah
+2014-08-22T19:19:24 <Bosmon> Well ok
+2014-08-22T19:19:47 <Bosmon> You can\'t really
+2014-08-22T19:19:58 <Bosmon> But you can at least update its options using its "option" interface
+2014-08-22T19:20:14 <Bosmon> Well, or whatever other APIs it allows
+2014-08-22T19:20:56 <cindyli> yes, seems possible
+2014-08-22T19:21:33 <Bosmon> All the "different" dialogs actually share the same markup, right?
+2014-08-22T19:23:32 <cindyli> the markup you mean an empty div, Bosmon?
+2014-08-22T19:23:43 <Bosmon> hah
+2014-08-22T19:23:46 <Bosmon> Is that all there is?
+2014-08-22T19:23:55 <Bosmon> In that case, why might you even need to wait for them to be ready?
+2014-08-22T19:26:36 <cindyli> well, it\'s more than an empty div :) our process is, clicking on the button creates and appends an empty div into the dom, the form is rendered into the div, then the dialog is instantiated on the div
+2014-08-22T19:26:59 <Bosmon> Well ok
+2014-08-22T19:27:06 <Bosmon> But is any of this process actually asynchronous?
+2014-08-22T19:27:15 <cindyli> rendering is async
+2014-08-22T19:27:22 <Bosmon> By what means?
+2014-08-22T19:27:47 <cindyli> fetching templates. it\'s an rederer component
+2014-08-22T19:28:01 <Bosmon> Well ok back to my original question
+2014-08-22T19:28:08 <cindyli> bindDialog listens to afterRender for its readiness
+'
+
+b'2014-08-22T01:36:13 * jhernandez joined the channel
+2014-08-22T02:12:55 * jhung joined the channel
+2014-08-22T02:14:06 * jhung has quit
+2014-08-22T02:22:46 * jhernandez has quit
+2014-08-22T03:42:38 * yzen joined the channel
+2014-08-22T04:31:02 * yzen has quit
+2014-08-22T04:31:33 * yzen joined the channel
+2014-08-22T04:32:45 * yzen has quit
+2014-08-22T04:32:49 * yzen_ joined the channel
+2014-08-22T06:06:22 * yzen_ has quit
+2014-08-22T08:21:40 * amilchev joined the channel
+2014-08-22T09:21:36 * slim_ joined the channel
+2014-08-22T10:29:10 * Bosmon7 joined the channel
+2014-08-22T10:31:59 * jhernandez joined the channel
+2014-08-22T11:43:26 * Bosmon7 has quit
+2014-08-22T12:48:30 * cindyli joined the channel
+2014-08-22T13:02:22 * Jess_ joined the channel
+2014-08-22T13:04:23 * Jess_ has quit
+2014-08-22T13:06:28 * Jess_ joined the channel
+2014-08-22T13:23:16 * yzen joined the channel
+2014-08-22T13:46:15 * anvk joined the channel
+2014-08-22T14:10:29 * clown joined the channel
+2014-08-22T14:16:24 <Bosmon> Hi there cindyli
+2014-08-22T14:16:29 <Bosmon> Very quiet today :)
+2014-08-22T14:16:47 <cindyli> ya
+2014-08-22T14:19:30 * michelled joined the channel
+2014-08-22T14:21:01 * anastasiac joined the channel
+2014-08-22T14:32:06 <cindyli> Bosmon: r u still there?
+2014-08-22T14:32:13 <Bosmon> Hi cindyli
+2014-08-22T14:32:32 <cindyli> cool. let\'s make some noise. i have a interesting problem with feedback tool unit tests
+2014-08-22T14:32:55 <cindyli> feedback component has 2 subcomponents created at afterMarkupReady event - https://github.com/cindyli/metadata/blob/FLOE-195/src/components/feedback/js/feedback.js#L39
+2014-08-22T14:33:01 <cindyli> as well as line 62
+2014-08-22T14:34:27 <cindyli> in my unit test, using IoC testing framework of course, i have "last" listener for afterMarkupReady event to check on something, right after that, click on one button which should trigger the creation of one dialog defined by a sub-component - https://github.com/cindyli/metadata/blob/FLOE-195/tests/components/feedback/js/feedbackTests.js#L124-L125
+2014-08-22T14:34:54 <cindyli> line 127 & 128 are for the button click
+2014-08-22T14:35:35 <cindyli> at this point, all the bindDialog instances, which are the two subcomponents, should have been instantiated and reasy
+2014-08-22T14:35:38 <cindyli> ready
+2014-08-22T14:35:58 <cindyli> however, the click doesn\'t trigger anything, even not the button click event handler
+2014-08-22T14:36:03 <cindyli> where did I do wrong?
+2014-08-22T14:36:27 <Bosmon> I don\'t know!
+2014-08-22T14:36:35 <Bosmon> Does the button exist and in the right place in the markup?
+2014-08-22T14:36:53 <cindyli> yes, btw, the demo itself works completely fine
+2014-08-22T14:38:14 <Bosmon> Try putting a sequence point before it passing the dom element as an argument to a function containing a "debugger;" statement
+2014-08-22T14:41:24 <cindyli> done. the button is there
+2014-08-22T14:43:48 <Bosmon> Lots of duplication between these two components, btw
+2014-08-22T14:45:52 <Bosmon> cindyli - also - where is the click handler?
+2014-08-22T14:46:26 <cindyli> https://github.com/cindyli/metadata/blob/FLOE-195/src/components/feedback/js/bindDialog.js#L285
+2014-08-22T14:47:06 <cindyli> Bosmon: for the duplication, do you mean the subcomponent definitions on the feedback component?
+2014-08-22T14:47:16 <Bosmon> cindyli - yes
+2014-08-22T14:47:45 <cindyli> the subcomponents are fetching different values from the parent, except activeCss tho
+2014-08-22T14:48:17 <Bosmon> cindyli - the modelListeners are almost identical
+2014-08-22T14:48:23 <Bosmon> And also, in my view, a little suspicious : P
+2014-08-22T14:48:55 <cindyli> agree but different the partner component is passed in. but almost identical i agree
+2014-08-22T14:49:06 <Bosmon> cindyli - what is a "partner"?
+2014-08-22T14:50:12 <cindyli> only one of the match or the mismatch should be active. so, when one is turned on, it needs to update the other one to inactive
+2014-08-22T14:50:24 <Bosmon> cindyli - it sounds like this should be done via model relay
+2014-08-22T14:50:45 <cindyli> ha
+2014-08-22T14:50:45 <Bosmon> As per my comments yesterday, when you find yourself manually updating a piece of one model in response to a listener to another, you should worry
+2014-08-22T14:51:03 <cindyli> good point
+2014-08-22T14:51:11 <Bosmon> In theory, Justin has a special excuse in his situation, and I\'m not even too sure about that : P
+2014-08-22T14:51:43 <cindyli> what excuse does he have? maybe i can use the same one ;)
+2014-08-22T14:52:07 * simonjb joined the channel
+2014-08-22T14:52:14 <Bosmon> His excuse was that he had a dynamic set of components which needed to each relay to a path with a different middle segment
+2014-08-22T14:52:30 <Bosmon> I think our current model relay system is not quite up to this
+2014-08-22T14:53:02 <cindyli> i see, let me see if i can replace this piece of code with model relay
+2014-08-22T14:53:17 <Bosmon> cindyli - sure - but in the meantime, let me see if I can reproduce your issue
+2014-08-22T14:53:24 <Bosmon> Can I just check out your current branch and try it?
+2014-08-22T14:53:41 <cindyli> certainly. it\'s up to date
+2014-08-22T14:54:12 <cindyli> thanks, Bosmon!
+2014-08-22T14:54:19 <Bosmon> ok
+2014-08-22T15:10:12 <cindyli> Bosmon: another question that I\'m not sure how to handle if switched to the model relay: changes on the 2 sub model isActive are saved into pouchDB. One problem with async pouchDB save function is, if a number of save calls happen too close, only the first change is saved.
+2014-08-22T15:10:46 <Bosmon> cindyli - perhaps you mean, if you issue a save call which overlaps with the first one asynchronously?
+2014-08-22T15:10:54 <Bosmon> That is, if you issue a save whilst one is still outstanding?
+2014-08-22T15:11:10 <cindyli> exactly
+2014-08-22T15:11:19 <cindyli> to solve this problem, if the change in one sub triggers the partner\'s model change, the save happens at the other end
+2014-08-22T15:11:56 <Bosmon> cindyli - it\'s a fascinating problem - and I think that model relay would at least make this easier
+2014-08-22T15:12:08 <Bosmon> Since all of the coordinated changes would resolve as a single transaction
+2014-08-22T15:12:31 <Bosmon> To solve the problem completely and in the general case, we would need to develop a custom component which "throttled" changes being broadcast back to pouch
+2014-08-22T15:12:42 <Bosmon> That is, a custom dataSource
+2014-08-22T15:13:32 <cindyli> how do we "throttled" changes since the dataSource needs to have some idea of which one is the last
+2014-08-22T15:13:54 <Bosmon> cindyli - we would throttle them locally - whilst a save request was outstanding, we would not send another one
+2014-08-22T15:13:54 <cindyli> every change could be the last change
+2014-08-22T15:13:57 <Bosmon> Yes
+2014-08-22T15:14:09 <cindyli> i see
+2014-08-22T15:14:09 <Bosmon> Every change could be the last change, but hopefully, a save request could not be outstanding forever : P
+2014-08-22T15:14:35 <Bosmon> We would "piggyback" a wrapper onto the callback from the save function, that would recheck whether any more data needed to be sent
+2014-08-22T15:14:57 <Bosmon> This would be a very useful component in general as well, if we generalised it sufficiently
+2014-08-22T15:15:09 <Bosmon> Since it could also deal with issue such as retries in the the case there was an error from the server
+2014-08-22T15:15:30 <cindyli> a wrapper to queue requests?
+2014-08-22T15:15:43 <Bosmon> cindyli - eys
+2014-08-22T15:15:51 <Bosmon> so cindyli - I am seeing the problem with your tests
+2014-08-22T15:16:02 <Bosmon> In that the markup you have bound to the component is not the same one that you have bound the tests to
+2014-08-22T15:16:25 <cindyli> don\'t get it
+2014-08-22T15:16:27 <Bosmon> I see two "section" nodes in the document
+2014-08-22T15:16:30 <Bosmon> They are both very similar
+2014-08-22T15:16:35 <Bosmon> Only one of them is visible, the other one is hidden
+2014-08-22T15:17:01 <cindyli> the visible is the one i\'m working on
+2014-08-22T15:17:05 <Bosmon> cindyli - yes
+2014-08-22T15:17:12 <Bosmon> But the invisible one is the one that the component implementation is bound to
+2014-08-22T15:17:22 <cindyli> oh, really?
+2014-08-22T15:17:25 <Bosmon> All the click handlers are bound to that one
+2014-08-22T15:17:42 <Bosmon> In fact, twice, for some reason
+2014-08-22T15:17:43 <cindyli> but line 78, i\'m using the 2nd container to instantiate the feedback tool
+2014-08-22T15:17:54 <Bosmon> Binding click to Object[li#fluid-id-5kh01kvo-142.gpiic-matchConfirmation-button.gpii-feedback-button]
+2014-08-22T15:17:54 <Bosmon> bindDialog.js (line 143)
+2014-08-22T15:17:54 <Bosmon> Binding click to Object[li#fluid-id-5kh01kvo-208.gpiic-mismatchDetails-button.gpii-feedback-button]
+2014-08-22T15:17:54 <Bosmon> bindDialog.js (line 143)
+2014-08-22T15:17:54 <Bosmon> Binding click to Object[li#fluid-id-5kh01kvo-142.gpiic-matchConfirmation-button.gpii-feedback-button]
+2014-08-22T15:17:54 <Bosmon> bindDialog.js (line 143)
+2014-08-22T15:17:54 <Bosmon> Binding click to Object[li#fluid-id-5kh01kvo-208.gpiic-mismatchDetails-button.gpii-feedback-button]
+2014-08-22T15:17:58 <Bosmon> This is what I get during startup
+2014-08-22T15:18:06 <Bosmon> So nodes 142 and 208 are both part of the hidden markup
+2014-08-22T15:18:16 <cindyli> those two tests messed up each other?! let me try commenting out the first test
+2014-08-22T15:18:40 <Bosmon> Whereas the test fixture is bound to the visible markup, but the visible markup doesn\'t appear to have a component attached to it, since its nodes have no ids
+2014-08-22T15:19:46 <cindyli> ha. why would that happen
+2014-08-22T15:19:59 <cindyli> commenting out the first doesn\'t help
+2014-08-22T15:25:29 <Bosmon> cindyli - the two areas of markup are present in the original document
+2014-08-22T15:25:41 <Bosmon> one of them is "gpiic-feedback-init" and the other is "gpiic-feedback-dialogs"
+2014-08-22T15:26:45 <cindyli> yes
+2014-08-22T15:27:25 <Bosmon> cindyli - ok, I commented out the first test
+2014-08-22T15:27:30 <Bosmon> Now I see no handlers being bound at all
+2014-08-22T15:27:40 <cindyli> exactly what i saw
+2014-08-22T15:28:13 <Bosmon> Well I don\'t mean just no handlers successfully bound, I mean not even any attempts to bind handlers : P
+2014-08-22T15:28:47 <cindyli> :(
+2014-08-22T15:29:22 <Bosmon> It seems you have a createOnEvent waiting
+2014-08-22T15:31:17 <cindyli> can you see for creating which component?
+2014-08-22T15:33:20 <Bosmon> cindyli ok
+2014-08-22T15:33:30 <Bosmon> So the issue is that you have too many things waiting for "afterMarkupReady"
+2014-08-22T15:33:34 <Bosmon> And none of them have any priority attached
+2014-08-22T15:33:47 <Bosmon> As it happens, the testing framework gets the event before any of your components too
+2014-08-22T15:33:53 <Bosmon> before any of your components do
+2014-08-22T15:34:30 <Bosmon> You should really make a clear distinction between which components are part of the implementation detail and which are to be used externally
+2014-08-22T15:34:43 <Bosmon> Ah, I see you did add a priority on the listener record
+2014-08-22T15:34:54 <Bosmon> But actually it has not made it through to the actual event firer
+2014-08-22T15:34:56 <Bosmon> Looks like another bug!
+2014-08-22T15:35:02 <Bosmon> Ok, here we go again....
+2014-08-22T15:36:35 <Bosmon> Oh I see
+2014-08-22T15:36:40 <Bosmon> It is because of the stupid "listenerMaker" system
+2014-08-22T15:36:53 <Bosmon> cindyli - I think the best option here is for you to update to my current branch
+2014-08-22T15:37:19 <Bosmon> The one in this pull request https://github.com/fluid-project/infusion/pull/554
+2014-08-22T15:37:31 <Bosmon> And try removing the "listenerMaker" and replace it just with a plain "listener"
+2014-08-22T15:43:11 <cindyli> sure. trying your pull now, Bosmon
+2014-08-22T15:44:56 <Bosmon> cindyli - actually please update again
+2014-08-22T15:45:04 <Bosmon> It looks like I forgot to check in my merge with the previous branch
+2014-08-22T15:45:07 <Bosmon> I just pushed again
+2014-08-22T15:45:12 <cindyli> sure
+2014-08-22T15:45:15 <Bosmon> michelled - also I addressed your comment about the comment
+2014-08-22T15:45:36 <Bosmon> cindyli - you will now get the benefit of HANG TEST DETECTION :)
+2014-08-22T15:45:48 <Bosmon> If the IoC testing framework hangs for more than 5 seconds, it will give you a log diagnostic
+2014-08-22T15:46:01 <cindyli> sounds really cool and useful!
+2014-08-22T15:48:01 <Bosmon> Also we can get rid of all "listenerMakers" everywhere
+'
+

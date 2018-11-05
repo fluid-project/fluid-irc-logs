@@ -1,0 +1,237 @@
+b'2015-08-20T18:50:59 <kasparnet> I\'m getting a "socket hang up" error in my \'getPreferences\' function
+2015-08-20T18:51:20 <kasparnet> which results in a fluid.fail, and makes the system explode with a fatal error
+2015-08-20T18:51:38 <colinclark> kasparnet\'s going driftin\'
+2015-08-20T18:53:36 <Bosmon> kasparnet - why aren\'t we seeing this issue in current trunk?
+2015-08-20T18:55:03 <Bosmon> kasparnet and ALSO - why does the system explode with a fatal error if you overrode the failure handler with this: https://github.com/GPII/universal/blob/master/tests/DeviceReporterErrorTests.js#L72#
+2015-08-20T18:56:05 * alanharnum joined the channel
+2015-08-20T18:56:25 * alanharnum joined the channel
+2015-08-20T18:56:48 <kasparnet> for the first question: I\'ve only just added the functionality of the preference server getting to react to an error in the system.. before it was just silently accepting that it couldn\'t get the preferences, I believe
+2015-08-20T18:57:32 <kasparnet> in terms of why it still explodes, I\'m not sure
+2015-08-20T18:58:00 <kasparnet> would I need to push another soft failure handler in case there might be a second explosion?
+2015-08-20T18:58:17 <kasparnet> (ie. one explosion from the device reporter and one from the settings handler)
+2015-08-20T18:58:28 * alanharnum joined the channel
+2015-08-20T18:58:50 <kasparnet> btw, Bosmon, colinclark, saw this and thought of you (being my only real references to the Dr. Who universe) http://www.qwantz.com/index.php?comic=2570
+2015-08-20T19:00:33 * alanharnum has quit
+2015-08-20T19:00:41 * alanharnum joined the channel
+2015-08-20T19:02:31 <Bosmon> kasparnet - well, for a start, failing to get preferences should trigger request onError, not fluid.fail - fluid.fail is reserved for cases which correspond to "assertion failure" - that is, there is a provable logic error in the implementation of the system
+2015-08-20T19:02:58 <Bosmon> kasparnet - DO YOU NOT RECALL my previous warnings about the fact that THE STATE OF THE NODE VM AFTER AN UNCAUGHT EXCEPTION CANNOT BE DEPENDED UPON : p
+2015-08-20T19:04:09 * alanharnum joined the channel
+2015-08-20T19:08:06 <kasparnet> Bosmon: haha yeah, ok - those are good points
+2015-08-20T19:08:30 <kasparnet> but it\'s true, I should fail the request instead of making the framework explode
+2015-08-20T19:10:00 * cindyli joined the channel
+2015-08-20T19:11:57 <colinclark> kasparnet: whoa look at those caps from Bosmon!
+2015-08-20T19:12:54 <colinclark> apparently making the universe explode is verboten
+2015-08-20T19:14:59 <Bosmon> kasparnet - and the good thing about firing onError is that the magically implemented FLUID-5333 ABORTABLE EVENTS behaviour will ensure that you do not blow up the universe a 2nd time
+2015-08-20T19:15:31 <Bosmon> https://issues.fluidproject.org/browse/FLUID-5333
+2015-08-20T19:15:58 <Bosmon> I\'ve been on a very far-ranging tour of JURAs this evening
+2015-08-20T19:16:12 <Bosmon> So I have all this information AT MY FINGERTIPS.....
+2015-08-20T19:20:16 * anastasiac has quit
+2015-08-20T19:20:41 * anastasiac joined the channel
+2015-08-20T19:24:30 * kasparnet has quit
+2015-08-20T19:32:47 * murilocrivellari joined the channel
+2015-08-20T19:36:54 * kasparnet joined the channel
+2015-08-20T19:38:04 <kasparnet> that\'s awesome Bosmon
+2015-08-20T19:38:27 * anastasiac joined the channel
+2015-08-20T19:38:35 <kasparnet> ... although, I must admit that not being able to blow up the universe is problematic for my kasparnet plans
+2015-08-20T19:41:06 * alanharnum has quit
+2015-08-20T19:43:08 <kasparnet> ok - so not actually doing a fluid fail prevented explosions.. not sure why I decided to do that in the first place
+2015-08-20T19:48:49 * alanharnum joined the channel
+2015-08-20T19:52:31 * cindyli joined the channel
+2015-08-20T19:55:53 * clown joined the channel
+2015-08-20T20:27:25 * anvk has quit
+2015-08-20T20:37:46 * anastasiac joined the channel
+2015-08-20T20:38:43 <colinclark> Bosmon: Full green bars in both Node and the browser with your new grade reversal branch
+2015-08-20T20:38:56 <colinclark> Have you updated the documentation to conform to the new grade ordering?
+2015-08-20T20:39:50 <colinclark> with some kind of special note that describes the "strength" of fluid.viewComponent due to the nature of its unusual signature?
+2015-08-20T20:41:29 * anastasiac has quit
+2015-08-20T20:46:31 * anastasiac joined the channel
+2015-08-20T20:51:15 <cindyli> alan: https://wiki.gpii.net/w/Architecture_-_Available_transformation_functions#Changing_an_array_into_an_object_.28fluid.transforms.arrayToObject.29
+2015-08-20T20:54:02 * alanharnum joined the channel
+2015-08-20T20:57:57 <Bosmon> colinclark - I updated the docs in general
+2015-08-20T20:58:08 <Bosmon> I wonder whether the note about viewComponent may confuse more than it enlightens
+2015-08-20T20:58:13 <colinclark> Well...
+2015-08-20T20:58:28 <colinclark> I certainly would have never known that my viewComponent and rendererComponent grades MUST come last
+2015-08-20T20:58:48 <colinclark> I don\'t know how I could possibly know this, as a user, unless there\'s some kind of note about it somewhere?
+2015-08-20T20:59:12 <colinclark> don\'t you think?
+2015-08-20T20:59:48 <Bosmon> I guess I could put it in the docs on viewComponent in general
+2015-08-20T20:59:56 <Bosmon> Where do you think it might go, and what could it say?
+2015-08-20T21:00:44 <colinclark> I think it should probably say something to the effect of
+2015-08-20T21:01:33 <colinclark> "Note: in the current version of Infusion, you must declare all grades derived from fluid.viewComponent after those that are not"
+2015-08-20T21:01:40 <colinclark> That\'s not quite clear enough
+2015-08-20T21:01:43 <colinclark> but something along those lines
+2015-08-20T21:01:53 <Bosmon> ok
+2015-08-20T21:05:52 * clown_mtg has left the channel
+2015-08-20T21:06:33 <Bosmon> colinclark: https://github.com/amb26/infusion-docs/blob/FLUID-5249/src/documents/ComponentGrades.md#combining-grades
+2015-08-20T21:17:01 <gtirloni> fluid-everyone: tonight I\'m upgrading fluid\'s JIRA.. there will be periods of downtime. if anyone is planning on working with JIRA late today, please let me know
+2015-08-20T21:17:09 * alanharnum joined the channel
+2015-08-20T21:17:26 <Bosmon> Thanks for the headsup, gtirloni
+2015-08-20T21:17:43 <Bosmon> I might be tinkering with it, but just let me know when it\'s the all-clear - cheers!
+2015-08-20T21:19:25 <gtirloni> okay!
+2015-08-20T22:39:59 * kasparnet has quit
+2015-08-20T23:00:29 * danayo joined the channel
+2015-08-20T23:10:46 <gtirloni> if anyone is still around, jira has been upgraded from 5.2 to 6.4 ... it\'s still running on the old server though
+2015-08-20T23:11:16 <gtirloni> i\'m gonna have dinner and be back in 30min or so, to start migrating it to the new server, which will mean more downtime unfortunately.. but hopefully it\'ll be quickier
+2015-08-20T23:18:53 <Bosmon> Hey, thanks gtirloni
+2015-08-20T23:19:32 <Bosmon> Wow, this new JIRA is plenty wierd-looking
+2015-08-20T23:19:50 <Bosmon> Lots of nasty Metro-style flat areas : P
+2015-08-20T23:21:42 <Bosmon> It feels unpleasantly slow compared to the old version.... lots of sluggish AJAX-generated content
+2015-08-20T23:34:34 <gtirloni> yea, it feels kind of awkward
+2015-08-20T23:35:03 <gtirloni> the old server is giving really bad performance though.. it took me a while to get the backups in place
+2015-08-20T23:36:07 <gtirloni> i\'m planning to take it down in about 10min... will that disrupt your work too much?
+2015-08-20T23:45:55 <gtirloni> ok here we go...
+2015-08-20T23:47:34 <Bosmon> ugg
+2015-08-20T23:47:40 <Bosmon> Oh well, better go to bed :)
+'
+
+b'2015-08-20T01:00:54 * alanharnum joined the channel
+2015-08-20T01:01:49 * alanharnum has quit
+2015-08-20T01:04:11 * alanharnum joined the channel
+2015-08-20T01:06:22 * alanharnum joined the channel
+2015-08-20T02:09:08 * alanharnum joined the channel
+2015-08-20T02:44:10 * alanharnum joined the channel
+2015-08-20T06:47:27 * slim_ joined the channel
+2015-08-20T07:02:15 * slim__ joined the channel
+2015-08-20T07:02:39 * slim_ has quit
+2015-08-20T07:02:47 * slim__ is now known as slim_
+2015-08-20T07:10:09 * the-t-in-rtf joined the channel
+2015-08-20T07:36:34 * kasparnet joined the channel
+2015-08-20T07:53:42 * slim__ joined the channel
+2015-08-20T07:55:00 * slim_ has quit
+2015-08-20T07:55:07 * slim__ is now known as slim_
+2015-08-20T10:37:55 * the-t-in-rtf has quit
+2015-08-20T11:07:00 * slim_ has quit
+2015-08-20T11:07:05 * alanharnum joined the channel
+2015-08-20T11:25:29 * alanharnum joined the channel
+2015-08-20T11:37:17 * alanharn_ joined the channel
+2015-08-20T11:43:22 * slim_ joined the channel
+2015-08-20T11:54:01 <slim_> jhernand1z: hey javi, what is your skype ID? I\'m expecting the otehrs to call me as I don\'t have theirs. I\'ll then add you in
+2015-08-20T11:55:50 <jhernand1z> slim_: hey
+2015-08-20T11:55:57 <jhernand1z> javiube
+2015-08-20T11:56:12 * jhernand1z is now known as jhernandez
+2015-08-20T12:07:29 * the-t-in-rtf joined the channel
+2015-08-20T12:25:28 * slim__ joined the channel
+2015-08-20T12:28:54 <slim__> jhernandez: https://github.com/jxcore/jxcore-cordova
+2015-08-20T12:40:00 <Bosmon> kasparnet - thanks for updating your GPII-641 pull request
+2015-08-20T12:40:18 <Bosmon> It looks good in itself now - but what about the original mission? Of actually checking that the deviceReporter test files are not corrupt?
+2015-08-20T12:42:43 <Bosmon> Oh well I guess I\'ll put you out of your misery and merge it anyway... since the majority of those files have been deleted
+2015-08-20T12:42:51 <Bosmon> YOu did let in 2 stray files with 755 permissions:
+2015-08-20T12:43:01 <Bosmon> create mode 100755 testData/deviceReporter/installedSolutions.txt
+2015-08-20T12:43:10 <Bosmon> create mode 100755 examples/deviceReporter/README.txt
+2015-08-20T12:43:13 <Bosmon> Are you on Windows?
+2015-08-20T12:47:46 <slim__> https://github.com/jxcore/jxcore-cordova
+2015-08-20T13:05:15 * anastasiac joined the channel
+2015-08-20T13:06:30 * kasparnet has quit
+2015-08-20T13:15:24 * jhung joined the channel
+2015-08-20T13:19:45 * jhung joined the channel
+2015-08-20T13:25:29 * anvk joined the channel
+2015-08-20T13:30:05 * kasparnet joined the channel
+2015-08-20T13:30:30 * sepidehshahi joined the channel
+2015-08-20T13:31:11 <kasparnet> Bosmon: Good job me - disappearing just as I get a ping from you
+2015-08-20T13:31:21 <kasparnet> anyway - just saw the merge, thanks for that!
+2015-08-20T13:31:55 <kasparnet> I\'m on mac - and not sure why I keep getting 755 perm files
+2015-08-20T13:32:05 <Bosmon> kasparnet - is your umask set wrongly?
+2015-08-20T13:32:49 * cindyli joined the channel
+2015-08-20T13:33:38 * alanharnum joined the channel
+2015-08-20T13:33:39 <kasparnet> not sure... I know I havent changed it from the default in mac
+2015-08-20T13:33:55 <Bosmon> What is the default...
+2015-08-20T13:41:53 * alanharnum joined the channel
+2015-08-20T13:42:46 * alanharnum joined the channel
+2015-08-20T13:45:37 * alanharn_ joined the channel
+2015-08-20T13:45:48 * simonjb joined the channel
+2015-08-20T13:49:47 * jhung joined the channel
+2015-08-20T13:50:34 * anastasiac joined the channel
+2015-08-20T13:53:06 * clown joined the channel
+2015-08-20T13:54:26 * alanharnum joined the channel
+2015-08-20T13:54:39 * jessm joined the channel
+2015-08-20T13:56:56 <kasparnet> Bosmon: 022
+2015-08-20T13:57:21 <Bosmon> kasparnet - looks faulty to me
+2015-08-20T13:57:47 <kasparnet> ie. it should be 133?
+2015-08-20T13:58:04 * danayo joined the channel
+2015-08-20T13:58:09 <kasparnet> or 137 even
+2015-08-20T13:58:43 * alanharnum joined the channel
+2015-08-20T14:04:55 * cindyli1 joined the channel
+2015-08-20T14:06:00 * anastasiac joined the channel
+2015-08-20T14:12:22 * kasparnet has quit
+2015-08-20T14:12:39 * slim__ has quit
+2015-08-20T14:43:33 * slim__ joined the channel
+2015-08-20T14:47:02 * slim___ joined the channel
+2015-08-20T14:50:47 * slim__ has quit
+2015-08-20T14:53:51 * murilocrivellari joined the channel
+2015-08-20T15:23:52 * the-t-in-rtf has quit
+2015-08-20T15:24:10 * the-t-in-rtf joined the channel
+2015-08-20T15:34:29 * colinclark joined the channel
+2015-08-20T15:40:53 * anastasiac joined the channel
+2015-08-20T15:41:10 * cindyli joined the channel
+2015-08-20T15:42:40 * sepidehshahi joined the channel
+2015-08-20T15:55:37 * the-t-in-rtf has quit
+2015-08-20T15:57:46 * colinclark joined the channel
+2015-08-20T16:03:21 * the-t-in-rtf joined the channel
+2015-08-20T16:15:02 * anastasiac joined the channel
+2015-08-20T16:19:49 * clown joined the channel
+2015-08-20T16:22:22 * jhung joined the channel
+2015-08-20T16:23:56 * danayo joined the channel
+2015-08-20T16:24:16 * cindyli joined the channel
+2015-08-20T16:27:18 * alanharnum joined the channel
+2015-08-20T16:28:58 * sepidehshahi joined the channel
+2015-08-20T16:29:08 * anastasiac joined the channel
+2015-08-20T16:42:25 * slim___ has quit
+2015-08-20T16:52:33 * slim_ has quit
+2015-08-20T17:03:55 * cindyli joined the channel
+2015-08-20T17:08:57 * gtirloni joined the channel
+2015-08-20T17:12:50 * kasparnet joined the channel
+2015-08-20T17:16:50 * kasparnet has quit
+2015-08-20T17:24:59 * slim_ joined the channel
+2015-08-20T17:26:46 * gtirloni joined the channel
+2015-08-20T17:32:12 * slim_ has quit
+2015-08-20T18:00:55 * kasparnet joined the channel
+2015-08-20T18:05:25 * alanharnum joined the channel
+2015-08-20T18:05:48 <anastasiac> fluid-everyone, today\xe2\x80\x99s design crit will be in the the stand-up Vidyo room
+2015-08-20T18:11:51 * clown joined the channel
+2015-08-20T18:13:41 <kasparnet> Bosmon: ping
+2015-08-20T18:14:41 * danayo joined the channel
+2015-08-20T18:15:35 <Bosmon> NITT
+2015-08-20T18:16:50 <kasparnet> MONN
+2015-08-20T18:17:05 <kasparnet> so I\'m just looking at my failing preference work
+2015-08-20T18:17:25 <kasparnet> and I\'m finding a {request} with no "onError" event
+2015-08-20T18:18:01 <kasparnet> is that because I\'ve doing too much crack cocaine, or is this something that actually exists for some reason?
+2015-08-20T18:21:16 <kasparnet> Bosmon: ^
+2015-08-20T18:22:07 <Bosmon> There is no reason this could or should exist
+2015-08-20T18:22:35 * clown likely not the cocaine, but the beer
+2015-08-20T18:22:58 <Bosmon> I would like to say that "this is completely impossible" but nothing is impossible in OLD KETTLE
+2015-08-20T18:23:10 <Bosmon> How do you know that the onError event isn\'t there?
+2015-08-20T18:23:51 <kasparnet> I\'m inspecting the {request} reference I\'m passing to my function
+2015-08-20T18:24:13 <Bosmon> INSPECTING it!
+2015-08-20T18:24:22 <Bosmon> You can\'t trust anything sent to you by that pile of bolts :)
+2015-08-20T18:24:41 <Bosmon> Have you actually tried printing out the value of the that.events.onError ?
+2015-08-20T18:24:57 <kasparnet> JSON.stringify(request.events)
+2015-08-20T18:24:59 <kasparnet> "{"onComplete":{"eventId":"5k6y5aum-4378","name":"onComplete of component with typename kettle.test.request.http and id 5k6y5aum-4377","ownerId":"5k6y5aum-4377","typeName":"fluid.event.firer","listeners":{"5k6y5aum-4522":[{"predicate":null,"namespace":"5k6y5aum-4522","priority":0}]},"byId":{"5k6y5aum-4522":{"predicate":null,"namespace":"5k6y5aum-4522","priority":0}},"sortedListeners":[{"predicate":null,"namespace":"5k6y5aum-4522","prior
+2015-08-20T18:24:59 <kasparnet> ity":0}]},"onCreate":{"eventId":"5k6y5aum-4379","name":"onCreate of component with typename kettle.test.request.http and id 5k6y5aum-4377","ownerId":"5k6y5aum-4377","typeName":"fluid.event.firer"},"onAttach":{"eventId":"5k6y5aum-4380","name":"onAttach of component with typename kettle.test.request.http and id 5k6y5aum-4377","ownerId":"5k6y5aum-4377","typeName":"fluid.event.firer"},"onClear":{"eventId":"5k6y5aum-4381","name":"onClear of
+2015-08-20T18:24:59 <kasparnet> component with typename kettle.test.request.http and id 5k6y5aum-4377","ownerId":"5k6y5aum-4377","typeName":"fluid.event.firer"},"onDestroy":{"eventId":"5k6y5aum-4382","name":"onDestroy of component with typename kettle.test.request.http and id 5k6y5aum-4377","ownerId":"5k6y5aum-4377","typeName":"fluid.event.firer"},"afterDestroy":{"eventId":"5k6y5aum-4383","name":"afterDestroy of component with typename kettle.test.request.http and id
+2015-08-20T18:25:00 <kasparnet> 5k6y5aum-4377","ownerId":"5k6y5aum-4377","typeName":"fluid.event.firer"}}"
+2015-08-20T18:25:02 <kasparnet> request.events.onError
+2015-08-20T18:25:05 <kasparnet> undefined
+2015-08-20T18:25:06 <kasparnet> ok - that was horrible... sec
+2015-08-20T18:25:17 <Bosmon> Yes
+2015-08-20T18:25:20 <Bosmon> Also that is not a request object
+2015-08-20T18:25:35 <Bosmon> That is, it is the request from the point of view of the client
+2015-08-20T18:25:42 <Bosmon> You have mixed that up with the request from the point of view of the server
+2015-08-20T18:25:54 <Bosmon> How happy I am that I put event names in
+2015-08-20T18:26:17 <Bosmon> kettle.test.request.http is the request that you make from a test fixture to the server
+2015-08-20T18:26:32 <Bosmon> This has no onError event
+2015-08-20T18:27:18 <Bosmon> You\'ve mixed this up with "kettle.requests.request.http"
+2015-08-20T18:27:21 <Bosmon> Which is the server\'s request
+2015-08-20T18:27:26 <Bosmon> This has an onError event
+2015-08-20T18:27:30 * cindyli joined the channel
+2015-08-20T18:27:49 <Bosmon> https://github.com/fluid-project/kettle/blob/master/lib/request.js#L124
+2015-08-20T18:27:51 <Bosmon> That one
+2015-08-20T18:29:50 <kasparnet> ah ok
+2015-08-20T18:30:00 <kasparnet> so there is some amount of sanity left in the world
+2015-08-20T18:46:20 <kasparnet> Bosmon: ok - so back to my original hassle with the preferences server testing
+2015-08-20T18:46:52 <kasparnet> it seems I\'ve hit some racing conditions in my testing
+2015-08-20T18:47:27 <Bosmon> Perhaps you should instead apply some DRIFTING CONDITIONS : P
+2015-08-20T18:49:03 <kasparnet> hah indeed
+2015-08-20T18:49:13 <kasparnet> I\'m sure sgithens would appreciate that
+2015-08-20T18:50:13 <kasparnet> the issue happens when the newly added device reporter test is run .. as the architecture calls the prefs server and device reporter simoultanously
+2015-08-20T18:50:25 <kasparnet> if the device reporter manages to fail first (as it should in that test)
+'
+

@@ -1,0 +1,282 @@
+b'2016-02-03T18:51:24 <Bosmon> It seems your iframe is already doing this....
+2016-02-03T18:51:40 <Bosmon> We just need to fire up the right jQuery
+2016-02-03T18:52:25 * cindyli joined the channel
+2016-02-03T18:52:47 * sepidehshahi joined the channel
+2016-02-03T18:54:28 <Justin_o> Bosmon: i probably forgot to remove that
+2016-02-03T18:54:38 <Justin_o> Bosmon: but i guess it is necessary anways
+2016-02-03T18:55:49 * yzen is now known as yzen_
+2016-02-03T18:57:41 <Bosmon> Justin_o - can you remind me again why we are trying to show tooltips in iframes? : P
+2016-02-03T19:00:10 * yzen_ has quit
+2016-02-03T19:01:19 * michelled joined the channel
+2016-02-03T19:02:08 * amatas joined the channel
+2016-02-03T19:02:38 <Justin_o> Bosmon: it\'s for the GPII / UIO integration
+2016-02-03T19:02:39 <Justin_o> https://www.dropbox.com/s/i4c3pni6cnnwuts/uioptions%20GPII%20integration.pdf?dl=0
+2016-02-03T19:02:49 <Justin_o> so the new panel needs tooltips for its buttons
+2016-02-03T19:03:00 <Bosmon> oh yes
+2016-02-03T19:03:01 <Bosmon> I see
+2016-02-03T19:05:14 <Justin_o> danayo: if you want to talk about the PGA test plans i have some time now before the community meeting, or we could also talk after
+2016-02-03T19:05:33 <Bosmon> Justin_o, cindyli - so I imagine what I will do is hoist some of this code from the prefs framework out into the core framework:
+2016-02-03T19:05:34 <Bosmon> https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/SeparatedPanelPrefsEditor.js#L214
+2016-02-03T19:05:56 <Bosmon> Otherwise we\'ll just have to duplicate it everywhere we deal with iframes, including in Justin_o\'s recent test cases
+2016-02-03T19:06:53 <Justin_o> Bosmon: thanks, what will that look like
+2016-02-03T19:07:12 <Bosmon> Justin_o - hopefully it will just look like having your current test case "happen to work" automatically : P
+2016-02-03T19:07:36 <Bosmon> I hadn\'t realised that it is possible to make a jQuery search that "bridges the worlds" directly, even as badly as we currently do
+2016-02-03T19:07:38 <Justin_o> danayo: actually, i don\'t have time before the community meeting, but after, if you want to talk
+2016-02-03T19:07:54 <Justin_o> Bosmon:  :)
+2016-02-03T19:07:57 <Bosmon> So it is "a little unusual" that the container of your tooltips component is the "document" for the iframe, but it seems that it might be possible to make this work
+2016-02-03T19:08:06 <Bosmon> I already patched up the other failures that this causes
+2016-02-03T19:08:33 <Bosmon> For example the places in the tooltip component where it tries to check that the container "is contained" by the document, which it isn\'t if it actually IS the component
+2016-02-03T19:09:04 <Bosmon> So it seems that we should be able to fix up the DOM binder to automatically detect whether the user appears to be trying to use this pattern, and just automatically fish out the correct jQuery by using the method that we have in the prefs framework
+2016-02-03T19:09:19 <Justin_o> Bosmon: i guess it doesn\'t have to be the document itself, but that seemed like a good place to start :)
+2016-02-03T19:09:28 <Justin_o> the iframe element didn\'t work as the container
+2016-02-03T19:09:48 <Justin_o> that sounds good
+2016-02-03T19:10:05 <Bosmon> Justin_o - oh, I see now
+2016-02-03T19:10:15 <Bosmon> This is why you have this funky expander
+2016-02-03T19:10:16 * michelled joined the channel
+2016-02-03T19:10:33 <danayo> sounds good Justin_o
+2016-02-03T19:10:35 <Bosmon> I\'d glossed over that in my reading...
+2016-02-03T19:10:42 <Bosmon> Ok, I guess we can make that bit happen automatically too
+2016-02-03T19:11:22 <Bosmon> That is - the new behaviour will be that the DOM binder, when it detects it has matched an iframe node, will automatically resolve that to the contained document node, hosted by the correct jQuery
+2016-02-03T19:12:06 <Bosmon> Well
+2016-02-03T19:12:12 <Bosmon> Perhaps this is just all a bit too magic
+2016-02-03T19:12:26 <Bosmon> I can just fix up your expander to resolve the right jQuery, I guess
+2016-02-03T19:13:41 <Justin_o> Bosmon: we also need to know when iframe\'s contents have loaded
+2016-02-03T19:13:51 <Bosmon> Justin_o - right
+2016-02-03T19:14:03 * kasparnet has quit
+2016-02-03T19:14:07 <Bosmon> So there really isn\'t all that much space for too much "magic" now
+2016-02-03T19:14:26 * kasparnet joined the channel
+2016-02-03T19:15:57 <Bosmon> jhernandez: use fluid.log
+2016-02-03T19:17:46 <jhernandez> Bosmon: personally, I tend to use console.log
+2016-02-03T19:17:49 <jhernandez> but I\'m ok
+2016-02-03T19:17:51 <jhernandez> xDDD
+2016-02-03T19:17:54 <Bosmon> jhernandez - use fluid.log
+2016-02-03T19:24:19 * yzen joined the channel
+2016-02-03T19:25:58 <jessm> gtirloni: ping
+2016-02-03T19:27:35 <gtirloni> jessm: hi
+2016-02-03T19:28:00 <jessm> gtirloni: heya, so JT got me edits to the mailing list\xe2\x80\xa6 i\xe2\x80\x99m wondering if you can help me with pre-populating
+2016-02-03T19:28:15 * colinclark joined the channel
+2016-02-03T19:28:17 <gtirloni> sure, just send it to me and I can add to the proper place in mailman
+2016-02-03T19:29:01 <jessm> gtirloni: ok, i will send you an email with the lists from which to populate and the intro email
+2016-02-03T19:29:07 <jessm> ping me if you have any questions
+2016-02-03T19:29:12 <gtirloni> ok!
+2016-02-03T19:29:36 <Justin_o> fluid-everyone: Today\'s community meeting will be a continuation of last weeks, with the focus on how to improve our communication in out community.
+2016-02-03T19:30:47 * jhernandez has quit
+2016-02-03T19:33:47 <Justin_o> we\'re continuing on with the same pirate pad from last week http://piratepad.net/OklTcOw1wh
+2016-02-03T19:35:11 * sepidehshahi has quit
+2016-02-03T19:35:49 * alanharnum joined the channel
+2016-02-03T19:38:58 * kasparnet has quit
+2016-02-03T19:39:20 * cindyli has quit
+2016-02-03T19:41:29 <Justin_o> https://wiki.fluidproject.org/display/fluid/FLUID+PROJECT+COMMUNICATION+SYNCHROSPECTIVE
+2016-02-03T19:51:36 * anvk joined the channel
+2016-02-03T19:59:47 * jhernandez joined the channel
+2016-02-03T20:01:16 * kasparnet joined the channel
+2016-02-03T20:07:47 * cindyli joined the channel
+2016-02-03T20:09:43 <Bosmon> Hi there Justin_o - I\'ve fixed up the tooltip iframe tests here: https://github.com/fluid-project/infusion/pull/666
+2016-02-03T20:10:06 <Justin_o> Bosmon: and evil pull request
+2016-02-03T20:10:19 <Bosmon> Oh yes
+2016-02-03T20:10:32 <Bosmon> I was going to say it is moderately evil, but not THAT evil : P
+2016-02-03T20:10:35 <Bosmon> But now I see the number
+2016-02-03T20:11:37 <Justin_o> Bosmon: :) thanks for the fix though i\'ll try to take a look at that in a bit
+2016-02-03T20:14:11 <Justin_o> Bosmon: we\'re talking about how to improve communication at the community meeting, if you have time to join.
+2016-02-03T20:30:50 * kasparnet has quit
+2016-02-03T20:33:24 * kasparnet joined the channel
+2016-02-03T20:39:58 <colinclark> Hey fluid-everyone, I just merged a pretty awesome pull request from avtar a few minutes ago, which you may find useful...
+2016-02-03T20:40:09 <michelled> yay! what is it?
+2016-02-03T20:40:21 <colinclark> You can now run all unit tests in all the browsers installed on your computer with one command
+2016-02-03T20:40:33 <michelled> !
+2016-02-03T20:40:47 <colinclark> https://github.com/fluid-project/infusion#run-tests-using-browsers-installed-on-your-computer
+2016-02-03T20:41:07 <colinclark> And if you\'d like, you can also run them in a Linux virtual machine
+2016-02-03T20:41:08 <colinclark> https://github.com/fluid-project/infusion#run-tests-using-browsers-installed-in-a-vm
+2016-02-03T20:41:25 <colinclark> Eventually, we\'ll also have support for doing so in a set of Sauce Labs VMs
+2016-02-03T20:41:30 <colinclark> and in local Windows vagrant boxes
+2016-02-03T20:41:41 <colinclark> but it sure will make reviewing pull requests much easier
+2016-02-03T20:41:51 <colinclark> in that you can just run one command and let it go
+2016-02-03T20:41:59 * cindyli has quit
+2016-02-03T20:45:25 * cindyli joined the channel
+2016-02-03T20:45:45 * jhernandez has quit
+2016-02-03T21:00:25 * jhernandez joined the channel
+2016-02-03T21:00:25 * sepidehshahi joined the channel
+2016-02-03T21:06:46 <Justin_o> danayo: did you want to talk about the test plans now
+2016-02-03T21:07:09 <danayo> hey Justin_o how about we check in tomorrow?
+2016-02-03T21:07:22 <danayo> will that work for you?
+2016-02-03T21:07:26 * michelled has quit
+2016-02-03T21:11:09 <Justin_o> danayo: yes, that works
+2016-02-03T21:11:15 <danayo> great
+2016-02-03T21:12:28 * michelled joined the channel
+2016-02-03T21:16:25 * kasparne_ joined the channel
+2016-02-03T21:16:25 * kasparnet has quit
+2016-02-03T21:40:32 * danayo joined the channel
+2016-02-03T21:41:44 * danayo has quit
+2016-02-03T21:59:10 * kasparne_ has quit
+2016-02-03T22:00:56 * kasparnet joined the channel
+2016-02-03T22:09:42 * danayo joined the channel
+2016-02-03T22:25:14 * jhernandez has quit
+2016-02-03T22:29:47 * colinclark joined the channel
+2016-02-03T22:34:23 * colinclark has quit
+2016-02-03T22:35:11 * kasparnet has quit
+2016-02-03T22:39:57 * kasparnet joined the channel
+2016-02-03T22:44:49 * colinclark joined the channel
+2016-02-03T22:45:21 * sepidehshahi has left the channel
+2016-02-03T22:53:41 * kasparnet has quit
+2016-02-03T23:07:01 * kasparnet joined the channel
+2016-02-03T23:07:26 * yzen is now known as yzen_
+2016-02-03T23:11:08 * colinclark joined the channel
+2016-02-03T23:11:38 * kasparnet has quit
+2016-02-03T23:12:05 * yzen_ has quit
+2016-02-03T23:23:13 * colinclark joined the channel
+2016-02-03T23:23:13 * colinclark has quit
+2016-02-03T23:48:47 * colinclark joined the channel
+'
+
+b'2016-02-03T00:05:22 * jhernandez has quit
+2016-02-03T00:32:55 * jhung joined the channel
+2016-02-03T00:56:52 * alanharnum joined the channel
+2016-02-03T02:35:28 * yzen joined the channel
+2016-02-03T02:49:33 * jhung joined the channel
+2016-02-03T03:18:42 * yzen is now known as yzen_
+2016-02-03T03:23:00 * yzen_ has quit
+2016-02-03T04:02:41 * kasparnet joined the channel
+2016-02-03T04:05:04 * michelled joined the channel
+2016-02-03T04:06:38 * jhernandez joined the channel
+2016-02-03T04:38:22 * colinclark joined the channel
+2016-02-03T04:51:08 * kasparnet has quit
+2016-02-03T05:37:17 * Bosmon joined the channel
+2016-02-03T06:22:31 * colinclark has quit
+2016-02-03T07:31:58 * the-t-in-rtf has quit
+2016-02-03T08:08:27 * the-t-in-rtf joined the channel
+2016-02-03T11:22:41 * gtirloni joined the channel
+2016-02-03T11:43:27 * danayo joined the channel
+2016-02-03T13:21:49 * jhung joined the channel
+2016-02-03T13:22:09 * Justin_o joined the channel
+2016-02-03T13:34:44 * yzen joined the channel
+2016-02-03T13:38:48 * yzen is now known as yzen_
+2016-02-03T13:39:21 * michelled joined the channel
+2016-02-03T13:43:32 * yzen_ has quit
+2016-02-03T13:53:24 * alanharnum joined the channel
+2016-02-03T13:55:11 * Jess_ joined the channel
+2016-02-03T14:04:19 * kasparnet joined the channel
+2016-02-03T14:06:27 * cindyli joined the channel
+2016-02-03T14:09:56 * the-t-in-rtf has quit
+2016-02-03T14:09:57 * yzen joined the channel
+2016-02-03T14:10:42 * the-t-in-rtf joined the channel
+2016-02-03T14:10:43 * the-t-in-rtf has quit
+2016-02-03T14:15:34 * kasparnet has quit
+2016-02-03T14:25:56 * simonjb joined the channel
+2016-02-03T14:31:57 * sepidehshahi joined the channel
+2016-02-03T14:34:11 * cindyli1 joined the channel
+2016-02-03T14:36:22 * jhernandez has quit
+2016-02-03T14:44:49 * kasparnet joined the channel
+2016-02-03T14:45:36 * anvk joined the channel
+2016-02-03T14:50:06 * anvk has quit
+2016-02-03T15:02:09 * colinclark joined the channel
+2016-02-03T15:03:31 * danayo joined the channel
+2016-02-03T15:04:42 * cindyli1 has quit
+2016-02-03T15:05:50 * jhernandez joined the channel
+2016-02-03T15:07:00 * clown joined the channel
+2016-02-03T15:11:05 * amatas joined the channel
+2016-02-03T15:12:12 * the-t-in-rtf joined the channel
+2016-02-03T15:25:36 * sepidehshahi has quit
+2016-02-03T15:26:35 * sepidehshahi joined the channel
+2016-02-03T15:33:30 <michelled> alanharnum: are you interested in joining us to chat learning dashboard?
+2016-02-03T15:33:43 <michelled> colinclark: I assume you are in meetings?
+2016-02-03T15:33:55 <alanharnum> michelled: yup one second - let me grab my headset
+2016-02-03T15:34:02 <colinclark> yeah, unfortuantely, michelled
+2016-02-03T15:36:38 * jhung joined the channel
+2016-02-03T15:44:29 * jhung joined the channel
+2016-02-03T15:55:48 * jhernandez has quit
+2016-02-03T16:05:10 * cindyli joined the channel
+2016-02-03T16:07:26 * kasparnet has quit
+2016-02-03T16:08:35 * kasparnet joined the channel
+2016-02-03T16:12:14 * colinclark joined the channel
+2016-02-03T16:13:51 <Justin_o> Bosmon, simonjb, avtar, gtirloni, alanharnum: when should we talk more about the UIO/GPII prefs server integration work
+2016-02-03T16:13:55 * jhernandez joined the channel
+2016-02-03T16:27:13 * amatas joined the channel
+2016-02-03T16:32:07 * cindyli joined the channel
+2016-02-03T16:45:19 * sepidehshahi joined the channel
+2016-02-03T16:45:28 <alanharnum> danayo sepidehshahi: this is the game i was thinking of http://motherboard.vice.com/read/a-clippy-like-assistant-makes-your-life-hell-in-this-game
+2016-02-03T16:46:06 <danayo> alanharnum: a sandwich???
+2016-02-03T16:46:17 <danayo> hilarious
+2016-02-03T16:46:30 <kasparnet> Bosmon: in your pull request, I\'m seeing:     jqUnit = fluid.require("node-jqunit", require, "jqUnit")
+2016-02-03T16:46:32 <kasparnet> in some places
+2016-02-03T16:46:41 <kasparnet> and         jqUnit = fluid.registerNamespace("jqUnit"),
+2016-02-03T16:46:43 <kasparnet> in others
+2016-02-03T16:46:58 <kasparnet> Bosmon: is there a reason/system in when what should be used
+2016-02-03T16:47:04 <kasparnet> or is one of them outdated?
+2016-02-03T16:47:04 <Bosmon> One of those loads jqUnit, and the other one just gets access to it if you know someone else has loaded it
+2016-02-03T16:47:14 <kasparnet> ah
+2016-02-03T16:47:38 <Bosmon> alanharnum - I\'m sorry for your TIM HORTON\'S EXPERIENCE of yesterday : P
+2016-02-03T16:48:00 <alanharnum> Bosmon: it\'s something i accept as part of the whole Tim\'s experience
+2016-02-03T16:48:21 <alanharnum> "the web of my thumb and forefinger is burned, i must have got coffee from tim horton\'s"
+2016-02-03T16:48:52 <Bosmon> alanharnum - https://en.wikipedia.org/wiki/Plausible_reasoning : P
+2016-02-03T16:49:18 <kasparnet> Bosmon: so, something like: OntologyHandlerTests.js uses the registerNamespace version
+2016-02-03T16:49:35 <kasparnet> but runing that test alone, I dont see where else the jqUnit would be loaded
+2016-02-03T16:50:44 <Bosmon> kasparnet - it comes from kettle.loadTestingSupport
+2016-02-03T16:51:52 * colinclark joined the channel
+2016-02-03T16:52:22 <kasparnet> Bosmon: gotcha, thanks
+2016-02-03T16:52:35 <Bosmon> alanharnum - PROBABILITY THEORY - the LOGIC OF *SCIENCE*!
+2016-02-03T16:53:07 <alanharnum> Bosomon: is this the time to mention the only class I ever failed in undergrad was Introduction to Symbolic Logic?
+2016-02-03T16:56:50 <Bosmon> That\'s fine, symbolic logic is bunk :)
+2016-02-03T16:57:00 <Justin_o> Bosmon: added this unit test pull request to demonstrate FLUID-5846 https://github.com/fluid-project/infusion/pull/665
+2016-02-03T16:57:34 <Bosmon> Justin_o - that\'s great, thanks!
+2016-02-03T16:58:01 <Bosmon> Justin_o - would you like to merge https://github.com/fluid-project/infusion/pull/657 if it seems ok?
+2016-02-03T16:58:46 <Justin_o> Bosmon: sure i\'ll take a look
+2016-02-03T16:59:53 <alanharnum> Bosmon: that was my conclusion as well, hence not going to 3/4 of it and changing my major away from English/Philosophy to straight-up English Literature Specialist
+2016-02-03T17:00:18 <alanharnum> which informs my practice as a developer by helping me think of relevant poems to current problem spaces
+2016-02-03T17:00:30 <Bosmon> :)
+2016-02-03T17:00:35 <alanharnum> FE, http://allpoetry.com/All-Watched-Over-By-Machines-Of-Loving-Grace in the context of the learning dashboard work!
+2016-02-03T17:00:46 * scott_gonzalez_ is now known as scott_gonzalez
+2016-02-03T17:01:02 <Bosmon> I was telling Justin_o only the other day that his sweetness would not be wasted on the desert air : P
+2016-02-03T17:01:10 <Bosmon> Specifically, in the context of PGA .....
+2016-02-03T17:02:00 <Justin_o> Bosmon: haha i remember that
+2016-02-03T17:09:52 <Justin_o> Bosmon: left a couple of comments on the FLUID-5821 pull request
+2016-02-03T17:10:17 * danayo has quit
+2016-02-03T17:11:08 <Bosmon> Thanks, Justin_o
+2016-02-03T17:20:17 <Justin_o> cindyli: were you expecting to add the export button to the pull down tab under FLUID-5837 or a separate JIRA/
+2016-02-03T17:20:19 <Justin_o> ?
+2016-02-03T17:21:06 <cindyli> Justin_o: i\'m fine with either way. do you have a preference?
+2016-02-03T17:21:18 <Justin_o> cindyli: not really, just curious about what the plan was
+2016-02-03T17:21:42 <Justin_o> cindyli: also here\'s the rough code we talked about for fluid.prefs.create
+2016-02-03T17:21:51 <Justin_o> https://www.irccloud.com/pastebin/ixFt4YQ7/
+2016-02-03T17:21:53 * Yan_Hu joined the channel
+2016-02-03T17:22:27 <Justin_o> and the related JIRA https://issues.fluidproject.org/browse/FLUID-5817
+2016-02-03T17:22:58 <cindyli> thanks, Justin_o, the initial plan was to use a separate jira. but in this way, we\'ll need to maintain that branch which seems will be based off the branch 5837
+2016-02-03T17:23:18 <cindyli> considering the current state of 5837, that branch might have to be long time pending
+2016-02-03T17:23:55 <Justin_o> cindyli: yes, that\'s true, but I could create a new JIRA anyways, and work out of the same branch
+2016-02-03T17:24:13 <cindyli> sounds good, Justin_o
+2016-02-03T17:24:14 * kasparnet has quit
+2016-02-03T17:24:37 * kasparnet joined the channel
+2016-02-03T17:26:14 * michelled joined the channel
+2016-02-03T17:27:34 <Justin_o> cindyli: here\'s the new JIRA https://issues.fluidproject.org/browse/FLUID-5853
+2016-02-03T17:27:49 <cindyli> thanks, Justin_o, can you add it to the iteration plan
+2016-02-03T17:28:08 <Justin_o> cindyli: will do
+2016-02-03T17:28:13 <cindyli> thanks, Justin_o
+2016-02-03T17:29:09 <Justin_o> cindyli: done
+2016-02-03T17:29:17 <cindyli> cool
+2016-02-03T17:43:36 * jhernandez has quit
+2016-02-03T17:43:48 * alanharnum joined the channel
+2016-02-03T17:44:49 * jhernandez joined the channel
+2016-02-03T17:47:47 * jessm joined the channel
+2016-02-03T17:49:58 * danayo joined the channel
+2016-02-03T17:55:24 * sepidehshahi joined the channel
+2016-02-03T18:03:24 * colinclark has quit
+2016-02-03T18:04:47 * kasparnet has quit
+2016-02-03T18:05:51 * sepidehshahi has quit
+2016-02-03T18:07:53 * jhernandez has quit
+2016-02-03T18:12:40 * colinclark joined the channel
+2016-02-03T18:23:57 * colinclark has quit
+2016-02-03T18:28:06 * michelled joined the channel
+2016-02-03T18:28:44 * cindyli has quit
+2016-02-03T18:32:20 * colinclark joined the channel
+2016-02-03T18:33:38 * colinclark has quit
+2016-02-03T18:37:29 * kasparnet joined the channel
+2016-02-03T18:39:15 <Bosmon> Hi there Justin_o - bad news about FLUID-5846
+2016-02-03T18:39:26 <Bosmon> I can make the tests pass, but I fear that the implementation itself will not work
+2016-02-03T18:39:41 <Bosmon> It looks like the jQuery UI tooltips plugin is riddled with assumptions about which document the tooltip is in
+2016-02-03T18:40:02 * colinclark joined the channel
+2016-02-03T18:40:51 <Bosmon> It uses this completely boneheaded strategy to find its tooltips: https://github.com/fluid-project/infusion/blob/master/src/lib/jquery/ui/js/jquery.ui.tooltip.js#L371
+2016-02-03T18:41:00 <Bosmon> and https://github.com/fluid-project/infusion/blob/master/src/lib/jquery/ui/js/jquery.ui.tooltip.js#L391
+2016-02-03T18:41:51 <Bosmon> So unfortunately what I said last week is not really true - we really will have to continue to load jQuery in every iframe that we use
+2016-02-03T18:44:41 * jhernandez joined the channel
+2016-02-03T18:51:17 <Bosmon> Ah
+'
+

@@ -1,0 +1,261 @@
+b'2016-06-22T20:20:24 <alanharnum> reducing the amount of files loaded would involve something like rolling up the file templates for individual panels into a single file, same thing for the message files
+2016-06-22T20:22:43 <Justin_o> alanharnum: okay cool thanks...  i started looking at the lazy loading a bit earlier.. which seemed to work although you had to click on the show tab a few times before it would open. The messages were a bit harder because the message loader right now also loads in the strings for the text on the tab
+2016-06-22T20:25:15 * bens__ has quit
+2016-06-22T20:27:22 * clown joined the channel
+2016-06-22T20:27:25 <clown> cindyli:  http://wiki.commonjs.org/wiki/Promises/A
+2016-06-22T20:27:40 <cindyli> thanks, clown
+2016-06-22T20:33:48 * michelled joined the channel
+2016-06-22T20:34:37 <cindyli> hi Bosmon, a question about infusion promises. as u know i\'m making lots of requests into pouchdb to do all sorts of things. one problem i\'m dealing with is, before i update a doc. i need to check the user is correct, which is one async request, and, the gpii token is correct, which is another async request
+2016-06-22T20:35:06 <cindyli> so, i have a promise chain, one waits on the other to get the response
+2016-06-22T20:35:23 <cindyli> i wonder if fluid.promise.fireTransformEvent() is the right solution for this case?
+2016-06-22T20:35:32 <cindyli> or fluid.promise.follow()?
+2016-06-22T20:36:11 <Bosmon> cindyli - it depends if there is any data dependency
+2016-06-22T20:36:28 <cindyli> there is, yes
+2016-06-22T20:36:42 <cindyli> i have 2 input arguments: user id and date to update
+2016-06-22T20:36:50 <Bosmon> date?
+2016-06-22T20:36:55 <cindyli> sorry, data
+2016-06-22T20:37:20 <cindyli> the very first request needs data.id as the input
+2016-06-22T20:37:39 <cindyli> and the 2nd one requires data.token
+2016-06-22T20:37:40 <Bosmon> Ok
+2016-06-22T20:37:47 <cindyli> and the 3rd request needs both
+2016-06-22T20:37:49 <Bosmon> But it sounds like there is no data dependency *between* the requests
+2016-06-22T20:37:56 <Bosmon> In this case fluid.promise.sequence is fine
+2016-06-22T20:38:23 <Bosmon> Do any of the requests provide data which is used by the other requests?
+2016-06-22T20:38:38 <cindyli> yes, the 2nd one needs the response of the first one
+2016-06-22T20:38:49 <Bosmon> I see
+2016-06-22T20:38:55 <Bosmon> What is returned in the response of the first one?
+2016-06-22T20:39:20 <cindyli> and the 3rd request needs the response of the 2nd one
+2016-06-22T20:39:38 <Bosmon> What is in the response of the 2nd one?
+2016-06-22T20:40:16 <cindyli> the first one returns an object of the auth decision, the 2nd request needs the "gpiiToken" field of that object
+2016-06-22T20:41:25 <cindyli> the 2nd request returns an object of gpii token, the 3rd request needs to compare its "userid" with the input "userId"
+2016-06-22T20:41:37 <cindyli> to make sure the auth decision belongs to the right user
+2016-06-22T20:41:48 <Bosmon> cindyli - ok, then yes, this is a classic use case for fireTransformEvent
+2016-06-22T20:42:12 <Bosmon> You should set up a "pseudoevent" which governs this workflow and set up all the requests as listeners to this event
+2016-06-22T20:43:00 <cindyli> ok, Bosmon,
+2016-06-22T20:43:31 <Bosmon> Following the same pattern that we do, e.g. in the GPII for the matchmaking process, etc.
+2016-06-22T20:43:36 <cindyli> fluid.promise.fireTransformEvent(event, payload[, options]) shows the 2nd argument is "payload". how can i pass 2 arguments then?
+2016-06-22T20:43:50 <Bosmon> cindyli - just pack them into a structure
+2016-06-22T20:43:51 <cindyli> can i do things like [userId, data]
+2016-06-22T20:44:02 <Bosmon> We despise blind arrays :)
+2016-06-22T20:44:14 <Bosmon> You can do things like {userId: userId, data: data}
+2016-06-22T20:44:15 <cindyli> object
+2016-06-22T20:44:24 <cindyli> cool
+2016-06-22T20:44:40 <Bosmon> Although if you want information to be common across all listeners, you should instead stick it into "options"
+2016-06-22T20:45:04 <Bosmon> Well
+2016-06-22T20:45:12 <Bosmon> I guess it might work better if you used the "megapayloadism" pattern
+2016-06-22T20:45:22 <cindyli> what\'s that
+2016-06-22T20:45:24 <Bosmon> And design each listener to accumulate into the same, common, "megapayload"
+2016-06-22T20:45:30 <Bosmon> Well, it is also what we use in the matchmaking flow
+2016-06-22T20:45:49 <Bosmon> Each listener accumulates more information at a new path into the same giant payload, and then accumulates it on like a snowball
+2016-06-22T20:46:24 <cindyli> Bosmon: i already have the first 2 requests implemented as functions. they take in different arguments
+2016-06-22T20:47:00 <Bosmon> cindyli - you can wrap them in megapayloadic wrappers
+2016-06-22T20:47:07 <Bosmon> This is all that some future version of the framework will do anyway
+2016-06-22T20:47:38 <cindyli> do we have a megapayloadic wrapper example?
+2016-06-22T20:48:49 <Bosmon> cindyli - sure, here\'s one: https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/FlowManagerUtilities.js#L93
+2016-06-22T20:48:52 * gtirloni joined the channel
+2016-06-22T20:51:48 <cindyli> ah, so Bosmon, if using the structure of {userId: userId, data: data}, i should be able to control the argument like "{arguments}.0.data.id", right?
+2016-06-22T20:52:09 <cindyli> this line is using "{arguments}.0" - https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/FlowManagerUtilities.js#L208
+2016-06-22T20:52:24 <Bosmon> Well, that\'s another possibility, yes
+2016-06-22T20:52:46 <Bosmon> But you still have the problem of adapting the return value
+2016-06-22T20:52:46 <cindyli> ok, i will give a try. thanks, Bosmon
+2016-06-22T20:53:01 <Bosmon> So you will probably need some wrapper anyway, if you don\'t want to disturb your existing functions
+2016-06-22T20:53:22 <Bosmon> It depends on what the pattern of data access really is
+2016-06-22T20:54:28 <gtirloni> jhernandez_, hey, thanks for testing the 3d accel. i\'m running a bunch of tests here to try and nail down where this issue started happening (which vbox version) with fedora 24 and ubuntu 16.04 (for comparison). i\'ll open a bug against vbox with this information and update those PRs as well
+2016-06-22T20:56:10 <cindyli> i think i probably do need wrappers, Bosmon. i wonder where my original object argument will be after receiving the response of a previous request. i will experiment
+2016-06-22T20:56:51 <cindyli> i probably need wrappers for the first 2 requests
+2016-06-22T20:57:35 * michelled has quit
+2016-06-22T20:59:57 <Bosmon> cindyli - this is why we use the "megapayloadism" pattern
+2016-06-22T21:00:07 <Bosmon> To make it clear where all the responses to any previous requests can be acquired
+2016-06-22T21:00:18 * anvk has quit
+2016-06-22T21:00:23 <Bosmon> If we do this enough times, eventually we will make a standard utility for it
+2016-06-22T21:00:29 <Bosmon> But so far the matchmaker was the first exercises
+2016-06-22T21:00:31 <Bosmon> exercise
+2016-06-22T21:01:10 <cindyli> Bosmon: each listener on the chain needs to return a promise, right?
+2016-06-22T21:01:52 <cindyli> so to create a wrapper, i need to:
+2016-06-22T21:02:05 <cindyli> var promise = request1();
+2016-06-22T21:02:38 <cindyli> promise.then(function (response) {wrap the response into another promise})
+2016-06-22T21:02:50 <cindyli> return this "another promise"
+2016-06-22T21:03:20 <Bosmon> cindyli - yes, broadly like that
+2016-06-22T21:03:29 <cindyli> ok. will try
+2016-06-22T21:03:52 <cindyli> thanks a lot, Bosmon
+2016-06-22T21:04:23 <Bosmon> cindyli - no worries, it is exciting to be dealing with our 2nd instance of this problem :)
+2016-06-22T21:04:39 <Bosmon> The "modern framework" will eventually allow you to do this just with expander definitions
+2016-06-22T21:04:45 <Bosmon> And the wrapping layer will go away
+2016-06-22T21:05:59 <cindyli> cool. good to know
+2016-06-22T21:06:33 <cindyli> heading home\xe2\x80\xa6
+2016-06-22T21:13:26 <jhernandez_> gtirloni: cool, thanks! are you experiencing the same then? let me know if you want me to try things out
+2016-06-22T21:16:56 <gtirloni> jhernandez_, yeah, i have the same issue on a win10 host, with virtualbox 5.0.22... guests fedora24 and ubuntu 16.04. there are some bug reports about 3d accel being broken lately in virtualbox.
+2016-06-22T21:17:27 <gtirloni> just confirmed 3d accel is fine with virtualbox 4.3.38 :/ let\'s see if there is an older version of 5.x that works...
+2016-06-22T21:22:05 * gtirloni has quit
+2016-06-22T21:25:53 * gtirloni joined the channel
+2016-06-22T21:32:41 * sepidehshahi has quit
+2016-06-22T22:01:59 * lliskovoi_ joined the channel
+2016-06-22T22:02:04 * lliskovoi_ has quit
+2016-06-22T22:16:31 * gtirloni has quit
+2016-06-22T22:35:38 * gtirloni joined the channel
+2016-06-22T22:37:21 * gtirloni_ joined the channel
+2016-06-22T22:39:02 * yzen joined the channel
+2016-06-22T22:41:14 * gtirloni has quit
+2016-06-22T22:43:24 * yzen has quit
+2016-06-22T22:49:21 * gtirloni__ joined the channel
+2016-06-22T22:50:41 * gtirloni joined the channel
+2016-06-22T22:52:56 * gtirloni_ has quit
+2016-06-22T22:53:48 * gtirloni__ has quit
+2016-06-22T23:01:40 * alanharnum joined the channel
+2016-06-22T23:06:14 * gtirloni_ joined the channel
+2016-06-22T23:08:32 * gtirloni has quit
+2016-06-22T23:41:42 * gtirloni__ joined the channel
+'
+
+b'2016-06-22T02:36:01 * the-t-in-rtf has quit
+2016-06-22T04:05:51 * wannabeCitizen has quit
+2016-06-22T04:15:09 * wannabeCitizen joined the channel
+2016-06-22T06:48:17 * wannabeCitizen has quit
+2016-06-22T09:28:13 * the-t-in-rtf joined the channel
+2016-06-22T09:52:05 * amatas joined the channel
+2016-06-22T12:14:27 * Justin_o joined the channel
+2016-06-22T12:20:32 * gtirloni joined the channel
+2016-06-22T12:22:19 * yzen joined the channel
+2016-06-22T12:41:22 * Dinuka joined the channel
+2016-06-22T12:46:30 * the-t-in-rtf has quit
+2016-06-22T12:56:39 <jhernandez_> Justin_o, Bosmon: I\'ve just pushed more changes to https://github.com/GPII/gpii-chrome-extension/pull/1
+2016-06-22T12:57:19 <jhernandez_> *I think* that most of the comments have been addressed, although I still need to add more tests
+2016-06-22T12:57:27 <jhernandez_> and good morning btw :)
+2016-06-22T12:58:28 <Justin_o> jhernandez_: good morning :) I\'ll try to take another look through it today
+2016-06-22T12:58:51 <jhernandez_> Justin_o: thanks!
+2016-06-22T13:01:26 * yzen is now known as yzen_
+2016-06-22T13:01:48 * michelled joined the channel
+2016-06-22T13:05:31 * cindyli joined the channel
+2016-06-22T13:06:30 * yzen_ has quit
+2016-06-22T13:16:00 * alanharnum joined the channel
+2016-06-22T13:21:13 * Jess_ joined the channel
+2016-06-22T13:25:23 * sepidehshahi joined the channel
+2016-06-22T13:25:24 * anvk joined the channel
+2016-06-22T13:30:06 * wale joined the channel
+2016-06-22T13:34:26 * yzen joined the channel
+2016-06-22T13:45:59 * clown joined the channel
+2016-06-22T13:55:08 * simonjb joined the channel
+2016-06-22T14:00:13 * bens__ joined the channel
+2016-06-22T14:01:16 <wale> k
+2016-06-22T14:02:22 * colinclark joined the channel
+2016-06-22T14:03:42 <wale> simonjb can you hop on a quick skype call?
+2016-06-22T14:09:01 <simonjb> sorry wale, I\'m in another meeting
+2016-06-22T14:11:53 * the-t-in-rtf joined the channel
+2016-06-22T14:13:11 <cindyli> wale, wonder if i could help?
+2016-06-22T14:13:24 * the-t-in-rtf has quit
+2016-06-22T15:10:30 * yzen has quit
+2016-06-22T15:11:26 * yzen joined the channel
+2016-06-22T15:28:01 * yzen_ joined the channel
+2016-06-22T15:28:39 * danayo joined the channel
+2016-06-22T15:31:27 * yzen has quit
+2016-06-22T15:40:55 * PaliwalSparsh joined the channel
+2016-06-22T15:44:03 * alanharnum joined the channel
+2016-06-22T15:44:48 * sepidehshahi joined the channel
+2016-06-22T15:57:38 <colinclark> cindyli: I just saw your ping now
+2016-06-22T15:57:42 <colinclark> but you definitely could have helped
+2016-06-22T15:57:43 <colinclark> :)
+2016-06-22T15:57:47 <colinclark> next meeting, you should join us
+2016-06-22T15:58:01 <colinclark> Monday at 10 am work for you, cindyli?
+2016-06-22T15:58:20 <cindyli> yes, if you do need me there ;)
+2016-06-22T16:21:41 <colinclark> great, cindyli
+2016-06-22T16:36:21 <Justin_o> PaliwalSparsh: Hello.. just looking over the branch you dropped in the channel yesterday.
+2016-06-22T16:36:45 <PaliwalSparsh> sure Justin_o
+2016-06-22T16:37:24 <Justin_o> PaliwalSparsh: so far one thing I\'ve noticed is for the language buttons, these could actually all be boiled down to a single function that just takes in the language code. https://github.com/PaliwalSparsh/Discovery-Cat/blob/midterm/demo/js/langPref.js#L170-L194
+2016-06-22T16:39:50 <PaliwalSparsh> Sure Justin_o will make that change
+2016-06-22T16:40:28 * alanharnum has quit
+2016-06-22T16:42:09 <Justin_o> PaliwalSparsh: also the create methods are quite long, i think we could probably do some refactoring in there to make them more configurable. I\'m not exactly sure what the best approach for that would be, maybe invokers, but it\'s something you could start thinking about. And maybe a bit later in the project you could try to clean up those sections.
+2016-06-22T16:53:41 * alanharnum joined the channel
+2016-06-22T16:53:57 * yzen_ is now known as yzen
+2016-06-22T16:56:36 <PaliwalSparsh> Justin_o: I never gave this a thought but I will try to fix this thanks
+2016-06-22T16:57:06 <Justin_o> PaliwalSparsh: cool thanks
+2016-06-22T17:18:39 <clown> jhernandez_:  do you have a few minutes for a hopefully quick question?
+2016-06-22T17:18:50 <jhernandez_> clown: sure
+2016-06-22T17:19:45 <clown> Is this the correct way to use the DR\'s alwaysInstalled() function in a test spec?  See: https://github.com/klown/universal/blob/a61644e1bdc29af3d775d2ace0cbba28471f66ba/tests/platform/windows/windows-builtIn-testSpec.js#L249
+2016-06-22T17:23:08 <jhernandez_> clown: I *think so*
+2016-06-22T17:23:15 <clown> :-)
+2016-06-22T17:23:36 <jhernandez_> I mean, that looks correct to me
+2016-06-22T17:24:36 * clown looks for how it\'s used in the windows solutions registry...
+2016-06-22T17:25:42 <clown> Here is how it is declared in the solutions registry:  https://github.com/klown/universal/blob/a61644e1bdc29af3d775d2ace0cbba28471f66ba/testData/solutions/win32.json#L1442
+2016-06-22T17:25:55 <clown> there is just a "type".
+2016-06-22T17:26:47 <clown> For checking if JAWS is installed, there are a lot more parameters:  https://github.com/klown/universal/blob/a61644e1bdc29af3d775d2ace0cbba28471f66ba/testData/solutions/win32.json#L70
+2016-06-22T17:28:30 <clown> And, in that case, the deviceReporters block has something similar in the test spec: https://github.com/klown/universal/blob/a61644e1bdc29af3d775d2ace0cbba28471f66ba/tests/platform/windows/windows-jaws-testSpec.js#L50
+2016-06-22T17:28:40 * cindyli has quit
+2016-06-22T17:29:23 <clown> maybe the alwaysInstalled case should include a "expectInstalled" property that is always true?  Or is that not needed?
+2016-06-22T17:34:41 <clown> jhernandez_ ?
+2016-06-22T17:37:40 * lliskovoi joined the channel
+2016-06-22T17:43:50 * alanharnum-datac joined the channel
+2016-06-22T17:44:07 <clown> jhernandez_:  On another topic:  this is funny:
+2016-06-22T17:44:37 <clown> I was poking around windows API documents to see how to get a list of processes, and ended up here:  https://msdn.microsoft.com/en-us/library/windows/desktop/ms686701(v=vs.85).aspx
+2016-06-22T17:44:52 <clown> that looks awfully familiar now :-)
+2016-06-22T17:44:53 * alanharnum-datac joined the channel
+2016-06-22T17:50:09 * alanharn_ joined the channel
+2016-06-22T17:54:27 * jhung joined the channel
+2016-06-22T17:55:59 * alanharnum-datac joined the channel
+2016-06-22T17:59:22 * cindyli joined the channel
+2016-06-22T18:00:56 * sepidehshahi joined the channel
+2016-06-22T18:01:01 * styki joined the channel
+2016-06-22T18:01:36 * yzen is now known as yzen_
+2016-06-22T18:02:05 <jhung> Hi cindyli. Do you have a moment to chat with me and styki about UIO on skype?
+2016-06-22T18:02:14 <cindyli> sure, jhung
+2016-06-22T18:02:32 <jhung> thanks. I\'ll call you both up
+2016-06-22T18:14:40 * gtirloni_ joined the channel
+2016-06-22T18:16:03 * gtirloni has quit
+2016-06-22T18:17:33 * amatas has quit
+2016-06-22T18:22:08 * gtirloni__ joined the channel
+2016-06-22T18:22:59 * gtirloni_ has quit
+2016-06-22T18:23:28 * yzen_ is now known as yzen
+2016-06-22T18:26:52 * wannabeCitizen joined the channel
+2016-06-22T18:29:44 * yzen is now known as yzen_
+2016-06-22T18:30:13 <Justin_o> fluid-everyone: community meeting is a discussion about built in a11y features in OSs
+2016-06-22T18:34:05 * yzen_ has quit
+2016-06-22T18:35:50 * clown joined the channel
+2016-06-22T18:43:18 * alanharn_ joined the channel
+2016-06-22T18:43:18 * alanharnum-datac has quit
+2016-06-22T18:43:59 <jhernandez_> clown: exactly, alwaysInstalled is for things that we assume they are "always installed"
+2016-06-22T18:44:01 <jhernandez_> :)
+2016-06-22T18:44:25 * alanharn_ has quit
+2016-06-22T18:44:48 <clown> jhernandez_:  how clever!
+2016-06-22T18:44:53 <jhernandez_> or for things that we can\'t determine whether they\'re installed or not
+2016-06-22T18:44:53 <clown> ;-)
+2016-06-22T18:44:59 <jhernandez_> xD
+2016-06-22T18:45:41 <jhernandez_> gotta leave now, have to cook a couscous :)
+2016-06-22T18:45:52 <jhernandez_> will read you later ;)
+2016-06-22T18:48:34 <Justin_o> PaliwalSparsh: if you\'re interested in joining the community meeting today, you can join the fluid-standup vidyo room
+2016-06-22T18:49:02 <PaliwalSparsh> sure Justin_o
+2016-06-22T18:51:46 * wale has quit
+2016-06-22T18:52:56 * alanharnum joined the channel
+2016-06-22T18:55:15 * styki has quit
+2016-06-22T19:06:01 * colinclark has quit
+2016-06-22T19:06:25 * colinclark joined the channel
+2016-06-22T19:06:50 * colinclark has quit
+2016-06-22T19:10:36 <clown> jhernandez_:  have a good couscous!
+2016-06-22T19:13:14 <danayo> re: community meeting http://www.wired.com/2013/09/flux-eyestrain/
+2016-06-22T19:27:10 * alanharnum joined the channel
+2016-06-22T19:28:52 * yzen joined the channel
+2016-06-22T19:28:58 <jhernandez_> clown: already in the pot :)
+2016-06-22T19:29:32 <jhernandez_> btw, count on me if you feel like you need help for the process reporter work ;)
+2016-06-22T19:31:57 * alanharnum has quit
+2016-06-22T19:36:14 * yzen is now known as yzen_
+2016-06-22T19:38:53 * gtirloni__ has quit
+2016-06-22T19:39:17 <gloob> Justin_o: and when is that community meeting?
+2016-06-22T19:40:31 * yzen_ has quit
+2016-06-22T19:44:11 <cindyli> hi Bosmon
+2016-06-22T19:57:31 * alanharnum joined the channel
+2016-06-22T20:03:23 <danayo> PaliwalSparsh: this is the windows version of the settings list https://docs.google.com/document/d/1var1ZWwFWyeIhoJWcGIesrh8UgTHBuuoY2ITBoohH_k/edit?usp=sharing
+2016-06-22T20:03:42 <PaliwalSparsh> thanks
+2016-06-22T20:05:35 * simonjb has quit
+2016-06-22T20:07:30 * clown has quit
+2016-06-22T20:10:48 <Justin_o> gloob: sorry, just saw your message.. i realize i forgot to include that in the e-mail.. the community meetings take place from 2:30 - 4 pm EDT on Wednesdays
+2016-06-22T20:11:49 * PaliwalSparsh has quit
+2016-06-22T20:12:06 * lliskovoi joined the channel
+2016-06-22T20:14:05 <Justin_o> alanharnum: wanted to check in with you about the UIO optimizations strategies that were discussed. So you\'re almost done with the native sliders.. what else was looked at.. i might have some time to work on it, here and there
+2016-06-22T20:14:50 <alanharnum> Justin_o: lazy loading and reducing the amount of files loaded were the big ones
+2016-06-22T20:15:08 <alanharnum> i don\'t believe there were others
+2016-06-22T20:16:34 <Justin_o> alanharnum: thanks, anything in particular about those
+2016-06-22T20:16:43 <Justin_o> e.g. strategies that were discussed
+2016-06-22T20:18:38 <alanharnum> Justin_o: the lazy loading was basically to delay loading of the various resource files until a user intent to interact with them (via "show display preferences") occured
+2016-06-22T20:19:32 <Bosmon> Hi there cindyli
+2016-06-22T20:19:35 <alanharnum> I looked at that one a little and found it required a lot of sequencing changes, given the number of components involved
+2016-06-22T20:20:06 <Bosmon> Would you be able to take a quick look at my update of your docs pull?
+'
+

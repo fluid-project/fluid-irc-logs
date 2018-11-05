@@ -1,0 +1,146 @@
+b'2017-01-25T06:46:04 * mrtyler joined the channel
+2017-01-25T07:41:01 * the-t-in-rtf joined the channel
+2017-01-25T08:46:41 * alanharnum joined the channel
+2017-01-25T08:54:17 * stegru joined the channel
+2017-01-25T09:05:03 * javjarfer joined the channel
+2017-01-25T09:54:15 * gtirloni joined the channel
+2017-01-25T09:56:12 * kasparnet joined the channel
+2017-01-25T09:58:14 * amatas joined the channel
+2017-01-25T11:17:15 * kasparnet has quit
+2017-01-25T11:55:19 * kasparnet joined the channel
+2017-01-25T12:04:56 <gloob> kasparnet: hi, you around?
+2017-01-25T12:17:08 <kasparnet> hey gloob
+2017-01-25T12:43:56 <gloob> kasparnet: hi, I was checking some preferences against the mm and find that if I mix common term with application specific terms, the system doesn\'t add the app specific terms, in example https://github.com/gloob/gpii-settings/blob/master/AT-Tools/JAWS/preferences/JAWS-PrefSet_A.json
+2017-01-25T12:44:13 <gloob> it seems it only applies the common terms, maybe I need to declare a block for the commons terms?
+2017-01-25T12:44:42 <gloob> I didn\'t trace it yet, I wanted to check with you if you know something about, before start tracing it
+2017-01-25T13:00:51 <kasparnet> hi gloob
+2017-01-25T13:01:08 <kasparnet> it should indeed mix them - with the application specific terms being prioritized
+2017-01-25T13:02:50 * kasparnet is looking for examples
+2017-01-25T13:09:18 <kasparnet> gloob: ... hmmm, I\'m actually not able to find any tests that are checking it - though I feel I must be looking in the wrong places, since I was quite sure that it\'s implemented and tested
+2017-01-25T13:12:58 <gloob> kasparnet: so, that json should work?
+2017-01-25T13:13:03 <gloob> is it the syntax ok?
+2017-01-25T13:15:07 <kasparnet> yeah, it looks correct
+2017-01-25T13:15:29 <gloob> kasparnet: ok, so I will trace it to provide more information then, thanks!
+2017-01-25T13:15:31 <kasparnet> perhaps to double check, try removing the common terms from the NP set
+2017-01-25T13:15:42 <kasparnet> and see if the application specific settings are applied
+2017-01-25T13:15:43 <gloob> kasparnet: yes, I will
+2017-01-25T13:16:04 <gloob> kasparnet: and if they are not applied? where to check
+2017-01-25T13:16:26 <kasparnet> first in the solutions registry
+2017-01-25T13:16:36 <kasparnet> they should be listed in the solutions registry
+2017-01-25T13:17:27 <kasparnet> (this doesn\'t always apply --- but since JAWS has its settings spread across two files, they need to be explicitly stated at the relevant settingshandler for the system to know where to write the settings)
+2017-01-25T13:19:33 <kasparnet> gloob: so either here: https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L17-L24
+2017-01-25T13:19:51 <kasparnet> or here: https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L159-L189
+2017-01-25T13:20:12 <gloob> ok, that two file are on my radar there days :D
+2017-01-25T13:20:33 <gloob> files, these
+2017-01-25T13:20:38 <kasparnet> :D
+2017-01-25T13:20:46 <kasparnet> yeah - so I just looked through the solutions registry
+2017-01-25T13:21:05 <kasparnet> and it turns out none of the three settings you have in the NP set are listed there
+2017-01-25T13:21:24 <kasparnet> so to get things to working, you need to add the setting name in the relevant section
+2017-01-25T13:21:46 <kasparnet> (you dont need capabilities transformations or anything - just need it to be listed under supportedSettings)
+2017-01-25T13:21:54 <kasparnet> and then things should work as expected
+2017-01-25T13:23:12 <gloob> ah, you mean the app-specific ones?
+2017-01-25T13:23:30 <gloob> so there\'s some kind of whitelisting
+2017-01-25T13:26:19 <stegru> gloob, the "supportedSettings" block is used when there\'s is more than 1 "configuration" block in a solution. it\'s used to tell it which configuration block the option is in
+2017-01-25T13:27:30 * Justin_o joined the channel
+2017-01-25T13:29:41 <gloob> so they are exclusive
+2017-01-25T13:29:55 <stegru> https://github.com/stegru/universal/blob/GPII-2052/testData/solutions/win32.json5#L346
+2017-01-25T13:30:04 <gloob> or is in one block or in another, there isn\'t a competition
+2017-01-25T13:30:19 <stegru> er
+2017-01-25T13:30:40 <stegru> it\'s in the block you say it is
+2017-01-25T13:31:15 <gloob> stegru: yes, that\'s about SR/SH
+2017-01-25T13:31:22 <gloob> stegru: I\'m talking about a preferences definition
+2017-01-25T13:31:59 <gloob> I mean, what happens if I define same term with a common-term and a specific-app term
+2017-01-25T13:32:11 <stegru> ok, i don\'t know
+2017-01-25T13:32:19 <gloob> and I whitelisted them int he SR/SH file
+2017-01-25T13:32:32 <gloob> the last to be processed win? both are applied?
+2017-01-25T13:33:05 <stegru> i don\'t know
+2017-01-25T13:44:25 <kasparnet> gloob: the application term should take priority
+2017-01-25T13:48:59 <kasparnet> ie. common term A that translates into application specific A1 will be used, unless the application specific setting A1 is specified in the preferences set
+2017-01-25T13:51:30 * kasparnet has quit
+2017-01-25T13:55:14 * cindyli joined the channel
+2017-01-25T13:59:15 * kasparnet joined the channel
+2017-01-25T14:00:03 * Jess_ joined the channel
+2017-01-25T14:08:12 <gloob> kasparnet: ok, thanks!
+2017-01-25T14:16:20 * clown joined the channel
+2017-01-25T14:16:28 * amatas joined the channel
+2017-01-25T14:22:52 * simonjb joined the channel
+2017-01-25T14:50:02 * avtar joined the channel
+2017-01-25T14:56:35 * colinclark joined the channel
+2017-01-25T15:02:11 * michelled joined the channel
+2017-01-25T15:18:17 <gtirloni> amatas: have you ever seen this issue when using the jenkins-master role? https://github.com/ansible/ansible-modules-core/issues/5864
+2017-01-25T15:18:23 <gtirloni> amatas: i got it today when running it on i-0037
+2017-01-25T15:18:48 <gtirloni> i substituted the async wait for a pause (50sec) just so i could continue, but it looks like a bug in ansible
+2017-01-25T15:24:13 * cindyli joined the channel
+2017-01-25T15:28:54 <amatas> let me see
+2017-01-25T15:30:11 <amatas> I didn\'t see this issue before
+2017-01-25T15:31:21 <amatas> which task of the jenkins-master role throws that error?
+2017-01-25T15:39:12 * kasparne_ joined the channel
+2017-01-25T15:39:12 * kasparnet has quit
+2017-01-25T15:39:29 <gtirloni> wait for plugins to be installed
+2017-01-25T15:45:11 <gtirloni> colinclark amatas: sandra just sent an email saying she created a doc to collect topics for the f2f "next week" ... :) it\'s still on feb 20-23, right? or is this another f2f i\'m not aware of?
+2017-01-25T15:45:23 <colinclark> hahaha
+2017-01-25T15:45:57 <colinclark> I think she\'s probably just enthusiastic about the meetings
+2017-01-25T15:46:01 <colinclark> and wishing they were sooner
+2017-01-25T15:46:04 <gtirloni> hehe ok, i panic for a second
+2017-01-25T15:46:14 <colinclark> So one thing I will encourage...
+2017-01-25T15:46:27 <colinclark> and have talked to Sandra about this
+2017-01-25T15:46:29 <colinclark> is much more time for paired working sessions
+2017-01-25T15:47:06 <colinclark> less agenda items, more opportunity to actually work through specific issues in front of a laptop
+2017-01-25T15:47:22 <gtirloni> nice +1
+2017-01-25T15:49:10 <colinclark> so let\'s aim for maybe 3 hours of architectural discussion per day, max
+2017-01-25T15:49:16 <colinclark> and actual work sessions the rest of the time
+2017-01-25T15:49:19 <colinclark> we can be flexible
+2017-01-25T15:52:01 <gtirloni> ok, sonds good
+2017-01-25T15:56:39 * michelled joined the channel
+2017-01-25T15:57:52 * mrtyler joined the channel
+2017-01-25T16:59:08 <gtirloni> amatas: i\'ve deployed i-0037/38/39 from scratch using the jenkins-master/node roles and the deploy_app_jenkins.yml playbook... however, the last piece missing is the ca.crt file, should i generate a new one one my machine and push it to the ops repo?
+2017-01-25T17:00:07 <gtirloni> amatas: https://github.com/inclusive-design/ops/blob/master/ansible/deploy_app_jenkins.yml#L26-L34
+2017-01-25T17:05:45 <amatas> gtirloni, I think that you can use the crts that are in the LBs
+2017-01-25T17:06:09 <amatas> search the cert that the domain ci.gpii.net is using and copy to the nodes. I should work
+2017-01-25T17:06:31 <amatas> It will throw a warning though
+2017-01-25T17:07:19 <gtirloni> ok thanks
+2017-01-25T17:46:03 * kasparne_ has quit
+2017-01-25T17:52:06 * Jess_ joined the channel
+2017-01-25T18:08:55 * mrtyler joined the channel
+2017-01-25T18:23:11 * avtar joined the channel
+2017-01-25T19:07:51 <mrtyler> vault webinar starting!
+2017-01-25T19:09:51 * cindyli joined the channel
+2017-01-25T19:13:07 * colinclark joined the channel
+2017-01-25T19:26:53 * clown joined the channel
+2017-01-25T19:31:00 * michelled joined the channel
+2017-01-25T19:31:24 * michelled1 joined the channel
+2017-01-25T19:31:24 * michelled has quit
+2017-01-25T19:38:33 * avtar1 joined the channel
+2017-01-25T19:39:14 * colinclark joined the channel
+2017-01-25T19:44:20 * colinclark_ joined the channel
+2017-01-25T19:46:01 * colinclark_ joined the channel
+2017-01-25T19:48:59 * colinclark joined the channel
+2017-01-25T20:49:52 * avtar joined the channel
+2017-01-25T21:01:24 <mrtyler> colinclark: i am here whenever you are re-settled after your last meeting :)
+2017-01-25T21:01:35 <colinclark> yep, almost done
+2017-01-25T21:01:47 <mrtyler> np
+2017-01-25T21:01:56 * clown joined the channel
+2017-01-25T21:08:13 * michelled joined the channel
+2017-01-25T21:12:30 * michelled joined the channel
+2017-01-25T21:12:32 <colinclark> skype, mrtyler? or somethign else?
+2017-01-25T21:12:45 <mrtyler> skype is good
+2017-01-25T21:15:17 * clown joined the channel
+2017-01-25T21:27:06 * avtar joined the channel
+2017-01-25T21:29:25 * colinclark_ joined the channel
+2017-01-25T21:47:34 * simonjb joined the channel
+2017-01-25T22:14:43 <mrtyler> avtar: colin said you might know more about how the bandwidth estimates were calculated in the GPII Costing Report?
+2017-01-25T22:14:56 <mrtyler> lmk if you want more context
+2017-01-25T22:16:58 <mrtyler> also thx for the reply on h-0007
+2017-01-25T22:20:43 * stegru has quit
+2017-01-25T22:58:40 <avtar> hey mrtyler
+2017-01-25T23:01:39 <avtar> i\'m looking at that report now
+2017-01-25T23:01:49 <avtar> this is quite the stroll down memory lane
+2017-01-25T23:05:37 <avtar> i believe what we did was refer to the throughput average from tsung reports, used that to derive estimates for the scenarios listed in the report, and came up with a dollar figure with the help of the aws cost calculator
+2017-01-25T23:12:47 <avtar> i know you\'re thinking http://i.imgur.com/AfnKtkU.jpg and you would be right
+2017-01-25T23:15:30 * the-t-in-rtf has quit
+2017-01-25T23:16:46 * javjarfer has quit
+2017-01-25T23:24:31 * javjarfer joined the channel
+2017-01-25T23:30:14 <mrtyler> oops i missed him :\\
+2017-01-25T23:31:20 <mrtyler> but that helps. thanks, in absentia avtar
+'
+

@@ -1,0 +1,353 @@
+b'2017-09-13T20:35:28 <cindyli> yes, it will, until the application quits
+2017-09-13T20:36:06 <simonjb> ok, under what circumstance then would an access token be requested that would result in a reissue?
+2017-09-13T20:36:56 <simonjb> the client would need to have forgotten the access token but be requesting within the lifetime
+2017-09-13T20:37:17 <simonjb> within an hour
+2017-09-13T20:37:19 <cindyli> 1. when a different gpii token is keyed in
+2017-09-13T20:37:41 <cindyli> 2. when the application quits, the access token will be forgotten
+2017-09-13T20:38:09 <simonjb> and the gpii token is used again on the same machine within an hour
+2017-09-13T20:38:21 <ussjoin> Hrm. Just occurred to me: an attacker can "forget" an access token and just re-request, right? And then they\'ll be the same, in the audit logs.
+2017-09-13T20:39:30 <simonjb> ussjoin: the access token request will need to provide an oauth2 client id
+2017-09-13T20:39:51 <ussjoin> Right, but that\'s as easy as having access to the computer one time in the past, right?
+2017-09-13T20:40:51 * alanharnum joined the channel
+2017-09-13T20:41:21 <cindyli> ussjoin: yes, if an attacker provides the same client crendential and gpii token
+2017-09-13T20:43:10 <simonjb> in the public deployment case, like AJCs, the oauth2 client id and secret will be not retrievable by the public user but in general, yes
+2017-09-13T20:43:40 <ussjoin> Well, we assume that, but it\'s dependent on a security configuration that we don\'t control, right?
+2017-09-13T20:44:19 <cindyli> yes
+2017-09-13T20:44:38 <cindyli> any problem with the same access token showing up in the audit logs?
+2017-09-13T20:44:43 <simonjb> ussjoin: yes, you are right
+2017-09-13T20:45:18 <ussjoin> It\'s more "then this attacker would be indistinguishable from the user." Which may not be avoidable anyway (malware on the box will look the same as the user, too), but just occurred to me that we might slightly be facilitating that.
+2017-09-13T20:47:00 <simonjb> ussjoin: I don\'t quite follow, can you expand? when you same "they\'ll be the same" above what are you thinking?
+2017-09-13T20:49:41 <ussjoin> I\'m thinking that someone who got a copy of the client OAuth ID would be able to request any user\'s live/active access token at any time, and then take actions which would look like theirs.
+2017-09-13T20:51:14 <cindyli> ussjoin: would it help if every time a new access token is issued
+2017-09-13T20:52:22 <ussjoin> It would be differentiable, at least; the attacker could request a new token, but it would be different in our audit logs than the real user, and we could take actions (like G Suite does: "this account is in use in one other place" and allow them to nuke it, at least potentially) on that basis.
+2017-09-13T20:52:41 <ussjoin> If we also revoke the old token, it would create a big obvious issue in the user experience, which might or might not be what we\'d want.
+2017-09-13T20:54:23 <simonjb> ussjoin: got it, that seems like a good argument to reissue
+2017-09-13T20:55:10 * javjarfer_ joined the channel
+2017-09-13T20:55:10 * javjarfer joined the channel
+2017-09-13T20:57:26 <simonjb> then each request for an access token for a given gpii token is treated and tracked independently
+2017-09-13T20:59:24 <cindyli> i\'m more convinced too. i will modify the code to reissue a new access token every time. thanks, ussjoin and simonjb
+2017-09-13T20:59:46 * mrtyler has quit
+2017-09-13T21:02:00 * simonjb has quit
+2017-09-13T21:09:45 <michelled> alanharnum: not sure if you saw this: http://www.prosperity4all.eu/outcomes/innovations-2/e-learning-the-floe-flexible-learning-for-open-education-project-in-p4a/
+2017-09-13T21:10:22 <alanharnum> mchelled: I hadn\'t! thanks
+2017-09-13T21:10:28 <michelled> np
+2017-09-13T21:16:44 * alanharnum has quit
+2017-09-13T21:17:10 * alanharnum joined the channel
+2017-09-13T21:21:17 * alanharnum joined the channel
+2017-09-13T21:29:05 * mrtyler joined the channel
+2017-09-13T21:30:06 * michelled has quit
+2017-09-13T21:30:10 * gtirloni has quit
+2017-09-13T21:30:27 * alanharnum has quit
+2017-09-13T21:41:09 * kavya has quit
+2017-09-13T21:47:25 * amatas has quit
+2017-09-13T22:40:14 * Justin_o has quit
+2017-09-13T22:51:51 * javjarfer_ has quit
+2017-09-13T22:51:51 * javjarfer has quit
+2017-09-13T23:25:47 * mrtyler has quit
+2017-09-13T23:58:14 * danayo has quit
+'
+
+b'2017-09-13T16:59:15 <cindyli> 12:57
+2017-09-13T16:59:15 <cindyli> Request timeout for icmp_seq 1
+2017-09-13T16:59:15 <cindyli> 12:57
+2017-09-13T16:59:15 <cindyli> Request timeout for icmp_seq 2
+2017-09-13T16:59:15 <cindyli> 12:57
+2017-09-13T16:59:15 <cindyli> Request timeout for icmp_seq 3
+2017-09-13T16:59:15 <cindyli> 12:57
+2017-09-13T16:59:16 <cindyli> Request timeout for icmp_seq 4
+2017-09-13T16:59:16 <cindyli> 12:58
+2017-09-13T16:59:17 <cindyli> It looks to me like I\'m blocked at your firewall.
+2017-09-13T16:59:19 * the-t-in-rtf has quit
+2017-09-13T16:59:33 <ussjoin> gtirloni: To be clear, that was just trying to ping the server. In Chrome I just get a normal timeout.
+2017-09-13T16:59:55 <cindyli> gtirloni: just pmed you the web link to my room
+2017-09-13T17:00:06 <gtirloni> hi, that link is for a webcast
+2017-09-13T17:00:18 <cindyli> right
+2017-09-13T17:00:48 <cindyli> ussjoin: i will tell sandra to use a gotomeeting room
+2017-09-13T17:00:54 <gtirloni> never used that :)
+2017-09-13T17:01:02 <gtirloni> are you having a regular meeting?
+2017-09-13T17:01:44 <gtirloni> just sent the regular link for the room
+2017-09-13T17:02:55 <gtirloni> i\'m getting an error joining it, let me check the webrtc server
+2017-09-13T17:03:36 <cindyli> ussjoin: sandra will update the invite to use a gotomeeting room
+2017-09-13T17:03:52 <ussjoin> cindyli: Cool cool, thanks.
+2017-09-13T17:03:58 <cindyli> np
+2017-09-13T17:06:12 <grrrero> Justin_o: Sure gonna try to figure it out for now maybe tomorrow?
+2017-09-13T17:25:04 * michelled joined the channel
+2017-09-13T17:32:02 <jhernandez> stegru: no more EPERM?!?!!
+2017-09-13T17:48:38 * michelled has quit
+2017-09-13T17:50:43 * cindyli has quit
+2017-09-13T17:51:18 * alanharnum joined the channel
+2017-09-13T17:57:27 * michelled joined the channel
+2017-09-13T17:59:23 * alanharnum joined the channel
+2017-09-13T17:59:33 <stegru> jhernandez: woop woop!
+2017-09-13T18:01:54 <stegru> there was another error, due to the warning about the licence expiring.. I fixed that (but my fix was poor)
+2017-09-13T18:05:58 * alanharnum joined the channel
+2017-09-13T18:19:32 <alanharnum> possibly of interest, new working draft: https://www.w3.org/TR/act-rules-format/
+2017-09-13T18:19:34 <alanharnum> "The Accessibility Conformance Testing (ACT) Rules Format 1.0 specifies requirements for writing accessibility test rules. This includes test rules that are carried out fully-automatically, semi-automatically, and manually. By defining this common format, organizations are better able to document and share their testing procedures. This enables transparency and harmonization of testing methods, including methods implem
+2017-09-13T18:19:34 <alanharnum> ented by accessibility test tools."
+2017-09-13T18:22:30 <Justin_o> grrrero: i\'m going to start looking into this part of the FLUID-5534 PR https://github.com/fluid-project/infusion/pull/844#discussion_r137302821 as I\'ll likely need if for FLUID-6180 too
+2017-09-13T18:23:37 <grrrero> Justin_o: Ok sounds good
+2017-09-13T18:23:56 <grrrero> Justin_o: Let me know when you do? I\'d like to pair with that
+2017-09-13T18:24:24 <Justin_o> grrrero: i\'m just looking it over right now, but it\'s close to the community meeting. Maybe we can pair a bit after the meeting today
+2017-09-13T18:24:35 <grrrero> Ok
+2017-09-13T18:25:47 * cindyli joined the channel
+2017-09-13T18:29:24 * alanharnum has quit
+2017-09-13T18:29:29 * danayo joined the channel
+2017-09-13T18:29:50 * alanharnum joined the channel
+2017-09-13T18:33:35 <Justin_o> fluid-everyone: at the community meeting today we\'ll be talking about Learning Differences
+2017-09-13T18:34:18 * alanharnum has quit
+2017-09-13T18:34:25 * the-t-in-rtf joined the channel
+2017-09-13T18:39:48 * the-t-in-rtf has quit
+2017-09-13T18:41:21 * javjarfer has quit
+2017-09-13T18:41:35 * javjarfer_ has quit
+2017-09-13T19:06:11 * alanharnum joined the channel
+2017-09-13T19:32:27 * alanharnum has quit
+2017-09-13T19:33:34 <cindyli> simonjb: i noticed an issue with the process of creating access tokens for resource owner gpii token grant. the current process first looks up an existing unexpired access token, if there\'s one, it returns it. Otherwise, it creates and returns a new token. I found I forgot to check the "unexpired" state - https://github.com/cindyli/universal/blob/GPII-2435/gpii/node_modules/gpii-oauth2/gpii-oauth2-authz-server/src/AuthorizationServic
+2017-09-13T19:33:34 <cindyli> e.js#L266-L272
+2017-09-13T19:33:54 * alanharnum joined the channel
+2017-09-13T19:34:38 <cindyli> while fixing it, I\'m thinking about if it\'s worth to return the existing token if this token is going to expire in 2 seconds
+2017-09-13T19:35:14 <cindyli> the round trip back and forth between the application and the cloud may take more than 2 seconds
+2017-09-13T19:36:31 <cindyli> so, do you think if it makes sense to introduce a threshold value to restrict the access token must have this number of active lifetime for it to be returned
+2017-09-13T19:37:08 <cindyli> this is the code comment i\'m writing for this constant:
+2017-09-13T19:37:43 <cindyli> "Example, assume this value is 30, when an application requests for an access token and the auth server finds an previously generated access token is going to expired in less than 30 seconds, instead of giving this existing access token back to the application, the auth server will generate and return a new access token"
+2017-09-13T19:37:52 * simonjb joined the channel
+2017-09-13T19:38:08 <cindyli> simonjb: you missed my message ^
+2017-09-13T19:39:15 * michelled joined the channel
+2017-09-13T19:39:25 <simonjb> cindyli: reading now...
+2017-09-13T19:39:32 <cindyli> thanks
+2017-09-13T19:42:15 <simonjb> cindyli: the client of this access token would be the local flow manager, is this right?
+2017-09-13T19:42:24 <cindyli> yes
+2017-09-13T19:43:10 <simonjb> typically, we would request the access token at key in and then use it immediately to get the settings?
+2017-09-13T19:44:09 <simonjb> are there cases when the local flow manager holds on to the access token and uses it again later after key in? (I guess maybe with PCP with memory, to update prefs?)
+2017-09-13T19:45:29 <ussjoin> Would it be possible/good, upon request for an access token, to invalidate old ones and return a new one?
+2017-09-13T19:47:42 <cindyli> ussjoin: i thought about that too. the disadvantage is many old access tokens that are still valid would become obsolete very soon, depending on how often user settings are requested. It also take up the db space
+2017-09-13T19:48:05 <ussjoin> Do we keep old tokens after they\'re revoked?
+2017-09-13T19:48:15 <cindyli> simonjb: yes, at the moment, key in and update prefs would need to use the access token
+2017-09-13T19:48:21 <cindyli> ussjoin: yes
+2017-09-13T19:48:25 <ussjoin> How come?
+2017-09-13T19:49:39 <cindyli> auditing i think
+2017-09-13T19:50:20 <simonjb> and I think it will help debugging also to have history of access tokens
+2017-09-13T19:50:31 <ussjoin> So how long are we keeping them?
+2017-09-13T19:50:59 <cindyli> not decided yet
+2017-09-13T19:51:21 <simonjb> ussjoin: do you have recommendations?
+2017-09-13T19:51:38 <ussjoin> The understanding I got from Gregg was that we wanted to delete as much data as quickly as possible.
+2017-09-13T19:51:59 <ussjoin> (And we\'ve discussed, e.g., progressive log deidentification.)
+2017-09-13T19:52:44 <ussjoin> So if we\'re concerned about debugging, that\'s totally valid, and then I guess if we\'re keeping tokens only for, say, 30 days (just a number based on nothing, to be clear), I don\'t think we care about the extra storage space.
+2017-09-13T19:53:33 * javjarfer_ joined the channel
+2017-09-13T19:53:37 * javjarfer joined the channel
+2017-09-13T19:53:40 <simonjb> ussjoin: am I correct in thinking that regulations that we would be subject to would have auditing requirements that need data to be kept?
+2017-09-13T19:54:12 <ussjoin> You are entirely correct; however, that doesn\'t mean we have to keep all data. Just data relevant to auditing certain types of actions.
+2017-09-13T19:55:15 <simonjb> ok, cool
+2017-09-13T19:55:32 <ussjoin> (Just a back of the envelope: if it costs us 1kb of storage space per record, we have 15k users, and each one requests a new token 50x per day, we use 22GB of storage to save every token for a month. I\'m essentially fine with 22GB of storage if it makes cindyli\'s life easier.)
+2017-09-13T19:57:55 <simonjb> cindyli: for the case that the local flow manager wants to use a token that has expired, what is our strategy? do we use refresh tokens or do we hold onto the Key so we can ask again for a new access token?
+2017-09-13T19:58:34 <cindyli> the local flow manager requests a new access token
+2017-09-13T19:58:45 <simonjb> by holding onto the user\'s Key?
+2017-09-13T19:59:14 <simonjb> or GPII Token, in current terminology
+2017-09-13T19:59:24 <cindyli> yes
+2017-09-13T19:59:41 <cindyli> we don\'t actually hold onto it
+2017-09-13T20:00:10 <cindyli> with /untrusted-settings url, the gpii token must be provided to use it
+2017-09-13T20:00:26 <cindyli> not sure about update prefs end point yet
+2017-09-13T20:00:56 <cindyli> likely the gpii token must be provided too
+2017-09-13T20:01:14 <simonjb> but isn\'t /untrusted-settings url on the cloud side?
+2017-09-13T20:01:52 <cindyli> yes, the for format of it is :userToken/untrusted-settings/%device
+2017-09-13T20:02:02 <cindyli> the local flow manager needs to prepare in this format
+2017-09-13T20:02:35 <simonjb> so the local flow manager tracks the currently active gpii token
+2017-09-13T20:02:37 <simonjb> I think
+2017-09-13T20:04:11 <simonjb> I think your proposal to re-use access tokens if they have at least 30 seconds left is reasonable -- we could also do as ussjoin suggests and always re-issue
+2017-09-13T20:04:28 <cindyli> i\'m fine with either way
+2017-09-13T20:04:32 <simonjb> what are the advantages of each?
+2017-09-13T20:05:12 <cindyli> reusing would be less records, less storage
+2017-09-13T20:05:28 <cindyli> issuing new would be a simplified functional flow
+2017-09-13T20:05:32 <cindyli> that\'s what i can think of
+2017-09-13T20:06:09 <cindyli> ussjoin: are there other advantages you can think of
+2017-09-13T20:06:29 <ussjoin> Simpler code is safer code IMO (the safest code is the code you deleted :-) ), and storage is within rounding errors of free (especially at our scale; when we start buying storage by the Snowmobile, we should revisit this proposition).
+2017-09-13T20:07:12 <ussjoin> I\'m mostly interested in making your life easier, and if we can do it, making security properties easier to explain/debug/apply. So if this does that, cindyli, go for it. If reusing is easier, then I\'m not opposed. Just wanted to ask the question.
+2017-09-13T20:07:28 <simonjb> (if we keep tokens) could always issuing new be an attack to use up storage? we could throttle or maybe not worth worrying about?
+2017-09-13T20:07:58 <ussjoin> Alerting---if we\'re issuing 600 tokens per second, someone needs the Mallet of Loving Correction tastefully applied to their forehead.
+2017-09-13T20:08:37 <simonjb> ussjoin: could you rephrase that :)
+2017-09-13T20:09:02 <ussjoin> Sorry, MLC is too obtuse or too inappropriate?
+2017-09-13T20:09:29 <simonjb> obtuse (for me) I didn\'t understand
+2017-09-13T20:09:35 <ussjoin> Gotcha. :-)
+2017-09-13T20:10:09 <ussjoin> My general thought would be (to rephrase) that if there\'s an attack in progress to use storage, we should have sufficient alerting in place on a few fronts---# of requests per unit time, storage remaining/sudden spikes, etc.---to warn us to take corrective/remedial action. Like blocking an IP block.
+2017-09-13T20:10:47 <ussjoin> And since I believe the Ops team is working on metrics from which we can usefully alert, I think we\'re getting the tools in place to make that possible.
+2017-09-13T20:11:20 <simonjb> ussjoin: this seems reasonable to me and implies (1) we build adequate logging/alerting and (2) we have a mechanism for blocking
+2017-09-13T20:11:50 <ussjoin> 1 and 2 are both required by our other goals, though; 1 is on my current task queue, and 2 is a thing we\'re going to need to make this defensible anyway.
+2017-09-13T20:12:27 <simonjb> agreed
+2017-09-13T20:12:29 <ussjoin> (1 is also required by NIST 800-53, so, there\'s that. But it is my usual first step in defense.)
+2017-09-13T20:18:27 * javjarfer_ has quit
+2017-09-13T20:18:32 * javjarfer has quit
+2017-09-13T20:18:34 <cindyli> ussjoin, simonjb, probably we reuse until the shields are in place or we find flaws with reusing?
+2017-09-13T20:18:50 <ussjoin> Shields?
+2017-09-13T20:19:10 <cindyli> 2 points you said above, ussjoin
+2017-09-13T20:19:21 <cindyli> alerting and blocking
+2017-09-13T20:19:28 <cindyli> or maybe more
+2017-09-13T20:19:48 <ussjoin> Ah, gotcha. I\'m not primarily concerned about DOS right now, so I wouldn\'t vote for implement then reimplement in this case.
+2017-09-13T20:20:33 <ussjoin> (I\'m concerned right now about issues of the type "I saw you had a cloud so I eated it," hence the Vault work and the logging.)
+2017-09-13T20:22:33 * alanharnum joined the channel
+2017-09-13T20:23:13 * colinclark joined the channel
+2017-09-13T20:23:45 * alanharnum has quit
+2017-09-13T20:24:11 * alanharnum joined the channel
+2017-09-13T20:28:27 * alanharnum has quit
+2017-09-13T20:28:52 <cindyli> ussjoin: so you vote for reissuing every time.
+2017-09-13T20:29:17 <ussjoin> I think so, if that doesn\'t cause untold work for you / if it makes sense.
+2017-09-13T20:30:13 <cindyli> simonjb: what\'s your opinion?
+2017-09-13T20:30:51 * sepidehshahi has left the channel
+2017-09-13T20:31:31 <cindyli> i\'m a little leaning towards reusing because it won\'t result in many good tokens being discarded.
+2017-09-13T20:32:33 <simonjb> cindyli: I\'m good with either -- whichever is clearest/simplest to implement I think -- in practice I think we will be largely reissuing anyway as we are thinking of short lifetimes for access tokens, right? Like 10 mins?
+2017-09-13T20:33:56 <cindyli> 60 mins at the moment, just my current pick, it can be changed to any number that makes sense
+2017-09-13T20:34:09 <simonjb> ah ok
+2017-09-13T20:34:33 <simonjb> does/will the local flow manager hold onto the access token?
+2017-09-13T20:34:50 <simonjb> so it can use within the next hour?
+'
+
+b'2017-09-13T01:07:43 * javjarfer has quit
+2017-09-13T02:53:56 * the-t-in-rtf joined the channel
+2017-09-13T02:59:42 * the-t-in-rtf has quit
+2017-09-13T03:07:08 * danayo_ joined the channel
+2017-09-13T03:18:10 * danayo_ has quit
+2017-09-13T03:21:05 * danayo_ joined the channel
+2017-09-13T04:50:27 * danayo has quit
+2017-09-13T05:13:05 * amatas joined the channel
+2017-09-13T05:20:02 * dandimitrov joined the channel
+2017-09-13T05:26:21 * dandimitrov has quit
+2017-09-13T07:38:47 * kasparnet joined the channel
+2017-09-13T07:51:35 * georgitodorov joined the channel
+2017-09-13T07:55:18 * kasparnet has quit
+2017-09-13T07:55:33 <georgitodorov> Hi, guys! Yesterday I asked a question about the slider/stepper component that the PCP needs to have. I don\'t know if you saw it so I am going to paste it again:
+2017-09-13T07:55:47 <georgitodorov> I the basic widget set document for the PCP I can see that there is a "Number from a Range (integer or continuous)" widget which appears to be a combination between a TextfieldSlider and a TextfieldStepper component. Shall we actually combine these components or can we simply use a slider (or a stepper aternatively)?
+2017-09-13T08:19:38 * kasparnet joined the channel
+2017-09-13T08:23:51 * javjarfer joined the channel
+2017-09-13T08:52:53 * kasparnet has quit
+2017-09-13T08:53:29 * kasparnet joined the channel
+2017-09-13T08:53:47 * kasparnet has quit
+2017-09-13T08:55:43 * yuriy__ joined the channel
+2017-09-13T08:56:23 <Bosmon> morning, yuriy__, georgitodorov
+2017-09-13T08:57:09 <Bosmon> Would you guys like a call in a bit?
+2017-09-13T09:01:12 * kasparnet joined the channel
+2017-09-13T09:01:44 * javjarfer_ joined the channel
+2017-09-13T09:07:00 * the-t-in-rtf joined the channel
+2017-09-13T09:12:43 * stegru joined the channel
+2017-09-13T09:54:32 <yuriy__> Hi, Antranig! We were on a lunch break, does making that call in about 40 minutes work for you, so at around 10:30 GMT?
+2017-09-13T10:02:58 <yuriy__> Hi, Bosmon! We were on a lunch break, does making that call in about 40 minutes work for you, so at around 10:30 GMT?
+2017-09-13T10:03:35 <Bosmon> yuriy__ - yup, sure
+2017-09-13T10:05:35 <yuriy__> can you please send me your Skype nickname
+2017-09-13T10:13:42 <Bosmon> Hi, it is antranig.basman
+2017-09-13T11:14:28 * gtirloni joined the channel
+2017-09-13T11:20:39 * michelled joined the channel
+2017-09-13T11:53:19 * cindyli joined the channel
+2017-09-13T12:02:15 <jhernandez> stegru: morning
+2017-09-13T12:02:32 <stegru> hi jhernandez
+2017-09-13T12:02:41 <jhernandez> any update on the EPERM thing?
+2017-09-13T12:03:07 <jhernandez> I saw that your last ci job failed too
+2017-09-13T12:03:11 <jhernandez> :/
+2017-09-13T12:04:35 <stegru> not yet
+2017-09-13T12:04:47 <stegru> it\'s just so slow to reproduce
+2017-09-13T12:07:39 * Caren joined the channel
+2017-09-13T12:07:58 <jhernandez> yes it is
+2017-09-13T12:11:58 <stegru> it creates the log file, and at some point the permissions get screwed up - I can\'t even read the file as administrator
+2017-09-13T12:13:16 * alanharnum joined the channel
+2017-09-13T12:26:21 * the-t-in-rtf has quit
+2017-09-13T12:26:41 * kasparnet has quit
+2017-09-13T12:28:47 * the-t-in-rtf joined the channel
+2017-09-13T12:31:28 * Justin_o joined the channel
+2017-09-13T12:32:07 * Caren joined the channel
+2017-09-13T12:35:08 * Caren has quit
+2017-09-13T12:37:38 <jhernandez> that\'s weird
+2017-09-13T12:43:09 * jhung joined the channel
+2017-09-13T12:50:47 <stegru> I think I know what it is now, jhernandez: the file is read (maybe not closed), then it is deleted.. because it\'s not closed it stays there and can\'t be read/written until it\'s closed
+2017-09-13T13:03:27 * sepidehshahi joined the channel
+2017-09-13T13:03:28 * sepidehshahi has quit
+2017-09-13T13:04:42 * Caren joined the channel
+2017-09-13T13:07:34 * Caren has quit
+2017-09-13T13:10:39 * sepidehshahi joined the channel
+2017-09-13T13:20:28 * clown joined the channel
+2017-09-13T13:32:36 * Jess_ joined the channel
+2017-09-13T13:37:25 * grrrero joined the channel
+2017-09-13T13:43:18 * colinclark joined the channel
+2017-09-13T13:46:16 * jhernandez has quit
+2017-09-13T13:48:26 <clown> jhernandez, my fix for the process reporter unit test works in CI (windows master):  https://github.com/GPII/windows/pull/146#issuecomment-329152420
+2017-09-13T13:49:39 <clown> oh, you are not here.
+2017-09-13T13:53:42 * kasparnet joined the channel
+2017-09-13T14:02:39 * michelled joined the channel
+2017-09-13T14:03:05 * Jess_ has quit
+2017-09-13T14:13:56 * jessm joined the channel
+2017-09-13T14:15:39 * kasparne_ joined the channel
+2017-09-13T14:17:10 * kasparnet has quit
+2017-09-13T14:19:13 * michelled has quit
+2017-09-13T14:20:21 * michelled joined the channel
+2017-09-13T14:25:21 * simonjb joined the channel
+2017-09-13T14:30:14 * kasparne_ has quit
+2017-09-13T14:31:32 * georgitodorov has quit
+2017-09-13T14:33:33 * simonjb joined the channel
+2017-09-13T14:36:24 * alanharnum has quit
+2017-09-13T14:37:43 * kasparnet joined the channel
+2017-09-13T14:40:56 <colinclark> hey Bosmon and simonjb and michelled
+2017-09-13T14:41:10 <colinclark> should we round ourselves up for a meeting about Nexus next steps sometime this week?
+2017-09-13T14:41:10 <simonjb> hey colinclark
+2017-09-13T14:41:39 <colinclark> I think I could use a creative and speculative antidote to the terminological determinism going around these days ;)
+2017-09-13T14:43:10 <simonjb> colinclark: I will be working Friday this week, so would be available then in addition to today and tomorrow
+2017-09-13T14:43:39 <colinclark> Today I\'m going to be out for a few hours to help my dad this afternoon
+2017-09-13T14:43:43 <colinclark> so either tomorrow or Friday is good for me
+2017-09-13T14:45:09 <michelled> both those days work for me but I\'ll have to leave around 4 eastern tomorrow
+2017-09-13T14:45:35 <colinclark> I wonder if 10 am EDT tomorrow or Friday would work best for Bosmon\'s schedule?
+2017-09-13T14:48:57 * jhernandez joined the channel
+2017-09-13T14:51:25 <jhernandez> clown: hey, I saw your pull request and I\'m about to test it
+2017-09-13T14:51:35 <jhernandez> thanks!!
+2017-09-13T14:55:15 * kasparnet has quit
+2017-09-13T14:57:20 * the-t-in-rtf has quit
+2017-09-13T14:58:58 * danayo joined the channel
+2017-09-13T14:59:17 <Bosmon> Oh hey colinclark
+2017-09-13T14:59:27 <Bosmon> simonjb
+2017-09-13T14:59:32 <Bosmon> Thursday/Friday is also good for me
+2017-09-13T14:59:38 <Bosmon> Friday perhaps a touch better
+2017-09-13T14:59:59 * kasparnet joined the channel
+2017-09-13T15:02:35 <clown> jhernandez:  you\'re welcome.  Let me know how it goes.  Or, how it went.
+2017-09-13T15:10:03 * mrtyler joined the channel
+2017-09-13T15:13:49 <colinclark> simonjb, michelled, Bosmon: Shall we say 10 am EDT (3 pm BST) on Friday, then?
+2017-09-13T15:14:51 <simonjb> colinclark: good for me
+2017-09-13T15:15:51 <michelled> sounds good
+2017-09-13T15:24:09 <Bosmon> Very good!
+2017-09-13T15:27:03 * alanharnum joined the channel
+2017-09-13T15:31:41 * michelled has quit
+2017-09-13T15:32:05 * alanharnum joined the channel
+2017-09-13T15:41:39 * sepidehshahi has quit
+2017-09-13T15:46:32 * the-t-in-rtf joined the channel
+2017-09-13T15:46:54 * kavya joined the channel
+2017-09-13T15:49:28 * kasparnet has quit
+2017-09-13T15:53:44 * sepidehshahi joined the channel
+2017-09-13T15:53:49 * alanharnum joined the channel
+2017-09-13T15:54:59 * michelled joined the channel
+2017-09-13T15:59:50 <stegru> amatas: by the way, the VM Windows licence is running out
+2017-09-13T16:00:06 <amatas> awesome
+2017-09-13T16:01:00 <amatas> I see a new warm weekend at the datacenter
+2017-09-13T16:05:26 * javjarfer_ has quit
+2017-09-13T16:05:52 * javjarfer_ joined the channel
+2017-09-13T16:21:33 * the-t-in-rtf has quit
+2017-09-13T16:37:12 <jhernandez> clown: here\'s the output I\'m getting
+2017-09-13T16:37:58 <clown> yes?
+2017-09-13T16:38:02 <jhernandez> https://pastebin.com/a4B4dwHE
+2017-09-13T16:38:09 * clown looks
+2017-09-13T16:38:23 <jhernandez> I monkey patched my copy of gpii-windows according to your pull request
+2017-09-13T16:39:44 <clown> I can do the same with my local copy of gpii-app, and see what\'s up.
+2017-09-13T16:39:49 <jhernandez> right
+2017-09-13T16:40:01 <clown> have there been any changes to gpii-app since Mon?
+2017-09-13T16:40:10 <clown> I should just do a git pull.
+2017-09-13T16:40:51 <jhernandez> no, you have to use my GPII-2084 branch
+2017-09-13T16:41:18 <jhernandez> of gpii-app
+2017-09-13T16:41:35 <clown> right, but has there been any changes there?
+2017-09-13T16:42:00 <jhernandez> mostly updated refs
+2017-09-13T16:43:00 <clown> okay.  to be sure, I did a git pull on your 2084 branch and got "up to date".
+2017-09-13T16:43:01 <jhernandez> there\'s also an additional step in the provisioning.ps1 script, which builds the vaio listener, but you shouldn\'t be worry about it
+2017-09-13T16:43:08 <jhernandez> right
+2017-09-13T16:43:16 <Justin_o> grrrero: how are things going with the bugs and PR?
+2017-09-13T16:51:53 <grrrero> Justin_o: Still working on the bug; paired with michelled for that
+2017-09-13T16:52:10 <grrrero> Justin_o: Won\'t be able to join on the long walk today :(
+2017-09-13T16:52:58 * the-t-in-rtf joined the channel
+2017-09-13T16:55:56 <ussjoin> cindyli: I tried to connect to your Vidyo link to make sure I had whatever software I needed, but it doesn\'t appear to want to let me in *at all*. (Timeout while connecting). Do I have to be at the IDRC to connect, and if so, can we move the meeting on Friday to a different medium?
+2017-09-13T16:56:42 <cindyli> ussjoin: can you try again? i just unlocked my room
+2017-09-13T16:56:54 <ussjoin> cindyli: Same result.
+2017-09-13T16:57:11 <Justin_o> grrrero: no problem, I may have some time before/after the community meeting today, as well as time tomorrow, to pair up some more if that helps.
+2017-09-13T16:57:17 <ussjoin> It\'s not getting to the room part, it\'s timing out attempting to connect to the server AFAICT.
+2017-09-13T16:59:03 <cindyli> hi gio, ussjoin is receiving this error at connecting to my vidyo room
+2017-09-13T16:59:14 <cindyli> Request timeout for icmp_seq 0
+'
+

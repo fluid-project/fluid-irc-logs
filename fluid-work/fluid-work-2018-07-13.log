@@ -1,0 +1,280 @@
+b'2018-07-13T13:52:22 <cindyli> dandimitrov: in the real production environment, the cloud based flow manager will not start locally
+2018-07-13T13:52:31 <cindyli> i guess there are 2 options to solve this:
+2018-07-13T13:52:43 <dandimitrov> a more specific selector?
+2018-07-13T13:52:53 <cindyli> 1. link the start of gpii-app with local flow manager rather than cloud based flow manager
+2018-07-13T13:53:03 <cindyli> right, as you\'ve said
+2018-07-13T13:53:04 <dandimitrov> gpii.flowManager.untrusted will probably work?
+2018-07-13T13:53:32 <cindyli> gpii.flowManager.local would work better for both all-in-local and untrusted configs
+2018-07-13T13:54:51 <dandimitrov> Oh, yes
+2018-07-13T13:54:58 * colinclark has quit
+2018-07-13T13:55:10 <dandimitrov> It works like a charm
+2018-07-13T13:55:17 <dandimitrov> Great, thank you again :)
+2018-07-13T13:55:23 <cindyli> the other option i was going to mention is to start CBFM in VM instead of your host machine
+2018-07-13T13:55:31 <cindyli> CHEER!
+2018-07-13T13:55:34 <cindyli> S
+2018-07-13T13:57:21 * colinclark joined the channel
+2018-07-13T14:01:30 <dandimitrov> Bosmon, everything seems to be working correctly (setting changes from the PSP are persisted) with the config cindyli provided so is there anything else we should test on our end regarding this topic?
+2018-07-13T14:02:40 <dandimitrov> cindyli: And one last thing - is there a way to reset the pouchdb database in order to revert all changes made to preferences?
+2018-07-13T14:06:04 <cindyli> dandimitrov: starts gpii servers and open a browser to access this url: http://localhost:8060/reset-pouch
+2018-07-13T14:06:30 <cindyli> of course, using curl with this url is fine too
+2018-07-13T14:07:12 <cindyli> this url will wipe out data in pouchdb and reload the initial test data
+2018-07-13T14:08:03 <cindyli> here\'s the doc for it - https://github.com/GPII/universal/blob/master/documentation/PouchManager.md#get-reset-pouch
+2018-07-13T14:13:42 * yuriy__ has quit
+2018-07-13T14:20:20 * georgitodorov has quit
+2018-07-13T14:24:08 * neuralmilkhotel joined the channel
+2018-07-13T14:36:42 * the-t-in-rtf joined the channel
+2018-07-13T14:41:35 * gtirloni joined the channel
+2018-07-13T14:43:09 * gtirloni has quit
+2018-07-13T14:43:39 * mrtyler joined the channel
+2018-07-13T14:51:06 * gtirloni joined the channel
+2018-07-13T14:51:18 * colinclark_ joined the channel
+2018-07-13T15:05:46 * dandimitrov has quit
+2018-07-13T15:16:25 * colinclark_ joined the channel
+2018-07-13T15:31:53 * alanharnum has quit
+2018-07-13T15:37:54 <jhernandez> cindyli: I have just created a config that uses the dynamic device reporter
+2018-07-13T15:37:57 <jhernandez> FYI
+2018-07-13T15:39:43 <jhernandez> I only created the config for the untrusted one, so, do you want me to also create one to use the cloud AND the dynamic device reporter?
+2018-07-13T15:41:15 * sepidehshahi has quit
+2018-07-13T15:42:45 <jhernandez> btw, cindyli, is there any jira issue related to creation of these configs?
+2018-07-13T15:45:33 <cindyli> jhernandez: do we need to have a config using cloud + dynamic device reporter? doesn\'t device reporter only make sense using with local flow manager?
+2018-07-13T15:45:55 <cindyli> jhernandez: i don\'t think we have a jira for creating these configs
+2018-07-13T15:46:31 <jhernandez> well, no, I mean, I thought the plan was to use the dynamic device reporter AND the cloud
+2018-07-13T15:46:48 <cindyli> ok
+2018-07-13T15:47:35 <jhernandez> for a closed deployment we can be just fine with the static one, but I\'m not sure whether the decoupling of the local and remote components is a problem for this
+2018-07-13T15:48:24 <cindyli> when is the dynamic device reporter needed? wonder if it can be included as a default with gpii.config.untrusted.development.all.local
+2018-07-13T15:48:25 <jhernandez> I mean, my guess is that yes, we might want using the dynamic device reporter and the cloud
+2018-07-13T15:49:22 <jhernandez> when? well, the dynamic device reporter is capable of reporting the solutions that are available on the device
+2018-07-13T15:49:44 <cindyli> sorry about my lack of knowledge on device reporter. what\'s the difference btw static and dynamic? is the static reading from a static file while the dynamic detects from the real OS?
+2018-07-13T15:49:49 <jhernandez> no problem
+2018-07-13T15:50:47 <jhernandez> static DR reports as installed all the solutions included in testData/deviceReporter/installedSolutions.json
+2018-07-13T15:51:27 <jhernandez> the dynamic DR currently runs native code in order to guess what are the solutions available in the running system and report them as installed
+2018-07-13T15:51:28 <cindyli> i see, so we still need the static for testing purpose, while the dynamic is only for production?
+2018-07-13T15:51:34 <jhernandez> yup\\
+2018-07-13T15:52:06 <cindyli> that means we need 2 separate configs, one for the dev, one for the production
+2018-07-13T15:52:19 <jhernandez> I\'d say so
+2018-07-13T15:52:41 * gtirloni_ joined the channel
+2018-07-13T15:52:47 <jhernandez> in my mind, we put 3 configs in gpii-app
+2018-07-13T15:52:58 <cindyli> but with the production config, cloud would never run together with the local flow manager, so i\'d say we don\'t need a production config for cloud + dynamic DR
+2018-07-13T15:52:59 <jhernandez> dev, testing and production
+2018-07-13T15:53:29 <jhernandez> dev, to me, should use all local, which is what ASTEA team does AFAIK
+2018-07-13T15:54:04 <jhernandez> testing is the "default" config, this is, it\'s the config that uses all local and the dynamic DR
+2018-07-13T15:54:24 <cindyli> for the gpii-app development testing with dynamic DR, the cloud can be start separately using gpii.config.cloudBased.development.all.local
+2018-07-13T15:54:25 * alanharnum joined the channel
+2018-07-13T15:54:39 * sepidehshahi joined the channel
+2018-07-13T15:54:50 <jhernandez> production, right now it doesn\'t make sense, but is there for being the config to use when creating installers, that use the production cloud and the dynamic DR
+2018-07-13T15:55:09 <jhernandez> ok
+2018-07-13T15:55:50 <jhernandez> then the production config would be the same as testing, but it includes the URL to the cloud?
+2018-07-13T15:55:58 <cindyli> yes
+2018-07-13T15:56:35 <jhernandez> ok, then we\'re in the same page
+2018-07-13T15:56:42 <jhernandez> :)
+2018-07-13T15:56:58 <cindyli> yah, thanks for the explanation, jhernandez
+2018-07-13T16:00:47 <jhernandez> okay, I will create a jira issue and produce a pr
+2018-07-13T16:01:02 <jhernandez> cindyli: sorry, what was the current CLOUD_URL that I should provide?
+2018-07-13T16:01:50 <cindyli> if the cloud runs using gpii.config.cloudBased.development.all.local, would be http://localhost:8081
+2018-07-13T16:02:12 <cindyli> if the cloud runs using the universal VM, would be http://localhost:9081
+2018-07-13T16:02:22 <cindyli> just different ports
+2018-07-13T16:02:43 <cindyli> i would recommend the VM to avoid the port conflict
+2018-07-13T16:06:33 <jhernandez> okay, and then, if I just want to pull the prefs from the cloud, can I just use the real production url? this is, flowmanager.gpii.net or the like?
+2018-07-13T16:06:51 <jhernandez> or we\'re not ready for that yet?
+2018-07-13T16:06:55 <jhernandez> cindyli: ^
+2018-07-13T16:09:04 <cindyli> jhernandez: i gave the wrong prod url last time, as per mrtyler pointed out, it should be https://flowmanager.prd.gpii.net/
+2018-07-13T16:09:15 <cindyli> mrtyler: correct me if i\'m wrong again
+2018-07-13T16:09:27 <mrtyler> nope, that\'s the right one :)
+2018-07-13T16:09:46 <cindyli> thanks, mrtyler.
+2018-07-13T16:09:49 <jhernandez> okay, great
+2018-07-13T16:09:52 <cindyli> jhernandez: production prefs server is https://preferences.prd.gpii.net/preferences/carla
+2018-07-13T16:09:58 <jhernandez> thanks to you both mrtyler and cindyli
+2018-07-13T16:10:06 <cindyli> :)
+2018-07-13T16:10:07 <mrtyler> that url is also correct :)
+2018-07-13T16:10:29 * sepidehshahi has quit
+2018-07-13T16:10:50 <jhernandez> okay, I am not sure whether I am going to arrive to that point today (juggling with a few things at the same time), but just in case
+2018-07-13T16:11:00 <jhernandez> cheers
+2018-07-13T16:20:20 * cindyli has quit
+2018-07-13T16:23:07 * cindyli joined the channel
+2018-07-13T16:24:23 * jhung has quit
+2018-07-13T16:40:56 * gtirloni_ is now known as gtirloni
+2018-07-13T16:56:15 * jhung joined the channel
+2018-07-13T17:11:14 * alanharnum joined the channel
+2018-07-13T17:19:02 <jhernandez> cindyli: looks like this is looking great https://pastebin.com/jcxJbmks
+2018-07-13T17:19:38 <jhernandez> awesome, it worked at the very first time!
+2018-07-13T17:19:44 <jhernandez> :)
+2018-07-13T17:34:02 * alanharnum joined the channel
+2018-07-13T17:38:35 <cindyli> YAY!!
+2018-07-13T17:41:24 <mrtyler> i\'m not sure what that integration demonstrates, but yay integration!
+2018-07-13T18:10:02 * colinclark joined the channel
+2018-07-13T18:32:13 <jhernandez> cindyli: here\'s the jira https://issues.gpii.net/browse/GPII-3206 and the pr https://github.com/GPII/universal/pull/627
+2018-07-13T18:32:28 <jhernandez> left some comments on the jira ticket
+2018-07-13T18:40:11 * jessm joined the channel
+2018-07-13T18:43:40 <jhernandez> also, created https://issues.gpii.net/browse/GPII-3207 for gpii-app, by when we have GPII-3206 ready
+2018-07-13T18:44:01 <jhernandez> I have to leave it here for today
+2018-07-13T19:08:35 * cindyli joined the channel
+2018-07-13T19:34:17 <cindyli> stegru: r u there?
+2018-07-13T19:35:40 * alanharnum joined the channel
+2018-07-13T19:59:18 * alanharnum joined the channel
+2018-07-13T20:41:53 * alanharnum has quit
+2018-07-13T20:46:10 * alanharnum joined the channel
+2018-07-13T20:53:24 <cindyli> Bosmon: when you have time, can you review my universal pull request that cleans up cloud endpoint - https://github.com/GPII/universal/pull/628. thanks
+2018-07-13T20:54:15 * cindyli has quit
+2018-07-13T21:02:26 <gtirloni> could anyone to a JS beginner what the fluid_3_0_0 identifier is used for?
+2018-07-13T21:03:36 * alanharnum has quit
+2018-07-13T21:07:08 * alanharnum joined the channel
+2018-07-13T21:14:57 <gtirloni> https://issues.fluidproject.org/browse/FLUID-1078
+2018-07-13T21:15:01 <gtirloni> https://wiki.fluidproject.org/display/Infusion13/Versioning+the+Fluid+Framework
+2018-07-13T21:15:06 * gtirloni has quit
+2018-07-13T21:17:48 * alanharnum has quit
+2018-07-13T21:29:18 * michelled joined the channel
+2018-07-13T22:14:54 * mrtyler joined the channel
+'
+
+b'2018-07-13T00:31:45 * mrtyler joined the channel
+2018-07-13T00:39:59 * danayo joined the channel
+2018-07-13T05:51:50 * the-t-in-rtf has quit
+2018-07-13T06:05:55 * the-t-in-rtf joined the channel
+2018-07-13T08:00:27 * georgitodorov joined the channel
+2018-07-13T09:00:54 * the-t-in-rtf joined the channel
+2018-07-13T09:09:40 * dandimitrov joined the channel
+2018-07-13T09:19:48 <dandimitrov> Hey, Bosmon. I\'m not familiar with the cloud persistence process so I have a few questions regarding Cindy\xe2\x80\x99s PR:
+2018-07-13T09:19:48 <dandimitrov> * From what I understood from the discussion on Tuesday\xe2\x80\x99s we can use a remote cloud flow manager. Is this correct?
+2018-07-13T09:19:49 <dandimitrov> * How do we know that we are connected to the cloud? What configuration are we supposed to use (probably https://github.com/cindyli/universal/blob/GPII-1990/gpii/configs/gpii.config.cloudBased.development.json5)?
+2018-07-13T09:19:57 <dandimitrov> * How do we check for changes in the cloud? Should we remotely connect to the CoachDB there? Or are changes loaded on subsequent key-ins?
+2018-07-13T09:19:58 <dandimitrov> Are you available for a short call today to discuss that topic?
+2018-07-13T09:51:15 <Bosmon> Hey there dandimitrov - yes I can talk in a bit
+2018-07-13T09:51:24 <Bosmon> Did you manage to sort out your test case issues from yesterday?
+2018-07-13T09:51:39 <Bosmon> The short answer is we have currently not implemented the cloud endpoint that would allow you to check for changes
+2018-07-13T09:53:17 <dandimitrov> Yes, the tests should be working now
+2018-07-13T09:53:47 <Bosmon> Oh brilliant, well done
+2018-07-13T09:53:57 <Bosmon> What was the name of the event that was corrupted, and what was the cause?
+2018-07-13T09:54:27 <georgitodorov> Bosmon: But the build is failing again and I don\'t think that this has to do with our code this time :)
+2018-07-13T09:54:42 <georgitodorov> The event was onQssNotificationHeightChanged
+2018-07-13T09:55:09 <georgitodorov> The cause was that the listener for that event was not deregistered correctly
+2018-07-13T09:57:36 <georgitodorov> Bosmon: I guess we can meet in Skype when you are ready
+2018-07-13T10:11:53 * yuriy joined the channel
+2018-07-13T10:25:17 * dandimitrov has quit
+2018-07-13T10:26:42 * dandimitrov joined the channel
+2018-07-13T10:44:13 <Bosmon> Hi georgitodorov - are you there now?
+2018-07-13T10:44:27 <georgitodorov> Bosmon: Yes, we are here
+2018-07-13T11:08:19 * Justin_o joined the channel
+2018-07-13T11:16:14 * dandimitrov has quit
+2018-07-13T11:17:02 * yuriy__ joined the channel
+2018-07-13T11:20:34 * yuriy has quit
+2018-07-13T11:20:34 <Justin_o> Bosmon: my latests PR for FLUID-6177 includes all the work for the updates to the orator and self voicing preference. It\'s ready for review. Would you be able to take a look at it? https://github.com/fluid-project/infusion/pull/903
+2018-07-13T11:20:42 <Bosmon> Justin_o - sure
+2018-07-13T11:20:48 <Justin_o> Bosmon: thanks :)
+2018-07-13T11:46:45 * dandimitrov joined the channel
+2018-07-13T11:48:21 * dandimitrov has quit
+2018-07-13T12:02:17 * the-t-in-rtf joined the channel
+2018-07-13T12:03:13 <the-t-in-rtf> For anyone else on the LSR call, here\'s the link to room 2: https://global.gotomeeting.com/join/619028605
+2018-07-13T12:06:34 <georgitodorov> Bosmon: Here is the JIRA tickets for the missing values of some QSS settings: https://issues.gpii.net/browse/GPII-3202
+2018-07-13T12:06:52 <Bosmon> Thanks very much, georgitodorov
+2018-07-13T12:21:24 * gtirloni joined the channel
+2018-07-13T12:21:53 <georgitodorov> Bosmon: The build for the QSS branch (https://ci.gpii.net/job/create-gpii-app-vm/260/console) is failing with the following error: c1: fatal error C1083: Cannot open source file: \'test-window.c\': No such file or directory
+2018-07-13T12:21:59 <georgitodorov> Have you encountered this before?
+2018-07-13T12:22:06 <Bosmon> georgitodorov - yes
+2018-07-13T12:22:39 <Bosmon> It will be resolved shortly when the following pull is merged in: https://github.com/GPII/windows/pull/166
+2018-07-13T12:22:54 <Bosmon> In the meantime you will need to trigger the build manually via the following couple of commands:
+2018-07-13T12:24:22 <Bosmon> https://github.com/GPII/windows/blob/master/provisioning/NpmInstall.ps1#L21
+2018-07-13T12:24:25 * cindyli joined the channel
+2018-07-13T12:25:51 <Bosmon> This is done automatically as part of the vagrant build, which is why the build passes
+2018-07-13T12:28:50 <jhernandez> Bosmon: pull/166 is passing on CI
+2018-07-13T12:29:38 <Bosmon> jhernandez - that\'s great
+2018-07-13T12:30:07 <Bosmon> jhernandez - "is passing" => "is running"?
+2018-07-13T12:30:28 <jhernandez> after merging it, we need to also update gpii-app/40 to point to windows/master
+2018-07-13T12:30:50 <jhernandez> is running
+2018-07-13T12:31:00 <Bosmon> hahaha
+2018-07-13T12:31:13 <Bosmon> OK
+2018-07-13T12:31:14 <Bosmon> It has now passed
+2018-07-13T12:31:30 <jhernandez> well, in spanish we can say it\'s passing, not sure if that makes sense at all in english
+2018-07-13T12:31:33 <jhernandez> :P
+2018-07-13T12:31:46 <Bosmon> Yes I felt sure it was an exercise of Spanish english
+2018-07-13T12:31:47 <jhernandez> oh, right, it did pass
+2018-07-13T12:32:04 <Bosmon> As part of this general "manana" idiom where things that are happening today are really happening tomorrow :)
+2018-07-13T12:32:27 <jhernandez> haha
+2018-07-13T12:33:05 <jhernandez> yeah, tomorrow ... a classic one
+2018-07-13T12:33:33 <jhernandez> we also have the andalusian "enseguia"
+2018-07-13T12:33:50 <jhernandez> which comes from the term "enseguida"
+2018-07-13T12:34:14 <jhernandez> that means that it is never going to happen
+2018-07-13T12:34:20 <jhernandez> xD
+2018-07-13T12:34:58 * dandimitrov joined the channel
+2018-07-13T12:35:50 <stegru> nice smug email to the arch list, Bosmon - however, it doesn\'t help the packages 5 layers deep into the rat\'s nest of dependencies
+2018-07-13T12:36:25 <jhernandez> stegru: yes, this is the first thing that came to my mind
+2018-07-13T12:36:28 * jhernandez shurgs
+2018-07-13T12:36:41 <stegru> is that what the lock file helps?
+2018-07-13T12:36:50 <jhernandez> but yeah, thanks for the heads up Bosmon
+2018-07-13T12:38:44 <Bosmon> I guess the lock file guards against some cases of that
+2018-07-13T12:40:15 <stegru> will no doubt get a finger wagging from tony
+2018-07-13T12:42:53 <stegru> amatas[m]: I\'m working on metrics this week, if there\'s any changes you need then let me know - or put it in GPII-3102
+2018-07-13T12:43:07 <stegru> I\'ve already fixed the duplicate entries
+2018-07-13T12:52:10 * dandimitrov has quit
+2018-07-13T12:53:28 <Bosmon> jhernandez - as in, allocated for this release? : P https://issues.gpii.net/projects/GPII/versions/10304
+2018-07-13T12:54:44 * dandimitrov joined the channel
+2018-07-13T12:55:54 * dandimitrov has quit
+2018-07-13T12:56:02 <jhernandez> hahaha, for "enseguia" do you mean?
+2018-07-13T12:58:11 * dandimitrov joined the channel
+2018-07-13T12:58:11 * dandimitrov has quit
+2018-07-13T12:58:19 <Bosmon> jhernandez yes
+2018-07-13T12:59:40 <Bosmon> Cheers for the pull jhernandez now merged!
+2018-07-13T13:00:07 <Bosmon> georgitodorov - I\'ve rolled a fresh release of gpii-windows at 0.3.0-dev.20180713T125916Z.3aecce7 which now automatically builds the test-window.exe on install
+2018-07-13T13:00:41 <Bosmon> georgitodorov - I think you may have to remove some corresponding material from the gpii-app install process which will now no longer be necessary
+2018-07-13T13:01:13 * simonjb joined the channel
+2018-07-13T13:01:54 <Bosmon> cindyli - dandimitrov__ and georgitodorov were needing some help picking an appropriate config
+2018-07-13T13:02:00 <georgitodorov> Bosmon: I never familiarized myself with this process
+2018-07-13T13:02:31 <georgitodorov> I guess jhernandez has a better idea of what needs to be removed?
+2018-07-13T13:03:13 <Bosmon> georgitodorov - he does, yes - jhernandez, could you help them out with fixing up the provisioning scripts for gpii-app with respect to the GPII-2884 merge?
+2018-07-13T13:04:09 <cindyli> georgitodorov, dandimitrov__, is it the same config we talked a couple of days ago with jhernandez about untrusted + dynamic device reporter?
+2018-07-13T13:05:05 <jhernandez> cindyli: no, at this moment is related to the provisioning scripts
+2018-07-13T13:05:09 <jhernandez> I guess we\'re not there yet
+2018-07-13T13:05:13 <Bosmon> cindyli - if you scroll up in the IRC logs you will see them starting to ask their question
+2018-07-13T13:05:13 * jhung joined the channel
+2018-07-13T13:05:20 * the-t-in-rtf has quit
+2018-07-13T13:05:20 <jhernandez> (in the config files)
+2018-07-13T13:05:49 <jhernandez> Bosmon: thanks for the merge, I\'m updating gpii-app/40 now
+2018-07-13T13:05:50 <Bosmon> They want to start up a configuration of the GPII with an untrusted local flowmanager, locally hosted CBFM and pouch persistence
+2018-07-13T13:06:02 * dandimitrov joined the channel
+2018-07-13T13:06:39 <Bosmon> They tried using gpii.config.cloudBased.development.all.local.json5 as their base grade for this
+2018-07-13T13:06:42 <jhernandez> georgitodorov: gpii-app/40 is what you will need to pull into your branch
+2018-07-13T13:06:48 * the-t-in-rtf joined the channel
+2018-07-13T13:06:50 <jhernandez> I\'m updating it now
+2018-07-13T13:06:56 <Bosmon> But got an error "Kettle server getDispatcher found no matching handlers, continuing"
+2018-07-13T13:07:27 <Bosmon> Oddly I see that there are no references to gpii.config.cloudBased.development.all.local anywhere in the codebase except in Configs.md
+2018-07-13T13:07:32 <Bosmon> So I wonder if this is actually tested?
+2018-07-13T13:08:29 <jhernandez> Bosmon: shall we roll up a dev release of windows?
+2018-07-13T13:10:08 <Bosmon> jhernandez - I just did
+2018-07-13T13:10:09 <Bosmon> See above
+2018-07-13T13:10:59 <cindyli> Bosmon, georgitodorov, dandimitrov, sounds like you can use gpii.config.untrusted.development.all.local.json5, which starts untrusted flow manager on 8081, CBFM on 8084 and is backed with pouchdb persistence
+2018-07-13T13:11:24 <Bosmon> cindyli - sounds great - what about the config that I listed?
+2018-07-13T13:11:27 <Bosmon> Is it supported/working?
+2018-07-13T13:12:38 <cindyli> Bosmon: the config you mentioned is to start CBFM only, and uses port 8081
+2018-07-13T13:13:08 <jhernandez> Bosmon: oh, cool! going for it
+2018-07-13T13:14:18 <Bosmon> cindyli - ok I see
+2018-07-13T13:14:18 <cindyli> 8081 is the common port used by most configs, which could be easily conflict with standalone apps started with other configs,  such as gpii-app probably
+2018-07-13T13:14:31 <Bosmon> I guess we need to make even more effort to explain what all our configs do
+2018-07-13T13:14:49 <dandimitrov> cindyli, thanks, I\xe2\x80\x99ll try the gpii.config.untrusted.development.all.local.json5 config
+2018-07-13T13:14:57 <cindyli> np
+2018-07-13T13:15:17 <dandimitrov> and it starts a local cloud flow manager ? (CFM)
+2018-07-13T13:15:28 <cindyli> Bosmon: i will enhance the README in gpii/configs/ directory in the GPII-1990 branch i\'m working on
+2018-07-13T13:15:44 <cindyli> dandimitrov: yes, it does start a local untrusted flow manager
+2018-07-13T13:16:19 <cindyli> dandimitrov: let me know if you only want to start a cloud based flow manager
+2018-07-13T13:17:23 <cindyli> the best way to start a cloud is to use the VM in the universal root directory. That VM will start perfs server on 9081, CBFM on 9082 and couchdb on 5984
+2018-07-13T13:17:38 <cindyli> the advantages of this VM are:
+2018-07-13T13:17:55 <cindyli> 1. no port conflicts with your things started on your host machine
+2018-07-13T13:18:42 <cindyli> 2. all ports for servers started in the VM are forwarded to the host machine, so you can access them like accessing ports on your host machine
+2018-07-13T13:19:05 <cindyli> 3. it uses couchdb instead of pouchdb, which is the closest config used by the production cloud
+2018-07-13T13:19:25 * gtirloni has quit
+2018-07-13T13:19:32 <cindyli> that\'s it
+2018-07-13T13:20:24 * sepidehshahi joined the channel
+2018-07-13T13:20:30 <cindyli> the README on how to use this VM: https://github.com/GPII/universal/blob/master/README.md#docker-containers
+2018-07-13T13:20:41 <cindyli> let me know if you have problems
+2018-07-13T13:30:24 * michelled joined the channel
+2018-07-13T13:32:58 <jhernandez> Bosmon: weird ... npm says that it can\'t find the dev release you just published
+2018-07-13T13:34:01 <jhernandez> No compatible version found: gpii-windows@0.3.0-dev.20180713T125916Z.3aecce7
+2018-07-13T13:39:34 * alanharnum joined the channel
+2018-07-13T13:45:09 * colinclark joined the channel
+2018-07-13T13:47:32 <dandimitrov> cindyli: It works! It saves setting changes correctly.
+2018-07-13T13:48:43 <dandimitrov> But there a rather strange misbehaviour for the PSP when using that config - it creates two instances of the gpii-app
+2018-07-13T13:50:36 <cindyli> congrats, dandimitrov. i wonder if the problem with starting two instances of the gpii-app relates to this config starts 2 separate severs?
+2018-07-13T13:51:13 <dandimitrov> From what I found it is caused by the fact that our configuration registrates the gpii-app under the flowManger - see here https://github.com/danailbd/gpii-app/blob/master/configs/app.dev.json#L12
+2018-07-13T13:51:20 <cindyli> what\'s the relationship between starting gpii-app and starting GPII server instances
+2018-07-13T13:51:38 <cindyli> ah ha
+2018-07-13T13:51:43 <dandimitrov> together with the fact that there are two flowManager components
+'
+

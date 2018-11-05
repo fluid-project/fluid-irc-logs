@@ -1,0 +1,296 @@
+b'2014-10-31T14:57:32 <Justin_o> Bosmon: definitely :(
+2014-10-31T14:57:34 <Justin_o> :)
+2014-10-31T14:57:45 <Bosmon> So in theory it isn\'t costing us much more to have more queue variants
+2014-10-31T14:57:53 <Bosmon> Justin_o - no, we have nothing of this sort in existence
+2014-10-31T14:58:10 <Justin_o> Bosmon: i guess i mean that it can handle it on a per function bases
+2014-10-31T14:58:25 <Justin_o> is there a way to extract some of that machinery to work with model values
+2014-10-31T14:58:33 <Justin_o> or maybe something from the model relay system?
+2014-10-31T14:58:48 <Bosmon> Justin_o nothing helpful that I can think of, no
+2014-10-31T14:58:58 <Bosmon> This is afaik a completely new use case
+2014-10-31T14:59:29 <Justin_o> Bosmon: i\'d expect  you to be the expert in that, so i\'ll take your word for it :)
+2014-10-31T14:59:39 <heidiv> michelled jhung agreed, that sounds noisy and not meaningful since there are so many. jon could we show the additional text \xe2\x80\x9c(external link)\xe2\x80\x9d on link hover/focus? we could also do aria-label=\xe2\x80\x9ctext here (external link)\xe2\x80\x9d but i like solutions that might help sighted users as well
+2014-10-31T14:59:54 <Justin_o> Bosmon: do you think you could provide me with a sketch of how this system might look/work
+2014-10-31T14:59:57 <Bosmon> Well, we can be sure it is, because it finally requires us to do this THING which has constantly peeped a little bit over the horizon but then peeped back again
+2014-10-31T15:00:04 <Bosmon> Which is, to compute what we could call "hashes" of models
+2014-10-31T15:00:21 <Bosmon> Because in JS, you can\'t store any keys to structures which are not themselves strings
+2014-10-31T15:00:37 <Bosmon> Which implies that we will have to have a way to reliably convert any kind of directModel to a unique string
+2014-10-31T15:01:17 <Justin_o> Bosmon: you want to use the directModel itself as a key?
+2014-10-31T15:01:38 <Bosmon> Justin_o - it needs to be, yes, otherwise we wouldn\'t be able to find the right queue object governing a particular directModel
+2014-10-31T15:02:32 <Bosmon> In practice we needn\'t do anything particularly clever or expensive about this
+2014-10-31T15:02:51 <Bosmon> But a key step is to iterate through the directModel recursively, sorting all the keys of any objects you find in it, say, in alphabetical order
+2014-10-31T15:03:17 <Justin_o> Bosmon: ah right
+2014-10-31T15:03:21 <Bosmon> And then appending both the keys and their values into a string that you build up progressively, with some appropriate separators
+2014-10-31T15:03:37 <Justin_o> Bosmon: could we just JSON stringify it?
+2014-10-31T15:03:53 <Bosmon> Justin_o - JSON stringifying won\'t produce a unique result
+2014-10-31T15:04:03 <Bosmon> Since the order of the keys in objects will be undefined
+2014-10-31T15:04:05 <jhung> heidiv: yes we can show additional content on focus/hover. Displaying it is the harder question to answer. We will need extra space to display it. Alternatively we can have the additional text/icon display like a tooltip when focus/hover.
+2014-10-31T15:04:13 <Bosmon> I remember for years I thought we would do something wacky like convert them into SHA-1 hashes
+2014-10-31T15:04:24 <Bosmon> But I\'m glad that the requirement never actually came up whilst I was in that crazy state
+2014-10-31T15:04:25 <heidiv> jhung yeah, overtop
+2014-10-31T15:04:43 <heidiv> looking to see if there are examples of this out there..
+2014-10-31T15:05:03 <jhung> heidiv: yes. So by default, an AT user will get the full description. Visual users will just see a link without the extra text until focus / hover.
+2014-10-31T15:05:22 <heidiv> yep, that\xe2\x80\x99s what i\xe2\x80\x99m thinkin\xe2\x80\x99
+2014-10-31T15:05:22 <Justin_o> Bosmon: yes.. glad we don\'t have to convert to SHA hashes..
+2014-10-31T15:05:48 <Bosmon> Justin_o - well, of course we can if we want to..... if we wanted to condense this "key" we could just hash that
+2014-10-31T15:05:53 <Bosmon> But in practice they are never going to be very big
+2014-10-31T15:05:55 <Justin_o> Bosmon: shouldn\'t the order of an object within a given environment be stable? We aren\'t transporting these between browsers anyways.
+2014-10-31T15:05:59 <jhung> heidiv: I\'ll hunt for examples too. Let me know if you find something.
+2014-10-31T15:06:00 <Bosmon> At least for this use case
+2014-10-31T15:06:12 <Bosmon> Justin_o - in practice the order depends on the exact history of the object as well as just the environment
+2014-10-31T15:06:20 <Justin_o> Bosmon: hmm okay
+2014-10-31T15:06:24 <Bosmon> For example, you can disturb the order by removing a key and readding it later
+2014-10-31T15:06:39 <Bosmon> In general "undefined" means "undefined" : P
+2014-10-31T15:06:58 <Bosmon> For some environments of course it is completely stable
+2014-10-31T15:07:08 <Bosmon> But the standard is clear that every environment reserves the right to do whatever it likes
+2014-10-31T15:08:09 <Bosmon> Anyway, this algorithm is a rare example of something that is genuinely fun to do : P
+2014-10-31T15:08:15 <Bosmon> And you will get to do it :)
+2014-10-31T15:08:43 <Justin_o> Bosmon: haha.. yes sounds like a fun project :)
+2014-10-31T15:09:51 <Justin_o> Bosmon:  if you could help me sketch the overall picture that would be helpful.. for example what we expect the grade to be like. For example do set/delete actions still get queued together.. i would imagine that the directModel for set/get/delete could all be identical
+2014-10-31T15:09:59 <Bosmon> Should only be about 5 lines..... involving a fluid.each, a fluid.keys and a sort : P
+2014-10-31T15:10:16 <Bosmon> Justin_o - yes, the directModels have the same structure for every operation
+2014-10-31T15:10:39 <Justin_o> Bosmon: so would they all be queued together or need to be separated based on function too?
+2014-10-31T15:10:48 <Bosmon> I think for now you can have a simple implementation that just maintains a single queue
+2014-10-31T15:10:56 <Bosmon> That is, across all operation types
+2014-10-31T15:11:14 <Bosmon> But there should be a big implementation comment explaining that a full implementation would act as a fully consistent "cache"
+2014-10-31T15:12:13 <Justin_o> Bosmon: what do you mean by "fully consistent"?
+2014-10-31T15:12:26 <Bosmon> One helpful thing to do would be to service a "get" request based on the most recent "write" that we had received locally, rather than going to persistence
+2014-10-31T15:12:41 <Bosmon> But this is a hugely intricate implementation area and we shouldn\'t implement any elaborate behaviour until we have a client for it
+2014-10-31T15:12:59 <Bosmon> Justin_o - I mean, that the dataSource wrapper would fully understand the relationship between interleaved read and write operations
+2014-10-31T15:13:19 <Bosmon> And know that if it has an outstanding "write" operation, it could use this to service an intermediate "read" operation
+2014-10-31T15:13:38 <Bosmon> But cache coherency is a vast and elaborate implementation area that we should just shelve for now
+2014-10-31T15:14:02 <Bosmon> You should just document the wrapper as only being primarily useful for workloads that consist of just writes, or just reads
+2014-10-31T15:14:05 <Justin_o> Bosmon: that\'s interesting.. it would be faster, but i can imagine it could be dangerous if the pending write request was never actually registered to the persistence
+2014-10-31T15:14:32 <Justin_o> Bosmon: +1 for shelving at the moment :)
+2014-10-31T15:15:07 <Bosmon> Justin_o - sure, it could be "dangerous" - but on the other hand it could be "infuriating" if an application stopped working properly because it lost its data connection
+2014-10-31T15:15:17 <Bosmon> There is a vast civilization of tradeoffs that could be explored here
+2014-10-31T15:16:39 <Bosmon> Well... perhaps we should at least operate two queues per directModel, just for consistency
+2014-10-31T15:16:53 <Bosmon> I think the-t-in-rtf1 will never perform writes at all, so he won\'t be bothered by it
+2014-10-31T15:17:11 <Bosmon> I imagine the feedback tool will just perform one read, when it starts up, and after that will just issue writes
+2014-10-31T15:17:15 <Justin_o> Bosmon: sure.. one queue for write/delete and one for get
+2014-10-31T15:17:39 <Bosmon> Justin_o - yup
+2014-10-31T15:17:46 <Bosmon> It won\'t be much extra implementation effort
+2014-10-31T15:17:53 <Bosmon> And we\'ll just have the queues non-interacting for now
+2014-10-31T15:18:22 <Bosmon> The operation type will just be another piece of info that gets shoved into the "hash" that is used to locate the queue for the current operation
+2014-10-31T15:18:43 <Bosmon> That is, you\'ll just stick "|read" or "|write" on the end of the long string before you use it to look up
+2014-10-31T15:19:21 <Justin_o> Bosmon: maybe i should put it at the beginning so we can sort them out easier if we need to
+2014-10-31T15:20:06 <Justin_o> or i could have more hierarchy in the object and separate the queues like {write: {hash: value}, read: {hash: value}}
+2014-10-31T15:20:24 <Bosmon> Justin_o - yes.... either is workable
+2014-10-31T15:21:59 <Bosmon> I don\'t think there\'s a huge amount to choose between the approaches
+2014-10-31T15:22:37 <Justin_o> Bosmon: are we still trying to implement the amalgamation of requests?
+2014-10-31T15:22:55 <Bosmon> It\'s possible the version with hierarchy might generate a bit less garbage over the lifetime of the wrapper
+2014-10-31T15:23:11 <Bosmon> Justin_o - there was never any more amalgamation planned than "throw away all but the most recent request"
+2014-10-31T15:23:18 <Justin_o> Bosmon: ah okay
+2014-10-31T15:23:46 <Justin_o> Bosmon: but what about the issue we had for feedback, where we wanted all of the requests to remain
+2014-10-31T15:23:52 <Justin_o> but were getting too many to handle at once
+2014-10-31T15:24:00 <Bosmon> Justin_o - well, did we really want them all to remain?
+2014-10-31T15:24:07 <Justin_o> Bosmon: i believe so
+2014-10-31T15:24:15 <Bosmon> Don\'t we really just want to ensure that "the current application state will hit persistence eventually"
+2014-10-31T15:25:04 <Justin_o> Bosmon: i\'ll have to look into it again, it\'s not fresh in my mind anymore. i guess once this is in place i can try to put it into the the feedback tool and see if things work
+2014-10-31T15:25:30 <Bosmon> Justin_o - I think we never really wanted a model where every individual UI change made by the user results in a different document revision
+2014-10-31T15:25:43 <Bosmon> There are some applications that might be important for, but it doesn\'t seem like this is one of them
+2014-10-31T15:25:51 <Bosmon> All we want is to "have the most recent state persisted"
+2014-10-31T15:26:17 <Justin_o> Bosmon: okay.. i\'ll start with that and we can add more if needed.
+2014-10-31T15:26:26 <Bosmon> Justin_o - cool
+2014-10-31T15:30:57 <anastasiac> fluid-everyone, we\xe2\x80\x99ll be conducting today\xe2\x80\x99s stand-up using the new Vidyo software. If you\xe2\x80\x99re connecting remotely and don\xe2\x80\x99t have the client on your machine, ping avtar
+2014-10-31T15:43:41 <kasparnet> Bosmon: http://www.youtube.com/watch?v=CdqoNKCCt7A&t=0m54s
+2014-10-31T15:46:33 <Bosmon> kasparnet - my Chrome seems to have conked
+2014-10-31T15:46:37 <Bosmon> Anyway, I am here now
+2014-10-31T15:46:52 <kasparnet> Bosmon: cool - up for a quick call?
+2014-10-31T15:51:11 <Bosmon> kasparnet - sure
+2014-10-31T16:29:00 * anastasiac has quit
+2014-10-31T16:31:54 * michelled has quit
+2014-10-31T16:38:38 * avtar has quit
+2014-10-31T16:48:17 * anastasiac joined the channel
+2014-10-31T16:57:43 <Justin_o> Bosmon: i have another question for you if you are still around
+2014-10-31T17:18:18 * kasparnet has quit
+2014-10-31T17:20:20 <Bosmon> Hi Justin_o
+2014-10-31T17:22:02 <Justin_o> Bosmon: hello...
+2014-10-31T17:22:18 <Justin_o> i was wondering if directModel can contain arrays and nested objects
+2014-10-31T17:23:12 * slim_jim joined the channel
+2014-10-31T17:23:40 <Bosmon> Justin_o - of course
+2014-10-31T17:23:48 <Bosmon> That is the whole point : P
+2014-10-31T17:24:05 <Justin_o> Bosmon: okay.. that\'s what I thought.. so i\'ll have to recurse into each to convert them to strings
+2014-10-31T17:24:26 <Justin_o> i just wanted to make sure that was the case before I went through the process of doing that
+2014-10-31T17:25:43 * kasparnet joined the channel
+2014-10-31T17:31:05 * kasparnet has quit
+2014-10-31T17:31:55 * kasparnet joined the channel
+2014-10-31T17:33:09 * kasparnet has quit
+2014-10-31T17:33:23 * heidiv has quit
+2014-10-31T17:35:59 * heidiv joined the channel
+2014-10-31T18:29:05 * anastasiac has quit
+2014-10-31T18:32:06 * Jess_ has quit
+2014-10-31T19:06:19 * anastasiac joined the channel
+2014-10-31T19:13:26 * sgithens___ has quit
+2014-10-31T19:13:54 * sgithens____ joined the channel
+2014-10-31T19:55:35 * heidiv has quit
+2014-10-31T20:02:51 * jhung has quit
+2014-10-31T20:14:10 * michelled joined the channel
+2014-10-31T20:22:33 * jessm joined the channel
+2014-10-31T20:35:50 * michelled has quit
+2014-10-31T20:48:41 * michelled joined the channel
+2014-10-31T20:54:48 * michelled has quit
+2014-10-31T20:57:03 * amilchev has quit
+2014-10-31T20:58:16 * amilchev joined the channel
+2014-10-31T21:01:07 * clown has quit
+2014-10-31T21:01:28 * anastasiac has quit
+2014-10-31T21:06:44 * anvk has quit
+2014-10-31T21:19:26 * simonjb has quit
+2014-10-31T21:33:49 * slim_jim has quit
+2014-10-31T22:13:15 * jessm has quit
+2014-10-31T22:56:54 * Justin_o has quit
+2014-10-31T23:56:32 * amilchev has quit
+2014-10-31T23:57:44 * amilchev joined the channel
+'
+
+b'2014-10-31T00:15:54 * Bosmon has quit
+2014-10-31T00:23:15 * kasparnet joined the channel
+2014-10-31T00:28:12 * jhernandez has quit
+2014-10-31T00:29:49 * Bosmon joined the channel
+2014-10-31T00:41:16 * kasparnet has quit
+2014-10-31T01:48:59 * Bosmon has quit
+2014-10-31T01:53:14 * Bosmon joined the channel
+2014-10-31T02:37:17 * michelled joined the channel
+2014-10-31T03:39:04 * michelled has quit
+2014-10-31T03:41:40 * kasparnet joined the channel
+2014-10-31T03:45:58 * kasparnet has quit
+2014-10-31T05:06:50 * Justin_o has quit
+2014-10-31T09:53:46 * kasparnet joined the channel
+2014-10-31T09:55:44 * jhernandez joined the channel
+2014-10-31T09:57:55 * the-t-in-rtf1 joined the channel
+2014-10-31T09:59:22 * the-t-in-rtf has quit
+2014-10-31T10:01:50 * slim_jim joined the channel
+2014-10-31T10:04:24 <jhernandez> slim_jim: hey, just seen your latest comment
+2014-10-31T10:04:34 <jhernandez> 21:38 < slim_jim> jhernandez: err getScreenResolution is missing form the cc file? setScreenResolution is there
+2014-10-31T10:05:31 <jhernandez> that method is pure js, it just makes a call to getDisplays (which is in the cc file)
+2014-10-31T10:05:36 <slim_jim> jhernandez: yeah - get is in the JS binding but not in the C as far as I can tell
+2014-10-31T10:06:10 <slim_jim> jhernandez: oh Doah!  Iwas assuming all the same and not reading the code!
+2014-10-31T10:07:02 <slim_jim> jhernandez: Bosman mention using ffi for windows bindings - is that what you use in linux? I\'m try to figure out where to start adding my working spike to a settings handler
+2014-10-31T10:07:27 <slim_jim> Perhasp Linux is same as WIndows, or perhaps very different?
+2014-10-31T10:07:27 <jhernandez> yeah, for windows you have to use ffi
+2014-10-31T10:07:45 <jhernandez> in linux we use different libraries
+2014-10-31T10:07:54 <jhernandez> but, in the end, the concept is the same
+2014-10-31T10:08:51 <jhernandez> just found that: http://wiki.gpii.net/w/Building_node.js_Windows_C/C%2B%2B_Addons
+2014-10-31T10:09:41 <slim_jim> jhernandez: thanks. So now I need to know which settings handler it goes it. I should be able to figure that!
+2014-10-31T10:09:56 <slim_jim> jhernandez - Windows support guy ftw
+2014-10-31T10:10:52 <jhernandez> xD
+2014-10-31T10:11:09 <jhernandez> I don\'t know whether you can do that in windows, sorry
+2014-10-31T10:11:25 <jhernandez> linux/android guy here :P
+2014-10-31T10:12:39 <jhernandez> there are some hints here http://stackoverflow.com/questions/15897847/how-to-change-screen-resolution-programmatically
+2014-10-31T10:17:59 <slim_jim> jhernandez: it\'s easy enough - the outline logic is as your X code :)
+2014-10-31T10:24:10 <jhernandez> cool
+2014-10-31T10:27:38 * slim_jim has quit
+2014-10-31T10:32:59 * slim_jim joined the channel
+2014-10-31T10:36:53 * kasparnet has quit
+2014-10-31T10:37:25 * kasparnet joined the channel
+2014-10-31T10:41:53 * kasparnet has quit
+2014-10-31T11:05:56 * kasparnet joined the channel
+2014-10-31T11:06:40 * Justin_o joined the channel
+2014-10-31T11:56:20 * jhung joined the channel
+2014-10-31T12:19:22 * Jess_ joined the channel
+2014-10-31T12:26:26 * kasparnet has quit
+2014-10-31T12:37:13 * anastasiac joined the channel
+2014-10-31T12:44:09 * kasparnet joined the channel
+2014-10-31T12:52:55 * kasparne_ joined the channel
+2014-10-31T12:56:38 * kasparnet has quit
+2014-10-31T13:05:37 * anvk joined the channel
+2014-10-31T13:14:23 * heidiv joined the channel
+2014-10-31T13:39:22 <jhung> anastasiac, Justin_o, heidiv - I have submitted a pull request for the Fluid website. https://github.com/fluid-project/fluidproject.org/pull/1 Any idea who should review it?
+2014-10-31T13:40:06 <heidiv> jhung i could take a look at it after lunch. i don\xe2\x80\x99t have permission to pull it in, but i could look it over
+2014-10-31T13:40:33 <Justin_o> jhung, heidiv: what was the reason for the external links symbol?
+2014-10-31T13:40:48 <Justin_o> i meant to ask about that yesterday when i was looking over the build site stuff
+2014-10-31T13:40:57 <heidiv> Justin_o a way of indicating an external link ;)
+2014-10-31T13:41:18 <heidiv> there are many, so the distinction seemed it would be helpful
+2014-10-31T13:41:51 <anastasiac> Jess_, will you be in the office today?
+2014-10-31T13:43:02 <anastasiac> jhung, Justin_o, I can deploy the fluidproject site on my machine so Jess_ can give it a looksy if she\xe2\x80\x99s onsite
+2014-10-31T13:43:53 <anastasiac> heidiv, a concern with the external link icons is that almost every single link on the site (and there are many) is external, so the icons are just everywhere
+2014-10-31T13:45:43 <heidiv> anastasiac i see. not pretty. it just seemed a bit surprising to me to be sent to a different site each time i clicked something that felt internal\xe2\x80\xa6 i wonder if there\xe2\x80\x99s a better way to let users know that happens.
+2014-10-31T13:46:10 * simonjb joined the channel
+2014-10-31T13:46:38 <anastasiac> yeah, I understand the issue\xe2\x80\xa6 there are just so many. It looks like someone spilled crumbs all over the site
+2014-10-31T13:46:48 <anastasiac> you should see the build site!
+2014-10-31T13:47:47 <heidiv> anastasiac eek! ok, that\xe2\x80\x99s not good. we could add aria-labels to the links that echo the link text + (external link). sounds like that would be better. but it would only be available to AT users...
+2014-10-31T13:48:38 <heidiv> the title tag is generally to be avoided but i wonder if a title and an aria-label would make sense in this case
+2014-10-31T13:48:38 <anastasiac> well, let\xe2\x80\x99s get some other opinions. Maybe I\xe2\x80\x99m just a neat freak :-)
+2014-10-31T13:48:59 <heidiv> anastasiac i believe you - it sounds distracting and ugly
+2014-10-31T13:50:08 * simonjb has quit
+2014-10-31T13:50:09 <anastasiac> well, let\xe2\x80\x99s talk after lunch, heidiv, after you\xe2\x80\x99ve had a chance to look at it. Maybe also check out the build site branch as well, since they\xe2\x80\x99re designed to \xe2\x80\x9cgo together\xe2\x80\x9d i.e. same styling, linking to each other
+2014-10-31T13:50:19 * simonjb joined the channel
+2014-10-31T13:50:28 <heidiv> anastasiac ok will take a look soon\xe2\x80\xa6 heading into meeting
+2014-10-31T13:50:38 * clown joined the channel
+2014-10-31T13:54:48 * simonjb has quit
+2014-10-31T13:55:40 * simonjb joined the channel
+2014-10-31T13:56:21 <jhung> thanks all
+2014-10-31T14:00:41 * anastasiac has left the channel
+2014-10-31T14:00:58 * anastasiac joined the channel
+2014-10-31T14:05:37 * avtar joined the channel
+2014-10-31T14:07:41 <jhung> anastasiac: as an alternative to those external link icons, we can hide them by default and show them when focused?
+2014-10-31T14:07:49 <jhung> ^heidiv too
+2014-10-31T14:09:06 <anastasiac> interesting idea. Would that include hover as well as focus? I wonder what that user experience would be like. I would imagine it might be a bit jarring, since the icons are in-line with the text, so the change might cause the text to move around a bit
+2014-10-31T14:11:19 * kasparne_ has quit
+2014-10-31T14:14:24 <jhung> yes hover too anastasiac. As for positioning, I think there are ways to handle this. Maybe give a subtle margin to left and right of inline links to give just enough space. Also a slightly wider margin on links helps give a subtle emphasis too.
+2014-10-31T14:14:49 <jhung> Also we can give a transition to the pop-in/out so it doesn\'t feel as rough.
+2014-10-31T14:29:30 * kasparnet joined the channel
+2014-10-31T14:33:00 <Justin_o> Bosmon: did this comment apply to all of the tests or specifically to the throttling one. https://github.com/fluid-project/infusion/pull/566#discussion_r19628050
+2014-10-31T14:33:13 <Justin_o> Bosmon: I have removed the throttle request queue for lack of use case
+2014-10-31T14:33:46 * michelled joined the channel
+2014-10-31T14:37:38 <michelled> jhung, heidiv, anastasiac: for what it\'s worth, I find it difficult to read the text with those icons scattered through it. It doesn\'t bother me on the actual circle icons, but it does just seem like noise
+2014-10-31T14:37:49 <michelled> since it\'s on almost every link on the page
+2014-10-31T14:37:56 <michelled> I just end up not seeing it
+2014-10-31T14:38:22 <michelled> we should probably ask Dana and Jess_ for an opinion
+2014-10-31T14:38:36 <michelled> it\'s interesting that the external link icons weren\'t in the original design
+2014-10-31T14:39:24 <michelled> the site looks so good now! I just can\'t wait see it live :)
+2014-10-31T14:39:53 <Bosmon> Justin_o - I think we can allow "white box testing" here
+2014-10-31T14:40:15 <Bosmon> That is, unless you have no reason to believe that a particular queue is sensitive to a particular delay threshold, there is no need to write tests involving it
+2014-10-31T14:41:49 <Justin_o> Bosmon: okay.. and what about this portion of the comment "For example, we know that 2 requests were queued, but we are unable to resolve given this structure which ones they were"
+2014-10-31T14:42:09 <jhung> michelled: there are things in the original design that needed modification. Indicating external links where appropriate I think is a good idea. However in our case since most of our links are external, it seems a bit redundant.
+2014-10-31T14:42:10 <Justin_o> or is simply having the number of requests and etc okay for the fifo and "debounce" <- to be renamed, ones
+2014-10-31T14:43:30 <michelled> jhung: particularly on the build site who\'s job it is to point to external things. It exists *only* to do this
+2014-10-31T14:46:22 <jhung> michelled: agreed. For the build site I think we can do without the external link icons. Having OverviewPanel on each demo page certainly helps orient the user once they reach their destination.
+2014-10-31T14:46:33 <Bosmon> Justin_o - no, we still need to be able to know exactly which requests were queued and which ones dumped
+2014-10-31T14:46:40 <Bosmon> Just knowing the number of them isn\'t sufficient
+2014-10-31T14:46:40 <jhung> However, demos do not have a link back to the Build site.
+2014-10-31T14:47:28 <Justin_o> Bosmon: okay thanks..
+2014-10-31T14:47:42 <Justin_o> Bosmon: I also left you another question on the pull request about how the amalgamation actually works
+2014-10-31T14:47:55 <Bosmon> Justin_o - I just left a lengthy response to that one
+2014-10-31T14:48:03 <Justin_o> Bosmon: thanks, i\'ll go take a look
+2014-10-31T14:48:05 <Bosmon> The short answer is - "we do nothing" : P
+2014-10-31T14:48:16 <Bosmon> The longer answer is - "we do only exactly those things that we need to do" : P
+2014-10-31T14:48:27 <Bosmon> I\'m sure colinclark would approve both of these answers heartily if he were here.......
+2014-10-31T14:49:12 <michelled> jhung: I think it would be a maintenance hassle to have the demos link back to the nightly build page given that we expect to host released versions of demos too.
+2014-10-31T14:49:37 <Justin_o> Bosmon: :)
+2014-10-31T14:49:45 <jhung> good point michelled.
+2014-10-31T14:50:11 <Justin_o> Bosmon: okay.. so i just read them over.. for the first case "i) simple concurrency limiting (for writing to couch/pouch)" the current implementation is actually correct
+2014-10-31T14:50:25 * slim_jim has quit
+2014-10-31T14:50:58 <Justin_o> Bosmon: for the second case "ii) concurrency limiting PLUS debouncing (for UI liveness, e.g. autocomplete)" was this more like what i had for throttle before?
+2014-10-31T14:51:37 <Bosmon> Justin_o - the thing currently called "fluid.requestQueue.debounce", right?
+2014-10-31T14:51:43 <Justin_o> Bosmon: yes
+2014-10-31T14:51:46 <Bosmon> Which is now even more misleadingly named than before : P
+2014-10-31T14:52:07 <Justin_o> Bosmon: haha yes.. i\'d need to rename it to something like concurrencyLimited or something?
+2014-10-31T14:52:10 <Bosmon> So yes
+2014-10-31T14:52:16 <Bosmon> Justin_o - yes that seems reasonable
+2014-10-31T14:52:33 <Bosmon> And now it looks like the "fifo" implementation which is the white elephant - since I\'m not sure we can think of a current use for it
+2014-10-31T14:52:39 <Justin_o> Bosmon: okay.. and what about the second one.. the one that should be called debounce?
+2014-10-31T14:53:00 <Justin_o> Bosmon: i needed that for the feedback tool
+2014-10-31T14:53:07 <Bosmon> Justin_o - I think something like that yes - perhaps "debounceAndLimit" to be clearer
+2014-10-31T14:53:18 <Bosmon> Justin_o - isn\'t the one you need for the feedback tool simply the "concurrencyLimited" one?
+2014-10-31T14:53:22 <Justin_o> Bosmon: we wanted all of the requests but pouchdb had issues handling them if they came in at the same time
+2014-10-31T14:53:47 <Bosmon> Justin_o - I\'m not sure we really do want all the requests, in practice - this is what I am getting at with the "amalgamating"
+2014-10-31T14:53:48 <Justin_o> Bosmon: we didn\'t want to lose any as they were all valid requests
+2014-10-31T14:54:06 <Bosmon> Given each request simply says, "update pouch with whatever the current cached model has"
+2014-10-31T14:54:23 <Justin_o> Bosmon: sure, but what if they come in a different paths into the model
+2014-10-31T14:54:29 <Justin_o> paths into the datasource
+2014-10-31T14:54:42 <Bosmon> Justin_o - sure - and that\'s the other big issue with the wrappers which I had forgotten about
+2014-10-31T14:54:57 <Bosmon> WHich is, that there should be one queue PER DIRECTMODEL VALUE
+2014-10-31T14:55:02 <Bosmon> Not one queue for the datasource as a whole
+2014-10-31T14:55:56 <Bosmon> Since clearly with pouch/couch, there\'s only a possibility of conflict if we are trying to write to the same document
+2014-10-31T14:56:21 <Bosmon> Each distinct value of the directModel will correspond to a different document in persistence
+2014-10-31T14:56:36 <Bosmon> And I think it is the same for the-t-in-rtf1 \'s case too
+2014-10-31T14:56:43 <Bosmon> A different URL should be limited by a different queue
+2014-10-31T14:56:50 <Justin_o> Bosmon: yes.. i was just coming to think of this..
+2014-10-31T14:56:57 <Bosmon> This makes the implementation much more fun :)
+2014-10-31T14:57:01 <Justin_o> Bosmon: okay.. so the whole idea maybe needs to be rethought :(
+2014-10-31T14:57:02 <Justin_o> haha yes
+2014-10-31T14:57:15 <Bosmon> And will make you even gladder that you cast out any unnecessary queue variants before we got to this point : P
+2014-10-31T14:57:22 <Justin_o> Bosmon:  is there a way we can reuse things from the event system.. they must handle this type of case already to some degree right
+2014-10-31T14:57:31 <Bosmon> Although to be honest all the queue-generation logic will be consolidated in the base grade
+'
+

@@ -1,0 +1,282 @@
+b'2013-09-23T19:00:48 <Bosmon> I am now working at the next level of insanity - which is assimmillating the MODEL RELAY system
+2013-09-23T19:01:00 <Bosmon> For which cindyli\'s implementation in UIO is a helpful guide
+2013-09-23T19:01:39 <Bosmon> Unfortunately this will create a huge amount of disruption since it involves going back on an assumption we made almost on day 1 in Fluid... that the "model" reference of a component is stable
+2013-09-23T19:02:07 <Justin_o> Bosmon: so i was talking with cindyli  a bit about the template combining stuff.. so the integrator will need to supply a template template which defines how all the templates for the sub panels are arranged.. as well as anything else that needs to be rendered for the parent panel.. the question for me is how to get those other templates into this.. i could just dump the resourceText into a jQuery and use that to insert the other pieces at
+2013-09-23T19:02:07 <Bosmon> My plan is to create a new base grade, "modelRelayComponent" that has the new semantic, and we will have to vet all of our components in Fluid 1 by 1 to make them ready for the new model
+2013-09-23T19:02:07 <Justin_o> the proper locations and get the html back out to put in the resourceText field.. or perhaps there is a better way.
+2013-09-23T19:02:32 <Bosmon> Justin_o - it would be very helpful to avoid round-tripping the template through the document
+2013-09-23T19:02:41 <Justin_o> Bosmon: sounds interesting.. is this going to be a 2.0 thing then
+2013-09-23T19:02:42 <Justin_o> ?
+2013-09-23T19:02:53 <Bosmon> There is still a "back door" in RendererComponent that accepts a "function returning some text" in the role of a template
+2013-09-23T19:03:12 <Justin_o> Bosmon: interesting.. how does that work?
+2013-09-23T19:03:18 <Bosmon> So I suggest you try to use this to see if it is good enough for you
+2013-09-23T19:04:00 <Bosmon> Justin_o - the option "templateSource"
+2013-09-23T19:04:20 <Justin_o> Bosmon: anyways.. i didn\'t mean to put it in the DOM exactly just to wrap the text in a jQuery.. like $("<div>\xe2\x80\xa6</div>)
+2013-09-23T19:04:37 <Bosmon> You might notice the following very dubious section in RendererUtilities.js
+2013-09-23T19:04:38 <Bosmon> if (typeof(source) === "function") { // TODO: make a better attempt than this at asynchrony
+2013-09-23T19:04:39 <Bosmon> source = source();
+2013-09-23T19:04:39 <Bosmon> }
+2013-09-23T19:04:45 <Bosmon> About line 102
+2013-09-23T19:04:58 <Bosmon> Justin_o - that will still unavoidably create DOM material for the template
+2013-09-23T19:05:05 <Bosmon> Even if it isn\'t put into the document\'s DOM
+2013-09-23T19:05:16 <Bosmon> You should really make sure you manipulate the templates as text until the final moment
+2013-09-23T19:05:21 <Justin_o> Bosmon: okay.. looking at your code above.. i remember that spot now
+2013-09-23T19:05:48 <Justin_o> Bosmon: so i\'ll have to do some string operations to combine the templates together from the various resourceText fields
+2013-09-23T19:05:49 <Bosmon> Given you are generating your own grade, to be honest, I\'m not sure that this will be helpful
+2013-09-23T19:05:52 <Justin_o> does that sound about right?
+2013-09-23T19:05:53 <Bosmon> Justin_o - that\'s correct
+2013-09-23T19:06:20 <Bosmon> Unfortunately as the comment suggests, the implementation there doesn\'t really help you with the asynchrony angle
+2013-09-23T19:06:40 <Bosmon> You will still need to make sure that "somehow this has already been achieved" before the time anyone calls the "render" function
+2013-09-23T19:07:02 <Bosmon> And given you have achieved it, the fact that you can call a function to return the result doesn\'t really help you very much with the important problem : P
+2013-09-23T19:07:35 <Bosmon> So you may as well just stick the whole template itself into templateSource after all
+2013-09-23T19:08:01 <Bosmon> Until we have the "asynchronous ginger world", this kind of problem is going to keep recurring
+2013-09-23T19:18:45 <Justin_o> Bosmon: okay.. so i\'ll do that.. i\'ll just rewrite the resourceText for the template to include the sub panels templates as well
+2013-09-23T19:19:00 <Bosmon> Justin_o - cool!
+2013-09-23T19:19:02 <Bosmon> Should be interesting
+2013-09-23T19:19:15 <Justin_o> Bosmon: at the moment none of the panels are able to fetch there own templates anyways.. so this should be right in line with that :)
+2013-09-23T19:19:30 <Bosmon> Justin_o - yes
+2013-09-23T19:19:37 <Justin_o> Bosmon: hopefully.. we\'ll see how my string hacking skills go
+2013-09-23T19:19:41 <Bosmon> In theory you might use the renderer itself for this task
+2013-09-23T19:20:17 <Bosmon> Thankfully since we abolished the "rsf:id" system there is now no longer a difference in form between a renderer template and its rendered result
+2013-09-23T19:20:22 <Justin_o> Bosmon: interesting are there public functions i can borrow for that.. or will i need to make a call to the renderer itself and get it dump out the text
+2013-09-23T19:20:34 <Bosmon> And so fewer obstacles to creating a "renderer template-renderer"
+2013-09-23T19:20:49 <Bosmon> Justin_o - In theory all you would need is a use of the "UIVerbatim" component type
+2013-09-23T19:21:19 <Justin_o> Bosmon: which would return the markup to me as a string right?
+2013-09-23T19:21:25 <Bosmon> This has a member named "markup" holding the already-rendered markup
+2013-09-23T19:21:30 <Bosmon> Justin_o - the other way round
+2013-09-23T19:21:36 <Bosmon> You SUPPLY the markup as a string
+2013-09-23T19:22:02 <Bosmon> But the overall renderer action returns the markup as a string too, yes
+2013-09-23T19:22:38 <Bosmon> But you would do this as a "private" invocation of the renderer, rather than through using RendererComponent which isn\'t set up to put the markup anywhere but in the DOM
+2013-09-23T19:23:49 <Justin_o> Bosmon: so i could just make a call to fluid.renderer itself?
+2013-09-23T19:23:55 <Bosmon> Justin_o - yes
+2013-09-23T19:24:17 <Bosmon> On the other hand, you may decide that this is too much trouble, and just operate a giant instance of fluid.stringTemplate instead : P
+2013-09-23T19:25:00 <Bosmon> I guess this would still require you to somehow "parse" the outer template and then discover where all the "holes" are
+2013-09-23T19:25:08 <Bosmon> And so is not really advisable
+2013-09-23T19:26:12 <Bosmon> All the same, the kind of component tree you\'ll need to make this work will be something we have not seen for many moons
+2013-09-23T19:26:37 <Justin_o> Bosmon: i guess the integrator could supply a markup block in the options that contains the string template tokens which would correspond to templates, but i\'ll try to use the renderer first
+2013-09-23T19:26:40 <Bosmon> Something involving both UIJointContainer and UIVerbatim
+2013-09-23T19:26:51 <Justin_o> Bosmon: time to dig through the docs i guess :)
+2013-09-23T19:27:03 <Bosmon> The member "jointID" in a component is what signals to the renderer to make a jump from one template to another
+2013-09-23T19:27:51 <Bosmon> So the component tree for this rendering involves i) 1 UIJointContainer, with ii) a UIVerbatim inside it, for every subtemplate
+2013-09-23T19:29:35 <Bosmon> Justin_o - the only usage I can find of jointID in the whole image is in the manual tests
+2013-09-23T19:29:40 <Bosmon> "renderer-component-types.html"
+2013-09-23T19:29:53 <Bosmon> I guess we have anastasiac to thank for this, since without this we would have no examples at all : P
+2013-09-23T19:30:19 <Bosmon> Ironic that 5 years had to elapse before we had a use case for this
+2013-09-23T19:30:29 <Bosmon> When we were just on the point of abolishing the renderer anyway
+2013-09-23T19:31:12 <Justin_o> Bosmon: that is funny actually, you were very forward thinking
+2013-09-23T19:31:19 <Justin_o> Bosmon: i guess these are the docs http://wiki.fluidproject.org/display/Infusion13/Renderer+Component+Types
+2013-09-23T19:31:24 <Justin_o> and i\'ll take a look at that example
+2013-09-23T19:32:19 <Bosmon> Justin_o - actually in the "RSF Renderer" from which this was taken, this component was much more frequently used
+2013-09-23T19:32:49 <Bosmon> Since the system typically had to create the entire markup for a page in one pass on the server ...
+2013-09-23T19:33:15 <Bosmon> Given we never yet sorted out our infrastructure on the client for allowing one rendererComponent to be nested inside another, this component was hugely less useful
+2013-09-23T19:33:40 <Bosmon> But given you are now mocking up this infrastructure yourself with your "grade-combining grade", the use case for UIJointContainer reappears ahead of time
+2013-09-23T19:33:51 <Bosmon> But thankfully the "new renderer" will be free of such monstrosities
+2013-09-23T19:34:53 <Bosmon> The "joint" infrastructure will be moved inside the IoC system itself where the user won\'t be constantly stubbing their toe on it
+2013-09-23T19:35:58 <Justin_o> Bosmon: :) looking forward to the new system.. i guess it\'s a ways off, but things in general keep getting better everyday
+2013-09-23T19:36:35 <Bosmon> Yes
+2013-09-23T19:36:50 <Bosmon> We should have a meeting about the "new model infrastructure" soon, since it will involve big changes for all of us
+2013-09-23T19:37:29 <Bosmon> The central issue is that model references will no longer be shared i) between different components, and ii) between the users of components and the components
+2013-09-23T19:38:28 <Bosmon> And it will become possible for the model reference of a component to become "undefined"
+2013-09-23T19:38:45 <Bosmon> BIG CHANGES are afoot!
+2013-09-23T19:38:52 <Justin_o> Bosmon: whoa.. that\'s different.. did you want to have this talk before or after the 1.5 release?
+2013-09-23T19:39:03 <Bosmon> Justin_o - I guess it can happen concurrently or whenever
+2013-09-23T19:39:12 <Bosmon> You will need to "opt in" to the new system by using the new grade of "modelRelayComponent"
+2013-09-23T19:39:22 <Bosmon> So it shouldn\'t bother anyone who doesn\'t want to opt in to it
+2013-09-23T19:39:25 <Justin_o> Bosmon: ah okay..
+2013-09-23T19:39:39 <Bosmon> But for 2.0 this grade will become simply renamed to "modelComponent" and we will abolish the old one
+2013-09-23T19:39:43 <Justin_o> Bosmon: is there enough for a whole community meeting for this topic?
+2013-09-23T19:40:09 <Bosmon> Probably, yes
+2013-09-23T19:40:31 <Justin_o> Bosmon: did you want to lead one on Oct 9 for this topic?
+2013-09-23T19:40:50 <Bosmon> I guess that\'s conceivable, yes
+2013-09-23T19:41:05 <Bosmon> I should have something implemented by then
+2013-09-23T19:42:28 <Justin_o> Bosmon: cool.. i\'ll book one for then.. if you can\'t let me know and we can change it
+2013-09-23T19:42:54 <Bosmon> Justin_o - cool
+2013-09-23T19:43:14 <Justin_o> Bosmon: http://wiki.fluidproject.org/display/fluid/Community+workshops
+2013-09-23T19:43:20 <Bosmon> This will enable us to do a number of helpful things, for example not having to wrap every component\'s value in some stupid name such as "value"
+2013-09-23T19:43:32 <Bosmon> We realised we had to do this very early on, when InlineEdit was designed
+2013-09-23T19:43:45 <Bosmon> But it was an inevitable consequence of the "shared model reference" model we had started with
+2013-09-23T19:44:21 <Bosmon> And of course we continue to find ourselves doing this in situations such as UIOptions\' panels etc.
+2013-09-23T19:44:29 <Justin_o> Bosmon: i have to run now, thanks for the chat.. i think i have enough to keep me going on FLUID-5131
+2013-09-23T19:44:33 <Justin_o> Bosmon: yes. that\'s true
+2013-09-23T19:44:36 <Bosmon> Justin_o - cool!
+2013-09-23T19:44:37 <Bosmon> Good luck
+2013-09-23T19:44:39 <Justin_o> we have a lot of those
+2013-09-23T19:44:44 <Justin_o> Bosmon: thanks
+2013-09-23T19:45:15 * Justin_o has quit
+2013-09-23T20:22:05 * jessm has quit
+2013-09-23T20:35:24 * mrvisser_ joined the channel
+2013-09-23T20:35:40 * mrvisser has quit
+2013-09-23T20:40:16 * thealphanerd joined the channel
+2013-09-23T20:49:32 * cindyli has quit
+2013-09-23T20:50:08 * mrvisser_ has quit
+2013-09-23T20:50:24 * mrvisser joined the channel
+2013-09-23T20:53:16 * jhung has quit
+2013-09-23T21:09:06 * clown has left the channel
+2013-09-23T21:19:14 * greggy has quit
+2013-09-23T21:27:55 * anastasiac has quit
+2013-09-23T21:56:20 * mrvisser has quit
+2013-09-23T22:01:00 * danaayotte has quit
+2013-09-23T22:07:29 * thealphanerd has quit
+2013-09-23T22:12:30 * michelled has quit
+2013-09-23T22:16:52 * thealphanerd joined the channel
+2013-09-23T22:29:48 * vjoanna has quit
+2013-09-23T23:07:02 * mrvisser joined the channel
+2013-09-23T23:11:24 * mrvisser has quit
+2013-09-23T23:11:44 * mrvisser joined the channel
+2013-09-23T23:27:33 * jessm joined the channel
+2013-09-23T23:28:53 * jessm has quit
+2013-09-23T23:38:58 * avtar has quit
+'
+
+b'2013-09-23T00:43:50 * michelled joined the channel
+2013-09-23T02:49:08 * thealphanerd has quit
+2013-09-23T02:49:34 * thealphanerd joined the channel
+2013-09-23T02:52:11 * michelled has quit
+2013-09-23T06:02:19 * thealphanerd has quit
+2013-09-23T07:21:53 * thealphanerd joined the channel
+2013-09-23T07:29:25 * thealphanerd has quit
+2013-09-23T08:16:02 * Bosmon2 joined the channel
+2013-09-23T08:17:28 * Bosmon has quit
+2013-09-23T08:18:45 * jhernandez joined the channel
+2013-09-23T08:36:55 * amilchev joined the channel
+2013-09-23T09:47:10 * thealphanerd joined the channel
+2013-09-23T09:47:12 * thealphanerd has quit
+2013-09-23T11:26:53 * mrvisser joined the channel
+2013-09-23T12:18:16 * michelled joined the channel
+2013-09-23T12:20:05 * mrvisser has quit
+2013-09-23T12:22:36 * Justin_o joined the channel
+2013-09-23T12:38:35 * mrvisser joined the channel
+2013-09-23T12:39:56 * michelled has quit
+2013-09-23T12:43:40 * jhung joined the channel
+2013-09-23T12:59:37 * cindyli joined the channel
+2013-09-23T13:08:11 * greggy joined the channel
+2013-09-23T13:33:39 * jessm joined the channel
+2013-09-23T13:37:19 * danaayotte joined the channel
+2013-09-23T13:40:26 * anastasiac joined the channel
+2013-09-23T13:49:21 * greggy has quit
+2013-09-23T13:56:09 * greggy joined the channel
+2013-09-23T14:02:28 * Justin_o has quit
+2013-09-23T14:04:04 * anvk joined the channel
+2013-09-23T14:09:28 * clown joined the channel
+2013-09-23T14:09:33 * clown is now known as clown_mtg
+2013-09-23T14:09:37 * Justin_o joined the channel
+2013-09-23T14:27:30 * greggy has quit
+2013-09-23T14:32:02 * michelled joined the channel
+2013-09-23T14:34:53 * amilchev has left the channel
+2013-09-23T14:35:38 * vjoanna joined the channel
+2013-09-23T14:42:43 * greggy joined the channel
+2013-09-23T14:43:22 * greggy has left the channel
+2013-09-23T14:44:20 * greggy joined the channel
+2013-09-23T15:07:10 <jessm> for a very meaningful use of eyebrows see: https://plus.google.com/photos/108097314255204250860/albums/5925096771476242417/5925096929167161874?banner=pwa&authkey=CKaRh67H09zE5QE&pid=5925096929167161874&oid=108097314255204250860
+2013-09-23T15:07:15 <jessm> yay yzen!
+2013-09-23T15:07:30 * anastasiac has left the channel
+2013-09-23T15:07:39 * anastasiac joined the channel
+2013-09-23T15:59:38 * jessm has quit
+2013-09-23T15:59:52 * mrvisser has quit
+2013-09-23T16:08:04 * machines joined the channel
+2013-09-23T16:08:15 * machines has left the channel
+2013-09-23T16:14:59 <jhung> cindyli or Justin_o: can either of you check out my GPII-193 and see if vjoanna finds it a good solution for the hit area issue for the panel bar? https://github.com/jhung/prefsEditors/tree/GPII-193
+2013-09-23T16:16:12 <Justin_o> jhung: i can take a look
+2013-09-23T16:17:35 * mrvisser joined the channel
+2013-09-23T16:19:44 <Justin_o> jhung: is the head supposed to point down on hover?
+2013-09-23T16:19:59 <Justin_o> icon beside "doesn\'t make sense"
+2013-09-23T16:20:37 <jhung> Yes. It\'s supposed to rotate. vjonna can let me know if it\'s rotating the right way and if it\'s rotating enough or too much. :)
+2013-09-23T16:20:42 <jhung> ^Justin_o
+2013-09-23T16:24:54 <Justin_o> jhung: just showed vjoanna.. so generally looks good.. the border shouldn\'t show up on hover though.. and it seems that there is either a bottom border or something causing a line to show between the panel bar and the rest of the panel which shouldn\'t be there
+2013-09-23T16:25:21 <jhung> So the outline should go? Justin_o?
+2013-09-23T16:25:38 <Justin_o> jhung: yes
+2013-09-23T16:25:56 <vjoanna> orange outline just on focus state, not on hover :)
+2013-09-23T16:26:38 <jhung> Ok. I\'ll switch that to focus. Also please see contrast modes and see if it\'s acceptable vjoanna.
+2013-09-23T16:28:30 * avtar joined the channel
+2013-09-23T16:34:54 <vjoanna> jhung: contrast modes look good to me
+2013-09-23T16:35:25 <jhung> Thanks vjoanna! I\'ll fix that focus/hover style now.
+2013-09-23T16:35:46 <vjoanna> thank you!
+2013-09-23T16:41:52 * clown_mtg has quit
+2013-09-23T17:00:15 * Justin_o has quit
+2013-09-23T17:00:35 * jessm joined the channel
+2013-09-23T17:43:48 * mrvisser has quit
+2013-09-23T17:44:03 * mrvisser joined the channel
+2013-09-23T17:47:15 * danaayotte has quit
+2013-09-23T17:48:13 * danaayotte joined the channel
+2013-09-23T17:59:29 * clown joined the channel
+2013-09-23T18:04:23 * [o__o] has left the channel
+2013-09-23T18:06:05 * [o__o] joined the channel
+2013-09-23T18:10:31 * jhernandez has quit
+2013-09-23T18:10:52 * jhernandez joined the channel
+2013-09-23T18:20:03 <jessm> hey everyone: gmail is down
+2013-09-23T18:20:06 <jessm> DO NOT PANIC
+2013-09-23T18:20:18 <jessm> http://downrightnow.com/gmail
+2013-09-23T18:27:18 * Justin_o joined the channel
+2013-09-23T18:42:16 <Bosmon2> jessm - My suspicion is that it is in fact "downrightnow.com" which is down, rather than gmail itself : P
+2013-09-23T18:42:48 <jessm> i have confirmed reports of gmail in fact being down
+2013-09-23T18:43:07 <Bosmon2> But somehow it is not down for me ....
+2013-09-23T18:43:14 <jessm> http://thenextweb.com/google/2013/09/23/having-problems-with-gmail-today-dont-worry-its-not-just-you/
+2013-09-23T18:43:18 <jessm> spotty downage
+2013-09-23T18:43:21 <Bosmon2> Very strange
+2013-09-23T18:43:28 <jessm> http://www.google.com/appsstatus#hl=en&v=issue&ts=1379977199000&sid=1&iid=043f082bc7cd18e15458318035d9bc7a
+2013-09-23T18:43:43 <jessm> grammar error in the announcement
+2013-09-23T18:43:56 <jessm> "The email delays are affecting less than 50% of Gmail users."
+2013-09-23T18:44:00 <Justin_o> Bosmon2: hello.. you have some time to chat?
+2013-09-23T18:44:51 <Bosmon2> Justin_o - yes, I was expecting to chat with you : P
+2013-09-23T18:45:00 <Bosmon2> let me just give THER CATT his **CATT FFOOD** .....
+2013-09-23T18:45:15 <Justin_o> Bosmon2: okay.. i\'ll start typing in here while you do that :)
+2013-09-23T18:46:00 <Bosmon2> I did read your report from Friday, but needed some more details on your plan in order to understand it
+2013-09-23T18:46:44 <Justin_o> Bosmon2: thanks for looking it over.. i have something in the branch now, so that might help.
+2013-09-23T18:46:46 <Justin_o> https://github.com/jobara/infusion/blob/FLUID-5131/src/components/uiOptions/js/Panels.js
+2013-09-23T18:47:01 <Justin_o> more specifically
+2013-09-23T18:47:06 <Justin_o> https://github.com/jobara/infusion/blob/FLUID-5131/src/components/uiOptions/js/Panels.js#L97-L116
+2013-09-23T18:47:24 <Justin_o> so what i\'d like to do is be able to use an expander to create the distributeOptions block
+2013-09-23T18:47:37 * Bosmon2 is now known as Bosmon
+2013-09-23T18:48:17 <Justin_o> the reason why is that i want to the combinedPanel to be able to automatically generate this itself, and it won\'t really know ahead of time what the sub panels all are.
+2013-09-23T18:48:55 <Justin_o> in my case i\'m trying to distribute a gradeName that will have all of the settings needed.
+2013-09-23T18:49:02 <Bosmon> Justin_o - I think this issue is the reason that you would need to build a "grade-combining grade"
+2013-09-23T18:49:22 <Bosmon> But I guess another thing I meant by this at the time, was that you would write a grade which takes more of the approach similar to the "AuxBuilder"
+2013-09-23T18:49:39 <Bosmon> In that it violates our normal recommendation on not issuing a grade description dynamically
+2013-09-23T18:49:45 <Justin_o> Bosmon: the auxiliary builder actually creates the entire components block
+2013-09-23T18:49:48 <Bosmon> This is one of those situations where I think you can\'t really get away with it
+2013-09-23T18:49:53 <Bosmon> Justin_o - yes
+2013-09-23T18:49:56 <Justin_o> :(
+2013-09-23T18:50:01 <Bosmon> Or rather, "you can\'t get away without it"
+2013-09-23T18:50:14 <Justin_o> Bosmon: so we need to have another type of schema ?
+2013-09-23T18:50:23 <Bosmon> There is too much dynamism in the component to be able to expect to be able to issue its defaults block statically
+2013-09-23T18:50:33 <Bosmon> Justin_o - you ALREADY have the schema, luckily : P
+2013-09-23T18:50:45 <Justin_o> Bosmon: but it won\'t work for people who don\'t have the schema
+2013-09-23T18:50:48 <Bosmon> All the information you need can be discovered from i) the preferencesMap, and ii) the existing defaults block
+2013-09-23T18:50:52 <Justin_o> there will be a lot for them to do manually
+2013-09-23T18:50:57 <Bosmon> Justin_o ^
+2013-09-23T18:51:18 <Justin_o> Bosmon: that parts okay.. the problem is knowing which panels are the subpanels
+2013-09-23T18:51:44 <Justin_o> Bosmon: it would have been nice to have just been able to use the components block in the options..
+2013-09-23T18:51:47 <Bosmon> Justin_o - that can also be discovered from those sources
+2013-09-23T18:51:52 <Justin_o> it seems strange to have to have a different method
+2013-09-23T18:52:01 <Justin_o> Bosmon: how is that?
+2013-09-23T18:52:16 <Bosmon> By, as you say, inspecting the components block
+2013-09-23T18:52:56 <Bosmon> Actually, you CAN achieve the effect you want from your commented-out block right now
+2013-09-23T18:53:03 <Justin_o> Bosmon: really
+2013-09-23T18:53:05 <Justin_o> ?
+2013-09-23T18:53:06 * mrvisser has quit
+2013-09-23T18:53:09 <Justin_o> what am i missing?
+2013-09-23T18:53:09 <Bosmon> All you need to do is issue a dynamic grade, which adds an extra supergrade to the current component
+2013-09-23T18:53:17 <Bosmon> Which contains the distributeOptions block you need
+2013-09-23T18:53:31 * mrvisser joined the channel
+2013-09-23T18:53:59 <Justin_o> Bosmon: hmmm.. but i would still need a way to generate that distributeOptions blcok
+2013-09-23T18:54:02 <Justin_o> block
+2013-09-23T18:54:08 <Bosmon> Justin_o - sure, but you needed one anyway : P
+2013-09-23T18:54:21 <Justin_o> Bosmon: yes.. i just don\'t know how to do that still ;)
+2013-09-23T18:54:25 <Bosmon> And as your expander shows, you already know that the information you need to generate it can be derived from the "components" block of this component
+2013-09-23T18:54:31 <Bosmon> Which can be discovered by inspecting its defaults
+2013-09-23T18:54:57 <Bosmon> //         args: ["{that}.options.components"]
+2013-09-23T18:55:08 <Bosmon> It\'s clear you were aware this is where the information you required was : P
+2013-09-23T18:55:25 <Justin_o> Bosmon: yes.. that parts okay.. i just don\'t know how to do the actually creation of the distributeOptions block.. since it can\'t take an expander
+2013-09-23T18:56:41 <Bosmon> Justin_o - probably best to write a function which creates a wholly new grade, and then returns the name of that grade
+2013-09-23T18:56:56 <Bosmon> I know this is something we don\'t normally recommend, but it is probably the best way out of this current situation
+2013-09-23T18:57:14 <Justin_o> Bosmon: okay.. and in this function i\'ll just create a simple json structure that gets passed into the call to fluid.defaults of the new grade
+2013-09-23T18:57:23 <Justin_o> Bosmon: okay
+2013-09-23T18:58:09 <Bosmon> This will all be "temporary infrastructure" in any case, since all of this requirement will go away once we have the "new renderer"
+2013-09-23T18:58:09 <Justin_o> Bosmon: i also had a question about the combining of templates
+2013-09-23T18:58:22 <Justin_o> Bosmon: yeah !!! :)
+2013-09-23T18:58:28 <Bosmon> But your implementation will be useful as a study for what the "new renderer" will need to do
+2013-09-23T18:58:40 <Justin_o> Bosmon: looking forward to having the declarative change applier listeners soon too :)
+2013-09-23T18:58:59 <Bosmon> Justin_o - that is now simply a matter of REVIEW : P
+2013-09-23T18:59:32 <Justin_o> Bosmon: yes.. i was taking a peek at your pull request this morning.. the syntax looked good
+'
+

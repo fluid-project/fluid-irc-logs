@@ -1,0 +1,134 @@
+b'2014-10-10T06:49:20 * kasparnet joined the channel
+2014-10-10T07:17:37 * kasparnet has quit
+2014-10-10T07:24:36 * kasparnet joined the channel
+2014-10-10T08:59:59 * kasparnet has quit
+2014-10-10T10:08:06 * kasparnet joined the channel
+2014-10-10T10:55:54 * kasparnet has quit
+2014-10-10T11:09:28 * Justin_o joined the channel
+2014-10-10T11:27:40 * kasparnet joined the channel
+2014-10-10T11:45:47 * kasparnet has quit
+2014-10-10T11:52:47 * kasparnet joined the channel
+2014-10-10T11:52:51 * kasparnet has quit
+2014-10-10T12:56:13 * cindyli joined the channel
+2014-10-10T13:03:20 * jessm joined the channel
+2014-10-10T13:28:11 * simonjb joined the channel
+2014-10-10T13:55:41 * anastasiac joined the channel
+2014-10-10T14:02:35 * clown joined the channel
+2014-10-10T14:28:34 * colinclark joined the channel
+2014-10-10T16:12:09 * anastasiac has quit
+2014-10-10T16:16:25 * michelled joined the channel
+2014-10-10T16:42:38 * michelled has quit
+2014-10-10T17:08:04 <sgithens___> Hey guys, just catching up on the sec meeting from here yesterday.
+2014-10-10T17:09:27 <sgithens___> Sorry about the GUK, the intention was to talk about these names during a sec meeting, my work sort of dropped off with some of the branch issues and I just didn\'t get back to it.  Just needed to write something that wasn\'t an overloaded term already.  colinclark Bosmon
+2014-10-10T17:09:44 <colinclark> Why are you apologizing?
+2014-10-10T17:09:48 <colinclark> I think it\'s a cool name
+2014-10-10T17:09:52 <sgithens___> Ok
+2014-10-10T17:10:03 <sgithens___> I couldn\'t decide if it was really cool, or horrible
+2014-10-10T17:10:06 <sgithens___> :)
+2014-10-10T17:10:14 <colinclark> and was just saying to people yesterday that the readme in your branch suggests some of the most important written thinking about what we are doing
+2014-10-10T17:10:54 <sgithens___> For the OAuth stuff, I think we actually have 2 separate OAuth users, one where we are the provider (3rd party websites) and one where it\'s part of a user auth plugin.
+2014-10-10T17:12:00 <sgithens___> For identifying users, I think there is the support you mentioned (and I forgot about) for completely random anonymous people, and then the part where we use someone else\'s account provisioning, which could be an OAuth provider, or a university CAS system, etc
+2014-10-10T17:13:00 <sgithens___> And that OAuth usage would be completely blocked off from where we are the provider, by indirection. And it wouldn\'t necessarily have to be OAuth.  It could be another user lookup system...
+2014-10-10T17:13:22 <sgithens___> colinclark: Cool thanks!
+2014-10-10T17:14:21 <colinclark> So if we were to break out these two use cases, they\'re roughly like this:
+2014-10-10T17:14:24 <sgithens___> Also, it has always been my concern how you actually tell that an OS is an OS implementation of the GPII.  Other than requesting settings over HTTPS using a redirection key
+2014-10-10T17:14:39 <colinclark> 1. Authenticating third-party web applications to access a user\'s preference
+2014-10-10T17:15:02 <colinclark> 2. Connecting up with other sources of "identity" for single sign-on purposes
+2014-10-10T17:15:26 <colinclark> i.e. that they can just use some existing source of "identity" to key into a GPII-enabled system
+2014-10-10T17:15:39 <colinclark> I\'m still not sure that, for #2, OAuth really provides us with much
+2014-10-10T17:15:59 <colinclark> but what at least is clear is that #1 requires us to be, as you say, the OAuth provider
+2014-10-10T17:16:09 <sgithens___> Yeah, and I think they completely walled off from each other.  In that the system doesn\'t require the 2nd usage at all
+2014-10-10T17:16:13 <colinclark> yes
+2014-10-10T17:16:15 <colinclark> exactly
+2014-10-10T17:16:37 <colinclark> We need to think through #2 a bit more
+2014-10-10T17:16:49 <colinclark> since I can think of naive solutions to the problem
+2014-10-10T17:17:21 <colinclark> like that we just aggregate sets of "external identifiers" and correspond them to a user\'s GUK
+2014-10-10T17:17:30 <sgithens___> I think I latched on to #2 for the sake of testing and demo\'ing in that it was really easy to implement using Github as an OAuth provider, and would allow to show the use of non-anonymous accounts.  Also, because I think it\'s more work to find and setup and generally usable CAS server to show off accounts with
+2014-10-10T17:17:40 <colinclark> yup, makes sense
+2014-10-10T17:17:57 <sgithens___> yes, and that aggregation makes up the \'redirection\' from your diagram
+2014-10-10T17:17:58 <colinclark> is CAS our best option for #2, do you think?
+2014-10-10T17:18:06 <colinclark> yup, that\'s right
+2014-10-10T17:18:53 <colinclark> but I suspect it\'s a very superficial approach, since users within an institutional context (i.e. in a university library where they already have a student number and library card and son on) won\'t want to have a GPII ID at all
+2014-10-10T17:19:05 <colinclark> I guess the notion of a GPII identity is pretty loose
+2014-10-10T17:19:12 <colinclark> in that we have the anonymous use case
+2014-10-10T17:19:47 <colinclark> and that in general the only reason we ask them to potential come up with a username and password for the GPII is so that they can go into something like the PMT to be able to adjust various settings
+2014-10-10T17:20:03 <colinclark> like their privacy settings, or to provision a physical login device like a USB stick or an RFID tag
+2014-10-10T17:21:04 <sgithens___> Well... I mean, I think someone will use CAS.  The problem is that CAS is wildly different (not wildly different, but you need to change the code and stuff a bit).  I think whatever hooks we supply need to be configurable in 2 spots, so that it could be multiple CAS implementation, Google/Github OAuth, etc.  And that is in the security gateway that calls
+2014-10-10T17:21:04 <sgithens___> them to link up to a GUK, and in the IU (PMT at the moment) where they login.  So that in those 2 spots its possible to swap in whatever routine needs to be used.
+2014-10-10T17:21:29 <sgithens___> colinclark: That\'s right
+2014-10-10T17:21:45 <colinclark> So arguably, what we want is a situation where we have a) a preference set and b) a GUK assocated with it
+2014-10-10T17:22:05 <colinclark> That\'s the GPII\'s "core" notion of what a user\'s "identity" is
+2014-10-10T17:22:08 <colinclark> sorry for all the quotation marks
+2014-10-10T17:22:09 <sgithens___> yes
+2014-10-10T17:22:13 <sgithens___> I love it :)
+2014-10-10T17:22:18 <colinclark> but calling this an "identity" is dangerous
+2014-10-10T17:22:23 <colinclark> so then there are these editors
+2014-10-10T17:22:24 <colinclark> like the PMT
+2014-10-10T17:22:35 <colinclark> and they have some slightly more refined idea of what a user\'s "identity" is
+2014-10-10T17:22:56 <colinclark> in large part because they want to provide a means by which the user can come back and do some stuff, even if they\'ve lost their RFID tag or library card or whatever
+2014-10-10T17:23:10 <colinclark> and, really, we don\'t want to be the central source for this kind of identity
+2014-10-10T17:23:43 <colinclark> we just want to connect up the user\'s GUK with institutional sources of identity where they exist
+2014-10-10T17:23:51 <sgithens___> which is why I think we wanted to farm out authentication and stuff, and really store just the prefs and just enough information for them to log back in
+2014-10-10T17:23:55 <colinclark> for the purpose of logging into a thing like the PMT
+2014-10-10T17:23:58 <colinclark> yes
+2014-10-10T17:24:13 <colinclark> An interesting question is, for example, "what happens when the student graduates?"
+2014-10-10T17:24:29 <colinclark> What\'s the process like for them to keep using the GPII
+2014-10-10T17:24:34 <colinclark> and keep using the PMT
+2014-10-10T17:24:38 <colinclark> if you see what I\'m getting at
+2014-10-10T17:25:42 <sgithens___> Yeah, I mean, they could log in one last time with their Univeristy ID, and either copy out the prefs, or, because of the structure of the GUK linkage, it\'s possible to change the identify provider and sub key from it used for looking up
+2014-10-10T17:25:50 <sgithens___> so they could migrate it to, say a google OAuth ID
+2014-10-10T17:26:22 <sgithens___> or the official OCAD provider if one existed at the time
+2014-10-10T17:27:12 <colinclark> How would they do so?
+2014-10-10T17:27:27 <colinclark> or rather, what kind of a user interface might we provide to help them when the graduate?
+2014-10-10T17:28:16 <colinclark> The other question, which I\'m still feeling a bit skeptical (and confused) about is whether OAuth is really the technology we need for this part
+2014-10-10T17:28:38 <sgithens___> I guess either we\'d develop and admin process... right.  I mean, it could be a dialog saying like, hey, you want to authenticate with Google now (from a list of providers), click here to use your google account from now, you click, it goes through the usual redirection stuff, etc
+2014-10-10T17:28:47 <colinclark> I guess you could think of the account information as representing the "private resource" that the GPII, as a third party, wants to access
+2014-10-10T17:28:48 <colinclark> from, say, the university\'s student and staff database
+2014-10-10T17:29:08 <colinclark> but it seems to me that CAS or LDAP are closer to what we want
+2014-10-10T17:29:15 <sgithens___> I don\'t *really* need OAuth, we just need our system to be flexible enough to write a plugin (of which OAuth is one) to do that sort of log-in
+2014-10-10T17:30:33 <sgithens___> again, I just did OAuth as a test because it was easy using node libraries, and I thought it would be a convenient way for beta testers to download and try our stuff.  I imagine in another month or so I will actually need to do it with UMich and Madisons real setups
+2014-10-10T17:30:48 <colinclark> ok
+2014-10-10T17:30:48 <sgithens___> It\'s like super easy to test using github
+2014-10-10T17:30:56 <colinclark> I\'m not criticizing your use of OAuth at all
+2014-10-10T17:31:01 <sgithens___> right right
+2014-10-10T17:31:09 <colinclark> I\'m just trying to puzzle through what the problem is and what kinds of solutions we\'ll have to integrate with
+2014-10-10T17:31:29 <colinclark> I guess you\'ll learn a lot when you start to figure out how to do it with UMich and UW
+2014-10-10T17:31:37 <sgithens___> if our system is flexible enough for both an OAuth one and a Madison CAS one to work, I think that will be a good start
+2014-10-10T17:32:06 <sgithens___> also, it will hopefully mean that it\'s at least sort of factored correctly to do this
+2014-10-10T17:32:39 <sgithens___> not to mention the S word, but I\'m kind of building off the history of watching how Sakai used a bunch of different login mechanisms
+2014-10-10T17:33:14 <sgithens___> and just Django auth plugins here at work
+2014-10-10T17:34:10 <sgithens___> it is probably the most confusing one to start with though... due to our \'other\' use of OAuth in a different context
+2014-10-10T17:34:23 <colinclark> I guess our biggest complication in comparison to most of these systems--and it may not be too big--is that we expect users to be able to move around
+2014-10-10T17:34:36 <colinclark> in the sense that we aren\'t delegating some absolute authority over a user\'s identity to some other system
+2014-10-10T17:34:44 <sgithens___> right
+2014-10-10T17:34:54 <sgithens___> what\'s interesting about the payload we have right now for user indirection
+2014-10-10T17:34:56 <sgithens___> is that
+2014-10-10T17:34:59 <colinclark> whereas any Sakai implementer can safely say "I have the permanent and definitive record of who all students are"
+2014-10-10T17:35:27 <colinclark> Can you point me to the payload? I lost all my firefox tabs so don\'t have it open
+2014-10-10T17:35:51 <sgithens___> let me find it
+2014-10-10T17:35:57 <sgithens___> it\'s just that same README that I wrote
+2014-10-10T17:36:23 <colinclark> yup
+2014-10-10T17:37:41 <sgithens___> in other web based systems I\'ve looked at, Sakai, Django, whatever, you often have a core \'username\' and you just loop through the auth plugins until one of them authenticates that username (it\'s usually just two, internal accounts and then whatever CAS system).  In our situation, I think we\'re more explicitly listing what identify provider to use for each
+2014-10-10T17:37:41 <sgithens___> user.  ( Although I\'m still not sure where a regular username password entry would go to )
+2014-10-10T17:38:14 <sgithens___> https://github.com/sgithens/universal/tree/GPII-434-oauth-spike/gpii/node_modules/securityGateway
+2014-10-10T17:38:58 <sgithens___> right now that payload has just one authProvider, we could theoretically make it an array of hashes...
+2014-10-10T17:45:13 <sgithens___> for the moving around comparison, hopefully it\'s simpler for us (if we stick to our mission of only housing prefs), that if they needed to migrate it would just be prefs and a security profile), rather than a stack of assignments, grades, documents, messages, etc
+2014-10-10T17:50:45 <colinclark> I guess the key is actually never to migrate the preference set
+2014-10-10T17:51:12 <colinclark> but only to migration the association between some external source of identity and the preference set
+2014-10-10T17:51:44 <colinclark> because ultimately we don\'t want, I think, to delegate actual storage or sharing of preference set to anyone else
+2014-10-10T17:52:09 <colinclark> otherwise the user has to ask the question "how do I know this is being used in the way you say it is?"
+2014-10-10T17:56:54 * anastasiac joined the channel
+2014-10-10T19:32:04 * kasparnet joined the channel
+2014-10-10T19:39:53 * kasparnet has quit
+2014-10-10T19:42:06 * kasparnet joined the channel
+2014-10-10T20:21:33 * cindyli has quit
+2014-10-10T20:42:13 * kasparnet has quit
+2014-10-10T20:55:04 * clown has quit
+2014-10-10T21:02:18 * anastasiac has quit
+2014-10-10T21:04:46 * jessm has quit
+2014-10-10T21:49:38 * colinclark has quit
+2014-10-10T21:50:39 * colinclark joined the channel
+2014-10-10T21:50:39 * colinclark has quit
+2014-10-10T22:06:45 * Justin_o has quit
+'
+

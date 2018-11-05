@@ -1,0 +1,323 @@
+b'2013-11-19T21:56:57 <Bosmon> Justin_o - great
+2013-11-19T21:58:22 * danaayotte_ joined the channel
+2013-11-19T22:04:33 * jhung joined the channel
+2013-11-19T22:04:37 * jhung has quit
+2013-11-19T22:04:57 * greggy joined the channel
+2013-11-19T22:16:17 * greggy has quit
+2013-11-19T22:26:42 * [o__o] has left the channel
+2013-11-19T22:28:49 * anastasiac has quit
+2013-11-19T22:28:50 * [o__o] joined the channel
+2013-11-19T22:30:39 * yzen has quit
+2013-11-19T22:49:46 * yzen joined the channel
+2013-11-19T22:50:07 * jessm has quit
+2013-11-19T22:54:31 * mrvisser has quit
+2013-11-19T22:58:28 * michelled has quit
+2013-11-19T22:58:54 * yzen has quit
+2013-11-19T23:29:56 * danaayotte_ has quit
+2013-11-19T23:59:25 * anvk has quit
+'
+
+b'2013-11-19T16:19:52 * kasparnet joined the channel
+2013-11-19T16:36:24 <Bosmon> cindyli - so I am still confused
+2013-11-19T16:36:33 <Bosmon> You say, " i would use a distributeOptions block to pass fluid.prefs.uiEnhancerConnections as a grade to all enactors"
+2013-11-19T16:36:49 <Bosmon> But then you say that it is because of the uiEnhancerConnections grade that your fluid.tests.uiEnhancer grade exists
+2013-11-19T16:36:57 <Bosmon> Which implies that uiEnhancerConnections is already applied
+2013-11-19T16:36:59 <Bosmon> Can you explain?
+2013-11-19T16:41:23 <cindyli> Bosmon: if 5193 is resolved, we can add a distributeOptions block on "fluid.prefs.starterEnactors" to pass down fluid.prefs.uiEnhancerConnections to its sub-components which are enactors. To work around 5193, fluid.prefs.uiEnhancerConnections is currently added to enactors directly. since fluid.prefs.uiEnhancerConnections requires the presence of uiEnhancer which leads to having fluid.tests.uiEnhancer in unit tests for all enactors
+2013-11-19T16:41:38 <cindyli> let me know if i made it clear :)
+2013-11-19T16:44:03 * colinclark has quit
+2013-11-19T16:44:19 <Bosmon> cindyli - ok, I see now, that you apply the connections grade manually in the auxBuilder
+2013-11-19T16:45:49 <Bosmon> What I suggest you do is instead to use a IoCSS expression of the kind "{that > fluid.prefs.enactor}" rather than *
+2013-11-19T16:46:04 <Bosmon> I ass you have also added the connections grade to fluid.prefs.enactor itself, where it probably might not belong
+2013-11-19T16:46:42 <Bosmon> Actually there seems to be a duplication here since the connections is present within fluid.prefs.enactor as well as being encoded in the AuxBuilder
+2013-11-19T16:47:34 * colinclark joined the channel
+2013-11-19T16:53:54 * michelled joined the channel
+2013-11-19T16:57:09 <cindyli> you are right, Bosmon, a duplication in the aux builder. it would make sense again once ur IoCSS expression is applied and uiEnhancerConnections is removed from the grade list of fluid.prefs.enactor
+2013-11-19T17:06:50 * colinclark has quit
+2013-11-19T17:07:46 * colinclark joined the channel
+2013-11-19T17:42:26 * mrvisser has quit
+2013-11-19T17:43:57 * kasparnet has quit
+2013-11-19T17:44:59 * kasparnet joined the channel
+2013-11-19T17:48:52 * jhung joined the channel
+2013-11-19T17:53:57 * thealphanerd joined the channel
+2013-11-19T17:55:14 * kasparnet has quit
+2013-11-19T17:55:41 * mrvisser joined the channel
+2013-11-19T17:57:58 * jhernandez has quit
+2013-11-19T17:58:30 * greggy joined the channel
+2013-11-19T18:04:06 * colinclark has quit
+2013-11-19T18:21:32 <Justin_o> Bosmon: have you had a chance to look at the FLUID-5205 branch again https://github.com/fluid-project/infusion/pull/433
+2013-11-19T18:21:41 <cindyli> Bosmon: the pull request for 5191 (https://github.com/fluid-project/infusion/pull/425) is ready for more reviews
+2013-11-19T18:21:45 <Justin_o> it should be ready to go for another round of code review
+2013-11-19T18:28:55 * kasparnet joined the channel
+2013-11-19T18:29:25 * greggy has quit
+2013-11-19T18:42:11 * cindyli1 joined the channel
+2013-11-19T18:42:53 * cindyli has quit
+2013-11-19T18:42:58 * michelled has quit
+2013-11-19T18:51:28 * jhung has quit
+2013-11-19T18:51:45 * jhung joined the channel
+2013-11-19T19:06:38 * kasparnet has quit
+2013-11-19T19:09:59 * the-t-in-rtf joined the channel
+2013-11-19T19:14:50 * the-t-in-rtf has quit
+2013-11-19T19:43:15 * clown has quit
+2013-11-19T19:51:34 <Justin_o> Bosmon: i\'m having another issue with model relay and composite panels.. when the sub panel has a fluid decorator in it\'s tree we need to setup the model relay for it.. part of which is to pass in the parent\'s applier. However this reference is sourced at render time but after render the sub panel is recreated so the decorators refers to an old applier. The
+2013-11-19T19:51:34 <Justin_o> result of this is kind of strange... changing the model of the decorator component updates the composite panel\'s model correctly, but doesn\'t update the sub panels at all.. I assume this is because the old applier is updating the composite panel, but should\'t the change in the composite panel have filtered back down to the sub panel. Updating the composite
+2013-11-19T19:51:34 <Justin_o> panel\'s model directly will in fact update the sub panel.
+2013-11-19T19:52:22 * clown joined the channel
+2013-11-19T19:52:28 <Justin_o> Bosmon:  i can only theorize that somehow it appears that the sources are the same and the model isn\'t being relayed
+2013-11-19T19:52:32 * clown is now known as clown_mtg
+2013-11-19T19:52:32 <Justin_o> Bosmon: any thoughts?
+2013-11-19T19:56:19 * cindyli1 has quit
+2013-11-19T19:59:01 <Bosmon> Justin_o - this is most likely a result stemming from your workaround to the model update timing problems you were describing last week
+2013-11-19T19:59:37 <Bosmon> It sounds like the solution to this was to fall back to a ancestral model involving "model sharing" between the components, which was something we had hoped to eliminate with the use of model relay systems
+2013-11-19T19:59:57 <Bosmon> The fact that you are seeing "update leakage" between the composite panel\'s model and the subpanel suggests that these have become aliased together
+2013-11-19T20:00:07 <Justin_o> Bosmon: i wasn\'t able to get the timing to actually work, i had to instead just modify how the rebasing worked
+2013-11-19T20:00:17 <Bosmon> Justin_o: exactly
+2013-11-19T20:00:34 <Bosmon> And I assume that "modifying how the rebasing worked" involved aliasing some of the models together throughout the component tree
+2013-11-19T20:00:54 <Justin_o> Bosmon: no not at all.. i\'ll send you some code
+2013-11-19T20:01:07 <Bosmon> Justin_o - but it sounds from your description that they are indeed aliased
+2013-11-19T20:01:19 <Bosmon> Given you said " Updating the composite panel\'s model directly will in fact update the sub panel."
+2013-11-19T20:01:56 <Justin_o> Bosmon: here\'s the rebasing change
+2013-11-19T20:01:57 <Justin_o> https://github.com/jobara/infusion/blob/ec00cedb90f1efabdc450ec10ef523a3dd8498c0/src/framework/preferences/js/Panels.js#L510-L512
+2013-11-19T20:02:15 <Justin_o> so basically i just source the value from the composite panel instead of from the sub panel
+2013-11-19T20:02:33 <Justin_o> Bosmon:  so if we have a set of components set up like this
+2013-11-19T20:02:44 <Justin_o> compositePanel -> subPanel -> decorator
+2013-11-19T20:03:05 <Justin_o> if i call requestChange on compositePanel, subPanel\'s model will be correctly updated
+2013-11-19T20:03:23 <Justin_o> but the decorator is not
+2013-11-19T20:03:48 <Justin_o> if i call requestChange on the decorator, the compositePanel\'s model is updated, but the subPanel\'s isn\'t
+2013-11-19T20:03:52 <Justin_o> Bosmon: ^
+2013-11-19T20:03:53 <Bosmon> Justin_o - I assume by a decorator you mean a "renderer decorator"
+2013-11-19T20:04:00 <Justin_o> Bosmon: that\'s correct
+2013-11-19T20:04:16 <Bosmon> That is, a view-bearing Fluid component which is rendered using the "fluid" decorator type in the "old renderer"
+2013-11-19T20:04:30 <Justin_o> Bosmon: it has the applier from the old sub panel by old i mean, before it is recreated after rendering
+2013-11-19T20:04:40 <Justin_o> Bosmon: yes.. that is correct
+2013-11-19T20:05:06 <Bosmon> This stuff is all very dangerous.... which is why we would prefer to do this kind of thing via model relay
+2013-11-19T20:05:16 <Bosmon> By "this stuff" I mean the business of sharing model references and applier references
+2013-11-19T20:05:37 <Justin_o> Bosmon: it is the intention to use the model relay.. in fact it is setup to do so
+2013-11-19T20:06:26 <Bosmon> Justin_o - ok - the idea of an "old applier" sounds hazardous
+2013-11-19T20:06:41 <Bosmon> If you have a two-step linkage, this should be done by two levels of model relay
+2013-11-19T20:07:01 <Justin_o> Bosmon: yes.. but i don\'t know how to correct that since the decorator is created on render, and the sub panel is recreated after the rendering
+2013-11-19T20:07:06 <Bosmon> You say, " this reference is sourced at render time but after render the sub panel is recreated so the decorators refers to an old applier"
+2013-11-19T20:07:11 <Justin_o> this is all because the composite panel handles it\'s sub panel\'s rendering
+2013-11-19T20:07:31 <Bosmon> Firstly I must say that I am very sorry to have landed you with this mess
+2013-11-19T20:07:46 <Bosmon> Which you would not have if we had i) a sensible model relay system, and ii) a sensible renderer : P
+2013-11-19T20:08:17 <Justin_o> Bosmon: :) no worries.. it\'s just the state of progress we are currently at
+2013-11-19T20:08:23 <Bosmon> It is all extremely unsatisfactory
+2013-11-19T20:08:31 <Bosmon> So - can you describe where this "old applier" is sourced from?
+2013-11-19T20:08:36 <Bosmon> Which component did it belong to?
+2013-11-19T20:09:40 <Bosmon> Personally I would try to do without the renderer decorator entirely if you can, and just try to use a "createOnEvent" traditional subcomponent
+2013-11-19T20:10:04 <Bosmon> Trying to tunnel configuration through the renderer\'s interpretation mechanism will only multiply your problems
+2013-11-19T20:10:22 * michelled joined the channel
+2013-11-19T20:11:12 <Justin_o> Bosmon: sure.. 1) we create but don\'t render the sub panels so that we can get things from them like their produceTree function 2) we render - at his point the decorator has the applier supplied as a reference to the sub panel it is bound to. currently this is correct 3) after render we recreate the sub panels to establish the correct bindings to the DOM -
+2013-11-19T20:11:12 <Justin_o> at this point the sub panel is given a new applier thus severing the connection to the rendered decorator
+2013-11-19T20:12:48 <Bosmon> Justin_o - have you verified that the listeners bound by the old renderer decorator have been correctly unbound when it is destroyed?
+2013-11-19T20:12:50 <Justin_o> Bosmon: funny.. i\'ve been advocating for not using renderer decorators and using subcomponents instead.. i guess this may be the final straw. Although i had hoped it would still be possible to use if the implementor preferred.
+2013-11-19T20:13:12 <Bosmon> Justin_o - the implementor doesn\'t really get the choice here, given that renderer decorators are a doomed feature :)
+2013-11-19T20:13:26 <Bosmon> Just as with demands blocks, we would hope to have as few of them as possible around when the renderer is destroyed
+2013-11-19T20:13:46 <Bosmon> So I would strongly recommend you reimplement this setup using subcomponents which will at least help us to study the problem better
+2013-11-19T20:13:47 <Justin_o> Bosmon: no i have not.. i tried stepping through the model relay but there are so much being relayed i just got lost
+2013-11-19T20:14:21 <Justin_o> Bosmon: i would hope the problem would just go away with subcomponents
+2013-11-19T20:14:30 <Justin_o> since they will be created along with the sub panel
+2013-11-19T20:15:26 <Justin_o> Bosmon: okay.. i\'ll reimplement with subcomponents instead.. i\'ll let you know if i run into any more issues
+2013-11-19T20:15:51 <Justin_o> anastasiac: you might want to add this to your documentation.. fluid renderer decorators are not supported in subpanels
+2013-11-19T20:15:51 <Bosmon> Justin_o - you may have to start tracing this through carefully, making use of the "changeid" field which is attached to each applier in order to distinguish them
+2013-11-19T20:16:20 <anastasiac> Justin_o: good to know!! thanks for the heads-up
+2013-11-19T20:16:22 <Bosmon> That looks like the name for it which is currently in trunk
+2013-11-19T20:16:41 <Justin_o> Bosmon: does the changeid refer to the applier\'s id?
+2013-11-19T20:16:43 <Bosmon> You can see it being attached in the changeApplier\'s creator:
+2013-11-19T20:16:44 <Bosmon> var that = {
+2013-11-19T20:16:44 <Bosmon> changeid: fluid.allocateGuid(),
+2013-11-19T20:16:44 <Bosmon> model: model
+2013-11-19T20:16:44 <Bosmon> };
+2013-11-19T20:16:46 <Bosmon> Justin_o - yes
+2013-11-19T20:16:55 <Bosmon> Each ChangeApplier will have a unique id attached to it
+2013-11-19T20:17:21 <Bosmon> So if you get lost, you will have to start writing down these ids on a small piece of paper : P
+2013-11-19T20:17:54 <Bosmon> The system\'s trajectory will be deterministic (or should be) and so you should be able to rely on these being stable from run to run (minus the variable prefix referring to the Fluid instance)
+2013-11-19T20:18:15 <Justin_o> Bosmon: yes.. i was trying to step through looking at the changeapplier, but i think it took 10+min to trace through all of the relays... there are quite a large number in the demo i\'m using.. i\'ll try to comment out a bunch of the other configuration, that should simplify it
+2013-11-19T20:18:28 <Bosmon> These kinds of debugging techniques end up being essential in the more complex scenarios we first started to encounter in the CSpace days
+2013-11-19T20:18:52 <Bosmon> Justin_o - another important technique is the use of conditional breakpoints to only stop on the instances of the framework\'s code that refer to the objects that you are interested in
+2013-11-19T20:19:06 <Bosmon> Without which it can indeed take hours to trace through a system of relays : P
+2013-11-19T20:19:27 <Bosmon> But there are intended to be enough "landmarks" in the system (component ids, applier ids, and instantiator contents) to help you find your way around
+2013-11-19T20:20:23 <Justin_o> Bosmon: thanks.. i\'ll give it a try
+2013-11-19T20:20:29 <Bosmon> Justin_o - good luck
+2013-11-19T20:20:41 <Justin_o> thanks
+2013-11-19T20:20:44 <Bosmon> It should be a substantial simplification in any case to get rid of the renderer decorators
+2013-11-19T20:20:53 <Bosmon> Especially given they are things that we will not be supporting
+2013-11-19T20:21:01 <Justin_o> after i trace through this and let you know what i find.. then i\'ll switch to subcomponents
+2013-11-19T20:21:09 <Bosmon> Subcomponents with createOnEvent will always be supported
+2013-11-19T20:21:27 <Bosmon> But the "new renderer" will provide slightly more compact ways of expressing them
+2013-11-19T20:21:39 <Bosmon> But they will still essentially appear as traditional subcomponents
+2013-11-19T20:21:49 <Justin_o> cool... that will simplify things
+2013-11-19T20:43:47 * thealphanerd has quit
+2013-11-19T20:45:43 * cindyli joined the channel
+2013-11-19T20:48:22 <Justin_o> Bosmon: here\'s the output of the model relays http://pastie.org/private/trdoydkvbjz4z0rtboelhw
+2013-11-19T20:48:54 <Justin_o> i\'d assume that it\'s only the tops of those stacks that are interesting.. also i don\'t know what 86 is..
+2013-11-19T20:50:20 <Bosmon> Justin_o - the sourceApplier with id 86?
+2013-11-19T20:50:41 <Bosmon> That is quite a bewildering number of relays
+2013-11-19T20:50:47 <Bosmon> Do you know why there are so many?
+2013-11-19T20:50:56 <Justin_o> Bosmon: so you can see that is it in fact using the old applier when trying to update values from the textStepper, which is the decorator... and this applier is still bound to relay changes to increaseSize
+2013-11-19T20:51:11 <Bosmon> It would appear that either i) a large number of redundant relays are being created and/or ii) listeners are not being unbound to old relays
+2013-11-19T20:51:55 <Justin_o> Bosmon: yes.. sourceApplier 86.. and i have no idea why there are so many.. there is model binding to the enhancers.. but 269 and 263 seem to happen excessively
+2013-11-19T20:58:38 * cindyli has quit
+2013-11-19T21:07:32 <Justin_o> Bosmon: i did single test of converting one of the sub panels to use subcomponents instead of decorators and it works now.. i\'ll change the rest
+2013-11-19T21:14:06 * cindyli joined the channel
+2013-11-19T21:17:19 * clown_mtg has quit
+2013-11-19T21:26:22 * cindyli has quit
+2013-11-19T21:36:16 * cindyli joined the channel
+2013-11-19T21:41:49 * thealphanerd joined the channel
+2013-11-19T21:42:23 * clown joined the channel
+2013-11-19T21:45:08 * cindyli has quit
+2013-11-19T21:49:02 * jhung has quit
+'
+
+b'2013-11-19T00:01:51 * jhernandez has quit
+2013-11-19T00:30:10 * mrvisser joined the channel
+2013-11-19T00:34:45 * mrvisser has quit
+2013-11-19T00:46:11 * colinclark has quit
+2013-11-19T00:47:25 * vjoanna has quit
+2013-11-19T01:00:57 * kasparnet has quit
+2013-11-19T01:10:38 * thealphanerd has quit
+2013-11-19T01:10:54 * thealphanerd joined the channel
+2013-11-19T01:12:40 * thealphanerd has quit
+2013-11-19T01:12:58 * thealphanerd joined the channel
+2013-11-19T01:20:55 * thealphanerd has quit
+2013-11-19T04:39:08 * thealphanerd joined the channel
+2013-11-19T04:48:33 * thealphanerd has quit
+2013-11-19T08:03:34 * amilchev joined the channel
+2013-11-19T08:48:25 * kasparnet joined the channel
+2013-11-19T09:04:24 * kasparnet has quit
+2013-11-19T09:15:54 * kasparnet joined the channel
+2013-11-19T09:18:42 * kasparnet has quit
+2013-11-19T09:27:36 * kasparnet joined the channel
+2013-11-19T09:32:34 * kasparnet has quit
+2013-11-19T10:19:56 * amilchev has left the channel
+2013-11-19T10:27:40 * kasparnet joined the channel
+2013-11-19T10:44:20 * kasparnet has quit
+2013-11-19T11:11:52 * kasparnet joined the channel
+2013-11-19T11:35:45 * kasparnet has quit
+2013-11-19T12:03:43 * mrvisser joined the channel
+2013-11-19T13:08:49 * kasparnet joined the channel
+2013-11-19T13:10:33 * colinclark joined the channel
+2013-11-19T13:24:21 * mrvisser has quit
+2013-11-19T13:43:32 * mrvisser joined the channel
+2013-11-19T13:50:50 * anvk joined the channel
+2013-11-19T13:58:39 * cindyli joined the channel
+2013-11-19T14:05:38 * michelled joined the channel
+2013-11-19T14:12:28 <Justin_o> cindyli: i filed this one for the issue i found yesterday http://issues.fluidproject.org/browse/FLUID-5213
+2013-11-19T14:13:20 <cindyli> thanks, Justin_o, i will take a look later
+2013-11-19T14:13:29 * kasparnet has quit
+2013-11-19T14:13:44 <Justin_o> cindyli: Thanks
+2013-11-19T14:15:39 * kasparnet joined the channel
+2013-11-19T14:21:13 * jessm joined the channel
+2013-11-19T14:24:25 * yzen joined the channel
+2013-11-19T14:30:13 * Bosmon joined the channel
+2013-11-19T14:34:54 <Justin_o> Bosmon: i have a grade merging question for you
+2013-11-19T14:36:12 <Justin_o> Bosmon: when we try to add gradeNames through the auxiliary schema it causes an error that says the sourceApplier for the subpanels are null... the grade in the auxiliary schema is added to the subpanel. The strange part though is that the sub panel has a merge policy of "no merge" for the sourceApplier
+2013-11-19T14:37:28 <Justin_o> the gradeName from the auxiliary schema is being added to the first position of the grade names.. if i add this same grade to the sub panel component directly things work and the grade is in a different position in the gradeNames
+2013-11-19T14:46:04 <Bosmon> Justin_o - can you be more specific about the situation?
+2013-11-19T14:46:21 <Bosmon> At what point does it say that the sourceApplier is null, and which part of the grade implementation is interested in this?
+2013-11-19T14:50:24 <Justin_o> Bosmon: it\'s in a call to fluid.addSourceGuardedListener probably as the modelRelay
+2013-11-19T14:51:46 * jhung joined the channel
+2013-11-19T14:54:47 * clown joined the channel
+2013-11-19T14:57:24 <Bosmon> Justin_o - so the call occurs somehow as part of the grade resolution process?
+2013-11-19T14:57:34 <Bosmon> Can you tell exactly what causes it to execute?
+2013-11-19T15:01:58 * anastasiac joined the channel
+2013-11-19T15:02:54 * jhung has quit
+2013-11-19T15:05:42 * jhung joined the channel
+2013-11-19T15:13:57 * kasparnet has quit
+2013-11-19T15:14:06 * colinclark has quit
+2013-11-19T15:16:00 <Justin_o> Bosmon: not really sure what you mean, but the modelRelay automatically makes those calls to fluid.addSourceGuardedListener on create
+2013-11-19T15:16:16 <Bosmon> Ok
+2013-11-19T15:16:22 <Bosmon> So it is during "onCreate"?
+2013-11-19T15:16:43 <Justin_o> Bosmon: yes.. this happens as the components are trying to initialize
+2013-11-19T15:16:50 * kasparnet joined the channel
+2013-11-19T15:16:56 * kasparnet has quit
+2013-11-19T15:17:01 <Bosmon> Justin_o - ok, so the grade merging process has already finished by this point
+2013-11-19T15:17:12 <Bosmon> Which implies that it is not an order of evaluation issue
+2013-11-19T15:17:29 <Justin_o> Bosmon: yes.. but the grade merging seems to be removing the sourceApplier option
+2013-11-19T15:18:02 * colinclark joined the channel
+2013-11-19T15:18:08 * sgithens joined the channel
+2013-11-19T15:18:16 <Bosmon> Justin_o - do you have a sourceApplier: null option written in any of the grades, by any chance?
+2013-11-19T15:18:30 <Justin_o> i don\'t think so, but i\'ll take a look
+2013-11-19T15:19:31 <Justin_o> Bosmon: there is in the base grade of modelRelay
+2013-11-19T15:19:44 <Bosmon> Justin_o - seems dodgy
+2013-11-19T15:19:51 <Bosmon> I would get rid of it : P
+2013-11-19T15:20:15 * colinclark has quit
+2013-11-19T15:21:04 <Justin_o> Bosmon: hmm.. seems to have done the trick.. so it only matters because of the order of the gradeNames?
+2013-11-19T15:21:12 * colinclark joined the channel
+2013-11-19T15:21:26 <Justin_o> Bosmon: also how would we then represent it in the base grade?
+2013-11-19T15:21:41 <Bosmon> Justin_o - yes, since FLUID-5085, grade order is crucial in merging
+2013-11-19T15:21:50 <Bosmon> Justin_o - there is no need to represent it in the base grade, since it has no useful default value
+2013-11-19T15:22:22 <Justin_o> Bosmon: so we should just leave a comment about it?
+2013-11-19T15:22:30 <Bosmon> Justin_o - yes
+2013-11-19T15:22:38 <Justin_o> Bosmon: okay
+2013-11-19T15:22:51 <Justin_o> Bosmon: can i set it to undefined.. it seems to work
+2013-11-19T15:23:03 <Bosmon> Although it\'s worth trying to understand why you got an extra copy of the modelRelay grade inserted into the grade hierarchy
+2013-11-19T15:23:07 <Bosmon> Justin_o - I wouldn\'t rely on that
+2013-11-19T15:23:18 <Bosmon> There is a fix to that "bug" in my ChangeApplier branch : P
+2013-11-19T15:23:41 <Justin_o> oh okay :)
+2013-11-19T15:24:06 <Justin_o> Bosmon: hmm.. that is a good question about where the extra model relay comes from.
+2013-11-19T15:24:26 * colinclark has quit
+2013-11-19T15:24:44 <Justin_o> Bosmon: ah the grade i\'m adding is also of type fluid.prefs.panel which has a modelRelay in it
+2013-11-19T15:24:52 <Justin_o> as a base grade that is
+2013-11-19T15:25:25 <Justin_o> i suppose this could have just been a little component since i\'m only using it to add on configuration
+2013-11-19T15:25:27 <Justin_o> Bosmon: ^
+2013-11-19T15:25:30 <Bosmon> Justin_o - yes
+2013-11-19T15:25:33 * colinclark joined the channel
+2013-11-19T15:25:42 <Bosmon> It\'s useful to remove "unnecessary" grades from a hierarchy
+2013-11-19T15:25:55 <Bosmon> I had to make a change like this in UIO when I implemented FLUID-5085 in the first place
+2013-11-19T15:26:12 <Bosmon> Congrats on yesterday\'s Rob Ford vote btw :)
+2013-11-19T15:26:27 <Justin_o> Bosmon: okay.. i had though we were supposed to use a similar grade to what it would be applied to, like what we did for the starterGrades.. or maybe this is what you changed
+2013-11-19T15:27:40 <Justin_o> Bosmon: yes.. :) now we have a leader with less power than his subordinate. This whole situation is making us look so bad though :( is it big news over there too?
+2013-11-19T15:28:15 <Bosmon> Justin_o - certainly it\'s top headlines in almost every news outlet.... only the Obamacare rollout and the typhoon rank higher : P
+2013-11-19T15:29:10 <colinclark> I\'ve received several jokes about it here in Madrid
+2013-11-19T15:29:13 <colinclark> what a bummer
+2013-11-19T15:29:29 <Justin_o> colinclark: i hope they were at least funny
+2013-11-19T15:29:42 <Justin_o> colinclark, Bosmon: did you guys see the SNL skit?
+2013-11-19T15:30:19 <colinclark> I haven\'t yet, no
+2013-11-19T15:30:30 <colinclark> The Fox News interview with Ford himself was funny enough :P
+2013-11-19T15:30:54 <Justin_o> colinclark: are you planning on voting for him to be prime minister?
+2013-11-19T15:31:10 <colinclark> :)
+2013-11-19T15:31:20 <colinclark> I think I will pass on that one
+2013-11-19T15:32:09 * kasparnet joined the channel
+2013-11-19T15:32:12 * jhernandez joined the channel
+2013-11-19T15:33:01 <Justin_o> I\'m still hoping that one day there\'ll be a -1 option for election ballots
+2013-11-19T15:40:13 <colinclark> hey yzen
+2013-11-19T15:40:26 <yzen> colinclark: hi
+2013-11-19T15:40:36 <colinclark> Tony Atkins is sitting beside me
+2013-11-19T15:40:45 <colinclark> he was asking if there are any super-simple examples of Kettle apps
+2013-11-19T15:40:51 <colinclark> I told him I thought we just weren\'t there yet
+2013-11-19T15:41:05 <colinclark> but I thought I should check with our Kettle Master just in case something occurred to you
+2013-11-19T15:41:13 <colinclark> as a good place to just sort of check out how it should be used
+2013-11-19T15:41:21 <colinclark> without being as complex as, say, the Flow Manager
+2013-11-19T15:41:47 <Justin_o> Bosmon: when you get a chance can you also review this one https://github.com/fluid-project/infusion/pull/425
+2013-11-19T15:42:04 <Justin_o> i think it\'s just awaiting another round of code review from you
+2013-11-19T15:42:34 <yzen> colinclark: i think you can point him to other apps we have in universal , such as device reporter , it\'s pretty simple
+2013-11-19T15:43:05 <yzen> colinclark: also my GPII-75 branch of kettle has quite a bit of test configs that might be useful too
+2013-11-19T15:44:38 <Bosmon> cindyli - can you say what you would write without the "fluid.tests.uiEnhancer" component?
+2013-11-19T15:44:53 <Bosmon> I\'m not quite clear on how an IoCSS selector would substitute for this
+2013-11-19T15:52:11 * kasparnet has quit
+2013-11-19T15:53:05 * michelled has quit
+2013-11-19T15:56:23 * kasparnet joined the channel
+2013-11-19T15:56:56 * kasparnet has quit
+2013-11-19T15:57:38 * jhung has quit
+2013-11-19T15:57:43 * kasparnet joined the channel
+2013-11-19T15:58:17 <cindyli> Bosmon: i guess you are referring to https://github.com/fluid-project/infusion/pull/425 for the "fluid.tests.uiEnhancer" component
+2013-11-19T15:58:34 * kasparnet has quit
+2013-11-19T15:58:53 <Bosmon> cindyli - yes
+2013-11-19T15:59:15 * kasparnet joined the channel
+2013-11-19T16:02:29 * greggy joined the channel
+2013-11-19T16:04:08 <cindyli> Bosmon: "fluid.tests.uiEnhancer" is in place because "fluid.prefs.uiEnhancerConnections" is added as a base grade of fluid.prefs.enactor as a work around for http://issues.fluidproject.org/browse/FLUID-5193. This introduces the dependency btw uiEnhancer and enactors.
+2013-11-19T16:04:22 <cindyli> any idea of a better work-around?
+2013-11-19T16:08:33 <Bosmon> cindyli - can you explain what you would write if FLUID-5193 were resolved?
+2013-11-19T16:10:18 <cindyli> Bosmon: i would use a distributeOptions block to pass fluid.prefs.uiEnhancerConnections as a grade to all enactors
+2013-11-19T16:12:44 <Bosmon> cindyli - it seems that the effect of your temporary grade is different - it creates a new enhancer for each grade rather than arranging to share an applier
+2013-11-19T16:15:04 <cindyli> Bosmon: do you mean i can use a fake enhancer as long as it has an applier rather than creating a whole real enhancer?
+2013-11-19T16:15:39 <cindyli> i can certainly do that
+2013-11-19T16:15:56 <Bosmon> cindyli - well, right now I\'m not sure how your temporary grade is equivalent to the uiEnhancerConnections grade
+2013-11-19T16:16:04 <Bosmon> How does one thing have the effect of another?
+2013-11-19T16:17:02 * greggy has quit
+2013-11-19T16:17:10 <cindyli> Bosmon: the only thing uiEnhancerConnections does is to provide: sourceApplier:\xc2\xa0"{uiEnhancer}.applier"
+2013-11-19T16:17:38 <cindyli> with its reference on uiEnhancer, i need this component on the tree
+2013-11-19T16:18:28 * kasparnet has quit
+'
+

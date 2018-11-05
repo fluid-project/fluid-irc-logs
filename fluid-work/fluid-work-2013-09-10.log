@@ -1,0 +1,268 @@
+b'2013-09-10T17:41:56 <Justin_o> cindyli: was looking at the stuff for amilchev this morning. He want\'s to basically add another template to pull in. The trick is how to get it in and how to use it.
+2013-09-10T17:42:35 <cindyli> Justin_o: is amilchev using schema version of UIO?
+2013-09-10T17:43:05 <cindyli> what\'s special with that "another template"? one panel with 2 templates?
+2013-09-10T17:44:19 <Justin_o> cindyli: yes.. he\'s using the schema and yes.. seems like multiple templates for a single panel.. now sure what the renderer will do with this.. but assuming it works.. how would you get that other template in.. the easiest solution of course would be to have 1 template only, but i guess it would be nice to support multiple templates to make things more modular
+2013-09-10T17:46:21 <cindyli> Justin_o: i don\'t think our current aux schema supports loading multiple templates for one single panel. we can extend to support that.
+2013-09-10T17:46:48 <Justin_o> cindyli: i\'m thinking the integrator will have to pass it in to their generated UIO as another option to the templateLoader or we could fix the auxschema
+2013-09-10T17:46:52 <cindyli> needs more thinking on how to support since each template needs to know which selector for it to render
+2013-09-10T17:47:24 <Justin_o> cindyli: what do you mean
+2013-09-10T17:47:54 <cindyli> let me find some panel code
+2013-09-10T17:51:14 <Justin_o> cindyli: okay, thanks
+2013-09-10T17:51:58 <cindyli> here it is, Justin_o - https://github.com/fluid-project/infusion/blob/master/src/components/uiOptions/js/StarterGrades.js#L244, right now, the panel container is enough since one panel only renders one template. If this panel takes in two templates, panel needs to be aware of where they are rendered. 2 css selectors I think
+2013-09-10T17:52:37 * avtar joined the channel
+2013-09-10T17:52:57 <Justin_o> cindyli: i\'m hoping that the renderer can just handle that, but don\'t know for sure..
+2013-09-10T17:53:13 <Justin_o> i\'d have to ask Bosmon or run some tests
+2013-09-10T17:53:36 <cindyli> agree
+2013-09-10T17:53:36 <Justin_o> cindyli: but yes, if it doesn\'t that would be another big hurdle
+2013-09-10T17:53:46 <cindyli> ya
+2013-09-10T17:58:39 <Justin_o> cindyli: so any thoughts on how to get the templates in.. if we change the auxiliary schema i think we should take in a string for the simple case and an object for multiple templates
+2013-09-10T17:58:57 <Justin_o> what do you think and how will this affect things internally
+2013-09-10T17:58:58 <Justin_o> ?
+2013-09-10T18:05:08 <cindyli> Justin_o: I agree with the change you suggested for the aux schema. the part i\'m not sure about is whether renderer component support multiple template rendering, if it does, it should be easy to modify the aux builder. otherwise, we may need multiple panels or sub-panels for rendering multiple templates. let me take a look at the render component unit tests.
+2013-09-10T18:05:59 <Justin_o> cindyli:  okay\xe2\x80\xa6 let me know if you see anything.. if not i\'ll try to make a quick test
+2013-09-10T18:06:06 <Justin_o> or example
+2013-09-10T18:06:14 <cindyli> sure
+2013-09-10T18:16:43 <cindyli> Justin_o: don\'t see a unit test that renders multiple templates with one single renderer component
+2013-09-10T18:16:59 <Justin_o> cindyli: okay.. i\'ll try to make a test for it.
+2013-09-10T18:17:13 <cindyli> ok. thanks, Justin_o
+2013-09-10T18:31:37 <Bosmon> Hi cindyli, Justin_o - can you explain what you mean by "multiple template rendering"?
+2013-09-10T18:32:15 <Justin_o> Bosmon: great you are here.. if you have multiple templates in your resources block.. when the render is working will it look at all of them?
+2013-09-10T18:33:58 * avtar has quit
+2013-09-10T18:35:09 * mrvisser joined the channel
+2013-09-10T18:35:31 <Bosmon> Justin_o - "not really" : P
+2013-09-10T18:35:43 <Bosmon> But in particular, what do you want it to do with them?
+2013-09-10T18:37:10 * mrvisser_ has quit
+2013-09-10T18:37:38 <Justin_o> Bosmon: well now that i\'m thinking about it again.. i guess the renderer wouldn\'t really know where to put things, how to combine the templates. Anyways.. the issue is around the complex panels.. have you had any more thoughts about this? amilchev is trying to combine panels through grade merging.. to create a complex panel from several simple ones.. but he wanted to not have to create a new combined template.
+2013-09-10T18:38:45 <Bosmon> Justin_o - so how would you like to describe this "combined template", without having to write it?
+2013-09-10T18:42:08 * yzen joined the channel
+2013-09-10T18:43:01 <Justin_o> Bosmon: that\'s a good question since it will be hard to know how to assemble them..
+2013-09-10T18:43:20 <Bosmon> Justin_o - what I suggest is, that you write a "template-rendering component"
+2013-09-10T18:43:21 <Justin_o> Bosmon: do you have an idea of how we should be creating these types of complex panels?
+2013-09-10T18:43:34 <Justin_o> Bosmon: what would that be?
+2013-09-10T18:43:36 <Bosmon> Which accepts a "meta-template" with some empty divs in it, a bunch of selectors, and the component templates
+2013-09-10T18:43:54 <Bosmon> It then uses the renderer to produce a set of "UIVerbatim" component in order to render the combined template
+2013-09-10T18:44:15 <Justin_o> Bosmon: so you mean a sort of template template
+2013-09-10T18:44:20 <Bosmon> Yes
+2013-09-10T18:44:22 <Justin_o> and we render a combined template
+2013-09-10T18:44:31 <Justin_o> okay.. interesting idea..
+2013-09-10T18:44:51 <Bosmon> This still leaves you with the problem of actually doing the rendering at the end, of course ....
+2013-09-10T18:45:28 <Bosmon> Well, ironically, you don\'t really want a "combined template" since that\'s exactly what the renderer for the component panels can\'t accept
+2013-09-10T18:46:29 <Bosmon> The way the current renderer is, you will need to do the rendering in two stages
+2013-09-10T18:46:41 <Bosmon> But in general you won\'t be able to combine the panels through straightforward grade merging
+2013-09-10T18:46:48 <Bosmon> YOu will need to create a special "grade-combining grade"
+2013-09-10T18:47:07 <Bosmon> Since you will need to insert an extra lifecycle step to subvert the normal action of the renderewr
+2013-09-10T18:48:10 <Justin_o> Bosmon: not sure if this causes more issues.. but the rendering is triggered by UIO as it expects the templates to be ready after the templateLoader
+2013-09-10T18:48:20 <Justin_o> if i remember things correctly
+2013-09-10T18:48:43 <Bosmon> Yes well, tinkering with the event boiling for that is the easy part of the problem
+2013-09-10T18:49:29 <Justin_o> Bosmon: uh oh.. what\'s the hard part
+2013-09-10T18:50:27 <cindyli> the part to create a special "grade-combining grade", i guess
+2013-09-10T18:50:31 * jhung has quit
+2013-09-10T18:50:56 <Justin_o> cindyli: :)
+2013-09-10T18:51:14 <cindyli> it sounds pretty hard to me at least :)
+2013-09-10T18:52:43 <Justin_o> cindyli, Bosmon: yes.. i still don\'t fully know what it entails
+2013-09-10T18:53:11 <Justin_o> and how to subvert the normal action of the renderer
+2013-09-10T18:55:16 * colinclark joined the channel
+2013-09-10T18:59:04 <Bosmon> Well, it is only the "grade-combining grade" that will contain any unusual code
+2013-09-10T18:59:24 <Bosmon> The subpanels themselves will be essentiall normal renderer components
+2013-09-10T19:00:28 <cindyli> Justin_o, Bosmon: i\'m thinking this process is like what fluid.uiOptions is doing now. fluid.uiOptions is a view component that takes in one template which has a few empty divs for panels. its subcomponents are panel renderer components. what if we create this sort of generic component that replicates this structure and behavior\xe2\x80\xa6 what do you think?
+2013-09-10T19:02:01 * clown has quit
+2013-09-10T19:02:07 <Bosmon> cindyli - yes
+2013-09-10T19:02:28 <Bosmon> With the one complication that if you indeed use this component itself for UIO, it will need to accept one like itself as children in addition to standard renderer components
+2013-09-10T19:03:01 <Bosmon> This suggests that you will end up creating a new "parent grade" factored off from RendererComponent itself, once this work is completed fully
+2013-09-10T19:03:39 <Justin_o> Bosmon: you mean using the rendererComponent as grade
+2013-09-10T19:03:40 <Justin_o> ?
+2013-09-10T19:03:42 <cindyli> whoa. that sounds quite tricky
+2013-09-10T19:04:32 <Bosmon> That bit can be left till last : P
+2013-09-10T19:05:35 <Bosmon> Just "get it working" first : P
+2013-09-10T19:05:48 <Bosmon> As colinclark will remark when he wakes up..... "ship it"!
+2013-09-10T19:05:55 <cindyli> lol
+2013-09-10T19:11:48 * mrvisser has quit
+2013-09-10T19:22:18 <Justin_o> cindyli: you want to pair on this tomorrow?
+2013-09-10T19:22:27 <cindyli> sure, Justin_o
+2013-09-10T19:28:53 <colinclark> SHIP IT
+2013-09-10T19:28:58 <colinclark> SHIP.IT!
+2013-09-10T19:40:22 <Justin_o> colinclark: :)
+2013-09-10T19:40:53 * Justin_o has quit
+2013-09-10T19:50:23 * thealphanerd has quit
+2013-09-10T20:03:23 * thealphanerd joined the channel
+2013-09-10T20:04:01 * system64 has quit
+2013-09-10T20:13:11 * thealphanerd has quit
+2013-09-10T20:23:49 * mrvisser joined the channel
+2013-09-10T20:25:16 * jhung joined the channel
+2013-09-10T20:30:04 * mrvisser has quit
+2013-09-10T20:30:39 * mrvisser joined the channel
+2013-09-10T20:32:15 * clown joined the channel
+2013-09-10T20:33:55 * clown has quit
+2013-09-10T20:35:31 * mrvisser has quit
+2013-09-10T20:43:00 * avtar joined the channel
+2013-09-10T20:49:40 * thealphanerd joined the channel
+2013-09-10T20:59:45 * cindyli has quit
+2013-09-10T21:00:00 * jhung has quit
+2013-09-10T21:03:43 * greggy has quit
+2013-09-10T21:13:31 * colinclark has quit
+2013-09-10T21:38:05 * michelled has quit
+2013-09-10T21:50:31 * avtar has quit
+2013-09-10T21:54:22 * avtar joined the channel
+2013-09-10T22:03:07 * danaayotte has quit
+2013-09-10T22:08:19 * jessm has quit
+2013-09-10T22:28:09 * kasparnet has quit
+2013-09-10T22:59:28 * kasparnet joined the channel
+2013-09-10T23:21:27 * kasparnet has quit
+2013-09-10T23:23:08 * kasparnet joined the channel
+2013-09-10T23:28:32 * yzen has quit
+2013-09-10T23:40:13 * thealphanerd has quit
+2013-09-10T23:43:33 * kasparnet has quit
+'
+
+b'2013-09-10T00:39:52 * sgithens has quit
+2013-09-10T00:48:47 * sgithens joined the channel
+2013-09-10T01:34:47 * sgithens has quit
+2013-09-10T01:46:16 * sgithens joined the channel
+2013-09-10T02:47:59 * sgithens has quit
+2013-09-10T03:02:16 * sgithens joined the channel
+2013-09-10T04:33:36 * thealphanerd has quit
+2013-09-10T04:44:07 * thealphanerd joined the channel
+2013-09-10T04:58:02 * thealphanerd has quit
+2013-09-10T05:00:36 * thealphanerd joined the channel
+2013-09-10T05:01:03 * thealphanerd has quit
+2013-09-10T05:03:41 * thealphanerd joined the channel
+2013-09-10T05:08:27 * thealphanerd has quit
+2013-09-10T05:11:41 * system64 joined the channel
+2013-09-10T06:15:33 * -- BotBot disconnected, possible missing messages --
+2013-09-10T06:17:16 * [o__o] joined the channel
+2013-09-10T06:17:54 * -- BotBot disconnected, possible missing messages --
+2013-09-10T06:32:47 * system64 has quit
+2013-09-10T06:42:23 * thealphanerd joined the channel
+2013-09-10T06:46:53 * thealphanerd has quit
+2013-09-10T07:17:51 * thealphanerd joined the channel
+2013-09-10T07:31:14 * nanook joined the channel
+2013-09-10T07:51:11 * kasparnet joined the channel
+2013-09-10T08:03:20 * amilchev joined the channel
+2013-09-10T08:12:47 * thealphanerd has quit
+2013-09-10T08:20:06 * kasparnet has quit
+2013-09-10T08:24:49 * kasparnet joined the channel
+2013-09-10T08:43:28 * thealphanerd joined the channel
+2013-09-10T09:00:27 * jhernandez joined the channel
+2013-09-10T09:17:27 * rworth_ has quit
+2013-09-10T09:17:28 * nanook has quit
+2013-09-10T09:17:29 * Bosmon8 has quit
+2013-09-10T09:17:29 * scott_gonzalez has quit
+2013-09-10T09:17:29 * thealphanerd has quit
+2013-09-10T09:26:00 * nanook joined the channel
+2013-09-10T09:26:00 * rworth_ joined the channel
+2013-09-10T09:26:00 * scott_gonzalez joined the channel
+2013-09-10T09:26:00 * Bosmon8 joined the channel
+2013-09-10T10:33:53 * mrvisser joined the channel
+2013-09-10T11:02:15 * mrvisser has quit
+2013-09-10T11:02:33 * mrvisser joined the channel
+2013-09-10T11:40:07 * jhung joined the channel
+2013-09-10T11:54:50 * cindyli joined the channel
+2013-09-10T11:55:30 * kasparnet has quit
+2013-09-10T11:57:27 * kasparnet joined the channel
+2013-09-10T12:06:34 * mrvisser has quit
+2013-09-10T12:12:20 * michelled joined the channel
+2013-09-10T12:22:13 * mrvisser joined the channel
+2013-09-10T12:26:14 * sgithens has quit
+2013-09-10T12:28:03 * Justin_o joined the channel
+2013-09-10T12:30:52 <amilchev> Justin_o: Hi, I was about to write in the mailing list but maybe here it would be better .. tell me if you have 5-10 minutes
+2013-09-10T12:35:42 <Justin_o> amilchev: sure
+2013-09-10T12:36:53 * jessm joined the channel
+2013-09-10T12:39:09 * sgithens joined the channel
+2013-09-10T12:39:36 <amilchev> Justin_o: to pick up from your last email - I successfully appended the small markup into the DOM but failed to instantiate the panel so that the change is applied - the selectors are still looked for BEFORE they have been appended
+2013-09-10T12:40:51 <amilchev> Justin_o: I tried appending in the preInitFunction (instead of finalInit), but it didn\'t work at all. Am I supposed to do sth like this https://github.com/fluid-project/infusion/blob/master/src/components/uiOptions/js/UIOptions.js#L403-L414 ?
+2013-09-10T12:40:57 <Justin_o> amilchev: can you tell me a bit more about when you want the subcomponent to be instantiated, and how you are trying to do it
+2013-09-10T12:42:11 <Justin_o> amilchev: we\'d probably rather do things more declaratively if possible. Some of the code hasn\'t been fully brought up to modern practices yet.
+2013-09-10T12:43:03 <amilchev> Justin_o: um.. I didn\'t add the small panels as subcomponents, but as gradeNames
+2013-09-10T12:44:43 <amilchev> Justin_o: what I want is the big panel to manage its selectors after the appending has finished
+2013-09-10T12:45:14 <Justin_o> amilchev: are all of your changes in the divide-and-conquer branch?
+2013-09-10T12:46:32 <amilchev> Justin_o: I haven\'t pushed them yet, but it\'s only slightly different from what is currently there - and I don\'t think this issue has anything to do with this difference
+2013-09-10T12:46:42 <Justin_o> amilchev: okay
+2013-09-10T12:47:38 <amilchev> Justin_o: sorry in case now is not a comfortable time, I don\'t mean to be disturbing
+2013-09-10T12:47:39 <Justin_o> let me take another look.. so to be clear what you want is to manually append the template for keyEcho into the DOM and have the DOM binder work for the selectors pertaining to it.
+2013-09-10T12:47:40 <Justin_o> ?
+2013-09-10T12:47:57 <Justin_o> amilchev: it\'s okay.. i have some time now
+2013-09-10T12:48:00 <amilchev> yes
+2013-09-10T12:49:31 <amilchev> https://github.com/radmanovi4/prefsEditors/blob/divide-and-conquer/src/shared/adjusters/js/speakTextCollectivePanel.js#L145 this line works properly now, but I haven\'t pushed
+2013-09-10T12:52:00 * sgithens has quit
+2013-09-10T12:53:49 <Justin_o> amilchev: i\'d guess the approach you\'d probably want to take is to add an event to fire after you append the template. Then you\'d bind a listener to this event and do your calls with the selectors here
+2013-09-10T12:56:35 <amilchev> Justin_o: "do your calls with the selectors here" - I have nothing to do with these selectors manually, I just want them to be rendered (and shown of course)
+2013-09-10T13:00:02 <Justin_o> amilchev: hmm.. okay.. not really sure what you need then.. i have the template being rendered fine for me, with the changes i mentioned to you yesterday.
+2013-09-10T13:00:28 <Justin_o> amilchev: when do you use this template that.. which I guess is what the real issue is
+2013-09-10T13:01:02 <amilchev> Justin_o: so you have the checkbox "Echo letter after typed" at the bottom ?
+2013-09-10T13:02:25 * danaayotte joined the channel
+2013-09-10T13:03:07 <Justin_o> amilchev: yes.. it\'s in the markup.. it might be in the wrong place though as it is a sibling to <div class="preferences">
+2013-09-10T13:04:23 <amilchev> Justin_o: oh yes, it is in the markup, but is it rendered as the other three checkboxes?
+2013-09-10T13:05:04 <amilchev> Justin_o: when you run https://github.com/radmanovi4/prefsEditors/blob/divide-and-conquer/demos/speakTextAdjusterGroup/index.html this file
+2013-09-10T13:05:13 <amilchev> in node-webkit
+2013-09-10T13:05:55 <Justin_o> amilchev: you mean like the one labelled "Uppercase Letters"
+2013-09-10T13:06:17 <amilchev> yes
+2013-09-10T13:08:54 <Justin_o> amilchev: yes and no.. it would have the same style if there was any text label. but there isn\'t so it\'s kind of hidden.. if i force text in there it looks the same. however it\'s not in the same container so the positioning is also different
+2013-09-10T13:09:34 * sgithens joined the channel
+2013-09-10T13:09:48 <amilchev> Justin_o: same here
+2013-09-10T13:10:36 <Justin_o> amilchev: okay.. so you want it in the preferences container?
+2013-09-10T13:11:21 <amilchev> Justin_o: by the way, is the checkbox styled? here it isn\'t ..
+2013-09-10T13:11:23 * greggy joined the channel
+2013-09-10T13:11:43 <Justin_o> amilchev: it is
+2013-09-10T13:13:00 * yzen joined the channel
+2013-09-10T13:13:48 * anvk joined the channel
+2013-09-10T13:14:24 * sgithens has quit
+2013-09-10T13:14:35 <Justin_o> amilchev: do you want me to push up my changes for you to look at.. see how it is compared to what you want?
+2013-09-10T13:16:43 <amilchev> Justin_o: that\'d be great! I just pushed my work btw
+2013-09-10T13:16:59 <Justin_o> amilchev: thanks.. i\'ll let you know when it\'s up.
+2013-09-10T13:17:33 <amilchev> Justin_o: thank you
+2013-09-10T13:25:09 * jhung has quit
+2013-09-10T13:27:08 <Justin_o> amilchev: sorry it took a bit longer because i started over from your new code.. anyways.. not a whole lot of changes\xe2\x80\xa6 just added an event that i used to set the label of the checkbox with. https://github.com/jobara/prefsEditors/commit/c45b8fc5aceeaf950b444dfc6731efdae3da3352
+2013-09-10T13:27:42 <Justin_o> amilchev: this is just a quick example.. it should probably be done differently depending on what you want to do exactly
+2013-09-10T13:29:04 * cindyli has quit
+2013-09-10T13:29:13 * cindyli joined the channel
+2013-09-10T13:33:29 * colinclark joined the channel
+2013-09-10T13:52:18 * greggy has quit
+2013-09-10T13:53:51 * greggy joined the channel
+2013-09-10T14:02:28 * Justin_o has quit
+2013-09-10T14:13:04 * Justin_o joined the channel
+2013-09-10T14:13:36 <Justin_o> amilchev: how are things going?
+2013-09-10T14:26:34 * Justin_o has quit
+2013-09-10T14:27:18 * Justin_o joined the channel
+2013-09-10T14:34:35 <amilchev> Justin_o: I got it shown now, too
+2013-09-10T14:36:32 <amilchev> Justin_o: but I want it connected to the schema
+2013-09-10T14:37:56 <amilchev> Justin_o: as it is related to keyEcho in the protoTreee - I want the switch to represent the state in the model and get the label from the appropriate messagekey
+2013-09-10T14:38:44 <amilchev> Justin_o: sorry if I didn\'t make it clear before
+2013-09-10T14:47:00 * michelled has quit
+2013-09-10T14:48:46 <amilchev> Justin_o: I have to go now, if you link the checkbox to the schema (otherwise it\'s useless), it\'d be great if you pushed your code again! Bye for now and thanks for the time.
+2013-09-10T14:51:28 * jhung joined the channel
+2013-09-10T14:51:59 * Justin_o has quit
+2013-09-10T14:52:48 * amilchev has left the channel
+2013-09-10T15:25:58 * kasparnet has quit
+2013-09-10T15:37:03 * kasparnet joined the channel
+2013-09-10T15:39:23 <jessm> fluid-everyone: standup?
+2013-09-10T15:44:39 * clown joined the channel
+2013-09-10T16:07:35 * jessm has quit
+2013-09-10T16:07:50 * mrvisser has quit
+2013-09-10T16:17:51 * michelled joined the channel
+2013-09-10T16:19:32 * Justin_o joined the channel
+2013-09-10T16:19:43 * mrvisser joined the channel
+2013-09-10T16:20:36 * mrvisser has quit
+2013-09-10T16:20:45 * mrvisser joined the channel
+2013-09-10T16:26:06 * jessm joined the channel
+2013-09-10T16:35:45 * system64 joined the channel
+2013-09-10T16:38:32 <system64> Hello michelled, could I PM you?
+2013-09-10T16:49:37 * danaayotte has quit
+2013-09-10T16:54:34 * cindyli has quit
+2013-09-10T16:58:07 * cindyli joined the channel
+2013-09-10T17:00:55 <jhung> Justin_o:  I\'ve added the More Text floating issue to Jira. http://issues.gpii.net/browse/GPII-203
+2013-09-10T17:03:48 <Justin_o> jhung: thanks
+2013-09-10T17:04:09 <michelled> system64: sure
+2013-09-10T17:08:22 * thealphanerd joined the channel
+2013-09-10T17:14:58 * thealphanerd has quit
+2013-09-10T17:15:20 * anvk has quit
+2013-09-10T17:15:51 * Justin_o has quit
+2013-09-10T17:16:14 * colinclark has quit
+2013-09-10T17:16:16 * yzen has quit
+2013-09-10T17:18:30 * thealphanerd joined the channel
+2013-09-10T17:31:22 * jhernandez has quit
+2013-09-10T17:33:19 * Justin_o joined the channel
+2013-09-10T17:34:54 * mrvisser has quit
+2013-09-10T17:34:54 * mrvisser_ joined the channel
+2013-09-10T17:37:25 * danaayotte joined the channel
+'
+

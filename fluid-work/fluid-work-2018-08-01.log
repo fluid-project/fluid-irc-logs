@@ -1,0 +1,260 @@
+b'2018-08-01T14:41:04 * georgit has quit
+2018-08-01T14:48:34 * colinclark has quit
+2018-08-01T14:54:49 * mrtyler joined the channel
+2018-08-01T14:58:00 * the-t-in-rtf joined the channel
+2018-08-01T15:05:59 <jhernandez_> clown: you coming to the apcp?
+2018-08-01T15:06:02 <jhernandez_> meeting?
+2018-08-01T15:06:05 <jhernandez_> room2
+2018-08-01T15:06:22 <clown> on my way \xe2\x80\x94 getting headphones.
+2018-08-01T15:06:30 <jhernandez_> ok ok
+2018-08-01T15:06:40 <jhernandez_> we\'re still waiting for Sergey
+2018-08-01T15:30:06 <mrtyler> thanks for the ad-hoc demo clown :)
+2018-08-01T15:30:18 <mrtyler> and to cindyli who i think raised the topic?
+2018-08-01T15:30:55 <clown> mrtyler:  my pleasure.  hopefully it made some sense.
+2018-08-01T15:30:55 <cindyli> nah, thanks to jhernandez_ who raised the topic ;)
+2018-08-01T15:31:12 <mrtyler> ah sorry. thanks javi
+2018-08-01T15:31:31 <mrtyler> clown: it did to me, but i\'ve been discussing this with you and cindy for a couple weeks now :)
+2018-08-01T15:31:36 <clown> yes, thanks jhernandez_
+2018-08-01T15:31:42 <jhernandez_> in fact it was Colin\'s idea during a chat we had earlier today on skype
+2018-08-01T15:31:53 * clown goes to the next meeting
+2018-08-01T15:32:37 <jhernandez_> but yeah, it was a right time to raise it and have an idea of what\'s left before the demo
+2018-08-01T15:32:54 <mrtyler> yeah, this is an exciting piece of integration to see working!
+2018-08-01T15:33:08 <jhernandez_> thanks to you all guys
+2018-08-01T15:33:26 <jhernandez_> everything\'s so under control
+2018-08-01T15:39:28 * colinclark joined the channel
+2018-08-01T15:45:34 <mrtyler> clown: a quick thing to get out of the way: we can merge your universal work at any time, right? dataloader (and gpii-infra) depend on those universal changes, but universal does not depend on dataloader of gpii-infra changes?
+2018-08-01T15:46:23 * alf is now known as amatas
+2018-08-01T15:47:41 <mrtyler> uh oh, github is throwing 500s :(
+2018-08-01T15:48:45 <jhernandez_> yup, github is down
+2018-08-01T15:57:29 <mrtyler> seems like it was only affecting some page types, and once i got a "you cannot add this comment now" error, but it\'s back for me
+2018-08-01T15:58:07 <Justin_o> Bosmon: I\'m trying to remove the onboarding of dictionary for UIO+. Things were going okay except that the PSPChannelTests are now failing. I tried to update the tests but they still seem to fail. Do you know how they work enough to guide me in updating them? Also is it safe to remove the dictionary from all the snap sets. this didn\'t seem to fix the tests though.
+2018-08-01T15:58:46 <Bosmon> Yes, I\'m sure it is safe to remove it from the snapsets
+2018-08-01T15:58:56 <Bosmon> And then I guess from any matching expected payloads in the tests
+2018-08-01T15:59:00 <Bosmon> What kinds of failures are you getting?
+2018-08-01T15:59:03 <Justin_o> Bosmon: this is related to https://issues.gpii.net/browse/GPII-3053 in case you were wondering
+2018-08-01T15:59:47 <Justin_o> I think the dictionary is still showing up in some in some returned or expected payload
+2018-08-01T16:00:01 <Justin_o> although it\'s a bit hard to verify because the output is cut off
+2018-08-01T16:00:41 <Justin_o> i believe i have removed dictionary from the entire repo but it still fails the tests
+2018-08-01T16:01:10 <Justin_o> Bosmon: ^
+2018-08-01T16:01:42 <Bosmon> Justin_o - you can increase the rendered payload size with the fluid.logObjectRenderChars global
+2018-08-01T16:02:16 <Justin_o> Bosmon: okay, i\'ll try that, thanks
+2018-08-01T16:10:53 * dandimitrov has quit
+2018-08-01T16:15:20 * sepidehshahi joined the channel
+2018-08-01T16:33:18 * sepidehshahi joined the channel
+2018-08-01T16:46:45 <clown> mrtyler, not quite.  "vagrantCloudBasedContainers.sh" runs the docker image made by gpii-dataloader.  So, I guess, if that universal script is run AND the gpiii-dataloader docker image has been created from my branch \xe2\x80\xa6 probably not good.
+2018-08-01T16:50:42 <clown> actually, mytyler, I re-read your quesion:  I don\'t know what you mean by "universal does not depend on dataloader of gpii-infra changes", specifically "dataloader of gpii-infra changes".
+2018-08-01T16:50:59 <clown> what is a dataloader of gpii-infra changes.?
+2018-08-01T16:51:35 <clown> *mrtyler ^
+2018-08-01T16:52:31 <mrtyler> sorry, s/of/or/
+2018-08-01T16:52:52 <mrtyler> i think you answered it. universal does use dataloader via vagrantCloudBasedContainers.sh
+2018-08-01T16:53:01 <mrtyler> so we do need to be careful to coordinate those two merges
+2018-08-01T16:53:13 <clown> ah.  that makes more sense.
+2018-08-01T16:54:09 <clown> right.  you could merge gpii-dataloader into master, but not use it to replace any existing docker image until such time as universal is also updated.
+2018-08-01T16:55:37 <clown> and, on the flip side, the docker image clones the lastest master of universal.  If universal does not have the GPII-3138 changes, then the docker image will run the "wrong" universal code.
+2018-08-01T16:55:59 <mrtyler> right i was aware of the dataloader -> universal dependency. what i forgot about was the universal -> dataloader dependency
+2018-08-01T16:56:26 <mrtyler> i.e. it\'s a two-way reciprocal dependency, not a directed acycilc graph :)
+2018-08-01T16:56:55 <clown> as you noted, at last (?)  week\'s meeting, gpii-dataloader is becoming less and less of a separted standalone thing, and is moving slowing into universal
+2018-08-01T16:57:00 <clown> *slowly
+2018-08-01T16:59:24 * jhung joined the channel
+2018-08-01T17:01:55 <Justin_o> Bosmon: would you like to talk now?
+2018-08-01T17:02:57 <clown> mrtyler, cindyli, just to make sure there are no errors due to timezones, we are meeting in half an hour, correct?
+2018-08-01T17:08:55 <cindyli> clown: that\'s what i think too
+2018-08-01T17:09:07 <clown> thanks cindyli
+2018-08-01T17:13:54 * dandimitrov joined the channel
+2018-08-01T17:14:09 * dandimitrov has quit
+2018-08-01T17:18:15 <mrtyler> clown: cindyli yes in 12 minutes
+2018-08-01T17:26:45 <clown> mrtyle, cindyli, I just fired up skype and it did an update.  It\'s asking me to set up a bunch of stuff that I don\'t really want to setup.  Bottom line:  I may be a little late.
+2018-08-01T17:27:37 <clown> okay, it\'s up (yay).
+2018-08-01T17:32:07 <mrtyler> cindyli: clown sorry, but i\'m ready now. starting the call
+2018-08-01T17:32:31 <clown> okay mrtyler
+2018-08-01T17:59:45 * Justin_o joined the channel
+2018-08-01T18:23:28 <Justin_o> gtirloni: this PR doesn\'t seem to have the buildkite check anymore https://github.com/fluid-project/infusion/pull/914
+2018-08-01T18:29:21 <Justin_o> fluid-everyone: at today\'s community meeting Jon will be leading leading brainstorming inclusive activities
+2018-08-01T18:31:44 <gtirloni> Justin_o: that\'s weird. github was down a few hours ago... and their API doesn\'t seem to let people delete PR statuses (https://developer.github.com/v3/repos/statuses/)
+2018-08-01T18:32:27 <gtirloni> Justin_o: https://github.com/fluid-project/infusion/pull/914
+2018-08-01T18:32:34 <gtirloni> it seems to be there now
+2018-08-01T18:32:57 <gtirloni> but it\'s outdated... the build is running
+2018-08-01T19:01:53 * alanharn_ joined the channel
+2018-08-01T19:03:16 * avtar joined the channel
+2018-08-01T19:04:56 * alanharnum has quit
+2018-08-01T19:08:10 * alanharn_ is now known as alanharnum
+2018-08-01T19:27:41 * amatas has quit
+2018-08-01T19:32:57 <alanharnum> jhung: what\'s the other room we\'re using for remtoe discussion?
+2018-08-01T19:33:25 <jhung> We\'re talking together as a small group Alan. You can join my room
+2018-08-01T19:33:30 <jhung> alanharnum:  ^
+2018-08-01T20:10:54 * sepidehshahi joined the channel
+2018-08-01T20:12:56 <Bosmon> Hi there Justin_o - are you there?
+2018-08-01T20:16:33 * colinclark has quit
+2018-08-01T20:16:59 <alanharnum> cindyli: your praises are being sung in the CAST/CISL meeting for the great introduction you gave to the GPII / prefs server :)
+2018-08-01T20:18:28 <cindyli> yay! i probably gave a confusing introduction than "great" ;)
+2018-08-01T20:19:38 <alanharnum> honestly on a project as big as the GPII with as many moving parts, you gave a great introduction, very clear :)
+2018-08-01T20:21:41 <cindyli> thanks
+2018-08-01T20:24:44 * sepidehshahi has quit
+2018-08-01T20:42:37 * sepidehshahi joined the channel
+2018-08-01T21:00:35 * jhung has quit
+2018-08-01T21:01:23 * alanharnum has quit
+2018-08-01T21:01:32 * the-t-in-rtf has quit
+2018-08-01T21:04:06 * clown has quit
+2018-08-01T21:04:59 * sepidehshahi joined the channel
+2018-08-01T21:05:15 * sepidehshahi has quit
+2018-08-01T21:22:05 * jhernandez_ has quit
+2018-08-01T21:22:15 * jhernandez_ joined the channel
+2018-08-01T21:26:28 * jhernandez_ has quit
+2018-08-01T21:26:39 * jhernandez joined the channel
+2018-08-01T22:51:01 * avtar has quit
+2018-08-01T23:02:25 * cindyli joined the channel
+2018-08-01T23:02:35 <cindyli> hi Bosmon, r u there?
+'
+
+b'2018-08-01T00:31:24 * mrtyler joined the channel
+2018-08-01T06:54:04 * the-t-in-rtf has quit
+2018-08-01T07:48:40 * dandimitrov joined the channel
+2018-08-01T07:53:02 * mrtyler has quit
+2018-08-01T07:53:18 * georgitodorov joined the channel
+2018-08-01T08:55:29 * dandimitrov has quit
+2018-08-01T09:30:24 * [o__o] joined the channel
+2018-08-01T10:03:35 * dandimitrov joined the channel
+2018-08-01T10:06:18 * the-t-in-rtf joined the channel
+2018-08-01T10:52:39 * dandimitrov has quit
+2018-08-01T10:53:45 * dandimitrov joined the channel
+2018-08-01T10:57:47 <dandimitrov> Hey, jhernandez_, should we merge https://github.com/GPII/gpii-app/pull/40 for our tests (in the QSS PR) to run successfully in the CI :?
+2018-08-01T11:02:23 * dandimitrov has quit
+2018-08-01T11:09:17 * dandimitrov joined the channel
+2018-08-01T11:10:35 * dandimitrov has quit
+2018-08-01T11:11:34 * dandimitrov joined the channel
+2018-08-01T11:15:20 * alf joined the channel
+2018-08-01T11:19:53 * dandimitrov has quit
+2018-08-01T11:23:08 * Bosmon has quit
+2018-08-01T11:26:57 * dandimitrov joined the channel
+2018-08-01T11:27:36 * dandimitrov has quit
+2018-08-01T11:29:12 * Bosmon joined the channel
+2018-08-01T11:30:13 * michelled joined the channel
+2018-08-01T11:39:02 * dandimitrov joined the channel
+2018-08-01T12:00:58 * cindyli joined the channel
+2018-08-01T12:05:13 <cindyli> jhernandez_: with PSP and QSS, when logging in with "alice", is "alice" displayed somewhere on the UI? I\'m playing with gpii-app VM but not seeing the key "alice" is showing somewhere
+2018-08-01T12:22:10 * Justin_o joined the channel
+2018-08-01T12:30:59 <cindyli> Bosmon: a question about snapshotter, i should create a file that contains all QSS supported settings. The QSS settings.json (https://github.com/GPII/gpii-app/pull/48/files#diff-854e7c96442be6cafe779083bd503d63L-1) uses common terms such as "http://registry\\\\.gpii\\\\.net/common/language". But invokeSettingsHandlerGet() expects solutionId like "com.microsoft.windows.magnifier", so I used testData/solutions/win32.json5 to convert QSS su
+2018-08-01T12:30:59 <cindyli> pported common terms to solution ids and came up with this json content:
+2018-08-01T12:31:02 <cindyli> [
+2018-08-01T12:31:02 <cindyli> // Solutions for http://registry\\\\.gpii\\\\.net/common/DPIScale
+2018-08-01T12:31:02 <cindyli> "com.microsoft.windows.screenDPI",
+2018-08-01T12:31:02 <cindyli> // Solutions for http://registry.gpii.net/common/language
+2018-08-01T12:31:02 <cindyli> // not found in testData/solutions/win32.json5
+2018-08-01T12:31:02 <cindyli> // "http://registry.gpii.net/common/fontSize"
+2018-08-01T12:31:02 <cindyli> "eu.singularlogic.pixelsense.sociable",
+2018-08-01T12:31:03 <cindyli> "net.gpii.uioPlus",
+2018-08-01T12:31:03 <cindyli> // Solutions for http://registry.gpii.net/common/captions/enabled
+2018-08-01T12:31:04 <cindyli> "net.gpii.uioPlus",
+2018-08-01T12:31:04 <cindyli> // Solutions for http://registry.gpii.net/common/highContrastTheme
+2018-08-01T12:31:05 <cindyli> "net.opendirective.maavis",
+2018-08-01T12:32:08 * jhung joined the channel
+2018-08-01T12:32:20 <cindyli> IRC sends some errors when I pasted the json string. in case it didn\'t go thru. here\'s the pastebin for it - https://pastebin.com/7kiHCDSU
+2018-08-01T12:32:42 <cindyli> Bosmon: is what i\'m doing correct?
+2018-08-01T12:40:47 * dandimitrov_ joined the channel
+2018-08-01T12:47:33 <Bosmon> cindyli - no
+2018-08-01T12:48:12 <cindyli> :(
+2018-08-01T12:48:20 <Bosmon> Well, I\'m not quite sure what you are doing : P
+2018-08-01T12:48:27 <Bosmon> Why are you looking up all solution ids that support all common terms?
+2018-08-01T12:48:57 * dandimitrov has quit
+2018-08-01T12:49:03 * dandimitrov_ is now known as dandimitrov
+2018-08-01T12:49:03 <cindyli> because invokeSettingsHandlerGet() requires solution ids
+2018-08-01T12:49:07 <cindyli> https://github.com/GPII/universal/blob/master/gpii/node_modules/lifecycleManager/src/LifecycleManager.js#L328
+2018-08-01T12:49:13 <cindyli> not common terms
+2018-08-01T12:50:00 <cindyli> oh, maybe the matchmaking process can auto convert common terms to solutions
+2018-08-01T12:50:52 <cindyli> but matchmaking happens in the cloud and only for user defined preferences
+2018-08-01T12:51:34 <Bosmon> cindyli - yes ok
+2018-08-01T12:52:06 <Bosmon> I guess you will have to go through one round of matchmaking in order to discover what solutions they would be allocated to
+2018-08-01T12:52:30 <Bosmon> But it is ok to hard-code this for this current implementation
+2018-08-01T12:52:39 <Bosmon> Given the set of preferences is fixed
+2018-08-01T12:53:03 <Bosmon> Just go for either the builtin solutions or UIO+ for now
+2018-08-01T12:53:04 <cindyli> you mean hard code common terms or solutions?
+2018-08-01T12:53:13 <cindyli> ok, solutions
+2018-08-01T12:53:27 <Bosmon> cindyli - well in practice you are hardcoding both
+2018-08-01T12:53:36 <Bosmon> Since the set supported by the QSS is not going to change quickly
+2018-08-01T12:54:19 <Bosmon> Windows language support is coming here: https://github.com/GPII/universal/pull/534
+2018-08-01T12:58:59 <cindyli> Bosmon: there are multiple solutions for these common terms: font size, high contrast, self voicing. without matchmaking, how to decide which one to use?
+2018-08-01T12:59:30 <Bosmon> cindyli ^
+2018-08-01T13:00:25 <Bosmon> Pick builtin, or UIO+
+2018-08-01T13:00:25 <cindyli> for example high contrast has
+2018-08-01T13:00:25 <cindyli> "net.opendirective.maavis",
+2018-08-01T13:00:25 <cindyli> "com.microsoft.windows.highContrast",
+2018-08-01T13:00:25 <cindyli> "net.gpii.uioPlus",
+2018-08-01T13:00:25 <cindyli> is "com.microsoft.windows.highContrast" the builtin?
+2018-08-01T13:01:53 <cindyli> Bosmon: i don\'t know enough to determine which one is builtin
+2018-08-01T13:02:07 <Bosmon> cindyli - yes, that is builtin
+2018-08-01T13:02:13 <Bosmon> Anything that begins com.microsoft.windows is builtin
+2018-08-01T13:02:17 <cindyli> ok. thanks
+2018-08-01T13:06:01 <Justin_o> the-t-in-rtf: thanks for the update about gpii-grunt-lint-all. The latest dev release seems to be working. Do you know when you\'ll have a stable release out?
+2018-08-01T13:06:11 <the-t-in-rtf> Ask @Bosmon.
+2018-08-01T13:06:23 <Bosmon> ask me? : P
+2018-08-01T13:06:33 <the-t-in-rtf> The related pull is waiting on your input, dear.
+2018-08-01T13:07:01 <the-t-in-rtf> https://github.com/GPII/gpii-grunt-lint-all/pull/2
+2018-08-01T13:07:27 <the-t-in-rtf> the global excludes stuff there is new
+2018-08-01T13:08:15 <dandimitrov> cindyli: Regarding the keyed in user (\xe2\x80\x9calice\xe2\x80\x9d), it is displayed in the tray icon\xe2\x80\x99s context menu - right click on the tray icon
+2018-08-01T13:08:30 <cindyli> great. thanks, dandimitrov
+2018-08-01T13:08:49 <cindyli> dandimitrov: is the string "alice" the received key?
+2018-08-01T13:09:10 <dandimitrov> cindyli: looks like it
+2018-08-01T13:09:22 <cindyli> cool. thanks
+2018-08-01T13:10:10 <dandimitrov> Were you able to find it in your VM :?
+2018-08-01T13:11:00 <cindyli> yes, i did find it, dandimitrov
+2018-08-01T13:11:24 <cindyli> missed the right clicking at the first try :)
+2018-08-01T13:12:11 <stegru> Bosmon: the app zome is ready - but not ready for review, if you know what I mean
+2018-08-01T13:12:19 <stegru> our baz
+2018-08-01T13:12:48 <Bosmon> zome?
+2018-08-01T13:15:06 * clown joined the channel
+2018-08-01T13:17:27 * alanharnum joined the channel
+2018-08-01T13:20:04 <stegru> oh, i\'ve been working on the wrong thing?
+2018-08-01T13:21:46 * sepidehshahi joined the channel
+2018-08-01T13:22:48 <jhernandez_> dandimitrov: sorry, I\'m reading this now - re pull/40, yes, part of it. I can make a pull request against your branch if you want me to
+2018-08-01T13:23:22 <jhernandez_> but that will only fix the issues related to the creation of the installer
+2018-08-01T13:23:36 <dandimitrov> jhernandez_: that would be great
+2018-08-01T13:24:20 <Justin_o> jhernandez_: i filed another PR against gpii-chrome-extension. Are you able to review it https://github.com/GPII/gpii-chrome-extension/pull/9 and there is the previous one still https://github.com/GPII/gpii-chrome-extension/pull/8
+2018-08-01T13:25:02 <dandimitrov> I think there are changes to the Build.ps1 script as well
+2018-08-01T13:25:04 * g2szeto joined the channel
+2018-08-01T13:26:06 <dandimitrov> jhernandez_: In the last CI run only the create-vm step is failing because of the `test-windows.c` file
+2018-08-01T13:26:29 * colinclark joined the channel
+2018-08-01T13:29:02 <jhernandez_> dandimitrov: right, let me create a tiny pr for you to incorporate into your branch
+2018-08-01T13:30:49 <dandimitrov> jhernandez_: great, thanks
+2018-08-01T13:43:26 <cindyli> Bosmon, colinclark, in a skype call that Greg and Bern had with me yesterday, they want to create 2 user keys and 20 empty user keys for the august demo. clown and I talked about the workflow for creating these keys. we\'re thinking to add a new testData/preferences/demoUserPrefs directory to hold preferences sets for these keys. convertPrefs.js will run in the same npm postinstall step as converting snapsets and other keys to convert
+2018-08-01T13:43:26 <cindyli> these user keys with "user" flag to build/dbData/demouser/. CD will pick up from this new build dir to load them into staging and production. do you think this workflow is ok?
+2018-08-01T13:43:45 <cindyli> clown: please correct me if i missed anything
+2018-08-01T13:44:35 <cindyli> btw, these 20 empty keys will just be jsons files with UUIDs as file names. their contents will be an empty javascript object
+2018-08-01T13:44:40 <colinclark> But isn\'t the point that we will give these empty user keys to people to actually use and try out?
+2018-08-01T13:45:07 <colinclark> if so, why would we load them using the same workflow as the canned preference sets?
+2018-08-01T13:45:23 <cindyli> colinclark: greg said he needs these keys just to save the prefs adjusted by QSS
+2018-08-01T13:45:35 <colinclark> (also, three Gs in Gregg)
+2018-08-01T13:45:47 <cindyli> haha, got it
+2018-08-01T13:46:01 <cindyli> i\'ve been wrong with his name all the time, sorry, Gregg
+2018-08-01T13:46:04 <cindyli> :)
+2018-08-01T13:46:09 <colinclark> hahaha
+2018-08-01T13:46:21 <cindyli> our canned prefs sets in testData/preferences are loaded as snapsets, not user keys
+2018-08-01T13:46:50 <cindyli> this is a temp workflow for the august demo for loading test user keys
+2018-08-01T13:47:14 <cindyli> Greg has a different requirement for creating real user keys that will be handed out to users.
+2018-08-01T13:47:23 <cindyli> he will write that requirement in a doc for review
+2018-08-01T13:48:06 <colinclark> ok, i think whatever is easiest is probably fine
+2018-08-01T13:48:15 <cindyli> ok. i think so too
+2018-08-01T13:48:26 <colinclark> there\'s no risk that these keys will be written over in later deployments?
+2018-08-01T13:49:41 <cindyli> i think no, because our dataloading will only reload snapsets, not user keys. if later deployments, the same UUID is posted, couchdb will throw error
+2018-08-01T13:50:57 <clown> cindyli, colinclark, just got back from getting coffee:  reading log.
+2018-08-01T13:51:10 <colinclark> ok, smart data loader :)
+2018-08-01T13:51:33 <clown> cindyli, your description of how I\'ve handled the "demo user preferences" is correct.
+2018-08-01T13:51:58 * clown wonders if colin thinks the data is smart, or the loader, or the coder
+2018-08-01T13:52:40 <cindyli> all of them, in my opinion :)
+2018-08-01T13:53:14 <clown> as for the workflow,  my understanding is that we are doing it this way for the demo, and it\'s relatively easy for us to follow the cow path we created for the snapsets.
+2018-08-01T13:53:44 <clown> whether this is  good approach in the long run is beyond me, at present.  Likely not.
+2018-08-01T13:55:14 <clown> but I find it weird that the demo will not display "roy" as the name for a user\'s preferences (for example), but a UUID.  Ah well, it\'s a demo.
+2018-08-01T13:55:58 * clown goes back to figuring out AWS
+2018-08-01T14:01:01 * dandimitrov has quit
+2018-08-01T14:03:15 * the-t-in-rtf joined the channel
+2018-08-01T14:09:52 <jhernandez_> Justin_o: re the extension pulls, yes, happy to review them, but not sure by when
+2018-08-01T14:13:12 <jhernandez_> but will do my best to get to them ASAP
+2018-08-01T14:14:00 <jhernandez_> clown, cindyli: regarding your work on the dataloader, do you think that you can give us a quick tour on it during our apcp meeting today? I guess that I would also like to know how are we going to proceed with the upcoming demo
+2018-08-01T14:14:45 <Justin_o> jhernandez_: okay thanks.. i\'m not exactly sure when it\'s needed.. it sounded like it might be needed for the august demo, but then in another call i had, it sounded like it wasn\'t will probably need to confirm that with Sandra
+2018-08-01T14:15:50 <clown> jhernandez_:  quick tour \xe2\x80\x94 sure.
+2018-08-01T14:15:53 * avtar joined the channel
+2018-08-01T14:17:36 <jhernandez_> Justin_o: yeah, it\'s hard for me to say too - maybe we should just double check with Sandra/Gregg
+2018-08-01T14:19:59 * dandimitrov joined the channel
+2018-08-01T14:32:04 <Justin_o> yes, i think so
+2018-08-01T14:38:47 * gtirloni joined the channel
+'
+

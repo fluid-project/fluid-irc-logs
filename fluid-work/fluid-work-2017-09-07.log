@@ -1,0 +1,404 @@
+b'2017-09-07T18:24:28 <jhernandez> and yes, they did pass
+2017-09-07T18:24:42 <jhernandez> :)
+2017-09-07T18:24:47 <clown> \\o/
+2017-09-07T18:25:22 <stegru> the problem was because it starts the metrics on an onCreate, that\'s why it buggered up when windows/index.js was being included
+2017-09-07T18:25:32 <jhernandez> right
+2017-09-07T18:26:07 <jhernandez> I could get rid of the problem by splitting the tests into two different files and run them in a row
+2017-09-07T18:26:31 <stegru> i knew you could sort it out :)
+2017-09-07T18:26:54 <jhernandez> clown: and looks like the JIRA I reported and assigned to you isn\'t relevant (now) - I will close it
+2017-09-07T18:27:17 * mrtyler has quit
+2017-09-07T18:27:26 <clown> jhernandez:  whoo!
+2017-09-07T18:27:28 <clown> thanks.
+2017-09-07T18:28:56 <clown> or, rather, whew!
+2017-09-07T18:29:38 <jhernandez> :)
+2017-09-07T18:30:49 * clown deletes his GPII-2579 branch
+2017-09-07T18:32:57 * jhung joined the channel
+2017-09-07T18:36:14 <jhernandez> michelled: I was going to ask you for a review but I see that you already commented on it
+2017-09-07T18:36:30 <jhernandez> great!
+2017-09-07T18:37:16 <jhernandez> and regarding your comment, yes, it does make sense
+2017-09-07T18:37:18 <jhernandez> the question is, how?
+2017-09-07T18:39:07 <jhernandez> I mean, is there any way to ensure that these tests run in sequence and provide a consolidated result?
+2017-09-07T18:39:29 <michelled> I think this is a question for Bosmon
+2017-09-07T18:39:48 <jhernandez> right
+2017-09-07T18:40:55 <stegru> i know what he\'ll say
+2017-09-07T18:41:02 <jhernandez> and actually answering to your question, no, we get two different consolidated results
+2017-09-07T18:41:14 <jhernandez> :)
+2017-09-07T18:41:45 <jhernandez> stegru: ?
+2017-09-07T18:41:57 * lliskovoi has quit
+2017-09-07T18:43:48 <stegru> "fix the underlying problem instead of hacks to work around it"
+2017-09-07T18:44:01 * Jess_ joined the channel
+2017-09-07T18:44:53 <jhernandez> xDD
+2017-09-07T18:46:40 <jhernandez> that\'s right
+2017-09-07T18:48:54 <jhernandez> well, I don\'t have more time today
+2017-09-07T18:51:40 <jhernandez> I\'ll ask Bosmon about his opinion on this when he\'s around tomorrow
+2017-09-07T18:55:25 * lliskovoi joined the channel
+2017-09-07T18:55:41 * lliskovoi has quit
+2017-09-07T18:55:58 * lliskovoi joined the channel
+2017-09-07T18:59:53 <jhernandez> michelled: I commented on the pull request
+2017-09-07T19:00:40 <jhernandez> quick question, do you think that your work on that pull request will solve this problem?
+2017-09-07T19:01:16 <jhernandez> that pull = https://github.com/GPII/gpii-app/pull/17
+2017-09-07T19:04:51 <jhernandez> oh, now that I\'m looking at it, it looks like you\'re not running them (the windows and universal tests) yet
+2017-09-07T19:05:30 <jhernandez> oh wait, they are
+2017-09-07T19:06:27 <jhernandez> well, I guess it\'s a wip branch
+2017-09-07T19:08:25 * the-t-in-rtf has quit
+2017-09-07T19:09:45 <michelled> jhernandez: the issues that I\'m having in that branch means I can\'t run the universal and windows tests along with the app integration tests
+2017-09-07T19:09:54 <michelled> I doubt it\'s going to fix the issue you found though
+2017-09-07T19:30:43 * lliskovoi joined the channel
+2017-09-07T19:33:14 <Bosmon> Hey jhernandez
+2017-09-07T19:33:21 <Bosmon> What\'s all this about "a consolidated result"? : P
+2017-09-07T19:33:27 <Bosmon> This is how the tests are meant to ru nanyway
+2017-09-07T19:34:40 <michelled> Bosmon: https://issues.gpii.net/browse/GPII-2582
+2017-09-07T19:35:47 <Bosmon> Yes, I see it
+2017-09-07T19:35:49 * danayo has quit
+2017-09-07T19:35:51 <Bosmon> But the report still isn\'t completely clear
+2017-09-07T19:36:11 <Bosmon> "we found out that the universal eventLogger tests fail because the eventLogger is actually producing event logs that causes interference in the universal tests"
+2017-09-07T19:36:20 <Bosmon> Doesn\'t explain in detail what is happening
+2017-09-07T19:37:06 <michelled> I think stegru knows more details
+2017-09-07T19:37:15 <Bosmon> I guess the problem is that the event logger doesn\'t have proper mocks?
+2017-09-07T19:37:22 <stegru> that\'s right
+2017-09-07T19:37:27 <Bosmon> ok
+2017-09-07T19:37:40 <stegru> sorry, need to go the chippy.. i\'ve just put in a pr that might fix it for now
+2017-09-07T19:37:46 <Bosmon> awesome
+2017-09-07T19:37:49 <Bosmon> On both counts :)
+2017-09-07T19:37:54 <Bosmon> I wish I could go to the chippy
+2017-09-07T19:38:09 <michelled> oh! me too :)
+2017-09-07T19:44:53 * kavya joined the channel
+2017-09-07T19:45:58 * jhung has quit
+2017-09-07T19:46:17 * jhung joined the channel
+2017-09-07T19:52:15 * jhung joined the channel
+2017-09-07T19:57:57 * jhung has quit
+2017-09-07T20:07:49 <stegru> yes Bosmon, the tests just log to a file and the file is read... but other unexpected things get added to the file from the non-test logging
+2017-09-07T20:09:05 * alanharnum2 joined the channel
+2017-09-07T20:10:09 * lliskovoi joined the channel
+2017-09-07T20:11:03 * javjarfer has quit
+2017-09-07T20:15:40 * alanharnum2 has quit
+2017-09-07T20:32:26 * lliskovoi joined the channel
+2017-09-07T20:33:01 * danayo joined the channel
+2017-09-07T20:37:40 * cindyli has quit
+2017-09-07T20:41:56 * simonjb has quit
+2017-09-07T20:50:18 * gtirloni has quit
+2017-09-07T21:00:18 * michelled has quit
+2017-09-07T21:00:37 * michelled joined the channel
+2017-09-07T21:00:55 * michelled has quit
+2017-09-07T21:15:05 * stegru has quit
+2017-09-07T21:29:51 * avtar has quit
+2017-09-07T21:31:21 * avtar joined the channel
+2017-09-07T22:13:29 * alanharnum2 joined the channel
+2017-09-07T22:14:59 * mrtyler joined the channel
+2017-09-07T22:18:25 * lliskovoi_ joined the channel
+2017-09-07T22:18:34 * lliskovoi_ has quit
+2017-09-07T22:20:07 * alanharnum2 has quit
+2017-09-07T23:02:55 * michelled joined the channel
+2017-09-07T23:17:43 * alanharnum2 joined the channel
+2017-09-07T23:23:03 * alanharnum2 has quit
+2017-09-07T23:26:42 * kavya has quit
+2017-09-07T23:42:03 * amatas has quit
+2017-09-07T23:42:14 * amatas joined the channel
+2017-09-07T23:45:35 * Jess_ joined the channel
+2017-09-07T23:45:56 * Jess_ has quit
+'
+
+b'2017-09-07T13:23:34 <cindyli> coming
+2017-09-07T13:25:12 * clown joined the channel
+2017-09-07T13:40:06 * grrrero joined the channel
+2017-09-07T13:48:45 * georgitodorov has quit
+2017-09-07T13:53:21 * alanharnum joined the channel
+2017-09-07T13:56:27 * michelled joined the channel
+2017-09-07T13:58:34 * alanharnum has quit
+2017-09-07T13:58:49 <cindyli> hi grrrero, do you have time to talk about jhung\'s wordpress plugin pull request - https://github.com/jhung/feedback-post-plugin/pull/1
+2017-09-07T14:00:06 <cindyli> did you have a chance to review it again?
+2017-09-07T14:06:22 * alanharnum joined the channel
+2017-09-07T14:20:03 * amatas has quit
+2017-09-07T14:45:14 * colinclark joined the channel
+2017-09-07T14:47:42 <stegru> jhung: I\'d like to make the installer run a script when it installs.. what do you think about that?
+2017-09-07T14:47:53 <stegru> sorry I mean jhernandez not jhung
+2017-09-07T14:49:16 * amatas joined the channel
+2017-09-07T14:49:20 <jhernandez> what do I think?
+2017-09-07T14:49:22 <jhernandez> it\'s fine
+2017-09-07T14:49:24 <jhernandez> :)
+2017-09-07T14:49:44 <jhernandez> I mean, are you asking about the feasibility of running things at installation time?
+2017-09-07T14:50:02 <jhernandez> if so, yes, it\'s not a problem
+2017-09-07T14:50:10 <jhernandez> stegru: ^
+2017-09-07T14:50:48 <stegru> ok!
+2017-09-07T14:51:04 <stegru> ^ jhernandez
+2017-09-07T14:52:12 <stegru> what actually builds the installer... is it gpii-windows or gpii-app? each has Installer.ps1
+2017-09-07T14:53:42 <stegru> it\'s ok, I used my own brain
+2017-09-07T14:53:47 <jhernandez> haha
+2017-09-07T14:54:03 <jhernandez> yes, there\'s an Installer.ps1 for both project
+2017-09-07T14:54:06 <jhernandez> *projects
+2017-09-07T14:54:08 <stegru> how come windows has one?
+2017-09-07T14:54:25 <jhernandez> it exists before the gpii-app one
+2017-09-07T14:54:39 <stegru> ah makes sense
+2017-09-07T14:54:41 <jhernandez> and yeah, we can either deliver the gpii-windows or gpii-app
+2017-09-07T14:55:07 <stegru> so, if i had to change anything.. both need to be updated?
+2017-09-07T14:55:27 <jhernandez> that\'s why they both have an Installer.ps1 included
+2017-09-07T14:55:51 <jhernandez> what kind of change?
+2017-09-07T14:55:58 <stegru> i don\'t know
+2017-09-07T14:56:09 <jhernandez> most of the installation creation logic is in gpii-wix-installer
+2017-09-07T14:56:26 * alanharnum2 joined the channel
+2017-09-07T14:56:44 <jhernandez> and in Installer.ps1 we set up everything to actually build the installer using gpii-wix-installer
+2017-09-07T14:56:48 <jhernandez> gotcha?
+2017-09-07T14:56:50 <stegru> yep
+2017-09-07T14:57:05 <stegru> and the script just moves things around, so it gets put into the installer
+2017-09-07T14:57:12 <stegru> and builds
+2017-09-07T14:57:35 <jhernandez> exacto
+2017-09-07T14:57:38 <jhernandez> amigo
+2017-09-07T14:58:35 <stegru> si
+2017-09-07T14:58:59 <stegru> s\xc3\xae
+2017-09-07T15:01:15 * mrtyler joined the channel
+2017-09-07T15:02:06 <jhernandez> in any case, if you want to run something at the end of the installation, we\'re already doing so to automatically start the listeners and the gpii
+2017-09-07T15:02:39 <stegru> yes, i was just looking at that line
+2017-09-07T15:03:12 * alanharnum2 has quit
+2017-09-07T15:04:09 <jhernandez> https://github.com/GPII/gpii-wix-installer/blob/HST/setup/Product.wxs#L350-L370
+2017-09-07T15:10:51 <stegru> jhernandez: let\'s say I have a "run-once.js", which is only ran after install - where do you think it should go.. gpii-wix-installer or gpii-app?
+2017-09-07T15:11:58 * danayo joined the channel
+2017-09-07T15:14:23 <jhernandez> if it\'s static, gpii-wix-installer
+2017-09-07T15:15:26 <stegru> what would it be if it wasn\'t static?
+2017-09-07T15:15:39 <stegru> i mean... what do you mean by "static"?
+2017-09-07T15:16:22 <jhernandez> well, by static I mean something that is going to be ship always in the same form, that doesn\'t depend if we\'re on windows or gpii-app
+2017-09-07T15:16:42 <jhernandez> and that is not going to receive a lot of updates
+2017-09-07T15:17:03 <stegru> ok, got it thanks
+2017-09-07T15:19:30 * danayo_ joined the channel
+2017-09-07T15:23:51 <jhernandez> yw
+2017-09-07T15:25:59 <grrrero> cindyli: Sure maybe this afternoon?
+2017-09-07T15:30:53 <cindyli> grrrero: sure. what time is good for you? 1:30?
+2017-09-07T15:33:34 * javjarfer has quit
+2017-09-07T15:39:43 * amatas has quit
+2017-09-07T15:41:13 * amatas joined the channel
+2017-09-07T15:47:45 * lliskovoi joined the channel
+2017-09-07T15:48:32 * lliskovoi has quit
+2017-09-07T15:48:55 * sepidehshahi joined the channel
+2017-09-07T15:57:51 * michelled has quit
+2017-09-07T16:00:37 * alanharnum2 joined the channel
+2017-09-07T16:07:04 * alanharnum2 has quit
+2017-09-07T16:08:10 * dandimitrov has quit
+2017-09-07T16:13:13 * cindyli has quit
+2017-09-07T16:15:52 * cindyli joined the channel
+2017-09-07T16:22:19 * michelled joined the channel
+2017-09-07T16:30:36 * avtar joined the channel
+2017-09-07T16:53:59 * alanharnum has quit
+2017-09-07T16:57:26 * alanharnum joined the channel
+2017-09-07T17:04:09 * michelled joined the channel
+2017-09-07T17:05:59 * sepidehshahi has quit
+2017-09-07T17:14:44 * amatas_ joined the channel
+2017-09-07T17:15:22 * dandimitrov joined the channel
+2017-09-07T17:29:07 <clown> jhernandez: Just saw you latest comment on GPII-2579.  So, I should wait?
+2017-09-07T17:30:56 * lliskovoi joined the channel
+2017-09-07T17:31:32 <jhernandez> clown: hey
+2017-09-07T17:31:38 * jhung1 joined the channel
+2017-09-07T17:31:40 <jhernandez> yes please, hold a sec
+2017-09-07T17:32:17 <jhernandez> I\'ve just pushed an update to see whether this is really a problem or not on CI
+2017-09-07T17:33:12 <clown> jhernandez:  a second has passed.  and another second.  and another.  (ignore me).
+2017-09-07T17:33:18 * jhung has quit
+2017-09-07T17:33:28 <jhernandez> I saw it locally, but probably everything had to do with this problem that I just pushed a workaround for https://issues.gpii.net/browse/GPII-2582
+2017-09-07T17:33:32 <jhernandez> clown: DDD
+2017-09-07T17:33:34 <jhernandez> xDD
+2017-09-07T17:34:16 <jhernandez> yeah, let\'s see whether this pull request passes CI -> https://github.com/GPII/gpii-app/pull/24
+2017-09-07T17:35:29 * clown crosses fingers.
+2017-09-07T17:35:35 * clown as if that helps.
+2017-09-07T17:35:56 <stegru> no, it all depends on the wind direction
+2017-09-07T17:36:11 * michelled has quit
+2017-09-07T17:36:40 <clown> so that\'s it.  up vs. down vs. tornado
+2017-09-07T17:37:28 <ussjoin> amatas: What are the secret strings in the ops repo you\'re worried about exposing? I\'m wondering if those should be checked into source control at all.
+2017-09-07T17:38:39 <clown> brb
+2017-09-07T17:46:57 * clown is back
+2017-09-07T17:52:26 * michelled joined the channel
+2017-09-07T17:56:23 * javjarfer joined the channel
+2017-09-07T18:00:48 <stegru> it would be nice if the installer was built after the tests
+2017-09-07T18:04:07 <amatas> hi ussjoin, well, they are not strict secrets. I\'m talking about IP address, routes, users, password hashes
+2017-09-07T18:04:29 <ussjoin> amatas: Ah yeah---so can we avoid checking that into source control at all?
+2017-09-07T18:05:06 * alanharnum2 joined the channel
+2017-09-07T18:05:48 <amatas> I think that is not an easy task, and it will require some time. At least all the variables that Ansible use, because I guess that we would have to change some code of the roles that we use.
+2017-09-07T18:05:52 * dandimitrov has quit
+2017-09-07T18:06:31 <ussjoin> amatas: Those variables have to be in source control, or they just have to be available to Ansible?
+2017-09-07T18:06:32 * dandimitrov joined the channel
+2017-09-07T18:07:58 <amatas> most of them are in the inventory and group variables files
+2017-09-07T18:08:52 <amatas> but I\'d like to go over all the playbooks and check that are clean of those variables
+2017-09-07T18:09:03 <jhernandez> stegru: when running the filebeat installer, I have to close the window instead of "pressing any key to continue"?
+2017-09-07T18:09:17 <jhernandez> what if I press A key?
+2017-09-07T18:09:36 <amatas> you have to press the any key
+2017-09-07T18:09:38 <stegru> javi, i was talking about the thing that Han uses
+2017-09-07T18:10:15 <stegru> you can do what you want with the filebeat installer... it just asks to press a key in case there\'s an error message
+2017-09-07T18:10:23 <jhernandez> haha
+2017-09-07T18:10:25 <jhernandez> okay
+2017-09-07T18:10:32 <jhernandez> I was confused after reading the email
+2017-09-07T18:10:46 <jhernandez> thanks
+2017-09-07T18:10:46 * amatas_ has quit
+2017-09-07T18:10:48 <stegru> han uses a script in addition to the installer, to make the logs go somewhere else (I set APPDATA))
+2017-09-07T18:11:15 * dandimitrov has quit
+2017-09-07T18:11:51 <stegru> it\'s to work around deep freeze
+2017-09-07T18:13:13 <jhernandez> okok
+2017-09-07T18:16:42 * alanharnum has quit
+2017-09-07T18:17:25 * the-t-in-rtf joined the channel
+2017-09-07T18:18:11 <stegru> these tests are taking forever and a day, is that usual?
+2017-09-07T18:18:48 * alanharnum joined the channel
+2017-09-07T18:19:06 <michelled> which tests stegru?
+2017-09-07T18:19:28 <stegru> whatever gpii-app is doing, michelled
+2017-09-07T18:19:47 <michelled> I\'ve been having issues with them hanging, but I thought it was just in my branch
+2017-09-07T18:19:55 <michelled> you\'re seeing it in hst?
+2017-09-07T18:20:02 <stegru> https://ci.gpii.net/job/gpii-app-test/75/console
+2017-09-07T18:20:09 <stegru> no hanging
+2017-09-07T18:20:42 <michelled> ah, ok
+2017-09-07T18:21:03 <jhernandez> stegru: yeeah, it is, running tests
+2017-09-07T18:21:39 <jhernandez> this time, they\'re actually running
+2017-09-07T18:21:40 <stegru> isn\'t it the same tests as windows and universal? because they don\'t take as long
+2017-09-07T18:21:57 <michelled> yes, it\'s the same ones
+2017-09-07T18:22:02 <jhernandez> it runs universal all tests and windows unit tests
+2017-09-07T18:22:33 <stegru> a watched pot never boils
+2017-09-07T18:22:41 <michelled> haha, true that
+2017-09-07T18:23:57 <stegru> nice one, they passed
+2017-09-07T18:24:09 <jhernandez> stegru: hahaha
+'
+
+b'2017-09-07T00:44:24 * alanharnum joined the channel
+2017-09-07T00:58:32 * kavya has quit
+2017-09-07T02:09:59 * alanharnum joined the channel
+2017-09-07T02:51:07 * mrtyler has quit
+2017-09-07T03:14:36 * alanharnum joined the channel
+2017-09-07T03:21:05 * alanharnum has quit
+2017-09-07T03:25:16 * danayo_ joined the channel
+2017-09-07T03:29:27 * mrtyler joined the channel
+2017-09-07T03:46:18 * mrtyler has quit
+2017-09-07T04:18:46 * alanharnum joined the channel
+2017-09-07T04:26:04 * alanharnum has quit
+2017-09-07T05:23:47 * alanharnum joined the channel
+2017-09-07T05:30:04 * alanharnum has quit
+2017-09-07T06:27:50 * alanharnum joined the channel
+2017-09-07T06:31:07 * dandimitrov joined the channel
+2017-09-07T06:33:22 * alanharnum has quit
+2017-09-07T06:53:53 * dandimitrov has quit
+2017-09-07T07:08:15 * the-t-in-rtf joined the channel
+2017-09-07T07:30:52 * alanharnum joined the channel
+2017-09-07T07:34:16 * the-t-in-rtf1 joined the channel
+2017-09-07T07:34:16 * the-t-in-rtf has quit
+2017-09-07T07:37:32 * alanharnum has quit
+2017-09-07T07:41:45 * the-t-in-rtf1 has quit
+2017-09-07T07:42:01 * the-t-in-rtf joined the channel
+2017-09-07T07:47:18 * georgitodorov joined the channel
+2017-09-07T07:51:41 * stegru joined the channel
+2017-09-07T07:59:43 * javjarfer joined the channel
+2017-09-07T08:35:07 * alanharnum joined the channel
+2017-09-07T08:38:54 * dandimitrov joined the channel
+2017-09-07T08:39:51 * amatas joined the channel
+2017-09-07T09:03:34 * amatas_ joined the channel
+2017-09-07T09:08:32 * amatas_ has quit
+2017-09-07T09:23:48 * the-t-in-rtf has quit
+2017-09-07T09:25:00 * the-t-in-rtf joined the channel
+2017-09-07T09:37:36 * gtirloni joined the channel
+2017-09-07T09:39:21 * alanharnum joined the channel
+2017-09-07T09:51:47 <jhernandez> stegru: morning
+2017-09-07T09:51:52 <stegru> hi
+2017-09-07T09:52:42 <stegru> what have i broke now?
+2017-09-07T09:53:08 <jhernandez> xDD
+2017-09-07T09:53:24 <jhernandez> gpii-app tests
+2017-09-07T09:53:28 <jhernandez> https://ci.gpii.net/job/gpii-app-test/72/consoleFull
+2017-09-07T09:54:19 <stegru> ah
+2017-09-07T09:54:20 <jhernandez> the universal eventLog tests are failing both here locally and on CI
+2017-09-07T10:03:37 <stegru> works ok for me, jhernandez. are you using master for universal?
+2017-09-07T10:03:41 <Bosmon> Morning georgitodorov
+2017-09-07T10:03:46 <Bosmon> dandimitrov
+2017-09-07T10:03:56 <jhernandez> stegru: yes, but on electron
+2017-09-07T10:04:17 <Bosmon> Would you like to have a session going over your code so far?
+2017-09-07T10:04:54 <jhernandez> stegru: on node they run fine, the problem comes when running them on electron
+2017-09-07T10:05:48 <jhernandez> Bosmon: I saw your update from yesterday night on the PCP API - great job!!
+2017-09-07T10:06:06 <stegru> I have an idea why.. the real metrics are being captured, while the tests are running.. causing real data to be also sent to the log
+2017-09-07T10:07:54 * the-t-in-rtf has quit
+2017-09-07T10:11:55 * amatas_ joined the channel
+2017-09-07T10:13:56 <georgitodorov> Bosmon: Hello, Antranig! Yes, having such a session sounds great. How do you image that we do it?
+2017-09-07T10:14:46 <georgitodorov> Sorry for the typo - I meant, how shall we do it?
+2017-09-07T10:17:11 <jhernandez> stegru: yeah, that was my impression, but why is that it only happens on gpii-app?
+2017-09-07T10:18:06 <jhernandez> oh, and btw, the metrics are working - just checked with amatas in Kibana
+2017-09-07T10:19:35 <stegru> good
+2017-09-07T10:19:41 <jhernandez> very good
+2017-09-07T10:25:40 <stegru> can\'t even get these stupid tests to work
+2017-09-07T10:26:08 <stegru> can you remove require("gpii-windows/index.js"); from tests.js and see what happens for me?
+2017-09-07T10:27:13 <stegru> because, when the tests are ran without gpii-app, that file isn\'t required
+2017-09-07T10:30:41 <jhernandez> mmm
+2017-09-07T10:30:50 <jhernandez> let me check what happens
+2017-09-07T10:32:37 <Bosmon> georgitodorov - well, we could have a session over Skype, perhaps with some screensharing
+2017-09-07T10:32:39 <stegru> this is the branch? javihernandez/GPII-2084
+2017-09-07T10:34:03 <jhernandez> stegru: right
+2017-09-07T10:34:32 <jhernandez> mmm, I\'m also getting random failures from the process reporter tests
+2017-09-07T10:35:15 <jhernandez> let me restart the machine, yesterday night they were passing
+2017-09-07T10:40:27 <gloob> you shall not pass
+2017-09-07T10:40:47 <georgitodorov> Bosmon: Do you want us to send you some pieces of code to look at them before having a call?
+2017-09-07T10:40:54 <Bosmon> georgitodorov - sure
+2017-09-07T10:40:56 * alanharnum joined the channel
+2017-09-07T10:41:06 <Bosmon> We should start a running pull in github for our comments
+2017-09-07T10:41:10 <Bosmon> We often do this with other work
+2017-09-07T10:41:21 <Bosmon> Even if code is not ready to be merged, it can be useful to have a pull request as a focus for it
+2017-09-07T10:41:31 <Bosmon> For example, my own pull request on universal :)
+2017-09-07T10:41:42 <gloob> jhernandez: the eventlog was failing in my branch too
+2017-09-07T10:41:55 <georgitodorov> Bosomon: Great, we will prepare the PR and will send it to you shortly
+2017-09-07T10:42:11 <georgitodorov> Any comments you have will be greatly appreciated.
+2017-09-07T10:42:13 <Bosmon> georgitodorov - awesome!
+2017-09-07T10:42:16 <Bosmon> See you in a bit
+2017-09-07T10:44:49 <jhernandez> gloob: how come? under what situation? using windows or gpii-app?
+2017-09-07T10:48:04 * alanharnum has quit
+2017-09-07T10:48:20 <dandimitrov> Hello everyone! We are having trouble running the `gpii-app` with the newest version of the `gpii-windows` module - it gives an error upon start: ```...The grade hierarchy of component with type gpii.processes.windows is incomplete - it inherits from the following grade(s): gpii.processes for which the grade definitions are corrupt or missing...```
+2017-09-07T10:48:23 <dandimitrov> We found that `gpii.pocesses.windows` component is defined in `gpii-windows/gpii/node_module/ProcessReporter.js`, however we couldn\'t find a definition for the `gpii.processes` component anywhere in the `gpii-windows` (including the dependencies).
+2017-09-07T10:48:23 <dandimitrov> Has someone encountered such an error before?
+2017-09-07T10:48:30 <stegru> ok when I remove the gpii-windows/index.js include, metrics passes
+2017-09-07T10:49:27 <jhernandez> stegru: yup, tests just finished here
+2017-09-07T10:50:41 <jhernandez> dandimitrov: which version of gpii-app are you using?
+2017-09-07T10:52:15 <stegru> so it\'s wokring now?
+2017-09-07T10:55:13 <dandimitrov> jhernandez: We are using this one: https://github.com/danailbd/gpii-app/commits/add/pcp_channel_communication
+2017-09-07T10:56:54 <stegru> dandimitrov: that points to your hst-2017 branch of windows, which is 12 commits behind
+2017-09-07T10:57:10 <stegru> "gpii-windows": "git://github.com/danailbd/windows.git#hst-2017",
+2017-09-07T10:58:40 <jhernandez> dandimitrov: right, that\'s because windows/hst-2017 has been updated recently and the changes are not in gpii-app yet
+2017-09-07T11:00:43 <dandimitrov> stegru: We wanted to use the draft version of the PCP API that Bosmon supplied us with
+2017-09-07T11:01:22 <gloob> jhernandez: windows
+2017-09-07T11:01:48 * the-t-in-rtf joined the channel
+2017-09-07T11:02:36 <dandimitrov> jhernandez: We saw you have a PR to the gpii-app, adding `electron-egde` as dependency and did so locally - are there any more changes we are missing?
+2017-09-07T11:05:08 <jhernandez> dandimitrov: nope, just the thing that windows/hst-2017 is not pointing to Bosmon\'s PCP API branch of universal
+2017-09-07T11:05:51 <jhernandez> dandimitrov: after the update, have you deleted node_modules and ran npm install again?
+2017-09-07T11:07:27 <jhernandez> dandimitrov: and yeah, your windows/hst-2017 branch must be updated too
+2017-09-07T11:08:39 <Bosmon> dandimitrov - you are going to have to make your own branches of all the relevant projects, sorry that everything is in a bit of flux at the moment
+2017-09-07T11:08:55 <dandimitrov> jhernandez: Thank you I\'ll have these checked and yes we tried deleting the node_modules folder
+2017-09-07T11:09:32 <Bosmon> You might need to back up your windows branch to the last one which was good for gpii-app
+2017-09-07T11:10:37 <jhernandez> yes, that what I was going to suggest dandimitrov, you can just stick to the version of windows that works for your gpii-app
+2017-09-07T11:11:51 <dandimitrov> Bosmon: Ok, we\'ll fallback to that version
+2017-09-07T11:15:13 <dandimitrov> And just to clarify things, my main idea for the gpii-windows fork was to use Bosmon\'s PCP API branch as universal dependency in order to have a simpler way of supplying it to our dev gpii-app
+2017-09-07T11:15:25 <Bosmon> dandimitrov - yes, that should work
+2017-09-07T11:15:45 <Bosmon> In general it is ok for the more dependent projects to be newer than the ones that depend on them
+2017-09-07T11:16:08 <Bosmon> But gpii-app itself is the focus of a lot of tangle currently
+2017-09-07T11:17:56 <Bosmon> If you take branches of windows and gpii-app at your "last known good" configuration, and then just update your universal to my branch, you should be fine
+2017-09-07T11:28:10 * the-t-in-rtf has quit
+2017-09-07T11:28:31 * the-t-in-rtf joined the channel
+2017-09-07T11:29:36 <dandimitrov> Bosmon: Thank you, we\'ll try downgrading the windows dependency
+2017-09-07T11:37:20 <georgitodorov> Bosmon: A quick question - I am struggling a bit with the "Selection to inputs" expander. What I am trying to achieve is to pass dynamically the ID of the selection. I am using something like `selectionID: "{that}.attrs.name"`. However, the IoC reference is not interpreted. Is there a support in the infusion framework for dynamic selectIDs?
+2017-09-07T11:39:24 <Bosmon> georgitodorov - it\'s odd you say this, since Justin_o just implemented this last month
+2017-09-07T11:39:25 <Bosmon> https://github.com/fluid-project/infusion/blob/master/src/framework/renderer/js/RendererUtilities.js#L312
+2017-09-07T11:39:35 <Bosmon> It should be enough for you to update to the most recent infusion dev release
+2017-09-07T11:40:29 <Bosmon> So the dev release in my branch was from 3 days after this commit
+2017-09-07T11:40:34 <Bosmon> So in theory it should be there
+2017-09-07T11:40:56 <Bosmon> Your gpii-app may have an older dependency - it is something to check when you make your branches
+2017-09-07T11:41:10 <Bosmon> Anything after 3.0.0-dev.20170727T125648Z.47055ca should be fine
+2017-09-07T11:42:12 * cindyli joined the channel
+2017-09-07T11:46:04 * alanharnum joined the channel
+2017-09-07T11:52:35 * yuriy joined the channel
+2017-09-07T11:54:20 * the-t-in-rtf has quit
+2017-09-07T11:59:31 * amatas_ has quit
+2017-09-07T12:00:36 * the-t-in-rtf joined the channel
+2017-09-07T12:22:38 * dandimitrov has quit
+2017-09-07T12:22:57 <georgitodorov> Bosmon: Here is the pull request which I promised: https://github.com/danailbd/gpii-app/pull/1
+2017-09-07T12:24:13 * cindyli joined the channel
+2017-09-07T12:24:32 <georgitodorov> It contains work regarding the initial setup of the settings window, dynamically adding widgets to the settings window, definition of all 7 types of supported widgets, as well as example usage of widgets in the settings window.
+2017-09-07T12:25:56 * Justin_o joined the channel
+2017-09-07T12:26:09 <georgitodorov> Please take a look at it and add comments where necessary. We can then have a call to further discuss.
+2017-09-07T12:35:35 * jhung joined the channel
+2017-09-07T12:36:27 <Bosmon> Cheers georgitodorov - that\'s really great
+2017-09-07T12:45:16 * the-t-in-rtf has quit
+2017-09-07T12:49:17 * alanharnum joined the channel
+2017-09-07T12:55:35 * alanharnum has quit
+2017-09-07T13:01:12 * sepidehshahi joined the channel
+2017-09-07T13:04:14 * dandimitrov joined the channel
+2017-09-07T13:19:46 * yuriy has quit
+2017-09-07T13:21:32 * simonjb joined the channel
+2017-09-07T13:22:10 <jhung> cindyli and Justin_o - do you both have time to check-in about the Feedback Plugin and on-ramping?
+2017-09-07T13:22:26 <Justin_o> jhung: sure
+2017-09-07T13:22:31 <cindyli> sure
+2017-09-07T13:23:02 <jhung> my room cindyli Justin_o?
+2017-09-07T13:23:19 <Justin_o> jhung: okay
+'
+

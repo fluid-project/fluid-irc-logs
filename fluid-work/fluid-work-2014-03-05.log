@@ -1,0 +1,260 @@
+b'2014-03-05T21:14:54 <Bosmon> Yes well, I looked at them too
+2014-03-05T21:15:06 <Bosmon> I guess I can hardly point any fingers given I have barely started documenting the new ChangeApplier
+2014-03-05T21:15:37 <cindyli1> lol
+2014-03-05T21:30:48 <simonjb> colinclark, Bosmon: just pushed my start on the debugger https://github.com/simonbates/infusion/commit/802fc8559824ba7b81c3cfecf3a2272d897e430e
+2014-03-05T21:31:19 <colinclark> ooh awesome
+2014-03-05T21:31:27 <Bosmon> Fascinating and fantastic, simonjb : P
+2014-03-05T21:31:36 <simonjb> it\'s _very_ basic
+2014-03-05T21:32:07 <simonjb> adds a link to the page that when clicked dumps the activityTrace
+2014-03-05T21:32:36 <simonjb> the dump has activities indented by spaces
+2014-03-05T21:32:41 <Bosmon> The code in your "buildSummary" function looks a little familiar : P
+2014-03-05T21:32:46 <simonjb> to indicate the push/pop level
+2014-03-05T21:33:29 <simonjb> Bosmon: yes, basically a copy of fluid.stringTemplate
+2014-03-05T21:33:43 <simonjb> with special casing for functions
+2014-03-05T21:34:01 <colinclark> If you feel like it, I don\'t see any reason why it couldn\'t be factored as a View component
+2014-03-05T21:34:55 <Bosmon> I think you could revert to just the standard fluid.stringTemplate by just preprocessing the "args" entry before it is sent in
+2014-03-05T21:35:17 <simonjb> yeah, I wanted to discuss that; I can also see an argument for having the debugger separate from the fluid IoC machinery
+2014-03-05T21:35:17 <colinclark> would it make sense to build up a model-like structure from an activity log in preparation for presentation, or to adjust the activity log prior to rendering it?
+2014-03-05T21:35:41 <Bosmon> I think it will inevitable that the debugger becomes tightly coupled to the Fluid IoC machinery....
+2014-03-05T21:35:58 <colinclark> inevitable how?
+2014-03-05T21:36:07 <Bosmon> For the kinds of reasons we had chatted about - for example, its requirement in the end to perform "simulation" of various pieces of configuration
+2014-03-05T21:36:08 <simonjb> Bosmon: yes, I mean perhaps not be a user of it
+2014-03-05T21:36:14 * cindyli1 has quit
+2014-03-05T21:36:59 <Bosmon> Well, I think we will have to sort out its intimately being a user of it too - since very quickly we will run into questions that the debugger is unable to answer without submitting them to IoC resolution on its own bat
+2014-03-05T21:37:24 <Bosmon> For example, "what subcomponents might this component have, that has not yet been instantiated"
+2014-03-05T21:38:52 <simonjb> Bosmon: ok, I agree there also; by "user" I want to say not have debugger construction code complicating the activity log of the users page -- be an observer, not what is being observed
+2014-03-05T21:39:01 <Bosmon> Yes, that\'s certainly a danger
+2014-03-05T21:39:12 <simonjb> but I think how the debugger integrates is a conversation we want to have
+2014-03-05T21:39:19 <Bosmon> We will need to make our facilities for controlling the tracing much more robust
+2014-03-05T21:39:39 <Bosmon> For example, for fluid logging we operate a "stacking" system whereby logging states get pushed and popped from a stack
+2014-03-05T21:39:48 <Bosmon> And we presumably want the same for tracing states too
+2014-03-05T21:39:59 * jhung has quit
+2014-03-05T21:40:08 <Bosmon> Well
+2014-03-05T21:40:14 <Bosmon> We probably need something even better than a stack
+2014-03-05T21:40:39 <Bosmon> Especially once the framework becomes more asynchronous, it will become harder and harder for the debugger to guard its own stack frames
+2014-03-05T21:40:47 <Bosmon> So what we probably want is "per-tree" tracing configuration
+2014-03-05T21:40:57 <simonjb> Bosmon: and regarding reusing fluid.stringTemplate and preprocessing -- definitely another good option -- I did think of doing that and might go that route; I wanted to see what doing it myself would look like and see if there was value
+2014-03-05T21:41:03 <Bosmon> simonjb - cool
+2014-03-05T21:41:25 <Bosmon> So, for example, we would be able to turn off tracing for all materials related to the debugger\'s own tree of IoC components
+2014-03-05T21:42:57 <Bosmon> I guess for the time being we could get away with a stack-based system
+2014-03-05T21:43:08 <Bosmon> Assuming there won\'t be much dynamism in the debugger to start with
+2014-03-05T21:43:10 <simonjb> Bosmon: certainly something like that would make it easier to make the debugger a fluid component and get all of the good stuff that entails -- I\'d like to keep the debugger out of what the user sees in the trace
+2014-03-05T21:43:34 <Bosmon> simonjb - yes, that\'s certainly essential
+2014-03-05T21:45:54 <Bosmon> Perhaps the most straightforward and "reasonably robust" solution might be to apply a special grade name to the root of the debugger\'s own component tree
+2014-03-05T21:45:58 <Bosmon> "fluid.noTracing" or so
+2014-03-05T21:46:23 <Bosmon> And then to make a utility which checks this from every call site - naturally we\'d do the cheap test first to avoid slowing things down horribly
+2014-03-05T21:46:54 <simonjb> Bosmon: that sounds very reasonable; is there any tracing that would happen before "fluid.noTracing" could be detected?
+2014-03-05T21:47:19 <Bosmon> simonjb - well, we\'d put the check at every call site - since I believe every call site will have access to a "that" of some kind
+2014-03-05T21:47:27 <Bosmon> Although it will be interesting to see if there are any exceptions
+2014-03-05T21:48:51 <Bosmon> simonjb - I don\'t see any such sites on a quick scan of FluidIoC.js
+2014-03-05T21:49:03 <Bosmon> Although I notice that resolveContextValue doesn\'t seem to have a "that" propagated into it in any visible way
+2014-03-05T21:50:51 <Bosmon> "expandSource" is another one - but both of these in real fact will always have a "that" close at hand
+2014-03-05T21:51:32 <Bosmon> So I think "morally", yes, we will always be able to guard each tracing site in this way
+2014-03-05T21:51:41 <Bosmon> With doing only minor violence to the signatures in the framework : P
+2014-03-05T21:53:58 <simonjb> cool
+2014-03-05T21:54:23 <Bosmon> The tracing log is a log of IoC-mediated activities after all
+2014-03-05T21:54:35 <Bosmon> So it stands to reason we should be able to assign a well-defined IoC location to each one
+2014-03-05T21:54:47 <Bosmon> In fact this would only improve the relevance and consistency of the logs
+2014-03-05T21:54:57 <Bosmon> That is, the local "that" is something that each logging record should get for free
+2014-03-05T21:56:18 <simonjb> if I\'m understanding: add "that" to each tracing activity object in the activityTrace?
+2014-03-05T21:56:42 <Bosmon> yes
+2014-03-05T21:58:56 <simonjb> are any of those objects temporary? any concerns about holding references to objects that could cause them not to be collected?
+2014-03-05T21:59:24 <simonjb> I know this would only be while tracing is enabled
+2014-03-05T21:59:37 <simonjb> but good to have an idea
+2014-03-05T22:00:50 <simonjb> there are quite a number of tracing events generated
+2014-03-05T22:01:21 <simonjb> for the uiOptions demo page ~ 9000
+2014-03-05T22:01:41 <simonjb> that includes pops
+2014-03-05T22:04:25 * sgithens has quit
+2014-03-05T22:04:49 * anvk has quit
+2014-03-05T22:06:54 <Bosmon> simonjb - holding on to references is a concern, yes
+2014-03-05T22:07:02 <Bosmon> And I guess of a piece with serialisation concerns in general
+2014-03-05T22:07:17 * clown has left the channel
+2014-03-05T22:08:33 <Bosmon> That is, we would like to be able to send these records to disk whilst reducing their value as little as possible
+2014-03-05T22:08:44 <Bosmon> But that\'s sort of the same issue as to what extent they hold on to live object references
+2014-03-05T22:09:05 <Bosmon> I imagine we could support both models to some extent
+2014-03-05T22:09:23 <Bosmon> Even a destroyed component might in some situations hold some information valuable for debugging
+2014-03-05T22:09:50 <Bosmon> But holding on to all of them as a set policy would be hazardous in general
+2014-03-05T22:10:04 <simonjb> Bosmon: agreed
+2014-03-05T22:10:27 <simonjb> ok, stuff to figure out but good to make a start
+2014-03-05T22:10:39 <Bosmon> simonjb - yes, it is great that all these issues are even surfacing
+2014-03-05T22:10:51 <Bosmon> Since they were clearly "immediately latent" the moment any serious work began to be done on our tooling : P
+2014-03-05T22:11:14 <simonjb> :)
+2014-03-05T22:12:51 <simonjb> tomorrow, I will start a wiki page and get these things written down
+2014-03-05T22:13:58 <Bosmon> simonjb - that will be completely fantastic
+2014-03-05T22:14:25 <simonjb> Bosmon: thanks for all your help these past few days
+2014-03-05T22:15:13 <Bosmon> simonjb - but thanks for YOUR help :)
+2014-03-05T22:15:53 <colinclark> I\'m going to hit the road now too
+2014-03-05T22:15:57 <colinclark> but I enjoyed reading this conversation
+2014-03-05T22:16:03 <colinclark> and am excited about your progress, simonjb
+2014-03-05T22:17:24 <simonjb> thanks colinclark; early days but good to have something concrete to help us see where we need further work within the core system in addition to the debugger ui itself
+2014-03-05T22:19:40 <colinclark> yup
+2014-03-05T22:20:06 * colinclark has quit
+2014-03-05T22:20:58 * anastasiac has quit
+2014-03-05T22:21:42 * simonjb has quit
+2014-03-05T22:26:31 * michelled has quit
+2014-03-05T22:28:55 * michelled joined the channel
+2014-03-05T22:32:04 * kasparnet joined the channel
+2014-03-05T22:32:36 * avtar has quit
+2014-03-05T22:44:51 * jash4 has quit
+2014-03-05T22:48:47 * jash4 joined the channel
+2014-03-05T22:58:36 * sgithens joined the channel
+2014-03-05T23:05:06 * Justin_o has quit
+2014-03-05T23:05:09 * sgithens has quit
+2014-03-05T23:28:46 * kasparnet has quit
+2014-03-05T23:32:39 * danaayotte_ has quit
+2014-03-05T23:32:59 * michelled has quit
+2014-03-05T23:49:58 * yzen has quit
+'
+
+b'2014-03-05T00:02:33 * jash4 joined the channel
+2014-03-05T00:11:26 * avtar has quit
+2014-03-05T00:16:00 * kasparnet joined the channel
+2014-03-05T00:18:52 * kasparnet has quit
+2014-03-05T00:27:39 * vjoanna has quit
+2014-03-05T00:28:38 * michelled has quit
+2014-03-05T00:32:11 * sgithens joined the channel
+2014-03-05T00:47:36 * sgithens has quit
+2014-03-05T00:54:10 <jash4> greggy, wanted to inquire regarding atutor bug #5349
+2014-03-05T01:00:02 * sgithens joined the channel
+2014-03-05T01:14:05 * jash4 has quit
+2014-03-05T01:15:22 * jash4 joined the channel
+2014-03-05T01:34:36 * colinclark joined the channel
+2014-03-05T02:04:47 * vjoanna joined the channel
+2014-03-05T02:16:48 * vjoanna has left the channel
+2014-03-05T03:15:25 * colinclark has quit
+2014-03-05T04:20:18 * yzen joined the channel
+2014-03-05T07:04:00 * yzen has quit
+2014-03-05T07:38:35 * kasparnet joined the channel
+2014-03-05T08:01:40 * kasparnet has quit
+2014-03-05T08:02:35 * kasparnet joined the channel
+2014-03-05T08:11:02 * sgithens has quit
+2014-03-05T08:22:19 * sgithens joined the channel
+2014-03-05T08:23:14 * kasparnet has quit
+2014-03-05T09:04:10 * kasparnet joined the channel
+2014-03-05T09:27:54 * kasparnet has quit
+2014-03-05T09:36:16 * kasparnet joined the channel
+2014-03-05T10:25:01 * kasparnet has quit
+2014-03-05T11:11:36 * jhernandez has quit
+2014-03-05T11:11:42 * kasparnet joined the channel
+2014-03-05T11:13:24 * jhernandez joined the channel
+2014-03-05T11:47:23 * -- BotBot disconnected, possible missing messages --
+2014-03-05T11:54:01 * -- BotBot disconnected, possible missing messages --
+2014-03-05T11:56:26 * [o__o] is now known as Guest37849
+2014-03-05T11:58:30 * Guest37849 joined the channel
+2014-03-05T12:04:01 * kasparnet has quit
+2014-03-05T12:18:37 * Niharika joined the channel
+2014-03-05T12:31:12 * kasparnet joined the channel
+2014-03-05T12:48:30 * sgithens has quit
+2014-03-05T13:00:06 * AyushDatta joined the channel
+2014-03-05T13:00:24 * AyushDatta has quit
+2014-03-05T13:02:20 * sgithens joined the channel
+2014-03-05T13:16:30 <jash4> do we have a bot for #atutor on OFTC as well? or is the channel logged somewhere?
+2014-03-05T13:24:05 * Justin_o joined the channel
+2014-03-05T13:29:44 * jhung joined the channel
+2014-03-05T13:31:54 * anvk joined the channel
+2014-03-05T13:36:32 * cindyli joined the channel
+2014-03-05T13:36:50 * cindyli has quit
+2014-03-05T13:46:03 * cindyli joined the channel
+2014-03-05T13:53:09 * greggy1 joined the channel
+2014-03-05T13:53:43 * kasparnet has quit
+2014-03-05T13:55:28 * greggy1 has quit
+2014-03-05T13:59:28 * greggy1 joined the channel
+2014-03-05T14:03:02 * colinclark joined the channel
+2014-03-05T14:03:36 * kasparnet joined the channel
+2014-03-05T14:07:21 * yzen joined the channel
+2014-03-05T14:22:22 * clown joined the channel
+2014-03-05T14:23:38 * sgithens has quit
+2014-03-05T14:45:54 * greggy1 has quit
+2014-03-05T14:46:17 * greggy1 joined the channel
+2014-03-05T14:53:07 * michelled joined the channel
+2014-03-05T14:56:56 * anastasiac joined the channel
+2014-03-05T15:20:46 * sgithens joined the channel
+2014-03-05T15:26:06 * simonjb joined the channel
+2014-03-05T15:32:25 * greggy1 has quit
+2014-03-05T15:34:32 * avtar joined the channel
+2014-03-05T15:37:52 * vjoanna joined the channel
+2014-03-05T15:51:34 <jhung> simonjb: I was wondering if you have some time this morning for a quick chat on skype?
+2014-03-05T15:52:07 <simonjb> jhung: yes, definitely
+2014-03-05T15:52:30 <simonjb> jhung: at 11?
+2014-03-05T15:52:39 <jhung> Sure simonjb.
+2014-03-05T16:02:56 * greggy1 joined the channel
+2014-03-05T16:13:33 * greggy1 has quit
+2014-03-05T16:23:33 * jash4 has quit
+2014-03-05T16:23:50 * -- BotBot disconnected, possible missing messages --
+2014-03-05T16:25:42 * [o__o] joined the channel
+2014-03-05T16:40:14 * jash4 joined the channel
+2014-03-05T16:42:14 * michelled has quit
+2014-03-05T16:53:12 * michelled joined the channel
+2014-03-05T17:15:58 * greggy1 joined the channel
+2014-03-05T18:03:59 * yzen has quit
+2014-03-05T18:12:50 * Niharika has left the channel
+2014-03-05T18:25:48 * cindyli has quit
+2014-03-05T18:27:22 * the-t-in-rtf joined the channel
+2014-03-05T18:37:04 * scott_gonzalez has quit
+2014-03-05T18:37:29 * scott_gonzalez joined the channel
+2014-03-05T18:38:12 * scott_gonzalez has quit
+2014-03-05T18:38:29 * scott_gonzalez_ joined the channel
+2014-03-05T18:41:10 * kasparnet has quit
+2014-03-05T18:58:06 * jhung has quit
+2014-03-05T18:59:47 * jhung joined the channel
+2014-03-05T19:10:27 * corazon joined the channel
+2014-03-05T19:19:13 * cindyli joined the channel
+2014-03-05T19:21:24 * yzen joined the channel
+2014-03-05T19:26:02 * yzen has quit
+2014-03-05T19:30:11 <Justin_o> fluid-everyone: would anyone like to join the community meeting remotely. Today we\'ll be holding the monthly informal design review.
+2014-03-05T19:30:22 * danaayotte_ joined the channel
+2014-03-05T19:32:32 <danaayotte_> fluid-everyone: we\'re going to start the open design review/community meeting now.  We\'ll be talking about next steps for the GPII/Cloud4All project.  Let me know if you want to join remotely.
+2014-03-05T19:32:52 <jhung> danaayotte_: please add me.
+2014-03-05T19:33:11 <colinclark> I\'d like to join as well
+2014-03-05T19:33:16 <colinclark> but I will be about 15 minutes late, I think
+2014-03-05T19:37:39 * yzen joined the channel
+2014-03-05T19:37:42 * michelled has quit
+2014-03-05T19:38:52 * cindyli1 joined the channel
+2014-03-05T19:39:22 * cindyli has quit
+2014-03-05T19:48:34 <Bosmon> danaayotte_ - please could you add me too - thanks
+2014-03-05T19:49:40 * greggy1 has quit
+2014-03-05T19:49:51 * michelled joined the channel
+2014-03-05T20:06:54 * corazon has quit
+2014-03-05T20:19:17 * anastasiac has quit
+2014-03-05T20:20:02 * anastasiac joined the channel
+2014-03-05T20:20:15 * danaayotte_ has quit
+2014-03-05T20:40:18 * simonjb has quit
+2014-03-05T20:43:50 * kasparnet joined the channel
+2014-03-05T20:50:02 * kasparnet has quit
+2014-03-05T20:52:01 * kasparnet joined the channel
+2014-03-05T20:57:12 * kasparnet has quit
+2014-03-05T21:00:19 <cindyli1> hi Bosmon
+2014-03-05T21:02:56 <Bosmon> Hi there cindyli1!
+2014-03-05T21:03:43 <cindyli1> thanks for fixing 5282. it works great, so far ;) i have another question about model transformation, Bosmon
+2014-03-05T21:04:00 <cindyli1> here\'s my use case: i have a central model looks like:
+2014-03-05T21:04:05 <cindyli1> model: {
+2014-03-05T21:04:05 <cindyli1> features: ["highContrast", "signLanguage", "captions"]
+2014-03-05T21:04:05 <cindyli1> }
+2014-03-05T21:04:19 <cindyli1> it needs to be relayed and transformed to three models:
+2014-03-05T21:04:29 <cindyli1> model1: {
+2014-03-05T21:04:29 <cindyli1> highContrast: true (or false)
+2014-03-05T21:04:29 <cindyli1> }
+2014-03-05T21:04:41 <cindyli1> model2: {
+2014-03-05T21:04:41 <cindyli1> signLanguage: true (or false)
+2014-03-05T21:04:41 <cindyli1> }
+2014-03-05T21:04:52 <cindyli1> model3: {
+2014-03-05T21:04:52 <cindyli1> captions: true (or false)
+2014-03-05T21:04:52 <cindyli1> }
+2014-03-05T21:05:22 * simonjb joined the channel
+2014-03-05T21:05:38 <Bosmon> cindyli1 - and I assume these separated models are in different components
+2014-03-05T21:05:41 <cindyli1> the values of true or false in transformed three models depend on the presence of the corresponding keyword in the array
+2014-03-05T21:05:49 <Bosmon> My suggestion for this is to do the transform in two stages
+2014-03-05T21:05:55 <cindyli1> exactly, for different components
+2014-03-05T21:06:13 <Bosmon> Firstly, transform the model to an "intermediate model" attached to the same component using our existing arrayToBoolean transformer or whatever the damn thing is called
+2014-03-05T21:06:26 <Bosmon> And then link to the separate models via simple references to the intermediate model
+2014-03-05T21:07:20 <Bosmon> For example model3: { captions: "{rootModel}.model.featureBooleans.captions" } or so
+2014-03-05T21:08:37 * danaayotte_ joined the channel
+2014-03-05T21:09:34 <cindyli1> umm\xe2\x80\xa6 the first stage to transform in the same model still map btw the similar structures. why do we need that stage, Bosmon?
+2014-03-05T21:11:34 <Bosmon> cindyli1 - because it is more sensible to make use of the transforms we have already, rather than design some strange customised thing that both maps to booleans and then separates into different models in a single step
+2014-03-05T21:12:19 <Bosmon> It looks like the transform "arrayToSetMembership" is the one you want
+2014-03-05T21:12:25 <Bosmon> unfortunately our documentation for this is dreadful
+2014-03-05T21:12:31 <Bosmon> And KASPARNET has gone to bed already : P
+2014-03-05T21:12:40 * scott_gonzalez_ is now known as scott_gonzalez
+2014-03-05T21:13:40 <cindyli1> ok, i see ur point. don\'t worry about the documentation. we have unit tests which are same helpful :)
+'
+

@@ -1,0 +1,337 @@
+b'2017-09-26T21:30:22 <simonjb> cool
+2017-09-26T21:34:56 <simonjb> Bosmon: I can verify and merge https://github.com/GPII/universal/pull/555 tomorrow
+2017-09-26T21:36:13 <simonjb> that Vagrantfile won\'t be fully working unfortunately even with this fix and it has other issues: https://issues.gpii.net/browse/GPII-2620
+2017-09-26T21:36:33 <Bosmon> simonjb - oh wow
+2017-09-26T21:36:40 * alanharn_ has quit
+2017-09-26T21:37:14 <Bosmon> simonjb - why does CI continue to run, in the face of this issue?
+2017-09-26T21:37:48 <simonjb> this Vagrantfile is not widely used and isn\'t (I believe) used by CI
+2017-09-26T21:39:22 <simonjb> it makes a VM containing \'production\' configurations of Cloud Based Flow Manager, Preferences server, and a CouchDB instance
+2017-09-26T21:39:32 <simonjb> Cindy made it
+2017-09-26T21:39:38 <simonjb> https://github.com/GPII/universal/tree/master/vagrant-configs
+2017-09-26T21:40:08 <simonjb> I wanted to use it to do a little manual testing of GPII-2435 and then discovered that it wasn\'t operational
+2017-09-26T21:41:31 <simonjb> https://github.com/GPII/universal/blob/master/documentation/ProductionSetupInstructions.md
+2017-09-26T21:44:27 <Bosmon> simonjb - that\'s interesting
+2017-09-26T21:44:33 <Bosmon> Isn\'t this what is used in our "end to end testing"?
+2017-09-26T21:44:40 <Bosmon> Or have such things not yet got into CI yet?
+2017-09-26T21:45:21 <simonjb> Bosmon: good question, I don\'t know -- maybe something to bring up at the arch meeting tomorrow?
+2017-09-26T21:45:35 <Bosmon> simonjb - yes, sounds very relevant
+2017-09-26T21:45:46 <Bosmon> I know alfredo asked about something similar about 3 weeks ago
+2017-09-26T21:45:57 <Bosmon> And since then I merged the pull of kasparnet\'s that this was waiting on
+2017-09-26T21:49:49 * michelled has quit
+2017-09-26T21:51:44 <simonjb> Bosmon: actually I think it might have been Avtar that made this Vagrantfile, I don\'t know the history
+2017-09-26T21:52:30 <simonjb> but it might be worth chatting about at tomorrow\'s meeting to see how it\'s being used and if there are other VMs that are being used instead in CI for similar purpose
+2017-09-26T21:56:06 <Bosmon> simonjb - cool
+2017-09-26T21:56:45 * alanharnum joined the channel
+2017-09-26T22:01:05 * alanharnum has quit
+2017-09-26T22:02:28 * alanharnum joined the channel
+2017-09-26T22:13:37 * Justin_o has quit
+2017-09-26T22:29:35 * javjarfer has quit
+2017-09-26T23:28:55 * alanharnum joined the channel
+2017-09-26T23:38:44 * alanharn_ joined the channel
+2017-09-26T23:42:22 * alanharnum has quit
+'
+
+b'2017-09-26T16:32:15 <cindyli> gtirloni: if the production VM has been handled, we probably should remove the one under /vagrant-configs
+2017-09-26T16:33:08 <gtirloni> is the /vagrant-configs dir used for development? or just for running tests? right now the container workflow isn\'t very friendly to active development (container gets builds, tests run and everything is deleted afterwards)
+2017-09-26T16:34:48 <cindyli> gtirloni: not just for running tests. it spins up flow manager and prefs server as separate node servers and back up with couchdb
+2017-09-26T16:35:20 <gtirloni> got it, maybe we should fix it then
+2017-09-26T16:35:29 <cindyli> was reading vagrantCloudBasedContainers.sh. it sets up couchdb for prefs server but didn\'t set up auth database
+2017-09-26T16:35:34 * clown joined the channel
+2017-09-26T16:35:40 <gtirloni> it\'s not used in production or CI anymore because it\'s too heavyweight.. so we\'re not using ansible for those tasks anymore
+2017-09-26T16:36:18 <gtirloni> if CI should setup auth database, that process needs to be improved, if that\'s a requirement
+2017-09-26T16:36:18 * clown has quit
+2017-09-26T16:36:23 <cindyli> ok. i see. if so, we probably should keep vagrant-configs
+2017-09-26T16:36:40 <cindyli> i will create jira
+2017-09-26T16:36:55 <cindyli> for fixing ansible roles used by vagrant-configs
+2017-09-26T16:37:14 * clown joined the channel
+2017-09-26T16:38:10 <gtirloni> thanks
+2017-09-26T16:53:51 <cindyli> simonjb: shall we create another jira for the problem you hit with starting "vagrant-configs" VM on windows 10
+2017-09-26T17:03:22 * Jess_ joined the channel
+2017-09-26T17:04:59 <mrtyler> gpii cloud demo part 2 is starting now in Room 2
+2017-09-26T17:07:04 * kasparnet joined the channel
+2017-09-26T17:07:20 <simonjb> yes cindyli, we can file a jira
+2017-09-26T17:08:43 <simonjb> I\'m wondering also if we should and some more description to https://github.com/GPII/universal/blob/master/vagrant-configs/README.md
+2017-09-26T17:09:22 <simonjb> am I right in thinking that this VM is to run a "production" mode VM for local development?
+2017-09-26T17:09:32 <simonjb> it\'s not actually for production deployment, right?
+2017-09-26T17:14:32 <cindyli> "the production deployment", do you mean if the same steps would be used for deploying production?
+2017-09-26T17:14:33 <cindyli> no
+2017-09-26T17:15:56 <simonjb> cindyli: I mean that the VM would be deployed on the public internet
+2017-09-26T17:16:18 <gtirloni> the usage in GPII of the term "production" is confusing but it\'s not really production... maybe there should be a different term for what\'s proposed
+2017-09-26T17:16:31 <cindyli> i don\'t know, simonjb, but my guess is no
+2017-09-26T17:17:25 <simonjb> we have production mode kettle configurations which would be used when we deploy publicly
+2017-09-26T17:18:12 <simonjb> and this VM packages in one VM GPII projects running in production configuration, right?
+2017-09-26T17:18:29 * alanharnum joined the channel
+2017-09-26T17:18:48 <simonjb> this is what we mean my production in the context on the VM we are discussing?
+2017-09-26T17:19:19 <simonjb> this is what we mean my production in the context _of_ the VM we are discussing?
+2017-09-26T17:23:10 <simonjb> cindyli: how much work do you think it\'ll be to fix the VM? is this something we could do today or is it a bigger job? I can look into the Windows 10 issue
+2017-09-26T17:23:26 <simonjb> gtirloni: do you have any suggestions for the issue I\'m seeing on Windows 10?
+2017-09-26T17:23:38 <cindyli> simonjb, gtirloni: i\'ve created a jira describing the issues i hit: https://issues.gpii.net/browse/GPII-2620
+2017-09-26T17:23:51 <cindyli> simonjb: i think this should be addressed as a separate issue
+2017-09-26T17:24:02 <gtirloni> simonjb: i haven\'t been able to test that, sorry... still download the latest box here
+2017-09-26T17:24:03 <cindyli> all errors i hit was due to the change to other ansible repos
+2017-09-26T17:24:49 <simonjb> I\'ll file a jira for the Windows 10 issue now
+2017-09-26T17:25:11 <gtirloni> maybe tell npm not to use symlinks, because those don\'t exist in vbox shared folders
+2017-09-26T17:25:17 <cindyli> simonjb: "separate issue" i mean outside of the GPII-2435 scope
+2017-09-26T17:25:33 <gtirloni> maybe @amatas has some ideas, based on the work he did with masking dirs behind drive letters
+2017-09-26T17:25:56 * alanharnum has quit
+2017-09-26T17:25:59 <simonjb> cindyli: yes, agree, makes sense to separate from GPII-2435
+2017-09-26T17:26:46 <simonjb> cindyli: I\'d like to run your code against a real CouchDB though, would you be able to help me with that?
+2017-09-26T17:27:09 <cindyli> simonjb: do you have couchdb installed?
+2017-09-26T17:27:18 <simonjb> cindyli: not yet
+2017-09-26T17:27:50 <simonjb> cindyli: do you have a recommended way to run it?
+2017-09-26T17:28:38 <cindyli> the easiest way is to use this VM, otherwise, we may have to set it up locally.
+2017-09-26T17:29:14 <simonjb> yes, using this VM would be great :)
+2017-09-26T17:29:43 <simonjb> that\'s why I asked if we could fix it today
+2017-09-26T17:30:04 <simonjb> otherwise I can install and run locally
+2017-09-26T17:30:32 <cindyli> the hard part using this VM is to fix the issue you had
+2017-09-26T17:30:47 <cindyli> i should be able to get around errors I hit
+2017-09-26T17:30:58 <simonjb> I\'ll reproduce the Windows 10 issue with the VM now and file a JIRA
+2017-09-26T17:31:11 <simonjb> let\'s start with that
+2017-09-26T17:45:11 <cindyli> simonjb: i\'m leaving for a conference soon. I\'m thinking tomorrow I will see if i can get this VM up at least on my machine. if successful, we can test GPII-2435 together on my machine at least. what do you think?
+2017-09-26T17:46:15 <simonjb> sure cindyli, chat tomorrow
+2017-09-26T17:46:27 <cindyli> cool
+2017-09-26T17:57:11 <simonjb> gtirloni: I\'ve filed https://issues.gpii.net/browse/GPII-2621
+2017-09-26T17:57:26 <gtirloni> thank you
+2017-09-26T17:58:05 * Jess_ has quit
+2017-09-26T17:58:20 * Jess_ joined the channel
+2017-09-26T18:04:13 * stegru has quit
+2017-09-26T18:08:04 * alanharnum joined the channel
+2017-09-26T18:08:43 * alanharnum has quit
+2017-09-26T18:08:50 * alanharnum joined the channel
+2017-09-26T18:09:04 * michelled has quit
+2017-09-26T18:10:05 * alanharnum has quit
+2017-09-26T18:10:32 * alanharnum joined the channel
+2017-09-26T18:10:44 <simonjb> gtirloni: to try running npm install without symlinks, would I use \'npm install --no-bin-links\' ?
+2017-09-26T18:11:10 <simonjb> the error I\'m seeing looks like it\'s when making a bin link
+2017-09-26T18:11:44 <gtirloni> yep, i think that\'s what avtar discovered and we started using it on linux (before the split node_modules solution was in place)
+2017-09-26T18:14:51 * alanharnum has quit
+2017-09-26T18:20:14 * kasparnet has quit
+2017-09-26T18:21:41 * kasparnet joined the channel
+2017-09-26T18:22:58 * clown has quit
+2017-09-26T18:29:50 <simonjb> gtirloni: I ran npm install with --no-bin-links but now fail on "Maximum call stack size exceeded" :(
+2017-09-26T18:29:52 <simonjb> https://issues.gpii.net/browse/GPII-2621?focusedCommentId=28507&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-28507
+2017-09-26T18:30:16 <simonjb> looking to see how to increase...
+2017-09-26T18:32:09 <gtirloni> npm3 usually has a lots of bugs like that.. i never found a workaround
+2017-09-26T18:32:15 <gtirloni> i wonder how all of this was working in the past
+2017-09-26T18:32:18 * alanharnum joined the channel
+2017-09-26T18:32:38 <simonjb> gtirloni: it\'s possible that it never worked on Windows
+2017-09-26T18:33:08 * michelled joined the channel
+2017-09-26T18:33:12 <simonjb> maybe we can use yarn?
+2017-09-26T18:34:59 <gtirloni> it seems there are some issues with compiling native extensions that we use with yarn. Bosmon faced some issues which i coulnd\'t reproduce on Linux because my platform (OS+bitness) matched some pre-compiled package and I was lucky.. I don\'t know if that has changed lately
+2017-09-26T18:35:04 * clown joined the channel
+2017-09-26T18:37:16 <simonjb> *sad face*
+2017-09-26T18:38:59 <simonjb> https://github.com/npm/npm/issues/10776
+2017-09-26T18:39:45 <gtirloni> ha! https://github.com/npm/npm/issues/10776#issuecomment-250841904
+2017-09-26T18:41:22 <simonjb> ha indeed!
+2017-09-26T18:50:23 <simonjb> gtirloni: so I guess that we need to update universal/vagrant-configs/Vagrantfile to use the same approach as universal/Vagrantfile so that it will work on a Windows host
+2017-09-26T18:50:33 <simonjb> who is the person best able to do that?
+2017-09-26T18:51:10 * michelled has quit
+2017-09-26T18:52:16 <gtirloni> good point, that should work. I can submit a PR for that
+2017-09-26T18:52:53 <simonjb> ok, awesome, thanks gtirloni
+2017-09-26T18:54:10 <simonjb> gtirloni: can I assign https://issues.gpii.net/browse/GPII-2621 to you then?
+2017-09-26T18:54:54 <gtirloni> just did :)
+2017-09-26T18:55:06 <simonjb> :)
+2017-09-26T18:56:25 * stegru joined the channel
+2017-09-26T18:57:52 * kasparnet has quit
+2017-09-26T19:06:56 * the-t-in-rtf has quit
+2017-09-26T19:07:14 * kasparnet joined the channel
+2017-09-26T19:22:06 * kasparnet has quit
+2017-09-26T19:22:35 * alanharnum joined the channel
+2017-09-26T19:27:08 * javjarfer has quit
+2017-09-26T19:30:59 * alanharnum has quit
+2017-09-26T19:38:21 * jessm joined the channel
+2017-09-26T19:38:27 * mrtyler has quit
+2017-09-26T19:46:41 * alanharnum joined the channel
+2017-09-26T19:51:14 * kasparnet joined the channel
+2017-09-26T19:52:46 * mrtyler joined the channel
+2017-09-26T19:55:05 * alanharnum has quit
+2017-09-26T19:55:09 * kasparnet has quit
+2017-09-26T20:08:45 * michelled joined the channel
+2017-09-26T20:11:16 * alanharnum joined the channel
+2017-09-26T20:17:08 * mrtyler has quit
+2017-09-26T20:22:47 * alanharnum joined the channel
+2017-09-26T20:25:00 * colinclark joined the channel
+2017-09-26T20:31:07 * mrtyler joined the channel
+2017-09-26T20:43:45 * alanharnum has quit
+2017-09-26T20:51:50 * alanharnum joined the channel
+2017-09-26T21:11:52 * javjarfer joined the channel
+2017-09-26T21:13:26 <Bosmon> simonjb - could you give me a brief potted summary of what this node_modules separation business is about? : P
+2017-09-26T21:13:44 <Bosmon> I\'ve read the materials I can find but can\'t say I fully grasp it
+2017-09-26T21:16:31 * alanharnum has quit
+2017-09-26T21:16:57 * alanharnum joined the channel
+2017-09-26T21:17:22 <simonjb> Bosmon: when we do an npm install inside a Linux VM on a VirtualBox shared folder we hit issues regarding use of symbolic links -- such as https://issues.gpii.net/browse/GPII-2621
+2017-09-26T21:18:30 <simonjb> the node_modules separation fix causes the node_modules directory to be mounted from the guest (Linux) filesystem
+2017-09-26T21:19:07 <simonjb> so rather than a directory in a shared folder, its a native filesystem directory
+2017-09-26T21:19:16 <simonjb> and symbolic links work successfully
+2017-09-26T21:19:49 <simonjb> we still use a virtual box shared folder to access the source code
+2017-09-26T21:20:02 <simonjb> but the node_modules exists on the guest filesystem
+2017-09-26T21:20:17 <simonjb> and is mounted as a child of the shared folder
+2017-09-26T21:20:54 <simonjb> it also has the advantage that any natively compiled code is isolated
+2017-09-26T21:21:14 <simonjb> the guest and host node_modules are separate
+2017-09-26T21:21:17 * alanharnum has quit
+2017-09-26T21:22:10 * alanharnum joined the channel
+2017-09-26T21:23:26 * alanharnum has quit
+2017-09-26T21:23:52 * alanharnum joined the channel
+2017-09-26T21:25:05 * stegru has quit
+2017-09-26T21:25:16 <simonjb> Bosmon: does that make sense?
+2017-09-26T21:27:05 * alanharn_ joined the channel
+2017-09-26T21:28:27 * alanharnum has quit
+2017-09-26T21:29:05 <Bosmon> simonjb - yes, I see
+2017-09-26T21:29:21 <Bosmon> It explains why I\'ve never observed it since I\'ve been unable to fire up Linux vagrant boxes for quite a while
+2017-09-26T21:29:29 <Bosmon> Through causes unknown
+2017-09-26T21:29:40 <simonjb> Bosmon: I should have asked, but I\'m assumming this is for https://github.com/GPII/universal/pull/555 ?
+2017-09-26T21:30:19 <Bosmon> simonjb - yes
+'
+
+b'2017-09-26T00:05:54 * mrtyler joined the channel
+2017-09-26T00:55:26 * mrtyler joined the channel
+2017-09-26T01:28:48 * mrtyler has quit
+2017-09-26T01:32:26 * mrtyler joined the channel
+2017-09-26T02:47:45 * kasparnet joined the channel
+2017-09-26T02:52:05 * kasparnet has quit
+2017-09-26T03:42:12 * colinclark joined the channel
+2017-09-26T03:42:18 * colinclark has quit
+2017-09-26T03:42:39 * grrrero has quit
+2017-09-26T04:36:00 * kasparnet joined the channel
+2017-09-26T04:40:31 * kasparnet has quit
+2017-09-26T05:15:40 * the-t-in-rtf joined the channel
+2017-09-26T05:26:07 * the-t-in-rtf has quit
+2017-09-26T05:37:32 * mrtyler has quit
+2017-09-26T05:49:19 * the-t-in-rtf joined the channel
+2017-09-26T05:56:04 * the-t-in-rtf has quit
+2017-09-26T06:21:11 * kasparnet joined the channel
+2017-09-26T06:25:14 * kasparnet has quit
+2017-09-26T06:51:42 * kasparnet joined the channel
+2017-09-26T06:52:28 * kasparne_ joined the channel
+2017-09-26T06:56:01 * kasparnet has quit
+2017-09-26T07:40:05 * the-t-in-rtf joined the channel
+2017-09-26T08:13:14 * stegru joined the channel
+2017-09-26T08:33:14 * kasparnet joined the channel
+2017-09-26T08:35:55 * kasparne_ has quit
+2017-09-26T09:04:30 * kasparne_ joined the channel
+2017-09-26T09:07:41 * kasparnet has quit
+2017-09-26T09:32:07 * gtirloni joined the channel
+2017-09-26T09:34:13 * stegru has quit
+2017-09-26T09:42:33 * stegru joined the channel
+2017-09-26T09:51:17 * kasparnet joined the channel
+2017-09-26T09:52:35 * kasparne_ has quit
+2017-09-26T10:06:03 * javjarfer joined the channel
+2017-09-26T10:27:05 * the-t-in-rtf has quit
+2017-09-26T10:29:44 * kasparnet has quit
+2017-09-26T10:49:28 * kasparnet joined the channel
+2017-09-26T11:34:37 * the-t-in-rtf joined the channel
+2017-09-26T11:36:32 * kasparne_ joined the channel
+2017-09-26T11:36:50 * kasparnet has quit
+2017-09-26T11:37:22 * kasparnet joined the channel
+2017-09-26T11:40:56 * kasparne_ has quit
+2017-09-26T12:16:33 * Justin_o joined the channel
+2017-09-26T12:32:37 * jhernandez has quit
+2017-09-26T12:37:26 * the-t-in-rtf has quit
+2017-09-26T12:41:12 * the-t-in-rtf joined the channel
+2017-09-26T12:53:31 * the-t-in-rtf has quit
+2017-09-26T13:00:13 * simonjb joined the channel
+2017-09-26T13:00:20 * cindyli joined the channel
+2017-09-26T13:07:40 * alanharnum joined the channel
+2017-09-26T13:20:52 * clown joined the channel
+2017-09-26T13:25:09 * grrrero joined the channel
+2017-09-26T13:26:32 * jhernandez joined the channel
+2017-09-26T14:13:38 * alanharnum has quit
+2017-09-26T14:16:21 * michelled joined the channel
+2017-09-26T14:35:26 * colinclark joined the channel
+2017-09-26T14:38:36 * the-t-in-rtf joined the channel
+2017-09-26T14:51:14 * clown has quit
+2017-09-26T14:52:04 * mrtyler joined the channel
+2017-09-26T14:52:36 * clown joined the channel
+2017-09-26T14:55:04 * alanharnum joined the channel
+2017-09-26T14:55:38 <cindyli> simonjb: move our discussion here not to disturb the ongoing conversation in the fluid-work
+2017-09-26T14:55:49 <cindyli> "vagrant up" finishes and i hit a different error
+2017-09-26T14:55:49 <cindyli> cp: cannot stat \xe2\x80\x98/home/vagrant/sync/gpii/node_modules/preferencesServer/configs/gpii.config.preferencesServer.standalone.production.json\xe2\x80\x99: No such file or directory
+2017-09-26T14:56:02 <cindyli> seems it looks up the config file from a wrong folder
+2017-09-26T14:56:04 * alanharnum has quit
+2017-09-26T14:56:11 <cindyli> looking up where this path is defined
+2017-09-26T14:56:20 <cindyli> might be in an ansible repo
+2017-09-26T14:56:30 <cindyli> simonjb: when did you hit the error?
+2017-09-26T14:56:30 * alanharnum joined the channel
+2017-09-26T14:56:50 <cindyli> is it at the very beginning of the provisioning or down below?
+2017-09-26T14:58:12 <simonjb> it\'s an npm install, I think
+2017-09-26T14:58:30 <simonjb> https://gist.github.com/simonbates/354f176f325104613bb25218e3a89de3
+2017-09-26T14:58:40 <simonjb> cindyli ^
+2017-09-26T14:59:03 <cindyli> right
+2017-09-26T14:59:21 * alanharnum has quit
+2017-09-26T14:59:29 * alanharnum joined the channel
+2017-09-26T15:01:17 <cindyli> simonjb: i might have passed that step- https://gist.github.com/cindyli/2e4dc60500105db9e03461c4b10975f6
+2017-09-26T15:01:19 <cindyli> see line 201
+2017-09-26T15:01:58 * alanharnum has quit
+2017-09-26T15:02:50 * michelled1 joined the channel
+2017-09-26T15:04:54 <simonjb> yes cindyli, it looks like you were able to npm install
+2017-09-26T15:05:43 * michelled has quit
+2017-09-26T15:06:41 <simonjb> gtirloni: do you think that you might be able to help us with some of your Windows npm symlink magic skills? I am getting an error when doing vagrant up on https://github.com/cindyli/universal/blob/GPII-2435/vagrant-configs/Vagrantfile
+2017-09-26T15:06:49 <simonjb> on Windows 10 host
+2017-09-26T15:06:58 <simonjb> I get this error from npm install
+2017-09-26T15:07:09 <simonjb> https://gist.github.com/simonbates/354f176f325104613bb25218e3a89de3
+2017-09-26T15:08:24 <gtirloni> sure, let me try to reproduce this in a moment
+2017-09-26T15:08:38 <simonjb> thanks very much gtirloni
+2017-09-26T15:08:58 <gtirloni> np
+2017-09-26T15:14:09 * alanharnum joined the channel
+2017-09-26T15:21:28 * alanharnum has quit
+2017-09-26T15:23:22 <simonjb> cindyli ^
+2017-09-26T15:30:17 * cindyli has quit
+2017-09-26T15:39:31 * alanharnum joined the channel
+2017-09-26T15:40:10 * cindyli joined the channel
+2017-09-26T15:42:25 * jessm joined the channel
+2017-09-26T15:43:33 <cindyli> thanks, simonjb. regarding the error you hit, i was thinking there are 2 things we could try:
+2017-09-26T15:43:52 <cindyli> 1. make sure GPII is not running on your host machine, so /node_modules is not in use
+2017-09-26T15:44:46 <cindyli> 2. remove /node_modules from your host machine completely since the VM is using a different VM so it likely needs to populate a different /node_modules
+2017-09-26T15:45:26 <simonjb> cindyli: good suggestions, but I believe that I did those already
+2017-09-26T15:45:33 <cindyli> ah ok
+2017-09-26T15:45:35 <cindyli> :(
+2017-09-26T15:45:51 <simonjb> I did a git clean before running vagrant up
+2017-09-26T15:46:31 <simonjb> (git clean -dix)
+2017-09-26T15:50:13 * kasparnet has quit
+2017-09-26T15:56:26 <gtirloni> simonjb cindyli: what version of vbox are you using?
+2017-09-26T15:56:49 <cindyli> 5.1.14
+2017-09-26T15:57:05 <cindyli> the latest is 5.1.28. shall i upgrade, gtirloni
+2017-09-26T15:57:36 <gtirloni> I have been using that for a while now but I have not tested win10 yet with it.. no problems with centos/fedora boxes for me at least
+2017-09-26T15:59:19 <simonjb> gtirloni: 5.1.28
+2017-09-26T15:59:48 <gtirloni> ok. yeah, i wouldn\'t expect a newer version to fix that... lately vbox has been pretty stale
+2017-09-26T16:01:52 * jessm joined the channel
+2017-09-26T16:10:56 <cindyli> gtirloni: i\'m hitting the error of "\'preferences_server_data_loader_port\' is undefined" when using https://github.com/gpii-ops/ansible-preferences-server-data-loader
+2017-09-26T16:11:20 <cindyli> it seems in deploy.yml, a wrong variable name is used
+2017-09-26T16:11:31 <cindyli> at https://github.com/gpii-ops/ansible-preferences-server-data-loader/blob/master/tasks/deploy.yml#L3
+2017-09-26T16:11:53 <cindyli> shall "preferences_server_data_loader_port" be "preferences_server_data_loader_couchdb_host_port"
+2017-09-26T16:12:17 <cindyli> by looking at main.yml - https://github.com/gpii-ops/ansible-preferences-server-data-loader/blob/master/defaults/main.yml#L5
+2017-09-26T16:13:26 <cindyli> another issue is with "ansible-preferences-server" repo
+2017-09-26T16:14:12 <cindyli> I believe we talked about before and decided the gpii config files should always be read from gpii/configs folder
+2017-09-26T16:14:19 * michelled joined the channel
+2017-09-26T16:14:33 <cindyli> so, these 2 lines might need to be changed - https://github.com/gpii-ops/ansible-preferences-server/blob/master/defaults/main.yml#L6-L7
+2017-09-26T16:15:28 <cindyli> to
+2017-09-26T16:15:29 <cindyli> preferences_server_environment: gpii.config.preferencesServer.standalone.production
+2017-09-26T16:15:29 <cindyli> preferences_server_config_dir: gpii/configs
+2017-09-26T16:16:22 <cindyli> the 2nd issue is trivial since those 2 environment variables can be overridden in Vagrantfile
+2017-09-26T16:17:59 <cindyli> but i cannot get around the first issue with modifying vagrant files (due to my lack of knowledge with vagrant and ansible) ;)
+2017-09-26T16:22:18 <gtirloni> cindyli: please add `preferences_server_data_loader_couchdb_host_port: 5984`
+2017-09-26T16:22:48 <cindyli> but the deploy script is using "preferences_server_data_loader_port"
+2017-09-26T16:22:53 <cindyli> a different variable
+2017-09-26T16:23:03 <cindyli> which would still be undefined
+2017-09-26T16:24:50 <gtirloni> these are the variables needed: https://github.com/gpii-ops/ansible-preferences-server-data-loader/blob/master/defaults/main.yml
+2017-09-26T16:25:26 <cindyli> gtirloni: but deploy.yml is using a different var - https://github.com/gpii-ops/ansible-preferences-server-data-loader/blob/master/tasks/deploy.yml#L3
+2017-09-26T16:25:26 * clown1 joined the channel
+2017-09-26T16:25:35 * clown has quit
+2017-09-26T16:25:39 <cindyli> search for {{ preferences_server_data_loader_port }}
+2017-09-26T16:25:53 <cindyli> this var name should be changed to "preferences_server_data_loader_couchdb_host_port"
+2017-09-26T16:26:08 <gtirloni> got it
+2017-09-26T16:26:13 <gtirloni> what project are you working on?
+2017-09-26T16:26:22 <cindyli> there are other lines with the wrong var name
+2017-09-26T16:26:37 <cindyli> working on https://github.com/GPII/universal/tree/master/vagrant-configs
+2017-09-26T16:26:46 <cindyli> this VM spins up a GPII production env
+2017-09-26T16:27:04 <cindyli> hitting various errors due to the ansible change
+2017-09-26T16:29:11 <gtirloni> i see
+2017-09-26T16:29:24 <gtirloni> the role is deprecated and we\'ve moved on to using containers
+2017-09-26T16:29:33 <cindyli> ok
+2017-09-26T16:29:34 <gtirloni> i would need some time to retrofit those changes
+2017-09-26T16:29:54 <gtirloni> https://github.com/GPII/universal/blob/master/package.json#L79
+2017-09-26T16:30:08 <gtirloni> https://github.com/GPII/universal/blob/master/scripts/vagrantCloudBasedContainers.sh
+2017-09-26T16:30:12 <gtirloni> this is what is being used by CI
+2017-09-26T16:30:42 <gtirloni> could you open a JIRA for that issue? I can try to fix those errors. right now i don\'t remember anymore how they work together
+'
+

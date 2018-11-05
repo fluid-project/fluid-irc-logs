@@ -1,0 +1,501 @@
+b'2015-10-19T23:24:23 <Bosmon7> Is there a way we can see the logs from the provisioning operations?
+2015-10-19T23:26:19 <Bosmon7> Where are the provisioning operations actually encoded.......
+2015-10-19T23:34:41 <avtar> Bosmon, Bosmon7: sorry i was afk, by the windows 7 test machine
+2015-10-19T23:34:47 <avtar> https://gist.github.com/anonymous/e7af837f3d2e4ad0eedb
+2015-10-19T23:36:04 <avtar> i\'ll poke around for logs
+2015-10-19T23:36:05 <avtar> one sec
+2015-10-19T23:42:08 <avtar> Bosmon7: you can try this command from your cygwin host\'s side
+2015-10-19T23:42:59 <avtar> vagrant ssh -c \'sudo PYTHONUNBUFFERED=1 ansible-playbook -v /home/vagrant/sync/provisioning/playbook.yml --tags="install,configure,deploy"\'
+2015-10-19T23:43:05 <avtar> http://pastie.org/pastes/10494043/text
+2015-10-19T23:43:25 <avtar> it won\'t look pretty btw
+2015-10-19T23:44:12 <avtar> but for the last task i see "Running \\"dedupe-infusion\\" task\\u001b[24m\
+\\u001b
+2015-10-19T23:44:12 <avtar> [32m>> \\u001b[39mFound 1 infusions\
+\
+\\u001b[32mDone, without errors."
+2015-10-19T23:53:20 <avtar> Bosmon7, Bosmon
+2015-10-19T23:53:27 <avtar> just thought of something
+2015-10-19T23:53:39 <avtar> could you please share the contents of your vars/requirements.yml file?
+2015-10-19T23:53:54 <avtar> err sorry
+2015-10-19T23:54:00 <avtar> provisioning/requirements.yml
+2015-10-19T23:54:10 <Bosmon7> - src: https://github.com/idi-ops/ansible-facts
+2015-10-19T23:54:10 <Bosmon7> name: facts
+2015-10-19T23:54:10 <Bosmon7> - src: https://github.com/avtar/ansible-nodejs
+2015-10-19T23:54:10 <Bosmon7> version: remotes/origin/npm-symlink
+2015-10-19T23:54:10 <Bosmon7> name: nodejs
+2015-10-19T23:55:28 <avtar> i thought i might have pointed you to the wrong branch but that looks fine as well
+2015-10-19T23:55:28 <avtar> hmm
+2015-10-19T23:55:41 <Bosmon> Just running the command you sent earlier
+2015-10-19T23:55:43 <Bosmon> very slowly
+2015-10-19T23:56:25 <Bosmon> Can\'t I just log into the damn thing?
+2015-10-19T23:56:30 <Bosmon> What\'s the vagrant password
+2015-10-19T23:57:01 <avtar> i was thinking of what might be different on the win7 box i have access to but at this point it\'s not even a windows issue since the tasks are being run in the vm
+2015-10-19T23:57:05 <avtar> the password is vagrant
+2015-10-19T23:57:12 <Bosmon> It didn\'t accept it
+2015-10-19T23:57:24 <Bosmon> So I got the output from the dedupe command, it says that there is only 1 infusion
+2015-10-19T23:58:05 <Bosmon> But then it runs it a 2nd time
+2015-10-19T23:58:09 <Bosmon> and finds 4 infusions
+2015-10-19T23:58:27 <Bosmon> ok
+2015-10-19T23:59:08 <Bosmon7> Deleted a bunch from paths like /tmp/first-discovery-server-build-dir/node_modules/gpii-express/node_modules/infusion
+2015-10-19T23:59:35 <Bosmon7> It seems for some reason you decided to use rsync for your copy operation
+2015-10-19T23:59:38 <Bosmon7> You must be unusually fond of it : P
+2015-10-19T23:59:51 <avtar> i tried cp first :)
+2015-10-19T23:59:58 <Bosmon7> The problem was?
+'
+
+b'2015-10-19T20:35:56 * anvk1 has quit
+2015-10-19T20:36:22 <avtar> colinclark: could you try spinning up the vm using this vars.yml? https://gist.githubusercontent.com/avtar/60e50f59cc7bf256b730/raw/04fb2509a3c136d12099462c90dc6a9d8dd24746/gistfile1.txt
+2015-10-19T20:36:34 <avtar> it adds a c++ compiler
+2015-10-19T20:36:54 <avtar> and fixes the ssh issue by using /home/vagrant/sync as the app\'s directory
+2015-10-19T20:37:15 <avtar> i\'ll make the path a default so that this doesn\'t happen again
+2015-10-19T20:37:39 <colinclark> aha, yes
+2015-10-19T20:37:58 <colinclark> I didn\'t imagine there was a linux distro out there that ships without a C++ compiler
+2015-10-19T20:38:07 <colinclark> but I guess our box is VERY SLEEK
+2015-10-19T20:38:09 <Bosmon> avtar - I would love to, but I realise this would mean rebooting my machine for that BIOS setting........
+2015-10-19T20:38:14 <Bosmon> I guess I can try it on my laptop
+2015-10-19T20:38:21 <colinclark> as gtirloni says, WE\'RE SMALLER THAN COREOS
+2015-10-19T20:38:22 <Bosmon> Which hugely increases the risk of npm thrashing issues anyway
+2015-10-19T20:38:30 <colinclark> Bosmon: Have you been using OS/2 recently?
+2015-10-19T20:38:42 <Bosmon> colinclark - no, I haven\'t started my OS/2 image for a while
+2015-10-19T20:39:00 <Bosmon> Although I did recently look over the github repo for a torrent client that proudly advertised its OS/2 support :)
+2015-10-19T20:39:00 <avtar> Bosmon: please be sure to \'vagrant destroy -f\' before testing
+2015-10-19T20:39:41 <Bosmon> What is it with you ops types and destruction
+2015-10-19T20:40:21 <avtar> Bosmon: everything that rises passes away
+2015-10-19T20:40:53 <Bosmon> Yes
+2015-10-19T20:41:00 <colinclark> Offered without comment: https://github.com/fluid-project/infusion/blob/8c33cd430943c964fb3e5e6a0b971f74bd83be4a/src/framework/core/js/Fluid.js#L1344
+2015-10-19T20:41:10 <Bosmon> He flees LIKE A SHADOW and CONTINUES NOT
+2015-10-19T20:41:31 <gtirloni> we\'re 123MB smaller than coreos, just sayin...
+2015-10-19T20:41:45 <gtirloni> oops, 103MB only
+2015-10-19T20:41:47 <Bosmon> Well, you see.... all this does is NOTATES destruction :)
+2015-10-19T20:42:10 <alanharnum> this seems like a good time to share my important project: https://github.com/waharnum/silverbullet
+2015-10-19T20:42:18 <Bosmon> crikey
+2015-10-19T20:42:27 <alanharnum> speaking of destruction
+2015-10-19T20:42:30 <Bosmon> WAHARNUM has created that which Brooks has proved is impossible
+2015-10-19T20:42:42 <avtar> https://github.com/waharnum/silverbullet/stargazers
+2015-10-19T20:42:47 * cindyli has quit
+2015-10-19T20:43:06 <Bosmon> Yes
+2015-10-19T20:43:14 <Bosmon> Sadly my system is mostly immune to your bullet
+2015-10-19T20:43:28 <alanharnum> i regret to say that this probably won\'t work on Windows
+2015-10-19T20:43:33 <alanharnum> though it might in Cygwin!
+2015-10-19T20:43:52 <alanharnum> Windows support is on the roadmap
+2015-10-19T20:43:52 <Bosmon> Well, I think it wouldn\'t end up deleting very much in the end
+2015-10-19T20:44:14 <Bosmon> Probably just the little fake bit of "root filesystem" and the mount points : P
+2015-10-19T20:44:22 <Bosmon> It might delete a lot of cygwin itself
+2015-10-19T20:44:25 <colinclark> alanharnum, can you come over and help me with my computer?
+2015-10-19T20:44:32 <colinclark> I ran your awesome new project
+2015-10-19T20:44:36 <colinclark> and now the screen is black
+2015-10-19T20:44:50 <Bosmon> How can you even observe the screen
+2015-10-19T20:45:02 <Bosmon> If the project were even working properly, that should have been deleted too
+2015-10-19T20:45:07 <Bosmon> You\'ve seen the SELF video......
+2015-10-19T20:46:07 <gtirloni> alanharnum: it\'d be nice if the road map included erasing the bios flash
+2015-10-19T20:47:00 <Bosmon> alanharnum: https://www.youtube.com/watch?v=Ox5P7QyL774&feature=youtu.be&t=1232
+2015-10-19T20:49:22 <colinclark> Bosmon: http://postimg.org/image/ti5fmfb6p/
+2015-10-19T20:50:05 <alanharnum> that is some vintage mid-90s computer tutorializing
+2015-10-19T20:50:10 <alanharnum> RIP Sun Microsystems :(
+2015-10-19T20:50:19 <colinclark> This Philip Larkin reading rules
+2015-10-19T20:50:20 <Bosmon> If only they could
+2015-10-19T20:50:35 <Bosmon> Sadly their perpetually rotting corpse will be reanimated endlessly by Ellison
+2015-10-19T20:51:22 <Bosmon> Ah yes, VAPPORIZE :)
+2015-10-19T20:57:33 <colinclark> ah, avtar, serious progress
+2015-10-19T20:57:50 <colinclark> So is there a way I can make this box run an npm command instead of "node"
+2015-10-19T20:58:00 <colinclark> I\'m encountering the dreaded Infusion dedupe issue
+2015-10-19T20:58:08 <colinclark> which if I run "npm test" is taken care of for me
+2015-10-19T20:58:50 <colinclark> and provision runs for me again-totally awesome
+2015-10-19T20:59:14 <gtirloni> colinclark: check provisioning/vars.yml -- the nodejs_app_commands list
+2015-10-19T20:59:50 <colinclark> aha, ok
+2015-10-19T20:59:53 <gtirloni> https://github.com/idi-ops/ansible-nodejs/blob/master/defaults/main.yml#L101-L103
+2015-10-19T21:00:37 <colinclark> thanks
+2015-10-19T21:00:56 * sepidehshahi has left the channel
+2015-10-19T21:01:21 <colinclark> and if, speculatively, I\'d want to make a thing that ran, say, "electron" instead of "node," I\'d actually have to produce a new ansible role to do so, is that correct?
+2015-10-19T21:04:39 <avtar> hmm we didn\'t take electron into account :/
+2015-10-19T21:04:42 <avtar> https://github.com/idi-ops/ansible-nodejs/blob/master/vars/RedHat.yml#L2
+2015-10-19T21:06:36 <avtar> i think it might be possible to use the role for the most part if that nodejs_executable variable to defaults/main.yml
+2015-10-19T21:06:39 <avtar> gtirloni: thoughts?
+2015-10-19T21:07:04 <colinclark> I\'m not suggesting that you should have taken electron into account
+2015-10-19T21:07:13 <colinclark> I\'m just trying to understand the "space" of these tools
+2015-10-19T21:08:01 <colinclark> I guess there are probably projects out there that typically start their apps using something like "npm start" for example
+2015-10-19T21:08:17 <colinclark> but maybe that\'s sufficient to require a new role
+2015-10-19T21:08:29 * kasparne_ has quit
+2015-10-19T21:09:13 <colinclark> gtirloni or avtar, my other question is whether there\'s a way to control the version of node used by the box?
+2015-10-19T21:09:14 <gtirloni> electron would be for GUI apps, right?
+2015-10-19T21:09:17 <colinclark> is there a parameter I\'m missing
+2015-10-19T21:09:20 <colinclark> gtirloni: yes
+2015-10-19T21:09:23 <colinclark> it\'s a bit of a stretch
+2015-10-19T21:09:33 <colinclark> I do run it headless on a linux box
+2015-10-19T21:09:42 <colinclark> but I don\'t think most sane people will do this :)
+2015-10-19T21:09:52 <gtirloni> colinclark: you can pick any version as long as it\'s 0.10.36, 0.10.40 or 4.2.0 :) https://github.com/idi-ops/ansible-nodejs/blob/master/vars/RedHat.yml#L10-L13
+2015-10-19T21:10:10 <colinclark> hahaha
+2015-10-19T21:10:32 <colinclark> I love how I can choose between two apparently interchangeable versions of 0.10.x :)
+2015-10-19T21:10:39 <colinclark> That\'s choice!
+2015-10-19T21:11:05 <gtirloni> yeah, 0.10.36 (what centos ship and we\'ve been using for a while) and the less buggy version 0.10.40 now that we use nodesource
+2015-10-19T21:11:26 <colinclark> gtirloni: So I would specify a "nodejs_centos_rpms" variable in my vars.yml file?
+2015-10-19T21:11:57 <gtirloni> colinclark: nodejs_version instead (https://github.com/idi-ops/ansible-nodejs/blob/master/defaults/main.yml#L7)
+2015-10-19T21:12:05 <colinclark> ah, got it
+2015-10-19T21:12:05 * yzen is now known as yzen_
+2015-10-19T21:12:28 <colinclark> thanks--I\'m asking dumb questions and should just read through the main.yml file :)
+2015-10-19T21:12:55 <gtirloni> no worries
+2015-10-19T21:13:32 <gtirloni> re: electron and this role... if changing nodejs_executable works, but.. right now we take care of installing node from a packaged/trusted source, i don\'t know how mature electron packages are
+2015-10-19T21:13:41 <gtirloni> (or if they exist)
+2015-10-19T21:17:05 * anastasiac has quit
+2015-10-19T21:22:24 <colinclark> Can I override any variable?
+2015-10-19T21:22:54 <avtar> as long as it\'s in defaults/main.yml
+2015-10-19T21:22:54 <colinclark> Can I just be all wicked and override nodejs_executable if I wanted to?
+2015-10-19T21:23:02 <colinclark> ok
+2015-10-19T21:23:03 <avtar> the ones in vars/* not so much
+2015-10-19T21:23:06 <colinclark> got it
+2015-10-19T21:24:02 <colinclark> avtar: I\'m having a new issue...
+2015-10-19T21:24:07 <avtar> gtirloni: speaking of nodesource packages
+2015-10-19T21:24:13 <colinclark> It\'s pretty clear that something during "npm install" is failing
+2015-10-19T21:24:23 <colinclark> but I don\'t see anything in the console about it while provisioning
+2015-10-19T21:24:24 <avtar> what are your thoughts re: building them using idi\'s jenkins instance?
+2015-10-19T21:24:36 <colinclark> but shouldn\'t I?
+2015-10-19T21:25:02 <avtar> colinclark: yes you should see something
+2015-10-19T21:25:21 <avtar> i was able to see errors when g++ wasn\'t found
+2015-10-19T21:25:25 <colinclark> hmm
+2015-10-19T21:25:31 <colinclark> I\'m not sure I ever saw those before, either
+2015-10-19T21:26:07 <avtar> what happens if you remove that gcc-c++ change and then try provisioning?
+2015-10-19T21:27:38 <avtar> https://gist.githubusercontent.com/anonymous/b57c8acd8ceecd4990d5/raw/720988de06c0638ba9526bd20d40dcbbed7c0f77/gistfile1.txt
+2015-10-19T21:27:42 <colinclark> destroy the box and reprovision?
+2015-10-19T21:27:47 <avtar> colinclark: ^ that is what i saw
+2015-10-19T21:27:57 <colinclark> man, you\'re so lucky!
+2015-10-19T21:28:11 <gtirloni> avtar: it\'d be nice to build them ourselves yes
+2015-10-19T21:29:18 <avtar> gtirloni: the only reason i mention it is because nodesource didn\'t seem super committed to supporting fedora releases
+2015-10-19T21:29:29 <avtar> more so debian and ubuntu
+2015-10-19T21:29:31 <colinclark> avtar: silence
+2015-10-19T21:29:37 <colinclark> it appears as if it were successful
+2015-10-19T21:44:47 * michelled joined the channel
+2015-10-19T21:50:40 * kasparnet joined the channel
+2015-10-19T21:51:40 * yzen joined the channel
+2015-10-19T22:05:39 * kasparnet has quit
+2015-10-19T22:08:23 * Bosmon7 joined the channel
+2015-10-19T22:40:52 <Bosmon> Hi there avtar - relatively good news
+2015-10-19T22:41:06 <Bosmon> Your vagrant box seems to NEARLY work on my crappy Win 7 machine
+2015-10-19T22:41:31 <Bosmon> Unfortunately the dedupe-infusion step didn\'t run properly, but hopefully this is just a matter of you not having updated from Justin_o\'s version of the tool
+2015-10-19T22:45:10 <Bosmon> hmm
+2015-10-19T22:45:15 <Bosmon> Well, maybe not
+2015-10-19T22:45:21 <Bosmon> Your scripts should actually be working....
+2015-10-19T22:46:08 <Bosmon> https://github.com/avtar/first-discovery-server/blob/FLOE-423/provisioning/vars.yml#L7
+2015-10-19T22:46:14 <Bosmon> Not clear that this is actually running
+2015-10-19T22:49:50 <Bosmon> Well, it seems to be running from the vagrant console trace
+2015-10-19T22:49:57 <Bosmon> But the logs in the machine show that startup failed
+2015-10-19T23:01:48 <avtar> Bosmon: hmm
+2015-10-19T23:02:10 <avtar> and this is on a brand new vm? after \'vagrant destroy\'?
+2015-10-19T23:02:13 <Bosmon> I\'ll tinker a bit further, it\'s not really clear what happened
+2015-10-19T23:02:16 <Bosmon> Yes, brand new vm
+2015-10-19T23:02:50 <avtar> i\'ll try it again on the win 7 machine here
+2015-10-19T23:22:39 <Bosmon7> avtar - yes, everything seems ok, but the dedupe just hasn\'t run
+2015-10-19T23:22:47 <Bosmon7> I guess your copy commands aren\'t quite correct
+2015-10-19T23:23:04 <Bosmon7> Oct 19 23:22:23 first-discovery-server nodemon[4337]: 23:22:23.922:  FATAL ERROR: Uncaught exception: Object Error loading infusion - infusion has already been loaded from the path
+2015-10-19T23:23:04 <Bosmon7> Oct 19 23:22:23 first-discovery-server nodemon[4337]: /home/vagrant/sync/node_modules/infusion
+2015-10-19T23:23:04 <Bosmon7> Oct 19 23:22:23 first-discovery-server nodemon[4337]: - please delete the duplicate copy which is found at
+2015-10-19T23:23:04 <Bosmon7> Oct 19 23:22:23 first-discovery-server nodemon[4337]: /home/vagrant/sync/node_modules/gpii-express/node_modules/infusion/src/module
+2015-10-19T23:23:04 <Bosmon7> Oct 19 23:22:24 first-discovery-server nodemon[4337]: This can be done automatically by running the task "grunt dedupe-infusion" has no method \'Assertion failure - check console for details\'
+2015-10-19T23:23:24 <Bosmon7> I ran "vagrant provision" and all of the tasks seemed to execute correctly
+2015-10-19T23:23:54 <Bosmon7> And I can access the LOGS on port 19531
+2015-10-19T23:24:03 <Bosmon7> But they say that node hasn\'t started up because the dedupe didn\'t run
+'
+
+b'2015-10-19T15:54:39 * colinclark has quit
+2015-10-19T16:09:17 * simonjb joined the channel
+2015-10-19T16:26:39 * anvk1 joined the channel
+2015-10-19T16:27:05 * kasparne_ joined the channel
+2015-10-19T16:28:23 * anvk has quit
+2015-10-19T16:29:12 * slim_ has quit
+2015-10-19T16:29:36 * kasparnet has quit
+2015-10-19T16:56:31 * slim_ joined the channel
+2015-10-19T17:01:31 * danayo has quit
+2015-10-19T17:05:07 <Justin_o> Bosmon: Do you have time to continue the review of https://github.com/jobara/publish/pull/1 I\'ve made the changes you recommended.
+2015-10-19T17:07:59 <anastasiac> cindyli: regarding the FD tool prefs server integration: the new docs mention a token panel: Is that code in master yet? If not, which branch would I find it in, to try it out?
+2015-10-19T17:23:51 <Bosmon> Thanks, Justin_o - fresh round of feedback for you
+2015-10-19T17:32:38 * colinclark joined the channel
+2015-10-19T17:34:28 * alanharnum joined the channel
+2015-10-19T17:36:26 * slim_ has quit
+2015-10-19T17:41:19 <cindyli> anastasiac: the code for the token panel is already in the master. to see that, launch this demo: demos/prefsServerIntegration/. It\'s specifically for integrating the first discovery tool and the preferences server
+2015-10-19T17:42:07 <anastasiac> ah, ok. cindyli, Justin_o: Should the FD tool/prefs server integration demo be added to the build site?
+2015-10-19T17:43:33 <Justin_o> Bosmon: thanks,  if only I could spell correctly, i\'d have half as many changes to make :(
+2015-10-19T17:44:02 <Bosmon> Justin_o - an IDE with a spell checker? : P
+2015-10-19T17:44:49 <Justin_o> Bosmon: sadly it mine does have one :(
+2015-10-19T17:45:35 <Justin_o> anastasiac: i think it could be, for now you\'ll get an error message instead of the token though
+2015-10-19T17:45:39 <Justin_o> cindyli: what do you think?
+2015-10-19T17:46:32 <anastasiac> cindyli, Justin_o: Is the fd tool master not deployed to the build site automatically? the prefsServerIntegration demo isn\xe2\x80\x99t there\xe2\x80\xa6
+2015-10-19T17:46:34 <anastasiac> http://build.fluidproject.org/first-discovery/demos/prefsServerIntegration/
+2015-10-19T17:49:56 <Justin_o> anastasiac: i\'m not sure, maybe gtirloni knows?
+2015-10-19T17:50:18 * simonjb has quit
+2015-10-19T17:52:46 * simonjb joined the channel
+2015-10-19T17:54:55 <gtirloni> anastasiac Justin_o: this is what the fd tool build creates and gets deployed - http://pastie.org/10493442
+2015-10-19T17:55:44 <gtirloni> more complete listing - http://pastie.org/10493443
+2015-10-19T17:56:27 <anastasiac> gtirloni: is this controlled by something specific? There\xe2\x80\x99s a new demo in the demos folder, \xe2\x80\x9cprefsServerIntegration\xe2\x80\x9d, that should probably be deployed as well
+2015-10-19T17:57:54 <gtirloni> the last time a build for first-discovery was triggered was Sept 28, when was this added?
+2015-10-19T17:58:25 <anastasiac> gtirloni: \xe2\x80\x9c20 days ago\xe2\x80\x9d which isn\xe2\x80\x99t helpful without some mental math :-)
+2015-10-19T17:59:18 <anastasiac> hm. 20 day is after the 28th, i.e. the 29th
+2015-10-19T17:59:21 <gtirloni> i triggered a build manually and it the demo is there now
+2015-10-19T17:59:32 * michelled joined the channel
+2015-10-19T17:59:45 <anastasiac> excellent, gtirloni. Any idea why it didn\xe2\x80\x99t work on the last commit?
+2015-10-19T18:00:01 <gtirloni> Justin_o: could you double check fluid-project/first-discovery\'s webhook?
+2015-10-19T18:00:11 <michelled> colinclark, jessm: would you like to meet in my vidyo room?
+2015-10-19T18:00:21 <jessm> michelled: sure \xe2\x80\x94 be there in 2 minutes?
+2015-10-19T18:00:27 <michelled> sounds good
+2015-10-19T18:06:59 <Justin_o> gtirloni: well that\'s another issue
+2015-10-19T18:07:18 <Justin_o> gtirloni: the first-discovery repo has been moved to the GPII github space today
+2015-10-19T18:07:24 <Justin_o> gtirloni: so i don\'t have access to check
+2015-10-19T18:07:35 <Justin_o> Bosmon, kasparne_ : can either of you help gtirloni
+2015-10-19T18:08:42 <avtar> gtirloni: the first-discovery jjb config will need to be changed as well
+2015-10-19T18:09:07 <avtar> to include the repo\'s new url
+2015-10-19T18:10:06 <gtirloni> i\'ve updated it today, but it seems this commit was done 20 days ago so i\'m wondering why it hasn\'t triggered a build
+2015-10-19T18:10:56 * slim_ joined the channel
+2015-10-19T18:11:12 * alanharnum has quit
+2015-10-19T18:11:32 * danayo joined the channel
+2015-10-19T18:12:39 <gtirloni> Bosmon kasparne_ amatas: could you check what the current webhook settings for GPII/first-discovery repo? we want to double check it\'s pointing to the right place
+2015-10-19T18:13:52 * alanharnum joined the channel
+2015-10-19T18:21:08 * sepidehshahi has quit
+2015-10-19T18:24:16 <colinclark> hi michelled
+2015-10-19T18:24:51 <michelled> hey there
+2015-10-19T18:25:07 <colinclark> I assumed you\'d be off today
+2015-10-19T18:25:22 <michelled> I mostly am :)
+2015-10-19T18:26:07 <colinclark> I am getting Vidyo errors
+2015-10-19T18:26:21 <colinclark> "Failed to establish connection with the router (error 1003)"
+2015-10-19T18:27:03 <michelled> oh no!
+2015-10-19T18:27:13 <michelled> that happened to me before and I restarted my machine
+2015-10-19T18:27:18 <michelled> and then it all worked
+2015-10-19T18:27:19 <Bosmon> gtirloni - what is a webhook? : P
+2015-10-19T18:27:26 <michelled> I think I had that issue when I upgraded
+2015-10-19T18:27:33 <Bosmon> Justin_o - I gave you access to the repo
+2015-10-19T18:28:15 * slim_ has quit
+2015-10-19T18:28:17 <colinclark> Bosmon: https://developer.github.com/webhooks/
+2015-10-19T18:28:30 * colinclark has quit
+2015-10-19T18:28:58 * anastasiac has quit
+2015-10-19T18:30:25 * colinclark joined the channel
+2015-10-19T18:30:39 <Bosmon> gtirloni - claims that the fd webhook hasn\'t been successful for months
+2015-10-19T18:30:52 <Bosmon> https://issues.fluidproject.org/rest/bitbucket/1.0/repository/37/sync
+2015-10-19T18:30:56 <Bosmon> peculiar-looking URL.....
+2015-10-19T18:40:00 * cindyli has quit
+2015-10-19T18:40:03 * yzen joined the channel
+2015-10-19T18:53:13 * cindyli joined the channel
+2015-10-19T18:53:18 * anastasiac joined the channel
+2015-10-19T18:54:01 * alanharnum joined the channel
+2015-10-19T18:54:08 * sepidehshahi joined the channel
+2015-10-19T18:54:38 * slim_ joined the channel
+2015-10-19T18:54:41 <gtirloni> that doesn\'t look like the url to jenkins
+2015-10-19T18:54:47 <gtirloni> since it points to jira :)
+2015-10-19T18:54:53 <gtirloni> maybe there are other webhooks
+2015-10-19T19:00:08 <Justin_o> Bosmon, gtirloni: there may be multiple hooks and some of them might be configured in different ways.
+2015-10-19T19:00:48 <Justin_o> Bosmon: also, i don\'t have access to the settings for the first-discovery repos on gpii, maybe you have to be an owner
+2015-10-19T19:00:53 <Bosmon> Yes there\'s one pointing to https://ci.fluidproject.org/github-webhook/
+2015-10-19T19:00:57 <Bosmon> Ok, I\'ll add permissions
+2015-10-19T19:02:03 <Bosmon> Ok Justin_o you should be admin now
+2015-10-19T19:02:20 <Justin_o> Bosmon: thanks :)
+2015-10-19T19:03:39 <Justin_o> gtirloni: did you want me to send a test request from the web hook?
+2015-10-19T19:05:00 * simonjb has quit
+2015-10-19T19:05:07 <gtirloni> Justin_o: yes please
+2015-10-19T19:05:23 <gtirloni> the url should be https://ci-int.fluidproject.org though
+2015-10-19T19:06:21 * simonjb joined the channel
+2015-10-19T19:08:19 <Justin_o> gtirloni: is the ci-int new
+2015-10-19T19:08:28 <Justin_o> it had just been ci.fluidproject.org...
+2015-10-19T19:09:06 <Justin_o> gtirloni: i updated the url and sent a test
+2015-10-19T19:09:18 <gtirloni> looks like it\'s working
+2015-10-19T19:09:18 <gtirloni> INFO: Received POST for https://github.com/GPII/first-discovery
+2015-10-19T19:12:26 <Justin_o> gtirloni: cool
+2015-10-19T19:12:38 <Justin_o> should all of our web hooks be updated to use ci-int?
+2015-10-19T19:12:43 <Justin_o> gtirloni: ^
+2015-10-19T19:12:53 <gtirloni> yep
+2015-10-19T19:18:18 <Justin_o> gtirloni: okay i\'ll try to check the rest
+2015-10-19T19:36:13 <Justin_o> gtirloni: is it an issue to add this web hook to repos that aren\'t yet being built by jenkins?
+2015-10-19T19:37:02 <gtirloni> i don\'t think so. if any notification arrives, jenkins will reject it for repositories it doesn\'t know
+2015-10-19T19:37:06 <gtirloni> so it\'s okay
+2015-10-19T19:37:25 <Justin_o> gtirloni: cool thanks, i think i\'ll just add it to everything if it isn\'t already there
+2015-10-19T19:37:59 <Justin_o> Bosmon: can you make me an admin on first-discovery-server too
+2015-10-19T19:38:44 <Bosmon> Justin_o - done
+2015-10-19T19:38:59 <Justin_o> Bosmon: thanks
+2015-10-19T19:39:24 * jessm has quit
+2015-10-19T19:47:07 * slim_ has quit
+2015-10-19T19:47:29 <anastasiac> cindyli, might you have some time this afternoon or tomorrow to walk me through how the FD tool prefs server integration stuff works? It should only take a few minutes
+2015-10-19T19:48:21 <cindyli> sure. anastasiac. let me know when you are ready to talk
+2015-10-19T19:48:40 <anastasiac> now would work for me, cindyli
+2015-10-19T19:48:48 <cindyli> coming
+2015-10-19T19:56:53 <anastasiac> sorry, cindyli, one more question. Do you mind coming back
+2015-10-19T19:56:54 <anastasiac> ?
+2015-10-19T19:57:00 <cindyli> sure
+2015-10-19T20:09:42 * michelled has quit
+2015-10-19T20:18:56 <avtar> Bosmon: ping
+2015-10-19T20:22:16 <Bosmon> Hello there AVVTTAR
+2015-10-19T20:22:42 <avtar> how are things?
+2015-10-19T20:27:29 <Bosmon> avtar - they are sort of reasonable
+2015-10-19T20:27:37 <Bosmon> Although I have been in a DOCKUMENTATION HELL for some weeks now
+2015-10-19T20:28:18 <colinclark> Bosmon: This fix is INCORRECT: https://github.com/fluid-project/infusion/pull/643/files#diff-04c6e90faac2675aa89e2176d2eec7d8R4
+2015-10-19T20:28:23 <Bosmon> !!!!!!!
+2015-10-19T20:28:38 <Bosmon> colinclark - why so?
+2015-10-19T20:28:41 <colinclark> That is, your fix to the em dash
+2015-10-19T20:28:43 <colinclark> NO SPACES
+2015-10-19T20:28:48 <colinclark> ABSOLUTELY NO SPACES
+2015-10-19T20:28:49 <Bosmon> no spaces where?
+2015-10-19T20:29:13 <colinclark> between sides of the em dash
+2015-10-19T20:29:27 <colinclark> unless, apparently, you work for a newspaper
+2015-10-19T20:29:30 <Bosmon> Well it\'s better to have them at least the same on either side of the em-dash :)
+2015-10-19T20:29:37 <Bosmon> Rather than one with and one without
+2015-10-19T20:29:59 <avtar> Bosmon: if you want you could distract yourself from documentation tasks by checking out my fork and branch of fds https://github.com/avtar/first-discovery-server/tree/FLOE-423
+2015-10-19T20:30:14 <Bosmon> ok, avtar
+2015-10-19T20:30:14 <colinclark> Yes, you can at least claim you are following the Associated Press Style Guide, Bosmon
+2015-10-19T20:30:22 <avtar> i confirmed that the changes work on linux and windows 7 hosts
+2015-10-19T20:30:23 <Bosmon> Well that is something :)
+2015-10-19T20:30:25 <colinclark> indeed
+2015-10-19T20:30:35 <Bosmon> I\'m also happy for the spaces to be removed
+2015-10-19T20:30:39 <Bosmon> As long as both of them are removed : P
+2015-10-19T20:31:07 <colinclark> hahaha
+2015-10-19T20:31:23 <colinclark> It\'s really not a big deal, I\'m just being silly
+2015-10-19T20:31:36 <colinclark> but I will remove both spaces as part of my editorial privilege :)
+2015-10-19T20:34:24 <colinclark> avtar: Did you detect any stupid mistakes in my osc.js branch related to Vagrant?
+2015-10-19T20:34:46 <avtar> colinclark: just finished checking
+'
+
+b'2015-10-19T00:37:46 * jhernandez has quit
+2015-10-19T00:47:07 * jhernandez joined the channel
+2015-10-19T00:52:20 * jhernandez has quit
+2015-10-19T00:59:23 * jhernandez joined the channel
+2015-10-19T02:50:18 * colinclark joined the channel
+2015-10-19T03:09:33 * colinclark joined the channel
+2015-10-19T07:14:07 * the-t-in-rtf joined the channel
+2015-10-19T07:16:58 * the-t-in-rtf has quit
+2015-10-19T07:34:15 * the-t-in-rtf joined the channel
+2015-10-19T07:35:31 * slim_ joined the channel
+2015-10-19T07:35:47 * slim_ has quit
+2015-10-19T07:58:42 * slim_ joined the channel
+2015-10-19T08:46:03 * the-t-in-rtf has quit
+2015-10-19T08:50:57 * the-t-in-rtf joined the channel
+2015-10-19T09:01:50 * kasparnet joined the channel
+2015-10-19T09:42:12 * the-t-in-rtf has quit
+2015-10-19T09:46:34 * kasparnet has quit
+2015-10-19T10:07:45 * kasparnet joined the channel
+2015-10-19T12:24:05 * Justin_o joined the channel
+2015-10-19T12:45:06 * cindyli joined the channel
+2015-10-19T12:46:11 * the-t-in-rtf joined the channel
+2015-10-19T12:58:40 * cindyli has quit
+2015-10-19T12:59:15 * colinclark joined the channel
+2015-10-19T12:59:53 * gtirloni joined the channel
+2015-10-19T13:03:14 * jessm joined the channel
+2015-10-19T13:09:53 * cindyli joined the channel
+2015-10-19T13:10:19 * anvk joined the channel
+2015-10-19T13:11:46 * gtirloni joined the channel
+2015-10-19T13:12:24 * simonjb joined the channel
+2015-10-19T13:14:19 <cindyli> simonjb: can you review my pull request for adding the support for the client credentials grant type to the OAuth server - https://github.com/GPII/universal/pull/406. Many other pull requests are tagged with "review4", I\'m not sure if i should use the same tag. let me know if i should. thanks
+2015-10-19T13:16:11 <simonjb> cindyli: the "review4" tag is for changes needed for the Cloud4All final review; the work that you are doing is not needed for the review so please don\'t use that tag
+2015-10-19T13:16:30 <cindyli> good to know. thanks, simonjb
+2015-10-19T13:27:34 * sepidehshahi joined the channel
+2015-10-19T13:29:18 * alanharnum joined the channel
+2015-10-19T13:29:54 <Justin_o> Bosmon: do you know the name of the ISO8601 profile we\'re using for the timestamp on dev revisions
+2015-10-19T13:29:56 <Justin_o> i can\'t seem to find it
+2015-10-19T13:30:07 * danayo joined the channel
+2015-10-19T13:35:24 <Bosmon> Justin_o - I don\'t believe they have names
+2015-10-19T13:35:52 <Justin_o> Bosmon: what should I add to address this comment https://github.com/jobara/publish/pull/1#discussion_r42169548
+2015-10-19T13:36:17 <Justin_o> oh, maybe you meant to write that quote as is
+2015-10-19T13:40:13 <Bosmon> Justin_o - yes
+2015-10-19T13:40:23 <Justin_o> Bosmon: thanks, i just misread that
+2015-10-19T13:52:16 * clown joined the channel
+2015-10-19T14:13:38 <colinclark> Bosmon: hey
+2015-10-19T14:13:57 <Bosmon> Hey there colinclark
+2015-10-19T14:14:42 <colinclark> So yesterday we had that edifying chat about how Node modules and Infusion IoC could be integrated
+2015-10-19T14:14:47 <colinclark> which was great
+2015-10-19T14:14:50 <Bosmon> Yes, we did
+2015-10-19T14:15:06 <colinclark> I had initially asked about the "fluid.store" micromodule for a somewhat different reason
+2015-10-19T14:15:10 <Bosmon> aha
+2015-10-19T14:15:23 <colinclark> I\'m starting to look at making an "optimized" version of Bergson
+2015-10-19T14:15:37 <colinclark> suitable for being integrated directly into Flocking\'s sample block generation function
+2015-10-19T14:15:44 <colinclark> which runs at around 700 Hz, as you know
+2015-10-19T14:16:00 <colinclark> and it immediately got me thinking about how terribly factored Flocking\'s unit generators are
+2015-10-19T14:16:20 <colinclark> there\'s very little support for sharing code amongst unit generator implementations, for example
+2015-10-19T14:16:27 <colinclark> which leads to a lot of duplication, etc.
+2015-10-19T14:16:37 <colinclark> so just to clarify my thinking, I did some very quick sketching
+2015-10-19T14:17:09 <colinclark> imagining what a tiny bit of support for "functions and state" caveperson-style programming would look like
+2015-10-19T14:17:30 <colinclark> and of course it became very clear, nearly immediately, that it was a small subset of Infusion
+2015-10-19T14:17:41 <colinclark> particularly fluid.defaults and the options merging system
+2015-10-19T14:17:48 <Bosmon> yes
+2015-10-19T14:17:54 <colinclark> perhaps some init function-style stuff from the old days
+2015-10-19T14:18:14 <colinclark> I guess my question now is, how should I look at using Infusion to support this?
+2015-10-19T14:18:30 <colinclark> Rather than rolling separate infrastructure for Flocking as I have in the past
+2015-10-19T14:18:42 <Bosmon> Well, I guess the first answer is, by ripping off those 212 lines of code that I linked last time : P
+2015-10-19T14:18:49 <Bosmon> Just before the discussion started to go off the rails
+2015-10-19T14:18:53 <colinclark> Can I, for the time being, use them as is?
+2015-10-19T14:19:10 <Bosmon> You could even put in some vestigial support for "invokers" too - if you were happy with fixed signatures, which you almost certainly are
+2015-10-19T14:19:11 <colinclark> i.e. until I have an actual "other universe" in a worker, I can just use Infusion
+2015-10-19T14:19:14 <colinclark> since it is already there
+2015-10-19T14:19:26 <Bosmon> It could consume the subset of our dialect that we already support for where the argument list is not modified
+2015-10-19T14:19:30 <colinclark> yeah, I\'m happy with fixed function signatures
+2015-10-19T14:19:36 <Bosmon> Well, I guess "semi-fixed"
+2015-10-19T14:19:46 <Bosmon> THat is, supporting references which are either {that} or {arguments}.n
+2015-10-19T14:19:57 <Bosmon> Which can all both be accommodated very fast
+2015-10-19T14:20:29 <Bosmon> THat would be much better than bringing back init functions
+2015-10-19T14:20:39 <colinclark> interesting, yes
+2015-10-19T14:20:49 <Bosmon> Then you can say that "micro-Infusion perfectly supports a profile of Infusion"
+2015-10-19T14:21:04 <Bosmon> And then a bunch of Infusion configuration can be statically scanned to see if it falls in that profile or not
+2015-10-19T14:21:57 <colinclark> that\'ll be quite interesting
+2015-10-19T14:22:16 <Bosmon> This would basically be "Infusion without arbitrary IoC references" or indeed the notion of a "component tree" at all
+2015-10-19T14:22:25 <colinclark> right
+2015-10-19T14:22:47 <Bosmon> Although I guess in practice you might want the ability to instantiate subcomponents of various very simple kinds
+2015-10-19T14:23:10 * anastasiac joined the channel
+2015-10-19T14:23:25 <Bosmon> But no gingerness, no context resolution other than {that} or to locally available data, no distributeOptions
+2015-10-19T14:23:46 <Bosmon> It\'ll basically be what Infusion 1.3 would have been had we designed it to be forwardly compatible with the Infusion we have today
+2015-10-19T14:30:56 * clown has quit
+2015-10-19T14:32:06 * slim_ has quit
+2015-10-19T14:32:21 * slim_ joined the channel
+2015-10-19T14:41:05 * clown joined the channel
+2015-10-19T15:05:58 * anastasiac has quit
+2015-10-19T15:06:15 * anastasiac joined the channel
+2015-10-19T15:13:22 <cindyli> kasparnet, do you have some time to fork the first dicovery repos into gpii? two of them - https://github.com/fluid-project/first-discovery/, https://github.com/fluid-project/first-discovery-server/
+2015-10-19T15:14:58 <cindyli> Bosmon: we want to move the first discovery server repo into gpii, can the pending pull request https://github.com/fluid-project/first-discovery-server/pull/2 go in now?
+2015-10-19T15:15:25 <cindyli> if not, we can file the pull request against the gpii repo after the repo is moved
+2015-10-19T15:16:15 <Bosmon> cindyli - I think we are still waiting on some fixes from avtar to enable the vagrant build to work on Windows
+2015-10-19T15:16:25 <Bosmon> I guess it will be relatively easy to refile the pull
+2015-10-19T15:16:41 <cindyli> ok. cool
+2015-10-19T15:16:57 <cindyli> Bosmon: can you help to fork those repos into gpii?
+2015-10-19T15:17:36 <kasparnet> cindyli: hey cindyli
+2015-10-19T15:17:48 <kasparnet> sure, I can fork those
+2015-10-19T15:18:06 <kasparnet> https://github.com/GPII/first-discovery-server
+2015-10-19T15:18:10 <cindyli> thanks, kasparnet
+2015-10-19T15:18:14 <Bosmon> Is it a fork?
+2015-10-19T15:18:19 <avtar> cindyli: i should have the fixes ready in a couple of hours
+2015-10-19T15:18:20 <Bosmon> I thought we could "transfer ownership"
+2015-10-19T15:18:42 <kasparnet> Bosmon: I thought that required a fork
+2015-10-19T15:18:47 <Bosmon> kasparnet: https://help.github.com/articles/transferring-a-repository/
+2015-10-19T15:18:47 <cindyli> that\'s true
+2015-10-19T15:19:03 <Bosmon> Read, mark, learn and inwardly digest
+2015-10-19T15:19:47 <kasparnet> lol
+2015-10-19T15:20:12 <cindyli> kasparnet: have u forked both repos? only see "first-discovery-server" gets forked.
+2015-10-19T15:20:14 <kasparnet> ok - I guess something like this line: "The target account must not have a repository with the same name, or a fork in the same network." hints against forking
+2015-10-19T15:20:23 <Bosmon> kasparnet - indeed
+2015-10-19T15:21:37 <kasparnet> ok, cindyli, I\'ll delete the fork and then you\'ll have to transfer ownership from the fluid-project org to the GPII org
+2015-10-19T15:21:55 <kasparnet> then I can approve once you make the transfer ownership request
+2015-10-19T15:22:04 <cindyli> cool
+2015-10-19T15:22:14 <kasparnet> hold on a sec though
+2015-10-19T15:22:21 <kasparnet> will do the deletion of fork first
+2015-10-19T15:22:24 * yzen joined the channel
+2015-10-19T15:22:25 <Bosmon> I think I will need to do it
+2015-10-19T15:22:36 <Bosmon> It claims that the user who does it needs to have admin rights in both orgs
+2015-10-19T15:22:57 <cindyli> yay!! thanks, Bosmon
+2015-10-19T15:23:41 <kasparnet> cheers, Bosmon
+2015-10-19T15:23:56 <Bosmon> Is your fork deleted?
+2015-10-19T15:24:27 <kasparnet> Bosmon: yup - fork is deleted
+2015-10-19T15:24:27 <kasparnet> https://github.com/GPII/first-discovery-server
+2015-10-19T15:26:29 <Bosmon> Looks like it is now transferred over, with pull request still in place too
+2015-10-19T15:27:29 <cindyli> that\'s great
+2015-10-19T15:27:29 <kasparnet> Bosmon: there is this one as well https://github.com/GPII/first-discovery
+2015-10-19T15:27:30 <Bosmon> I\'ve added cindyli and Justin_o manually as collaborators, let me know if I should add anyone else
+2015-10-19T15:27:37 <Bosmon> ok
+2015-10-19T15:28:12 <Justin_o> Bosmon: what does that mean in terms of access rights?
+2015-10-19T15:28:49 <Bosmon> Justin_o - it means that you will have push access, as far as I can see
+2015-10-19T15:29:12 <Justin_o> Bosmon: cool thanks
+2015-10-19T15:32:42 * alanharnum has quit
+2015-10-19T15:40:30 <Bosmon> fluid-everyone - all the first-discovery repos are now transferred. I also transferred https://github.com/GPII/docs-first-discovery although it seems to be empty and has no pull requests
+2015-10-19T15:40:38 * anastasiac has quit
+2015-10-19T15:40:39 <Bosmon> I see that anastasiac and cindyli have forks
+2015-10-19T15:46:45 * sepidehshahi joined the channel
+2015-10-19T15:46:48 * alanharnum joined the channel
+2015-10-19T15:47:19 * anastasiac joined the channel
+2015-10-19T15:47:21 <Justin_o> Bosmon: thanks
+2015-10-19T15:47:58 <anastasiac> Bosmon, thanks for moving the docs-first-discovery repo. I\xe2\x80\x99m hoping to have a pull request for it this week :-)
+2015-10-19T15:48:07 <Bosmon> anastasiac - awesome
+2015-10-19T15:48:34 <cindyli> thanks for the help, Bosmon
+2015-10-19T15:48:46 <Bosmon> anastasiac - in the meantime, I\'d appreciate any comments on this arriving monster pull: https://github.com/fluid-project/infusion-docs/pull/77
+2015-10-19T15:49:03 <anastasiac> I\xe2\x80\x99ll have a look this week, Bosmon
+2015-10-19T15:49:10 * simonjb has quit
+2015-10-19T15:49:13 <Bosmon> anastasiac - cheers
+'
+

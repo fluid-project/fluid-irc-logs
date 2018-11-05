@@ -1,0 +1,402 @@
+b'2016-05-05T17:52:11 <avtar> 1:27 PM <Bosmon> I think we can be sure that SOME DAY someone will want to merge in a branch which makes a change to both a client and a server endpoint
+2016-05-05T17:52:12 <amatas> shhh silence everybody, Please go ahead Avtar
+2016-05-05T17:52:39 <avtar> i think amatas\' work provides value for that reason
+2016-05-05T17:53:56 <avtar> we run the universal production tests right now in the data centre but it would be great if we move in the direction of being able to spin up ALL the services anywhere and get an idea of the state of the gpii world
+2016-05-05T17:55:13 <avtar> the scenario that Bosmon described is something we\'ve dealt with in the past during pre-reviews weeks when the hosted components are being modified in different branches
+2016-05-05T17:56:06 <avtar> in those cases newer and different versions of gpii components need to be made available somewhere for tests to be carried out
+2016-05-05T17:57:38 <avtar> so far we\'ve only used vagrant to spin up single VMs for builds and tests so what amatas is doing is unchartered territory for us
+2016-05-05T17:58:21 <avtar> i\'m not sure if there is a travis comparison to be made at the moment since travis doesn\'t seem to let you use more than one vm or container (or at least not that i know of)
+2016-05-05T17:59:35 <gtirloni> we\'re already better than travis then
+2016-05-05T17:59:52 <gtirloni> in our plans, that is :P
+2016-05-05T18:00:36 <gtirloni> when we run the linux/windows tests.. we aren\'t testing anything that touches the prefs/flowmanager services, right? i mean, today.
+2016-05-05T18:00:51 <gtirloni> do we have tests that depend on the full environment being available?
+2016-05-05T18:02:43 <amatas> I don\'t thinks so gtirloni, and will be also a good test to check if each service are up and running ok
+2016-05-05T18:03:34 <amatas> something more accurate than statuscake or uptime robot
+2016-05-05T18:03:43 <avtar> gtirloni: i\'m not sure to be honest
+2016-05-05T18:03:55 <avtar> Bosmon: ^
+2016-05-05T18:04:23 <gtirloni> amatas: do you mean for production of development services? i was thinking more along the lines that these tests would spawn ephemeral services that would be destroyed after the tests end
+2016-05-05T18:06:04 <gtirloni> avtar: if we don\'t, then alfredo\'s work is also a good starting point on developing such tests
+2016-05-05T18:06:08 <amatas> gtirloni I meant for production services, some tests that check that the response of the services is correct
+2016-05-05T18:06:53 * clown_mtg has quit
+2016-05-05T18:07:22 <amatas> sorry guys, I\'ve to leave
+2016-05-05T18:07:49 <avtar> gtirloni: from a cursory glance in https://github.com/GPII/universal/tree/master/tests/platform/linux it looks like requests are being made to local resources
+2016-05-05T18:08:00 <avtar> cya amatas
+2016-05-05T18:08:47 <gtirloni> amatas: g\'night
+2016-05-05T18:09:37 <Bosmon> avtar - which point did you want a comment on?
+2016-05-05T18:09:59 <gtirloni> avtar: that\'s territory i don\'t fully grasp.. for instance, if just by pointing those tests to remote resources, would they be characterized as "integration tests".. if they are already integration tests as-is, then we\'d be testing the network connection (and the deployment/orchestration services)
+2016-05-05T18:10:12 <avtar> Bosmon: gtirloni was wondering if any of the linux or windows tests make requests to hosted instances of the pref server or other components
+2016-05-05T18:10:32 <Bosmon> avtar - no - how could they be tests in that case?
+2016-05-05T18:10:45 <Bosmon> The only file I found in my work that was not "testable" was the one I pasted earlier
+2016-05-05T18:10:55 <Bosmon> Because it made reference to a hosted instance
+2016-05-05T18:15:17 <gtirloni> could that be translate to: this config file we provide, needs certain components to work, and we want to ensure this particular way of configuring the gpii continues to work in the face of changes? i understand the need to test local changes and have a complete environment to test things on... i\'m just wondering if this particular scenario is something we\'re interested in TOO (testing config files in a live environment)
+2016-05-05T18:16:02 <gtirloni> i may not be making sense anymore, if i ever did :P
+2016-05-05T18:20:11 * michelled joined the channel
+2016-05-05T18:21:24 * cindyli has quit
+2016-05-05T18:22:37 <avtar> Bosmon: perfect thx
+2016-05-05T18:22:41 * cindyli joined the channel
+2016-05-05T18:24:02 <Bosmon> gtirloni - I can easily imagine use cases for both
+2016-05-05T18:24:22 <Bosmon> That is i) the ability to test new components against old ones, ii) the ability to test previously undeployed new components against each other
+2016-05-05T18:27:53 <gtirloni> ah good point
+2016-05-05T18:28:00 <gtirloni> thanks
+2016-05-05T18:29:02 <Bosmon> simonjb - I think that onBindWs definitely needs to be documented, yes
+2016-05-05T18:29:16 <Bosmon> And handleRequest doesn\'t look like it is a substitute in this case
+2016-05-05T18:29:26 <simonjb> cool
+2016-05-05T18:29:40 <Bosmon> handleRequest is just a no-op for ws requests since we can\'t predict when the upgrade will be processed
+2016-05-05T18:30:27 <Bosmon> It looks like there is a faulty namespace attached to "ensureResponseDisposes"
+2016-05-05T18:30:28 <Bosmon> priority: "before:handleRequest"
+2016-05-05T18:30:32 <simonjb> yeah, that\'s what it looked like to me be but was wondering when I didn\'t see onBindWs in the docs
+2016-05-05T18:30:53 <simonjb> ok
+2016-05-05T18:31:07 * clown joined the channel
+2016-05-05T18:31:16 <Bosmon> https://github.com/amb26/kettle/blob/KETTLE-32/lib/KettleRequest.ws.js#L37
+2016-05-05T18:31:22 <Bosmon> I don\'t see there is any other listener with this namespace
+2016-05-05T18:31:25 <simonjb> I\'ll add a note to the pr suggesting we add onBindWs to the docs
+2016-05-05T18:31:27 <Bosmon> So I\'m not really sure what I was thinking
+2016-05-05T18:32:05 <Bosmon> Probably got left behind from some prior version where I thought that onBindWs actually would have some interaction with handleRequest
+2016-05-05T18:32:23 <simonjb> yeah, that sounds reasonable
+2016-05-05T18:32:50 <Bosmon> I went back and forth on this quite a lot since "old Kettle" did couple these together
+2016-05-05T18:33:07 <Bosmon> But in the end I determined that WebSockets requests simply don\'t have a suitable lifecycle
+2016-05-05T18:42:01 * the-t-in-rtf joined the channel
+2016-05-05T19:31:26 * the-t-in-rtf has quit
+2016-05-05T19:50:37 <clown> avtar, just in case you have a quick answer: have you had any problem with USB headphones on F23?
+2016-05-05T19:50:46 <clown> VMs, that is.
+2016-05-05T19:51:56 <avtar> clown: never tried headphones with VMs
+2016-05-05T19:52:14 <avtar> but you\'ll want to change this https://github.com/GPII/linux/blob/master/Vagrantfile#L56
+2016-05-05T19:52:28 <clown> okay, thanks.  FWIW, I haven\'t had problems with any VM before F23.
+2016-05-05T19:52:42 * clown looks
+2016-05-05T19:53:34 <avtar> on os x you\'ll most likely want to replace \'null\' with \'coreaudio\'
+2016-05-05T19:55:51 <clown> Checking the F23 settings dialog for audio: I have "Coreaudio" and  "ICH AC97" (just like my F22 VM).
+2016-05-05T19:56:06 <clown> I guess I just won\'t use headphones...
+2016-05-05T19:56:39 <simonjb> Bosmon: I was just doing some experimenting with file dataSources and it looks to me like we don\'t do any protection against using relative filenames when building the file path
+2016-05-05T19:56:43 <simonjb> https://gist.github.com/simonbates/24685740d011be1f6f5f253dedced3ba
+2016-05-05T19:57:21 <Bosmon> simonjb - that\'s right, yes
+2016-05-05T19:57:29 <simonjb> should we?
+2016-05-05T19:58:13 <Bosmon> simonjb - I don\'t know : P
+2016-05-05T19:59:51 <simonjb> the risk I see is that if we expose a file dataSource to a public accessible endpoint, we could enable someone to access files outside of what the application intended
+2016-05-05T20:01:25 <simonjb> such as ../../../../etc/passwd
+2016-05-05T20:03:34 <simonjb> and I think I\'m right in thinking that a dataSource should be relatively interchangeable with another type? such as replace file dataSource with URL dataSource and the API is the same
+2016-05-05T20:04:47 <simonjb> which, I think, suggests that any filesystem-level protection should be the responsibility of the dataSource, rather than the client (as they shouldn\'t know the dataSource implementation)
+2016-05-05T20:05:31 <simonjb> or maybe "shouldn\'t assume" the dataSource implementation
+2016-05-05T20:10:28 <simonjb> Bosmon: ^
+2016-05-05T20:11:53 <Bosmon> simonjb - that seems like a reasonable risk to be concerned about, yes
+2016-05-05T20:12:14 <Bosmon> The URL varieties of the dataSource do URIencoding on some interpolation to guard against this
+2016-05-05T20:12:21 <Bosmon> If we exposed a file dataSource, we should certainly do something similar
+2016-05-05T20:13:55 <simonjb> the URL varieties do URIencoding when populating the url from the termMap?
+2016-05-05T20:14:47 <Bosmon> simonjb - yes
+2016-05-05T20:14:51 <simonjb> cool
+2016-05-05T20:16:28 <simonjb> for the filesystem we could do something similar -- either encode/strip out problematic chars or reject the call all together if we fail some check (such as whitelist of allowable filename chars)
+2016-05-05T20:17:50 <simonjb> Bosmon: I\'ll add a note to the pull request
+2016-05-05T20:19:53 <Bosmon> simonjb - perhaps a JIRA :)
+2016-05-05T20:20:00 <simonjb> sure
+2016-05-05T20:56:27 * simonjb has quit
+2016-05-05T21:05:20 * colinclark joined the channel
+2016-05-05T21:05:24 * colinclark has quit
+2016-05-05T21:08:28 * jessm has quit
+2016-05-05T21:50:34 * kasparnet joined the channel
+2016-05-05T22:13:34 * michelled has quit
+2016-05-05T22:28:52 * kasparnet has quit
+'
+
+b'2016-05-05T17:14:49 <colinclark> 3. #1 and #2 must be done in coordination with each other
+2016-05-05T17:14:52 <colinclark> is that correct?
+2016-05-05T17:14:55 <Bosmon> colinclark - that seems correct to me, yes
+2016-05-05T17:15:02 <Bosmon> The concept was to spin up a pair of linked containers
+2016-05-05T17:15:04 <colinclark> wow
+2016-05-05T17:15:06 <Bosmon> And validate them against each other
+2016-05-05T17:15:10 <colinclark> very cool amatas and Bosmon
+2016-05-05T17:15:15 <Bosmon> Well
+2016-05-05T17:15:22 <colinclark> So gtirloni, what was your suggestion?
+2016-05-05T17:15:26 <Bosmon> That is an encouraging verdict
+2016-05-05T17:15:28 <colinclark> regarding containers
+2016-05-05T17:15:34 <Bosmon> I can\'t say I was perfectly clear whether it WAS very cool
+2016-05-05T17:15:38 <amatas> thanks Bosmon, because I\'m feeling like http://www.quickmeme.com/img/5e/5e93ae0d7180ca8b95a12a50c7c218c3b4bfbd732df8b7bfe88b49b1cdf240a4.jpg
+2016-05-05T17:15:47 <Bosmon> Or simply represented a level of effort that we couldnt\' directly justify
+2016-05-05T17:16:03 <colinclark> Well, I believe it represents the culmination of the "developer side" of our infrastructural approach
+2016-05-05T17:16:22 <colinclark> i.e. it doubles as a means by which gtirloni or amatas can actually verify real production infrastructure prior to launch
+2016-05-05T17:16:29 <Bosmon> amatas - that meme illustrates a level of self-awareness that we should all aspire to
+2016-05-05T17:16:36 <colinclark> :) :)
+2016-05-05T17:16:50 <colinclark> I don\'t know what the level of effort it actually entails is
+2016-05-05T17:17:06 <colinclark> I\'d love to say, "oh provisioning VMs with vagrant and containers with Docker is easy"
+2016-05-05T17:17:10 <Bosmon> When someone comes to you insisting that they *DO* know what they\'re doing, this is the time for significant worry
+2016-05-05T17:17:12 <colinclark> but I don\'t tend to actually do those things much
+2016-05-05T17:17:58 <amatas> 0
+2016-05-05T17:18:07 <gtirloni> colinclark: i was wondering if, instead of spawning a local "server" VM, these tests could use the dev/semi-prod instances at gpii.net. but if changes involve both client and server and some fork.. then that\'s not doable since the online instances are bound to gpii/universal and the docker images that derive from it
+2016-05-05T17:18:38 <colinclark> gtirloni: yes, interesting
+2016-05-05T17:18:43 <amatas> sorry, ignore my last message, my daughter was typing...
+2016-05-05T17:18:49 <colinclark> awesome, amatas
+2016-05-05T17:19:00 <colinclark> say hi to her for all of us
+2016-05-05T17:19:00 <gtirloni> so this is in the "developer" realm.. allowing developers to test their changes before they submit, maybe to catch errors they haven\'t anticipated
+2016-05-05T17:19:01 <amatas> in fact she wrote the json
+2016-05-05T17:19:06 <colinclark> my impression is that we need this for two slightly different purposes, gtirloni
+2016-05-05T17:19:09 <Bosmon> amatas - my CATT typically types more characters than that
+2016-05-05T17:19:12 <Bosmon> Your daughter is very restrained
+2016-05-05T17:19:13 <colinclark> 1. exactly what you just said
+2016-05-05T17:19:33 <colinclark> and 2. for when you deploy new versions of our services, to verify that everything is actually working from an end-user perspective
+2016-05-05T17:19:39 <colinclark> does that seem right to you, gtirloni ^
+2016-05-05T17:19:58 <Bosmon> My CATT actually once succeeded in filing the following JIRA: https://issues.gpii.net/browse/GPII-1075
+2016-05-05T17:20:12 <Bosmon> He has also managed to send screenshots to people on Skype!
+2016-05-05T17:20:16 <colinclark> it\'s true
+2016-05-05T17:20:26 <Bosmon> Thankfully not containing anything compromising : P
+2016-05-05T17:21:03 <gtirloni> colinclark: yes, it does. i\'d like avtar\'s opinion on this since he has been thinking about it all much more than I :) but both goals are valid, very valid
+2016-05-05T17:21:12 <colinclark> :)
+2016-05-05T17:21:18 <colinclark> I just remember avtar always used to say
+2016-05-05T17:21:36 <colinclark> "We need some way for admin to verify, without having to ask Kasper to test it for them, that a service is actually working"
+2016-05-05T17:21:50 <colinclark> it seeeeeems like this may address that need, right amatas?
+2016-05-05T17:22:00 <colinclark> at least eventually?
+2016-05-05T17:22:08 <Bosmon> Hopefully relatively soon
+2016-05-05T17:22:17 <colinclark> yes
+2016-05-05T17:22:17 <Bosmon> Since I see this as one of the main blockers for getting the "big branch" in
+2016-05-05T17:22:20 <colinclark> oh wow
+2016-05-05T17:22:31 <Bosmon> Although I guess I could just try running the stuff myself
+2016-05-05T17:22:33 <colinclark> because it\'s infeasible to manually test all our configs?
+2016-05-05T17:22:48 <Bosmon> Given that this exercise has ended up giving me a much greater insight into what this stuff does
+2016-05-05T17:23:01 <Bosmon> All I said when seeing this config of Kasper\'s is "Here is something which is broken, and untestable"
+2016-05-05T17:23:35 <gtirloni> if the tests are specified for both the server and the client components, then it\'s a matter of describing how they should look like and informing the client of where to look for the server. i guess that\'s what alfredo is doing now, with the local environment. on the Ops side of things, for GPII specifically, the client tests run in Vagrant (see ci.gpii.net) but I\'m not sure about the state of the tests... if they touch the server
+2016-05-05T17:23:35 <gtirloni> components in any way (or if those tests exist). for the server components, we\'re likely looking at running them in containers and pointing this GPII VM to them
+2016-05-05T17:24:26 <Bosmon> I guess we imagine that http://preferences.gpii.net should actually stay up?
+2016-05-05T17:24:36 <Bosmon> A lot of the reason behind this exercise was my own ignorance
+2016-05-05T17:24:53 <gtirloni> preferences.gpii.net should stay up, and it points to the master branch of universal, IIRC.
+2016-05-05T17:25:04 <Bosmon> I saw some stuff which it was my job to rewrite, which I couldn\'t take responsibility for
+2016-05-05T17:25:28 <Bosmon> Because I didn\'t understand the underpinnings of it
+2016-05-05T17:25:45 <gtirloni> there is also staging-preferences.gpii.net and we can arrange a assortment of different services to stay up. i guess it\'s an area Avtar is researching (letting developers specify in their repositories how tests should run, a-la TravisCI)
+2016-05-05T17:25:47 <Bosmon> So I thought it would be a good idea if this stuff could be turned into something which was testable in a self-contained way
+2016-05-05T17:26:13 <gtirloni> using vagrant VMs for a local tests of the client and servers components seem like the most portable way right now, I agree
+2016-05-05T17:26:19 <Bosmon> gtirloni - ok, so it is an interesting point indeed
+2016-05-05T17:26:34 <Bosmon> SInce in order to get a pull request merged in from a branch, one would need to be able to validate it
+2016-05-05T17:26:46 <Bosmon> In this case, the PR has *not* changed the actual HTTP endpoints and their meaning
+2016-05-05T17:26:47 <gtirloni> back to travis-like testing functionality, i don\'t know if they support integration tests. I\'ve only seen their unit tests.
+2016-05-05T17:27:05 <Bosmon> And so the merge could be done in a valid way against the "current" trunk
+2016-05-05T17:27:08 * michelled joined the channel
+2016-05-05T17:27:20 <Bosmon> But I guess this does raise very deep philosophical issues about what a "service" is
+2016-05-05T17:27:25 <amatas> gtirloni, the problem I see with staging* is that is only one snapshot of a component. A developer may need to work with its own version of the component, and test it against the others components.
+2016-05-05T17:27:42 <Bosmon> I think we can be sure that SOME DAY someone will want to merge in a branch which makes a change to both a client and a server endpoint
+2016-05-05T17:27:56 <gtirloni> amatas: exactly, so it\'s in the developer "realm" and he/she can run the tests locally or resort to some travis-like testing feature we still haven\'t worked out
+2016-05-05T17:28:28 <Bosmon> Even if in the modern "Facebook-style" deployment model, we can never expect to add a new endpoint and remove an old corresponding one in a single operation
+2016-05-05T17:28:40 <Bosmon> We could imagine a new client being created for a new endpoint
+2016-05-05T17:29:51 <gtirloni> Bosmon: to account for changes that touch both server and client sides, i think it\'s better to work with ephemeral environments that spin up VMs/containers based on whatever the developer is working on (say, his/her private repo with those changes) and tear it down. that would offer more flexibility. in a Kubernetesssss world, the developer could submit that a certain number of containers be spawned from his/her code and we can even support
+2016-05-05T17:29:51 <gtirloni> load tests. so much awesomeness in the future :D
+2016-05-05T17:30:18 <amatas> Sorry, OT: Bosmon, I run "node driver.js" and it launches a kettle listening on port 8081. Is it what we spect?
+2016-05-05T17:30:27 <Bosmon> amatas - yes, it is what we expect
+2016-05-05T17:30:44 <Bosmon> gtirloni - sounds cool - and could we argue that what amatas is building here is a kind of simplified sketch of that?
+2016-05-05T17:31:48 <amatas> good, and from this point, how do I run the tests?
+2016-05-05T17:32:05 <gtirloni> Bosmon: yep. for efficient purposes we wouldn\'t be using the "server" Vagrant box side of what amatas is working on (because, containers kubernetes, etc) but certainly for the client side, yes.. we do use vagrant for gpii client tests already: https://ci.gpii.net/view/All/job/linux-tests/index.html (this spawns a vagrant box somewhere and run the tests)
+2016-05-05T17:33:03 <colinclark> gtirloni: not to muddy the waters
+2016-05-05T17:33:04 <gtirloni> and the windows version: https://ci.gpii.net/view/All/job/windows-tests/index.html
+2016-05-05T17:33:06 <colinclark> but IN THE FUTURE
+2016-05-05T17:33:09 <Bosmon> amatas - you can add a line to the end of driver.js which reads require("ProductionConfigTests.js") or whatever path it is at
+2016-05-05T17:33:22 <colinclark> do you anticipate that the developer-side of the equation will actually embed Kube into it?
+2016-05-05T17:33:33 <Bosmon> amatas - this is what our current all-tests.js driver looks like: https://github.com/GPII/universal/blob/master/tests/all-tests.js
+2016-05-05T17:33:39 <colinclark> like a "server" VM that is actually running Kubernetes and provisioning containers identically to how they are in the cloud?
+2016-05-05T17:33:44 <colinclark> or is that just crazy talk
+2016-05-05T17:33:47 <Bosmon> SO it simply issues "require" for all our internal unit and integration tests
+2016-05-05T17:33:58 <colinclark> colinclark: "Go back to writing emails, pointy hair!"
+2016-05-05T17:34:09 <amatas> I see, thanks! will test it!
+2016-05-05T17:34:16 <Bosmon> And so when working on my big branch I realised that ProductionConfigTests.js was the odd one out - it was the only test case which I had no way to run
+2016-05-05T17:34:52 <Bosmon> colinclark - I guess the only bit of "lossage" is being able to account for what URLs things are running at
+2016-05-05T17:34:53 <gtirloni> colinclark: i don\'t know if we are going to opt for a dotfile travis-like way for the developer to say where it want things, or letting developers contact the kube master directly and submit requests... but i expect in the end they would be pushing requests that translate to containers/pod and services being spawned in kubernetes and making their components available somewhere, say, bosmon-universal-jira1318.dev.gpii.net
+2016-05-05T17:35:03 <Bosmon> Which is the only bit of config adjustment amatas has to do here, for example
+2016-05-05T17:35:21 <colinclark> aha, gtirloni
+2016-05-05T17:35:22 <Bosmon> THe system would need some kind of "extrinsic metadata" in order to be able to know where there were two components that needed to be put into correspondence
+2016-05-05T17:35:41 <Bosmon> Although one way out of that would be "cunning DNS hacks"
+2016-05-05T17:36:00 <Bosmon> But we raised the possibility of "cunning DNS hacks" in the archi meeting the previous week and amatas considered they would be pretty appalling
+2016-05-05T17:36:25 <gtirloni> colinclark: ah, a local kube servers.. that would be interesting too. if only to offer the same API for the tools the developers will be using. so it would be the same API (kube), but either submitting it locally or submitting it remotely... if i got it right. i see some advantages in that too (the local setup wouldn\'t need to be remotely as complex as the datacenter one)
+2016-05-05T17:36:46 <Bosmon> gtirloni - right - and so we still need some way of accounting for - that is, predicting, and then configuring, the fact that another service you want to "co-test" needs to bind to, say  bosmon-universal-jira1318.dev.gpii.net
+2016-05-05T17:37:47 <gtirloni> yes, we still need to sort those details out and how it would be implemented
+2016-05-05T17:38:02 * cindyli joined the channel
+2016-05-05T17:38:03 <Bosmon> Well, we need more than that
+2016-05-05T17:38:07 <Bosmon> We need to UNDERSTAND WHAT IT MEANS : P
+2016-05-05T17:38:11 <gtirloni> lol
+2016-05-05T17:38:44 <Bosmon> For example how can a service KNOW that it will depend on another service that is going to be somewhere at a particular URL which might depend on odd details of how something is named in github or JIRA or whatever
+2016-05-05T17:38:50 <colinclark> gtirloni: One big benefit I see is offline development support
+2016-05-05T17:39:08 <colinclark> in this way, a developer could test all the way to pseudo-production on their local machine
+2016-05-05T17:39:13 <Bosmon> Yes
+2016-05-05T17:39:31 <colinclark> and if the QI is ubiquitous, confidently know that this is the same environment as is being run automatically upon commit/push
+2016-05-05T17:39:40 <colinclark> and is only a tiny step away from YOUR ENVIRONMENT
+2016-05-05T17:39:58 <Bosmon> All of this suggests we need some better system of metadata which accounts for the "topology" of a group of servers
+2016-05-05T17:40:08 <Bosmon> That is, THIS PIECE OF CONFIGURATION HERE is a URL which points to THAT SERVER OVER THERE
+2016-05-05T17:40:15 <Bosmon> For some "symbolic" value of "THIS HERE" and "THAT THERE"
+2016-05-05T17:40:21 <colinclark> "a group of servers" as far as the GPII is concerned?
+2016-05-05T17:40:25 <colinclark> like Kettle servers?
+2016-05-05T17:40:29 <Bosmon> Yes
+2016-05-05T17:40:33 <colinclark> ok
+2016-05-05T17:40:40 <Bosmon> Perhaps a kind of "mega-config"
+2016-05-05T17:40:51 <Bosmon> Which all configs in this group would derive from
+2016-05-05T17:41:05 <Bosmon> And contains a place where their mutual references are written
+2016-05-05T17:41:28 <Bosmon> We did have a conversation with gtirloni, Justin and others earlier in the year
+2016-05-05T17:41:39 <Bosmon> Where we started sketching ways that configs could be "munged" whilst being deployed
+2016-05-05T17:41:47 <Bosmon> And this seems like it fits into that category
+2016-05-05T17:41:52 <gtirloni> yep
+2016-05-05T17:42:38 <gtirloni> that certainly enables more flexibility into how the apps are deployed, which translates into simpler container images and, more importantly, being able to use cluster-wide services that distribute those parameters to the containers and let them adapt
+2016-05-05T17:42:41 <Bosmon> My head is still spinning a bit from what this MEANS though
+2016-05-05T17:42:54 <Bosmon> It suggests that the "mega-config" represents..... "the external world"
+2016-05-05T17:43:18 <Bosmon> And contains symbolic things that can be referred to as {the.external.world}.options.preferencesServerUrl
+2016-05-05T17:44:30 <gtirloni> the goal is to have this "mega-config" be simple, built from containers and services exposing those containers. it\'s doable today with the kubernetes yaml/json configuration, but i suspect that would be too boring/verbose for developers. i guess that\'s where avtar comes in with this mythological (:P) layer between a simple yaml/json files describing this things in very high-level and what they actually translate to in the datacenter (or
+2016-05-05T17:44:30 <gtirloni> even a local setup)
+2016-05-05T17:47:31 <gtirloni> for a more concrete (if only helloworld-class) example: imagine all these json files that deploy a guestbook service could be simplified into a 10-line config file: https://github.com/kubernetes/kubernetes/tree/master/examples/guestbook-go (building on convention we can determine later, say, what\'s the DNS name that will be used, which port, etc, etc)
+2016-05-05T17:48:16 <avtar> hi all
+2016-05-05T17:48:18 <gtirloni> these json files aren\'t terribly complex, but they still expose underlying building blocks that developers wouldn\'t have to care about
+2016-05-05T17:49:01 <colinclark> hi avtar
+2016-05-05T17:49:15 <gtirloni> avtar!!!1 if "ear is burning" is the same in English as in pt_BR, then avtar, your ear must be burning
+2016-05-05T17:49:17 <avtar> i just finished going through the channel logs while forcing artisanal pizza into my face
+2016-05-05T17:49:29 <avtar> i believe i have all the answers
+2016-05-05T17:49:30 <amatas> haha
+2016-05-05T17:49:31 <avtar> so here goes
+2016-05-05T17:50:10 <amatas> gtirloni, "ear is burning" is the same in es_ES
+2016-05-05T17:50:22 <gtirloni> haha cool
+2016-05-05T17:51:42 <colinclark> go go go, avtar
+2016-05-05T17:52:00 <colinclark> in english I guess it might be a bit more plurarl, gtirloni and amatas
+2016-05-05T17:52:04 <colinclark> "ears are burning"
+2016-05-05T17:52:08 <alanharnum> https://frinkiac.com/caption/S06E18/392224
+'
+
+b'2016-05-05T00:00:10 * Bosmon joined the channel
+2016-05-05T00:51:48 * alanharnum joined the channel
+2016-05-05T02:21:55 * alanharnum joined the channel
+2016-05-05T02:29:18 * alanharnum joined the channel
+2016-05-05T04:40:57 * the-t-in-rtf joined the channel
+2016-05-05T05:10:44 * the-t-in-rtf has quit
+2016-05-05T06:32:21 * Bosmon joined the channel
+2016-05-05T06:49:38 * Bosmon joined the channel
+2016-05-05T07:07:42 * the-t-in-rtf joined the channel
+2016-05-05T07:20:21 * the-t-in-rtf has quit
+2016-05-05T07:36:33 * Bosmon has quit
+2016-05-05T07:40:29 * Bosmon joined the channel
+2016-05-05T07:54:17 * Bosmon joined the channel
+2016-05-05T08:02:34 * Bosmon joined the channel
+2016-05-05T08:27:05 * the-t-in-rtf joined the channel
+2016-05-05T08:28:20 * the-t-in-rtf has quit
+2016-05-05T08:30:01 * Bosmon joined the channel
+2016-05-05T12:39:05 * the-t-in-rtf joined the channel
+2016-05-05T12:40:01 * jessm joined the channel
+2016-05-05T12:55:20 * alanharnum joined the channel
+2016-05-05T12:56:49 * simonjb joined the channel
+2016-05-05T13:03:51 * cindyli joined the channel
+2016-05-05T13:36:00 * clown joined the channel
+2016-05-05T13:50:11 * alanharnum joined the channel
+2016-05-05T13:50:58 * colinclark joined the channel
+2016-05-05T14:00:05 * michelled joined the channel
+2016-05-05T14:26:32 <Bosmon> Hey there cindyli
+2016-05-05T14:26:40 <Bosmon> You are really excellent :)
+2016-05-05T14:26:54 <Bosmon> I wanted to thank you again for catching that problem with the assertDeepEq implementation
+2016-05-05T14:28:27 <cindyli> Isn\'t that what i should do ;) btw, all ur pull requests in my plate have been merged. Cheers! thanks for making all those fixes, Bosmon
+2016-05-05T14:32:09 <Bosmon> When are you going on holiday?
+2016-05-05T14:32:15 <Bosmon> And how are we going to manage without you?
+2016-05-05T14:33:46 <cindyli> You guys might do better without me ;)
+2016-05-05T14:34:03 <cindyli> my vacation is from May 10-27
+2016-05-05T14:35:13 * colinclark has quit
+2016-05-05T14:37:06 <Bosmon> We will suffer a lot
+2016-05-05T14:37:08 <alanharnum> noooo
+2016-05-05T14:37:11 <alanharnum> cindyli
+2016-05-05T14:37:21 <alanharnum> who will find every time i\'ve copy-pasted without refactoring :(
+2016-05-05T14:37:36 <Bosmon> Well I can do *THAT*
+2016-05-05T14:37:44 <Bosmon> But for really sophisticated review we need cindy :)
+2016-05-05T14:37:45 <alanharnum> and make me less scared of the terniary operator
+2016-05-05T14:38:05 <cindyli> btw, guys, justin will be back from his vacation next week.
+2016-05-05T14:38:23 <alanharnum> i now think of my review process for my own code as basically "what would cindyli and Bosmon say if they saw this" :)
+2016-05-05T14:38:35 <cindyli> lol
+2016-05-05T14:38:56 <cindyli> i wanted to say "for really sophisticated review we need Bosmon!!, for sure"
+2016-05-05T14:40:44 * the-t-in-rtf has quit
+2016-05-05T14:42:42 * the-t-in-rtf joined the channel
+2016-05-05T14:42:48 * the-t-in-rtf has quit
+2016-05-05T14:43:08 * the-t-in-rtf joined the channel
+2016-05-05T15:14:20 * the-t-in-rtf has quit
+2016-05-05T15:24:48 * colinclark joined the channel
+2016-05-05T16:26:13 * clown joined the channel
+2016-05-05T16:26:21 * clown is now known as clown_mtg
+2016-05-05T16:29:56 * colinclark has quit
+2016-05-05T16:31:29 * amatas joined the channel
+2016-05-05T16:31:37 <Bosmon> Hey there amatas
+2016-05-05T16:31:40 <amatas> hi all
+2016-05-05T16:31:52 <amatas> I wasn\'t aware that this channel exists
+2016-05-05T16:31:55 <Bosmon> So you are working on getting the GPII production tests working with vagrant?
+2016-05-05T16:31:56 <amatas> :D
+2016-05-05T16:32:01 <amatas> yup
+2016-05-05T16:32:04 <Bosmon> SUPER-SECRET TECHNICAL CHANNEL :)
+2016-05-05T16:32:14 <Bosmon> Actually it is not super-secret since it is publically logged just like #fluid-work.....
+2016-05-05T16:32:31 <amatas> I see
+2016-05-05T16:32:54 <amatas> well, this is the work I\'ve done so far: https://github.com/amatas/vagrant-gpii-server-client
+2016-05-05T16:33:26 <amatas> that Vagrantfile has the ability to spin up a server VM and a Fedora VM
+2016-05-05T16:33:28 * colinclark joined the channel
+2016-05-05T16:33:43 <amatas> in the server VM is a preferences server running with a couchdb
+2016-05-05T16:34:03 <amatas> in the Fedora VM is a gpii-linux framework installed
+2016-05-05T16:34:15 <Bosmon> Sounds good
+2016-05-05T16:34:18 <amatas> now I need to connect all together :D
+2016-05-05T16:35:03 <Bosmon> ok
+2016-05-05T16:35:38 <Bosmon> What would you like to do?
+2016-05-05T16:36:18 <amatas> first of all check if the preferences server is the only requisite at server side to do the tests
+2016-05-05T16:36:34 <Bosmon> I believe it is
+2016-05-05T16:36:52 <amatas> because we also have the registry, and rbmm services running in the servers
+2016-05-05T16:36:58 <Bosmon> RBMM is dead
+2016-05-05T16:37:01 <Bosmon> You can ignore that
+2016-05-05T16:37:07 <Bosmon> registry is also local, in a file
+2016-05-05T16:37:08 <amatas> oh thanks
+2016-05-05T16:37:13 <amatas> ok
+2016-05-05T16:37:17 <amatas> good to know
+2016-05-05T16:37:30 <Bosmon> Ok, so here is what we\'ve got: https://github.com/GPII/universal/blob/master/tests/ProductionConfigTests.js
+2016-05-05T16:37:54 <Bosmon> Which drives this config: https://github.com/GPII/universal/blob/master/gpii/configs/production.with.logging.json
+2016-05-05T16:38:09 <Bosmon> So you can see that the solutions registry is local here:
+2016-05-05T16:38:16 <Bosmon> https://github.com/GPII/universal/blob/master/gpii/configs/production.with.logging.json#L17
+2016-05-05T16:38:37 <amatas> is this a local service?: https://github.com/GPII/universal/blob/master/gpii/configs/production.with.logging.json#L19-L22
+2016-05-05T16:38:41 <Bosmon> All you need to do, I would imagine, is derive a new config from this one and override devUrls.preferences
+2016-05-05T16:39:09 <Bosmon> Yes, the flat matchMaker will be hosted from the client VM as standard
+2016-05-05T16:39:17 <amatas> nice
+2016-05-05T16:39:18 <Bosmon> This is just the same as in development configs
+2016-05-05T16:39:55 <Bosmon> So here\'s an example of deriving a "driver" config from another one: https://github.com/GPII/universal/blob/master/examples/easit-oauth-integration/EasitCloudBasedConfig.json
+2016-05-05T16:39:59 <Bosmon> Yours will be much simpler than this
+2016-05-05T16:40:05 <Bosmon> Since all you need to do is override one URL
+2016-05-05T16:40:22 <Bosmon> But this directory as a whole shows the pattern for writing a "driver" for the GPII: https://github.com/GPII/universal/tree/master/examples/easit-oauth-integration
+2016-05-05T16:40:43 <Bosmon> There is a tiny little driver.js file which kicks off the application, and tells it which config to use
+2016-05-05T16:41:05 <Bosmon> And then the config itself in this case called "EasitCloudBasedConfig.json"
+2016-05-05T16:41:28 <Bosmon> We should start using this pattern rather than the crazy one of using some wacky sed-based search-and-replace on the JSON files : P
+2016-05-05T16:42:45 <amatas> ok, let me check it out
+2016-05-05T16:44:00 <Bosmon> gtirloni ^ you might be interested in this discussion
+2016-05-05T16:45:01 * michelled has quit
+2016-05-05T16:50:05 * colinclark has quit
+2016-05-05T16:50:56 * colinclark joined the channel
+2016-05-05T16:54:51 * cindyli has quit
+2016-05-05T16:55:15 * colinclark joined the channel
+2016-05-05T16:55:37 <gtirloni> thanks for the heads up. i certainly am :)
+2016-05-05T16:57:18 <gtirloni> i don\'t know if this will simplify the setup you are imagining, but running the server components as containers in the fedora VM might be doable too (so you don\'t have to worry about orchestrating VMs, and since the container images are based on our blessed centos environment)
+2016-05-05T16:59:04 <gtirloni> ah, just noticed it involves a windows box. maybe the container suggestion will make things trickier then
+2016-05-05T17:00:31 <amatas> gtirloni, the windows box setup that is in the vagrantfile isn\'t ready for testing. I left there just if at any moment is required.
+2016-05-05T17:00:38 <gtirloni> ok
+2016-05-05T17:02:01 <gtirloni> quick question: is this to be used during the development workflow so developers can\'t test their own changes locally? or something else? i\'m wondering if pointing the test box to the dev/semi-prod containers running at {preferences,flowmanager}.gpii.net would be acceptable
+2016-05-05T17:02:13 <gtirloni> s/can\'t/can/g
+2016-05-05T17:04:17 <amatas> gtirloni, if I understood well the main target for this setup is to test some PRs by the developers
+2016-05-05T17:05:00 <amatas> it uses the same ansible roles that are used to build and run the containers at server side
+2016-05-05T17:06:25 <gtirloni> got it
+2016-05-05T17:06:45 <Bosmon> I guess it\'s not unacceptable to point at the semi-prod containers, I don\'t know
+2016-05-05T17:06:48 <Bosmon> What do you think, colinclark
+2016-05-05T17:06:57 <colinclark> oh hi
+2016-05-05T17:07:27 <Bosmon> Although "orchestrating VMs" sounds like something we will need to figure out how to do
+2016-05-05T17:08:52 <colinclark> I can\'t say that I can parse the context of the conversation
+2016-05-05T17:08:58 <colinclark> despite having read up to the top of my buffer
+2016-05-05T17:09:02 <colinclark> Can someone summarize?
+2016-05-05T17:09:27 <Bosmon> One would worry about how to test changes that involve updates to both the prefs server and the core
+2016-05-05T17:09:52 <Bosmon> colinclark: https://botbot.me/freenode/fluid-tech/2016-05-05/?msg=65522766&page=1
+2016-05-05T17:10:39 <gtirloni> so giving the developer the ability to run end-to-end tests in his own machine of the gpii infrastructure with server and client-side components.. if i understood it right
+2016-05-05T17:10:53 <Bosmon> gtirloni - that was the original remit, yes
+2016-05-05T17:10:56 <gtirloni> ok
+2016-05-05T17:11:02 <colinclark> Bosmon: This still doesn\'t quite help
+2016-05-05T17:11:16 <colinclark> Can someone elaborate what the actual work is, and how it relates to what avtar has already done?
+2016-05-05T17:11:18 * amatas is hammering with his head jsons files in order to run some tests
+2016-05-05T17:11:40 <Bosmon> colinclark - kasparnet has written some things called "ProductionConfigTests.js"
+2016-05-05T17:11:50 <Bosmon> Which purport to test "production" configurations of the GPII
+2016-05-05T17:11:54 <colinclark> ok
+2016-05-05T17:11:55 <Bosmon> https://github.com/GPII/universal/blob/master/tests/ProductionConfigTests.js
+2016-05-05T17:11:59 <colinclark> that\'s a curious concept
+2016-05-05T17:12:05 <colinclark> they\'re a kind of integration test?
+2016-05-05T17:12:14 <colinclark> a full-stack, as-it-should-be-deployed integration test?
+2016-05-05T17:12:14 <amatas> Bosmon, could you check if this file is correct? GPIIProductionTests.json : http://pastie.org/private/cg0vctxelmyzjzyxc2wlhw
+2016-05-05T17:12:20 <Bosmon> "What we had considered desirable to do" was find some way of testing and validating, for a start, the contents of this config and what it refers to
+2016-05-05T17:12:47 <Bosmon> colinclark - something like that, yes
+2016-05-05T17:13:00 <Bosmon> It\'s hard to account for what they are, philosophically
+2016-05-05T17:13:05 <Bosmon> But there they are, in the JSON :)
+2016-05-05T17:13:10 <Bosmon> And anything that is there, should be testable
+2016-05-05T17:13:45 <colinclark> So am I correct in summarizing them this way:
+2016-05-05T17:13:50 <colinclark> They are tests which:
+2016-05-05T17:14:07 <Bosmon> amatas - that looks broadly correct
+2016-05-05T17:14:07 <colinclark> 1. Require a platform-specific "client" vagrant box (such as Windows computer) to be provisioned and spun up
+2016-05-05T17:14:23 <Bosmon> It\'s truly horrifying how ancient a version of Infusion the architecture is still bound to....
+2016-05-05T17:14:38 <colinclark> 2. Additionally, they require Docker containers within a "server" VM to be spun up with various infrastructural components such as the preferences server
+'
+

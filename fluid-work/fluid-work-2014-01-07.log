@@ -1,0 +1,456 @@
+b'2014-01-07T22:01:02 <kasparnet> failing under windows
+2014-01-07T22:01:17 <kasparnet> (not the high-contrast 64bit thing)
+2014-01-07T22:01:48 <kasparnet> Bosmon8: yzen is currently working on fixing it, I believe
+2014-01-07T22:02:36 <yzen> Bosmon8: the same issue that i though moduleSource can help, it seems like with latest changes environment is still attempted to be resovled
+2014-01-07T22:03:23 * clown has left the channel
+2014-01-07T22:04:00 <yzen> Bosmon8: regarding that user , it\'s an example of how match maker preference should look like in the preference set
+2014-01-07T22:09:31 <Bosmon8> yzen - it still resolves the environment "at an inappropriate time"?
+2014-01-07T22:09:39 <yzen> yes
+2014-01-07T22:09:41 <Bosmon8> Ok
+2014-01-07T22:09:49 <Bosmon8> Can you link me to the relevant line of configuration?
+2014-01-07T22:10:03 <yzen> of the test case ?
+2014-01-07T22:10:07 <Bosmon8> yes
+2014-01-07T22:10:25 <yzen> this for example https://github.com/yzen/windows/blob/GPII-75/tests/AcceptanceTests.js#L459
+2014-01-07T22:11:03 <Bosmon8> Ah
+2014-01-07T22:11:35 <Bosmon8> Well, isn\'t that strange?
+2014-01-07T22:11:49 <Bosmon8> Surely by definition that is the one piece of configuratoin that could never be resolved "early"
+2014-01-07T22:11:56 <Bosmon8> Since it is interpreted directly by the settings handler
+2014-01-07T22:12:06 <Bosmon8> Well, or rather, the flow manager
+2014-01-07T22:12:17 <yzen> Bosmon8: well this is passed as component options (for the test case holder)
+2014-01-07T22:12:35 <yzen> so naturally it gets resolved right ?
+2014-01-07T22:12:55 <Bosmon8> Well, if it were, it could only be resolved in a completely corrupted way
+2014-01-07T22:13:05 <Bosmon8> But I guess what you told me didn\'t rule that out
+2014-01-07T22:13:09 <Bosmon8> You did say it was resolved "early" : P
+2014-01-07T22:13:14 <yzen> yes
+2014-01-07T22:13:20 <Bosmon8> Without saying that it was resolved in an entirely incorrect way : P
+2014-01-07T22:13:46 <yzen> well surely if you pass json as component options and it has ioc references the framework will try to resolve it no ?
+2014-01-07T22:13:54 <Bosmon8> In theory the IoC system could indeed try to brokenly interpret "{environment}.APPDATA" as a context name
+2014-01-07T22:14:04 <yzen> yes
+2014-01-07T22:14:12 <Bosmon8> Although I guess the standard parsing rules would actually terminate the context at the first }
+2014-01-07T22:14:31 <Bosmon8> So it would actually consider that the context is "{environment"
+2014-01-07T22:14:55 <Bosmon8> And that the EL path is "APPDATA}\\\
+vda\\\
+vda.ini"
+2014-01-07T22:15:40 <yzen> 15:11:49.141:   ASSERTION FAILED:  Failed to resolve reference {environment}.APP
+2014-01-07T22:15:40 <yzen> DATA - could not match context with name environment from component { typeName:
+2014-01-07T22:15:41 <yzen> "kettle.tests.testCaseHolder"
+2014-01-07T22:15:53 <Bosmon8> ok
+2014-01-07T22:16:07 <Bosmon8> If you\'d shown me the actual error message, we might have saved some time :)
+2014-01-07T22:16:22 <Bosmon8> So it looks like you just need an additional mergePolicy inside the acceptance testing framework
+2014-01-07T22:16:33 <Bosmon8> In theory we didn\'t need "moduleSource" at all
+2014-01-07T22:17:19 <yzen> yes i thought so , i also though i can try using fluid.noexpand
+2014-01-07T22:17:22 <yzen> but it did not work
+2014-01-07T22:17:42 <Bosmon8> Well, fluid.noexpand may well be entirely broken, on the evidence we\'ve had recently
+2014-01-07T22:17:49 <yzen> so the acceptance framework does not create components , it just expands the testDefs block to include extra steps in the sequence
+2014-01-07T22:18:06 <yzen> Bosmon8: are you suggesting i need to make one :) ?
+2014-01-07T22:18:10 <Bosmon8> Well, I think not, it seems "noexpand" has some test cases
+2014-01-07T22:18:15 <Bosmon8> So it probably still works
+2014-01-07T22:18:18 <Bosmon8> Well ok
+2014-01-07T22:18:29 <Bosmon8> Let\'s explore this idea that "the acceptance framework does not create components" : P
+2014-01-07T22:20:01 <yzen> ok sure, so it means i can\'t contribute a mergePolicy right ?
+2014-01-07T22:20:10 <Bosmon8> Well
+2014-01-07T22:20:22 <Bosmon8> Surely the only issue could be the opposite - that it in fact DOES create some kind of component
+2014-01-07T22:20:55 * anvk has quit
+2014-01-07T22:20:55 <Bosmon8> Otherwise what would this EL reference be a reference to:     var testDefRef = "{tests}.options.testDef";
+2014-01-07T22:21:50 <yzen> hmm that
+2014-01-07T22:22:08 <Bosmon8> Can you link me to the copy of universal you are currently working with?
+2014-01-07T22:23:04 <yzen> Bosmon8: my copy of universal is broken , since i can\'t point to an infusion commit since 5185 is out of sync with master
+2014-01-07T22:23:12 <Bosmon8> ok
+2014-01-07T22:23:16 <Bosmon8> But just to read the code
+2014-01-07T22:23:20 <yzen> Bosmon8: its universal as is with kettle 5185 branch
+2014-01-07T22:23:31 <Bosmon8> I see
+2014-01-07T22:23:46 <yzen> Bosmon8: kettle test utils https://github.com/yzen/kettle/blob/FLUID-5185/test/utils/js/KettleTestUtils.js
+2014-01-07T22:24:01 <Bosmon8> Surely there were changes to univeral\'s AcceptanceTests.js?
+2014-01-07T22:24:13 <Bosmon8> The one I just quoted from
+2014-01-07T22:24:31 <yzen> not sure which version your testDefRef is from
+2014-01-07T22:24:35 <yzen> it is not in the latest master
+2014-01-07T22:24:38 <Bosmon8> ok
+2014-01-07T22:24:40 <Bosmon8> Let me check
+2014-01-07T22:25:59 <Bosmon8> yzen.... so the quoted line is not present
+2014-01-07T22:26:02 <Bosmon8> But a very similar one is
+2014-01-07T22:26:03 <Bosmon8> https://github.com/GPII/universal/blob/master/tests/AcceptanceTests.js#L182
+2014-01-07T22:26:10 <Bosmon8> Which suggests potential for the problem we are seeing
+2014-01-07T22:26:40 <Bosmon8> Clearly the block "settingsHandlers" is part of the options of SOME component
+2014-01-07T22:26:55 <yzen> Bosmon8: yes the test case holder
+2014-01-07T22:27:11 <yzen> that\'s what I mentioned earlier
+2014-01-07T22:27:12 <Bosmon8> Unfortunately there are so many things in the world called "tests" it is hard to see what it is
+2014-01-07T22:27:33 <yzen> tests - https://github.com/yzen/kettle/blob/FLUID-5185/test/utils/js/KettleTestUtils.js#L349
+2014-01-07T22:27:40 <Bosmon8> Sorry, thanks :)
+2014-01-07T22:27:41 <Bosmon8> With you now
+2014-01-07T22:27:59 <Bosmon8> Ah fascinating
+2014-01-07T22:28:08 <Bosmon8> And the builder function is hardwired into Kettle : P
+2014-01-07T22:28:11 <Bosmon8> As it its grade : P
+2014-01-07T22:29:17 <Bosmon8> So it seems that all that is required to is to extend "kettle.tests.buildTestCase" to be able to interpret more material from a "testDef"
+2014-01-07T22:29:25 <Bosmon8> That is, to allow it to accept some gradeNames as well
+2014-01-07T22:29:30 <Bosmon8> How lucky we are we still have you around : P
+2014-01-07T22:30:06 <yzen> ok ill try to fix it tonight or tomorrow morning :)
+2014-01-07T22:30:45 <Bosmon8> Then all we need to do is define a "gpii.tests.AcceptanceTestCaseHolder" grade with the appropriate mergePolicy
+2014-01-07T22:30:54 <yzen> ok ill try that :)
+2014-01-07T22:31:00 * yzen has quit
+2014-01-07T22:31:21 <Bosmon8> And add it into the options round about this line: https://github.com/GPII/universal/blob/master/tests/AcceptanceTests.js#L136
+2014-01-07T22:34:13 * kasparnet has quit
+2014-01-07T22:43:02 * anastasiac has quit
+2014-01-07T23:02:22 <colinclark> Bosmon8: another quick and simplistic question for you
+2014-01-07T23:02:26 <colinclark> if you can spare a sec
+2014-01-07T23:02:43 <colinclark> or Bosmon
+2014-01-07T23:02:46 <colinclark> either one of you
+2014-01-07T23:02:50 <Bosmon8> Hi colinclark - it is me
+2014-01-07T23:03:53 <colinclark> I have a component that fires an event
+2014-01-07T23:04:24 <colinclark> and it passes along a "raw" object
+2014-01-07T23:04:29 <colinclark> which another component listens for
+2014-01-07T23:04:36 <colinclark> "parses" the raw object
+2014-01-07T23:04:50 <colinclark> and fires a subsequent "higher level" event
+2014-01-07T23:13:04 <colinclark> sorry
+2014-01-07T23:13:13 <colinclark> someone waked into my office
+2014-01-07T23:13:24 <colinclark> anyway, I wonder if there\'s any kind of simple way to handle this
+2014-01-07T23:13:43 <colinclark> It\'s a kind of boiling scenario
+2014-01-07T23:14:01 <colinclark> but in this particular case a Node.js Buffer needs to get JSONified in between
+2014-01-07T23:16:38 <Bosmon8> You could write an expander in the args list of a boiled event
+2014-01-07T23:16:49 <Bosmon8> It\'s a little unsightly but not unheard-of
+2014-01-07T23:28:20 * jessm has quit
+2014-01-07T23:29:37 * danaayotte_ has quit
+2014-01-07T23:31:02 * vjoanna has quit
+2014-01-07T23:43:19 <Bosmon8> colinclark ^
+2014-01-07T23:46:17 <colinclark> hi sorry, i\'m back
+2014-01-07T23:47:12 <michelled> Bosmon8: the error we are getting is http://pastie.org/8612209
+2014-01-07T23:47:24 <michelled> does it seem like the same issue that yzen was seeing in tests?
+2014-01-07T23:47:47 <colinclark> It\'s comparable to the issue I was seeing also when debugging on Ubuntu over the holidays
+2014-01-07T23:47:54 <colinclark> but I checked for stray copies of Infusion and it appears to be all there
+2014-01-07T23:48:21 <colinclark> michelled: I think I might, as a next step, try cloning a fresh copy of the windows repository
+2014-01-07T23:48:22 <colinclark> and running the build scripts, etc.
+2014-01-07T23:48:55 <colinclark> Bosmon8: So if I put an expander in the args list of the event, it will be expanded automatically every time the event fires? That\'s great
+2014-01-07T23:48:59 <michelled> sure
+2014-01-07T23:49:18 <colinclark> I guess I\'ll still have the issue of the expander eating my Buffer?
+2014-01-07T23:49:22 <colinclark> in its voracious way
+2014-01-07T23:53:58 <Bosmon8> colinclark - hopefully the issue only bites in the other direction
+2014-01-07T23:54:05 <colinclark> chomp
+2014-01-07T23:54:09 <Bosmon8> That is, an expander which returns a Buffer, rather than one which consumes one
+2014-01-07T23:54:16 <colinclark> ok
+2014-01-07T23:54:20 <colinclark> ok, that will help tidy up this code a lot
+2014-01-07T23:54:45 <colinclark> sadly it won\'t reduce the latency of the sound it produces
+2014-01-07T23:54:52 <colinclark> but that\'ll come
+2014-01-07T23:54:56 <colinclark> michelled
+2014-01-07T23:55:00 <colinclark> \'s issue is very strange
+2014-01-07T23:55:13 <colinclark> I mean, it looks like the same issue I wrestled with over the holiday
+2014-01-07T23:55:17 <Bosmon8> michelled - that issue looks like it is caused by a mismatched version of Infusion being visible to Kettle
+2014-01-07T23:55:20 <Bosmon8> Yes
+2014-01-07T23:55:26 <Bosmon8> And it will have a very similar kind of cause
+2014-01-07T23:55:46 <colinclark> At the point of the error,  kettle.gradeLinkageRecord.userLoginHandlerSession does indeed have the "autoInit" grade
+2014-01-07T23:55:51 <colinclark> so i can\'t think of what else it could be
+2014-01-07T23:55:57 <colinclark> but I can\'t find any extra Infusions anywhere
+2014-01-07T23:56:24 <Bosmon8> colinclark - as we discovered, the error never really refers to the absence of "autoInit" itself
+2014-01-07T23:56:30 <Bosmon8> But actually to an "incomplete grade hierarchy"
+2014-01-07T23:56:44 <Bosmon8> In this case what will be missing is "fluid.gradeLinkageRecord"
+2014-01-07T23:56:54 <Bosmon8> You should try grepping throughout the tree for this to see what you find
+2014-01-07T23:57:10 <Bosmon8> It may be that what has happened is that the version of Infusion is simply incorrect, rather than duplicated
+2014-01-07T23:57:21 <Bosmon8> Since this depends on a framework feature which was only added a month or so ago
+2014-01-07T23:57:31 <colinclark> ah, interesting
+2014-01-07T23:58:02 <Bosmon8> Perhaps some kind of bad merge or checkout or npm install has somehow trashed the infusion revision
+2014-01-07T23:58:30 <Bosmon8> But firstly search for as many versions of FluidIoC.js as you can find
+2014-01-07T23:58:46 <Bosmon8> And then check that each one (hopefully just 1!) has fluid.defaults("fluid.gradeLinkageRecord") in it
+'
+
+b'2014-01-07T18:57:33 * sgithens has quit
+2014-01-07T18:58:00 * sgithens joined the channel
+2014-01-07T19:01:18 * jhung1 joined the channel
+2014-01-07T19:03:09 * avtar joined the channel
+2014-01-07T19:09:55 * cindyli joined the channel
+2014-01-07T19:11:20 * jhung has quit
+2014-01-07T19:20:51 * sgithens has quit
+2014-01-07T19:23:30 * cindyli has quit
+2014-01-07T19:33:36 * sgithens joined the channel
+2014-01-07T19:47:41 * danaayotte_ has quit
+2014-01-07T19:48:22 <Bosmon8> Thanks, kasparnet for your very thorough recent panic list :)
+2014-01-07T19:48:41 <Bosmon8> I am looking down the list starting at the most urgent ones.... but still find myself a bit puzzled
+2014-01-07T19:48:53 <Bosmon8> For example this one: https://github.com/GPII/universal/pull/180/files
+2014-01-07T19:48:58 <Bosmon8> Appears as if it might be harmless
+2014-01-07T19:49:10 <Bosmon8> But I wonder how I could possibly know if it is safe to be merged : P
+2014-01-07T19:49:17 <Bosmon8> yzen, colinclark may also have some input on this issue
+2014-01-07T19:49:33 * jhung1 has quit
+2014-01-07T19:49:53 <Bosmon8> This pull request has to me the unfortunate combination of properties of apparently being "very very urgent" whilst at the same time "sort of unfathomable" .......
+2014-01-07T19:51:48 <yzen> Bosmon8: what would make you feel better about this patch ?
+2014-01-07T19:54:53 * clown has quit
+2014-01-07T19:56:14 <sgithens> kasparnet: Are you going to run the actual pilots on Monday, or is that just when the review starts?  ie. After a bunch of frantic merges on friday I hope it works over the weekend
+2014-01-07T20:05:46 * clown joined the channel
+2014-01-07T20:05:46 * clown is now known as clown_mtg
+2014-01-07T20:16:28 * danaayotte_ joined the channel
+2014-01-07T20:18:42 * cindyli joined the channel
+2014-01-07T20:32:18 * michelled has quit
+2014-01-07T20:37:56 * michelled joined the channel
+2014-01-07T20:42:50 <kasparnet> sgithens: the review is monday but we\'ll be doing demos there so things have to work :)
+2014-01-07T20:43:49 <kasparnet> Bosmon8: I might have miscategorized some of them - I thought that one was a requirement for matchmaker integration (ST and RB matchmakers)
+2014-01-07T20:52:11 <michelled> kasparnet: will the demo be on Monday or on Wednesday?
+2014-01-07T20:52:23 <kasparnet> michelled: wednesday
+2014-01-07T20:52:53 <kasparnet> monday will be spent going through the demo, presentations, etc
+2014-01-07T20:52:57 <colinclark> kasparnet: I was just thinking about Matchmaker integration, based on Andy\'s response
+2014-01-07T20:53:04 <colinclark> I feel like there are some pieces missing
+2014-01-07T20:53:19 <colinclark> based on the comment where he says "Its tested to work in the architecture master as it was on xmas if you integrate it manually (replacing the .match function)"
+2014-01-07T20:53:27 <colinclark> that doesn\'t quite sound like an integration to me
+2014-01-07T20:53:45 <colinclark> but maybe there\'s something about the nature of an integration that I am unaware
+2014-01-07T20:53:46 <colinclark> of
+2014-01-07T20:53:56 <colinclark> yzen: How does it look from your perspective?
+2014-01-07T20:54:27 <colinclark> is the issue that we need the Matchmaker Proxy to be reviewed and pushed?
+2014-01-07T20:57:02 <kasparnet> colinclark: I *think* (and yura/michelle - correct me if I\'m wrong) we ended up deciding that the ST MM would be run as a separate server - and the solution for now is that andy will be running his own instance of a specially modified universal - where the matchmaker part is replaced
+2014-01-07T20:57:25 <kasparnet> colinclark: (he would then only run the \'matchmaker\' part of the framework as a service)
+2014-01-07T20:57:38 <colinclark> oh, ok
+2014-01-07T20:57:40 <yzen> kasparnet: colinclark: so as far as i know Nick has a working version of the rule based match maker that works as a standalone
+2014-01-07T20:57:58 <yzen> there were only a couple of changes to the older repo that he had related to updating to the latest universal
+2014-01-07T20:58:04 <kasparnet> colinclark: though this might just be me making stuff up cause I dont want new crazy and scary things to come up :)
+2014-01-07T20:58:33 <yzen> colinclark: kasparnet it should be working with the server without any issues, it\'s just the matter of pointing the proxy to the right standalone match makers
+2014-01-07T20:59:14 <colinclark> How is that done, yzen?
+2014-01-07T20:59:29 <yzen> statistical one, afaik, is almost the same and unless customization of match is done differently from the rule based matchmaker example, there might be something wrong
+2014-01-07T21:00:03 <yzen> well we have a top level configuration in universal along with the one we usually use that configures the proxy instead of the actual match maker
+2014-01-07T21:00:04 <colinclark> This is Andy\'s repository, yzen: https://github.com/AndreasStiegler/GPII_StatisticalMatchmaker1
+2014-01-07T21:00:59 <colinclark> So it sounds like we first need to get the Matchmaker Proxy into master
+2014-01-07T21:01:10 <colinclark> and then something needs to be done to create configuration files for each Matchmaker?
+2014-01-07T21:01:12 <michelled> yzen: what does the configuration look like? can you point me to the working one?
+2014-01-07T21:01:33 <yzen> https://github.com/yzen/universal/blob/GPII-270/gpii/node_modules/matchMaker/configs/proxy.json
+2014-01-07T21:01:58 <yzen> this is the one used by the top level config: https://github.com/yzen/universal/blob/GPII-270/gpii/configs/fm.ps.sr.dr.mm.os.lms.multipleMatchMakers.json
+2014-01-07T21:02:31 <colinclark> So what does Andy need to do to support the Proxy API?
+2014-01-07T21:02:35 <colinclark> or is he already good?
+2014-01-07T21:03:09 <colinclark> Looks like he\'s using older-style "demands" configuration, and needs to update his module to run as a server?
+2014-01-07T21:03:13 <colinclark> is that right?
+2014-01-07T21:03:32 <yzen> colinclark: he does not have to do anything except for making sure that his match maker server runs as a standalone server, which is similar to the previous pilot iteration
+2014-01-07T21:03:57 <yzen> colinclark: yes that was the only change nick and i had to do to make sure his repo supports latest universal
+2014-01-07T21:04:06 <colinclark> ok
+2014-01-07T21:04:15 <colinclark> So I\'ll compare Nick\'s module to Andy\'s
+2014-01-07T21:04:18 <yzen> colinclark: and even then the only reason we needed to update to the latest was because of solutions data being updated slightly
+2014-01-07T21:04:29 <colinclark> and that should tell me specifically what Andy needs to do?
+2014-01-07T21:04:48 <yzen> colinclark: ya instead of demands we are are now leverage grades and grade linkage ability
+2014-01-07T21:04:52 <colinclark> kasparnet and michelled: Who\'s on deck to review the Matchmaker Proxy? And do they know they are? And do they have a timeline for it?
+2014-01-07T21:05:10 <yzen> https://github.com/NickKaklanis/RuleBased_MatchMaker/blob/master/lib/RuleBasedMatchMaker.js#L34-L53
+2014-01-07T21:06:48 <yzen> and this https://github.com/NickKaklanis/RuleBased_MatchMaker/blob/master/lib/RuleBasedMatchMaker.js#L67-L71
+2014-01-07T21:06:54 <kasparnet> colinclark: Bosmon8 will be reviewing the matchmaker proxy stuff - and yeah - I think he\'s well aware of it (or well - I sent out the pull-request mail a few hours ago, so he\'s very-recently-well-aware of it)
+2014-01-07T21:07:13 <colinclark> thanks, yzen, for the links
+2014-01-07T21:07:15 <colinclark> very helpful
+2014-01-07T21:07:34 <kasparnet> colinclark: no timeline, but it\'s on the "very very very pressing" shortlist
+2014-01-07T21:08:02 <yzen> colinclark: there was an issue with older version and now the framework forced to correct something (access to the request)
+2014-01-07T21:10:11 <Bosmon8> yzen, colinclark - sorry to be away at dinner
+2014-01-07T21:10:24 <Bosmon8> yzen\'s original question is a good one, "what would make me feel better about it"
+2014-01-07T21:10:34 <Bosmon8> Clearly #1 at the list would be... "some tests"
+2014-01-07T21:10:45 <Bosmon8> But there may be some good reasons why these are not sensible to produce
+2014-01-07T21:11:02 <Bosmon8> For example, the CORS functionality itself is, I believe, at least somewhat tested at the kettle level
+2014-01-07T21:11:13 <yzen> Bosmon8: well we have core tests, if you want to test core in universal it is really testing kettle no?
+2014-01-07T21:11:19 <Bosmon8> So it would seem redundant to test it again, especially if the content of the patch is simply "to enable the use of CORS"
+2014-01-07T21:11:42 <Bosmon8> All the same, the reviewer needs some kind of assurance about the pull request : P
+2014-01-07T21:12:57 * cindyli has quit
+2014-01-07T21:13:35 <Bosmon8> kasparnet - I am "aware" of the proxy stuff, yes
+2014-01-07T21:13:38 <Bosmon8> But the issue is somewhat the same
+2014-01-07T21:13:44 <Bosmon8> The code "looks sensible" to me
+2014-01-07T21:13:49 <Bosmon8> And this pull request has at least SOME tests
+2014-01-07T21:14:24 <Bosmon8> But our test cases being what they are for the GPII still, I\'m still not completely clear on how I can actually run them
+2014-01-07T21:15:48 <Bosmon8> It seems that despite our best efforts we really are at the same situation that we were at the pilots previously - that is, we have lots of functionality on hand that we "have belief that it works" but have no reliable way of actually verifying this
+2014-01-07T21:15:59 <Bosmon8> That is, some test cases which "anyone" can run
+2014-01-07T21:16:05 <Bosmon8> kasparnet - do you think that is right?
+2014-01-07T21:17:12 <kasparnet> Bosmon8: well - yes and no - that depends on how you define "anyone".. We do have a pretty decent unit test coverage that anyone should be able to run (provided they have windows when testing windows stuff, linux when testing linux stuff, etc)
+2014-01-07T21:18:00 <kasparnet> Bosmon8: and we do have acceptance tests, which (with the prerequisite of having NVDA installed in windows) should work provided the tester has the relevant platform available
+2014-01-07T21:18:36 <kasparnet> Bosmon8: I guess the "relevant platform available" is what\'s prevents \'anyone\' to run it ... we still need that damn VM to distribute
+2014-01-07T21:18:56 * colinclark has quit
+2014-01-07T21:21:19 * clown_mtg has quit
+2014-01-07T21:23:49 * colinclark joined the channel
+2014-01-07T21:24:27 * colinclark has quit
+2014-01-07T21:26:25 <michelled> yzen: perhaps, if it\'s not possible to write tests for the pull request, you could provide Bosmon8 with a description of how to prove that it\'s working
+2014-01-07T21:26:36 <michelled> maybe you could screen share and show him?
+2014-01-07T21:27:31 * colinclark joined the channel
+2014-01-07T21:28:16 <michelled> Bosmon8: we have never managed to \'make back the ground\' we lost when we cut our last hack branches for pilots and hackathons. we have been slowly moving towards that, but we aren\'t there yet
+2014-01-07T21:28:56 <michelled> I feel confident that we will indeed get to the point where we have a lovely set of easily run tests and all the functionality that we regularly depend on and demo in the master repository
+2014-01-07T21:29:18 <michelled> but that unfortunately isn\'t going to be possible before the review.
+2014-01-07T21:29:30 <colinclark> uh oh
+2014-01-07T21:30:19 <michelled> I\'m not suggesting that we put anything in to master that we aren\'t happy with. so if things really can\'t go in - so be it. if there is a way we can be happy with it, let\'s strive for that.
+2014-01-07T21:33:27 <colinclark> I think the thing we need right now, Bosmon / Bosmon8 is specificity
+2014-01-07T21:33:39 <colinclark> I see seventeen pending pull requests to Universal
+2014-01-07T21:34:18 <colinclark> So if there are ones we have concerns about, we need a very specific to do list of what needs to be addressed about them
+2014-01-07T21:39:28 <Bosmon8> Ok
+2014-01-07T21:39:50 <Bosmon8> Well, interestingly from my point of view, the issue doesn\'t seem to be that much about "specificity"
+2014-01-07T21:40:05 <Bosmon8> But just that I still don\'t know how I can basically test the architecture in a way that is credible
+2014-01-07T21:40:09 * clown joined the channel
+2014-01-07T21:41:19 <Bosmon8> So of those "very very urgent" and "very urgent" pull requests on my plate, I see lots of things that "seem reasonable" and that I wouldn\'t have a strong reason to object to based on the code that is in them
+2014-01-07T21:43:14 <Bosmon8> But I just have no way of telling whether they will screw the system up completely
+2014-01-07T21:44:54 <michelled> hmmm\xe2\x80\xa6 I suppose people have been relying on manual testing. is that what you do kasparnet, yzen, colinclark, sgithens?
+2014-01-07T21:45:50 <kasparnet> michelled: yeah, I generally run unit tests (browser and non-browser), then acceptance and finally logging in/out a few people
+2014-01-07T21:46:07 <Bosmon8> The trouble is, I\'m on the move with an underpowered Windows laptop with no VMs on it
+2014-01-07T21:46:19 <Bosmon8> So my capability to test things is very limited
+2014-01-07T21:46:51 <Bosmon8> And I won\'t be back home and at work fully until Thursday, which seems cutting it a bit fine for things which are "very very urgent"
+2014-01-07T21:47:26 <michelled> ah, perhaps I can help there - why don\'t you tell me when pull requests you are actually happy with from reading the code perspective and I\'ll try to test them out as best as I can
+2014-01-07T21:47:44 <Bosmon8> Ok, well I am "in theory" happy with both of my "very very" urgent ones
+2014-01-07T21:48:02 <Bosmon8> https://github.com/GPII/universal/pull/180/files seems completely innocuous
+2014-01-07T21:48:19 <Bosmon8> Although it still seems a strange feature of Kettle\'s design that one actually needs to do this :)
+2014-01-07T21:48:45 <Bosmon8> The kettle.use.* system and its mysterious motivations is something we will need to shoulder after yura\'s departure
+2014-01-07T21:49:39 <colinclark> Which is why yzen and anastasiac have a plan to thoroughly document Kettle prior to his departure
+2014-01-07T21:49:40 <michelled> is this the second one? https://github.com/GPII/universal/pull/174
+2014-01-07T21:49:46 <Bosmon8> Yes
+2014-01-07T21:49:57 <Bosmon8> I just entered a small query on that, but otherwise I am happy with it too
+2014-01-07T21:50:46 <michelled> kasparnet: so, do you generally run the tests etc on windows and linux or also android?
+2014-01-07T21:52:05 <yzen> Bosmon8: well as far as the GPII-270 goes you the tests cover success and failure scenarios, and you can run then on any platform
+2014-01-07T21:52:13 <yzen> just like with the rest of the universal tests
+2014-01-07T21:53:09 <Bosmon8> yzen - it seems unclear that I can really run them "on any platform"
+2014-01-07T21:53:26 <Bosmon8> For example there\'s some material in this test, for example, which refers to Windows high contrast settings
+2014-01-07T21:53:42 <Bosmon8> Which from my experience, with our current testing infrastructure, can only be run on a suitable Windows system
+2014-01-07T21:53:45 <Bosmon8> Isn\'t this the case?
+2014-01-07T21:54:15 <colinclark> I just commented on both pull requests so that it\'s clear where we\'re at in terms of the status of these two pull requests
+2014-01-07T21:54:19 <yzen> Bosmon8: it only tests the proxy to the match maker not the whole architecture
+2014-01-07T21:55:23 <Bosmon8> yzen - ok - perhaps we should adopt a special annotation at the head of a test case which explains its portability profile
+2014-01-07T21:55:39 <kasparnet> michelled: well, most of the changes I review are specific to a platform (even if they may reside in universal) so I generally just test on that platform
+2014-01-07T21:56:33 <michelled> kasparnet: and what do you do about the currently failing windows tests?
+2014-01-07T21:57:31 <Bosmon8> So you\'re saying that I could run "ProxyTests.js" on any platform, even though its material appears to have Windows-specific tests?
+2014-01-07T21:57:48 <Bosmon8> Actually I see now that the input_TestCase12_new.json seems unrelated
+2014-01-07T21:59:11 <yzen> Bosmon8: yes it should not matter, all the tests in universal should run on any platform
+2014-01-07T21:59:39 <yzen> if there are test cases  that use prefs that are platform specific, they are not testing the actual application of those prefs
+2014-01-07T21:59:53 <Bosmon8> yzen - ok, I issued a few pull request queries for that one
+2014-01-07T22:00:19 <kasparnet> michelled: well - haven\'t reviewed anything after the failing windows tests - but will have to do so tomorrow -- not quite sure what to do about it though
+2014-01-07T22:00:35 <Bosmon8> kasparnet - which are our failures now?
+2014-01-07T22:00:55 <kasparnet> Bosmon8: apparently there is an issue with the acceptance tests
+'
+
+b'2014-01-07T00:10:36 <avtar> np
+2014-01-07T00:11:19 <avtar> bbiab
+2014-01-07T00:11:25 * avtar has quit
+2014-01-07T00:36:43 <sgithens> hahahahah
+2014-01-07T01:04:36 * colinclark has quit
+2014-01-07T02:10:44 * colinclark joined the channel
+2014-01-07T02:19:05 * sgithens has quit
+2014-01-07T02:35:05 * sgithens joined the channel
+2014-01-07T02:48:48 * colinclark has quit
+2014-01-07T03:14:35 * sgithens has quit
+2014-01-07T03:24:00 * colinclark joined the channel
+2014-01-07T04:20:53 * colinclark has quit
+2014-01-07T04:26:23 * yzen joined the channel
+2014-01-07T04:34:33 * colinclark joined the channel
+2014-01-07T06:07:42 * sgithens joined the channel
+2014-01-07T06:12:13 * colinclark has quit
+2014-01-07T06:43:33 * yzen has quit
+2014-01-07T07:00:43 * sgithens has quit
+2014-01-07T09:21:53 * amilchev joined the channel
+2014-01-07T10:52:39 * the-t-in-rtf joined the channel
+2014-01-07T12:55:44 * jhung joined the channel
+2014-01-07T12:58:33 * jhung1 joined the channel
+2014-01-07T13:00:17 * jhung has quit
+2014-01-07T13:33:51 * Bosmon7 joined the channel
+2014-01-07T13:49:09 * cindyli joined the channel
+2014-01-07T13:49:26 * yzen joined the channel
+2014-01-07T13:59:59 * anvk joined the channel
+2014-01-07T14:02:34 * yzen has quit
+2014-01-07T14:10:23 * Jess_ joined the channel
+2014-01-07T14:20:40 * vjoanna joined the channel
+2014-01-07T14:26:20 * yzen joined the channel
+2014-01-07T14:35:08 * kasparnet joined the channel
+2014-01-07T14:59:33 <Justin_o_> Bosmon: are you there?
+2014-01-07T15:04:48 * colinclark joined the channel
+2014-01-07T15:10:55 * vjoanna has left the channel
+2014-01-07T15:13:08 * Jess_ has quit
+2014-01-07T15:19:24 <Bosmon7> Hi Justin_o_
+2014-01-07T15:19:27 <Bosmon7> I am here a little
+2014-01-07T15:29:51 * clown joined the channel
+2014-01-07T15:37:09 <Justin_o_> Bosmon7: hello, sorry i missed this
+2014-01-07T15:37:33 <Justin_o_> Bosmon7: i\'m wondering if you have ideas around model sharing (e.g. model relays) and dynamic components
+2014-01-07T15:37:58 * anastasiac joined the channel
+2014-01-07T15:38:42 <Bosmon7> Justin_o_ - perhaps you can be more specific :)
+2014-01-07T15:40:24 * vjoanna joined the channel
+2014-01-07T15:45:41 <Justin_o_> Bosmon7: so we have something that\'s i guess like your repeating input field from CSpace.. basically a user can enter in some captions info, and a new set of inputs will appear.. but these all need to be fed back to a parent model to manage
+2014-01-07T15:46:50 <Justin_o_> Bosmon7: you can look at the designs for milestone 1 here http://wiki.fluidproject.org/display/fluid/FLOE+Metadata+Authoring+Design
+2014-01-07T15:47:51 <Justin_o_> we may just end up going with the two static fields but eventually we were planning on having the dynamically increasing set.. and we were thinking of using dynamic components to help with this.. but it\'s the model management that is tripping us up at the moment.
+2014-01-07T15:50:32 <jhung1> Justin_o_, cindyli - I was going to remove the closed tasks in the Floe Iteration Plan page. Is that okay?
+2014-01-07T15:50:53 <Justin_o_> jhung1: yes please.. we might want to close out FLOE-111 too
+2014-01-07T15:53:20 <Bosmon7> Justin_o_ - yes, it seems reasonable
+2014-01-07T15:53:30 <Bosmon7> I can\'t remember enough of the details of "old modelRelay" to see why this might problematic
+2014-01-07T15:56:23 <Justin_o_> Bosmon7: hmm.. okay.. will the new model relay system handle this okay.. and does it also come with model transformations.. the problem we are having is around the fact that the model in the parent will be an array and trying to associate those values with a particular dynamic component.. perhaps we need model transformations here.
+2014-01-07T15:57:32 <Bosmon7> Justin_o_ - I see what you mean
+2014-01-07T15:57:41 <Bosmon7> This is a facility that actually isn\'t implemented for "new modelRelay" either
+2014-01-07T15:57:56 <Bosmon7> So it may be to your advantage that you currently only have the old, simpler impl to work with : P
+2014-01-07T15:57:56 <Justin_o_> :(
+2014-01-07T15:58:04 * jessm joined the channel
+2014-01-07T15:58:06 <Justin_o_> i guess that\'s good :)
+2014-01-07T15:58:25 <Justin_o_> any ideas of how we might tackle this issue?
+2014-01-07T16:02:09 <Bosmon7> Justin_o_ - you\'ll just have to synthesize the required configuration yourself, probably based on a variant base grade of your existing modelRelay
+2014-01-07T16:02:09 <Bosmon7> Note that both the variables {source} and {sourcePath} are available in dynamicComponent configuration material
+2014-01-07T16:02:09 <Bosmon7> And so given the latter, you should be able to produce suitable modelRelay configuration
+2014-01-07T16:03:49 * kasparnet has quit
+2014-01-07T16:04:47 <Justin_o_> Bosmon7: what does {sourcePath} give you?
+2014-01-07T16:05:59 <Bosmon7> Justin_o_ - it gives you the path of the particular piece of source material used to instantiate the dynamic component
+2014-01-07T16:06:22 <Bosmon7> So in particular, if you had instantiated it from {that}.model.arrayThing it would give you the path into the model\'s array
+2014-01-07T16:07:37 <Justin_o_> Bosmon7:  oh okay... so that might work.. we can explore that..
+2014-01-07T16:09:55 <Justin_o_> Bosmon7: when do you think we\'ll have model transformations built in with the model relay?
+2014-01-07T16:10:03 <Bosmon7> Justin_o_ - it just needs review :)
+2014-01-07T16:10:48 <Justin_o_> oh cool.. so soon.. by the way, did you see michelled\'s comments on your FLUID-5185 pull request?
+2014-01-07T16:10:54 <Bosmon7> But don\'t expect the work of integrating it to be very quick
+2014-01-07T16:10:54 <Bosmon7> We will "have" it
+2014-01-07T16:10:54 <Bosmon7> But it will exist integrated initially only in the context of the Pager
+2014-01-07T16:10:56 <Bosmon7> THis will just start off a long process of converting and vetting our components one by one
+2014-01-07T16:11:13 * kasparnet joined the channel
+2014-01-07T16:11:55 <colinclark> I actually started reviewing it yesterday, so it will be in soon, I expect
+2014-01-07T16:11:59 <Bosmon7> Justin_o_ - yes, I have been working on answering those
+2014-01-07T16:12:09 <Bosmon7> colinclark - awesome :)
+2014-01-07T16:12:17 <Justin_o_> okay, that makes sense.. perhaps we could help trying it out in the metadata demo.. we may have a need for some model transformations there
+2014-01-07T16:12:53 <Bosmon7> Justin_o_ - yes, certainly for any new developments, we should start out by using the new component grades
+2014-01-07T16:13:06 <Bosmon7> Once we have 100% conversion, we can ditch all of the old code
+2014-01-07T16:13:14 <Bosmon7> But I don\'t plan for this before the 1.5 release
+2014-01-07T16:13:18 <Bosmon7> 1.5 will be a "fat release"
+2014-01-07T16:14:39 <Justin_o_> Bosmon7: that\'s all reasonable.. i guess 2.0 will be the lean version of infusion
+2014-01-07T16:14:51 <Bosmon7> Justin_o_ - right
+2014-01-07T16:15:46 <colinclark> Bosmon7: I have a quick, lame question for you
+2014-01-07T16:15:53 <Bosmon7> Hi colinclark
+2014-01-07T16:16:00 <Bosmon7> I\'m absolutely convinced it will be a great question
+2014-01-07T16:16:05 <colinclark> I have a model listener that looks roughly like this:
+2014-01-07T16:17:07 <colinclark> modelListeners: { "pots.*": ... }
+2014-01-07T16:17:07 <colinclark> when I log "{change}.path", it\'s actually an array
+2014-01-07T16:17:07 <colinclark> ["pots", "0"]
+2014-01-07T16:17:14 <Bosmon7> Oh yes
+2014-01-07T16:17:19 <colinclark> I was surprised by that
+2014-01-07T16:17:35 <Bosmon7> Yes, the framework has moved over to segment arrays pretty much universally
+2014-01-07T16:17:43 <Bosmon7> As an attempt to economise on "parsing garbage"
+2014-01-07T16:18:13 <colinclark> My model looks like this:
+2014-01-07T16:18:23 <Bosmon7> The "old framework" spent an inordinate amount of time packing things into string ELs and then parsing them out again
+2014-01-07T16:18:27 <colinclark> right
+2014-01-07T16:18:31 <colinclark> paths: [0, 27, 0, 192]
+2014-01-07T16:18:41 <colinclark> I\'d like to listen for changes in the "leaves"
+2014-01-07T16:18:56 <colinclark> sorry, that should be pots: [0, 27, 0, 192]
+2014-01-07T16:18:59 <Bosmon7> yup
+2014-01-07T16:19:15 <colinclark> so if one item in the array changes, I want to hear about it with that specific value
+2014-01-07T16:19:32 <colinclark> So should I just use a utility somewhere to reconstitute a path?
+2014-01-07T16:19:40 <colinclark> from the array?
+2014-01-07T16:19:44 <Bosmon7> Well - why would you want to reconstitute it?
+2014-01-07T16:19:51 <Bosmon7> Surely it already contains exactly what you need to know
+2014-01-07T16:20:27 <Bosmon7> And in fact it would be quickest to use it in the form given, rather than any other
+2014-01-07T16:20:53 <colinclark> interesting
+2014-01-07T16:21:14 <Bosmon7> You, like the framework, would only then go to parse out the damn thing again once you had reconstituted the path....
+2014-01-07T16:21:51 <Bosmon7> Yes.... it took me a while to come round to this point of view
+2014-01-07T16:22:00 <colinclark> Ok, I guess that makes some sense
+2014-01-07T16:22:20 * jhung1 is now known as jhung
+2014-01-07T16:22:25 <colinclark> and again speaks to the role of Model Relay in terms of actually covering most of the cases of what you\'d want to DO with the path anyway
+2014-01-07T16:26:29 * sgithens joined the channel
+2014-01-07T16:37:58 <colinclark> hey Justin_o_
+2014-01-07T16:39:09 * danaayotte joined the channel
+2014-01-07T16:51:20 <colinclark> Bosmon7: I just added this little section to the "IoC References" wiki page http://wiki.fluidproject.org/display/docs/IoC+References#IoCReferences-ReservedIoCNames
+2014-01-07T16:51:52 <Bosmon7> colinclark - that\'s very helpful, thanks
+2014-01-07T16:52:01 <Justin_o_> colinclark: hello
+2014-01-07T16:52:14 <colinclark> Did you name something "source," too?
+2014-01-07T16:52:21 <Bosmon7> I mentioned privately in chat that we might well be able to remove this restriction
+2014-01-07T16:54:18 <Justin_o_> colinclark: i had run into an issue where naming anything with source at the beginning didn\'t work.. e.g. sourceAnything.. but i\'m pretty sure Bosmon7 fixed that now
+2014-01-07T16:54:48 <Justin_o_> that list of reserved words is pretty useful
+2014-01-07T16:55:44 <colinclark> I\'m just filing an issue about my experience, in case it\'s helpful to others
+2014-01-07T16:55:46 <Bosmon7> It\'s fixed but may well still be in the review queue
+2014-01-07T16:55:51 <colinclark> and then Bosmon7 can use that as the basis for a more specific issue about removal of the restriction
+2014-01-07T17:04:42 * jhung1 joined the channel
+2014-01-07T17:07:42 * jhung has quit
+2014-01-07T17:09:16 * jhung1 has quit
+2014-01-07T17:13:37 * jhung joined the channel
+2014-01-07T17:13:56 <colinclark> Bosmon7, Justin_o_: not my clearest JIRA in the world, but at least it features cats: http://issues.fluidproject.org/browse/FLUID-5244
+2014-01-07T17:16:02 <Bosmon7> Thanks for your giant **FARM.CATT**, colinclark!
+2014-01-07T17:30:09 * colinclark has quit
+2014-01-07T17:45:28 * nanook_ has quit
+2014-01-07T17:45:52 * nanook_ joined the channel
+2014-01-07T17:47:00 * cindyli has quit
+2014-01-07T17:50:45 * danaayotte has quit
+2014-01-07T18:01:02 * sgithens has quit
+2014-01-07T18:09:00 * sgithens joined the channel
+2014-01-07T18:21:51 * colinclark joined the channel
+2014-01-07T18:22:18 * Bosmon8 joined the channel
+2014-01-07T18:22:37 * Bosmon7 has quit
+2014-01-07T18:22:49 * michelled joined the channel
+2014-01-07T18:31:51 <anastasiac> by the way, yzen, I forgot to mention: Happy Birthday!
+2014-01-07T18:32:41 <yzen> thanks :)
+2014-01-07T18:45:06 * jhung has quit
+2014-01-07T18:47:48 * danaayotte_ joined the channel
+2014-01-07T18:54:29 * jhung joined the channel
+'
+

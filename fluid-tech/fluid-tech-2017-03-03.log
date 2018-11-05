@@ -1,0 +1,96 @@
+b'2017-03-03T09:57:31 * stegru joined the channel
+2017-03-03T10:19:22 * javjarfer joined the channel
+2017-03-03T11:10:28 * stegru has quit
+2017-03-03T12:20:50 * the-t-in-rtf joined the channel
+2017-03-03T12:38:57 * Justin_o joined the channel
+2017-03-03T13:01:55 * stegru joined the channel
+2017-03-03T13:17:31 * cindyli joined the channel
+2017-03-03T13:49:04 * simonjb joined the channel
+2017-03-03T13:55:09 * alanharnum joined the channel
+2017-03-03T14:00:48 * jessm joined the channel
+2017-03-03T14:29:05 * clown joined the channel
+2017-03-03T14:54:44 * gtirloni joined the channel
+2017-03-03T15:23:08 * avtar joined the channel
+2017-03-03T15:26:46 * colinclark joined the channel
+2017-03-03T15:52:54 * aashay joined the channel
+2017-03-03T15:59:08 * mrtyler_ joined the channel
+2017-03-03T16:19:38 * colinclark joined the channel
+2017-03-03T16:20:37 <amatas> avtar, gtirloni finally I had to split the CI files in two: .gitlab-ci.yml and .gpii-ci.yml
+2017-03-03T16:21:23 <amatas> because as you can see at the firsts builds, gitlab-ci doesn\'t support stage names that aren\'t listed in the "stages" statements
+2017-03-03T16:21:24 <avtar> http://git.alfredomatas.es/amatas/gpii-windows/blob/gitlab-ci/.gpii-ci.yml
+2017-03-03T16:21:24 <avtar> http://git.alfredomatas.es/amatas/gpii-windows/blob/gitlab-ci/.gitlab-ci.yml
+2017-03-03T16:21:27 <avtar> those files?
+2017-03-03T16:21:34 <amatas> yup
+2017-03-03T16:21:42 <amatas> http://git.alfredomatas.es/amatas/gpii-windows/pipelines
+2017-03-03T16:22:00 <amatas> here you can see what gitlab-ci said the two first times I used only one file
+2017-03-03T16:22:36 <avtar> amatas: would moving the vagrant stages here http://git.alfredomatas.es/amatas/gpii-windows/blob/gitlab-ci/.gpii-ci.yml#L3-10 hide them from gitlab?
+2017-03-03T16:23:26 <amatas> that could be a possible solution
+2017-03-03T16:23:53 <amatas> but requires some additional development to take care about the new place of the stages
+2017-03-03T16:23:55 <gtirloni> amatas: why hiding .ci_env/.ci_stages but not setup_job/test_job ?
+2017-03-03T16:24:32 <amatas> other solution is to have two files one for gitlab other for vagrant-ci
+2017-03-03T16:26:04 <amatas> gtirloni, I didn\'t know that gitlab-ci needs that all stages are listed in the "stage" variable
+2017-03-03T16:26:33 <gtirloni> is setup_job/test_job something gitlab-ci needs to understand? or is that only for the CI plugin?
+2017-03-03T16:26:33 <amatas> I realized this morning with the first tests
+2017-03-03T16:26:53 <mrtyler_> gtirloni: do you have time today to look at my ansible json problems some more? if not, that\'s ok
+2017-03-03T16:27:01 <gtirloni> i thought we would have separate data for gitlab and for the plugin (using the dot notation, to hide it from gitlab)
+2017-03-03T16:27:02 <amatas> those jobs are only defined for CI plugin
+2017-03-03T16:27:41 <gtirloni> mrtyler_: i\'m leaving in a few minutes but i\'ll have more time later at the airport, if you want send it by email i can take a look if that\'s ok
+2017-03-03T16:27:55 <mrtyler_> gtirloni: sure, will do. thx
+2017-03-03T16:27:58 <avtar> amatas: the two file approach doesn\'t seem as ideal since people would have to maintain both
+2017-03-03T16:28:21 <avtar> especially since the dot notation is already being used to hide configuration from gitlab
+2017-03-03T16:29:55 <amatas> yes, but the gitlab-ci and the vagrant-gpii-ci plugin are two independent things, that\'s why I considered to have two files
+2017-03-03T16:30:56 <amatas> I\'m ok solving the issue of the stages, but perhaps it\'s more clear to have one file for each application
+2017-03-03T16:30:57 <avtar> is gitlab using vagrant to run these tasks?
+2017-03-03T16:31:11 <amatas> gitlab uses vagrant to run the tasks, yes
+2017-03-03T16:31:55 <amatas> also in the case of Jenkins, it would need the .gpii-ci.yml (or other name) file to run the vagrant-gpii-ci plugin
+2017-03-03T16:32:48 <amatas> http://git.alfredomatas.es/amatas/gpii-windows/blob/gitlab-ci/.gitlab-ci.yml#L22
+2017-03-03T16:34:51 <amatas> so I\'d like to discuss the two options and see which of those are better: 1) include the vagrant-gpii-ci plugin definition (starting with dots) in the gitlab-ci.yml, or 2) have two separate files one for each runner/application
+2017-03-03T16:35:51 <amatas> I\'m ok fixing any of these options
+2017-03-03T16:41:34 <amatas> gtirloni, good flights to maring\xc3\x81
+2017-03-03T16:53:33 <gtirloni> thank you!
+2017-03-03T16:54:22 <avtar> amatas: sorry, i was at standup
+2017-03-03T16:54:33 <avtar> alan had to leave early today
+2017-03-03T16:55:05 <avtar> mrtyler_ or anyone else: do you have preferences for one config file or two?
+2017-03-03T16:55:28 <mrtyler_> i don\'t think i know enough about the problem
+2017-03-03T16:55:47 <mrtyler_> i agree that one file seems simpler, but that may not be true if it ends up having lots of gitlab-specific instructions in it
+2017-03-03T16:55:58 <mrtyler_> in which case separation of concerns might be better
+2017-03-03T16:56:52 <mrtyler_> how about this thought experiment: let\'s say we planned to add support for another ci tool (jenkins, codeship, whatever). would you expect the rules for the new ci tool to go into .gpii-ci.yml alongside everything else? or would you rather see a .codeship-ci.yml for those rules?
+2017-03-03T16:57:28 <mrtyler_> fwiw molecule has one molecule.yml with separate sections for vagrant and docker "providers"
+2017-03-03T16:57:42 <mrtyler_> (not that molecule is a ci tool or anything :))
+2017-03-03T17:01:36 <avtar> that\'s a good question. if support for another ci tool had to be added i would expect to have its configuration live in its own file
+2017-03-03T17:02:25 <avtar> although i wonder if/when that would happen given how much work seems to be involved just moving away from jenkins to gitlab
+2017-03-03T17:02:25 <mrtyler_> then to me that suggests we stick with a separate .gitlab-ci.yml
+2017-03-03T17:02:53 <mrtyler_> right, it\'s just a thought experiment
+2017-03-03T17:03:10 <mrtyler_> altho if this plugin were to gain traction in the community, i guarantee someone will show up and want it to support $MY_FAVORITE_CI_TOOL
+2017-03-03T17:03:44 <mrtyler_> also arguably if it were easy to migrate (thanks to things like this plugin), maybe we would migrate more often :)
+2017-03-03T17:04:47 <avtar> fair enough :)
+2017-03-03T17:04:54 <avtar> in that case if the vagrant related config lives in a separate file then there doesn\'t seem to be any need to have variables hidden using preceding dots
+2017-03-03T17:04:58 <amatas> :) good arguments
+2017-03-03T17:05:13 * colinclark joined the channel
+2017-03-03T17:05:26 <avtar> should this file be named .gpii-ci.yml then or something like .vagrant.yml?
+2017-03-03T17:07:08 <amatas> well, as it can be used for any vagrant environment I guess that .vagrant.yml is fine
+2017-03-03T17:07:37 <mrtyler_> i would be a little nervous about .vagrant.yml vs vagrant.yml
+2017-03-03T17:07:45 <amatas> although the plugin\'s name is vagrant-gpii-ci
+2017-03-03T17:07:56 <mrtyler_> seems potentially confusing to a user. which of these files does what?
+2017-03-03T17:08:11 <mrtyler_> maybe .gpii-vagrant.yml ?
+2017-03-03T17:08:25 <mrtyler_> or .vagrant-gpii.yml
+2017-03-03T17:08:43 <avtar> .vagrant-ci.yml?
+2017-03-03T17:09:10 <avtar> my preference would be for .vagrant.yml
+2017-03-03T17:10:11 <avtar> with the preceding dot one would expect that vagrant related work is involved
+2017-03-03T17:11:34 <avtar> brb
+2017-03-03T17:19:37 <mrtyler_> is i-0040:~deploy/vault.yml the canonical one? i.e. if i want to add a password for our systems (for grafana), is that the one to update?
+2017-03-03T17:28:42 <amatas> avtar, are you sure that we can add a runner to gitlab.com?, I\'m not able to find the place in gitlab.com to get the registration token to do so
+2017-03-03T17:33:57 * javjarfer has quit
+2017-03-03T17:37:35 * colinclark has quit
+2017-03-03T17:39:15 * colinclark joined the channel
+2017-03-03T17:46:29 * colinclark has quit
+2017-03-03T19:25:32 * cindyli has quit
+2017-03-03T19:39:20 * cindyli joined the channel
+2017-03-03T19:48:41 * javjarfer joined the channel
+2017-03-03T19:48:50 * javjarfer has quit
+2017-03-03T19:54:57 * the-t-in-rtf joined the channel
+2017-03-03T20:41:12 * aashay joined the channel
+2017-03-03T20:43:04 * the-t-in-rtf joined the channel
+2017-03-03T21:41:37 * the-t-in-rtf1 joined the channel
+'
+

@@ -1,0 +1,339 @@
+b'2017-10-27T17:46:39 * the-t-in-rtf joined the channel
+2017-10-27T17:47:55 * sepidehshahi joined the channel
+2017-10-27T18:32:17 * public__ has quit
+2017-10-27T18:38:07 * javjarfer_ has quit
+2017-10-27T18:38:30 * javjarfer_ joined the channel
+2017-10-27T18:42:41 * public__ joined the channel
+2017-10-27T19:15:31 * the-t-in-rtf joined the channel
+2017-10-27T19:50:59 * javjarfer_ has quit
+2017-10-27T19:57:57 * stegru joined the channel
+2017-10-27T20:39:23 <gmoss> fluid-everyone: has anyone online right now had any experience with kettle.dataSource.CouchDB?
+2017-10-27T20:39:55 <cindyli> i have, gmoss
+2017-10-27T20:40:06 <stegru> plenty of experience of couches, and databases.. but not together
+2017-10-27T20:40:37 <gmoss> that\'s great, cindyli, can I pick your brain?  haha stegru same story for me, unfortunately :]
+2017-10-27T20:40:54 <cindyli> sure
+2017-10-27T20:46:14 <gmoss> Thanks cindyli! I\'m using the datasource to write docs to my couchdb, and it was working just fine. I\'ve recently added a validate_doc_update function that checks for the existence of a top-level key called "type". when calling datasource.put(), it adds the body of the request to a key called "value". with my validate function in place as it is, it won\'t allow writing to the database. I don\'t want to move the "type"
+2017-10-27T20:46:14 <gmoss> key under "value" since that doesn\'t smell right.. Should I worry about keeping the model data and the internal storage-related metadata separated? In any case, I\'m trying to add a "type" key during the call to datasource.put() by using the writePayload key, but it doesn\'t seem to work. Do you have any thoughts on this? :) Please let me know if I\'m not being clear
+2017-10-27T20:46:54 <gmoss> docs: https://github.com/fluid-project/kettle/blob/master/docs/DataSources.md#the-kettledatasourcecouchdb-mixin-grade
+2017-10-27T20:50:41 * stegru has quit
+2017-10-27T20:54:49 <cindyli> gmoss: where do you run validate_doc_update function?
+2017-10-27T20:55:17 <gmoss> cindyli: it\'s automatically called by CouchDB when a document is PUT to the db
+2017-10-27T20:55:32 <gmoss> to determine whether or not it\'ll store that new doc
+2017-10-27T20:58:21 <cindyli> gmoss: the default payload transformation performed by cuochdb data source is to place it into an object keyed by "value" - https://github.com/fluid-project/kettle/blob/master/lib/dataSource-core.js#L291-L293
+2017-10-27T20:58:36 <gmoss> cindyli: I believe I may have misunderstood how writePayload works. I was attempting to use it to inject keys directly, but it\'s expecting a transform function
+2017-10-27T20:58:55 <cindyli> what you can do is to override this block using writePayload: { "": "" }
+2017-10-27T20:59:21 <gmoss> I was trying to circumvent that automatic adding to \'value\' for just this one key, I\'d still like it to push the rest of the data into that value block
+2017-10-27T21:01:11 <cindyli> if what you mean is to have part of the data inside "value", part outside, I believe you still need to override writePayload block then construct the structure yourself
+2017-10-27T21:02:19 <gmoss> right, that\'s precisely what I\'m trying to achieve. I think I didn\'t grok how the writePayload works, initially, though... but it\'s reassuring to see that I\'m on the right track!
+2017-10-27T21:02:24 <gmoss> :)
+2017-10-27T21:02:35 * kavya has quit
+2017-10-27T21:03:42 <cindyli> cool. good luck, gmoss
+2017-10-27T21:03:49 <cindyli> heading offline. have a great weekend
+2017-10-27T21:03:53 <gmoss> thanks, cindyli! you too
+2017-10-27T21:14:53 <gmoss> (I got it to work, in case anyone\'s curious)
+'
+
+b'2017-10-27T12:09:59 <Bosmon> We have to make the work of the buffering component at least POSSIBLE
+2017-10-27T12:10:18 <Bosmon> Justin_o - I mean, to issue a write, and then a read, but have the read response arrive first, and then the write response
+2017-10-27T12:10:33 <Bosmon> This kind of situation just means simple chaos
+2017-10-27T12:10:57 <Bosmon> And I think we need to arrange things at the protocol level to ensure that it can\'t happen, and have the buffer assume that it can\'t happen
+2017-10-27T12:11:12 <Bosmon> Now, e.g. over a single WebSockets channel, this will occur automatically
+2017-10-27T12:11:47 <Bosmon> Well, I guess it doesn\'t QUITE - just because the remote has to process the messages in the order they were sent, doesn\'t mean that it will send acknowledgements in the same order
+2017-10-27T12:13:18 * public__ joined the channel
+2017-10-27T12:13:30 <Justin_o> so we need to block on reads/writes if one of them is in flight
+2017-10-27T12:13:48 <Bosmon> Justin_o - I think we do, yes
+2017-10-27T12:13:59 <Bosmon> If a write is in flight, any request for a read will just read the mirror model
+2017-10-27T12:14:24 <Justin_o> okay, so it returns right away and queues a request?
+2017-10-27T12:14:50 <Bosmon> Although I guess it can queue a request for a read to be issued after the write returns - although in practice a write response may include a read payload in any case
+2017-10-27T12:15:34 <Justin_o> Bosmon: it may, although i don\'t think that happens in the browser extension messages
+2017-10-27T12:15:43 <Bosmon> Justin_o - no
+2017-10-27T12:15:57 * the-t-in-rtf joined the channel
+2017-10-27T12:15:58 <Bosmon> And it doesn\'t happen with most persistence technologies either
+2017-10-27T12:16:04 <Bosmon> So we may as well plan for these activities to be separate
+2017-10-27T12:16:21 <Bosmon> GPII settingHandlers though, do indeed return a read payload on write
+2017-10-27T12:16:31 <Bosmon> Which was designed to help with transactional activities like this
+2017-10-27T12:17:35 <Bosmon> Justin_o - but in practice, we design our "write payloads" ourselves - so you could quite easily arrange for the "write acknowledgement payload" of your browser extension API to include a read payload if you wanted
+2017-10-27T12:17:48 <Bosmon> It\'s really a protocol-level issue ...
+2017-10-27T12:19:10 <Bosmon> If you are designing the payload from scratch, and you know that the buffer is almost always going to schedule a read after a write, you may as well just send the read response anyway
+2017-10-27T12:19:28 <Justin_o> that makes sense
+2017-10-27T12:19:32 <Justin_o> i suppose it doesn\'t hurt
+2017-10-27T12:19:34 <Justin_o> Bosmon: i\'m going to try to summarize this on the JIRA, and perhaps you could review that for accuracy
+2017-10-27T12:19:41 <Bosmon> Justin_o - yes, sounds great
+2017-10-27T12:20:18 <Bosmon> I think that we have something which is basically implementable now, and hopefully doesn\'t have too wide a scope or too many dependencies on other pieces of infrastructure
+2017-10-27T12:20:34 <Bosmon> And will also hopefully be useful for the Astea team
+2017-10-27T12:23:27 * public__ has quit
+2017-10-27T12:24:26 <Justin_o> \xf0\x9f\xa4\x9e
+2017-10-27T12:25:15 <Justin_o> speaking of other things, this is ready for review https://github.com/fluid-project/infusion/pull/853
+2017-10-27T12:25:18 * jhung joined the channel
+2017-10-27T12:25:23 <Justin_o> Bosmon: ^
+2017-10-27T12:29:48 * jhernandez has quit
+2017-10-27T12:36:07 <Justin_o> Bosmon: I left a summary here https://issues.fluidproject.org/browse/FLUID-6209?focusedCommentId=37438&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-37438
+2017-10-27T12:39:32 * public__ joined the channel
+2017-10-27T12:42:48 * cindyli joined the channel
+2017-10-27T12:45:58 * public__ has quit
+2017-10-27T12:46:07 <Justin_o> Bosmon: i won\'t have time to look into that till Monday, so please feel free to leave updates as needed.
+2017-10-27T12:49:03 * michelled joined the channel
+2017-10-27T12:51:24 <cindyli> Bosmon, the-t-in-rtf, would you have time to meet today to talk about the ways to mock server responses in node.js unit tests, and other requirements if we pick a library for it?
+2017-10-27T12:51:33 * public__ joined the channel
+2017-10-27T12:53:44 <the-t-in-rtf> I have a meeting in a half hour that runs to the end of my day.
+2017-10-27T12:53:55 <the-t-in-rtf> I would love to talk about the subject though.
+2017-10-27T12:54:01 <the-t-in-rtf> Monday?
+2017-10-27T12:54:16 <the-t-in-rtf> I am willing to defer on the slot I proposed with Antranig at 16:00 CET for the topic.
+2017-10-27T12:57:41 * public__ has quit
+2017-10-27T12:58:50 <cindyli> 16:00 CET on Monday, the-t-in-rtf? sure
+2017-10-27T13:00:54 <the-t-in-rtf> OK, I added you to the invite.
+2017-10-27T13:01:16 <the-t-in-rtf> Don\'t forget that our time changes over the weekend!
+2017-10-27T13:01:28 <the-t-in-rtf> We\'re only out of sync for one week this time, though.
+2017-10-27T13:02:16 <the-t-in-rtf> So it\'s an hour later for you, is my point.
+2017-10-27T13:02:52 <the-t-in-rtf> The calendar invite should be correct, just mentioning it.
+2017-10-27T13:04:32 <Bosmon> Ok, thanks the-t-in-rtf, cindyli
+2017-10-27T13:05:04 <cindyli> thanks, the-t-in-rtf
+2017-10-27T13:09:45 * public__ joined the channel
+2017-10-27T13:16:05 * public__ has quit
+2017-10-27T13:16:30 * public__ joined the channel
+2017-10-27T13:16:50 * the-t-in-rtf joined the channel
+2017-10-27T13:21:04 * sepidehshahi joined the channel
+2017-10-27T13:21:06 * simonjb joined the channel
+2017-10-27T13:22:35 * public__ has quit
+2017-10-27T13:23:33 <Justin_o> Bosmon: i was talking to Sandra and we are going to aim to have phase 1 of UIO+ ready for QA by Nov 13
+2017-10-27T13:24:29 <Justin_o> currently that would include FLUID-6180 and GPII-2424 PRs. The work needed for FLUID-6209 is likely going to be lower priority for that because it doesn\'t appear that the issue is present on the machines they will be using for the pilot sites.
+2017-10-27T13:24:46 <Justin_o> the-t-in-rtf: do you know where the UIO meeting with Gregg is going to be?
+2017-10-27T13:24:52 <cindyli> hi Bosmon
+2017-10-27T13:26:48 <Bosmon> Justin_o - ok
+2017-10-27T13:26:51 <Bosmon> cindyli - hi
+2017-10-27T13:27:31 <cindyli> Bosmon: i have a couple of questions at creating the new secured endpoint /untrusted-preferences for PSP to update preferences
+2017-10-27T13:27:54 <cindyli> this new endpoint directly sends the received preferences data to the prefs server endpoint: PUT /preferences/:token[?view=:view]
+2017-10-27T13:28:05 <the-t-in-rtf> @Justin_o, no idea.
+2017-10-27T13:28:31 <the-t-in-rtf> Just checked my mail, @Justin_o, GtM Room 3
+2017-10-27T13:28:31 <cindyli> 1. when no preferences set exists associated with the token, the prefs server will create a new prefs set
+2017-10-27T13:28:35 <the-t-in-rtf> See you there shortly.
+2017-10-27T13:29:03 <cindyli> Bosmon: do you think the new /untrusted-preferences should only do "update" not "create"
+2017-10-27T13:29:38 <Bosmon> cindyli - I\'ll have to get to your question in a bit since I am in a call
+2017-10-27T13:29:47 * public__ joined the channel
+2017-10-27T13:30:15 <cindyli> sure. Bosmon, i will leave my questions here. take your time to answer
+2017-10-27T13:30:27 * the-t-in-rtf joined the channel
+2017-10-27T13:30:58 <cindyli> 2. do you know the prefs data sent from the local flow manager (PSP) would be a subset of an existing prefs set or a full set?
+2017-10-27T13:31:23 <grrrero> michelled: Hi Michelle, are you coming in today?
+2017-10-27T13:32:01 <cindyli> the reason i\'m asking is the prefs server would write the received data into the prefs set without a merge. I wonder if I should do a merge on the cloud based flow manager before forwarding the "update" request to the prefs server
+2017-10-27T13:35:24 * kasparnet_ joined the channel
+2017-10-27T13:38:28 * public__ has quit
+2017-10-27T13:38:29 <michelled> grrrero: I am, but I have to run an errand first
+2017-10-27T13:38:35 <michelled> so I\'ll still be at least an hour
+2017-10-27T13:38:39 <grrrero> Ok cool see you in a bit then michelled!
+2017-10-27T13:38:51 * kasparnet joined the channel
+2017-10-27T13:39:15 <michelled> grrrero: was there something you wanted? we could certainly meet now if that\'s better for you
+2017-10-27T13:39:35 <grrrero> Just wanted to ask about timelines re: UIO since I\'m scheduled to start SNOW next week
+2017-10-27T13:40:55 <grrrero> michelled ^
+2017-10-27T13:40:56 * public__ joined the channel
+2017-10-27T13:41:21 * kasparnet_ has quit
+2017-10-27T13:42:30 <michelled> grrrero: let\'s have a quick vidyo conversation
+2017-10-27T13:42:37 <grrrero> michelled: Sure
+2017-10-27T13:43:41 <michelled> grrrero: call me when you\'re ready
+2017-10-27T13:43:54 <grrrero> Ya it\'s taking really long to load for some reason
+2017-10-27T13:43:57 <grrrero> Had that problem yesterday
+2017-10-27T13:44:32 * kasparnet has quit
+2017-10-27T13:46:54 * public__ has quit
+2017-10-27T13:49:47 * colinclark joined the channel
+2017-10-27T14:00:37 * mrtyler joined the channel
+2017-10-27T14:14:57 * dandimitrov has quit
+2017-10-27T14:29:54 * public__ joined the channel
+2017-10-27T14:45:43 * amatas has quit
+2017-10-27T14:45:51 * javjarfer_ joined the channel
+2017-10-27T14:48:53 * javjarfer has quit
+2017-10-27T14:52:06 <Bosmon> cindyli - yes, it will be a subset
+2017-10-27T14:56:37 <cindyli> thanks, Bosmon. does the prefs from the local flow manager looks like - https://gist.github.com/cindyli/06e258d9dfae99108ca8505c916ab28d?
+2017-10-27T14:56:52 <cindyli> or it only has the "preferences" section?
+2017-10-27T15:00:28 <Bosmon> It will be a full document, yes
+2017-10-27T15:00:40 <Bosmon> That is, a document with the schema of a full document
+2017-10-27T15:00:50 <Bosmon> Just with fewer preferences in it
+2017-10-27T15:01:13 <Bosmon> The preferences which will be read/written will be described in the "metadata" block of the full preferences document
+2017-10-27T15:02:06 <cindyli> ok. so the merge of the prefs should be performed at the cloud flow manager before it being sent to the prefs server to write
+2017-10-27T15:02:42 <cindyli> Bosmon: do you have an example of how the prefs data with "metadata" block looks like?
+2017-10-27T15:03:12 <cindyli> is the "metadata" block supported for this phase of PSP?
+2017-10-27T15:03:39 <Bosmon> cindyli - I think we will be able to go to this release without needing to support this
+2017-10-27T15:03:55 <Bosmon> But this depends on the exact contents of the snapsets that we deploy
+2017-10-27T15:04:13 <Bosmon> But I believe that, currently, there will not be any preferences in our snapsets that need to be censored from display in the PSP
+2017-10-27T15:04:49 <Bosmon> cindyli - I think the general format of our metadata remains as it was specified here: https://wiki.gpii.net/w/Preference_Set_Format#Metadata
+2017-10-27T15:05:09 <cindyli> ok, i will skip the check against the metadata
+2017-10-27T15:05:30 <Bosmon> cindyli - I think we will need to wait for some generalised utilities from Kasparnet to help working with metadata anyway
+2017-10-27T15:05:46 <cindyli> got it
+2017-10-27T15:11:45 <Bosmon> Hay stegru
+2017-10-27T15:11:54 <stegru> yo
+2017-10-27T15:12:01 <Bosmon> I just wanted to give you a headsup about https://issues.gpii.net/browse/GPII-2665 created by Astea
+2017-10-27T15:12:18 <Bosmon> They\'ve noted that when trying to upgrade our electron to the latest, "the application will not start"
+2017-10-27T15:12:30 <Bosmon> Any guess what this could be about?
+2017-10-27T15:13:35 <Bosmon> Also I think we need to refactor your errors notification stuff a bit in any case
+2017-10-27T15:14:31 <stegru> ok...
+2017-10-27T15:15:54 <Bosmon> I\'m looking for where your two apps on a port stuff is implemented, do you remember off the top of your head?
+2017-10-27T15:16:38 <Bosmon> Where does the EADDRINUSE get triggered from?
+2017-10-27T15:16:55 <Bosmon> Or is it really just whatever exception gets triggered when we start up the serveR?
+2017-10-27T15:26:25 * kavya joined the channel
+2017-10-27T15:36:24 <stegru> sorry, I have a baby in the house
+2017-10-27T15:36:47 <stegru> it\'s triggered somewhere by kettle, when it listens on the port Bosmon
+2017-10-27T15:36:56 * mrtyler joined the channel
+2017-10-27T15:38:08 <stegru> also, we ran into similar limitations with the notification pop-up.. https://issues.gpii.net/browse/GPII-2348
+2017-10-27T15:42:22 <Bosmon> Ok thanks let me link these
+2017-10-27T15:43:46 * sepidehshahi joined the channel
+2017-10-27T15:44:16 <Bosmon> Yes, there is a baby at this end too :)
+2017-10-27T15:46:34 <stegru> well, you\'re used to it!
+2017-10-27T15:52:49 * michelled joined the channel
+2017-10-27T15:54:28 * georgitodorov has quit
+2017-10-27T16:31:22 * sepidehshahi joined the channel
+2017-10-27T16:36:11 * colinclark joined the channel
+2017-10-27T16:53:19 * stegru has quit
+2017-10-27T17:04:30 * the-t-in-rtf joined the channel
+2017-10-27T17:19:38 * mrtyler joined the channel
+'
+
+b'2017-10-27T00:12:57 * mrtyler has quit
+2017-10-27T01:17:54 * mrtyler joined the channel
+2017-10-27T01:58:17 * mrtyler has quit
+2017-10-27T04:43:58 * dandimitrov joined the channel
+2017-10-27T06:21:38 * georgitodorov joined the channel
+2017-10-27T06:27:01 * public__ joined the channel
+2017-10-27T06:33:22 * public__ has quit
+2017-10-27T06:40:35 * dandimitrov has quit
+2017-10-27T07:20:04 * amatas joined the channel
+2017-10-27T07:51:34 * the-t-in-rtf joined the channel
+2017-10-27T07:51:42 * mrtyler joined the channel
+2017-10-27T08:12:55 * javjarfer joined the channel
+2017-10-27T09:01:25 * stegru joined the channel
+2017-10-27T09:02:54 * yuriy joined the channel
+2017-10-27T09:04:50 * dandimitrov joined the channel
+2017-10-27T09:05:13 * dandimitrov has quit
+2017-10-27T09:05:27 * dandimitrov joined the channel
+2017-10-27T09:39:02 * public__ joined the channel
+2017-10-27T09:45:57 * public__ has quit
+2017-10-27T10:40:09 * public__ joined the channel
+2017-10-27T10:46:35 * public__ has quit
+2017-10-27T10:58:46 * Justin_o joined the channel
+2017-10-27T11:03:42 <Justin_o> Bosmon: hello
+2017-10-27T11:17:57 <Bosmon> Hi there Justin_o
+2017-10-27T11:17:59 <Bosmon> Sorry to be late
+2017-10-27T11:18:04 <Bosmon> We had an emergency POO TIME : P
+2017-10-27T11:18:58 <Justin_o> Bosmon: no worries, that definitely sounds more important
+2017-10-27T11:19:20 <Bosmon> Well, it definitely makes more of a mess if not dealt with : P
+2017-10-27T11:19:25 <Bosmon> I\'m not so sure about the importance : P
+2017-10-27T11:19:44 <Bosmon> Could you just paste me the JIRA reference that you have been working on?
+2017-10-27T11:20:32 <Justin_o> yes, sorry, trying to find it in my pile of browser windows and tabs
+2017-10-27T11:20:46 <Bosmon> :)
+2017-10-27T11:21:54 <Justin_o> Bosmon: https://issues.fluidproject.org/browse/FLUID-6209
+2017-10-27T11:23:48 <Bosmon> Justin_o - so I\'ve been continuing to think about this issue and I\'m increasingly wondering whether this belongs at the dataSource level at all
+2017-10-27T11:24:09 <Bosmon> Or at least, whether it might not be a better fit with what we have in place already to do this differently
+2017-10-27T11:24:42 <Bosmon> And instead implement this at the model level
+2017-10-27T11:24:53 <Justin_o> Bosmon: yes i was thinking that too.. either at the model or event level
+2017-10-27T11:25:07 <Bosmon> Although as soon as I say this, I start to worry about losing access to all the value that\'s offered by the namespaced listener approach
+2017-10-27T11:25:23 <Bosmon> The promise chain solves a very important problem, which is how to configure this kind of facility transparently
+2017-10-27T11:25:53 <Bosmon> The other major kind of approach to this would be to configure some kind of "relay component" in between the original model component and the dataSource
+2017-10-27T11:26:31 <Justin_o> Bosmon: if we do it at the event/listener level then an implementor would be able to set a property on the listener to configure the specific debouncing.. which should allow it to maintain its transparency
+2017-10-27T11:26:37 <Bosmon> But now I think about this yet again I see what a design annoyance this will be
+2017-10-27T11:27:03 <Bosmon> Justin_o - well, this implies that there is some kind of listener in place already
+2017-10-27T11:27:37 <Justin_o> Bosmon: i guess i mean you could add it to any listener, and in the case of the datasource it would be on onRead.impl and onWrite.impl listeners
+2017-10-27T11:28:21 <Justin_o> and we could also use this for other listeners that may need to be debounced outside of the datasource context
+2017-10-27T11:28:50 <Bosmon> OK, well I guess there are a few worries here
+2017-10-27T11:28:55 <Bosmon> But they may cancel out somewhat
+2017-10-27T11:29:16 <Bosmon> On the one hand, it seems very hard to imagine what sense it might make to debounce a listener which is not at the end of the chain in this way
+2017-10-27T11:29:28 <Bosmon> I guess we need to be very clear that what we are implementing here is not actually classic "debouncing"
+2017-10-27T11:29:36 <Bosmon> But could more accurately be described as a kind of "backpressure"
+2017-10-27T11:30:08 <Bosmon> Justin_o - https://www.reactivemanifesto.org/glossary#Back-Pressure
+2017-10-27T11:30:54 <Bosmon> What it is doing is trying to propagate the fact that the "impl" listener can\'t deal with requests above a certain rate back up the chain of handlers - at least as far as it needs to go
+2017-10-27T11:31:18 <Bosmon> Now given we have a model idiom, in theory we always know what to do about backpressure
+2017-10-27T11:31:42 <Bosmon> Which is to maintain a local copy of the model with all the changes that have piled up so far, and only emit a new change message once we receive an acknowledgment
+2017-10-27T11:32:02 <Bosmon> This is a really peculiar and interesting problem which couples together all the design elements we have built so far
+2017-10-27T11:32:20 <Bosmon> It "looks" like a changeApplier problem because of the policy that we want to follow
+2017-10-27T11:33:11 <Bosmon> But on the other hand it "looks" like a dataSource problem because of how we would prefer to configure the solution, and also where the scope of the problem arises (attached to the "impl" listener of the dataSource)
+2017-10-27T11:33:41 <Bosmon> of course it has been clear that these two idioms (ChangeApplier and DataSource) are rather deficient for a long while, and were only provisional solutions to the problem
+2017-10-27T11:34:16 <Bosmon> I don\'t think there is time right now to imagine what the replacement for these things looks like, but we should at least try to lay the foundations of it, or at least take our design in the right direction rather than the wrong direction : P
+2017-10-27T11:34:53 <Justin_o> yes, i agree the closer we can align to the future the better
+2017-10-27T11:35:18 <Bosmon> So I think the notes that I\'ve written in this area are the most relevant ones: https://wiki.fluidproject.org/display/fluid/Plan+to+Abolish+Invokers+and+Events
+2017-10-27T11:35:26 <Bosmon> Because this is the kind of problem we are facing
+2017-10-27T11:35:39 <Bosmon> We are facing something that is "a little" event-like but at the same time "a little" invoker-like
+2017-10-27T11:35:49 <Bosmon> And it does talk about the promise chain idiom
+2017-10-27T11:36:36 <Bosmon> But I think this problem takes us beyond the boundary of even these "hypermodern" notes
+2017-10-27T11:36:58 <Bosmon> Where anything less than 2 years old counts as "hypermodern" : P
+2017-10-27T11:37:00 <Bosmon> https://wiki.fluidproject.org/display/fluid/New+New+Notes+on+the+ChangeApplier
+2017-10-27T11:37:05 * public__ joined the channel
+2017-10-27T11:37:08 <Bosmon> These are the other "hypermodern" notes....
+2017-10-27T11:37:35 <Bosmon> These aren\'t so relevant to this kind of problem, but they do talk about transactions
+2017-10-27T11:38:10 <Bosmon> ok
+2017-10-27T11:38:35 <Bosmon> I think starting from the parts of the problem that we DO understand, what to try to do next seems a bit clearer
+2017-10-27T11:38:52 <Bosmon> It\'s clear that at the very least we need to implement that thing that we talked about last week
+2017-10-27T11:39:08 <Bosmon> Which is, (i) something that looks like the ChangeApplier API, but instead returns a promise rather than returning nothing
+2017-10-27T11:40:26 <Bosmon> I mean, there are yet more and more issues involved here - for example, what the scope of the backpressure is exactly
+2017-10-27T11:40:47 <Bosmon> Should we infer from the fact that ONE changeApplier message has blocked, that ALL of them will block for the whole model, or only ones that hit the same path?
+2017-10-27T11:41:07 <Bosmon> If the reason for the backpressure is that we are writing to some kind of persistencen, we want the first model
+2017-10-27T11:41:29 <Bosmon> But if the reason for the backpressure is that we are having some other kind of side-effect, e.g. writing to a GPII settingsHandler, we want the second model
+2017-10-27T11:42:27 <Bosmon> Although I think it will be fine to concentrate on the safest and easiest to implement model - that is, the first one - where any blocked change message blocks the entire channel
+2017-10-27T11:42:57 * public__ has quit
+2017-10-27T11:42:58 <Bosmon> ok
+2017-10-27T11:43:16 <Bosmon> I\'m getting more and more convinced that we just need to ignore the dataSource infrastructure for now
+2017-10-27T11:43:25 <Bosmon> And implement this as a kind of "bufferingModelComponent"
+2017-10-27T11:43:49 <Bosmon> And we\'ll just have to rely on the general power of the IoC system to mitigate whatever design annoyances this causes for now
+2017-10-27T11:44:21 <Bosmon> So, this will be a component which can be attached to any modelComponent, generally as a listener to ""
+2017-10-27T11:44:52 <Bosmon> It will take any changes to the model and it will attempt to apply them to a local mirror that it keeps of the source model state
+2017-10-27T11:45:46 <Bosmon> Now, the OUTGOING behaviour of this component will be configurable - it could either write the entire model to a dataStore or dataSource, or it could relay the change via this "promise-yielding ChangeApplier API" I mentioned earlier
+2017-10-27T11:46:08 <Bosmon> But its basic strategy is the same - that is, it only applies changes to its local mirror which have been confirmed remotely
+2017-10-27T11:46:44 <Bosmon> This means that, whenever it is idle, it will compare the state of the source model and the its local mirror, and take one further action to try to bring them in sync
+2017-10-27T11:47:05 <Bosmon> That is, either by issuing a remote write or a change message
+2017-10-27T11:47:38 <Bosmon> Then when it receives an acknowledgement for this action, it will update its local mirror model one tick further, and then go round the whole cycle again
+2017-10-27T11:47:53 <Bosmon> If it ever detects that the source model and its local mirror are identical, it will fall silent and do nothing
+2017-10-27T11:48:42 <Bosmon> This is then another of what we might call "homeostatic components" - those that act by constantly trying to bring about a coincidence between the way things should be and the way they are now - but which don\'t have a fixed relationship between things they are asked to do and things which they do
+2017-10-27T11:48:49 <Bosmon> Hopefully that makes a bit of sense :)
+2017-10-27T11:49:02 <Bosmon> I\'ll let you digest this a bit and then we could have a bit of a Skype call if you have time....
+2017-10-27T11:49:13 <Justin_o> I think so, would it be simplest to implement this as a model within a datasource itself?
+2017-10-27T11:49:51 <Bosmon> Justin_o - I think it would be best to just implement this in "green fields"
+2017-10-27T11:49:59 <Bosmon> That is, unrelated to anything that we have currently
+2017-10-27T11:50:10 <Bosmon> But with a configuration which can connect to a dataSource if required
+2017-10-27T11:50:39 <Bosmon> Or even, an old fashioned "dataStore" - since I see that the OUTGOING algorithm is something that could really be quite flexible
+2017-10-27T11:50:52 <Bosmon> That is, it could also connect to an "async ChangeApplier"
+2017-10-27T11:51:51 <Bosmon> All this component knows is i) there are two models, a local and a remote one, ii) it has some actions at its disposal to try to bring the remote one into coincidence with the local one
+2017-10-27T11:52:06 <Bosmon> And the core flow of its algorithm is identical across all cases
+2017-10-27T11:52:26 <Bosmon> Which is a) if there is a discrepancy between the local model and the remote model, perform some action at your disposal to bring them in sync
+2017-10-27T11:52:38 <Bosmon> b) if the remote store indicates that you should block, then block
+2017-10-27T11:52:49 <Bosmon> c) if you are then unblocked, return to a)
+2017-10-27T11:53:07 <Justin_o> Bosmon: so i think this is relatively clear for writes, but for read operations less so
+2017-10-27T11:53:19 <Bosmon> oh yes
+2017-10-27T11:53:21 <Bosmon> READS
+2017-10-27T11:53:36 <Bosmon> Well, this is tough, isn\'t it
+2017-10-27T11:53:43 <Bosmon> What even SHOULD be the result of a read, if there is still a write outstanding?
+2017-10-27T11:53:59 <Justin_o> yes, good point
+2017-10-27T11:54:06 <Bosmon> My feeling is that we should return the local model, even if the remote model is not updated
+2017-10-27T11:54:17 <Bosmon> Because this is sort of the whole point of this implementation, to avoid cyclic races
+2017-10-27T11:55:01 <Bosmon> If we issued a read and then found that the model was stale, the user might be tempted to perform some UI action which triggered another write
+2017-10-27T11:55:08 <Bosmon> Which would just make things become worse and worse
+2017-10-27T11:55:34 <Bosmon> Although at least this component now gives us the basis for rendering a more sophisticated UI which could highlight to the user which of their changes had been saved and which hadn\'t
+2017-10-27T11:56:18 <Justin_o> by comparing the two models?
+2017-10-27T11:56:22 <Bosmon> Justin_o yes
+2017-10-27T11:56:27 <Bosmon> Which is what it is constantly doing anyway
+2017-10-27T11:56:41 <Bosmon> Given it can only learn which writes to issue by comparing the two models
+2017-10-27T11:57:00 <Bosmon> So this diff could also be something which could one day be consumed by the ultimate source (the UI)
+2017-10-27T11:57:13 <Justin_o> Bosmon: so if writes are handled by a modelListener.. it seems that a user would just carry on as usual making model changes, which would eventually be fed to the remote model.
+2017-10-27T11:57:31 <Justin_o> Bosmon: but i don\'t know how a similar read could be related to the remote model
+2017-10-27T11:57:34 <Bosmon> Justin_o - yes, that\'s right
+2017-10-27T11:58:12 <Bosmon> Justin_o - yes, it\'s an interesting issue
+2017-10-27T11:58:29 <Justin_o> that is a call like "{that}.model.someValue" wouldn\'t notify to check the remote model
+2017-10-27T11:58:41 <Bosmon> Justin_o - that\'s correct
+2017-10-27T11:58:48 <Bosmon> But this is always an interesting policy issue in any case
+2017-10-27T12:01:54 <Bosmon> Justin_o - but I imagine the way to deal with this is for the buffer component to have a simple method on it named "read()" or "pull()"
+2017-10-27T12:02:12 <Justin_o> fetch()?
+2017-10-27T12:02:20 <Bosmon> Or perhaps optionally accepting a path
+2017-10-27T12:02:28 <Justin_o> hmm.. a path?
+2017-10-27T12:02:53 <Bosmon> Well, let\'s ignore that possibility for now, but there\'s the chance it may only be interested in fetching a part of the model
+2017-10-27T12:03:42 <Bosmon> Anyway, this will be dataStore like rather than dataSource like in that the remote source has already been "fully configured" as it were - given it is the same one we are pushing the writes to
+2017-10-27T12:04:28 <Bosmon> But this fetch will need to make sure that it automatically, and synchronously, propagates this change to the source component
+2017-10-27T12:04:52 <Bosmon> Otherwise the homeostatic aspect of the buffer will constantly try to keep writing the discrepancy back to the store again
+2017-10-27T12:05:12 <Justin_o> ah, so not in the mirror
+2017-10-27T12:05:14 <Bosmon> I mean, synchronously, once it arrives from the backing store, I mean
+2017-10-27T12:05:29 * grrrero joined the channel
+2017-10-27T12:05:46 <Bosmon> The fetch itself is asynchronous, but once it resolves, both the local model and the mirror should be updated instantly in step
+2017-10-27T12:05:51 <Justin_o> Bosmon: yes, so we debounce the writes in the model listener thing.. and we debounce the reads
+2017-10-27T12:06:28 <Bosmon> Then the question is left - what happens to the content of this read if we still have a write outstanding?
+2017-10-27T12:06:29 <Justin_o> Bosmon: couldn\'t that still be problematic, if a write operation is underway
+2017-10-27T12:06:35 <Bosmon> Justin_o - yes, exactly
+2017-10-27T12:06:50 <Bosmon> But all the same, we have to assume that the read is authoritative, at the moment we receive it
+2017-10-27T12:07:25 <Bosmon> If we then subsequently receive an acknowledgement of a write, we will have to lay that on top of whatever was just read
+2017-10-27T12:08:06 <Bosmon> In practice there will just be chaos, though, if we assume that reads and writes can cross over in transit
+2017-10-27T12:09:50 <Bosmon> I think this is a condition that will have to be enforced at the layer of the underlying protocol - e.g. in your "chrome extension bridge"
+2017-10-27T12:09:51 <Justin_o> what do you mean by crossover?
+'
+

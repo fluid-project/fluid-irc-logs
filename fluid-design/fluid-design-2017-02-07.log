@@ -1,0 +1,297 @@
+b'2017-02-07T18:52:40 <Justin_o> :)
+2017-02-07T18:52:47 <Bosmon> perhaps he\'s working from home too
+2017-02-07T18:53:06 <Justin_o> he\'s at the office, i can see him in our planning meeting right now :) I\'ll try to ask him about it
+2017-02-07T18:56:00 * clown_mtg has quit
+2017-02-07T18:56:12 * michelled has quit
+2017-02-07T18:56:16 * lliskovoi has quit
+2017-02-07T18:57:33 * lliskovoi joined the channel
+2017-02-07T18:57:36 * Caren joined the channel
+2017-02-07T18:57:51 * lliskovoi has quit
+2017-02-07T18:58:06 <Justin_o> alanharn_: for the chart authoring work, did you encounter a need to handle the precision of decimal numbers... e.g. 1.2. vs 1.2000000000000002
+2017-02-07T18:58:23 <Bosmon> Justin_o - pretty interesting discussion on this on stackOverflow: http://stackoverflow.com/questions/11832914/round-to-at-most-2-decimal-places/12830454#12830454
+2017-02-07T18:58:29 * lliskovoi joined the channel
+2017-02-07T18:58:32 <Bosmon> Which suggests to me that we have never tried to deal with this issue before : P
+2017-02-07T18:59:04 <Bosmon> The fact that parseFloat("1.555").toFixed(2) produces the wrong answer is pretty hilarious
+2017-02-07T18:59:59 * avtar joined the channel
+2017-02-07T19:00:18 <Bosmon> What did we do in the days before we could observe that an appallingly intricate and special-case-ridden snippet of code was blessed by 1642 upvotes
+2017-02-07T19:00:41 * alanharn_ has quit
+2017-02-07T19:00:48 * alanharnum joined the channel
+2017-02-07T19:01:00 <Jess_> thanks danayo this helps put into context JT talking about a barn raising this a.m.
+2017-02-07T19:01:01 <Jess_> :P
+2017-02-07T19:02:51 <Justin_o> Bosmon: lol
+2017-02-07T19:03:15 <Justin_o> Bosmon: i thought you had code to handle this before though
+2017-02-07T19:03:24 * clown joined the channel
+2017-02-07T19:03:33 <Bosmon> Justin_o - the code we have is just there to cause the model relay calculation to stabilise
+2017-02-07T19:03:49 <Bosmon> There isn\'t anything that does the job of rendering numerical values in a human-readable form
+2017-02-07T19:04:57 <Bosmon> In particular we have this calculation here: https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/DataBinding.js#L1094
+2017-02-07T19:06:18 <Justin_o> perhaps that was the code i was thinking of
+2017-02-07T19:06:28 <Bosmon> Which would indeed consider that "1.2000000000000002" was the same number as "1.2" (if the latter had a distinct floating-point representation, which it doesn\'t)
+2017-02-07T19:06:57 <Bosmon> But this wouldn\'t help you in displaying such a number to the user
+2017-02-07T19:07:22 <alanharnum> Justin_o: the code at https://github.com/fluid-project/chartAuthoring/blob/657233685c3abd897409f881f78726ea3555d54a/src/js/percentage.js does this
+2017-02-07T19:07:51 <Bosmon> Ah, thanks alanharnum
+2017-02-07T19:08:00 <alanharnum> using this method: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/toFixed
+2017-02-07T19:08:11 <alanharnum> "The toFixed() method formats a number using fixed-point notation."
+2017-02-07T19:08:59 <Justin_o> alanharnum: interestingly Bosmon posted a stackoverflow discussion that shows it isn\'t always accurate ;(
+2017-02-07T19:09:14 <alanharnum> yes, that doesn\'t surprise me
+2017-02-07T19:09:32 <Justin_o> Bosmon, alanharnum: is it enough though.. is it possible to be 100% accurate given the state of things in the environment?
+2017-02-07T19:09:34 <alanharnum> whenever i hate how core JS handles dates, i should also remember it also has things to hate about basic mathematical functions
+2017-02-07T19:10:02 <alanharnum> I wonder if https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/toPrecision is any better
+2017-02-07T19:10:31 <alanharnum> though it appears the main difference is return type (string vs. number)
+2017-02-07T19:11:08 <Bosmon> alanharnum - seems unlikely - since it looks like the "bug" is in the ECMAScript standard
+2017-02-07T19:11:19 <Bosmon> i.e. in that it does not bother to specify exactly what these methods should do : P
+2017-02-07T19:12:48 <Bosmon> Well ok, it does describe what they should do
+2017-02-07T19:12:55 <Bosmon> https://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.5
+2017-02-07T19:13:07 <Bosmon> As one correspondent has noted, "It describes something fairly obtusely"
+2017-02-07T19:14:44 * simonjb has quit
+2017-02-07T19:15:34 <Bosmon> For Justin_o \'s use case, any of these implementations would be good enough
+2017-02-07T19:16:07 <Bosmon> But given we\'re giving some attention to the issue, it would be pleasant to have an implementation that considers that "1.555" to 2 decimal places is "1.56" as every child learns in school
+2017-02-07T19:19:14 <alanharnum> https://www.npmjs.com/browse/keyword/round!
+2017-02-07T19:19:25 <alanharnum> whoops!
+2017-02-07T19:19:27 <alanharnum> https://www.npmjs.com/browse/keyword/round !
+2017-02-07T19:21:04 * michelled joined the channel
+2017-02-07T19:25:54 * alanharnum has quit
+2017-02-07T19:26:20 * alanharnum joined the channel
+2017-02-07T19:26:25 <Justin_o> alanharnum, Bosmon : this one actually does work for 1.555 at least https://www.npmjs.com/package/sigdig
+2017-02-07T19:29:01 <Bosmon> Justin_o - I guess I\'d take a 2-line snippet of junk with 1642 upvotes on stackoverflow rather than a 2-line snippet of junk sitting in npm with no README or docs :)
+2017-02-07T19:29:49 <Bosmon> oh wow
+2017-02-07T19:29:55 <Bosmon> And one that has been there for all of 6 days :)
+2017-02-07T19:30:07 <Bosmon> Talk about "many eyeballs" ...
+2017-02-07T19:32:21 <Justin_o> Bosmon: it did get to version 2 in 8 commits
+2017-02-07T19:34:56 <Bosmon> Impressive!
+2017-02-07T19:35:24 <Bosmon> If it had even a single test case, it might be a little more impressive : P
+2017-02-07T19:35:38 * clown has quit
+2017-02-07T19:35:39 <Justin_o> Bosmon: or even a readme
+2017-02-07T19:36:20 <Justin_o> Bosmon: should i work on a PR for stringToNumber using the suggestion from stack overflow?
+2017-02-07T19:36:28 <Justin_o> also what is the licences for such things?
+2017-02-07T19:36:54 <Bosmon> Justin_o - yes, do
+2017-02-07T19:37:05 <Bosmon> http://meta.stackexchange.com/questions/12527/do-i-have-to-worry-about-copyright-issues-for-code-posted-on-stack-overflow
+2017-02-07T19:41:18 <Justin_o> Bosmon: thanks
+2017-02-07T19:41:39 <Bosmon> https://creativecommons.org/licenses/by-sa/3.0/
+2017-02-07T19:41:49 <Bosmon> Looks like simply linking back to the answer is sufficient
+2017-02-07T19:41:56 <Bosmon> Which naturally we would do anyway :)
+2017-02-07T19:44:36 * clown joined the channel
+2017-02-07T19:44:49 * clown is now known as clown_mtg
+2017-02-07T19:45:42 <Bosmon> Who knows, if we produce enough test cases, we might be able to check that the npm module\'s solution is better
+2017-02-07T19:45:51 <Bosmon> Certainly this SO snippet could be much better factored
+2017-02-07T19:47:49 <Justin_o> Bosmon: i\'m getting lost in all the "math" going on in these
+2017-02-07T19:48:27 <Justin_o> Bosmon: it\'s amazing how complicated it is to convince the javascript to do something that seems so simple
+2017-02-07T19:50:24 <Bosmon> Justin_o - well, there\'s nothing simple about floating point representation :)
+2017-02-07T19:50:33 <Bosmon> Just because there\'s a lot of it about, doesn\'t mean that we understand it
+2017-02-07T19:52:41 <Bosmon> The SO guy at least has a kind of "interactive test cases" which gains him points even if his algorithm is cumbersome and suspect
+2017-02-07T19:55:24 * alanharnum has quit
+2017-02-07T19:55:32 * alanharnum joined the channel
+2017-02-07T19:55:32 <Justin_o> i just mean if you asked someone to do the task you could probably get them to do it in their head, but trying to work out the formulas needed to do it computationally isn\'t as simple
+2017-02-07T20:01:04 <alanharnum> Justin_o: I\'m thinking about how I\'d end up doing the task in my head, and realizing I\'d basically be running a reduce function until I hit the desired # of digits of precision
+2017-02-07T20:01:13 <alanharnum> moving right to left along the number
+2017-02-07T20:02:07 <alanharnum> 1.3867 > 1.387 > 1.39
+2017-02-07T20:02:51 <alanharnum> it\'s a bit weird to actually think about what my process is
+2017-02-07T20:03:05 <Justin_o> yah, because you probably don\'t even think about most of that
+2017-02-07T20:03:20 <Justin_o> consciously that is
+2017-02-07T20:04:34 <alanharnum> i\'m sure if I go back far enough there\'s endless worksheets that drilled that process into me as "how you round a non-whole number".
+2017-02-07T20:09:22 <alanharnum> No one seems to be aware of Number.EPSILON.
+2017-02-07T20:09:25 <alanharnum> http://stackoverflow.com/a/41716722/6331308
+2017-02-07T20:09:33 <alanharnum> Above should have been quoted
+2017-02-07T20:09:45 <alanharnum> I was not aware of Number.EPSILON
+2017-02-07T20:09:51 <alanharnum> but I am now!
+2017-02-07T20:11:44 <Justin_o> alanharnum: i hadn\'t heard of it before either
+2017-02-07T20:11:46 <Justin_o> Bosmon: ^
+2017-02-07T20:12:17 <Bosmon> hahahaha
+2017-02-07T20:13:05 <Bosmon> That answer is not good
+2017-02-07T20:13:09 <alanharnum> thanks, 1-upvote question, for teaching me something new!
+2017-02-07T20:13:45 <Bosmon> Yes, even a 1-upvote question can teach SOMETHING :)
+2017-02-07T20:14:13 <Bosmon> But relative to the question asked, the answer is faulty because it fails to adjust epsilon with respect to the magnitude of the input number
+2017-02-07T20:14:31 <Bosmon> If I had any SO cred, I would downvote it :)
+2017-02-07T20:15:20 <Bosmon> Number.EPSILON is at best a wacky, poorly-supported curiosity....
+2017-02-07T20:15:46 <Bosmon> Actually the MDN page on it is actively dangerous
+2017-02-07T20:15:51 <Bosmon> SInce it suggests that it should be used!
+2017-02-07T20:16:09 <Bosmon> Look at that bogus equality testing code
+2017-02-07T20:16:41 <Bosmon> Wow, this is really terrible
+2017-02-07T20:19:49 <Justin_o> Bosmon: how does this sound? https://issues.fluidproject.org/browse/FLUID-6125
+2017-02-07T20:20:07 <Bosmon> Justin_o - looks good to me
+2017-02-07T20:20:09 <Jess_> fluid-everyone: looking for images? art? the MET just released 375K into the commons: https://creativecommons.org/2017/02/07/met-announcement/
+2017-02-07T20:20:37 * avtar has quit
+2017-02-07T20:20:39 <Justin_o> Jess_: cool thanks
+2017-02-07T20:20:54 <Justin_o> Bosmon: thanks
+2017-02-07T20:20:55 <Bosmon> Justin_o - although you don\'t need stringToNumber to take any arguments
+2017-02-07T20:20:57 <Jess_> browse it in the new cc search engine just rele\x08ased beta
+2017-02-07T20:21:03 <Bosmon> It\'s always just going to do what it does
+2017-02-07T20:21:10 <danayo> cool Jess_
+2017-02-07T20:21:41 <Justin_o> Bosmon: ah okay... i was thinking you might want to round it.. but i guess that\'s not necessary actually
+2017-02-07T20:22:07 <Bosmon> These transforms virtually always come in pairs where one leg is more precise than the other
+2017-02-07T20:22:16 <Justin_o> okay
+2017-02-07T20:25:31 * avtar joined the channel
+2017-02-07T21:05:59 * clown_mtg has quit
+2017-02-07T21:32:37 * clown joined the channel
+2017-02-07T21:36:25 * cindyli has quit
+2017-02-07T21:39:17 * gtirloni has quit
+2017-02-07T21:43:41 * jhung has quit
+2017-02-07T21:58:55 * clown has quit
+2017-02-07T22:11:30 * gtirloni joined the channel
+2017-02-07T22:14:28 * Caren has quit
+2017-02-07T22:15:52 * Jess_ has quit
+2017-02-07T22:24:39 * Yan_Hu1 has quit
+2017-02-07T22:27:19 * michelled has quit
+2017-02-07T22:39:34 * colinclark joined the channel
+2017-02-07T22:41:38 * avtar has quit
+2017-02-07T23:01:29 * alanharnum has quit
+2017-02-07T23:07:16 * gtirloni has quit
+2017-02-07T23:07:59 * Justin_o has quit
+2017-02-07T23:08:02 * amatas has quit
+2017-02-07T23:13:02 * colinclark has quit
+2017-02-07T23:21:28 * lliskovoi_ joined the channel
+2017-02-07T23:21:35 * lliskovoi_ has quit
+2017-02-07T23:24:54 * lliskovoi has quit
+'
+
+b'2017-02-07T00:07:53 * Jess_ joined the channel
+2017-02-07T00:09:01 * Jess_ has quit
+2017-02-07T00:41:23 * avtar has quit
+2017-02-07T01:40:50 * michelled joined the channel
+2017-02-07T02:27:58 * michelled has quit
+2017-02-07T02:54:58 * mrtyler has quit
+2017-02-07T03:35:48 * colinclark joined the channel
+2017-02-07T03:36:37 * colinclark has quit
+2017-02-07T09:39:19 * amatas joined the channel
+2017-02-07T11:44:26 * gtirloni joined the channel
+2017-02-07T12:41:10 * Justin_o joined the channel
+2017-02-07T13:30:59 * alanharnum joined the channel
+2017-02-07T13:37:01 * Jess_ joined the channel
+2017-02-07T13:46:33 * jhung joined the channel
+2017-02-07T14:18:39 * gtirloni has quit
+2017-02-07T14:19:57 * gtirloni joined the channel
+2017-02-07T14:33:49 * lliskovoi joined the channel
+2017-02-07T14:38:32 * Yan_Hu joined the channel
+2017-02-07T14:41:50 * colinclark joined the channel
+2017-02-07T14:52:32 <jhung> fluid-everyone: just a reminder that there is no design crit scheduled for today.
+2017-02-07T14:57:58 * gtirloni has quit
+2017-02-07T15:04:42 * simonjb joined the channel
+2017-02-07T15:06:17 * Caren joined the channel
+2017-02-07T15:09:11 * gtirloni joined the channel
+2017-02-07T15:10:40 * michelled joined the channel
+2017-02-07T15:16:31 * danayo joined the channel
+2017-02-07T15:24:49 * avtar joined the channel
+2017-02-07T15:25:34 * gtirloni has quit
+2017-02-07T15:28:10 * gtirloni joined the channel
+2017-02-07T15:29:39 * colinclark has quit
+2017-02-07T15:39:17 * mrtyler joined the channel
+2017-02-07T15:40:48 <danayo> Hi Caren
+2017-02-07T15:42:26 <Caren> hi Danayo
+2017-02-07T15:42:41 * alanharnum has quit
+2017-02-07T15:48:23 <jhung> Jess_: ping
+2017-02-07T15:55:30 <Jess_> jhung: pong
+2017-02-07T15:56:48 <jhung> Jess_,You spoke with Jon Udell about doing a community meeting, right? I was going to bring it up, but wanted to make sure it was already explained to him what they were.
+2017-02-07T15:57:37 <Jess_> jhung: hahah, i just sent him and Jeremy an email this morning about it
+2017-02-07T15:58:22 <jhung> Oh awesome. I will hold off on my reply then Jess_. I already feel there are lots of conversations going on. The IDRC firehouse in full effect. :D
+2017-02-07T15:58:29 <jhung> *firehose.
+2017-02-07T15:58:43 <Jess_> oops
+2017-02-07T15:59:25 <jhung> haha I didn\'t mean it in a negative way. I\'m just being sensitive to how prolific we can be.
+2017-02-07T15:59:40 <Jess_> jhung: glad you asked!
+2017-02-07T15:59:48 <Jess_> i\xe2\x80\x99ll forward you the email
+2017-02-07T16:00:01 <jhung> awesome, thanks Jess_
+2017-02-07T16:03:15 * clown joined the channel
+2017-02-07T16:28:34 * colinclark joined the channel
+2017-02-07T16:50:58 * avtar has quit
+2017-02-07T16:51:30 * alanharnum joined the channel
+2017-02-07T16:52:50 * cindyli joined the channel
+2017-02-07T16:54:47 * cindyli has quit
+2017-02-07T16:54:53 * cindyli1 joined the channel
+2017-02-07T17:20:03 * cindyli1 is now known as cindyli
+2017-02-07T17:33:53 <Justin_o> danayo: for the textfield steppers.. https://wiki.fluidproject.org/display/fluid/%28Floe%29+User+Interface+%28Learner%29+Options+Mobile+and+Responsive+Design
+2017-02-07T17:33:59 <Justin_o> what should the disabled state of the button look like
+2017-02-07T17:34:11 <Justin_o> i\'m disabling the buttons when at the min and max respectively.
+2017-02-07T17:34:19 <Justin_o> but i\'m finding that they look quite like the textfield
+2017-02-07T17:34:30 <Justin_o> which may lead a user to think that the textfield is disabled
+2017-02-07T17:35:12 <danayo> let me take a look Justin_o
+2017-02-07T17:36:06 <Justin_o> danayo: thanks
+2017-02-07T17:38:55 <danayo> can you show me what you\'ve got now Justin_o?
+2017-02-07T17:39:04 <danayo> maybe a screenshot?
+2017-02-07T17:41:21 <Justin_o> https://usercontent.irccloud-cdn.com/file/xjTLgShC/Screen%20Shot%202017-02-07%20at%2012.40.58%20PM.png
+2017-02-07T17:42:18 <danayo> thanks Justin_o
+2017-02-07T17:44:07 <Justin_o> danayo: np, the one on the left is disabled, the one on the right is enabled.
+2017-02-07T17:44:17 <danayo> yes
+2017-02-07T17:45:28 <Justin_o> danayo: i had tried to style the textfield more like the designs, which is when i noticed the problem.. Although the number in the textfield is not greyed out, the greyboard matches the colour of the disabled button
+2017-02-07T17:46:48 <danayo> Justin_o: I suppose we could make the texfield border darker, closer to black
+2017-02-07T17:47:21 <danayo> we\'ll need a different solution for high-contrast themes tho (I\'ll take a look at this)
+2017-02-07T17:48:13 <danayo> Justin_o: looking at the screenshot though, I think because the text is dark, it\'s not so bad
+2017-02-07T17:48:17 <Justin_o> danayo: if we make the border darker, do you think it\'ll look too much like the button?
+2017-02-07T17:48:33 <Justin_o> danayo: yes, that\'s true
+2017-02-07T17:48:39 <danayo> I think if we keep it with sharp corners, and thinner border, it\'ll be ok
+2017-02-07T17:48:47 <danayo> (won\'t look like the button)
+2017-02-07T17:48:53 <Justin_o> danayo: okay, so as is in the screenshot should be fine?
+2017-02-07T17:49:08 <Justin_o> danayo: or you\'d like the darker border too?
+2017-02-07T17:49:52 <danayo> I think it\'s ok as-is Justin_o, because the text is dark, and also because there\'s no state change (it always looks the same), whereas the buttons change when disabled
+2017-02-07T17:50:13 <danayo> disabled/enabled
+2017-02-07T17:50:13 <Justin_o> danayo: okay, cool thanks.
+2017-02-07T17:50:18 <danayo> thank you Justin_o
+2017-02-07T17:51:13 <Justin_o> danayo: please let me know what you\'d like for them in contrast mode. I think the default styling is just about done.
+2017-02-07T17:51:16 * cindyli has quit
+2017-02-07T17:51:25 <danayo> will do Justin_o
+2017-02-07T17:51:29 <Justin_o> thanks
+2017-02-07T17:54:34 * cindyli joined the channel
+2017-02-07T17:55:10 * alanharnum has quit
+2017-02-07T17:55:37 * alanharnum joined the channel
+2017-02-07T17:56:46 * michelled has quit
+2017-02-07T17:58:02 * michelled joined the channel
+2017-02-07T18:01:32 <danayo> Jess_, Justin_o: do either of you recall, by any chance, where stored/linked to that PGA interactive FD tool prototype for the senior\'s intake centre? It was an interactive PDF. I know we accessed it during the workshop in DC - can\'t find it anywhere (only the InDesign source file).
+2017-02-07T18:02:11 <Jess_> woah, blast from the past\xe2\x80\xa6
+2017-02-07T18:02:14 <Justin_o> danayo: i\'m not sure, i would have guess the wiki page
+2017-02-07T18:02:28 <danayo> yeah ... i checked the wiki
+2017-02-07T18:02:49 <danayo> thanks
+2017-02-07T18:03:06 <Justin_o> sorry, not sure then.
+2017-02-07T18:03:34 <Jess_> danayo: digging
+2017-02-07T18:03:41 <Jess_> i\xe2\x80\x99m a packrat
+2017-02-07T18:03:50 <danayo> thanks Jess_
+2017-02-07T18:03:52 * clown has quit
+2017-02-07T18:03:59 <Justin_o> Caren, lliskovoi: planning meeting
+2017-02-07T18:04:44 * lliskovoi_ joined the channel
+2017-02-07T18:04:49 * lliskovoi_ has quit
+2017-02-07T18:06:35 <Jess_> danayo: can you describe it at all?
+2017-02-07T18:08:11 * lliskovoi has quit
+2017-02-07T18:08:48 * alanharn_ joined the channel
+2017-02-07T18:08:49 * clown joined the channel
+2017-02-07T18:08:53 * clown is now known as clown_mtg
+2017-02-07T18:09:05 * Yan_Hu1 joined the channel
+2017-02-07T18:09:13 * Caren1 joined the channel
+2017-02-07T18:09:21 * colinclark_ joined the channel
+2017-02-07T18:09:27 <danayo> Jess_: looks like this https://files.inclusivedesign.ca/index.php/s/zTLMqtikiWnxWv1
+2017-02-07T18:09:36 <danayo> I tried recreated it but am having some trouble
+2017-02-07T18:09:41 <danayo> buttons are not active
+2017-02-07T18:09:43 <danayo> I\'ll keep trying
+2017-02-07T18:09:52 * lliskovoi joined the channel
+2017-02-07T18:09:58 * lliskovoi has quit
+2017-02-07T18:10:07 * Caren has quit
+2017-02-07T18:10:38 * colinclark has quit
+2017-02-07T18:10:38 * colinclark_ is now known as colinclark
+2017-02-07T18:10:57 * alanharnum has quit
+2017-02-07T18:12:29 * michelled has quit
+2017-02-07T18:13:25 <Jess_> i found some things danayo
+2017-02-07T18:13:29 <Jess_> will send over skype
+2017-02-07T18:13:51 * michelled joined the channel
+2017-02-07T18:14:00 <danayo> thanks Jess_ \\
+2017-02-07T18:43:51 * lliskovoi joined the channel
+2017-02-07T18:44:02 <Justin_o> Bosmon: i\'m running into an issue where i\'m getting values like 1.2000000000000002 instead of 1.2
+2017-02-07T18:44:16 <Justin_o> i remember we had a function to take care of that, could you remind me what that\'s called.
+2017-02-07T18:45:06 <Justin_o> Bosmon: I\'m still trying to figure out where the issue is coming from as well.. could be from the stringToNumber transformation
+2017-02-07T18:45:43 <Justin_o> sorry, this was supposed to be in fluid-work
+2017-02-07T18:46:36 <Bosmon> Justin_o - it comes from the IEEE-754 standard for floating point numbers :)
+2017-02-07T18:47:11 <Justin_o> Bosmon: :) yes, i mean i wonder which part of the code is triggering that quirk
+2017-02-07T18:47:28 <Bosmon> Well, hopefully all of it
+2017-02-07T18:47:47 <Justin_o> Bosmon: how should i go about addressing it
+2017-02-07T18:47:53 <Bosmon> Given "1.2000000000000002" *is* the correct representative for the number we call "1.2" in that standard
+2017-02-07T18:47:54 <Justin_o> as it\'s messing up my model ;(
+2017-02-07T18:48:06 <Bosmon> Justin_o - how is it messed up?
+2017-02-07T18:48:41 <Justin_o> bosmon: well.. to a user it seems strange to see 1.2 displayed as 1.2000000000000002 in the UI
+2017-02-07T18:50:10 <Bosmon> Justin_o - I was expecting to find some transforms in alanharn_ \'s chartAuthoring to deal with this, but perhaps there aren\'t
+2017-02-07T18:50:43 <Justin_o> Bosmon: i\'m sure we\'ve run into this before but can\'t remember where
+2017-02-07T18:51:02 <Bosmon> A numberToString that rounds to a specified number of decimal places would certainly be a rather essential thing to have
+2017-02-07T18:51:06 <Bosmon> But maybe we don\'t have one
+2017-02-07T18:51:17 * Caren1 has quit
+2017-02-07T18:51:32 <Justin_o> Bosmon: it would even be a useful option for the existing transform i\'d think
+2017-02-07T18:51:37 <Bosmon> Yes, it would
+2017-02-07T18:51:59 <Bosmon> Feel free to produce JIRA + PR for one if there doesn\'t already seem to be one around
+2017-02-07T18:52:11 <Justin_o> Bosmon: will do, thanks
+2017-02-07T18:52:11 <Bosmon> Perhaps you could throw a sponge at alanharn_ \'s desk to see if he has one
+2017-02-07T18:52:29 <Justin_o> i\'m working from home today, so that\'ll be a difficult throw
+2017-02-07T18:52:34 <Bosmon> hahaha
+'
+

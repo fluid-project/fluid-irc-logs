@@ -1,0 +1,255 @@
+b'2017-10-19T16:49:31 <Justin_o> Bosmon: thanks, i\'ll continue to think about this some more
+2017-10-19T16:51:22 * simonjb has quit
+2017-10-19T17:01:52 <kasparnet> goddammit, I did the classic of leaving you after the ping
+2017-10-19T17:01:58 <kasparnet> Bosmon,
+2017-10-19T17:02:18 <kasparnet> I\'ll try and ping you in the morning, perhaps
+2017-10-19T17:06:24 <Justin_o> kasparnet: sorry, didn\'t mean to distract him
+2017-10-19T17:07:42 <kasparnet> haha, no not at all, this was very much my own fault.... I have a tendency of "ping drivebys", pinging him and then being distracted
+2017-10-19T17:07:51 <kasparnet> only to ping him back 30-120 minutes later
+2017-10-19T17:07:58 <kasparnet> when he\'s busy with something else
+2017-10-19T17:09:02 <Justin_o> we\'re all always trying to ping him :)
+2017-10-19T17:09:38 * michelled has quit
+2017-10-19T17:12:02 * mrtyler joined the channel
+2017-10-19T17:27:17 * gtirloni joined the channel
+2017-10-19T17:27:45 * michelled joined the channel
+2017-10-19T17:27:49 * the-t-in-rtf joined the channel
+2017-10-19T17:36:01 * javjarfer has quit
+2017-10-19T17:37:25 <grrrero> Justin_o: Made another commit!
+2017-10-19T17:38:49 * the-t-in-rtf has quit
+2017-10-19T17:43:52 * gloob has quit
+2017-10-19T17:47:44 * Bosmon joined the channel
+2017-10-19T17:49:00 <Justin_o> grrrero: did you add all of the files/folders you removed from the infusion build to the list in the Version.md file?
+2017-10-19T17:49:15 * colinclark joined the channel
+2017-10-19T17:49:36 <Justin_o> grrrero: sorry, my page was out of date
+2017-10-19T17:49:38 <grrrero> Justin_o: I\'m going ot double check just to make sure
+2017-10-19T17:55:40 * simonjb joined the channel
+2017-10-19T18:00:03 * simonjb has quit
+2017-10-19T18:02:44 * alanharnum joined the channel
+2017-10-19T18:21:12 <Justin_o> grrrero: merged the FLOE-508 PR :)
+2017-10-19T18:21:24 <grrrero> Justin_o: \xc2\xa0(\xef\xbe\x89\xe2\x97\x95\xe3\x83\xae\xe2\x97\x95)\xef\xbe\x89*:\xef\xbd\xa5\xef\xbe\x9f\xe2\x9c\xa7
+2017-10-19T18:32:38 * the-t-in-rtf joined the channel
+2017-10-19T18:38:07 * the-t-in-rtf has quit
+2017-10-19T19:09:03 * avtar joined the channel
+2017-10-19T19:20:33 * michelled joined the channel
+2017-10-19T19:24:30 <stegru> virtualbox 5.2 has worked for me for a day so far
+2017-10-19T19:28:59 <clown> gtirloni:  FYI, I tried the new universal VM,  the one with the 9.90GB hard drive
+2017-10-19T19:29:23 <gtirloni> that\'s the old one
+2017-10-19T19:29:30 <clown> after running the node and browser tests, it was up to 90% full.
+2017-10-19T19:29:36 <gtirloni> the new one has a 15GiB disk
+2017-10-19T19:29:44 <gtirloni> let me check
+2017-10-19T19:29:58 <clown> But after running the production tests, it is 90% full, and I\'m getting message from the OS saying \xe2\x80\xa6
+2017-10-19T19:30:18 <clown> \xe2\x80\xa6 only 190 MB left
+2017-10-19T19:30:30 <clown> okay, maybe I got the wrong machine; I\'ll check too
+2017-10-19T19:30:41 <gtirloni> please see if you have 20171019 as the box version
+2017-10-19T19:31:15 <clown> This one:  "inclusivedesign/fedora26                (virtualbox, 20171019)"
+2017-10-19T19:31:31 <clown> yup, the numbers match yours, gtirloni
+2017-10-19T19:32:05 <gtirloni> ok, thanks for testing it.. i\'ll check what might be wrong
+2017-10-19T19:32:09 <clown> I\'m getting the disk size from looking at the VM settings itself.
+2017-10-19T19:34:08 <gtirloni> did you `vagrant destroy` you VM and recreated it after you update the base box?
+2017-10-19T19:34:12 <clown> The VM storage settings for the "fedora26-v20171019-disk001.vmdk" report an virtual size of 9.90GB
+2017-10-19T19:34:51 <clown> Yes,  the sequence was:  1. vagrant destroy, 2. vagrant box update, 3. vagrant box prune, 4. vagrant up.
+2017-10-19T19:35:21 <clown> actually 1. vagrant destroy -f
+2017-10-19T19:35:49 <gtirloni> cool, ok i can reproduce.. they CI jobs may have started to work just because this box happened to be 100-200MB smaller (due to updates, etc).. so i didn\'t check it too carefully
+2017-10-19T19:37:18 <clown> I noticed that running the production tests involves a whole lot of installing.  I\'ll see if I still have the information in some log file.
+2017-10-19T19:38:19 <gtirloni> yes, it creates the Docker image (so runs `npm install` inside it)
+2017-10-19T19:38:36 <gtirloni> we\'re in a hybrid situation.. half VM / half container
+2017-10-19T19:38:59 <clown> ah okay.
+2017-10-19T19:39:03 * the-t-in-rtf joined the channel
+2017-10-19T19:40:42 <gtirloni> oh this is sweet.. the disk_size option is set in the builder\'s configuration AND in a Makefile...
+2017-10-19T19:40:46 <gtirloni> there we go
+2017-10-19T19:41:05 <clown> are they the same?
+2017-10-19T19:42:31 <clown> my guess:  no, and the smaller size option is overwriting the larger one.  ?
+2017-10-19T19:43:21 <gtirloni> yep, exactly :) why it\'s set in a Makefile... we forked a famous project and it seems that specific line came with it. I\'ll fix that and release a new box (in 30-45min)
+2017-10-19T19:45:09 <clown> cool!  thanks gtirloni.
+2017-10-19T19:45:29 <grrrero> avtar: Do you know where we can see what the Hacktoberfest shirt looks like?
+2017-10-19T19:45:37 <clown> I\'ll see what I can do with it then, although it will be close to the end of day.
+2017-10-19T19:48:51 <avtar> grrrero: https://user-images.githubusercontent.com/121322/30888644-83b219e4-a2d6-11e7-84d5-4620a9c97e22.jpg
+2017-10-19T19:50:01 <grrrero> Nice!! Thanks avtar :D
+2017-10-19T19:50:19 * colinclark joined the channel
+2017-10-19T19:53:10 * sepidehshahi joined the channel
+2017-10-19T19:53:30 * sepidehshahi has left the channel
+2017-10-19T19:53:31 * simonjb joined the channel
+2017-10-19T19:55:58 * alanharnum joined the channel
+2017-10-19T19:55:59 * alanharnum has quit
+2017-10-19T19:56:05 * alanharnum joined the channel
+2017-10-19T19:57:09 * mrtyler has quit
+2017-10-19T20:06:45 * alanharnum has quit
+2017-10-19T20:06:53 * alanharnum joined the channel
+2017-10-19T20:07:44 * javjarfer joined the channel
+2017-10-19T20:10:45 * michelled joined the channel
+2017-10-19T20:16:55 * danayo joined the channel
+2017-10-19T20:24:33 * kasparnet has quit
+2017-10-19T20:33:59 * kasparnet joined the channel
+2017-10-19T20:40:38 * kasparnet has quit
+2017-10-19T20:41:09 * Jess_ has quit
+2017-10-19T20:56:40 * simonjb has quit
+2017-10-19T20:59:37 * stegru has quit
+2017-10-19T21:00:37 * clown has quit
+2017-10-19T21:23:45 * javjarfer has quit
+2017-10-19T21:25:32 * amatas has quit
+2017-10-19T21:40:17 * danayo_ joined the channel
+2017-10-19T21:41:22 * javjarfer joined the channel
+2017-10-19T21:46:19 * danayo joined the channel
+2017-10-19T21:48:29 * stegru joined the channel
+2017-10-19T21:56:44 * danayo_ joined the channel
+2017-10-19T21:58:59 * gloob joined the channel
+2017-10-19T22:13:53 * stegru has quit
+2017-10-19T22:44:07 * Justin_o has quit
+2017-10-19T23:26:11 * javjarfer has quit
+2017-10-19T23:27:42 * grrrero has quit
+2017-10-19T23:38:46 * avtar has quit
+2017-10-19T23:45:20 * mrtyler joined the channel
+'
+
+b'2017-10-19T00:05:25 * avtar has quit
+2017-10-19T00:09:37 * mrtyler joined the channel
+2017-10-19T00:26:29 * danayo joined the channel
+2017-10-19T00:35:11 * danayo has quit
+2017-10-19T00:35:25 * danayo joined the channel
+2017-10-19T00:35:31 * danayo has quit
+2017-10-19T00:57:30 * danayo joined the channel
+2017-10-19T05:18:48 * amatas joined the channel
+2017-10-19T07:28:58 * the-t-in-rtf joined the channel
+2017-10-19T07:31:54 * georgitodorov joined the channel
+2017-10-19T07:40:04 * the-t-in-rtf has quit
+2017-10-19T07:41:01 * javjarfer joined the channel
+2017-10-19T07:51:26 * the-t-in-rtf joined the channel
+2017-10-19T08:00:57 * javjarfer has quit
+2017-10-19T08:01:28 * javjarfer joined the channel
+2017-10-19T08:31:26 * stegru joined the channel
+2017-10-19T09:04:50 * amatas has quit
+2017-10-19T09:06:51 * amatas joined the channel
+2017-10-19T09:49:58 * the-t-in-rtf1 joined the channel
+2017-10-19T09:49:59 * the-t-in-rtf has quit
+2017-10-19T10:00:48 * yuriy joined the channel
+2017-10-19T10:19:01 * gtirloni joined the channel
+2017-10-19T10:38:19 * the-t-in-rtf joined the channel
+2017-10-19T10:47:38 <kasparnet> heya yuriy
+2017-10-19T10:48:04 <yuriy> hi, kasparnet
+2017-10-19T10:48:18 <kasparnet> would you happen to have an example of a message sent from the PSP to the GPII core, when a preference has been changed?
+2017-10-19T10:48:54 <kasparnet> (as in, I change a setting in the PSP, it then sends the payload X)
+2017-10-19T10:50:08 <yuriy> let me ping georgitodorov on this, he is the one that can be of more help here
+2017-10-19T10:50:22 <kasparnet> cheers yuriy
+2017-10-19T10:53:51 <georgitodorov> kasparnet: Here is what the PSP sends to the GPII core when the magnification preference is changed to the value of 3: {"path":["settingControls","http://registry\\\\.gpii\\\\.net/common/magnification"],"type":"ADD","value":3}
+2017-10-19T10:55:12 <kasparnet> awesome! Thanks georgitodorov
+2017-10-19T11:01:05 <georgitodorov> Bosmon: Hi, Antranig! Is it okay if we postpone our meeting with 30 minutes?
+2017-10-19T11:10:02 <Bosmon> Hi there georgitodorov - sure
+2017-10-19T11:26:10 * the-t-in-rtf joined the channel
+2017-10-19T11:37:10 <georgitodorov> Bosmon: We are ready now. Shall we call you?
+2017-10-19T11:38:33 <Bosmon> georgitodorov - sure
+2017-10-19T11:46:37 <kasparnet> Bosmon: in the gpii.pcpChannel.sessionBinder component of PCPChannel.js
+2017-10-19T11:47:13 <kasparnet> I take it htat the relay would go from the session to the PCP automatically whenever the relevant places of the session changes
+2017-10-19T11:47:22 <kasparnet> but I fail to find where the source is actually set up
+2017-10-19T11:50:59 <Bosmon> kasparnet - do you mean here?
+2017-10-19T11:51:01 <Bosmon> https://github.com/amb26/universal/blob/13a8f45683f88c6cf5ae6ff68f3eee8dff5cbc05/gpii/node_modules/flowManager/src/PCPChannel.js#L206
+2017-10-19T11:51:38 <Bosmon> kasparnet - this is where incoming changes from the socket are relayed onto our local model
+2017-10-19T11:51:51 <Bosmon> Or do you mean in the other direction
+2017-10-19T11:52:28 <Bosmon> Coming from the LM model to our local model the relay is here: https://github.com/amb26/universal/blob/13a8f45683f88c6cf5ae6ff68f3eee8dff5cbc05/gpii/node_modules/flowManager/src/PCPChannel.js#L18
+2017-10-19T11:53:38 <kasparnet> yeah, the second part is the one that I dont quite follow
+2017-10-19T11:53:44 <kasparnet> when is that triggered?
+2017-10-19T11:53:55 <kasparnet> I figured it\'d be model changes of the session
+2017-10-19T11:54:15 <Bosmon> kasparnet - yes, it is
+2017-10-19T11:54:19 <kasparnet> but I cant see any place where it\'s hooked up to the session
+2017-10-19T11:54:42 <Bosmon> kasparnet - that options distribution does it
+2017-10-19T11:55:22 <Bosmon> Here: https://github.com/amb26/universal/blob/13a8f45683f88c6cf5ae6ff68f3eee8dff5cbc05/gpii/node_modules/flowManager/src/PCPChannel.js#L52
+2017-10-19T11:55:44 <kasparnet> ahh, ofc, I see
+2017-10-19T11:55:57 <kasparnet> I was confused by the source statement of line 13-15
+2017-10-19T11:56:18 <kasparnet> but ofc, it\'ll use the model of the component
+2017-10-19T11:56:27 <kasparnet> and source is just the path into the model
+2017-10-19T11:56:56 <kasparnet> cheers, Bosmon
+2017-10-19T12:05:56 * jhung joined the channel
+2017-10-19T12:07:49 <Bosmon> no worries, kasparnet
+2017-10-19T12:08:30 * yuriy has quit
+2017-10-19T12:19:29 * grrrero joined the channel
+2017-10-19T12:34:25 * Justin_o joined the channel
+2017-10-19T12:55:36 * the-t-in-rtf has quit
+2017-10-19T13:01:20 * alanharnum joined the channel
+2017-10-19T13:07:32 <Justin_o> gtirloni: i\'m trying to upload an attachment to the wiki but it\'s not working
+2017-10-19T13:08:01 <Justin_o> using drag & drop i get an error dialog that says "Invalid response received from the server."
+2017-10-19T13:08:12 * michelled joined the channel
+2017-10-19T13:08:25 <Justin_o> and if i try to use the file picker i get "413 Request Entity Too Large"
+2017-10-19T13:08:32 <Justin_o> the file is 1.7MB
+2017-10-19T13:12:29 * avtar joined the channel
+2017-10-19T13:15:04 * colinclark joined the channel
+2017-10-19T13:15:16 * alanharnum has quit
+2017-10-19T13:15:42 * alanharnum joined the channel
+2017-10-19T13:18:12 * clown joined the channel
+2017-10-19T13:21:57 * sepidehshahi joined the channel
+2017-10-19T13:25:50 <gtirloni> Justin_o: could you try again?
+2017-10-19T13:28:34 <Justin_o> gtirloni: thanks that worked
+2017-10-19T13:28:46 <gtirloni> cool, i increased the max POST size
+2017-10-19T13:31:44 * georgitodorov has quit
+2017-10-19T13:32:33 <Justin_o> gtirloni: thanks, what is the max size?
+2017-10-19T13:32:39 <gtirloni> 256MiB
+2017-10-19T13:32:49 * alanharnum joined the channel
+2017-10-19T13:33:07 * Jess_ joined the channel
+2017-10-19T13:33:21 <Justin_o> ah that\'s pretty large thanks
+2017-10-19T13:36:23 * alanharnum joined the channel
+2017-10-19T13:37:02 * alanharnum joined the channel
+2017-10-19T13:39:29 * simonjb joined the channel
+2017-10-19T13:40:06 * alanharnum joined the channel
+2017-10-19T13:43:33 * sepidehshahi joined the channel
+2017-10-19T13:44:19 * sepidehshahi has left the channel
+2017-10-19T13:50:38 * alanharnum joined the channel
+2017-10-19T13:53:29 * alanharnum has quit
+2017-10-19T13:53:55 * alanharnum joined the channel
+2017-10-19T13:56:18 * alanharnum has quit
+2017-10-19T13:56:24 * alanharnum2 joined the channel
+2017-10-19T13:58:53 * alanharnum joined the channel
+2017-10-19T14:03:02 * the-t-in-rtf joined the channel
+2017-10-19T14:03:45 * kasparnet has quit
+2017-10-19T14:04:27 * javjarfer has quit
+2017-10-19T14:12:02 * the-t-in-rtf has quit
+2017-10-19T14:13:26 <grrrero> Justin_o: Updated my FLOE-508 PR for your pleasure and perusal :)
+2017-10-19T14:14:18 <Justin_o> grrrero: thanks, i\'ll take a look at that today
+2017-10-19T14:14:25 <grrrero> Thanks Justin_O
+2017-10-19T14:29:59 * jhernandez has quit
+2017-10-19T14:30:01 <Justin_o> Bosmon: so i\'m thinking about the debouncing some more
+2017-10-19T14:30:16 <Justin_o> Bosmon: we discussed putting it as another listener
+2017-10-19T14:30:51 * mrtyler joined the channel
+2017-10-19T14:31:42 <Justin_o> Bosmon: but won\'t that still just trigger all of the read/write requests to the actual source. that is if i make 4 quick requests to read or write, it will still actually read or write 4 times
+2017-10-19T14:32:55 <Justin_o> don\'t we just want 1 request
+2017-10-19T14:36:37 * michelled joined the channel
+2017-10-19T14:46:42 * kasparnet joined the channel
+2017-10-19T15:03:39 * javjarfer joined the channel
+2017-10-19T15:03:42 * avtar has quit
+2017-10-19T15:11:59 <gmoss> Hi all, I got a late start to the day and I may not make it in time for standup. If not, yesterday I worked on the storytelling tool to get categories to display properly in the storyViewer. Simon helped me discover the solution, and then I worked further on the tool. The community meeting was great, I think we gave them valuable feedback on their app. Today I plan to work on the ST some more, probably looking into
+2017-10-19T15:11:59 <gmoss> an issue with a model relay that we want to prevent from triggering another relay in the same component.
+2017-10-19T15:13:03 <gmoss> (currently on the subway)
+2017-10-19T15:15:19 <Justin_o> gmoss: if you haven\'t already, you may want to look at the "source" argument of a request and "excludeSource" and "includeSource" options of a modelRealy
+2017-10-19T15:18:21 * jhernandez joined the channel
+2017-10-19T15:18:43 <gmoss> Justin_o: Alan and I did try to fiddle with the source args, but we may have misunderstood the exact usage. I\'ll review the docs and see if there\'s any new meaning I can get from them :) Do think you would have time today to take a look at the code with me?
+2017-10-19T15:19:10 <Bosmon> Justin_o - yes, you\'re right - I guess this does imply a certain kind of "never-resolving promise" in order to work properly
+2017-10-19T15:20:36 <Justin_o> Bosmon: assume that would truncate/prune some request chains
+2017-10-19T15:20:58 <Justin_o> gmoss: yes, i should have some time
+2017-10-19T15:22:09 <Justin_o> Bosmon: the other option i was exploring, albeit messy, is to debounce the get/set request itself but there\'s a bunch of wrapping and other stuff that will make it less fun to work with i think
+2017-10-19T15:24:20 <ussjoin> Hello, world.
+2017-10-19T15:25:36 <Justin_o> hello
+2017-10-19T15:26:25 <gmoss> Justin_o: thanks, that\'s much appreciated :)
+2017-10-19T15:42:02 * simonjb joined the channel
+2017-10-19T16:00:49 * alanharnum joined the channel
+2017-10-19T16:11:53 * colinclark joined the channel
+2017-10-19T16:19:03 <Justin_o> grrrero: i left a couple comments on the FLOE-508 PR https://github.com/fluid-project/uio-wordpress-plugin/pull/5
+2017-10-19T16:22:27 <Justin_o> gmoss: let me know when you\'d like to pair up. I should be available any time now
+2017-10-19T16:22:50 <gmoss> Justin_o: I\'m good any time as well, thanks! say 12:30?
+2017-10-19T16:23:07 <Justin_o> gmoss: sure sounds good
+2017-10-19T16:23:49 <kasparnet> Bosmon, are you still around?
+2017-10-19T16:27:28 <Bosmon> Hi kasparnet
+2017-10-19T16:28:08 <Justin_o> Bosmon: when you\'ve finished talking to kasparnet, if you still have time, I\'d like to talk over strategies for debouncing the datasource
+2017-10-19T16:33:12 <Bosmon> Justin_o - unfortunately I need to head out now for the afternoon ....
+2017-10-19T16:34:06 <Bosmon> But based on what you observed earlier I am starting to wonder whether this might not be best implemented another way
+2017-10-19T16:34:28 <Bosmon> Since continuing in this direction appears to require extending our promise API which seems a bit too fundamental an engineering point to be looking at for now
+2017-10-19T16:34:39 <Bosmon> Well, maybe not
+2017-10-19T16:35:12 <Bosmon> Well, maybe so.... sorry to be so vague about this, especially given in theory it is something we have spent years thinking about
+2017-10-19T16:35:25 <Bosmon> But as our numerous attempts show, it is a remarkably hard thing to get right
+2017-10-19T16:36:24 <Bosmon> I\'m not sure how we would communicate to our promise sequence algorithm that one member of the chain had fully handled the request, without something like https://issues.fluidproject.org/browse/FLUID-5790
+2017-10-19T16:36:38 * colinclark has quit
+2017-10-19T16:36:50 <Bosmon> I mean, we could say that a blocked promise has been "cancelled"
+2017-10-19T16:36:57 <Bosmon> Which is then a separate resolution to being rejected
+2017-10-19T16:38:04 <Bosmon> But this still doesn\'t explain why the promise chain algorithm overall then considers that the overall request has in fact been handled, at some later date
+2017-10-19T16:38:17 <Bosmon> Let\'s keep thinking in the meantime until we can get together again
+2017-10-19T16:41:55 * the-t-in-rtf joined the channel
+2017-10-19T16:46:48 * simonjb joined the channel
+2017-10-19T16:47:09 * the-t-in-rtf has quit
+'
+

@@ -1,0 +1,231 @@
+b'2016-09-19T17:23:48 * clown has quit
+2016-09-19T17:28:45 * clown joined the channel
+2016-09-19T17:32:57 * yzen has quit
+2016-09-19T17:51:05 * cindyli joined the channel
+2016-09-19T17:55:34 * alanharnum joined the channel
+2016-09-19T18:15:24 <Justin_o> Bosmon: so i\'m looking at patching the call to fluid.wrap that you pointed me to
+2016-09-19T18:15:28 <jhung> fluid-everyone: I came across this site which teaching programming. You can choose the language you want to use, and you\'re encouraged to do testing. https://www.codingame.com/
+2016-09-19T18:15:36 <Bosmon> Justin_o - cool
+2016-09-19T18:15:40 <jhung> it\'s similar to code.org, but for a slightly older audience
+2016-09-19T18:15:41 <Bosmon> Did you discover why the container had 0 length?
+2016-09-19T18:15:44 * yzen joined the channel
+2016-09-19T18:16:09 <Justin_o> Bosmon: it seems to be because of this https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Panels.js#L154
+2016-09-19T18:16:38 <Justin_o> i had missed the fact that the that.container was being reassigned, so it can\'t find an element because that.container.selector is undefined
+2016-09-19T18:16:51 <Justin_o> originally that.container is correct
+2016-09-19T18:16:55 <Justin_o> or has a value
+2016-09-19T18:17:58 * kavya joined the channel
+2016-09-19T18:18:16 <Bosmon> Justin_o ah ok, right
+2016-09-19T18:18:22 <Justin_o> Bosmon: so i\'m thinking that the selector could be 1) containerSpec.selector 2) containerSpec 3) id 4) classes or 5) element name
+2016-09-19T18:18:31 <Justin_o> but i don\'t think i can know the context
+2016-09-19T18:19:02 <Bosmon> Justin_o - well, you do know the context - since there is no context applied at this point
+2016-09-19T18:19:08 <Bosmon> So it has to be the ownerDocument
+2016-09-19T18:19:27 <Justin_o> Bosmon: but there could be if it resolved from IoC right?
+2016-09-19T18:19:49 <Bosmon> Justin_o - by "context", I mean the 2nd argument to $(selector, context)
+2016-09-19T18:20:37 <Justin_o> Bosmon: yes.. i guess what i mean is if we are using the class or element name as the selector the original context could have been supplied by a parent component
+2016-09-19T18:20:47 <Justin_o> but that may not be visible to us at this time
+2016-09-19T18:21:54 <Bosmon> Justin_o - certainly we can\'t guard against the risk of the user having sent in the jQuery object from the outside
+2016-09-19T18:22:08 <Justin_o> Bosmon: okay... yes that\'s what i was wondering
+2016-09-19T18:22:15 <Bosmon> But we can certainly tackle the immediate issue for any selectors which the framework resolves itself via fluid.wrap here
+2016-09-19T18:22:16 <Justin_o> so should a context be set at all?
+2016-09-19T18:22:38 <Bosmon> Well, it will be helpful to set the context to be the appropriate document object
+2016-09-19T18:23:19 <Justin_o> Bosmon: so the issue we had here was with the sub panels. these would be in the iframe
+2016-09-19T18:23:40 <Justin_o> is there a reference to that document that i can hook into?
+2016-09-19T18:23:59 <Justin_o> or will another argument be needed for fluid.container?
+2016-09-19T18:24:44 <Bosmon> Justin_o - of course not
+2016-09-19T18:24:51 <Bosmon> We can\'t change the signature of fluid.container
+2016-09-19T18:24:56 <Bosmon> It\'s invoked declaratively anyway
+2016-09-19T18:25:04 <Justin_o> Bosmon: thanks :) i was hoping that wouldn\'t be the case
+2016-09-19T18:25:08 <Bosmon> It already knows everything that is known anyway
+2016-09-19T18:25:12 <Bosmon> Which is not very much
+2016-09-19T18:26:59 <Justin_o> Bosmon: you mean to get the document from userJQuery?
+2016-09-19T18:27:27 <Bosmon> Justin_o - I think that\'s the only source, isn\'t it
+2016-09-19T18:27:39 <Bosmon> We would just assume it is "document" if there isn\'t one
+2016-09-19T18:27:52 <Justin_o> okay... thanks
+2016-09-19T18:28:05 <Justin_o> Bosmon: what did you think of my selector options listed above
+2016-09-19T18:28:06 <Justin_o> ?
+2016-09-19T18:29:30 <Bosmon> Justin_o - the selector is whatever string that gets supplied to fluid.wrap, if it is a string
+2016-09-19T18:31:08 <Justin_o> Bosmon: right, so don\'t handle the case where a jQuery element is passed in
+2016-09-19T18:31:24 <Justin_o> so i\'ll check for containerSpec.selector or containerSpec
+2016-09-19T18:31:26 <Justin_o> and that\'s all
+2016-09-19T18:43:27 * alanharnum joined the channel
+2016-09-19T18:49:18 * alanharnum has quit
+2016-09-19T18:51:30 * clown joined the channel
+2016-09-19T18:54:31 * stegru joined the channel
+2016-09-19T19:01:58 * alanharnum joined the channel
+2016-09-19T19:31:41 * simonjb has quit
+2016-09-19T20:27:04 * alanharnum joined the channel
+2016-09-19T21:04:20 * cindyli has quit
+2016-09-19T21:10:38 <gtirloni> does anyone know if we have a JIRA component/label for the APCP Pilot? I\'m not sure I\'m looking in the right places, but I can\'t find one
+2016-09-19T21:11:25 <gtirloni> i see "APCP Core 1" , "APCP Pre-Alpha".. I\'ve a feeling the pilot is named "APCP Core 2", is that it?
+2016-09-19T21:23:24 * alanharnum has quit
+2016-09-19T21:38:36 * yzen is now known as yzen_
+2016-09-19T21:42:11 <colinclark> gtirloni: I don\'t know exactly what Sandra has set up
+2016-09-19T21:42:31 <colinclark> I think Core 2 probably corresponds with the pilots, yes
+2016-09-19T21:43:21 <gtirloni> cool, thanks colin. i\'ll confirm that with sandra
+2016-09-19T21:43:45 * yzen_ has quit
+2016-09-19T21:45:20 * stegru has quit
+2016-09-19T21:50:10 <gtirloni> Sandra says "Pilot 1" is the release we\'re using
+2016-09-19T21:59:22 * danayo joined the channel
+2016-09-19T22:06:44 * danayo has quit
+2016-09-19T22:07:34 * danayo joined the channel
+2016-09-19T22:07:38 * danayo has quit
+2016-09-19T22:09:27 * danayo joined the channel
+2016-09-19T22:29:54 * colinclark has quit
+2016-09-19T22:35:10 * kavya has quit
+2016-09-19T22:41:13 * Justin_o has quit
+2016-09-19T23:10:38 * yzen joined the channel
+2016-09-19T23:16:03 * yzen has quit
+'
+
+b"2016-09-19T04:57:24 * the-t-in-rtf1 joined the channel
+2016-09-19T04:59:59 * the-t-in-rtf has quit
+2016-09-19T07:14:51 * the-t-in-rtf joined the channel
+2016-09-19T10:11:30 * lliskovoi joined the channel
+2016-09-19T10:33:21 * jhernandez joined the channel
+2016-09-19T11:34:17 * stegru joined the channel
+2016-09-19T11:49:48 * the-t-in-rtf has quit
+2016-09-19T11:50:09 * the-t-in-rtf joined the channel
+2016-09-19T12:13:27 * Justin_o joined the channel
+2016-09-19T12:23:38 * the-t-in-rtf1 joined the channel
+2016-09-19T12:25:39 * the-t-in-rtf has quit
+2016-09-19T12:33:57 * jhernandez has quit
+2016-09-19T12:34:26 * jhernandez joined the channel
+2016-09-19T12:35:52 * cindyli joined the channel
+2016-09-19T12:41:59 * jhung joined the channel
+2016-09-19T12:56:05 * stegru has quit
+2016-09-19T12:56:44 * simonjb joined the channel
+2016-09-19T12:58:43 * stegru joined the channel
+2016-09-19T12:59:56 * the-t-in-rtf joined the channel
+2016-09-19T13:00:26 <the-t-in-rtf> @Bosmon, @cindyli, @simonjb, @waharnum, I am opening my Vidyo room now.
+2016-09-19T13:00:41 * alanharnum joined the channel
+2016-09-19T13:00:46 <Bosmon> the-t-in-rtf - we have a meeting now?
+2016-09-19T13:00:50 <Bosmon> My calendar shows it at 3
+2016-09-19T13:01:34 <the-t-in-rtf> Yes, you just missed my announcement.
+2016-09-19T13:01:40 <the-t-in-rtf> It's in my Vidyo room.
+2016-09-19T13:02:46 * the-t-in-rtf1 has quit
+2016-09-19T13:04:20 <the-t-in-rtf> @bosmon ^^^
+2016-09-19T13:04:28 <Bosmon> the-t-in-rtf - yes - what is the meeting?
+2016-09-19T13:04:35 <the-t-in-rtf> OuchDB
+2016-09-19T13:04:51 <the-t-in-rtf> with the usual suspects.
+2016-09-19T13:04:58 <the-t-in-rtf> we have another a bit later which is a pairing session.
+2016-09-19T13:05:11 <the-t-in-rtf> Anyway, the usual suspects are in a room waiting for you, we can go on without you if needed.
+2016-09-19T13:06:14 <the-t-in-rtf> Sorry, just noticed is was the wrong account on the invite.
+2016-09-19T13:06:16 <the-t-in-rtf> I fixed that.
+2016-09-19T13:08:43 * danayo joined the channel
+2016-09-19T13:13:12 * alanharnum joined the channel
+2016-09-19T13:20:37 * yzen joined the channel
+2016-09-19T13:21:00 * alanharnum joined the channel
+2016-09-19T13:27:08 * kavya joined the channel
+2016-09-19T13:30:18 * gtirloni_ joined the channel
+2016-09-19T13:33:09 * gtirloni_ has quit
+2016-09-19T13:33:31 * gtirloni joined the channel
+2016-09-19T13:34:57 * yzen is now known as yzen_
+2016-09-19T13:39:28 * amatas joined the channel
+2016-09-19T13:39:53 * yzen_ has quit
+2016-09-19T13:43:00 * the-t-in-rtf has quit
+2016-09-19T13:48:04 * the-t-in-rtf joined the channel
+2016-09-19T13:51:13 * alanharnum has quit
+2016-09-19T13:57:23 * yzen joined the channel
+2016-09-19T14:24:06 * clown joined the channel
+2016-09-19T14:26:33 * colinclark joined the channel
+2016-09-19T14:29:11 * alanharnum joined the channel
+2016-09-19T14:35:37 * the-t-in-rtf1 joined the channel
+2016-09-19T14:36:18 * the-t-in-rtf has quit
+2016-09-19T14:46:25 * gtirloni_ joined the channel
+2016-09-19T15:18:51 * alanharn_ joined the channel
+2016-09-19T15:19:12 * colinclark_ joined the channel
+2016-09-19T15:19:16 * clown1 joined the channel
+2016-09-19T15:19:19 * cindyli1 joined the channel
+2016-09-19T15:20:53 * clown1 joined the channel
+2016-09-19T15:21:30 * colinclark_ is now known as colinclark
+2016-09-19T15:22:05 * cindyli has quit
+2016-09-19T15:26:43 * Yan_Hu joined the channel
+2016-09-19T15:30:04 * kavya has quit
+2016-09-19T15:30:29 * Yan_Hu has quit
+2016-09-19T15:31:13 * alanharn_ has quit
+2016-09-19T15:31:14 * Yan_Hu joined the channel
+2016-09-19T15:33:51 * Yan_Hu1 joined the channel
+2016-09-19T15:35:11 <jhung> fluid-everyone: anyone coming to stand-up? :)
+2016-09-19T15:35:59 * Yan_Hu has quit
+2016-09-19T15:37:09 * the-t-in-rtf1 has quit
+2016-09-19T15:49:23 * alanharnum joined the channel
+2016-09-19T15:51:16 <Justin_o> jhung: we did standup, but no one came
+2016-09-19T15:51:23 <Justin_o> i wonder if we were in the wrong room
+2016-09-19T15:51:49 <jhung> whoa that's so strange. Dana and I are in Fluid_standup now.
+2016-09-19T15:52:09 <jhung> ^Justin_o
+2016-09-19T15:52:20 <Justin_o> strange, don't know what happened there
+2016-09-19T15:55:19 <danayo> you must have been in another dimension Justin_o
+2016-09-19T15:57:26 <Justin_o> danayo: scary.. we'll try to converge on a single dimension for the Floe meeting
+2016-09-19T15:57:40 * cindyli joined the channel
+2016-09-19T15:57:43 <alanharnum> Did we maybe not successfully connect the standup room to Fluid_standup this morning?
+2016-09-19T15:59:15 <danayo> maybe not alanharnum - jhung and I were in fluid_standup room
+2016-09-19T15:59:44 <alanharnum> danayo: sorry - I mean we may not have connected the (physical) standup room to the Fluid_standup Vidyo room
+2016-09-19T15:59:45 * the-t-in-rtf joined the channel
+2016-09-19T16:00:22 <alanharnum> so you and jhung were in the Vidyo room, and we were in the collaboration room talking into microphones to ourselves
+2016-09-19T16:00:32 <danayo> right
+2016-09-19T16:01:33 <danayo> we figured something must be up
+2016-09-19T16:01:51 <jhung> alanharnum: so it's probably not a system error\xe2\x80\xa6 just a simple snubbing of people who are remote. I get it. *sniff*
+2016-09-19T16:02:25 <danayo> :(
+2016-09-19T16:13:55 * simonjb joined the channel
+2016-09-19T16:34:15 * simonjb has quit
+2016-09-19T16:39:12 * alanharn_ joined the channel
+2016-09-19T16:44:54 <Justin_o> Bosmon: is there a way to get the original selector used during component creation?
+2016-09-19T16:45:07 <Justin_o> for a view or renderer component
+2016-09-19T16:45:25 <Bosmon> Justin_o - well there is, yes
+2016-09-19T16:45:35 <Bosmon> But the scheme isn't enormously reliable
+2016-09-19T16:45:40 <Justin_o> oh
+2016-09-19T16:45:42 <Bosmon> There's a reason that jQuery withdrew this facility : P
+2016-09-19T16:45:49 <Justin_o> :)
+2016-09-19T16:45:51 <Bosmon> You need to know both the selector and its scope
+2016-09-19T16:46:02 <Bosmon> We did actually restore this feature in our own codebase
+2016-09-19T16:46:24 <Bosmon> What is your use case?
+2016-09-19T16:46:57 <Justin_o> Bosmon: we did?
+2016-09-19T16:47:11 <Bosmon> Justin_o - yes, long ago
+2016-09-19T16:47:16 <Bosmon> Actually we do store the context too
+2016-09-19T16:47:16 <Justin_o> Bosmon: looking at upgrading jQuery and this is now throwing an error. https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Panels.js#L154
+2016-09-19T16:47:16 <Bosmon> https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/FluidView.js#L170
+2016-09-19T16:47:21 <Justin_o> at least it seems to be
+2016-09-19T16:47:29 <Bosmon> So the scheme should be relatively reliable
+2016-09-19T16:47:48 <Bosmon> Justin_o - ok, exactly
+2016-09-19T16:47:56 <Bosmon> This line appears to be relying precisely on this functionality
+2016-09-19T16:48:24 <Bosmon> This code was always going to be a weak point
+2016-09-19T16:48:41 <Bosmon> However, I can't see any clear reason for it to break
+2016-09-19T16:49:11 <Bosmon> Ah, I guess it could break if the container is initialised from a jQuery which didn't come from a DOM binder
+2016-09-19T16:49:57 <Bosmon> https://api.jquery.com/selector/
+2016-09-19T16:49:59 <Bosmon> Ah, here we go
+2016-09-19T16:50:05 <Bosmon> You weren't testing with jQuery 3.0 by any chance.......
+2016-09-19T16:50:20 <Justin_o> Bosmon: yes, 3.0
+2016-09-19T16:50:22 <Bosmon> Right
+2016-09-19T16:50:26 <Bosmon> Well the problem is clear in that case
+2016-09-19T16:50:36 <Bosmon> It was deprecated long ago but not removed until now
+2016-09-19T16:50:55 <Justin_o> actually 3.1 but same problem
+2016-09-19T16:51:50 <Justin_o> so i'm not actually sure where the selector is coming from.. i would have assumed it had been processed through the domBinder because it was for a subPanel
+2016-09-19T16:51:56 <Bosmon> Yes
+2016-09-19T16:52:05 <Bosmon> Well, see if you can trace it through
+2016-09-19T16:52:40 <Bosmon> Once it gets into the system, the code I referenced within the DOM binder should carry on cascading the necessary properties
+2016-09-19T16:53:00 * yzen has quit
+2016-09-19T16:53:21 <Bosmon> I guess it's possible that someone might have an IoC-resolved selector which happens not to be bound to a DOM-binder element
+2016-09-19T16:53:28 <Bosmon> Simply a global one, for example
+2016-09-19T16:53:34 <Bosmon> Which looks like what this code is depending on
+2016-09-19T16:53:48 * yzen joined the channel
+2016-09-19T16:54:03 <Bosmon> Since I see that it ignores the possibility that the selector was run in a context other than the top-level document
+2016-09-19T16:54:44 <Justin_o> Bosmon: perhaps it's actually a different issue.
+2016-09-19T16:54:55 <Justin_o> so the error occurs when i try to open the sliding panel
+2016-09-19T16:55:01 <Bosmon> If this is the case, my suggestion is that we will need to patch the fluid.wrap call on this site: https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/FluidView.js#L105
+2016-09-19T16:55:08 <Justin_o> and that.container had length === 0
+2016-09-19T16:55:21 <Bosmon> Since this is the other route by which a raw selector might get turned into a container
+2016-09-19T16:55:25 <Bosmon> Justin_o - sure
+2016-09-19T16:55:31 <Bosmon> It's quite possible we have two problems at once : P
+2016-09-19T16:58:29 <Justin_o> Bosmon: could be... i'll try to see why it's not getting a container first.. and then look into patching fluid.wrap if needed...
+2016-09-19T16:58:48 <Bosmon> Justin_o - awesome - good luck :)
+2016-09-19T17:02:49 <Justin_o> Bosmon: thanks
+2016-09-19T17:03:03 * simonjb joined the channel
+2016-09-19T17:03:05 <Justin_o> fluid-everyone: floe planning meeting
+2016-09-19T17:03:18 <simonjb> hi colinclark and Bosmon
+2016-09-19T17:03:36 <colinclark> it's simonjb!
+2016-09-19T17:04:06 <simonjb> I've just unlocked my vidyo room, shall we meet there?
+2016-09-19T17:04:43 <colinclark> sure!
+2016-09-19T17:05:20 * alanharn_ has quit
+2016-09-19T17:10:00 * stegru has quit
+"
+

@@ -1,0 +1,469 @@
+b'2014-07-22T21:13:57 * jhernandez has quit
+2014-07-22T21:20:12 * colinclark has quit
+2014-07-22T21:21:35 * danaayotte_ joined the channel
+2014-07-22T21:26:02 * jhernandez joined the channel
+2014-07-22T21:58:41 * simonjb has quit
+2014-07-22T22:05:54 * Justin_o has quit
+2014-07-22T22:16:16 * avtar has quit
+2014-07-22T22:19:17 * danaayotte_ has quit
+2014-07-22T22:36:55 * vjoanna has quit
+2014-07-22T22:38:10 * yzen joined the channel
+2014-07-22T22:48:26 * yzen has quit
+'
+
+b'2014-07-22T18:34:06 <Bosmon> cindyli - here is one in the core - https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Panels.js#L803
+2014-07-22T18:35:43 <cindyli> well, isn\'t it same with what we currently have with rendering "flashing" - https://github.com/cindyli/metadata/blob/FLOE-171/src/js/videoPanel.js#L79-L90
+2014-07-22T18:36:04 <Bosmon> urgh
+2014-07-22T18:36:21 <Bosmon> sorry
+2014-07-22T18:36:26 <cindyli> 8o|
+2014-07-22T18:36:28 <Bosmon> I should have looked at the code we were working on first : P
+2014-07-22T18:36:29 <cindyli> haha
+2014-07-22T18:36:48 <Bosmon> Well ok
+2014-07-22T18:36:54 <Bosmon> So all you need to write is fluid.transforms.filter : P
+2014-07-22T18:37:03 <Bosmon> Sorry to have wasted so much time
+2014-07-22T18:37:52 <cindyli> not at all, but the model structure accepted by this rendering is, flashing: "flashing",
+2014-07-22T18:37:54 <cindyli> or
+2014-07-22T18:37:59 <cindyli> flashing: "noflashing"
+2014-07-22T18:38:00 <cindyli> or
+2014-07-22T18:38:04 <cindyli> flashing: "unknown"
+2014-07-22T18:38:27 <cindyli> doesn\'t match with the result from the filter
+2014-07-22T18:38:50 <Bosmon> Well, all we need to do is upgrade its value to an array
+2014-07-22T18:39:03 <cindyli> oh
+2014-07-22T18:39:07 <cindyli> ok
+2014-07-22T18:39:18 <Bosmon> That is, the values on the LHS are ["flashing"], ["noFlashingHazard"] and []
+2014-07-22T18:39:34 <Bosmon> Whereas the ones on the RHS are ["flashing"], ["noFlashingHazard"] and ["unknown"]
+2014-07-22T18:40:11 <cindyli> so the line 88 - https://github.com/cindyli/metadata/blob/FLOE-171/src/js/videoPanel.js#L88
+2014-07-22T18:40:34 <cindyli> will be "${flashing}.0"?
+2014-07-22T18:40:47 <Bosmon> It shouldn\'t matter
+2014-07-22T18:40:49 <cindyli> let me try
+2014-07-22T18:40:52 <cindyli> oh, really
+2014-07-22T18:40:56 <cindyli> ok, trying..
+2014-07-22T18:43:58 <Bosmon> This method isn\'t really future-proof either
+2014-07-22T18:44:05 <Bosmon> Since there is no way to generalise it to other values
+2014-07-22T18:44:11 <Bosmon> But it should at least be quick
+2014-07-22T18:46:17 * clown joined the channel
+2014-07-22T18:46:37 <Bosmon> That is, quick, and not massively less readable than a lot of the other stuff we have around
+2014-07-22T18:46:49 * clown is now known as clown_mtg
+2014-07-22T18:50:30 <cindyli> Bosmon: i tried with giving an array value to "flashing" in the target model for videoPanel, having line 88 with ${flashing} or ${flashing}.0. but no matter what, the model change triggered by making a different choice on UI gives a string value rather than an array
+2014-07-22T18:51:34 <cindyli> i can add another transformation to convert the string into an array
+2014-07-22T18:52:12 <cindyli> we should already have that tranform. what do you think, Bosmon?
+2014-07-22T18:53:25 <Bosmon> cindyli did you try ${flashing.0} ?
+2014-07-22T18:53:34 <cindyli> no, trying
+2014-07-22T18:54:15 <cindyli> Bosmon: js error -
+2014-07-22T18:54:15 <cindyli> TypeError: 0 is read-only
+2014-07-22T18:54:24 <Bosmon> !!!!
+2014-07-22T18:54:36 <Bosmon> ok well
+2014-07-22T18:54:52 <Bosmon> If the model is of the wrong type to start with, it isn\'t going to fix it up
+2014-07-22T18:55:00 <Bosmon> How is the "flashing" value initialised?
+2014-07-22T18:56:04 <cindyli> with {"flashing": "unknown"}
+2014-07-22T18:56:19 <Bosmon> cindyli - you need to standardise on the value being an array
+2014-07-22T18:56:33 <cindyli> same error with unit tests
+2014-07-22T18:57:03 <cindyli> ah, better with unit tests
+2014-07-22T18:57:28 <cindyli> less failure
+2014-07-22T18:58:08 <cindyli> right, the renderer is responding with array values
+2014-07-22T18:58:17 <cindyli> that\'s nice
+2014-07-22T18:59:41 <cindyli> cool. working. fixed unit tests. Bosmon, always, you are my hero!!
+2014-07-22T18:59:59 <cindyli> now we only need one layer of transformation. on my way\xe2\x80\xa6
+2014-07-22T19:00:01 <Bosmon> After a heroic wasting of about 3 hours of your time : P
+2014-07-22T19:00:43 <cindyli> no, very helpful
+2014-07-22T19:14:04 <cindyli> filter
+2014-07-22T19:16:27 * vjoanna joined the channel
+2014-07-22T19:31:53 <Bosmon> cindyli - I have raised this for ... KASPARNETT
+2014-07-22T19:31:53 <Bosmon> http://issues.fluidproject.org/browse/FLUID-5478
+2014-07-22T19:32:32 <cindyli> nice. thanks, Bosmon
+2014-07-22T19:34:11 * vjoanna has quit
+2014-07-22T19:39:21 * the-t-in-rtf joined the channel
+2014-07-22T19:45:05 * vjoanna joined the channel
+2014-07-22T19:45:38 <cindyli> Bosmon: regarding the options for "fluid.transform.filter", i\'m thinking 1. valuesToLookup, an array with all values to lookup in the input object or array
+2014-07-22T19:46:20 <cindyli> 2. notFoundDefault: optional, the value to output if none of values defined in option 1. is found
+2014-07-22T19:46:36 <cindyli> that\'s all. what do you think, Bosmon? suggestions on names
+2014-07-22T19:47:32 <Bosmon> cindyli - standard name for the input of a transform is "input"
+2014-07-22T19:47:33 <Bosmon> http://issues.fluidproject.org/browse/FLUID-5294
+2014-07-22T19:47:47 <Bosmon> And I would call the value to be filtered out something like "exclude" or "remove"
+2014-07-22T19:48:16 <Bosmon> There shouldn\'t be a notFoundDefault because then you couldn\'t correctly register fluid.identity as a valid inverse
+2014-07-22T19:49:39 <cindyli> exclude? i thought it\'s to include for the target
+2014-07-22T19:50:27 <cindyli> example, if input value is {hazard: ["flashing", "anotherHazard"]}
+2014-07-22T19:50:45 <cindyli> the output we want is anotherKey: ["flashing"]
+2014-07-22T19:51:01 <cindyli> {anotherKey: ["flashing"]}, an object
+2014-07-22T19:51:46 <cindyli> isn\'t "fluid.transform.filter" to filter out what you need?
+2014-07-22T19:53:27 <cindyli> Bosmon: in our case, the values to filter out is "flashing" and "noflashing", in the case both of them are not found, output "unknown". is that correct?
+2014-07-22T19:53:36 * clown_mtg has quit
+2014-07-22T19:54:04 <Bosmon> cindyli - no, the other way round
+2014-07-22T19:54:11 <Bosmon> The values to filter out are those which are "unknown"
+2014-07-22T19:54:30 <Bosmon> To leave an empty array at the left if the UI tries to propagate one
+2014-07-22T19:54:58 <cindyli> in that case, we will need to know all other values we don\'t care about
+2014-07-22T19:55:33 <Bosmon> cindyli - no, all other values will be left untouched
+2014-07-22T19:55:40 <Bosmon> Only the value "unknown" will be filtered out
+2014-07-22T19:56:22 <cindyli> "unknown" does not exist in the source array
+2014-07-22T19:57:09 <cindyli> i\'m confused
+2014-07-22T19:57:22 <Bosmon> cindyli - the transform operates in the other direction
+2014-07-22T19:57:26 <Bosmon> From the UI end onto the source
+2014-07-22T19:57:34 <cindyli> ah
+2014-07-22T19:57:37 <Bosmon> From the source going towards the UI it just acts as its inverse, fluid.identity
+2014-07-22T19:57:40 <cindyli> oh, now it makes sense
+2014-07-22T19:58:22 <cindyli> so, the value needs to be filtered is actually "unknown"
+2014-07-22T19:58:48 <cindyli> if "unknown", no output, otherwise, add onto the target
+2014-07-22T20:00:46 <Bosmon> cindyli - for this task you can use the helpful framework utility fluid.remove_if : P
+2014-07-22T20:01:06 <cindyli> Bosmon: if that\'s the case, would it be a problem from source to target? using fluid.identity would copy whatever on the source to target
+2014-07-22T20:01:32 <cindyli> it means the not-needed-values would be on the target too
+2014-07-22T20:01:53 <Bosmon> cindyli - there are no not-needed-values in the other direction
+2014-07-22T20:02:11 <Bosmon> fluid.identity is what we might call a "LEFT INVERSE" for the transform
+2014-07-22T20:03:08 <Bosmon> I\'m sorry that although I can refer you to Wikipedia, what it says is not really very helpful :(
+2014-07-22T20:03:09 <Bosmon> https://en.wikipedia.org/wiki/Inverse_function#Left_and_right_inverses
+2014-07-22T20:05:13 <cindyli> this "LEFT INVERSE" is from central model to UI. the central accessibilityHazard array could contain more than flashing information. it could be, accessibilityHazard: ["flashing", "sound", "color"]
+2014-07-22T20:05:22 <Bosmon> Yes
+2014-07-22T20:05:34 <Bosmon> And so that transfers this model unchanged into the UI
+2014-07-22T20:06:17 <Bosmon> All we require is that the value we choose as "unknown" is not one of the valid values in the set from the central model
+2014-07-22T20:06:21 <Bosmon> Which is easy to arrange
+2014-07-22T20:07:10 <Bosmon> In that case, the inverse acts correctly on the set of valid values - in that they can be transferred from the central model, into the UI, and back again, without loss
+2014-07-22T20:07:42 <cindyli> the model required by UI renderer should only have "flashing" value, right?
+2014-07-22T20:08:02 <cindyli> like {flashing: ["flashing"]}
+2014-07-22T20:08:03 <Bosmon> Right now I believe it accepts either "flashing" or "noFlashingHazard", right?
+2014-07-22T20:08:09 <cindyli> yes
+2014-07-22T20:08:13 <cindyli> and unknow
+2014-07-22T20:08:16 <Bosmon> Yes
+2014-07-22T20:08:39 <cindyli> but our transformation result is {flashing: ["flashing", "sound", "color"]}
+2014-07-22T20:09:29 * the-t-in-rtf has quit
+2014-07-22T20:09:46 <Bosmon> Ok
+2014-07-22T20:10:00 * the-t-in-rtf joined the channel
+2014-07-22T20:10:07 <Bosmon> I had assumed that we were only required to read metadata that we had written ourselves
+2014-07-22T20:10:20 <Bosmon> But that\'s probably not realistic
+2014-07-22T20:22:42 <Bosmon> cindyli - btw, where did "color" come from as a possible value
+2014-07-22T20:22:49 <Bosmon> I don\'t see it at schema.org or in our wiki
+2014-07-22T20:23:10 <cindyli> i made that up, Bosmon, just wanna give a more-than-one example
+2014-07-22T20:23:15 <Bosmon> oh ok
+2014-07-22T20:23:15 <cindyli> ;)
+2014-07-22T20:23:46 <Bosmon> I am just writing up a pirate pad since we have got CONFUSED ENOUGH
+2014-07-22T20:23:57 <Bosmon> http://piratepad.net/z3bOTCiHnJ
+2014-07-22T20:24:47 <cindyli> thanks, this certainly will be useful
+2014-07-22T20:25:57 <cindyli> Bosmon: i like your word "all kind of junk" :-D
+2014-07-22T20:28:57 * jhung has quit
+2014-07-22T20:29:28 * anvk has quit
+2014-07-22T20:31:41 <Bosmon> ok, cindyli - I\'ve written a kind of "problem skeleton" in there
+2014-07-22T20:31:55 <cindyli> yes, saw it
+2014-07-22T20:32:05 <Bosmon> Now, it may be time for YOU to bash your head against the wall, but my thoughts are currently inclining back towards the use of valueMapper again : P
+2014-07-22T20:34:36 * jessm has quit
+2014-07-22T20:39:25 <Bosmon> cindyli - perhaps we should have a call : P
+2014-07-22T20:39:37 <cindyli> sure
+2014-07-22T20:40:25 <cindyli> i\'m on skype. call me whenever you want, Bosmon, you seem busy typing
+2014-07-22T20:42:17 * clown joined the channel
+2014-07-22T20:42:32 <Bosmon> Ok cindyli - let me just get a coffee
+2014-07-22T20:42:37 <Bosmon> And write down enough to think about : P
+2014-07-22T20:43:21 <cindyli> sure
+2014-07-22T20:46:09 <cindyli> Bosmon: do you need me to be here? if not, i\'m heading out
+2014-07-22T20:46:25 <Bosmon> Ok let me give you a call now
+2014-07-22T20:46:37 <cindyli> nvm, i can wait, Bosmon
+2014-07-22T20:55:11 * cindyli has quit
+2014-07-22T20:57:22 <Bosmon> Damn
+2014-07-22T20:57:30 <Bosmon> She left, just as I came up with a gimmick : P
+2014-07-22T20:57:43 * the-t-in-rtf has quit
+2014-07-22T20:58:41 * clown has left the channel
+2014-07-22T21:05:22 * colinclark joined the channel
+2014-07-22T21:07:23 * yzen has quit
+2014-07-22T21:09:32 * danaayotte_ has quit
+'
+
+b'2014-07-22T14:28:34 * Bosmon2 is now known as Bosmon
+2014-07-22T14:29:52 <Bosmon> OK THEN
+2014-07-22T14:30:06 <Bosmon> The next simplest possibility is to define a very simple transform, fluid.transforms.filter
+2014-07-22T14:30:28 <Bosmon> Which accepts an array or object, and filters out any value which matches a given one
+2014-07-22T14:30:35 <Bosmon> And we register its inverse as fluid.identity
+2014-07-22T14:31:22 <Bosmon> We then do have 3 models as before, but the "transit" model contains an array which may have spurious elements whose value is "unknown"
+2014-07-22T14:31:48 <cindyli> ok, i see
+2014-07-22T14:32:00 <Bosmon> fluid.transforms.filter will be of general utility in any case
+2014-07-22T14:32:11 <Bosmon> So you get to write an implementation and some test cases for it :)
+2014-07-22T14:32:47 <Bosmon> And at least its inverse is very simple
+2014-07-22T14:32:48 <cindyli> yes i can, one more question, if we use fluid.identity for inversion, what would happen to inverse "unknown"
+2014-07-22T14:33:15 <cindyli> sounds like unknown will sleak into the source model
+2014-07-22T14:33:27 <Bosmon> Well, if this were inserted into a model relay setup, the value would disappear after one cycle
+2014-07-22T14:33:49 <Bosmon> The value would be pushed to the right as "unknown" - it would then be propagated backwards as [], and then the update would propagate to the right also as []
+2014-07-22T14:34:11 <cindyli> ok, great. i will give a try. thanks, Bosmon
+2014-07-22T14:34:24 <Bosmon> So I think this is another situation where the framework will "generally do the right thing automatically"
+2014-07-22T14:34:37 <Bosmon> Even though properly, supplying a source array with a value "unknown" would be an error
+2014-07-22T14:35:36 <cindyli> fortunately, we avoid that error ;)
+2014-07-22T14:35:45 <cindyli> finger crossing\xe2\x80\xa6
+2014-07-22T14:58:29 * danaayotte joined the channel
+2014-07-22T15:13:14 * slim_ joined the channel
+2014-07-22T15:19:56 * jhung_away is now known as jhung
+2014-07-22T15:36:53 * vjoanna has quit
+2014-07-22T15:38:27 * vjoanna joined the channel
+2014-07-22T15:42:41 * colinclark has quit
+2014-07-22T15:44:01 * vjoanna has quit
+2014-07-22T15:44:23 * vjoanna joined the channel
+2014-07-22T15:57:23 * michelled has quit
+2014-07-22T16:12:26 * vjoanna has quit
+2014-07-22T16:12:55 * danaayotte has quit
+2014-07-22T16:14:07 * vjoanna joined the channel
+2014-07-22T16:14:50 * the-t-in-rtf joined the channel
+2014-07-22T16:19:57 * the-t-in-rtf has quit
+2014-07-22T16:28:58 <Bosmon> Hi there cindyli
+2014-07-22T16:29:00 <Bosmon> How is it going?
+2014-07-22T16:30:46 * vjoanna has quit
+2014-07-22T16:35:38 <cindyli> hi, Bosmon, i\'m working on LFOE-194 at this moment, which i think won\'t take much time. ;) apparently, not as little time as i thought
+2014-07-22T16:37:03 <Bosmon> cool
+2014-07-22T16:40:35 * slim_ has quit
+2014-07-22T16:47:04 * jhung has quit
+2014-07-22T17:08:45 <cindyli> Bosmon: is there a easy way to render 3 radio buttons based on 3 boolean values? radio button set usually based on one selection. or another internal model transformation is needed internally for the target component?
+2014-07-22T17:13:29 <Bosmon> Hi cindyli - with the renderer we have, it will naturally render based on the booleans
+2014-07-22T17:13:45 <Bosmon> I assume this is what you are doing at the moment
+2014-07-22T17:14:50 <cindyli> what? checkboxes are rendered based on individual booleans but radio buttons are based on one boolean
+2014-07-22T17:15:10 <cindyli> wrong? puzzled..
+2014-07-22T17:16:12 <cindyli> Bosmon: https://github.com/cindyli/metadata/blob/FLOE-171/src/js/videoPanel.js#L88
+2014-07-22T17:17:04 <cindyli> well, not based on "one boolean", should be one model key with different values.
+2014-07-22T17:17:19 <cindyli> one value at a time
+2014-07-22T17:17:19 <Bosmon> ah, ok
+2014-07-22T17:17:28 <Bosmon> Actually both methods are possible
+2014-07-22T17:17:46 <Bosmon> I had forgotten we supported rendering radio buttons backed by a single value
+2014-07-22T17:18:38 <cindyli> good to forget about the old implementation at doing a new one ;)
+2014-07-22T17:19:11 * danaayotte_ joined the channel
+2014-07-22T17:20:02 <Bosmon> Well, this is sort of annoying
+2014-07-22T17:22:48 <Bosmon> So we can take two routes here - i) if we continue to bind the radio buttons against a single value, we have the issue of potentially polluting your filter by getting it to upgrade single values to an array - or else adding another stage of transformation
+2014-07-22T17:23:50 <Bosmon> or ii) if you bind the radio buttons against an array of boolean, we get the potential benefits that the component is easier to expand should we want to add in some more of the "accessibilityHazard" values later - as well as retaining only 2 transforms in total
+2014-07-22T17:24:19 <Bosmon> But the down side to ii) is that you have to descend more into forgotten horrors of the OLD RENDERER.... I\'m not sure if you remember our "selection to inputs expander" ..............
+2014-07-22T17:24:23 * avtar joined the channel
+2014-07-22T17:24:57 <Bosmon> http://wiki.fluidproject.org/display/docs/Renderer+Component+Tree+Expanders
+2014-07-22T17:25:35 <Bosmon> wow
+2014-07-22T17:25:41 <Bosmon> Amazingly this docs page got converted
+2014-07-22T17:25:42 <Bosmon> https://github.com/fluid-project/infusion-docs/blob/master/RendererComponentTreeExpanders.md
+2014-07-22T17:26:02 <Bosmon> By that intrepid Justin_o, it looks like : P
+2014-07-22T17:29:24 * jhung joined the channel
+2014-07-22T17:37:33 <cindyli> i\'m back, Bosmon. i wish there\'s more examples about "selection to inputs" on this docs page.
+2014-07-22T17:37:54 <cindyli> will see if i can find some examples in infusion code
+2014-07-22T17:47:08 * colinclark joined the channel
+2014-07-22T17:47:35 * colinclark has quit
+2014-07-22T17:47:45 * the-t-in-rtf joined the channel
+2014-07-22T17:52:38 <Bosmon> cindyli - there\'s one in the rendererDemo.js file, although it uses the expansion manually rather than using the protoComponent expander
+2014-07-22T17:53:17 <cindyli> ok
+2014-07-22T17:54:25 <Bosmon> I don\'t seem to find any examples in CSpace either :)
+2014-07-22T17:54:34 <Bosmon> Which is odd, since I thought there should be some...
+2014-07-22T17:56:19 <cindyli> Bosmon: how does this look like - https://github.com/fluid-project/infusion/blob/master/tests/framework-tests/renderer/js/RendererUtilitiesTests.js#L1157-L1188
+2014-07-22T17:57:23 <Bosmon> cindyli - oh yes, that is it
+2014-07-22T17:57:28 <Bosmon> I was searching for the wrong string somehow
+2014-07-22T17:57:42 <Bosmon> I guess the protocomponent expander has a slightly different name than the raw function
+2014-07-22T17:59:48 * the-t-in-rtf has quit
+2014-07-22T18:05:50 <Bosmon> Disappointingly, it seems that one utility is not even implemented in terms of the other
+2014-07-22T18:05:56 <Bosmon> Oh how badly the renderer needs to burn!
+2014-07-22T18:06:31 <cindyli> Bosmon: looks like the model value accepted by the renderer is like - "flashing": [true, false, false]
+2014-07-22T18:06:46 <cindyli> those 3 positions are for "flashing", "noflashing" and "unknown"
+2014-07-22T18:07:01 * the-t-in-rtf joined the channel
+2014-07-22T18:07:06 <Bosmon> cindyli - yes
+2014-07-22T18:07:12 <cindyli> but our transformation result is like: {flashing: true, noflashing: false, unknown: false}
+2014-07-22T18:08:10 <cindyli> another layer of transformation? or there\'s another way for the 2nd transform?
+2014-07-22T18:11:09 <cindyli> banging your head on the wall again, Bosmon? :-P
+2014-07-22T18:11:32 <Bosmon> cindyli - that is a poor method of THINKING : P
+2014-07-22T18:11:52 <cindyli> what\'s the rich way?
+2014-07-22T18:12:08 <cindyli> :)
+2014-07-22T18:13:09 <Bosmon> We really need to better organise these transforms that we have
+2014-07-22T18:13:21 <cindyli> totally agree
+2014-07-22T18:13:35 <Bosmon> I\'m glad I at least got KASPARNET to give "arrayToSetMembership" a better name
+2014-07-22T18:13:42 <Bosmon> But really "arrayToObject" has a dreadful name
+2014-07-22T18:13:59 <Bosmon> And as far as I can see it does something quite peculiar
+2014-07-22T18:14:31 <Bosmon> "Take an array of objects and extract a named member from those objects to form a key in a hash"
+2014-07-22T18:17:27 <Bosmon> Whatever it does is of even less help than the transform we are using
+2014-07-22T18:17:43 <Bosmon> Ok well
+2014-07-22T18:18:07 <Bosmon> I\'m sorry, but there is no recourse for it - you\'ll have to write the transform that is missing
+2014-07-22T18:18:12 <Bosmon> "arrayToBooleanHash" or some such
+2014-07-22T18:18:52 <cindyli> Bosmon: i\'ve written "fluid.metadata.transforms.condition" :)
+2014-07-22T18:18:52 <Bosmon> no
+2014-07-22T18:18:59 <Bosmon> not booleanHash
+2014-07-22T18:19:17 <cindyli> booleanArray
+2014-07-22T18:19:18 <Bosmon> cindyli ok, but noone will be able to read the transforms which have been written with that one : P
+2014-07-22T18:19:32 <clown> hi jhernandez.
+2014-07-22T18:19:55 <cindyli> you and i can, Bosmon haha
+2014-07-22T18:19:59 <Bosmon> The work on fluid.metadata.transforms.condition is good
+2014-07-22T18:20:06 <Bosmon> But the use of it for this application is not
+2014-07-22T18:20:13 <clown> jhernandez:  if you\'re there, I fixed a few of the nodepackagekit unit tests so that they don\'t depend on shaky initial conditions.
+2014-07-22T18:20:22 <Bosmon> cindyli - I can\'t read those transforms
+2014-07-22T18:20:28 <cindyli> haha
+2014-07-22T18:20:28 <Bosmon> So I guess that only leaves one person : P
+2014-07-22T18:20:31 <clown> and, it\'s part of that pull request I made last week.
+2014-07-22T18:20:54 <cindyli> ok, if u cannot, Bosmon, let\'s write another one
+2014-07-22T18:21:37 <Bosmon> Ok, I guess it should be called something like "choiceToBooleanArray"
+2014-07-22T18:22:11 <Bosmon> Since it accepts one or more values, an array of choices that they are taken from, and produces an array of booleans indicating whether the choice was made
+2014-07-22T18:22:25 <Bosmon> cindyli - the good thing about this transform is that it is an essential part of the NEW RENDERER : P
+2014-07-22T18:22:37 <cindyli> sounds cool
+2014-07-22T18:22:41 <Bosmon> Since the new renderer will be operated purely by transforms rather than bizarre bits of machinery which mangle component trees
+2014-07-22T18:22:42 <cindyli> framework code
+2014-07-22T18:22:45 <Bosmon> yes
+2014-07-22T18:23:09 <cindyli> ok, giving a try
+2014-07-22T18:23:19 <Bosmon> This will be the single utility which eliminates those two strange renderer utilities we found
+2014-07-22T18:23:28 <Bosmon> Although for the time being you will still need to use one of them
+2014-07-22T18:23:44 <Bosmon> It\'s a bit of a downer that we/I thought we had this transform already
+2014-07-22T18:23:55 <Bosmon> Given the large number of general "array to boolean" converters that are littering the place
+2014-07-22T18:24:02 <Bosmon> But it seems none of them do this particular job
+2014-07-22T18:24:19 <Bosmon> In the meantime I\'ll issue a JIRA for renaming "arrayToObject"
+2014-07-22T18:24:55 <cindyli> and "objectToArray"?
+2014-07-22T18:25:01 <cindyli> for inversion
+2014-07-22T18:26:28 <Bosmon> Yes
+2014-07-22T18:26:31 <Bosmon> Both of those are bad names
+2014-07-22T18:27:12 <Bosmon> Well ok, just a second cindyli - given that this protocomponent expander exists already, we could of course just use it
+2014-07-22T18:27:56 <Bosmon> I think what the situation is, is that we can solve the problem with 3 models, + the choiceToBooleanArray transform, + the repetition expander
+2014-07-22T18:28:39 <cindyli> right. that\'s the plan. you can get rid of one element?
+2014-07-22T18:28:41 <Bosmon> Or we can solve the problem with 2 models, and just the selection.inputs expander
+2014-07-22T18:28:49 <cindyli> ha
+2014-07-22T18:29:10 <cindyli> have selection.inputs expander work with input model like {flashing: true, noflashing: false, unknown: false}
+2014-07-22T18:29:26 <Bosmon> no, not that one - it will work with an input model that is an array
+2014-07-22T18:29:30 <cindyli> ok
+2014-07-22T18:29:40 <Bosmon> It\'s a question of how we want to organise our work...
+2014-07-22T18:30:01 * the-t-in-rtf has quit
+2014-07-22T18:30:48 <Bosmon> The issue with using the inputs expander is that it puts a vital piece of configuration out of our reach - since it will need to accept an option which consists of {optionlist: ["flashing", "noFlashingHazard", unknown"]}
+2014-07-22T18:31:25 <Bosmon> In theory it offers a much quicker route to getting a working component, at the cost of investing some more in techniques which we plan to eliminate
+2014-07-22T18:32:20 <Bosmon> cindyli - wow, I find actually you have used this expander before : P
+2014-07-22T18:32:39 <Bosmon> I find an example in the magnifier panels for the preference editor....
+2014-07-22T18:32:59 <Bosmon> In this case this counts an "established technique" so I suggest we should just use it
+2014-07-22T18:33:01 <cindyli> whoa, you are really searching across
+2014-07-22T18:33:48 * clown has quit
+'
+
+b'2014-07-22T00:28:22 * jhernandez has quit
+2014-07-22T00:31:25 * jhernandez joined the channel
+2014-07-22T00:47:42 * jhernandez has quit
+2014-07-22T03:50:55 * yzen joined the channel
+2014-07-22T03:55:17 * yzen has quit
+2014-07-22T06:26:32 * jhernandez joined the channel
+2014-07-22T06:50:49 * yzen joined the channel
+2014-07-22T06:53:33 * jhernandez has quit
+2014-07-22T06:57:08 * yzen has quit
+2014-07-22T09:05:52 * jhernandez joined the channel
+2014-07-22T09:22:45 * slim_ joined the channel
+2014-07-22T10:54:19 * yzen joined the channel
+2014-07-22T10:58:31 * yzen has quit
+2014-07-22T11:14:40 * slim_ has quit
+2014-07-22T12:04:25 * michelled joined the channel
+2014-07-22T12:05:54 * Justin_o joined the channel
+2014-07-22T12:18:38 * colinclark joined the channel
+2014-07-22T12:22:40 * jhung joined the channel
+2014-07-22T12:27:12 * Bosmon has quit
+2014-07-22T12:32:32 * jhung has quit
+2014-07-22T12:32:51 * the-t-in-rtf joined the channel
+2014-07-22T12:36:38 * jhung joined the channel
+2014-07-22T12:43:32 * anvk joined the channel
+2014-07-22T12:49:26 * cindyli joined the channel
+2014-07-22T12:56:59 * jessm joined the channel
+2014-07-22T12:57:25 <Justin_o> cindyli: how are things going for FLOE-194?
+2014-07-22T12:58:35 <cindyli> Justin_o: was working on FLO-171 yesterday. i\'m cleaning up on it and will start making change for FLOE-194 soon.
+2014-07-22T12:58:56 <Justin_o> cindyli: okay...
+2014-07-22T12:59:32 <Justin_o> cindyli: i have a couple of meetings this morning and may have to meet with avtar later today as well.
+2014-07-22T13:00:04 <Justin_o> cindyli: I started looking at the arrows again this morning. I thought I had basically everything done for the arrows themselves, but just realized that i missed something
+2014-07-22T13:00:27 <Justin_o> for the preferences that aren\'t available. i had already been using an :after to set the "x" badge
+2014-07-22T13:00:45 <Justin_o> so there is a conflict with the arrow on those
+2014-07-22T13:01:04 <cindyli> ah ha
+2014-07-22T13:18:05 * simonjb joined the channel
+2014-07-22T13:20:36 * vjoanna joined the channel
+2014-07-22T13:23:25 * yzen joined the channel
+2014-07-22T13:31:20 <jhung> michelled: I made an update on the Floe iteration plan. I spent majority of yesterday trying to get a local instance of the ILDH running but no success.
+2014-07-22T13:32:41 <jhung> michelled: Given I don\'t have much time before my vacation, I have stopped working on FLUID-5477 (and therefore FLUID-5471 because it is dependent). Instead I will continue work on FLUID-5476. http://wiki.fluidproject.org/display/fluid/Floe+Iteration+Plan
+2014-07-22T13:36:21 * Bosmon joined the channel
+2014-07-22T13:38:47 * danaayotte joined the channel
+2014-07-22T13:40:25 <Bosmon> Hi there cindyli
+2014-07-22T13:40:36 <cindyli> hi, Bosmon
+2014-07-22T13:40:52 <cindyli> you are so early, Bosmon
+2014-07-22T13:41:01 <Bosmon> It is not that early : P
+2014-07-22T13:41:40 <cindyli> I\'m expecting you in the afternoon\xe2\x80\xa6 good to see you at this hour\xe2\x80\xa6 more healthy
+2014-07-22T13:41:54 <Bosmon> haha
+2014-07-22T13:42:00 <cindyli> continue yesterday\'s discussion?
+2014-07-22T13:42:01 <Bosmon> Do you have a bit of time to talk about your model transformation issues?
+2014-07-22T13:42:02 <Bosmon> Yes
+2014-07-22T13:42:06 <cindyli> certainly
+2014-07-22T13:43:10 <cindyli> Do you see my use case? the actual values for source and target models?
+2014-07-22T13:43:18 <cindyli> i can re-paste here or in a pastie
+2014-07-22T13:43:21 <Bosmon> Yes
+2014-07-22T13:43:24 <cindyli> ok
+2014-07-22T13:43:25 <Bosmon> I can see in the IRC logs
+2014-07-22T13:44:48 <Bosmon> So, you have 3 states for the target model
+2014-07-22T13:44:52 <Bosmon> Which has just a single key, "flashing"
+2014-07-22T13:44:56 <cindyli> ya
+2014-07-22T13:45:05 <Bosmon> The value may be "flashing", "noflashing", or "unknown"
+2014-07-22T13:45:11 <cindyli> exactly
+2014-07-22T13:45:25 <Bosmon> I\'m wondering why there is even an intermediate model at all
+2014-07-22T13:45:36 <Bosmon> Since it seems that we could transform from this model to an array of booleans in 1 step
+2014-07-22T13:46:15 <cindyli> that array could contain more than just "flashing" value
+2014-07-22T13:46:21 <cindyli> the source array i mean
+2014-07-22T13:46:35 <Bosmon> cindyli, sure
+2014-07-22T13:46:45 <Bosmon> But it still contains one of 3 values at the key "flashing", right?
+2014-07-22T13:47:10 <cindyli> no, in the presence of "unknown", there\'s no array value for "flashing"
+2014-07-22T13:48:14 <Bosmon> Ok, let\'s start again
+2014-07-22T13:48:36 <Bosmon> So the model you are calling "source", then, is the one which goes upstream to persistence
+2014-07-22T13:48:47 <Bosmon> It has possible states
+2014-07-22T13:49:01 <Bosmon> accessibilityHazard: ["flashing"]
+2014-07-22T13:49:09 <Bosmon> accessibilityHazard: ["noflashing"]
+2014-07-22T13:49:14 <Bosmon> or accessibilityHazard: []
+2014-07-22T13:49:16 <cindyli> yes
+2014-07-22T13:49:20 <Bosmon> Is that correct?
+2014-07-22T13:49:27 <cindyli> correct
+2014-07-22T13:49:39 <Bosmon> Out of interest, where is this defined
+2014-07-22T13:49:53 <Bosmon> And how is the condition of "noflashing" representing a hazard?
+2014-07-22T13:50:42 <michelled> thanks jhung
+2014-07-22T13:50:47 <michelled> are you working tomorrow?
+2014-07-22T13:51:14 <cindyli> Bosmon: digging code in github...
+2014-07-22T13:51:42 <jhung> michelled: yes I am. But an early start and early finish.
+2014-07-22T13:51:45 <cindyli> Bosmon: https://github.com/cindyli/metadata/blob/FLOE-171/src/js/videoMetadataPanel.js#L199-L213
+2014-07-22T13:51:58 <michelled> jhung: let\'s check in before your finish
+2014-07-22T13:52:01 <michelled> tomorrow
+2014-07-22T13:52:08 <jhung> sounds good michelled
+2014-07-22T13:52:53 * the-t-in-rtf has quit
+2014-07-22T13:53:41 <cindyli> oh, Bosmon, seems the definition you meant was not for the code
+2014-07-22T13:54:11 <cindyli> we have a doc for it, let me find out
+2014-07-22T13:55:44 <cindyli> Bosmon: wiki.fluidproject.org/display/fluid/Encoding+Accessibility+Metadata+for+Floe+-+Tables+and+Examples
+2014-07-22T13:56:02 <cindyli> in the section of "Panel: Video Features"
+2014-07-22T13:56:27 * jhung is now known as jhung_away
+2014-07-22T13:56:51 <Bosmon> cindyli - ok - and where did this document come from?
+2014-07-22T13:58:06 <cindyli> Bosmon: jhung_away created it by illustrating what\'s defined in schemas.org i think
+2014-07-22T13:58:35 <cindyli> jhung_away is away, we can find out more from him when he\'s back
+2014-07-22T14:01:31 <Bosmon> cindyli - ok, I think I have tracked it down to here
+2014-07-22T14:01:32 <Bosmon> http://www.w3.org/wiki/WebSchemas/Accessibility
+2014-07-22T14:02:15 <cindyli> ha, u found it
+2014-07-22T14:02:36 <Bosmon> It seems that for a start, this is a somewhat crazy "standard"
+2014-07-22T14:02:45 <Bosmon> And to go on with, we have not quite succeeded in representing it correctly
+2014-07-22T14:03:02 <Bosmon> It seems that their term for the absence of this hazard is "noFlashingHazard" rather than simply "noFlashing"
+2014-07-22T14:03:33 <colinclark> Bosmon: We don\'t get to choose the standard, sadly
+2014-07-22T14:03:39 <colinclark> we absolutely have to work with it
+2014-07-22T14:05:08 * clown joined the channel
+2014-07-22T14:05:46 <Bosmon> colinclark - I never dreamed of questioning that we have to work with it
+2014-07-22T14:05:51 <Bosmon> We have to work with everything, after all : P
+2014-07-22T14:08:31 <colinclark> lol
+2014-07-22T14:08:45 <colinclark> fair enough :)
+2014-07-22T14:09:29 <Bosmon> Ok, this is a somewhat tougher problem than I feared - given there are several other kinds of hazards multiplexed into this array field
+2014-07-22T14:10:22 <Bosmon> Each with their own dedicated negation values
+2014-07-22T14:11:23 <Bosmon> So we could imagine this UI expanding in time to incorporate whole battalions of these checkboxes
+2014-07-22T14:11:48 <colinclark> Battalions of Checkboxes!
+2014-07-22T14:12:00 * the-t-in-rtf joined the channel
+2014-07-22T14:12:00 <Bosmon> Sorry, radio buttons
+2014-07-22T14:12:47 <Bosmon> It makes it all the more urgent to come up with a compact and intuitive scheme for representing this using transformations
+2014-07-22T14:12:56 <Bosmon> Given the approach we have right now really isn\'t going to scale
+2014-07-22T14:14:13 <Bosmon> But, unless I am confused, I think we can do this quite simply, in 2 steps, using just the transforms we have now...
+2014-07-22T14:14:22 <cindyli> YAY!
+2014-07-22T14:14:24 <Bosmon> Since, of course, we don\'t need to tell "arrayToSetMembership" about all of the possible values
+2014-07-22T14:16:12 <Bosmon> If only we had a nice UI in which it was easy to sketch out and test different transformation rules : P
+2014-07-22T14:16:14 * the-t-in-rtf has quit
+2014-07-22T14:16:16 <Bosmon> eh, colinclark? : P
+2014-07-22T14:17:25 <Bosmon> So, cindyli - how about the following - the "rendering model" is as you currently have it - an array of 3 booleans, "flashing", "noFlashing" and "unknown"
+2014-07-22T14:18:45 <Bosmon> I believe you can set up binding from this to the upstream model just by using fluid.arrayToSetMembership
+2014-07-22T14:18:46 <cindyli> that should be ok, Bosmon, just that, for integrators who are not sure about if there\'s a flashing hazard for the video, they need to explicitly give "unknown" array value in the input mode
+2014-07-22T14:18:48 <cindyli> l
+2014-07-22T14:19:24 <Bosmon> giving it the options {flashing: "flashing", "noFlashing": "noFlashingHazard"}
+2014-07-22T14:19:34 <Bosmon> And the state of the "unknown" checkbox is simply left out of the transformation
+2014-07-22T14:19:39 <colinclark> Bosmon: YES!
+2014-07-22T14:19:59 <cindyli> ah, i see
+2014-07-22T14:20:46 <cindyli> no, i wish i understood.
+2014-07-22T14:21:41 <cindyli> Bosmon: do you mean the target model structure is like {flashing: "flashing", "noFlashing": "noFlashingHazard"}?
+2014-07-22T14:22:04 <Bosmon> cindyli - no, that is the options given to fluid.arrayToSetMembership
+2014-07-22T14:22:12 <cindyli> oh
+2014-07-22T14:22:41 <Bosmon> The "upstream model" is as it is in the design
+2014-07-22T14:22:42 * the-t-in-rtf joined the channel
+2014-07-22T14:22:47 <Bosmon> The "rendering model" consists of the 3 booleans
+2014-07-22T14:23:34 <Bosmon> My belief is we can just bind them directly together with one instance of fluid.arrayToSetMembership
+2014-07-22T14:23:45 <Bosmon> By ignoring the name of the "unknown" checkbox in its configuration
+2014-07-22T14:23:58 <Bosmon> Sorry, radio button, whatever : P
+2014-07-22T14:24:46 <cindyli> but in this case, the "unknown" value in the rendering model will always be false
+2014-07-22T14:24:58 <cindyli> the value for "unknown"
+2014-07-22T14:25:49 * danaayotte has left the channel
+2014-07-22T14:25:52 * the-t-in-rtf has quit
+2014-07-22T14:26:31 <cindyli> the "rendering model" you referred here is the target model for rendering? or the model in the middle to join step 1 and step 2 transformation?
+2014-07-22T14:27:18 * Bosmon2 joined the channel
+2014-07-22T14:28:16 <Bosmon2> Hi cindyli, sorry - I accidentally pressed the RESET button on my computer : P
+2014-07-22T14:28:22 <Bosmon2> I\'m still getting used to its new location....
+2014-07-22T14:28:26 <Bosmon2> yes, what you said is right
+2014-07-22T14:28:30 * Bosmon has quit
+'
+

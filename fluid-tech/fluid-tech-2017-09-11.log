@@ -1,0 +1,235 @@
+b'2017-09-11T20:23:58 <gtirloni> mrtyler: before i start breaking things, could you help me understand this error? https://www.pastery.net/nyhbma+acaajk/#nyhbma
+2017-09-11T20:24:17 <mrtyler> looking
+2017-09-11T20:24:44 <mrtyler> do you have the right aws creds?
+2017-09-11T20:25:47 <gtirloni> i\'ve added them with `aws configure --profile gpii` and then defined $AWS_PROFILE=gpii .. should they live somewhere else?
+2017-09-11T20:26:18 <gtirloni> `aws sts get-caller-identity` returns the correct user ID
+2017-09-11T20:26:36 <mrtyler> that sounds good
+2017-09-11T20:26:57 <mrtyler> aws s3 ls --region us-east-2 s3://gpii-terraform-state
+2017-09-11T20:27:03 <mrtyler> try that plz
+2017-09-11T20:27:14 <mrtyler> it should return some stuff
+2017-09-11T20:27:25 <gtirloni> https://www.pastery.net/nyhbma+acaajk+pkebef/#pkebef
+2017-09-11T20:27:51 <mrtyler> hmm
+2017-09-11T20:28:14 <mrtyler> are you somehow running rake in an environment where AWS_PROFILE isn\'t set?
+2017-09-11T20:28:48 <mrtyler> i don\'t use AWS_PROFILE so that\'s a potential difference between your environment and mine (and alfredo\'s, who also doesn\'t have this problem)
+2017-09-11T20:28:55 <gtirloni> it\'s set.. just retried
+2017-09-11T20:29:03 <gtirloni> ok, I can use the AWS_ env vars and see how it goes
+2017-09-11T20:29:13 <mrtyler> i don\'t do that either :)
+2017-09-11T20:29:23 <mrtyler> i just have the default .aws/config with my creds
+2017-09-11T20:29:54 <mrtyler> i wonder if terraform doesn\'t respect AWS_PROFILE for some reason
+2017-09-11T20:30:01 <gtirloni> I have 3 profiles that I need to switch between, so it\'s a bit painful to change the default one all the time
+2017-09-11T20:30:44 <mrtyler> right that\'s fine, i\'m just saying it\'s a potential difference
+2017-09-11T20:30:51 <mrtyler> it\'s definitely a feature the system should support :)
+2017-09-11T20:31:10 <mrtyler> let me see if i can repro
+2017-09-11T20:31:41 <gtirloni> ok, looks like using AWS_ACCESS_KEY got me further but I\'m getting this now: https://www.pastery.net/nyhbma+acaajk+pkebef+rxxyuv/#rxxyuv  (i have waited and retried, not sure if it\'s really a delay)
+2017-09-11T20:32:41 <gtirloni> btw, we can troubleshoot this at another time.. no hurry
+2017-09-11T20:32:56 <mrtyler> wow i have not seen that error before
+2017-09-11T20:32:59 <mrtyler> so congratulations
+2017-09-11T20:33:00 <mrtyler> !
+2017-09-11T20:33:07 <gtirloni> haha
+2017-09-11T20:33:17 <gtirloni> i\'m on terraform 0.9.11 this time, i hope that\'s the one
+2017-09-11T20:33:30 <mrtyler> yup :)
+2017-09-11T20:34:19 <gtirloni> maybe deleting ~/.terraform.d will help
+2017-09-11T20:34:19 <mrtyler> ok, first let me make sure spinning up a cluster works for me
+2017-09-11T20:34:22 <gtirloni> ok
+2017-09-11T20:34:43 <mrtyler> yeah, you can nuke any local terraform state
+2017-09-11T20:34:46 <mrtyler> pretty much at any time
+2017-09-11T20:34:59 <mrtyler> also you should rake clean ; rake clobber
+2017-09-11T20:35:07 <mrtyler> that was causing alfredom some trouble earlier
+2017-09-11T20:35:19 <gtirloni> ok, done all 3.. want me to try agian?
+2017-09-11T20:35:19 <mrtyler> some things get persisted to TMPDIR for various reasons
+2017-09-11T20:35:22 <mrtyler> sure
+2017-09-11T20:35:25 <gtirloni> ok, one sec
+2017-09-11T20:35:37 <mrtyler> my cluster has progressed beyond you
+2017-09-11T20:35:49 <mrtyler> so that s3 sync issue seems bogus
+2017-09-11T20:36:21 <gtirloni> that didn\'t help, same error here
+2017-09-11T20:36:35 <mrtyler> the s3 sync one?
+2017-09-11T20:37:01 <gtirloni> yep
+2017-09-11T20:37:07 <gtirloni> rror loading state: state data in S3 does not have the expected content.
+2017-09-11T20:37:32 <mrtyler> let me take a quick peek at your s3 state
+2017-09-11T20:37:42 <mrtyler> and then i\'ll nuke your key
+2017-09-11T20:38:32 <mrtyler> you don\'t have a key
+2017-09-11T20:38:37 <mrtyler> there\'s no dev-gtirloni in the bucket
+2017-09-11T20:39:04 <gtirloni> yeah, i noticed that dynamo has 2 locks for me, and none of them have the same ID that terraform is complaining about
+2017-09-11T20:39:20 <gtirloni> i remember since "the incident" i didn\'t create any other clusters
+2017-09-11T20:39:26 <mrtyler> haha
+2017-09-11T20:39:33 <mrtyler> you do have a key in prereqs/
+2017-09-11T20:39:48 <mrtyler> which is where rake is when it\'s failing
+2017-09-11T20:39:54 <mrtyler> maybe this is the one that needs to die
+2017-09-11T20:40:21 <mrtyler> \\
+2017-09-11T20:40:24 <mrtyler> ok i deleted it
+2017-09-11T20:40:26 <mrtyler> plz try again
+2017-09-11T20:40:44 * cindyli has quit
+2017-09-11T20:42:06 <gtirloni> same error but now it doesn\'t show a lock ID... ugh
+2017-09-11T20:42:10 <mrtyler> :(
+2017-09-11T20:42:12 <gtirloni> ok, i\'ll have to continue this tomorrow
+2017-09-11T20:42:16 <gtirloni> thanks for checking it\'s working for you
+2017-09-11T20:42:20 <gtirloni> that\'s reassuring
+2017-09-11T20:42:24 <mrtyler> lol
+2017-09-11T20:42:29 <mrtyler> thanks for helping find rough edges
+2017-09-11T20:42:31 <gtirloni> at least i haven\'t broken anything (i hope) this time
+2017-09-11T20:42:35 <mrtyler> haha
+2017-09-11T20:42:46 <gtirloni> i\'ll try again tomorrow and see if i can find out what\'s wrong.. will let you know. thanks
+2017-09-11T20:42:52 <mrtyler> i\'ll poke around a bit and let you know if i find anything
+2017-09-11T20:43:03 <mrtyler> in particular with those AWS_* variables
+2017-09-11T20:43:10 <mrtyler> have a good evening
+2017-09-11T20:43:15 <gtirloni> cool, thanks. you too
+2017-09-11T20:43:17 * gtirloni has quit
+2017-09-11T20:58:05 * stegru has quit
+2017-09-11T21:08:12 * alanharnum has quit
+2017-09-11T21:26:35 * simonjb has quit
+2017-09-11T23:08:38 * grrrero has quit
+2017-09-11T23:14:40 * javjarfer has quit
+'
+
+b'2017-09-11T07:19:15 * the-t-in-rtf has quit
+2017-09-11T07:49:59 * the-t-in-rtf joined the channel
+2017-09-11T07:50:17 * stegru joined the channel
+2017-09-11T08:02:40 * the-t-in-rtf has quit
+2017-09-11T08:09:44 * the-t-in-rtf joined the channel
+2017-09-11T08:47:07 * dandimitrov joined the channel
+2017-09-11T08:47:57 * the-t-in-rtf joined the channel
+2017-09-11T09:12:55 * the-t-in-rtf joined the channel
+2017-09-11T09:32:14 * the-t-in-rtf joined the channel
+2017-09-11T11:34:50 * gtirloni joined the channel
+2017-09-11T11:52:26 * Justin_o joined the channel
+2017-09-11T12:09:42 * cindyli joined the channel
+2017-09-11T12:31:38 * gtirloni joined the channel
+2017-09-11T12:43:46 * Jess_ joined the channel
+2017-09-11T12:47:27 * Jess__ joined the channel
+2017-09-11T12:48:08 * Jess_ has quit
+2017-09-11T12:48:08 * Jess__ is now known as Jess_
+2017-09-11T13:15:32 * the-t-in-rtf joined the channel
+2017-09-11T13:21:44 * grrrero joined the channel
+2017-09-11T13:28:54 * gtirloni joined the channel
+2017-09-11T13:36:49 * gtirloni joined the channel
+2017-09-11T13:36:55 * gtirloni_ joined the channel
+2017-09-11T13:40:35 * colinclark joined the channel
+2017-09-11T13:45:34 * the-t-in-rtf has quit
+2017-09-11T13:47:44 * the-t-in-rtf joined the channel
+2017-09-11T13:52:34 * simonjb joined the channel
+2017-09-11T13:54:02 * javjarfer joined the channel
+2017-09-11T13:55:56 * clown joined the channel
+2017-09-11T13:59:03 * gtirloni_ joined the channel
+2017-09-11T14:22:00 * dandimitrov has quit
+2017-09-11T14:22:24 * dandimitrov joined the channel
+2017-09-11T14:30:06 * gtirloni__ joined the channel
+2017-09-11T14:41:14 * dandimitrov has quit
+2017-09-11T14:53:16 * the-t-in-rtf has quit
+2017-09-11T14:54:45 * the-t-in-rtf joined the channel
+2017-09-11T15:04:50 <alanharnum> Bosmon the-t-in-rtf: a Q I should have asked in the meeting but that came up talking here with gmoss and simonjb - there was a brief mention of discussion of persistence approaches "more powerful" than CouchDB - I am wondering if this has been something more than casual discussion?
+2017-09-11T15:05:12 * the-t-in-rtf has quit
+2017-09-11T15:07:26 <alanharnum> simonjb: this is the Martin Fowler material Iwas talking about: https://martinfowler.com/nosql.html
+2017-09-11T15:07:34 <simonjb> thanks alanharnum
+2017-09-11T15:07:53 <alanharnum> simonjb: the "key points" page here is particularly useful: https://martinfowler.com/articles/nosqlKeyPoints.html
+2017-09-11T15:08:00 * mrtyler joined the channel
+2017-09-11T15:19:19 * alanharnum joined the channel
+2017-09-11T15:22:23 * alanharnum has quit
+2017-09-11T15:22:30 * alanharnum joined the channel
+2017-09-11T15:31:44 * alanharnum has quit
+2017-09-11T15:50:22 * alanharnum joined the channel
+2017-09-11T15:53:55 * alanharnum joined the channel
+2017-09-11T16:08:25 * alanharnum joined the channel
+2017-09-11T16:08:36 * colinclark has quit
+2017-09-11T16:09:29 * alanharnum has quit
+2017-09-11T16:09:35 * alanharnum joined the channel
+2017-09-11T16:24:39 * dandimitrov joined the channel
+2017-09-11T16:45:40 * colinclark joined the channel
+2017-09-11T17:12:00 * cindyli has quit
+2017-09-11T17:17:43 * cindyli joined the channel
+2017-09-11T17:22:41 * alanharnum has quit
+2017-09-11T17:23:08 * alanharnum joined the channel
+2017-09-11T17:25:22 * stegru has quit
+2017-09-11T17:27:53 * stegru joined the channel
+2017-09-11T17:28:08 * alanharnum joined the channel
+2017-09-11T17:31:27 <Bosmon> Hi there alanharnum
+2017-09-11T17:31:35 <Bosmon> It\'s been a relatively casual discussion
+2017-09-11T17:31:35 <alanharnum> Hello BOSMON
+2017-09-11T17:31:48 <Bosmon> Mostly focused on the things which are more or less known as "graph databases"
+2017-09-11T17:31:53 <alanharnum> i figured, but thought it was worth asking
+2017-09-11T17:31:58 <alanharnum> ah, neo4j and such?
+2017-09-11T17:31:59 <Bosmon> We discovered a need for what could be called "socially sharded persistence"
+2017-09-11T17:32:17 <Bosmon> In which each community of interest can freely aggregate what could be called kinds of "overlays" to a dataset
+2017-09-11T17:32:25 <alanharnum> interesting
+2017-09-11T17:32:38 <Bosmon> But overlay is a misleading term in that it implies that there is any kind of central, authoritative dataset
+2017-09-11T17:32:50 <Bosmon> But basically we want a persistence solution that does for persistence what Infusion does for general programming : P
+2017-09-11T17:33:14 * alanharnum has read some things about graph databases, especially neo4j, has not done an implementation using one.
+2017-09-11T17:33:16 <Bosmon> Yes, neo4j was one of the few things we entertained
+2017-09-11T17:33:24 <Bosmon> But it is a pretty gross possibility, for various reasons
+2017-09-11T17:33:45 <Bosmon> "orientDB" is another possibility
+2017-09-11T17:34:03 <Bosmon> Seems to have been getting on pretty well since we last looked at it
+2017-09-11T17:34:23 <alanharnum> hadn\'t heard of orientDB, but it looks interesting
+2017-09-11T17:35:01 <Bosmon> But something about the "graph database" concept seems inherently suspicious
+2017-09-11T17:35:19 <Bosmon> My feeling is that if it gives us what we want, it will be as a possibly unanticipated design consequence
+2017-09-11T17:35:35 <Bosmon> We don\'t want primarily to store information ABOUT a graph
+2017-09-11T17:35:57 <Bosmon> But we want our overall query network to support a graph structure
+2017-09-11T17:36:09 <Bosmon> Now it may well be that you can\'t achieve one of these things without achieving the other
+2017-09-11T17:36:16 <Bosmon> But this isn\'t necessarily clear to me at this point
+2017-09-11T17:37:10 <Bosmon> What we really want is for each "node" in such a graph to hold an arbitrary sized shared of the overall data
+2017-09-11T17:37:27 <Bosmon> Sorry, shared -> shard
+2017-09-11T17:38:16 <Bosmon> And for a "query" to consist of, "Fetch me all the shards from nodes which are directly connected to a particular root node, and merge them together so they appear to constitute the entire dataset"
+2017-09-11T17:38:31 <Bosmon> And then of course for the *actual* queries to be run against this merged, pooled dataset
+2017-09-11T17:38:46 <Bosmon> Now it\'s not clear to me that graph databases will strongly cater to this use case
+2017-09-11T17:38:59 <Bosmon> But I haven\'t seen signs of any other identifiable persistence paradigm that will
+2017-09-11T17:39:35 <alanharnum> i wonder, just speculatively, if looking for this in a single tool is the best approach, or if these concerns need to be split apart
+2017-09-11T17:39:54 <Bosmon> Well, it seems like one concern to me (the use case I\'ve just outlined)
+2017-09-11T17:40:15 <Bosmon> Catering to this kind of query model seems to imply the entire solution is architected around it
+2017-09-11T17:40:41 <alanharnum> that is to say, maybe handle persistence in one system, and indexing and querying in another that can be tuned to emulate the characteristics of Infusion that are desired (Elasticsearch, FE)
+2017-09-11T17:41:09 <Bosmon> alanharnum - yes, it\'s possible
+2017-09-11T17:41:19 <Bosmon> Actually we were planning to use git repositories for the actual raw persistence :)
+2017-09-11T17:41:27 <Bosmon> So what I meant by "persistence" here entirely was the indexing and querying system
+2017-09-11T17:41:34 <alanharnum> ah, yes
+2017-09-11T17:41:49 <Bosmon> But this will in the end amount to a very specialised kind of persistence
+2017-09-11T17:42:11 <Bosmon> In that the system will have to build up particularly refined and optimised data structures in order to support it
+2017-09-11T17:42:50 <Bosmon> It will have to be quite opportunistic in identifying repeatedly queried "clusters" in the dataset
+2017-09-11T17:43:03 <Bosmon> Since it couldn\'t possibly afford to optimise for all possible queries of the kind I outlined
+2017-09-11T17:43:22 <alanharnum> yeah, so it sounds like a lot of the concern is not (as you say) persistence per se, but highly tunable and customizable indexing and querying
+2017-09-11T17:43:35 <Bosmon> Well, I guess if all the queries are of the form "neighbours of this node" it could conceivably optimise for them
+2017-09-11T17:43:51 <Bosmon> But you would want such a thing to be able to support kinds of "ad hoc" queries as well
+2017-09-11T17:43:59 <alanharnum> which makes my mind go to things like Solr or Elasticsearch (both built on top of Lucene)
+2017-09-11T17:44:08 <Bosmon> But the space of these is exponential in the size of the graph
+2017-09-11T17:45:05 <Bosmon> alanharnum - yes, the Lucene query mode is impossibly primitive, in comparison
+2017-09-11T17:45:32 <Bosmon> It\'s a step backwards, compared to CouchDB
+2017-09-11T17:45:43 <Bosmon> Which at least allows "keys" to be given an arbitrary, ad hoc structure
+2017-09-11T17:45:56 <alanharnum> yeah, I am not thinking of something like raw Lucene, but systems built on top of it
+2017-09-11T17:46:13 <Bosmon> alanharnum - right, but the underlying problem is in the "persistence", if you will
+2017-09-11T17:46:27 <Bosmon> Which is why I somewhat misleadingly went on about persistence a lot
+2017-09-11T17:46:53 <Bosmon> But the problem with both CouchDB and Lucene and all similar solutions is that keys are confined to a single linear, totally ordered line
+2017-09-11T17:47:26 <Bosmon> That is, each index you have on the dataset is a single linear, total order - and it is this way because of the way the index is persisted on disk
+2017-09-11T17:47:40 <Bosmon> So if you want to go beyond this query model, you have to go beyond this persistence model for indexes
+2017-09-11T17:47:50 <Bosmon> Which is where I was hoping that graph databases might be some kind of improvement : P
+2017-09-11T17:47:58 <Bosmon> But perhaps it is still turtles all the way down
+2017-09-11T17:48:08 <Bosmon> But where there is ignorance, there is possibility : P
+2017-09-11T17:48:22 <Bosmon> That is, I\'m ignorant of how graph databases do persistence, and so there is a possibility that they might do what we want : P
+2017-09-11T17:48:56 <alanharnum> i don\'t think i entirely understand what we want, and i am definitely also ignorant of graph DB persistence
+2017-09-11T17:48:58 <alanharnum> :)
+2017-09-11T17:49:26 <Bosmon> So, for example, a fundamentally different persistence model is that of geo databases, which inherently have to be able to optimise freeform queries over a 2d grid
+2017-09-11T17:49:42 <Bosmon> So they\'ll use particular datastructures like quadtrees which are optimised for this
+2017-09-11T17:49:51 <Bosmon> But that still just kicks us upstairs one dimension
+2017-09-11T17:50:10 <Bosmon> Ideally we want a database that could optimise queries with arbitrary numbers of free dimensions : P
+2017-09-11T17:50:27 <Bosmon> At least, that\'s what I think we might want
+2017-09-11T17:50:58 <alanharnum> ah, ok, i understand better
+2017-09-11T17:51:29 <Bosmon> But, basically, if you look at the persistence model that your favorite database uses for queries, and find out that it is a B-tree (as it almost univerally is) you know it\'s not going to deal with problems of the kind we\'re interested in
+2017-09-11T17:52:25 <alanharnum> hm
+2017-09-11T17:52:59 <alanharnum> i wonder (to the extend I understand this concern) if we couldn\'t repurpose a GIS database, or an extension like PostGIS, at least experimentally
+2017-09-11T17:53:19 <Bosmon> Well, ultimately being hard-wired to help with 2d queries would probably make it even less suitable than Couch
+2017-09-11T17:53:39 <Bosmon> At least Couch squeezes every last atom of flexibility from the B-tree model, by allowing arbitrary JSON structures as keys
+2017-09-11T17:54:40 <Bosmon> Whereas a GIS database expects that all of its boundaries consist simply of NUMBERS
+2017-09-11T17:54:58 <Bosmon> How could we cover the surface of the earth coordinatised by arbitrary JSON structures :)
+2017-09-11T17:55:40 <alanharnum> yes, i suppose even a 3d spatial database lacks the 4th, 5th or other dimensions also needed :)
+2017-09-11T17:55:56 <Bosmon> "I command you to walk {"a": false, "b": "restaurant"} metres north"
+2017-09-11T17:57:03 <Bosmon> However far that is, you know that it is slightly less than {"a": false, "b": restaurant, "c": null} metres
+2017-09-11T18:00:36 * gtirloni joined the channel
+2017-09-11T18:03:01 * alanharnum joined the channel
+2017-09-11T18:20:59 * the-t-in-rtf joined the channel
+2017-09-11T18:39:28 * alanharnum joined the channel
+2017-09-11T18:43:45 * alanharnum has quit
+2017-09-11T18:44:12 * alanharnum joined the channel
+2017-09-11T18:45:07 * alanharnum has quit
+2017-09-11T18:45:14 * alanharnum joined the channel
+2017-09-11T19:33:20 * Jess_ has quit
+2017-09-11T19:47:35 * javjarfer has quit
+2017-09-11T19:55:06 * the-t-in-rtf has quit
+2017-09-11T20:11:26 * javjarfer joined the channel
+2017-09-11T20:15:05 * dandimitrov has quit
+'
+

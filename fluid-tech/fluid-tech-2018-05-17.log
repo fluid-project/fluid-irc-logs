@@ -1,0 +1,92 @@
+b'2018-05-17T07:43:28 * kasparnet joined the channel
+2018-05-17T08:20:06 * stegru joined the channel
+2018-05-17T09:01:21 * kasparnet has quit
+2018-05-17T10:53:05 * gtirloni joined the channel
+2018-05-17T11:01:45 * kasparnet joined the channel
+2018-05-17T12:15:11 * the-t-in-rtf joined the channel
+2018-05-17T12:20:53 * Justin_o joined the channel
+2018-05-17T12:23:07 * kasparnet has quit
+2018-05-17T12:34:04 * alanharnum joined the channel
+2018-05-17T12:47:08 <gtirloni> alanharnum: hi alan! almost done here... i\'m just seeing something weird: if I access the following URL using a browser, it returns 200 OK... if I use curl, it says 404...
+2018-05-17T12:47:09 <gtirloni> https://stories.floeproject.org/stories
+2018-05-17T12:47:42 <gtirloni> alanharnum: i would like to use that as a healthcheck URL to determine when everything is up (including the DB), in case you think some other URL would be better for that...
+2018-05-17T12:49:00 <alanharnum> gtirloni: interesting, let me check if it\'s an issue on the local environment - it may be an issue with the handler
+2018-05-17T12:49:07 <gtirloni> with chrome:
+2018-05-17T12:49:09 <gtirloni> 12:48:32.645:  Invoking handler sjrk.storyTelling.server.browseStoriesHandler for route /stories/ with expectedGrade kettle.request.http
+2018-05-17T12:49:11 <gtirloni> with curl
+2018-05-17T12:49:16 <gtirloni> Kettle server getDispatcher found no matching handlers, continuing
+2018-05-17T12:51:04 <alanharnum> yeah, all the URLs seem to return a 404 with curl on the local as well - investigating
+2018-05-17T12:52:31 <alanharnum> gtirloni: interestingly, I can see the server responding in different ways to curl -I on a URL versus regular curl
+2018-05-17T12:52:50 <gtirloni> oh, interesting
+2018-05-17T12:52:55 <gtirloni> that\'s what I was using -I
+2018-05-17T12:53:39 <gtirloni> so HTTP HEAD
+2018-05-17T12:54:00 <alanharnum> ah OK, that makes sense
+2018-05-17T12:54:27 <alanharnum> Express handlers (and thus Kettle handlers) are specific in which HTTP method they respond to
+2018-05-17T12:54:39 <gtirloni> ok
+2018-05-17T12:54:45 <gtirloni> no worries, I can use a regular request
+2018-05-17T12:54:49 <gtirloni> thanks for checking that
+2018-05-17T12:56:54 <gtirloni> alanharnum: could you add the usual webhook for jenkins? https://ci.inclusivedesign.ca/github-webhook/
+2018-05-17T12:57:09 <gtirloni> x-www-form-urlencoded
+2018-05-17T12:57:26 <gtirloni> just the push event should be enough
+2018-05-17T12:57:53 * kasparnet joined the channel
+2018-05-17T12:58:01 <alanharnum> gtirloni: done
+2018-05-17T12:59:34 <gtirloni> alanharnum: https://ci.inclusivedesign.ca/view/Stacks/
+2018-05-17T13:00:01 <gtirloni> two jobs, one for each app
+2018-05-17T13:00:11 <gtirloni> and a third one to clean the database of the learning reflections app
+2018-05-17T13:00:24 <gtirloni> it\'ll be triggered midnight, and then trigger a new build of the learning reflections app
+2018-05-17T13:00:42 <alanharnum> gtirloni: brilliant - I see it erased the story I entered last night as a test, which is what I\'d expect :)
+2018-05-17T13:00:58 <gtirloni> yeah, i tested it a few times and it seemed to work
+2018-05-17T13:01:13 <gtirloni> i\'ll reply to your email with details and the password
+2018-05-17T13:01:43 <alanharnum> gtirloni: one thing I am seeing is that the image is now missing from https://karisma-stories.floeproject.org/storyView.html?id=6057f830-594a-11e8-97bb-4794f8ada9a4 - can we make sure that things in the /upload directory of the deployed app are persisted between restarts?
+2018-05-17T13:02:06 <gtirloni> it\'s persisted but i only enabled it a few minutes ago
+2018-05-17T13:02:13 <alanharnum> ah ok, gotcha
+2018-05-17T13:02:44 <alanharnum> since I only just pushed up the volume link change that I made last night and forgot to push, understandable :p
+2018-05-17T13:03:55 * cindyli joined the channel
+2018-05-17T13:04:37 <gtirloni> :)
+2018-05-17T13:07:40 <gtirloni> alanharnum: https://github.com/inclusive-design/ci-service/pull/32
+2018-05-17T13:07:58 <gtirloni> the build will wait for the /stories endpoint to be ready, but the website will probably be up before it ends
+2018-05-17T13:11:36 <alanharnum> gtirloni: this is great, thanks - if we can just test the authed functions I think we are all good to go
+2018-05-17T13:12:29 <gtirloni> ok, let me just redeploy it a last time
+2018-05-17T13:16:44 * clown joined the channel
+2018-05-17T13:32:03 * colinclark joined the channel
+2018-05-17T13:38:56 <gtirloni> alanharnum: btw, "midnight" is UTC\'s midnight.. which is 8pm Toronto.. I guess I should make that 4am UTC then. Thgouths?
+2018-05-17T13:39:23 <gtirloni> it doesn\'t accept a timezone.. so we\'d have to change the server\'s timezone (/me cries)
+2018-05-17T13:41:45 <alanharnum> gtirloni: it\'s fine as long as it happens once a day
+2018-05-17T13:41:51 <gtirloni> ok
+2018-05-17T13:53:28 * alanharnum joined the channel
+2018-05-17T13:56:59 * alanharnum joined the channel
+2018-05-17T14:08:57 * mrtyler joined the channel
+2018-05-17T14:11:58 * cindyli joined the channel
+2018-05-17T14:15:26 * michelled joined the channel
+2018-05-17T14:43:50 * kasparnet has quit
+2018-05-17T14:45:43 * mrtyler joined the channel
+2018-05-17T15:33:14 * alanharnum joined the channel
+2018-05-17T15:50:05 * alanharnum joined the channel
+2018-05-17T15:52:33 * colinclark joined the channel
+2018-05-17T15:54:39 * cindyli joined the channel
+2018-05-17T16:20:28 * alanharnum has quit
+2018-05-17T16:20:37 * alanharnum joined the channel
+2018-05-17T16:29:50 * michelled has quit
+2018-05-17T17:07:32 * michelled joined the channel
+2018-05-17T17:56:00 * janardan joined the channel
+2018-05-17T17:58:54 * gtirloni joined the channel
+2018-05-17T18:10:34 * cindyli joined the channel
+2018-05-17T18:20:34 * gtirloni_ joined the channel
+2018-05-17T18:21:21 * gtirloni has quit
+2018-05-17T18:21:58 * gtirloni__ joined the channel
+2018-05-17T18:21:58 * gtirloni__ is now known as gtirloni
+2018-05-17T18:55:47 * gtirloni_ joined the channel
+2018-05-17T19:01:59 * kasparnet joined the channel
+2018-05-17T19:10:52 * cindyli joined the channel
+2018-05-17T19:42:36 * simonjb joined the channel
+2018-05-17T19:43:34 * neuralmilkhotel joined the channel
+2018-05-17T19:54:12 * YehchanP joined the channel
+2018-05-17T20:34:10 * kasparnet has quit
+2018-05-17T20:37:09 * simonjb has quit
+2018-05-17T21:09:17 * cindyli has quit
+2018-05-17T22:03:32 * janardan has quit
+2018-05-17T23:07:19 * stegru has quit
+2018-05-17T23:09:07 * cindyli joined the channel
+2018-05-17T23:50:39 * gtirloni_ has quit
+'
+

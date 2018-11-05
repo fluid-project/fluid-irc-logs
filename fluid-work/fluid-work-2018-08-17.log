@@ -1,0 +1,72 @@
+b'2018-08-17T00:52:01 * danayo joined the channel
+2018-08-17T00:55:01 * danayo has quit
+2018-08-17T02:49:34 * sepidehshahi joined the channel
+2018-08-17T03:18:45 * sepidehshahi has quit
+2018-08-17T03:23:06 * sepidehshahi joined the channel
+2018-08-17T03:37:57 * sepidehshahi has quit
+2018-08-17T06:44:01 * georgitodorov joined the channel
+2018-08-17T12:02:09 * gtirloni joined the channel
+2018-08-17T12:27:24 * cindyli joined the channel
+2018-08-17T12:32:28 * cindyli1 joined the channel
+2018-08-17T13:16:20 * sepidehshahi joined the channel
+2018-08-17T13:19:36 * georgitodorov has quit
+2018-08-17T13:36:12 * g2szeto joined the channel
+2018-08-17T14:03:38 * sepidehshahi joined the channel
+2018-08-17T14:19:16 * sepidehshahi has quit
+2018-08-17T15:21:35 * alanharnum joined the channel
+2018-08-17T15:35:48 <gmoss> Justin_o: ping
+2018-08-17T15:39:23 <gmoss> or anyone else familiar with the preferences editor lazyLoad: I\'ve been working on implementing i18n/l10n in UIO, and part of that has been to get the tab to re-render in the chosen language after new messages have been loaded. To get this to work as desired, I\'ve had to fire the prefernceEditorLoader\'s "onLazyLoad" event when the language is selected. I\'m wondering whether this is in line with the "philosophy" of lazy load
+2018-08-17T15:39:27 <gmoss> https://github.com/BlueSlug/infusion/commit/77cb7eea1cc5d91748a4d53c701736c97e45fdf3
+2018-08-17T15:40:19 <gmoss> I realize now that I should think of a way that only ends up firing onLazyLoad once, rather than every time the language is selected
+2018-08-17T15:51:34 * sepidehshahi joined the channel
+2018-08-17T15:53:58 * sepidehshahi has quit
+2018-08-17T16:18:59 * alanharnum joined the channel
+2018-08-17T16:22:16 * colinclark joined the channel
+2018-08-17T16:42:40 * danayo joined the channel
+2018-08-17T16:48:57 * alanharnum has quit
+2018-08-17T17:05:22 * cindyli joined the channel
+2018-08-17T17:07:59 * alanharnum joined the channel
+2018-08-17T18:25:54 * cindyli has quit
+2018-08-17T18:26:36 * cindyli joined the channel
+2018-08-17T18:29:01 <sgithens> cindyli: When you run the preferences server tests, the prefssafes should be cleared out between each run and only have the entries from `gpii/node_modules/preferencesServer/test/data/prefsSafes.json` right ? For some reason I\'m seeing prefsSafe-1 thru 7, and then all the testdata ones (alice, davey, etc etc etc)
+2018-08-17T18:30:54 <sgithens> I\'m writing a test for a listing endpoint I\'ve added for GPII-2966, and the list returned as the test ones,  plus all the others from testdata. I\'m working off the pii/node_modules/preferencesServer/test/preferencesServerTestsUtils.js like your original tests do
+2018-08-17T18:36:28 <cindyli> sgithens: the pouchTestCaseHolder used for the preferences server tests uses a base grade "gpii.test.pouch.pouchTestCaseHolder" (https://github.com/GPII/universal/blob/master/gpii/node_modules/preferencesServer/test/preferencesServerTestsUtils.js#L47), which loads data from testData/ too - https://github.com/GPII/universal/blob/master/gpii/node_modules/testing/src/PouchTestCaseHolder.js#L45-L52
+2018-08-17T18:36:43 <sgithens> aha!
+2018-08-17T18:36:50 <sgithens> cindyli: COol, thanks for the reference
+2018-08-17T18:38:43 <cindyli> sgithens: I believe i was expecting "data" array from "gpii.tests.preferencesServer.pouchTestCaseHolder" should override the same option from its base grade - "gpii.tests.preferencesServer.pouchTestCaseHolder" as "views.json" was specified in preferencesServer test case holder, but seems i was wrong and arrays are merged
+2018-08-17T18:38:57 <cindyli> https://github.com/GPII/universal/blob/master/gpii/node_modules/preferencesServer/test/preferencesServerTestsUtils.js#L51
+2018-08-17T18:39:29 <sgithens> cindyli: What would you expect the correct behavior to be? Probably to only load the 7 test ones we specify?
+2018-08-17T18:39:37 <sgithens> Should we fix that?
+2018-08-17T18:39:47 <cindyli> would be nice to fix it
+2018-08-17T18:40:00 <sgithens> I might take a look at it today while I\'m working on the tests
+2018-08-17T18:40:59 <cindyli> sgithens: before the fix, i think it\'s better to make sure preferences server tests don\'t use data from testData/preferences in case what i recalled is wrong ;)
+2018-08-17T18:41:19 <sgithens> I don\'t think any of them do from reading through your stuff
+2018-08-17T18:41:29 <cindyli> cool
+2018-08-17T18:41:32 <sgithens> let me take another quick browse
+2018-08-17T18:44:52 <sgithens> cindyli: all your prefsserver tests are confined to the 7 test prefssafes
+2018-08-17T18:44:59 <sgithens> although I just forgot about the browser tests
+2018-08-17T18:45:16 <cindyli> haha. thanks for checking, sgithens
+2018-08-17T18:45:44 <sgithens> it looks like that is all defined inline
+2018-08-17T18:46:09 <sgithens> I\'m goign to try and make the change, which will fix my test that depends on their being 7 of them to list them
+2018-08-17T18:46:25 <cindyli> nice. thanks, sgithens
+2018-08-17T18:57:21 * sepidehshahi joined the channel
+2018-08-17T19:19:50 * alanharnum has quit
+2018-08-17T19:25:44 * alanharnum2 joined the channel
+2018-08-17T19:58:17 * alanharnum joined the channel
+2018-08-17T19:58:24 * alanharnum joined the channel
+2018-08-17T20:22:54 <sgithens> cindyli: Everything seems fine with this mergePolicy ```    gradeNames: ["gpii.test.pouch.pouchTestCaseHolder"],
+2018-08-17T20:22:54 <sgithens> mergePolicy: {
+2018-08-17T20:22:54 <sgithens> "pouchConfig.databases.gpii.data": "replace"
+2018-08-17T20:22:54 <sgithens> },
+2018-08-17T20:22:54 <sgithens> ```
+2018-08-17T20:28:11 <cindyli> great. thanks, sgithens
+2018-08-17T20:28:18 <cindyli> forgot about "mergePolicy"
+2018-08-17T20:33:17 * alanharnum joined the channel
+2018-08-17T20:33:25 * alanharnum joined the channel
+2018-08-17T20:35:25 * cindyli has quit
+2018-08-17T21:45:49 * gtirloni_ joined the channel
+2018-08-17T21:48:13 * gtirloni has quit
+2018-08-17T23:22:40 * jhernandez has quit
+2018-08-17T23:22:57 * jhernandez joined the channel
+'
+

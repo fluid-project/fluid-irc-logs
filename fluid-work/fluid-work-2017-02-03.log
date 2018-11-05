@@ -1,0 +1,627 @@
+b'2017-02-03T23:33:23 <colinclark> "The uninterrupted operation of AudioNodes implies that as long as live references exist to a node, the node will continue processing its inputs and evolving its internal state even if it is disconnected from the audio graph."
+2017-02-03T23:33:43 <colinclark> since even a detched graph fragment will continue to change, even if it is not heard
+2017-02-03T23:34:49 <Bosmon> ok
+2017-02-03T23:34:57 <colinclark> "When an AudioNode has no references it will be deleted. Before it is deleted, it will disconnect itself from any other AudioNodes which it is connected to."
+2017-02-03T23:35:56 <colinclark> this implies to me that if you don\'t hang onto a reference to an AudioBufferSourceNode, it will be disconnected and GC\'ed
+2017-02-03T23:35:59 <colinclark> but I don\'t know
+2017-02-03T23:36:18 * yzen is now known as yzen_
+2017-02-03T23:36:52 <colinclark> It must be the case, since they\'re useless objects after they\'ve finished one trip through the buffer, assuming they\'re not looping
+2017-02-03T23:37:24 <colinclark> Here we go
+2017-02-03T23:37:47 <colinclark> "The audio system automatically deals with tearing-down the part of the routing graph for individual "note" events. A "note" is represented by an AudioBufferSourceNode, which can be directly connected to other processing nodes. When the note has finished playing, the context will automatically release the reference to the AudioBufferSourceNode, which in turn will release references to any nodes it is connected to, and so on. The nodes will
+2017-02-03T23:37:48 <colinclark> automatically get disconnected from the graph and will be deleted when they have no more references. Nodes in the graph which are long-lived and shared between dynamic voices can be managed explicitly. Although it sounds complicated, this all happens automatically with no extra JavaScript handling required."
+2017-02-03T23:38:01 <colinclark> this isn\'t even a particularly good spec :P
+2017-02-03T23:38:19 <Bosmon> KASPARDNIT could have written that final sentence :)
+2017-02-03T23:41:10 * yzen_ has quit
+2017-02-03T23:43:37 <colinclark> I can imagine writing something like this when I was younger
+2017-02-03T23:44:03 <colinclark> amazing to think it\'s been nearly a decade of this
+2017-02-03T23:57:10 <Bosmon> A decade of what?
+'
+
+b'2017-02-03T23:03:50 <Bosmon> Documents "of certain types" are likely to be acted by changes "of certain types"
+2017-02-03T23:04:31 <Bosmon> A lot of his comment thread kicks around the concept of what they call "plugins" which as far as I can work out might amount to kinds of "user-contributed change types"
+2017-02-03T23:04:40 <colinclark> yes
+2017-02-03T23:04:43 <colinclark> I was just going to say
+2017-02-03T23:04:49 <Bosmon> But there\'s no need I guess for Signaletic to be quite so open, just to start with
+2017-02-03T23:04:54 <colinclark> the ability to define "more semantic" change types was key
+2017-02-03T23:05:05 <colinclark> especially not at this lowest level, no
+2017-02-03T23:05:23 <Bosmon> But I think you are going to want to support change events of types which can be implemented particularly efficiently using that great SHIBBOLETH, the WEB AUDIO API
+2017-02-03T23:05:43 <colinclark> yes
+2017-02-03T23:05:54 <colinclark> change in the web audio api boils down to a few things
+2017-02-03T23:05:56 <Bosmon> Which I imagine, as well as the traditional kinds we have now, will include various kinds of "graph reconfiguration events"
+2017-02-03T23:06:11 <Bosmon> I.e. "take this node which used to be connected over here, and either disconnect it, or reconnect it over there"
+2017-02-03T23:06:17 <colinclark> 1) instantiation 2) disconnection/reconnection 3) freeing up references so things get garbage collected
+2017-02-03T23:06:19 <colinclark> that\'s about it :P
+2017-02-03T23:06:29 <Bosmon> I assume that operations like that are incredibly cheap using the Web Audio API
+2017-02-03T23:06:37 <colinclark> yes
+2017-02-03T23:06:41 <colinclark> very
+2017-02-03T23:06:42 <Bosmon> I assume that there is also 0) parameter changes
+2017-02-03T23:06:47 <colinclark> yes
+2017-02-03T23:06:57 <colinclark> parameter changes are sort of curious
+2017-02-03T23:07:08 <colinclark> because in some cases they will involve 1) and 2)
+2017-02-03T23:07:13 <colinclark> sometimes they\'ll just be an assignment
+2017-02-03T23:08:04 <Bosmon> How might a parameter change involve disconnection/reconnection?
+2017-02-03T23:08:27 * sirdancealot has quit
+2017-02-03T23:08:36 <colinclark> well, let\'s take a thing like a multiplication
+2017-02-03T23:08:43 <colinclark> which you want to do on a signal
+2017-02-03T23:09:01 <colinclark> you have both an "input" and an "audio param"
+2017-02-03T23:09:41 <colinclark> the "audio param" is the... what\'s the mathy word... the scale value
+2017-02-03T23:09:50 <colinclark> but you might want ot multiply two signals
+2017-02-03T23:10:08 <colinclark> in which case you\'re connecting a Node up to an AudioParam via a call to connect()
+2017-02-03T23:10:18 <colinclark> but if you\'re just multiplying by a constant, you\'re doing an assigment
+2017-02-03T23:10:28 <colinclark> gainNode.gain.value = 0.5
+2017-02-03T23:10:29 <colinclark> or whatever
+2017-02-03T23:11:03 <Bosmon> ok
+2017-02-03T23:11:17 <colinclark> I guess one benefit to Signaletic is that these kind of spurious distinctions should be invisible to users
+2017-02-03T23:11:27 <Bosmon> Well, I think we wouldn\'t take the Web Audio API\'s casting of this issue too seriously
+2017-02-03T23:11:33 <colinclark> no
+2017-02-03T23:11:34 <Bosmon> Well, I was going to say just the opposite
+2017-02-03T23:11:35 <Bosmon> :)
+2017-02-03T23:11:38 <colinclark> We absolutely shouldn\'t
+2017-02-03T23:11:41 <colinclark> oh?
+2017-02-03T23:11:49 <colinclark> is it a problem, instead?
+2017-02-03T23:11:57 <Bosmon> The benefit to Signaletic was that this spurious lack of distinction would be fully surfaced to users :)
+2017-02-03T23:12:59 <colinclark> :)
+2017-02-03T23:13:03 <Bosmon> That is, just because the WAA considers that both nodes and constants can both be "parameters" doesn\'t mean that we would use the same Change Event types to speak about their changes
+2017-02-03T23:13:36 <colinclark> ah, I see what you mean
+2017-02-03T23:13:48 <colinclark> precisely because they are enacted so differently
+2017-02-03T23:14:31 <Bosmon> Well, they might be, "in our minds", and also "in the basics of the WAA implementation"
+2017-02-03T23:14:41 <Bosmon> Even if the WAA itself tries to abstract over them
+2017-02-03T23:14:52 <Bosmon> We may not agree with its choice of primary abstractions : P
+2017-02-03T23:14:56 <colinclark> :)
+2017-02-03T23:15:03 <Bosmon> BUT, I was going to ask..... what, if anything, does the WAA do about transactionality
+2017-02-03T23:15:12 <Bosmon> Does it imagine that the graph is somehow "live at all times"?
+2017-02-03T23:15:20 <colinclark> hmmm
+2017-02-03T23:15:31 <colinclark> well
+2017-02-03T23:15:36 <Bosmon> How long have you got to perform a reconfiguration, before it starts trying to generate samples based on it...
+2017-02-03T23:15:36 <colinclark> let\'s see if i can think this through aloud
+2017-02-03T23:15:51 <Bosmon> Or is this the reason that the WAA\'s primary idiom for configuration is "reconnectionism"
+2017-02-03T23:16:04 <colinclark> if a node is alive, it is always being evaluated, even if it is silent (i.e. not connected to a destination)
+2017-02-03T23:16:10 <Bosmon> That is, that, perhaps, it only wants you to expect that graph connection and disconnection events are atomic
+2017-02-03T23:16:14 <colinclark> and if it\'s connected to a destination, it\'s always making sound
+2017-02-03T23:16:21 <Bosmon> And recommends you to do complex stuff in an "unconnected subgraph"
+2017-02-03T23:16:25 <colinclark> no
+2017-02-03T23:16:29 <colinclark> well
+2017-02-03T23:16:39 <colinclark> yes, that\'s probably right
+2017-02-03T23:16:48 <colinclark> you either do it in an unconnected subgraph
+2017-02-03T23:16:55 <colinclark> or you hear the results of your changes immediately :)
+2017-02-03T23:16:56 <Bosmon> Well, that\'s pretty interesting
+2017-02-03T23:17:17 <Bosmon> And I guess has a lot of implications for how our "Signaletic ChangeApplier" might have to be implemented
+2017-02-03T23:17:27 <Bosmon> GIven there are, on the face of it, many routes you could take from one signal graph to another
+2017-02-03T23:17:37 <Bosmon> But some of them may generate appalling noises along the way
+2017-02-03T23:17:40 <colinclark> yes
+2017-02-03T23:18:00 <Bosmon> Well
+2017-02-03T23:18:03 <colinclark> one must always build up a graph separately, and connect it to the "live graph" last
+2017-02-03T23:18:08 <Bosmon> I can see there\'s going to be a lot more to this than meets the eye :)
+2017-02-03T23:18:17 <Bosmon> In theory, react has an extremely cushy ride
+2017-02-03T23:18:21 <colinclark> the "live graph," by default, just takes the form of the AudioContext\'s "destination node"
+2017-02-03T23:18:36 <Bosmon> Given the enormous prior art there is in yoking highly performant, transactionalised render processes to trees of DOM nodes
+2017-02-03T23:19:00 <Bosmon> And the very small costs of getting this somewhat wrong (i.e. a few frames of visual jank)
+2017-02-03T23:19:15 <Bosmon> Compared to the complete lack of this in the WAA, and the really unacceptable costs of getting this even slightly wrong
+2017-02-03T23:20:15 <Bosmon> I guess I see where your "document comparison idiom" is coming from, now
+2017-02-03T23:20:39 <Bosmon> I guess a lot revolves around what a typical Signaletic "authoring gesture" looks like
+2017-02-03T23:22:00 * yzen joined the channel
+2017-02-03T23:22:01 <colinclark> I guess this also revolves around questions i\'ve been thinking about and which we talked about initially
+2017-02-03T23:22:18 <colinclark> I mean, Charlie appears completely convinced that signal graphs will essentially never change, except at their leaves
+2017-02-03T23:22:32 <colinclark> i.e. parameter updates\xe2\x80\x94"numbers"
+2017-02-03T23:22:52 <colinclark> I think in practice, for now, this is probably somewhat realistic
+2017-02-03T23:23:08 <Bosmon> Interesting
+2017-02-03T23:23:12 <Bosmon> Well, we can certainly do that
+2017-02-03T23:23:15 <colinclark> "sound designers" will develop an instrument, and then they will expect it to stay quite static
+2017-02-03T23:23:30 <Bosmon> And then for anything else, just do a "whole-graph replacement" in the model we just discussed
+2017-02-03T23:23:33 <colinclark> they will identify specific "regions" of the instrument that will change
+2017-02-03T23:23:44 <colinclark> by saying "okay, I want to map the theta value of this sim to the frequency of that instrument"
+2017-02-03T23:23:54 <Bosmon> THat is, "build it up disconnected, connect it silently, turn up its amplitude, turn down the amplitude of the other one, disconnect it"
+2017-02-03T23:24:24 <colinclark> yes
+2017-02-03T23:24:27 <colinclark> precisely
+2017-02-03T23:24:42 <colinclark> that\'s PRECISELY what I did to the GATech designer\'s Flocking synth
+2017-02-03T23:24:49 <colinclark> defined it, made sure it faded in on startup
+2017-02-03T23:24:50 * yzen_ has quit
+2017-02-03T23:24:55 <colinclark> and then wrote this line of code
+2017-02-03T23:25:03 <colinclark> which I can only paste here, since the repo is private
+2017-02-03T23:25:09 <Bosmon> Well, this will be a pretty straightforward couple of primitives to implement
+2017-02-03T23:25:19 <colinclark> synth.set("oscillator.freq", 440 + (100 * theta)); // Whenever theta changes, update the Flocking synth\'s oscillator frequency.
+2017-02-03T23:25:26 <Bosmon> Leading to an initial, rather simple and "unreactlike" implementation : P
+2017-02-03T23:25:47 <colinclark> "theta" here is changing as the result of a student dragging around a virtual magnet towards a coil on a canvas
+2017-02-03T23:25:55 <Bosmon> ok
+2017-02-03T23:25:57 <colinclark> yes, very simple
+2017-02-03T23:26:29 <Bosmon> Well, shame we don\'t yet have the "reduced expression parser" for expressions like that : P
+2017-02-03T23:26:35 <Bosmon> We should set KASPARDNIT on it
+2017-02-03T23:26:37 <colinclark> yes
+2017-02-03T23:26:42 <colinclark> we\'ll definitely need it here
+2017-02-03T23:26:48 <Bosmon> Well, that will be nice
+2017-02-03T23:26:50 <Bosmon> And make us feel better
+2017-02-03T23:26:58 <colinclark> you should see the kind of insane trees I had to write in the Flock drum
+2017-02-03T23:27:03 <Bosmon> It\'s always nice to achieve ANYTHING that we\'ve been banging on about for about 5 years : P
+2017-02-03T23:27:03 <colinclark> just to do some basic math
+2017-02-03T23:27:06 <colinclark> :)
+2017-02-03T23:27:35 <colinclark> Well, I guess I know my next steps
+2017-02-03T23:27:39 <colinclark> I need to flesh out three more examples
+2017-02-03T23:27:45 <colinclark> to ensure that this model works
+2017-02-03T23:27:50 <colinclark> and then I won\'t sweat change too much :)
+2017-02-03T23:27:52 <colinclark> YET
+2017-02-03T23:27:58 <Bosmon> yup
+2017-02-03T23:28:14 <colinclark> I believe some nodes disconnect themselves
+2017-02-03T23:28:22 <colinclark> which is why WAA is unsuitable for serialization
+2017-02-03T23:28:27 <Bosmon> We can just support Change events of type "ADD" (=== parameter changes) and then one other giant one "GRAPHREPLACE" or whatever
+2017-02-03T23:28:31 <colinclark> right
+2017-02-03T23:28:37 <colinclark> all buffersourcenodes are one-shot
+2017-02-03T23:28:42 <Bosmon> !!!!
+2017-02-03T23:28:52 <Bosmon> DISCONNECT THEMSELVES!
+2017-02-03T23:28:55 <colinclark> and I believe they disconnect themselves magically whne they\'re done
+2017-02-03T23:28:58 <Bosmon> yowch
+2017-02-03T23:29:02 <colinclark> it\'s on my to do list to double check the spec
+2017-02-03T23:29:10 <colinclark> I struggled over this kind of thing in Flocking
+2017-02-03T23:29:16 <colinclark> you might remember SuperCollider\'s "done actions"
+2017-02-03T23:29:19 <colinclark> of which there are FOUR
+2017-02-03T23:29:22 <Bosmon> I don\'t
+2017-02-03T23:29:32 <colinclark> it\'s a more insane case
+2017-02-03T23:29:43 <colinclark> But I believe in SuperColliders, Envelopes have magical powers
+2017-02-03T23:29:49 <colinclark> specified via DONE ACTIONS
+2017-02-03T23:30:13 <colinclark> So an envelope can signal the teardown of an entire synth
+2017-02-03T23:30:19 <colinclark> i.e. the synth it is contained within
+2017-02-03T23:30:37 <colinclark> in WAA, if I am not mistaken some nodes can have one of two only semi-magical actions
+2017-02-03T23:30:47 <colinclark> 1) to keep playing after they\'ve been told to stop ("tail time")
+2017-02-03T23:30:58 <colinclark> 2) to stop and disconnect themselves
+2017-02-03T23:31:06 <Bosmon> Totally horrific
+2017-02-03T23:31:16 <colinclark> but i do sometimes make these things up
+2017-02-03T23:31:34 <colinclark> "The start() method is used to schedule when sound playback will happen. The start() method may not be issued multiple times. The playback will stop automatically when the buffer\'s audio data has been completely played (if the loop attribute is false), or when the stop() method has been called and the specified time has been reached."
+2017-02-03T23:32:36 <colinclark> I may be wrong
+2017-02-03T23:33:20 <colinclark> this is, in itself, interesting
+'
+
+b'2017-02-03T19:03:14 <Bosmon> And then point 6 in the previous set is also fairly unclear
+2017-02-03T19:03:21 <Bosmon> "The service validates this pid is the GPII local flow manager process, perhaps by checking its directory is owned by Administrator "
+2017-02-03T19:03:27 * yzen_ joined the channel
+2017-02-03T19:03:37 <Bosmon> Why might checking that the directory is owned by Administrator validate that this is the GPII local flow manager process?
+2017-02-03T19:04:39 <cindyli> you have million questoins, Bosmon.
+2017-02-03T19:04:42 <cindyli> that\'s good tho
+2017-02-03T19:04:48 <cindyli> ok, your last question
+2017-02-03T19:04:57 <Bosmon> This is what happens when someone tries to implement a security system :)
+2017-02-03T19:05:00 <Bosmon> They get a million questions :)
+2017-02-03T19:05:16 <cindyli> stegru and I talked a bit more on this validation process this morning
+2017-02-03T19:05:39 <cindyli> the result is it might be easier to use anonymous pipes instead of name pipes
+2017-02-03T19:05:48 <cindyli> so that this validation can be bypassed
+2017-02-03T19:06:04 <cindyli> i will update the wiki with that
+2017-02-03T19:06:07 <Bosmon> cindyli - I was referring to this section: "The workflow to request an access token from GPII cloud"
+2017-02-03T19:06:17 <Bosmon> Which refers to some hashing and challenging, etc.
+2017-02-03T19:06:57 * yzen has quit
+2017-02-03T19:07:41 <cindyli> Bosmon: with OAuth 2, https://tools.ietf.org/html/rfc6749#section-4.3
+2017-02-03T19:08:03 <cindyli> with resource owner grant, the workflow is
+2017-02-03T19:08:23 <cindyli> 1. the local GPII sends a request with client id/secret
+2017-02-03T19:08:28 <Bosmon> If the source of the info on the wiki page was an IRC chat, we should try to create links to the chat log in the page
+2017-02-03T19:08:41 <cindyli> i can do that
+2017-02-03T19:08:57 <cindyli> 2. the GPII Cloud validate that client info, if it\'s ok, return an access token
+2017-02-03T19:09:03 <Bosmon> cindyli - but the specific steps listed in "The workflow to request an access token from GPII cloud" don\'t appear in the that RFC section
+2017-02-03T19:09:07 <Bosmon> Or anything similar
+2017-02-03T19:09:12 <Bosmon> So I am wondering where they came from?
+2017-02-03T19:09:23 <Bosmon> And how one could be sure that they achieve a particular purpose, and what that purpose is?
+2017-02-03T19:09:33 <cindyli> 3. then, any following requests sent by the local GPII must have that access token provided to retrieve user\'s info
+2017-02-03T19:09:42 <cindyli> like lifecycle instructions
+2017-02-03T19:10:00 <cindyli> this access token will expire after certain time
+2017-02-03T19:10:16 <cindyli> then the local GPII will repeat the same process to request another valid access token
+2017-02-03T19:11:02 <cindyli> Bosmon: that\'s the adjusted work flow because of having 2 separate processes
+2017-02-03T19:11:21 * sirdancealot joined the channel
+2017-02-03T19:11:26 <cindyli> one process can read the secret, but do not wanna expose that secret to any other process
+2017-02-03T19:11:29 <cindyli> es
+2017-02-03T19:12:11 <cindyli> so, stegru gives the idea with a challenge string, which i think is brilliant
+2017-02-03T19:30:31 * stegru_ has quit
+2017-02-03T19:34:09 * kasparnet joined the channel
+2017-02-03T19:55:22 <cindyli> Bosmon: i made some changes to section 6.3 "A dedicated process/service running on a different account for storing the GPII client secret"
+2017-02-03T19:55:35 <cindyli> let me know if anything still unclear
+2017-02-03T20:08:46 * alanharnum joined the channel
+2017-02-03T20:16:46 <Bosmon> cindyli - right - so this section is "stegru\'s idea"? : P
+2017-02-03T20:16:52 <Bosmon> If so, we should cite that :)
+2017-02-03T20:17:10 <cindyli> adding...
+2017-02-03T20:17:18 <Bosmon> Recall, at some point, some "due diligence professional" is going to come to us and say....... "On what evidence do you believe that the system you have designed is secure?"
+2017-02-03T20:17:22 <Bosmon> And then we will say ..............
+2017-02-03T20:19:55 * kasparnet has quit
+2017-02-03T20:20:34 <cindyli> Bosmon: i guess by evaluating whether the system can defend all possible attacks
+2017-02-03T20:21:47 <Bosmon> cindyli - yes, and I guess you see the problem inherent in that :)
+2017-02-03T20:22:04 <Bosmon> It will always be impossible to actually evaluate whether the system "can defend all possible attacks"
+2017-02-03T20:22:26 <Bosmon> Which is why we need to be able to short-circuit at least some of the evaluation by allowing people to trace back from what we have done to various "established best practices"
+2017-02-03T20:22:52 <Bosmon> Security protocols are incredibly dangerous things to simply invent on the hoof
+2017-02-03T20:23:14 <Bosmon> Certainly, we need to be able to convince ourselves, via reasoning, that our system is secure because it can defend against certain attacks
+2017-02-03T20:23:49 <Bosmon> But some of the evidence underlying this will in the end have to be of the form "People Xxxx have deployed such an algorithm in such a situation, and it was widely agreed that it defended against Yyyyy attacks"
+2017-02-03T20:26:29 <cindyli> well, i did see discussions out there on how to protect secrets. but haven\'t seen such best practices in a form of specification, Bosmon
+2017-02-03T20:26:36 <Bosmon> Yes
+2017-02-03T20:26:43 <Bosmon> Well, where we se such discussions, we should link to them
+2017-02-03T20:30:54 * kasparnet joined the channel
+2017-02-03T20:32:23 * kasparnet has quit
+2017-02-03T20:32:56 * kasparnet joined the channel
+2017-02-03T20:33:58 * sirdancealot has quit
+2017-02-03T20:40:37 * kasparnet has quit
+2017-02-03T20:41:38 * kasparnet joined the channel
+2017-02-03T20:43:31 * sirdancealot joined the channel
+2017-02-03T20:46:07 * kasparnet has quit
+2017-02-03T21:00:51 <gtirloni> Bosmon, it think our CI now has taken a good look at our PRs, including the way pre-CI (which obviously failed because they lack the vagrantfile/.qi.yml magic). It was a good stress test... there  were not stuck VirtualBox processes after that, so that was good.
+2017-02-03T21:08:12 * yzen_ has quit
+2017-02-03T21:08:17 * yzen joined the channel
+2017-02-03T21:32:06 <simonjb> cindyli and Bosmon: I was doing some testing of GPII-2160 against universal master before merging and there are failures in some of the oauth2 web tests
+2017-02-03T21:32:21 <cindyli> ah ha
+2017-02-03T21:33:01 <cindyli> did you run "npm install" after pouchdb stuff was merged into the master?
+2017-02-03T21:33:37 <simonjb> yes, I just cleaned (git clean -dix) and did npm install
+2017-02-03T21:33:54 <cindyli> ok
+2017-02-03T21:34:08 <cindyli> i can give a try
+2017-02-03T21:34:12 <simonjb> thanks cindyli
+2017-02-03T21:34:15 <cindyli> np
+2017-02-03T21:34:48 <simonjb> oh, I should mention -- the failures are on universal master
+2017-02-03T21:35:07 <simonjb> not specific to GPII-2160 (I found them while testing that work)
+2017-02-03T21:35:19 <cindyli> ah ok
+2017-02-03T21:40:56 <simonjb> cindyli, more data: passing in Chrome; I see the failure in FF; but in a FF Private Windows, the tests appear to get stuck on Auth Grant Finder Tests
+2017-02-03T21:41:13 <cindyli> ok
+2017-02-03T21:42:11 <cindyli> simonjb: everything passes here on ff
+2017-02-03T21:42:17 <cindyli> not a private windows
+2017-02-03T21:42:25 <cindyli> simonjb: did you try vagrant to run tests?
+2017-02-03T21:42:41 <cindyli> probably some legacy in ur ff storage
+2017-02-03T21:42:46 <simonjb> could be a caching issue, I will try clearing my cache
+2017-02-03T21:42:53 <simonjb> can you try a private window?
+2017-02-03T21:42:57 <cindyli> sure
+2017-02-03T21:43:11 <simonjb> not running in vagrant
+2017-02-03T21:43:40 <cindyli> right, same issue with private windows on ff
+2017-02-03T21:44:04 <cindyli> simonjb: there\'s an error: failed to open indexDB
+2017-02-03T21:44:18 <cindyli> i guess pouchdb cannot be used with private sessions
+2017-02-03T21:44:39 <cindyli> it probably requires local storage or sessions
+2017-02-03T21:44:49 <simonjb> ok, cindyli, that\'s reasonable
+2017-02-03T21:45:05 <simonjb> in chrome they ran in incognito mode
+2017-02-03T21:45:34 <cindyli> chrome incognito may not be that incognito then
+2017-02-03T21:46:32 <cindyli> well, i guess it depends on
+2017-02-03T21:46:54 <simonjb> cindyli: ok, fine in FF after clearing cache -- sorry for the false alarm
+2017-02-03T21:46:59 <cindyli> what and how the chrome local storage gets used in incognito mode
+2017-02-03T21:47:12 <cindyli> great it works, simonjb
+2017-02-03T21:47:33 <simonjb> yeah, it is interesting that difference between FF and Chrome private modes
+2017-02-03T22:12:29 <Bosmon> simonjb - also, kasparnet has been running into some failures in our web tests in the testem environment
+2017-02-03T22:12:35 <Bosmon> If you check yesterday\'s channel logs
+2017-02-03T22:12:44 <Bosmon> As far as I can tell, these are spurious too
+2017-02-03T22:19:18 <simonjb> thanks Bosmon
+2017-02-03T22:26:38 <Bosmon> simonjb - colinclark has mentioned to me "informally" that you are interested in walking a component tree :)
+2017-02-03T22:26:48 <Bosmon> This is currently done by the following rather informal and messy API: https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/FluidIoC.js#L379
+2017-02-03T22:27:03 <colinclark> "informally"
+2017-02-03T22:27:08 <simonjb> thanks Bosmon and colinclark :)
+2017-02-03T22:27:11 <colinclark> meaning I started blabbing in a gtalk window :P
+2017-02-03T22:27:36 <colinclark> about how I am going to store block counters on every unit generator in FUTURE FLOCKING
+2017-02-03T22:27:46 <colinclark> and then I also mentioned walking trees of components
+2017-02-03T22:44:40 <simonjb> Bosmon: GPII-2160 merged
+2017-02-03T22:45:00 <Bosmon> simonjb - awesome - thanks so much!
+2017-02-03T22:50:59 * yzen is now known as yzen_
+2017-02-03T22:55:26 <colinclark> Bosmon: I guess I can faintly imagine that update semantics of Signaletic will involve comparisons between two different states of the document
+2017-02-03T22:56:02 <colinclark> I started to wonder about this when I thought that Signaletic probably really can and should support the construction and destruction of more than just Nodes, but also things like buffers and "scores"
+2017-02-03T22:56:09 <colinclark> i.e. scheduled events in time
+2017-02-03T22:57:11 <colinclark> at that point, one might imagine that, say, the deletion of a repeating schedule of events might involve removing its declaration from the document and asking Signaletic to deal with diffing and operating on these differences
+2017-02-03T22:57:16 <colinclark> but I don\'t know why I think this at all :P
+2017-02-03T22:57:35 <Bosmon> Well, perhaps because you are subconsciously surfacing some react documents you read once :)
+2017-02-03T22:57:37 <colinclark> it just seemed to me that as such a low-level technology, it might be simple and consistent
+2017-02-03T22:57:40 <colinclark> ha
+2017-02-03T22:58:10 <colinclark> Learn React by Intuition in only 2100 days
+2017-02-03T22:58:11 <colinclark> my new book
+2017-02-03T22:58:17 <Bosmon> But I wonder why you are conceiving the workflow this way round
+2017-02-03T22:58:25 <Bosmon> I.e. that somehow "a new document" arises and you have to diff to it
+2017-02-03T22:58:34 <Bosmon> How might the new document arise?
+2017-02-03T23:00:17 <colinclark> yeah, that\'s the key question
+2017-02-03T23:00:30 <colinclark> there\'s no evidence to think that this will be a real workflow
+2017-02-03T23:00:43 <colinclark> I guess you could imagine, perhaps, that the layers above would generate these things
+2017-02-03T23:00:53 <colinclark> new documents, i mean
+2017-02-03T23:00:58 <Bosmon> YOu can see some of HAVERBEKE\'s recent thought going in what we could call "the right direction"
+2017-02-03T23:01:01 <colinclark> but I suppose there\'s no reason to think they\'d be capable of just generating changes
+2017-02-03T23:01:08 <colinclark> Yeah, I read that blog post
+2017-02-03T23:01:12 <Bosmon> In that he is realising that there needs to be a full-fledged "dialect of differences"
+2017-02-03T23:01:13 <colinclark> it was wildly bewildering
+2017-02-03T23:01:18 <colinclark> that\'s pretty interesting
+2017-02-03T23:01:34 <colinclark> transactionality was also a big issue
+2017-02-03T23:01:34 <Bosmon> i.e. a declarative bus of Change events :)
+2017-02-03T23:01:37 <colinclark> :)
+2017-02-03T23:01:38 <Bosmon> Yes, that too
+2017-02-03T23:01:59 <colinclark> So what characterizes the Change Applier\'s concept of a change?
+2017-02-03T23:02:13 <Bosmon> i) it forms a document in its own right
+2017-02-03T23:02:34 <Bosmon> ii) the document\'s action is expressed with respect to "externalisable coordinates" of the target document
+2017-02-03T23:02:46 <Bosmon> Other than that, it\'s a free-for-all :)
+2017-02-03T23:03:04 <Bosmon> There\'s no reason that the particular changes that we have implemented in Infusion\'s current ChangeApplier should be considered fundamental
+2017-02-03T23:03:14 <Bosmon> In fact, we\'ve known for a long time that the collection needs to be augmented in a big way
+2017-02-03T23:03:28 <Bosmon> But of course augmenting the collection means everyone lugging around support for the new change types
+2017-02-03T23:03:38 <colinclark> right
+2017-02-03T23:03:39 <Bosmon> Which is something that Haverbeke\'s discussion also surfaces
+'
+
+b'2017-02-03T15:56:03 <Justin_o> we\'re going to need to revamp these when switch to a monorepo style anyways, so i don\'t mind keeping things clearer for now and deciding on how to build source/min together later
+2017-02-03T15:56:07 <Justin_o> alanharnum: ^
+2017-02-03T15:56:29 <alanharnum> Justin_o: OK - I think I\'m going to roll back to that style, then.
+2017-02-03T15:56:37 <Justin_o> alanharnum: okay
+2017-02-03T15:58:52 <alanharnum> one thing from this - I am glad to have that verifyDists test.
+2017-02-03T15:59:03 <alanharnum> has made refactoring this much easier to test.
+2017-02-03T15:59:14 <Justin_o> alanharnum: :) yah that was a good idea to add
+2017-02-03T16:01:41 <alanharnum> and so colorful thanks to you pointing out grunt.log functionality :p
+2017-02-03T16:03:00 <cindyli> stegru: one question in our case using anonymous pipes is, the communication btw the windows service and the gpii process is bi-directional. they both need to write and read data from each other. is it possible for a windows process being a parent meanwhile a child process at the same time, to read/write to one same process at the other end of the pipe?
+2017-02-03T16:03:45 <stegru> if they\'re not bi-directional, you can have two pipes, cindyli
+2017-02-03T16:04:43 <stegru> yes, the call to "CreatePipe" returns two pipes
+2017-02-03T16:05:38 <cindyli> so anonymous pipes can be established in btw any two processes? it doesn\'t require child process being spawned or created by the parent process?
+2017-02-03T16:05:59 <cindyli> would that be a security problem, stegru?
+2017-02-03T16:06:30 <stegru> yes, it does need to spawn a child process
+2017-02-03T16:06:48 <stegru> the child inherits the 2 pipes
+2017-02-03T16:06:57 <cindyli> ah. ok
+2017-02-03T16:07:24 <cindyli> then it becomes bi-directional. makes sense. thanks, stegru
+2017-02-03T16:07:32 <cindyli> updating the wiki
+2017-02-03T16:08:46 <stegru> here\'s an example, in C: https://msdn.microsoft.com/en-us/library/windows/desktop/ms682499(v=vs.85).aspx
+2017-02-03T16:09:11 <stegru> not sure it\'s a good one
+2017-02-03T16:09:16 <cindyli> stegru: another question is, when gpii starts, is it possible to have this gpii process spawn a windows service as its child process?
+2017-02-03T16:09:40 <cindyli> is there permission problem
+2017-02-03T16:09:56 <stegru> yes.. but, this is where it gets tricky:
+2017-02-03T16:11:12 <stegru> 1. User launches GPII  2. GPII starts the service (if it\'s not already), 3: GPII tells the service to start the "real" GPII (the child) 4: Original GPII exits
+2017-02-03T16:11:45 <cindyli> ok, 2 gpii processes at different stages
+2017-02-03T16:11:58 <stegru> yes, as a launcher then as a child
+2017-02-03T16:12:14 <cindyli> this is really helpful, stegru. thanks!!!
+2017-02-03T16:13:03 <stegru> but.. the launcher gpii will have to comunicate with the service via a named pipe.. but all it\'s doing is telling it to start the "real" gpii so I don\'t think it matters if another process accesses that pipe
+2017-02-03T16:14:07 <Bosmon> Hadn\'t we planned to use electron-IPC for this use case anyway?
+2017-02-03T16:14:46 <stegru> i know nothing about electron IPC, but we\'re discussing a user process talking to a windows service
+2017-02-03T16:14:52 <Bosmon> !
+2017-02-03T16:15:23 <stegru> if electron ipc allows this, i will kiss you
+2017-02-03T16:16:19 <cindyli> i don\'t know if Bosmon would appreciate your kiss tho, stegru ;-)
+2017-02-03T16:19:53 <Bosmon> "One is a privileged process that stores the GPII client secret into its own file system so it is not accessible by the login user"
+2017-02-03T16:19:59 <Bosmon> So what problems does this solve?
+2017-02-03T16:20:20 <Bosmon> That is - what attacks does it defend against?
+2017-02-03T16:20:38 <stegru> a non-admin user can\'t get the access code for that machine
+2017-02-03T16:21:11 <Bosmon> Why had we assigned access codes "per machine" anyway - rather than just "per user account"?
+2017-02-03T16:23:22 <stegru> personally, I don\'t see the problem with sharing this access code - I don\'t know what it means to lock the computer
+2017-02-03T16:24:03 <Bosmon> It appears that the section "The work flow to assign client ID/secret" simply mentions "the user"
+2017-02-03T16:24:20 <Bosmon> So I\'m not sure why there is a problem with scoping the secret they are given to whatever file access they have on that machine
+2017-02-03T16:24:43 <Bosmon> THat is, storing it in files which are readable only by that user
+2017-02-03T16:25:08 <cindyli> Bosmon: this is for public machines, not private machines
+2017-02-03T16:25:42 <cindyli> 2nd, we are trying to protect client secrets which are unique identifiers to gpii installations
+2017-02-03T16:25:52 <cindyli> each gpii installation will have its own client secret
+2017-02-03T16:26:00 <stegru> why?
+2017-02-03T16:26:05 <Bosmon> cindyli - in that case I think this section on the wiki page is misleading
+2017-02-03T16:26:10 <Bosmon> And should be rewritten/expanded
+2017-02-03T16:26:16 <Bosmon> "The work flow to assign client ID/secret"
+2017-02-03T16:26:25 <cindyli> so when GPII cloud receives the request from a gpii installation, we know it IS from GPII not somewhere else
+2017-02-03T16:26:28 <cindyli> or hackers
+2017-02-03T16:26:29 <Bosmon> Since it mentions "the user" and then "logs into his GPII account"
+2017-02-03T16:26:46 <cindyli> good point
+2017-02-03T16:27:01 <Bosmon> Which seems to imply that there\'s a 1-1 relationship between people installing the GPII, local user accounts, and GPII accounts
+2017-02-03T16:27:45 <stegru> what\'s the difference between a public and private computer, in relation to needing a client id?
+2017-02-03T16:29:24 <Bosmon> I imagine that the difference is that we could expect that on a private computer, we could expect "the user" to go through this list of install steps for each installation of the GPII, and for a public computer, we couldnt\'
+2017-02-03T16:31:46 * kasparnet has quit
+2017-02-03T16:32:44 <alanharnum> fluid-everyone: standup time
+2017-02-03T16:36:46 * Yan_Hu1 joined the channel
+2017-02-03T16:36:55 * clown1 joined the channel
+2017-02-03T16:38:56 * clown has quit
+2017-02-03T16:39:20 * clown joined the channel
+2017-02-03T16:39:33 * Yan_Hu joined the channel
+2017-02-03T16:39:50 <cindyli> Bosmon: does this section look better now -
+2017-02-03T16:39:51 <cindyli> https://wiki.gpii.net/w/Continued_Researches_on_Possible_Approaches_for_Protecting_Communication_btw_LFM_and_CBFM#The_work_flow_to_assign_client_ID.2Fsecret
+2017-02-03T16:40:50 <stegru> 2 is speciesist
+2017-02-03T16:43:52 * Yan_Hu joined the channel
+2017-02-03T16:43:55 * clown joined the channel
+2017-02-03T16:44:34 <stegru> so cindyli, i\'m curious.. if i where to steal the client id for your installation, what would I be able to do that I couldn\'t do already?
+2017-02-03T16:45:58 * michelled joined the channel
+2017-02-03T16:46:50 <cindyli> stegru: do you mean what you could use client id/secret for if you have one?
+2017-02-03T16:47:25 <stegru> i mean, what if I pinched yours and used it instead of mine
+2017-02-03T16:49:14 <cindyli> stegru: well, if you use my secret to harvest a bunch of user tokens. those actions will be tracked on me
+2017-02-03T16:50:12 <stegru> gotcha
+2017-02-03T16:52:41 <cindyli> Bosmon: i\'m reading on electron IPC. this doc https://github.com/electron/electron/blob/master/docs/api/ipc-main.md says:
+2017-02-03T16:52:59 <cindyli> ipcMain handles asynchronous and synchronous messages sent from a renderer process (web page).
+2017-02-03T16:53:37 <cindyli> according to electron API, https://github.com/electron/electron/tree/master/docs/api, there are 2 IPC types:
+2017-02-03T16:53:53 <cindyli> ipcMain and ipcRenderer
+2017-02-03T16:55:06 <cindyli> so, it seems to me and i could likely be wrong that IPC is used for communications between electron main process and web renderers
+2017-02-03T16:56:28 <cindyli> in our saving secret case, the communication needs to happen in btw: the main process, and a privileged process that runs under a different user, likely an admin or a system account
+2017-02-03T16:56:54 <cindyli> this privileged process saves the client secret so other processes cannot access
+2017-02-03T16:58:37 <cindyli> seems to me so far the electron IPC cannot do this
+2017-02-03T17:01:24 <cindyli> let me know if i missed something
+2017-02-03T17:14:45 * colinclark joined the channel
+2017-02-03T17:39:59 * michelled joined the channel
+2017-02-03T17:50:44 * gtirloni joined the channel
+2017-02-03T17:51:56 * yzen is now known as yzen_
+2017-02-03T17:52:56 * colinclark joined the channel
+2017-02-03T17:54:49 * yzen joined the channel
+2017-02-03T17:55:46 <colinclark> simonjb, michelled: This really made my day today https://github.com/GPII/gpii-pouchdb/pull/13#pullrequestreview-20011106
+2017-02-03T17:56:28 * yzen_ has quit
+2017-02-03T17:57:12 * yzen_ joined the channel
+2017-02-03T18:00:04 * yzen has quit
+2017-02-03T18:01:52 * yzen_ has quit
+2017-02-03T18:16:21 * stegru_ joined the channel
+2017-02-03T18:33:10 * LMNTRIX joined the channel
+2017-02-03T18:42:21 <Bosmon> cindyli - yes, section 2 reads better
+2017-02-03T18:42:36 <Bosmon> But I\'m still puzzled about step 3: "The installer logs into his GPII account"
+2017-02-03T18:42:43 <Bosmon> What *is* a "GPII account", for these purposes?
+2017-02-03T18:43:16 <Bosmon> And - what about unattended, or automated installation?
+2017-02-03T18:43:19 <cindyli> Bosmon: it\'s like when someone request a google API access key, this person needs to first have a google account
+2017-02-03T18:43:45 <Bosmon> cindyli - is this going to be a different kind of GPII account than the one which allows users to autopersonalise a system?
+2017-02-03T18:43:47 <Bosmon> Or the same kind?
+2017-02-03T18:44:01 <cindyli> yes, could be the same site
+2017-02-03T18:44:27 * gtirloni joined the channel
+2017-02-03T18:45:08 <Bosmon> cindyli - for step 5, do you imagine that the secret and ID are sent in an email in plaintext?
+2017-02-03T18:45:12 <Bosmon> And if so, do you think this is wise?
+2017-02-03T18:45:38 <cindyli> Bosmon: no, i agree.
+2017-02-03T18:46:05 <cindyli> Bosmon: we could change the procedure to have client id/secret being given on that web page right away
+2017-02-03T18:46:24 <Bosmon> cindyli - I believe that\'s the kind of thing that Amazon, etc. do
+2017-02-03T18:46:27 <Bosmon> Annoying though it is
+2017-02-03T18:46:34 <cindyli> the validation that makes sure the user\'s email is valid can be done at the registration
+2017-02-03T18:46:36 <Bosmon> The secret should only ever be transmitted over HTTPS
+2017-02-03T18:46:55 <cindyli> agree
+2017-02-03T18:47:11 <cindyli> updating the wiki
+2017-02-03T18:47:24 <cindyli> Bosmon: did you see my question about using electron IPC?
+2017-02-03T18:47:29 <Bosmon> cindyli - I saw the question
+2017-02-03T18:47:46 <Bosmon> I think we shouldn\'t necessarily write off electron IPC based on what we see in that markdown description
+2017-02-03T18:47:58 <Bosmon> When the-t-in-rtf and I poked around a bit, we found that it seemed to be a relatively generalised mechanism
+2017-02-03T18:48:05 <Bosmon> Not a very well-documented one, perhaps
+2017-02-03T18:50:20 <cindyli> Bosmon: so IPC probably can do more than in btw the main process and renderers
+2017-02-03T18:50:32 <cindyli> Bosmon: i change the #5 to
+2017-02-03T18:50:32 <cindyli> 5. The client ID/secret is given;
+2017-02-03T18:50:48 <cindyli> do you think more details should be provided here at #5
+2017-02-03T18:51:11 <Bosmon> cindyli - yes
+2017-02-03T18:51:48 <cindyli> Bosmon: what about "The client ID/secret is given on the web UI"?
+2017-02-03T18:52:03 <Bosmon> That\'s a bit better :)
+2017-02-03T18:52:39 <cindyli> let me know if it could be even better, Bosmon
+2017-02-03T18:52:41 <cindyli> updating..
+2017-02-03T18:54:28 * sirdancealot joined the channel
+2017-02-03T18:57:25 <Bosmon> cindyli - I think the requirements and workflow are still all pretty unclear
+2017-02-03T18:57:43 * yzen joined the channel
+2017-02-03T18:58:09 <cindyli> in section "The work flow to assign client ID/secret"?
+2017-02-03T18:58:26 <Bosmon> Well, in the whole document
+2017-02-03T18:58:32 <Bosmon> For example in many places it refers to "access tokens"
+2017-02-03T18:58:38 <cindyli> nooooo.....
+2017-02-03T18:58:42 <Bosmon> But I can\'t help feeling that this word is used in different senses in different contexts
+2017-02-03T18:58:45 * alanharnum joined the channel
+2017-02-03T18:59:01 <Bosmon> For example, in the section "The workflow to request an access token from GPII cloud" it is used in one sense
+2017-02-03T18:59:03 * sirdancealot has quit
+2017-02-03T18:59:12 <cindyli> shall i say "OAuth2 access tokens" and link it to OAuth spec?
+2017-02-03T18:59:30 <Bosmon> Although I\'m not completely clear what this sense is - what *is* this access token, and what is the local flow manager capable to do with it?
+2017-02-03T19:00:16 <cindyli> local flow manager uses it to request lifecycle instructions from GPII cloud
+2017-02-03T19:00:18 <Bosmon> But then in the section "The work flow to assign client ID/secret"
+2017-02-03T19:00:31 <Bosmon> it reads: "it first needs to provide its client id/secret to GPII cloud to exchange access tokens."
+2017-02-03T19:00:38 <Bosmon> Are these the same kind of access tokens?
+2017-02-03T19:00:50 <cindyli> yes
+2017-02-03T19:01:01 <Bosmon> When does it provide its client id/secret to the cloud, and what does it mean to "exchange access tokens"?
+2017-02-03T19:02:11 <Bosmon> In the section "The workflow to request an access token from GPII cloud" - where did this workflow of 7 steps come from?
+2017-02-03T19:02:20 <Bosmon> DId you adapt it from some similar security protocol elsewhere?
+'
+
+b'2017-02-03T00:00:21 * colinclark joined the channel
+2017-02-03T00:00:21 * colinclark has quit
+2017-02-03T00:11:21 * yzen joined the channel
+2017-02-03T00:12:28 * yzen is now known as yzen_
+2017-02-03T00:17:10 * yzen_ has quit
+2017-02-03T00:41:46 * kasparnet joined the channel
+2017-02-03T00:46:05 * kasparnet has quit
+2017-02-03T01:33:04 * Jess_ joined the channel
+2017-02-03T02:18:28 * danayo joined the channel
+2017-02-03T02:41:09 * mrtyler joined the channel
+2017-02-03T03:05:44 * yzen joined the channel
+2017-02-03T03:05:53 * yzen is now known as yzen_
+2017-02-03T03:11:10 * yzen_ has quit
+2017-02-03T03:25:51 * yzen joined the channel
+2017-02-03T04:02:18 * danayo joined the channel
+2017-02-03T04:55:47 * yzen is now known as yzen_
+2017-02-03T05:00:58 * yzen_ has quit
+2017-02-03T06:10:18 * kasparnet joined the channel
+2017-02-03T06:17:52 * kasparnet has quit
+2017-02-03T06:18:18 * the-t-in-rtf joined the channel
+2017-02-03T08:30:22 * the-t-in-rtf joined the channel
+2017-02-03T08:57:50 * yzen joined the channel
+2017-02-03T08:58:45 * stegru joined the channel
+2017-02-03T09:02:10 * yzen has quit
+2017-02-03T11:49:58 <Bosmon> A good morning
+2017-02-03T11:50:12 <Bosmon> The word "Trump" doesn\'t appear in any of today\'s headlines, for the first time in quite a while
+2017-02-03T11:53:47 <Bosmon> Ah sorry, false alarm : P
+2017-02-03T11:59:09 <team-member-5> Bosmon: yeah, it\'s going to take a while
+2017-02-03T11:59:23 <team-member-5> oh, I\'m still team-member-5
+2017-02-03T12:14:30 * Justin_o joined the channel
+2017-02-03T12:28:51 * gtirloni joined the channel
+2017-02-03T12:33:59 <Justin_o> Bosmon: I sent out the e-mail to organize a meeting to discuss the infusion-docs deployment. Here\'s the doodle poll link http://doodle.com/poll/dm4rmrv6we3die2u
+2017-02-03T12:59:42 * yzen joined the channel
+2017-02-03T13:04:07 * yzen has quit
+2017-02-03T13:18:02 <Bosmon> Cheers, Justin_o
+2017-02-03T13:48:14 <Bosmon> Hi gtirloni - I\'m noticing that a lot of CI jobs seem to become jammed - such as this one: https://github.com/GPII/universal/pull/495
+2017-02-03T13:48:40 <Bosmon> Or at least, from the point of view of github
+2017-02-03T13:48:45 <Bosmon> It seems that some of the jobs did actually complete
+2017-02-03T13:49:24 <gtirloni> i think we may need to add stegru to the list of approved PR submitters, let me check
+2017-02-03T13:50:09 <gtirloni> yeah, he isn\'t here: https://github.com/GPII/ci-service/blob/master/jenkins_jobs/macros.yml#L7
+2017-02-03T13:51:04 <gtirloni> Bosmon: is stegru\'s PRs the only ones getting stuck? i can submit a PR to add more people
+2017-02-03T13:51:34 <Bosmon> Well, all the ones with orange spots here:
+2017-02-03T13:51:34 <Bosmon> https://github.com/GPII/universal/pulls
+2017-02-03T13:51:44 <Bosmon> I\'m not really clear what status these are in
+2017-02-03T13:51:50 <Bosmon> Given it says on them "build is triggered"
+2017-02-03T13:52:06 <Bosmon> If the submitter is not approved, why is the build triggered?
+2017-02-03T13:53:06 * alanharnum joined the channel
+2017-02-03T13:53:35 <gtirloni> those might be a different issue. i know sometimes jenkins may receive the ping from GH, start the build and, if something really bad happens (nullpointerexception or jenkins died, or it got restarted)... then it\'s easy for the GH PR builder plugin to lose track of which PR\'s it was building, so those PRs might stay stuck without a proper update
+2017-02-03T13:53:46 * cindyli joined the channel
+2017-02-03T13:53:56 <Bosmon> I see
+2017-02-03T13:54:05 <gtirloni> let me trigger them all again, and see how it goes now. they might be suffering from an old issue or bad event in the past
+2017-02-03T13:56:18 <stegru> it\'s a good job my code doesn\'t need testing ;)
+2017-02-03T13:58:18 <gtirloni> stegru: i\'ll add you to a bypass list so we save some resources :P
+2017-02-03T14:09:30 <Bosmon> Wow, stegru is due for a bypass
+2017-02-03T14:09:33 <Bosmon> Sounds painful
+2017-02-03T14:10:41 <gtirloni> stegru: see where this "my code doesn\'t need testing" got you? btw, i was talking about bypassing CI checks.. Bosmon will have to make the arrangement for the surgery
+2017-02-03T14:11:07 <stegru> oh dear
+2017-02-03T14:11:35 <Bosmon> gtirloni - what does it mean, "bypassing CI checks"?
+2017-02-03T14:12:26 <gtirloni> i have no idea, i\'d have to check if there is something like that for jenkins ("ignore $user\'s PRs and don\'t let anyone submit jobs for it"). you seem interested in that idea O_o
+2017-02-03T14:12:42 <Bosmon> gtirloni - seems like a misunderstanding since I have no idea what you are talking about :)
+2017-02-03T14:13:12 <gtirloni> haha :)
+2017-02-03T14:13:41 <Bosmon> Perhaps you can explain to me what the current workflow of the CI system is
+2017-02-03T14:13:50 <Bosmon> As currently integrated with github
+2017-02-03T14:14:27 <Bosmon> I had understood that builds were not triggered unless an approved PR submitter commented "ok to test"
+2017-02-03T14:14:33 <Bosmon> Is that true or not?
+2017-02-03T14:14:52 <stegru> oh, sarcasm works really well over irc
+2017-02-03T14:15:45 <Bosmon> Well for sarcasm to work, one needs to at least understand the primary meaning of the statement :)
+2017-02-03T14:16:01 <gtirloni> Bosmon: that\'s the usual workflow, yeah.. but we have a whitelist that tells Jenkins to build PR\'s from people we trust without someone \'ok-ing\' it: https://github.com/GPII/ci-service/blob/master/jenkins_jobs/macros.yml#L19-L33
+2017-02-03T14:16:48 <gtirloni> so an admin list and a white list
+2017-02-03T14:16:52 <Bosmon> Ok, and when it says "their PRs automatically trigger jobs", does that also mean that every commit to a branch for which there is a PR will trigger a fresh job?
+2017-02-03T14:17:56 <gtirloni> yes, that PR will have updated metadata due to the new commit and the GHPRB plugin *should* pick on that and re-build.. that was my understanding from when I looked at it many months ago. It\'s configured to check every 5min, IIRC.
+2017-02-03T14:18:07 <Bosmon> ok
+2017-02-03T14:18:44 <Bosmon> So, when we see one of these jobs get jammed for a long while, it\'s reasonable to just comment again with "ok to test"?
+2017-02-03T14:18:58 <gtirloni> yep!
+2017-02-03T14:19:12 <Bosmon> Ok, cheers
+2017-02-03T14:20:01 * sirdancealot joined the channel
+2017-02-03T14:21:24 <gtirloni> i must share some details about the internals of that though... the "multijob" plugin is quite "un-smart" when it comes to queuing stuff (it\'s top-level jobs occupy a slot in the build queue.. if the queue has 10 slots, you submit 10 jobs, then there are not slots for the sub-jobs that will do the actual work).
+2017-02-03T14:22:01 <gtirloni> also, with virtualbox shenanigans, like we say yesterday when it was failing to build because there was another VM for the same project stuck...
+2017-02-03T14:23:09 <gtirloni> so it\'s prudent to go gentle, submitting 2-3 PR\'s at a time. I can do that for the PR\'s that are stuck now because I feel it\'s a failure of the CI system and we should be responsible for cleaning up
+2017-02-03T14:38:08 <the-t-in-rtf> @avtar @alfredo @gtirloni, do we still need to specific a branch in the .qi.yml file?
+2017-02-03T14:40:15 * yzen joined the channel
+2017-02-03T14:47:56 <gtirloni> the-t-in-rtf: i\'m not sure, alfredo would be the right person to answer this
+2017-02-03T14:51:00 * alanharnum joined the channel
+2017-02-03T14:54:53 * Yan_Hu joined the channel
+2017-02-03T14:55:56 * clown joined the channel
+2017-02-03T14:56:01 * sirdancealot has quit
+2017-02-03T14:56:57 * simonjb joined the channel
+2017-02-03T15:02:00 * michelled joined the channel
+2017-02-03T15:03:47 * alanharn_ joined the channel
+2017-02-03T15:09:56 * danayo joined the channel
+2017-02-03T15:11:25 <Bosmon> Hi there simonjb - I\'ve wrapped the diff in https://github.com/fluid-project/kettle/pull/30/files to 120 chars - did you have any other comments on it?
+2017-02-03T15:12:23 <simonjb> Bosmon: I haven\'t had a look at it yet
+2017-02-03T15:12:29 <Bosmon> ah ok
+2017-02-03T15:12:33 <Bosmon> I must have mixed it up with the other one :)
+2017-02-03T15:13:37 <simonjb> Bosmon: the https://github.com/GPII/universal/pull/497 is all good to go? I think we have lines > 120 chars but I think that\'s fine until we implement that change
+2017-02-03T15:14:15 <Bosmon> simonjb oh yes, that was the one
+2017-02-03T15:14:29 <Bosmon> Yes, I guess it is good to go - would you be able to do the merge?
+2017-02-03T15:14:53 <simonjb> Bosmon: yes, I will check it over and merge this afternoon
+2017-02-03T15:15:01 <Bosmon> simonjb - brilliant, thanks!
+2017-02-03T15:22:01 <cindyli> gtirloni, simonjb, stegru, I made some adjustments to https://wiki.gpii.net/w/Continued_Researches_on_Possible_Approaches_for_Protecting_Communication_btw_LFM_and_CBFM#YubiHSM after our yesterday\'s discussion, especially to sections "6.2 https://wiki.gpii.net/w/Continued_Researches_on_Possible_Approaches_for_Protecting_Communication_btw_LFM_and_CBFM#OS-own_security_storage_for_keys" and "6.3 https://wiki.gpii.net/w/Continued_Researc
+2017-02-03T15:22:58 <cindyli> wooo.. so many links, in short, 6.2, 6.3 sections on the wiki - https://wiki.gpii.net/w/Continued_Researches_on_Possible_Approaches_for_Protecting_Communication_btw_LFM_and_CBFM
+2017-02-03T15:25:43 <stegru> ok cindyli
+2017-02-03T15:25:54 <cindyli> thanks, stegru
+2017-02-03T15:26:25 <stegru> I now don\'t think my idea of having a named pipe and "validating" the process is a good idea
+2017-02-03T15:26:59 <stegru> well, it\'s a good idea - but the way it should be properly implemented is nasty...
+2017-02-03T15:28:05 <stegru> cindyli:  i\'ve seen an example of verifying a process (used by VirtualBox), and, well.. https://github.com/mdaniel/virtualbox-org-svn-vbox-trunk/blob/master/src/VBox/HostDrivers/Support/win/SUPHardenedVerifyProcess-win.cpp
+2017-02-03T15:29:13 <cindyli> whoa, 2476 lines in one script :(
+2017-02-03T15:29:28 <stegru> there\'s all sorts of awful checks, such as verifying the process in memory matches the one on file, making sure a debugger isn\'t attached, and other libraries it\'s loaded
+2017-02-03T15:30:11 <cindyli> ya, didn\'t read in detail but saw many condition checking in there
+2017-02-03T15:34:50 <stegru> it also confirms to me that the secret token shouldn\'t be seen by the normal user GPII process - another process of same user can just read the memory of it
+2017-02-03T15:35:28 <stegru> oh well, good luck with this problem cindyli, i\'m sure you\'ll sort it out in the end ;)
+2017-02-03T15:36:58 <cindyli> i hope
+2017-02-03T15:39:23 <cindyli> actually, i just thought of a possible attack on having GPII Cloud return a challenge and use that to encrypt secret.
+2017-02-03T15:39:44 <Justin_o> alanharnum: was just thinking some more about your FLUID-6114 PR
+2017-02-03T15:39:51 <cindyli> if a bad process first contacts GPII cloud for a challenge
+2017-02-03T15:40:03 <cindyli> then gives that challenge to the service
+2017-02-03T15:40:08 <Justin_o> I\'m wondering if it would be easier/worthwhile to just change the build scripts in general so that they always produce both a source and minified version
+2017-02-03T15:40:21 * colinclark joined the channel
+2017-02-03T15:40:29 <alanharnum> Justin_o: I\'d considered the same thing yesterday
+2017-02-03T15:40:37 <Justin_o> perhaps for the CSS that might be annoying, what do you think though?
+2017-02-03T15:40:38 <cindyli> it will receives sha256 return from the service
+2017-02-03T15:40:43 <alanharnum> it does seem to me to be a reasonable assumption that this would be desirable.
+2017-02-03T15:41:43 <Justin_o> I don\'t know what to do about the CSS though.. because it\'s not concatenated, i don\'t know if you\'d want to make source and min versions of all of the files
+2017-02-03T15:41:47 <Justin_o> alanharnum: ^
+2017-02-03T15:41:57 <cindyli> if sha256 is compromised, i believe i read somewhere that the safety of using any sha-2 encryption depends on how many repetitions you use that encryption to encrypt a secret
+2017-02-03T15:42:19 <cindyli> the secret would be comprimised too
+2017-02-03T15:42:27 <cindyli> compromised**
+2017-02-03T15:43:29 * Jess_ joined the channel
+2017-02-03T15:44:26 <alanharnum> Justin_o: IMO, people who have a specific need are capable of picking and choosing the files they want
+2017-02-03T15:44:32 <alanharnum> as long as we don\'t eliminate an option
+2017-02-03T15:44:47 <alanharnum> we could probably also add something like a "--nominify" to not generate the minified files.
+2017-02-03T15:45:53 <alanharnum> is this maybe something to visit again later outside this PR? the "full + minify of everything" seems unequivocally reasonable within the content of producing the /dist directory for NPM.
+2017-02-03T15:46:04 <alanharnum> maybe more debatable as you point out for CSS, given its not concatenated.
+2017-02-03T15:46:45 <stegru> cindyli: yes
+2017-02-03T15:47:21 <cindyli> stegru: i just added this line to that workflow:
+2017-02-03T15:47:23 <cindyli> Make sure to perform enough rounds of hashing to make sha256 safe. See http://security.stackexchange.com/questions/4687/are-salted-sha-256-512-hashes-still-safe-if-the-hashes-and-their-salts-are-expos
+2017-02-03T15:48:29 <alanharnum> Justin_o: I\'m also questioning the value of the "parallel minify" approach to distributions, despite the time I spent on it yesterday.
+2017-02-03T15:48:52 <alanharnum> I think it may be a case where the virtue of "DRY" and "elegant" gets in the way of clarity, which is not a great thing for a build script.
+2017-02-03T15:48:59 * kasparnet joined the channel
+2017-02-03T15:49:33 <alanharnum> it may be better to be absolutely clear about what distributions are defined.
+2017-02-03T15:50:04 <alanharnum> rather than expecting someone else (or myself six months later) to look at this and remember that all "normal" distributions also generate a parallel "minify" distribution.
+2017-02-03T15:53:31 <cindyli> stegru: if the implementation for "named pipes" are difficult, do you think it\'s possible to use anonymous pipes?
+2017-02-03T15:53:37 <cindyli> according to this article: https://msdn.microsoft.com/en-us/library/windows/desktop/aa365574(v=vs.85).aspx#base.using_pipes_for_ipc
+2017-02-03T15:53:42 <cindyli> Anonymous pipes cannot be used over a network, nor can they be used between unrelated processes.
+2017-02-03T15:54:01 <cindyli> they can only be used btw parent and child processes
+2017-02-03T15:54:14 <cindyli> this will reduce the validation work
+2017-02-03T15:54:15 <cindyli> i think
+2017-02-03T15:54:20 <stegru> yeh, that was my original idea.. but i thought that was complex - I\'ve changed my mind now that i\'ve seen the complexity of the named pipe
+2017-02-03T15:55:02 <Justin_o> alanharnum: that\'s a good point too
+2017-02-03T15:55:29 <stegru> the child inherits the pipe, and there\'s no other way to get at it
+'
+

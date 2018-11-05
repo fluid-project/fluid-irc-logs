@@ -1,0 +1,256 @@
+b'2013-09-09T20:35:58 <cindyli> onUIOptionsRefresh also triggers the preview enhancer model be updated, which is missing and causing the problem - https://github.com/cindyli/infusion/blob/master/src/components/uiOptions/js/UIOptions.js#L471
+2013-09-09T20:36:55 * kasparnet has quit
+2013-09-09T20:38:26 * kasparnet joined the channel
+2013-09-09T20:39:24 * yzen has quit
+2013-09-09T20:41:57 <Bosmon> cindyli - why is the model missing?
+2013-09-09T20:42:31 <cindyli> ah ha. which model?
+2013-09-09T20:42:39 <cindyli> preview doesn\'t need a model
+2013-09-09T20:43:03 <cindyli> its listener connects uio model and preview enhancer model
+2013-09-09T20:49:18 <Bosmon> cindyli - I notice that the enactors are being destroyed on the refresh
+2013-09-09T20:49:22 <Bosmon> And in fact they are being destroyed twice
+2013-09-09T20:49:44 <cindyli> oh, how come
+2013-09-09T20:50:02 <Bosmon> And there is something special about the textSize panel
+2013-09-09T20:50:25 <Bosmon> Its enactor is only destroyed once
+2013-09-09T20:51:09 <cindyli> are all preview enactors destroyed or only textSize enactor?
+2013-09-09T20:52:06 <cindyli> this might be related: https://github.com/cindyli/prefsEditors/blob/GPII-188/src/shared/lib/cloud4all/CustomAdjusters.js#L217-L219
+2013-09-09T20:52:07 <Bosmon> It\'s a little hard to make out the sequence..... if only we had a VISUAL TOOL to help with these logs : P
+2013-09-09T20:52:44 <Bosmon> Oh, I see
+2013-09-09T20:52:48 <Bosmon> Why is that block there?
+2013-09-09T20:53:28 <cindyli> Chris doesn\'t want the textSize change being applied to magnifier preview window
+2013-09-09T20:53:47 * sgithens joined the channel
+2013-09-09T20:53:52 <Bosmon> sgithens
+2013-09-09T20:54:01 <Bosmon> We were just mentioning our absence of VISUAL TOOLS : P
+2013-09-09T20:55:18 <Bosmon> cindyli - where are the enhancers attached to the preview actually defined?
+2013-09-09T20:55:43 <cindyli> here: https://github.com/cindyli/prefsEditors/blob/GPII-188/src/shared/lib/cloud4all/CustomAdjusters.js#L213-L215
+2013-09-09T20:55:54 <cindyli> same for textSize panel
+2013-09-09T20:56:30 <cindyli> whatever enactors used by the outer main page enhancer are passed down to preview enhancer
+2013-09-09T20:57:33 <Bosmon> ok, can you explain more about this comment? " onUIOptionsRefresh also triggers the preview enhancer model be updated, which is missing and causing the problem "
+2013-09-09T20:57:57 <Bosmon> Do you mean "the problem" or "a problem"?
+2013-09-09T20:59:16 <cindyli> i think "the problem", which is the problem that the preview textsize enactor stops working at the 2nd time
+2013-09-09T20:59:25 <Bosmon> Ok, how does it cause that problem?
+2013-09-09T20:59:43 <cindyli> https://github.com/fluid-project/infusion/blob/master/src/components/uiOptions/js/StarterGrades.js#L219
+2013-09-09T21:00:14 <cindyli> not this one, one sec
+2013-09-09T21:00:38 <cindyli> this line: https://github.com/fluid-project/infusion/blob/master/src/components/uiOptions/js/UIOptions.js#L471
+2013-09-09T21:00:47 <sgithens> Bosmon!
+2013-09-09T21:01:07 <Bosmon> SGITHUENS!
+2013-09-09T21:01:11 <Bosmon> We need some VIZZUAL TOOLS!
+2013-09-09T21:01:13 <sgithens> visual tools are important
+2013-09-09T21:01:28 <Bosmon> cindyli - can you explain your comment further?
+2013-09-09T21:01:43 <cindyli> the line above is the listener gets triggered to update preview enhancer model at uiOptions modelChanged
+2013-09-09T21:01:48 <Bosmon> What do you mean by the model being missing, and how does it relate to this line?
+2013-09-09T21:01:50 <cindyli> it\'s not fired at the 2nd time
+2013-09-09T21:01:53 <Bosmon> Yes
+2013-09-09T21:02:09 <cindyli> sorry, the model is not missing, the listener firing is missing
+2013-09-09T21:02:13 <Bosmon> ah ok
+2013-09-09T21:02:14 * jessm joined the channel
+2013-09-09T21:02:16 <Bosmon> Now I see
+2013-09-09T21:02:18 * jessm has quit
+2013-09-09T21:02:45 <cindyli> yay! i finally make myself clear. ;-)
+2013-09-09T21:04:28 * clown has quit
+2013-09-09T21:05:30 * jhernandez joined the channel
+2013-09-09T21:08:52 <cindyli> Bosmon: i\'m heading out. anything you need from me before i disappear?
+2013-09-09T21:12:49 <Bosmon> cindyli - it seeming that this is an issue caused by the bloody softNamespaces I invented :(
+2013-09-09T21:13:04 <Bosmon> As far as I can see, all of the preview listeners are added with the same namespace
+2013-09-09T21:13:13 <Bosmon> Which implies that only one of them ever can be active at the same time
+2013-09-09T21:13:36 <cindyli> ah ha
+2013-09-09T21:13:37 <Bosmon> They are all supplied the name "fluid.uiOptions.preview.updateModel" since they are all components of the same type
+2013-09-09T21:14:08 <cindyli> good to know
+2013-09-09T21:14:20 <Bosmon> I guess it\'s a simple accident of order of attachment which means that the first panel\'s listener is the active one the first time
+2013-09-09T21:16:32 <cindyli> will you create a jira for it, Bosmon
+2013-09-09T21:17:06 <Bosmon> Yes
+2013-09-09T21:17:27 <cindyli> thanks for helping out, Bosmon. see you tomorrow
+2013-09-09T21:17:29 <Bosmon> Well, now somehow I see that the listener is already gone by the time the 2nd listener comes to be registered :(
+2013-09-09T21:17:35 <Bosmon> So there may well be something else going on
+2013-09-09T21:17:46 <cindyli> umm..
+2013-09-09T21:17:52 * kasparnet has quit
+2013-09-09T21:18:03 <Bosmon> Although this may be something to do with the unnecessary extra destruction of the components
+2013-09-09T21:18:14 <Bosmon> I think the base issue is probably as thought
+2013-09-09T21:18:46 <cindyli> extra destruction? you mean enactors are destroyed twice?
+2013-09-09T21:18:57 <Bosmon> Yes, I seemed to see two rounds of destruction in the logs
+2013-09-09T21:19:07 <cindyli> i don\'t even know why they would be destroyed once
+2013-09-09T21:19:18 <Bosmon> They are destroyed once because they are re-rendered
+2013-09-09T21:19:23 <cindyli> ah ok
+2013-09-09T21:19:27 <Bosmon> And everything attached to the preview components will be destroyed
+2013-09-09T21:19:35 <cindyli> makes sense
+2013-09-09T21:20:27 <cindyli> again, maybe this block is causing the 2nd destroy - https://github.com/cindyli/prefsEditors/blob/GPII-188/src/shared/lib/cloud4all/CustomAdjusters.js#L217-L219
+2013-09-09T21:20:47 <Bosmon> That should simply cause them never to be created
+2013-09-09T21:20:59 <cindyli> that\'s right
+2013-09-09T21:21:49 <Bosmon> So what I observe so far is that for some reason there is only ONE modelChanged listener attached to the root component
+2013-09-09T21:22:05 <Bosmon> But there seem to be two separate causes for this ........
+2013-09-09T21:22:18 <Bosmon> ah
+2013-09-09T21:22:29 <Bosmon> I think both of them are sort of the same ... it is related to the namespaces
+2013-09-09T21:24:34 <cindyli> ok. at least we have somewhere to start. thanks, Bosmon
+2013-09-09T21:26:06 * cindyli has quit
+2013-09-09T21:26:22 <Bosmon> o horrible
+2013-09-09T21:26:24 <Bosmon> I see it now, yes
+2013-09-09T21:26:31 <Bosmon> The components are destroyed in order
+2013-09-09T21:26:42 <Bosmon> And as each next one instantiates, it removes the listener supplied by the previous one
+2013-09-09T21:26:50 * thealphanerd joined the channel
+2013-09-09T21:28:07 * sgithens has quit
+2013-09-09T21:40:02 * mrvisser has quit
+2013-09-09T21:40:32 * sgithens joined the channel
+2013-09-09T21:46:55 * danaayotte has quit
+2013-09-09T21:48:14 * vjoanna has quit
+2013-09-09T22:11:59 * jhernandez has quit
+2013-09-09T22:11:59 * avtar has quit
+2013-09-09T22:22:59 * greggy has quit
+2013-09-09T22:26:13 * sgithens has quit
+2013-09-09T22:32:10 * michelled has quit
+2013-09-09T22:44:40 * sgithens joined the channel
+2013-09-09T23:08:27 * colinclark has quit
+2013-09-09T23:41:42 * sgithens has quit
+2013-09-09T23:54:02 * sgithens joined the channel
+'
+
+b'2013-09-09T02:03:29 * jhernandez has quit
+2013-09-09T02:57:22 * Bosmon2 joined the channel
+2013-09-09T03:00:44 * Bosmon has quit
+2013-09-09T04:47:42 * sgithens has quit
+2013-09-09T05:05:26 * sgithens joined the channel
+2013-09-09T05:33:19 * SonicX joined the channel
+2013-09-09T07:08:59 * amilchev joined the channel
+2013-09-09T07:11:29 * jhernandez joined the channel
+2013-09-09T07:46:35 * kasparnet joined the channel
+2013-09-09T07:53:10 * thealphanerd joined the channel
+2013-09-09T09:41:16 * SonicX has quit
+2013-09-09T10:25:58 * mrvisser joined the channel
+2013-09-09T10:27:37 * mrvisser has quit
+2013-09-09T10:28:02 * mrvisser joined the channel
+2013-09-09T10:44:13 * mrvisser has quit
+2013-09-09T10:44:30 * mrvisser joined the channel
+2013-09-09T11:46:45 * thealphanerd has quit
+2013-09-09T11:53:17 * mrvisser has quit
+2013-09-09T11:53:25 * mrvisser joined the channel
+2013-09-09T12:15:42 * mrvisser has quit
+2013-09-09T12:15:43 * mrvisser_ joined the channel
+2013-09-09T12:17:30 * Justin_o joined the channel
+2013-09-09T12:27:12 * jhung joined the channel
+2013-09-09T12:35:34 * sgithens has quit
+2013-09-09T12:37:12 * yzen joined the channel
+2013-09-09T12:37:19 * mrvisser_ has quit
+2013-09-09T12:41:46 * cindyli joined the channel
+2013-09-09T12:44:56 * mrvisser joined the channel
+2013-09-09T12:53:49 * jhung is now known as jhung_nick
+2013-09-09T13:01:31 * danaayotte joined the channel
+2013-09-09T13:03:30 * jhung_nick is now known as jhung
+2013-09-09T13:03:43 * vjoanna joined the channel
+2013-09-09T13:05:41 * amilchev has left the channel
+2013-09-09T13:08:35 * colinclark joined the channel
+2013-09-09T13:11:59 * Justin_o has quit
+2013-09-09T13:16:39 * michelled joined the channel
+2013-09-09T13:17:10 * greggy joined the channel
+2013-09-09T13:27:53 * jhung1 joined the channel
+2013-09-09T13:27:53 * jhung has quit
+2013-09-09T13:30:44 * jhung joined the channel
+2013-09-09T13:30:45 * jhung1 has quit
+2013-09-09T13:56:58 * Jess_ joined the channel
+2013-09-09T13:57:17 * anvk has left the channel
+2013-09-09T13:58:12 * jhung1 joined the channel
+2013-09-09T13:58:17 * jhung has quit
+2013-09-09T14:00:48 <jhung1> michelled: I want your opinion on how best to record the issues with the discovery tool demo. Since there are many small styling issues, doesn\'t make sense to file jiras for them all. I propose perhaps one broad Jira for the small issues, and jiras for the more significant ones?
+2013-09-09T14:01:28 <michelled> sounds good jhung1
+2013-09-09T14:01:29 * Justin_o joined the channel
+2013-09-09T14:01:36 * jhung1 is now known as jhung
+2013-09-09T14:01:41 <jhung> thanks michelled
+2013-09-09T14:04:40 * clown joined the channel
+2013-09-09T14:04:45 * clown is now known as clown_mtg
+2013-09-09T14:05:44 * Jess_ has quit
+2013-09-09T14:25:06 * Jess_ joined the channel
+2013-09-09T14:25:33 <Jess_> hi?
+2013-09-09T14:26:29 <jhung> Jess_: hi
+2013-09-09T14:26:48 <Jess_> jhung: i got an email from someone interested in a downloadable PDF version of the ILDH. colinclark reminded me we were slated to add ePub3 capabilities and should do PDF as well. more plugin work!
+2013-09-09T14:27:14 <Jess_> i\'m using the web-based IRC from freenode and i think it might be flakey
+2013-09-09T14:27:52 <jhung> Jess_: cool.
+2013-09-09T14:28:27 <jhung> Jess_: are we going to try to meet this morning, or are we going to wait until you are on a more reliable connection ?
+2013-09-09T14:29:06 <Jess_> oh dear, i\'ve done it again. yes, if folks have time let\'s meet
+2013-09-09T14:29:23 <Jess_> sorry, i doubted the sanity of my own self-populated calendar
+2013-09-09T14:29:29 * Jess_ sigh
+2013-09-09T14:41:25 * avtar joined the channel
+2013-09-09T15:00:51 * cindyli1 joined the channel
+2013-09-09T15:02:50 * cindyli has quit
+2013-09-09T15:11:01 * system64 joined the channel
+2013-09-09T15:20:23 * colinclark has quit
+2013-09-09T15:23:19 * sgithens joined the channel
+2013-09-09T15:32:50 <Justin_o> jhung: can you let me know when you\'ve put all of vjoanna\'s suggestions form the discovery tool into jira. Then we can discuss when we\'ll be getting to them.
+2013-09-09T15:44:46 * system64 has quit
+2013-09-09T15:47:11 * system64 joined the channel
+2013-09-09T15:50:29 * cindyli1 has quit
+2013-09-09T15:51:10 * cindyli joined the channel
+2013-09-09T15:54:50 * colinclark joined the channel
+2013-09-09T16:04:12 * jhung is now known as jhung_away
+2013-09-09T16:06:22 * system64 has quit
+2013-09-09T16:22:46 * sgithens has quit
+2013-09-09T16:31:23 * mrvisser has quit
+2013-09-09T16:33:05 * Jess_ has quit
+2013-09-09T16:35:44 * jhung_away is now known as jhung
+2013-09-09T16:42:44 * mrvisser joined the channel
+2013-09-09T16:46:51 * thealphanerd joined the channel
+2013-09-09T16:48:08 * thealphanerd has quit
+2013-09-09T16:52:03 * thealphanerd joined the channel
+2013-09-09T16:54:01 * thealphanerd has quit
+2013-09-09T17:18:26 * michelled has quit
+2013-09-09T17:19:47 * jhung1 joined the channel
+2013-09-09T17:19:57 * clown_mtg has quit
+2013-09-09T17:22:05 * jhung has quit
+2013-09-09T17:22:05 * jhung1 has quit
+2013-09-09T17:22:19 * jhung joined the channel
+2013-09-09T17:22:43 * yzen_ joined the channel
+2013-09-09T17:24:04 * yzen has quit
+2013-09-09T17:24:04 * yzen_ is now known as yzen
+2013-09-09T17:25:48 * jessm joined the channel
+2013-09-09T17:29:24 * mrvisser_ joined the channel
+2013-09-09T17:29:26 * mrvisser has quit
+2013-09-09T17:36:36 * [o__o] has left the channel
+2013-09-09T17:38:08 * [o__o] joined the channel
+2013-09-09T17:42:51 * cindyli has quit
+2013-09-09T17:43:31 * cindyli joined the channel
+2013-09-09T18:02:23 * yzen has quit
+2013-09-09T18:05:27 * mrvisser_ has quit
+2013-09-09T18:25:18 * yzen joined the channel
+2013-09-09T18:46:01 * mrvisser joined the channel
+2013-09-09T19:11:59 * cindyli has quit
+2013-09-09T19:15:26 * cindyli joined the channel
+2013-09-09T19:40:30 * Justin_o has quit
+2013-09-09T19:45:48 * clown joined the channel
+2013-09-09T19:48:01 * michelled joined the channel
+2013-09-09T19:48:43 * jessm has quit
+2013-09-09T19:49:07 <cindyli> hi, Bosmon2 or Bosmon8
+2013-09-09T20:06:03 <Bosmon2> Hi there cindyli
+2013-09-09T20:06:06 * Bosmon2 is now known as Bosmon
+2013-09-09T20:12:43 <cindyli> Bosmon: not sure if you read about the problem that Chris have after having "distribute options" to pass down a type of empty component to a preview enactor. justin and I were tracing down the issue this morning and there\'s something weird that we don\'t figure out. so need your help.
+2013-09-09T20:15:09 <cindyli> the problem is that after panel refreshView, where preview components are refreshed as well, the model linkage between uiOptions and preview components are broken
+2013-09-09T20:16:04 <Bosmon> cindyli - I see
+2013-09-09T20:16:15 <Bosmon> Tne empty component type should certainly be send down a 2nd time ....
+2013-09-09T20:16:22 <cindyli> yes, it did
+2013-09-09T20:16:27 <cindyli> that\'s confirmed
+2013-09-09T20:16:28 <Bosmon> aha
+2013-09-09T20:16:49 <cindyli> the panel component that has a preview subcomponent: https://github.com/cindyli/prefsEditors/blob/GPII-188/src/shared/lib/cloud4all/CustomAdjusters.js#L24-L33
+2013-09-09T20:17:34 <Bosmon> btw this file contains quite a number of tabs ....
+2013-09-09T20:17:58 * jhernandez has quit
+2013-09-09T20:18:42 * jhung has quit
+2013-09-09T20:19:27 <cindyli> ok, will let Chris know to clean it up
+2013-09-09T20:19:54 <cindyli> after panel and preview are refreshed, this listener no longer works: https://github.com/cindyli/infusion/blob/master/src/components/uiOptions/js/UIOptions.js#L471
+2013-09-09T20:20:29 <cindyli> event though it\'s attached onto the preview component at the 2nd time
+2013-09-09T20:21:01 <Bosmon> cindyli - the listener is still attached?
+2013-09-09T20:21:09 <cindyli> yes
+2013-09-09T20:21:09 <Bosmon> So what part of it doesn\'t work?
+2013-09-09T20:21:34 <cindyli> it\'s no longer triggered at uiOptions modelChanged
+2013-09-09T20:22:35 <Bosmon> No longer triggered ...
+2013-09-09T20:22:40 * mrvisser has quit
+2013-09-09T20:23:06 <Bosmon> Did you try making a test case?
+2013-09-09T20:24:47 <cindyli> not yet, with all these rendering and model connections, what a headache when I think about it. :)
+2013-09-09T20:25:23 <Bosmon> ok, what can I do to reproduce the issue
+2013-09-09T20:26:43 <cindyli> pull down my branch, open up http://localhost/prefsEditors/demos/pmt/index.html
+2013-09-09T20:26:55 <cindyli> adjust localhost to your local url
+2013-09-09T20:27:29 <cindyli> 1. click "increase size" to open up the dropdown menu
+2013-09-09T20:27:50 <cindyli> 2. adjust the first panel "text size", the preview works fine
+2013-09-09T20:27:59 <cindyli> 3. click "save and apply"
+2013-09-09T20:28:36 <cindyli> 4. adjust the first panel "text size" again \xe2\x80\x94 the preview stops working
+2013-09-09T20:31:26 <cindyli> if you comment line 27417 @ src/shared/lib/infusion/MyInfusion.js, the preview at the 2nd time will be back working
+2013-09-09T20:31:39 <cindyli> that line is - that.events.onUIOptionsRefresh.fire();
+2013-09-09T20:33:11 * mrvisser joined the channel
+2013-09-09T20:33:54 <Bosmon> cindyli - ok, I can reproduce it
+2013-09-09T20:33:56 <cindyli> onUIOptionsRefresh event triggers all the panels to refresh - https://github.com/fluid-project/infusion/blob/master/src/components/uiOptions/js/StarterGrades.js#L219
+2013-09-09T20:34:00 <cindyli> cool
+'
+

@@ -1,0 +1,97 @@
+b'2018-02-28T08:13:45 * the-t-in-rtf has quit
+2018-02-28T08:58:36 * the-t-in-rtf joined the channel
+2018-02-28T08:58:50 * kasparnet joined the channel
+2018-02-28T09:20:03 * amatas joined the channel
+2018-02-28T09:41:09 * stegru joined the channel
+2018-02-28T09:50:19 * grrrero has quit
+2018-02-28T11:07:49 * stegru has quit
+2018-02-28T11:29:51 * stegru joined the channel
+2018-02-28T12:04:02 * gtirloni joined the channel
+2018-02-28T12:55:17 * michelled joined the channel
+2018-02-28T13:23:10 * Justin_o joined the channel
+2018-02-28T13:40:59 * alanharnum joined the channel
+2018-02-28T14:19:36 * clown joined the channel
+2018-02-28T14:20:27 * cindyli joined the channel
+2018-02-28T14:57:10 * the-t-in-rtf has quit
+2018-02-28T14:58:59 * grrrero joined the channel
+2018-02-28T15:01:30 * the-t-in-rtf joined the channel
+2018-02-28T15:06:56 * mrtyler joined the channel
+2018-02-28T15:20:55 * avtar joined the channel
+2018-02-28T16:07:15 * the-t-in-rtf has quit
+2018-02-28T16:15:13 * avtar has quit
+2018-02-28T16:47:36 * alanharn_ joined the channel
+2018-02-28T16:49:53 * alanharnum has quit
+2018-02-28T16:59:10 * the-t-in-rtf joined the channel
+2018-02-28T16:59:13 * alanharn_ has quit
+2018-02-28T17:43:05 * mrtyler has quit
+2018-02-28T17:43:36 * mrtyler joined the channel
+2018-02-28T17:55:41 * alanharnum joined the channel
+2018-02-28T18:08:33 * kasparnet has quit
+2018-02-28T18:10:51 * kasparnet joined the channel
+2018-02-28T18:15:34 <cindyli> Bosmon: i\'m fixing the browser channel example. The problem is running `node browserChannelClient.js` returns undefined initial settings. here\'s the message:
+2018-02-28T18:15:36 <cindyli> ## Socket connected
+2018-02-28T18:15:36 <cindyli> ## Received the following message: {"type":"connectionSucceeded"}
+2018-02-28T18:15:36 <cindyli> ## Got initial settings  undefined  on connection
+2018-02-28T18:16:14 <cindyli> so i traced into the web socket settings handler and found the initial model.settings is not populated - https://github.com/GPII/universal/blob/master/gpii/node_modules/settingsHandlers/src/WebSocketsSettingsHandler.js#L65
+2018-02-28T18:16:57 <cindyli> but i didn\'t find where the initial setting gets retrieved and set, at least not from .set() in this settings handler
+2018-02-28T18:18:29 <cindyli> my question is, how does initial model value gets populated when using settings handler?
+2018-02-28T18:42:07 * kasparnet has quit
+2018-02-28T18:42:24 * kasparnet joined the channel
+2018-02-28T19:06:38 * alanharnum joined the channel
+2018-02-28T19:09:06 * alanharnum joined the channel
+2018-02-28T19:21:27 * clown has quit
+2018-02-28T19:25:43 * clown joined the channel
+2018-02-28T19:27:17 * alanharnum joined the channel
+2018-02-28T19:29:23 * michelled joined the channel
+2018-02-28T19:31:57 * alanharnum has quit
+2018-02-28T19:37:50 * clown has quit
+2018-02-28T19:38:56 * clown joined the channel
+2018-02-28T19:42:09 * stegru has quit
+2018-02-28T20:00:46 * gtirloni has quit
+2018-02-28T20:01:05 * avtar joined the channel
+2018-02-28T20:03:10 * gtirloni joined the channel
+2018-02-28T20:04:21 * alanharnum joined the channel
+2018-02-28T20:08:17 * gtirloni has quit
+2018-02-28T20:11:30 <Bosmon> cindyli - you\'ll be familiar with this answer :)
+2018-02-28T20:11:33 <Bosmon> It is from the mocks
+2018-02-28T20:12:41 * alanharnum has quit
+2018-02-28T20:19:32 <cindyli> Bosmon: good advice. seems from gpii.test.integration.mockSettingsHandlerRegistry.populate(). tracing deeper...
+2018-02-28T20:22:59 * stegru joined the channel
+2018-02-28T20:30:08 <cindyli> Bosmon: the tracing shows gpii.test.integration.mockSettingsHandlerRegistry.populate() just overrides get()/set() in the settings handler with mock get()/set() but the mock get() never gets called to populate the initial settings too. Also tried with starting GPII with gpii.config.development.all.local, which uses the real get(). it\'s the same that this get() is never called for populating the initial settings.
+2018-02-28T20:30:28 <cindyli> the initial settings has never been attempted to populate. is this right?
+2018-02-28T20:31:00 <cindyli> i probably should revert to an old commit to find out how this workflow works before
+2018-02-28T20:44:39 <cindyli> Bosmon: a good and bad news is, i reverted the universal to the commit when this example was first created - 12e4214d2669d05b9d6d7d311cd5a72443ab82a4
+2018-02-28T20:44:50 <cindyli> guess what?
+2018-02-28T20:45:07 <cindyli> exactly the same message i\'m receiving now...
+2018-02-28T20:45:09 <cindyli> ## Socket connected
+2018-02-28T20:45:09 <cindyli> ## Received the following message: {"type":"connectionSucceeded"}
+2018-02-28T20:45:09 <cindyli> ## Got initial settings  undefined  on connection
+2018-02-28T20:46:04 <cindyli> does it mean, receiving undefined initial settings is the right behavior
+2018-02-28T20:46:57 <Bosmon> cindyli - if noone is logged on, yes
+2018-02-28T20:47:03 <Bosmon> Sorry, I was wrong about the mocks
+2018-02-28T20:47:11 <Bosmon> I was confused : P
+2018-02-28T20:47:15 <Bosmon> Of course, this is a live test
+2018-02-28T20:47:22 <cindyli> not a problem. glad it\'s the right behavior
+2018-02-28T20:47:23 <Bosmon> So you will get whatever settings the logged-on user has
+2018-02-28T20:47:30 <cindyli> i see
+2018-02-28T20:57:37 * kasparnet has quit
+2018-02-28T21:01:00 * alanharnum joined the channel
+2018-02-28T21:07:02 * clown has quit
+2018-02-28T21:10:38 <cindyli> Bosmon: it seems the initial settings are always undefined regardless a user is logged in or not. tried with login "uioPlus_defaults" first before running the example, also received undefined initial settings, which makes sense as the earlier debugging shows that the settings handler (mock or not mock) get() method was never called for creating the initial.
+2018-02-28T21:12:14 <cindyli> if so, the current pull request is good enough - https://github.com/GPII/universal/pull/586
+2018-02-28T21:12:19 <cindyli> nothing needs to be fixed further
+2018-02-28T21:16:02 * michelled has quit
+2018-02-28T21:17:04 * cindyli has quit
+2018-02-28T21:22:57 * clown joined the channel
+2018-02-28T21:41:43 * mrtyler has quit
+2018-02-28T21:48:27 * avtar has quit
+2018-02-28T21:59:15 * clown has quit
+2018-02-28T22:07:15 * mrtyler joined the channel
+2018-02-28T22:10:18 * amatas has quit
+2018-02-28T22:11:38 * ussjoin_ joined the channel
+2018-02-28T22:12:27 * ussjoin has quit
+2018-02-28T22:57:50 * alanharnum has quit
+2018-02-28T23:37:43 * grrrero has quit
+2018-02-28T23:41:30 * Justin_o has quit
+'
+

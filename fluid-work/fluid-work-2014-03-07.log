@@ -1,0 +1,467 @@
+b'2014-03-07T23:39:29 * colinclark has quit
+2014-03-07T23:40:20 * intwork joined the channel
+2014-03-07T23:40:37 * sgithens joined the channel
+2014-03-07T23:41:29 * jhernandez has quit
+2014-03-07T23:43:24 * jhernandez joined the channel
+2014-03-07T23:49:52 * jash4 has quit
+2014-03-07T23:51:58 * sgithens has quit
+2014-03-07T23:55:32 * simonjb has quit
+2014-03-07T23:57:14 * jhernandez has quit
+'
+
+b'2014-03-07T18:43:49 <colinclark> I did quite a lot of hasty refactoring prior to Stuttgart meetings
+2014-03-07T18:44:02 <colinclark> to componentize most of the Playground itself
+2014-03-07T18:44:12 <colinclark> and then to require all synths to be specified as plain JSON
+2014-03-07T18:44:23 <colinclark> that in itself is a discussion :)
+2014-03-07T18:44:38 <colinclark> but anyway, I ended up treating a series of components that represented the "graph view"
+2014-03-07T18:44:58 <colinclark> the primary Playground component has a model that corresponds to the parsed JSON "synthDef"
+2014-03-07T18:45:32 <colinclark> and then I was able to use ChangeApplier listeners to inform the graph view (and the source view, for that matter) to update itself whenever a new synthDef is loaded into the playground
+2014-03-07T18:46:01 <colinclark> What I found is that is that I was initially confused about what the "semantics" of a particular change in model were in this case
+2014-03-07T18:46:09 <Bosmon> What kind of confusion was it?
+2014-03-07T18:46:18 <colinclark> Well, my model looked like this:
+2014-03-07T18:46:21 <Bosmon> "What is the mistake like to say that this is not my hand?" : P
+2014-03-07T18:46:31 <colinclark> :)
+2014-03-07T18:46:52 <colinclark> { activeSynthDef: <synthDef loaded by the user by selecting a demo from a dropdown> }
+2014-03-07T18:47:16 <colinclark> and so whenever the drop down fires a DOM change event, that is bound to some code that JSON.parses the synthDef
+2014-03-07T18:47:26 <colinclark> and then a change request to "activeSynthDef" is fired
+2014-03-07T18:47:47 <colinclark> now that actually caused demos to get merged into each other in curious and confusing ways
+2014-03-07T18:48:11 <colinclark> I ended up, to make this work, making a DELETE request prior to a change to the activeSynthDef
+2014-03-07T18:48:21 <colinclark> I don\'t know if there is a better way to do it
+2014-03-07T18:48:35 <Bosmon> No, I think the DELETE request is necessary
+2014-03-07T18:48:35 <colinclark> to specify a "complete replacement"
+2014-03-07T18:48:40 <Bosmon> Especially with the new semantic
+2014-03-07T18:48:46 <colinclark> ok, good
+2014-03-07T18:48:47 <colinclark> it actually is making my rendering code better
+2014-03-07T18:48:49 <Bosmon> But what you can do is bundle them into a single transaction
+2014-03-07T18:48:54 <Bosmon> So that observers are not confused
+2014-03-07T18:49:01 <colinclark> I think in this case I don\'t want to
+2014-03-07T18:49:03 <Bosmon> ok
+2014-03-07T18:49:07 <colinclark> since there is a step in the process that "blasts all old DOM elements"
+2014-03-07T18:49:13 <colinclark> which maps perfectly to this delete operation
+2014-03-07T18:49:15 <Bosmon> ah ok
+2014-03-07T18:49:40 <colinclark> cool, well, thanks for listening
+2014-03-07T18:49:54 <colinclark> My plan next is to actually use model transformation for a big part of this
+2014-03-07T18:50:33 <colinclark> taking a hierarchical collection of unit generator definitions (i.e. JSON blobs representing ugens that should be created by Flocking) and flattening them into an array
+2014-03-07T18:50:41 <colinclark> which can then be used to bind to a set of dynamic components
+2014-03-07T18:50:45 <Bosmon> cool
+2014-03-07T18:50:49 <colinclark> representing the "renderers" for each unit generator
+2014-03-07T18:51:17 <colinclark> and so the flat model for these renderers will contain information needed to render the DOM elements for each ugen
+2014-03-07T18:51:33 <colinclark> as well as a list of all "edges" (i.e. inputs)
+2014-03-07T18:51:39 <colinclark> and positional information
+2014-03-07T18:51:47 <colinclark> so rendering will involve
+2014-03-07T18:51:55 <colinclark> 1. Rendering DOM nodes for each ugen
+2014-03-07T18:51:56 * simonjb has quit
+2014-03-07T18:52:15 * sgithens joined the channel
+2014-03-07T18:52:19 <colinclark> 2. Invoking Dagre with the positional and edge information for all nodes, which will produce a layout
+2014-03-07T18:52:25 <Bosmon> DAGGGRE!
+2014-03-07T18:52:29 <colinclark> 3. Traversing the edge information to draw lines with JSPlumb
+2014-03-07T18:52:41 <colinclark> https://github.com/cpettitt/dagre
+2014-03-07T18:53:02 <colinclark> it\'s a view-independent DAG layout engine
+2014-03-07T18:53:12 <colinclark> you give it a list of nodes and their dimensions along with their edges
+2014-03-07T18:53:28 <colinclark> and it will produce a vaguely JSON-like structure with the positional information for each node
+2014-03-07T18:53:34 * simonjb joined the channel
+2014-03-07T18:53:39 <colinclark> I think :)
+2014-03-07T18:53:47 <colinclark> In general, does this sound like a sound approach?
+2014-03-07T18:53:51 <colinclark> and would you refine it at all
+2014-03-07T18:54:37 <colinclark> hierarchical ugen tree -> model relay -> flat list of ugens -> instantiate renderers a dynamic components -> dagre -> plumb -> done
+2014-03-07T18:57:31 <colinclark> Also, Bosmon, do you know when your new implicit one-shot invokers will be in Infusion?
+2014-03-07T18:57:59 <Bosmon> colinclark - a lot depends on the review pipeline :)
+2014-03-07T18:58:04 <colinclark> lol
+2014-03-07T18:58:06 <colinclark> duly noted
+2014-03-07T18:58:37 <Bosmon> I could get a kind of early pull together this afternoon if there was interest
+2014-03-07T18:59:00 <Bosmon> Since I do have a working impl already, it just needs a few diagnostics
+2014-03-07T18:59:29 * yzen has quit
+2014-03-07T19:00:02 <colinclark> I think there\'s general interest, but not time-sensitive interest
+2014-03-07T19:00:09 <colinclark> I certainly have enough review to do already
+2014-03-07T19:00:20 <Bosmon> It also integrates with Justin_o\'s "onDomBind" event scheme
+2014-03-07T19:00:25 <colinclark> ah cool
+2014-03-07T19:00:38 <colinclark> that\'s a convention for event definition in the p.f.?
+2014-03-07T19:00:38 <Bosmon> So should be a mostly drop-in replacement for infrastructure we already have in prefs "Panels"
+2014-03-07T19:00:57 <Bosmon> p.f.?
+2014-03-07T19:01:10 <Bosmon> oh yes
+2014-03-07T19:01:11 <Bosmon> it is
+2014-03-07T19:01:26 <Bosmon> And it\'s also something that will be a key part of the "new renderer"
+2014-03-07T19:01:35 * kasparnet joined the channel
+2014-03-07T19:09:54 <cindyli> Justin_o: your pull request for FLOE-173 has been merged into the master
+2014-03-07T19:11:04 <Justin_o> cindyli: thanks
+2014-03-07T19:11:09 <cindyli> np
+2014-03-07T19:11:35 <simonjb> hi sgithens -- I was looking at the logs for the channel -- were you looking for me earlier?
+2014-03-07T19:12:08 * AyushDatta1 joined the channel
+2014-03-07T19:12:10 * AyushDatta2 joined the channel
+2014-03-07T19:13:10 <Justin_o> Bosmon: i\'m looking at your comments to my FLOE-116 pull request. I think i\'ve taken care of or commented on all of them except for https://github.com/fluid-project/metadata/pull/19/files#r9853372
+2014-03-07T19:13:22 <sgithens> oh hey! simonjb: Yeah, I was just going to say I\'m going to reply to your email, but might not be able to until this weekend
+2014-03-07T19:13:30 <sgithens> with brainstorms for debugging tools
+2014-03-07T19:13:47 <simonjb> sgithens: awesome! thank you
+2014-03-07T19:13:49 <Justin_o> Bosmon: i could probably use some help with brainstorming on how to implement that, and if you could let me know if the rest are fine too
+2014-03-07T19:15:16 <Bosmon> Justin_o - sure
+2014-03-07T19:15:30 <Bosmon> It looks like it should be a fairly standard use of "dynamicComponents"
+2014-03-07T19:15:40 <Bosmon> Shall we have a short call in a bit?
+2014-03-07T19:15:43 <Bosmon> When are you off today
+2014-03-07T19:16:12 <simonjb> sgithens: would also be good to talk some time about the work that you did on the Scrobbler (is that the right name?)
+2014-03-07T19:16:57 <Bosmon> Hay, GITTHHUEN!
+2014-03-07T19:17:12 <sgithens> simonjb: Yes!  It\'s sad that I can\'t find the darn thing
+2014-03-07T19:17:19 <simonjb> :(
+2014-03-07T19:17:23 <sgithens> I committed it in a branch somewhere...
+2014-03-07T19:17:27 <sgithens> and
+2014-03-07T19:17:42 <sgithens> I don\'t know, maybe I\'ll look one more time before San Diego
+2014-03-07T19:17:55 <simonjb> that would be great, thanks
+2014-03-07T19:20:11 <sgithens> it was pretty cool, and ascii based
+2014-03-07T19:20:47 <Justin_o> Bosmon: i\'ll be off in about 1.5 hours
+2014-03-07T19:20:52 <sgithens> Bosmon, kasparnet, and colinclark can attest that it did actually exist for a period of several days
+2014-03-07T19:21:14 <Bosmon> I did indeed see a kind of "mountainscape built of asterisks" at one point, yes :)
+2014-03-07T19:21:47 <sgithens> part of the issue, is that I end up doing work in node_modules sub directories and than accidentally update them or overwrite them and stuff during builds
+2014-03-07T19:21:58 <sgithens> Or at least back then, it was a mistake I made occasionally
+2014-03-07T19:22:08 <sgithens> but I will do one last forensic look this weekend for it
+2014-03-07T19:22:38 <simonjb> thanks sgithens
+2014-03-07T19:23:07 <Bosmon> Justin_o - is in about 20 minutes ok?
+2014-03-07T19:23:16 <Justin_o> Bosmon: sure
+2014-03-07T19:23:23 <Bosmon> cool
+2014-03-07T19:26:27 <Justin_o> jhung: are the latest metadata designs up on the wiki?
+2014-03-07T19:27:36 <jhung> Justin_o: not yet. dana, joanna, and I were just walking through them yesterday. Dana was going to try to get them cleaned up and posted. Maybe next week?
+2014-03-07T19:30:00 <Justin_o> jhung: okay, is the way that we add captions going to be roughly the same?
+2014-03-07T19:31:31 <jhung> Justin_o: remind me how it is now?
+2014-03-07T19:32:28 <jhung> Justin_o: fyi here\'s a link to the latest from dayotte - https://www.dropbox.com/s/4ogzuwjxc4c2pay/audio%20file%20panels.pdf
+2014-03-07T19:32:40 * kasparnet has quit
+2014-03-07T19:35:35 <Justin_o> jhung: i don\'t have link to the old wireframes, but you can look at the demo http://metadata.floeproject.org/demos/html/metadata.html
+2014-03-07T19:35:49 <Justin_o> jhung:  what happens when you click add caption now?
+2014-03-07T19:39:17 <jhung> Justin_o: I think a section would appear that will allow the user to input a file or an URL, and specify a langauage.
+2014-03-07T19:43:14 <Justin_o> jhung: and if they wanted to add another one?
+2014-03-07T19:43:18 <Justin_o> or they can only add one?
+2014-03-07T19:44:03 <jhung> Justin_o: I\'m guessing there will be a way to add more than one.
+2014-03-07T19:45:19 * yzen joined the channel
+2014-03-07T19:53:59 * jash4 has quit
+2014-03-07T20:08:19 <Bosmon> Hi Justin_o
+2014-03-07T20:08:21 * jash4 joined the channel
+2014-03-07T20:08:23 <Bosmon> Is it a good time now?
+2014-03-07T20:08:26 <Justin_o> Bosmon: sure
+2014-03-07T20:28:36 * kasparnet joined the channel
+2014-03-07T20:43:53 * AyushDatta2 has quit
+2014-03-07T20:49:27 <Justin_o> cindyli: i just finished chatting with Bosmon about dynamic components for metadata. I\'ve updated the pull request with the suggested approach. Bosmon makes it sound straightforward. I won\'t have a chance to look at it today though, but I\'ll pick up the work next week.
+2014-03-07T20:50:03 <cindyli> that\'s great, thanks, Justin_o
+2014-03-07T20:50:19 <Justin_o> cindyli: i\'m going to be heading out now.. see you next week
+2014-03-07T20:50:28 <cindyli> have a good weekend, Justin_o
+2014-03-07T20:50:37 <Justin_o> thanks you too
+2014-03-07T20:53:06 * cindyli has quit
+2014-03-07T21:01:22 * anvk has quit
+2014-03-07T21:12:09 * kasparnet has quit
+2014-03-07T21:12:28 * sgithens has quit
+2014-03-07T21:26:05 * sgithens joined the channel
+2014-03-07T21:33:58 * sgithens has quit
+2014-03-07T21:34:56 * greggy1 has quit
+2014-03-07T21:55:48 * jhung has quit
+2014-03-07T22:01:23 * AyushDatta1 has quit
+2014-03-07T22:08:24 * yzen has quit
+2014-03-07T22:17:50 * anastasiac has quit
+2014-03-07T22:36:21 * yzen joined the channel
+2014-03-07T22:40:29 * yzen has quit
+2014-03-07T22:55:06 * Justin_o has quit
+2014-03-07T22:57:09 * jash4 has quit
+2014-03-07T23:09:50 * jash4 joined the channel
+2014-03-07T23:32:35 * jhernandez has quit
+2014-03-07T23:34:18 * jhernandez joined the channel
+'
+
+b'2014-03-07T18:01:29 <Justin_o> Bosmon, colinclark, anastasiac: i just sent an e-mail to the list about our forked version of jslint being gone and a suggestion to switch to jshint. If you have time to look it over and give your thoughts that would be great.
+2014-03-07T18:01:34 * danaayotte joined the channel
+2014-03-07T18:01:39 <colinclark> totally
+2014-03-07T18:01:47 <colinclark> Justin_o: I did some stuff in Flocking...
+2014-03-07T18:02:09 <colinclark> Flocking\'s code standards aren\'t the same as Infusion\'s
+2014-03-07T18:02:21 <colinclark> they\'re a little "weirder" in that I adopted "one var-ism"
+2014-03-07T18:02:28 <colinclark> but we could adapt it
+2014-03-07T18:02:29 <colinclark> https://github.com/colinbdclark/Flocking/blob/master/.jshintrc
+2014-03-07T18:02:42 <colinclark> https://github.com/colinbdclark/Flocking/blob/master/Gruntfile.js#L7-L12
+2014-03-07T18:03:00 <colinclark> It\'s really very convenient
+2014-03-07T18:03:17 <colinclark> and I even set up a pre-commit hook so that my commits get rejected if they fail JSHint
+2014-03-07T18:03:39 <colinclark> https://github.com/colinbdclark/Flocking/blob/master/Gruntfile.js#L93-L97
+2014-03-07T18:03:45 <Justin_o> colinclark: cool.. i was wondering if we do switch to jshint, if we should keep the linting comments instead, so people who don\'t have node setup could still copy it over to the website for linting.. although i\'m not sure how often that would happen..
+2014-03-07T18:03:59 <colinclark> It uses this git-hooks plugin for Grunt, which works across platform
+2014-03-07T18:04:02 <colinclark> Justin_o: Yeah, I do both
+2014-03-07T18:04:10 <colinclark> I have the jshintrc file and I try to keep the file comments up to date
+2014-03-07T18:04:23 * AyushDatta2 has quit
+2014-03-07T18:04:23 * AyushDatta1 has quit
+2014-03-07T18:04:59 <Justin_o> colinclark: that githook thing in your gruntfile is interesting.. does that get "installed" to your local git repo?
+2014-03-07T18:05:07 <colinclark> yes
+2014-03-07T18:05:21 <colinclark> you just run "grunt githooks"
+2014-03-07T18:05:24 <colinclark> and it will install the hook for you
+2014-03-07T18:05:29 <colinclark> and the hooks are written as JavaScript files
+2014-03-07T18:05:35 <colinclark> so they work on both Windows and Mac OS X
+2014-03-07T18:05:45 * danaayotte has quit
+2014-03-07T18:05:50 <colinclark> I find it pretty useful
+2014-03-07T18:05:54 <Justin_o> colinclark: that\'s awesome.. that would help solve our long standing missing feature from svn about preventing commits without a jira number
+2014-03-07T18:06:03 <colinclark> yes
+2014-03-07T18:06:05 <Bosmon> Well, sort of
+2014-03-07T18:06:14 <Bosmon> The issue still remains what to do about merges and conflict resolution commits
+2014-03-07T18:06:19 <colinclark> yes
+2014-03-07T18:06:22 <Bosmon> Which I always saw as the greater problem
+2014-03-07T18:06:50 <Justin_o> Bosmon: ah good point, although those tend to follow a particular pattern so they should be easy to accept
+2014-03-07T18:07:03 <Justin_o> or maybe you think they are an issue in and of themselves
+2014-03-07T18:07:12 <Bosmon> I\'m not sure
+2014-03-07T18:07:17 <Bosmon> All I can observe is that they exist : P
+2014-03-07T18:07:51 <Justin_o> Bosmon: i\'ve come to like the merge commits a lot, makes it easier to know when a branch got in, otherwise the individual commits get all merged in with the rest
+2014-03-07T18:08:04 <Bosmon> yes
+2014-03-07T18:08:18 <Bosmon> All the same I\'ve sort of given up trying to interpret git histories
+2014-03-07T18:08:23 <Bosmon> I just assume that "it has come out in the wash"
+2014-03-07T18:08:47 <Bosmon> What you get on issuing a "git log" from pretty much any point is unintelligible except for the most recent 1 or possible 2 commits : P
+2014-03-07T18:09:31 <Justin_o> Bosmon: that\'s a decent segue for my next comment
+2014-03-07T18:09:41 <Bosmon> All you can learn from it is "am I really on the branch I think I am" or "did I actually remember to commit this"
+2014-03-07T18:09:54 * danaayotte joined the channel
+2014-03-07T18:10:05 <Justin_o> Bosmon, colinclark: could you please take a look at http://issues.fluidproject.org/issues/?jql=status%20%3D%20Resolved%20AND%20resolution%20%3D%20Fixed and close off any of those issues that are done. If possible add the merge point in a comment too.
+2014-03-07T18:10:25 * jash4 has quit
+2014-03-07T18:10:39 <Bosmon> wagh
+2014-03-07T18:10:56 <Bosmon> The newest of these issues was updated 1 year ago : P
+2014-03-07T18:11:15 <Justin_o> Bosmon: We had over 600 of these in jiras at the start of the week :)
+2014-03-07T18:11:40 <Bosmon> I\'m not sure I could actually do that very easily at all
+2014-03-07T18:11:50 <Bosmon> FLUID-4695 for example
+2014-03-07T18:11:59 <Bosmon> Would involve a considerable amount of archaeology
+2014-03-07T18:12:23 <Bosmon> And it might be quite hard to even identify a single point at which the functionality was delivered
+2014-03-07T18:12:58 <Bosmon> FLUID-4609 similarly
+2014-03-07T18:13:07 <Bosmon> Many of these are awkward things that arrived in dribs and drabs
+2014-03-07T18:13:21 <Bosmon> FOr example an "early merge" that delivered a highly broken and limited version of the functionality
+2014-03-07T18:13:30 <Justin_o> Bosmon: that\'s fine if that\'s the case, maybe just leave a comment as such and close it off
+2014-03-07T18:13:36 <Justin_o> if the work is actually completed
+2014-03-07T18:13:39 <Bosmon> That gradually got tweaked until it was reasonably usable
+2014-03-07T18:13:39 <Bosmon> ok
+2014-03-07T18:13:59 <Bosmon> What actually is our protocol on "Closing"?
+2014-03-07T18:14:09 <Bosmon> Isn\'t it the case that the person responsible for the work can\'t do it?
+2014-03-07T18:14:29 <Justin_o> Bosmon: so speaking of git log history, i was able to track down several cases where the work was done with a single branch merge, but hadn\'t been documented on the jira. In the end it wasn\'t too hard, just used the grep option for git log
+2014-03-07T18:14:37 <Bosmon> yes
+2014-03-07T18:14:44 <Bosmon> I have closed several such issues myself
+2014-03-07T18:14:52 <colinclark> Bosmon: whatever we can do, we should help
+2014-03-07T18:14:54 <Bosmon> And have been encouraging those responsible for merges to take care of it : P
+2014-03-07T18:15:03 <colinclark> King has been slogging through a ton of these
+2014-03-07T18:15:13 <Bosmon> But many of these remaining ones are remaining I think because they are recalcitrant
+2014-03-07T18:15:36 <Justin_o> Bosmon: yes.. i think in general the person doing the merge should probably close it, or depending on the case, the person who filed it.
+2014-03-07T18:15:38 <Bosmon> We could probably discover a single timepoint for FLUID-4212
+2014-03-07T18:15:46 <Bosmon> But I think not for many of the others of these 7
+2014-03-07T18:16:13 <colinclark> So should our process change?
+2014-03-07T18:16:22 <colinclark> I was under the impression that as a reviewer
+2014-03-07T18:16:30 <colinclark> I should resolve but not close when I push a fix
+2014-03-07T18:16:31 <Justin_o> Bosmon: that\'s okay.. i mostly wanted to make sure that they were really done, and since you and colinclark filed them, I figured you\'d be the best to know
+2014-03-07T18:16:40 <colinclark> but should I actually be closing them?
+2014-03-07T18:16:58 <Bosmon> I believe they are all "really done"
+2014-03-07T18:16:58 <Justin_o> colinclark: seems like this is unclear, and i\'m not fully clear on it myself :)
+2014-03-07T18:17:06 <Bosmon> But I have never really understood who is responsible for "closing" issues
+2014-03-07T18:17:18 <Justin_o> colinclark: the notion of resolved vs closed is kind of vague, especially since we have the needs commit option
+2014-03-07T18:17:19 <Bosmon> Especially where the issue has no user-facing correlate
+2014-03-07T18:17:58 <Bosmon> To me, the mere fact that an issue has persisted in the "Resolved" condition for more than a year must prove that it is actually "Closed"
+2014-03-07T18:18:08 <Bosmon> Otherwise you imagine someone might have reopened it : P
+2014-03-07T18:18:22 <colinclark> yes
+2014-03-07T18:18:31 <colinclark> I guess we should close issues after they\'ve been tested and pushed
+2014-03-07T18:18:36 <colinclark> let\'s make life simpler for ourselves :)
+2014-03-07T18:18:49 <Bosmon> Ok
+2014-03-07T18:18:51 <colinclark> and if that shouldn\'t be the case, the submitter can make note of it on the pull request
+2014-03-07T18:18:54 <Bosmon> At least, as long as they are reported by one of us
+2014-03-07T18:18:56 <colinclark> as you recently did for me, Bosmon
+2014-03-07T18:19:02 <colinclark> where you said "don\'t resolve this when you push it"
+2014-03-07T18:19:06 <colinclark> yes
+2014-03-07T18:19:14 <Bosmon> If they are reported by an external user I imagine we should use the full 2-step system
+2014-03-07T18:19:27 <colinclark> if they are reported by a user, perhaps we can write a note on the JIRA asking them to confirm that we did indeed do what they wanted
+2014-03-07T18:19:36 <Bosmon> Although sometimes I think we count as "users" to ourselves
+2014-03-07T18:19:59 <colinclark> Like "@amb26, can you confirm that this fix does indeed make your synth extra-squawky? If it does, please close the issue"
+2014-03-07T18:20:02 <Bosmon> For example, those issues that I issue fixes for for cindyli should, for example, be "closed" by her
+2014-03-07T18:20:57 <Bosmon> For example, in the recent pull I did for her, I rewrote one of her test cases because "in my opinion" it could be represented by a much more simple test
+2014-03-07T18:21:11 <Bosmon> But that would still require her to verify that in her opinion, the original issue was indeed fixed
+2014-03-07T18:21:54 <Bosmon> So she commented in the channel yesterday that everything seemed fine for her - and so that would be a reasonable point for a "close"
+2014-03-07T18:22:14 <colinclark> that definitely is a case, yes
+2014-03-07T18:22:38 <colinclark> a very good example
+2014-03-07T18:22:44 <colinclark> any thoughts on all of this, Justin_o ?
+2014-03-07T18:22:45 <Bosmon> But I guess where, on the other hand, the issue is a framework issue reported by me, that is fixed by me, the reviewer for it should close it in one step when pushing
+2014-03-07T18:22:45 <cindyli> Bosmon, colinclark, r u talking about closing jiras? shouldn\'t they be closed after the fixes are merged into the master?
+2014-03-07T18:22:46 * kasparnet has quit
+2014-03-07T18:22:56 <Bosmon> cindyli - not necessarily, no
+2014-03-07T18:22:58 * jash4 joined the channel
+2014-03-07T18:22:58 <colinclark> cindyli: Yep, that\'s exactly what we\'re talking about
+2014-03-07T18:23:03 <Bosmon> The question is whether any "separate verification" is required
+2014-03-07T18:23:07 <colinclark> The proposal I think we\'re making is this:
+2014-03-07T18:23:19 <colinclark> 1. Straightforward fixes should be both resolved and closed when a reviewer pushes them
+2014-03-07T18:23:24 <Bosmon> And certainly in the case where the filer and the fixer are the same person, there clearly can\'t be any form of separate verification
+2014-03-07T18:23:31 <Bosmon> So that is definitely a case for "close on merge"
+2014-03-07T18:23:42 <colinclark> 2. Issues that involve changes or verification, such as the example Bosmon gave of your recent test case, should be bounced back
+2014-03-07T18:23:59 <colinclark> for a last look and confirmation by the person who filed the issue
+2014-03-07T18:24:01 <Bosmon> But I was arguing that the fix I made for your FLUID-5282 was not a case of "close on merge"
+2014-03-07T18:24:11 <Bosmon> Since I could have been wrong in my diagnosis of what the issue was
+2014-03-07T18:24:14 <colinclark> I would say that for 90% of our issues, they should be resolved and fixed
+2014-03-07T18:24:18 <colinclark> closed, sorry
+2014-03-07T18:24:37 <Justin_o> colinclark: the proposal sounds good
+2014-03-07T18:24:47 <Bosmon> Perhaps a person filing a pull request should be obliged to give an explicit annotation
+2014-03-07T18:25:05 <Bosmon> Either "close on merge" or "verification by xxx required"
+2014-03-07T18:25:25 <Bosmon> Since in the case of FLUID-5282 I was the "apparent filer" of the JIRA too
+2014-03-07T18:25:31 <Bosmon> But it was still really an issue on behalf of cindyli
+2014-03-07T18:25:58 <colinclark> I think it should be the reverse
+2014-03-07T18:26:11 <colinclark> The case of "resolve and close on merge" should be the default
+2014-03-07T18:26:24 <Bosmon> It\'s a shame that JIRA doesn\'t allow you to edit the "Reporter" field of a JIRA to make it apparently originate from another
+2014-03-07T18:26:35 <Bosmon> I remember that many of those 2011 UIO JIRAs were filed on behalf of cindyli : P
+2014-03-07T18:26:36 <colinclark> And someone who is looking at, fixing, or reviewing an issue that needs this extra workflow step should explicitly ask fro it
+2014-03-07T18:26:45 <Bosmon> colinclark - sure, that\'s good
+2014-03-07T18:27:01 <Bosmon> but I was able to do that by actually being logged on to JIRA as her : P
+2014-03-07T18:27:21 <colinclark> oh yes
+2014-03-07T18:27:21 <cindyli> :)
+2014-03-07T18:27:24 <colinclark> that was that amazing time
+2014-03-07T18:27:36 <colinclark> where you were visiting the office
+2014-03-07T18:27:38 <colinclark> Pair JIRAing with cindyli, right?
+2014-03-07T18:27:45 <cindyli> exactly :)
+2014-03-07T18:27:52 <cindyli> i got all the credit ;)
+2014-03-07T18:28:08 <colinclark> which you deserve unquestionably, cindyli
+2014-03-07T18:28:29 <cindyli> not really, Bosmon for sure won\'t agree
+2014-03-07T18:28:36 <Bosmon> I agree completely!
+2014-03-07T18:28:48 <cindyli> YAY!!
+2014-03-07T18:28:56 <Bosmon> Why else do you think I filed the issues as you? : P
+2014-03-07T18:29:20 <Bosmon> I could perfectly easily have used my THINKPAD KEYBOARD WITH SEPARATE FUNCTION KEYS ........
+2014-03-07T18:29:41 <cindyli> YAY.. this time i\'m DANCING!!
+2014-03-07T18:33:36 * greggy1 joined the channel
+2014-03-07T18:35:53 * danaayotte has quit
+2014-03-07T18:43:25 <colinclark> Bosmon: So as you know I\'ve been working on that "graph view" for Flocking\'s Playground
+'
+
+b'2014-03-07T00:05:20 * kasparnet joined the channel
+2014-03-07T00:39:46 * kasparnet has quit
+2014-03-07T00:56:29 * verbych joined the channel
+2014-03-07T01:03:26 * vjoanna has left the channel
+2014-03-07T01:16:36 * verbych has quit
+2014-03-07T01:31:59 * jash4 joined the channel
+2014-03-07T02:25:54 * -- BotBot disconnected, possible missing messages --
+2014-03-07T02:26:28 * -- BotBot disconnected, possible missing messages --
+2014-03-07T02:28:54 * -- BotBot disconnected, possible missing messages --
+2014-03-07T07:55:13 * [o__o] joined the channel
+2014-03-07T08:13:57 * Zuru_ is now known as Zuru
+2014-03-07T08:25:02 * SonicX joined the channel
+2014-03-07T08:25:30 * SonicX has quit
+2014-03-07T08:44:26 * kasparnet joined the channel
+2014-03-07T09:58:38 * kasparnet has quit
+2014-03-07T10:03:19 * kasparnet joined the channel
+2014-03-07T10:35:26 * Niharika has left the channel
+2014-03-07T10:58:43 * kasparnet has quit
+2014-03-07T11:04:20 * kasparnet joined the channel
+2014-03-07T12:00:47 * jash4 has quit
+2014-03-07T12:21:17 * jash4 joined the channel
+2014-03-07T12:37:04 * Niharika joined the channel
+2014-03-07T12:43:12 * Justin_o joined the channel
+2014-03-07T12:46:26 <Justin_o> Bosmon: sorry.. i missed your message, i had left for the day already.
+2014-03-07T12:58:59 * jash4 has quit
+2014-03-07T12:59:08 * jash4 joined the channel
+2014-03-07T13:13:13 * jhung joined the channel
+2014-03-07T13:15:31 * kasparnet has quit
+2014-03-07T13:16:10 * jhung has quit
+2014-03-07T13:17:26 * kasparnet joined the channel
+2014-03-07T13:23:21 * jhung joined the channel
+2014-03-07T13:29:18 * cindyli joined the channel
+2014-03-07T13:36:02 * sgithens joined the channel
+2014-03-07T13:36:52 * anvk joined the channel
+2014-03-07T13:40:48 * greggy1 joined the channel
+2014-03-07T13:41:38 * sgithens has quit
+2014-03-07T13:55:08 * sgithens joined the channel
+2014-03-07T14:10:29 * jash4 has quit
+2014-03-07T14:14:33 * yzen joined the channel
+2014-03-07T14:20:55 * sgithens has quit
+2014-03-07T14:21:02 * sgithens joined the channel
+2014-03-07T14:21:45 <sgithens> Is Simon one of the handles on here?
+2014-03-07T14:31:53 * cindyli has quit
+2014-03-07T14:32:13 * cindyli joined the channel
+2014-03-07T14:34:03 * jash4 joined the channel
+2014-03-07T14:46:28 * Jess_ joined the channel
+2014-03-07T14:46:28 * Jess_ has quit
+2014-03-07T14:58:53 * AyushDatta2 joined the channel
+2014-03-07T15:00:21 <Justin_o> cindyli: could you please review this pull request https://github.com/fluid-project/metadata/pull/21
+2014-03-07T15:01:00 <cindyli> sure, Justin_o
+2014-03-07T15:03:05 <Justin_o> cindyli: thanks
+2014-03-07T15:03:08 <Justin_o> it\'s based off of master
+2014-03-07T15:03:16 <cindyli> ok, Justin_o
+2014-03-07T15:06:04 * colinclark joined the channel
+2014-03-07T15:07:41 * yzen has quit
+2014-03-07T15:09:10 * yzen joined the channel
+2014-03-07T15:27:20 * anastasiac joined the channel
+2014-03-07T15:30:47 * simonjb joined the channel
+2014-03-07T15:31:49 <simonjb> good morning jhung -- I merged in your demoMenu changes this morning and was wondering if you had a little time to chat?
+2014-03-07T15:31:58 * Zuru has quit
+2014-03-07T15:33:34 * sgithens has quit
+2014-03-07T15:37:11 * Zuru joined the channel
+2014-03-07T15:38:36 <jhung> simonjb: sure. I\'ll ping you on Skype in a minute. I just need to find my headset.
+2014-03-07T15:38:56 <simonjb> sounds good jhung
+2014-03-07T15:43:47 * kasparnet has quit
+2014-03-07T15:52:23 * Zuru has quit
+2014-03-07T15:57:33 * Zuru joined the channel
+2014-03-07T15:58:41 * caravanvw joined the channel
+2014-03-07T16:02:26 <anastasiac> Justin_o, do we still have our custom version of jslint running anywhere? or an alternative, or something?
+2014-03-07T16:08:44 * sgithens joined the channel
+2014-03-07T16:09:53 * Zuru has quit
+2014-03-07T16:10:00 * Zuru joined the channel
+2014-03-07T16:12:19 * caravanvw has quit
+2014-03-07T16:15:09 * Zuru has quit
+2014-03-07T16:15:16 * Zuru joined the channel
+2014-03-07T16:22:40 * Zuru has quit
+2014-03-07T16:26:08 * jhung has quit
+2014-03-07T16:27:32 * jhung joined the channel
+2014-03-07T16:27:50 * Zuru joined the channel
+2014-03-07T16:35:44 * Zuru has quit
+2014-03-07T16:37:24 * Zuru joined the channel
+2014-03-07T16:53:54 * Zuru has quit
+2014-03-07T16:56:58 * sgithens has quit
+2014-03-07T16:59:03 * Zuru joined the channel
+2014-03-07T17:02:10 <Justin_o> anastasiac: we don\'t have our custom version running.. i think we\'re going to be using jshint instead
+2014-03-07T17:02:44 <anastasiac> okley, thanks for the info, Justin_o
+2014-03-07T17:05:59 * Zuru has quit
+2014-03-07T17:06:05 * Zuru joined the channel
+2014-03-07T17:10:33 * jhung has quit
+2014-03-07T17:10:57 * Zuru has quit
+2014-03-07T17:14:20 * jhung joined the channel
+2014-03-07T17:17:53 * Zuru joined the channel
+2014-03-07T17:22:52 * Zuru has quit
+2014-03-07T17:32:28 <colinclark> so Bosmon and simonjb
+2014-03-07T17:32:28 <colinclark> hi
+2014-03-07T17:32:51 <simonjb> hey
+2014-03-07T17:32:52 <colinclark> I\'d like to do some planning and thinking about asterics and connecting up "diverse sources of user input" to the web
+2014-03-07T17:33:04 <Bosmon> DIVERS ALARUMS
+2014-03-07T17:33:05 * Zuru joined the channel
+2014-03-07T17:33:06 <simonjb> absolutely
+2014-03-07T17:33:08 <colinclark> I\'m thinking I should try to scramble into the office
+2014-03-07T17:33:17 <colinclark> and then should we have a call to talk about it?
+2014-03-07T17:33:20 <Bosmon> ok
+2014-03-07T17:33:23 <colinclark> or type away here in the channel?
+2014-03-07T17:33:25 <colinclark> i\'m flexible
+2014-03-07T17:33:27 <simonjb> sounds good
+2014-03-07T17:33:39 <colinclark> i just think i want to come into the office for sanity\'s sake :)
+2014-03-07T17:34:00 <simonjb> this may evolve, but right now I think I\'m more effective with voice rather than typing
+2014-03-07T17:34:05 <colinclark> yup
+2014-03-07T17:34:06 <colinclark> that makes sense
+2014-03-07T17:34:19 <Bosmon> We still have some "high bandwidth" stuff to transact : P
+2014-03-07T17:34:19 <colinclark> So many morning conference calls this week
+2014-03-07T17:34:23 <colinclark> yup
+2014-03-07T17:34:24 <colinclark> ok
+2014-03-07T17:34:30 <colinclark> so should we settle on a time?
+2014-03-07T17:34:49 <simonjb> I\'m available all afternoon
+2014-03-07T17:35:04 <Bosmon> So will I, although I might fall asleep spontaneously
+2014-03-07T17:35:10 <simonjb> :)
+2014-03-07T17:35:39 <colinclark> should we find a way to wake you up, or should we pick a time?
+2014-03-07T17:35:47 <Bosmon> Both, or either : P
+2014-03-07T17:35:51 <colinclark> I\'m thinking 3 pm EST/1 pm MST would work for me
+2014-03-07T17:35:53 <Bosmon> ok
+2014-03-07T17:35:56 <Bosmon> Let\'s do that
+2014-03-07T17:35:57 <simonjb> ok
+2014-03-07T17:36:04 <Bosmon> Phone me if I don\'t seem to be here :)
+2014-03-07T17:38:15 <colinclark> ok perfect
+2014-03-07T17:38:16 <colinclark> thanks guys
+2014-03-07T17:38:23 <colinclark> i\'m excited about working on this with you
+2014-03-07T17:39:13 * greggy1 has quit
+2014-03-07T17:39:48 * Niharika is now known as Niharika|away
+2014-03-07T17:41:27 * Niharika|away has left the channel
+2014-03-07T17:43:45 * yzen has quit
+2014-03-07T17:49:25 * yzen joined the channel
+2014-03-07T17:49:35 * kasparnet joined the channel
+2014-03-07T17:58:18 <anastasiac> cindyli, Justin_o, Bosmon: how would i replace the following line with the "modelListeners" option in fluid.defaults?
+2014-03-07T17:58:19 <anastasiac> that.applier.guards.addListener({path: "volume", transactional: true}, fluid.linearRangeGuard(0, 100));
+2014-03-07T17:58:34 <anastasiac> my question is obviously about the \'transactional\' part
+2014-03-07T17:58:41 <Bosmon> anastasiac - guards are replaced by "modelRelay" blocks
+2014-03-07T17:58:46 <colinclark> yay
+2014-03-07T17:58:51 <Bosmon> And every listener is now by default transactional as appropriate
+2014-03-07T17:59:31 <Bosmon> Sadly I haven\'t got my ChangeApplier notes into a better form
+2014-03-07T17:59:34 <Bosmon> But I mean to start this afternoon
+2014-03-07T17:59:39 <anastasiac> Bosmon, is this in the very latest modelRelay stuff, the version that doesn\'t work with the VideoPlayer yet?
+2014-03-07T17:59:47 <Bosmon> anastasiac - yes, that\'s right
+2014-03-07T17:59:56 <anastasiac> so how would i do this in the video player? :-)
+2014-03-07T18:00:07 <Bosmon> anastasiac - well, it "works" with it
+2014-03-07T18:00:16 <Bosmon> What won\'t work is the UIO integration
+2014-03-07T18:00:37 <Bosmon> And if you\'re not updating it to the new grades, you\'ll just have to leave that guard the way it is
+2014-03-07T18:00:50 <Bosmon> All of the old ChangeApplier implementation is currently still there under the existing gradeNames
+2014-03-07T18:01:27 <anastasiac> ok, I\'ll leave it as is until we can upgrade the VP to the very latest infusion. Thanks
+'
+

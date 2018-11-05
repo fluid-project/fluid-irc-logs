@@ -1,0 +1,287 @@
+b'2014-11-12T17:06:28 <Bosmon7> And for those queues which are sensitive to a particular time threshold, 3 patterns of delays per test
+2014-11-12T17:06:51 <Justin_o> Bosmon7: what does that mean exactly
+2014-11-12T17:07:13 <Bosmon7> Justin_o - well, 4 actually
+2014-11-12T17:07:23 <Justin_o> can you give me an example of that
+2014-11-12T17:07:51 <Bosmon7> Given a pattern of 2 "gaps" between 3 requests, there are 4 combinations of delays where each one is separately lower than the threshhold or greater than the threshold
+2014-11-12T17:08:17 <Justin_o> Bosmon7: the queue should always execute the first and last item though
+2014-11-12T17:08:23 <Justin_o> so it could only ever drop the middle one
+2014-11-12T17:08:54 <Justin_o> so changing the duration of a request will only result in either all running or only the first and last
+2014-11-12T17:09:23 <Bosmon7> That is, if L is a delay lower than the threshold and H is one higher, you should test patterns LL, LH, HL and HH
+2014-11-12T17:09:23 <Bosmon7> Justin_o - sure - just because there are only 2 possible outcomes, doesn\'t mean that there are only 2 possible faults your implementation could have :)
+2014-11-12T17:09:23 <Bosmon7> Testing is the process of assuring yourself that you don\'t have faults, not observing all possible outcomes : p
+2014-11-12T17:09:36 <colinclark> +- 50 ms, in my experience, is perhaps expecting a lot from setTimeout running in the main thread
+2014-11-12T17:09:47 <colinclark> At least in Firefox
+2014-11-12T17:10:22 <Bosmon7> colinclark - but perhaps that\'s only risky in the case the tests are otherwise CPU-bound?
+2014-11-12T17:10:37 <colinclark> It\'s not entirely clear to me
+2014-11-12T17:10:51 <colinclark> but the Flocking scheduler runs its timers in a Web Worker
+2014-11-12T17:10:55 <colinclark> which provides greater stability
+2014-11-12T17:11:03 <Bosmon7> ok
+2014-11-12T17:11:15 <colinclark> and when I schedule fairly short intervals in succession, failure does occur occasionally above the 50 ms threshold
+2014-11-12T17:11:20 <colinclark> but probably very occasionally
+2014-11-12T17:11:28 <colinclark> it\'s quite bad, unforunately
+2014-11-12T17:11:46 <Justin_o> :(
+2014-11-12T17:11:50 * jhernandez has quit
+2014-11-12T17:11:51 <colinclark> I think it\'s probably a good number to start with
+2014-11-12T17:11:52 <colinclark> 50 ms
+2014-11-12T17:11:57 <Bosmon7> I imagine we could consider that approach if Justin_o\'s tests don\'t appear to execute reliably - and if we think they are too slow with higher durations and wider tolerances
+2014-11-12T17:12:02 <colinclark> and see if we get problematic failures in FF over time
+2014-11-12T17:12:20 <Justin_o> sounds like a  plan
+2014-11-12T17:12:23 <colinclark> I would avoid it as much as you can--running timers in workers
+2014-11-12T17:12:24 <colinclark> it\'s complex
+2014-11-12T17:13:00 <Justin_o> colinclark: yes.. it sounded like that
+2014-11-12T17:13:01 <Bosmon7> colinclark - they can\'t call back into the main thread, can they?
+2014-11-12T17:13:02 * jhernandez joined the channel
+2014-11-12T17:13:11 * jhernandez has quit
+2014-11-12T17:13:15 <Justin_o> Bosmon7: you can pass messages
+2014-11-12T17:13:24 <colinclark> My scheduler sends postMessage() messages between the two universes
+2014-11-12T17:13:32 <colinclark> which means its still subject to jitter in the main thread
+2014-11-12T17:13:50 <colinclark> so it\'s really not much of a viable solution
+2014-11-12T17:13:50 <Justin_o> Bosmon7: i have a question about your L\'s and H\'s are you referring to delay and duration there
+2014-11-12T17:13:53 <Justin_o> not sure exactly how though
+2014-11-12T17:14:11 <Bosmon7> Justin_o - I\'m speaking about the delays between the requests
+2014-11-12T17:14:20 <Bosmon7> It\'s ok to have the "duration" as a constant across all the fixtures
+2014-11-12T17:14:35 <Bosmon7> And vary the delays relative to that
+2014-11-12T17:14:47 <Justin_o> Bosmon7: i see
+2014-11-12T17:14:49 <Bosmon7> Well
+2014-11-12T17:14:51 <Justin_o> i have it sort of backwards then
+2014-11-12T17:15:11 <Justin_o> or maybe not
+2014-11-12T17:15:17 <Bosmon7> Justin_o - varying the duration is also acceptable
+2014-11-12T17:15:25 <Bosmon7> It\'s just I don\'t think we need to vary both
+2014-11-12T17:15:38 <Bosmon7> As long as we can test all possible patterns with which the requests could overlap one another
+2014-11-12T17:15:46 <Justin_o> Bosmon7: okay.. i\'ll experiment with this a bit.. i have a feeling i won\'t get to it all today though with the community meeting and soccer
+2014-11-12T17:15:58 <Bosmon7> **SOW-CHHER**!!!
+2014-11-12T17:16:09 <Justin_o> Bosmon7: your national sport :)
+2014-11-12T17:16:36 <Bosmon7> So colinclark - in terms of "observing jitter in the main thread"
+2014-11-12T17:17:17 <Bosmon7> Isn\'t it the case that by the time the main thread has got around to servicing the "postMessage" directed to it from the other world, that it has been subjected to all the jitter that a setTimeout would have exposed it to anyway?
+2014-11-12T17:17:25 <Bosmon7> Or does this still work out better?
+2014-11-12T17:17:59 * jhernandez joined the channel
+2014-11-12T17:18:57 <colinclark> It seems to still work better, yes
+2014-11-12T17:19:12 * Bosmon8 joined the channel
+2014-11-12T17:19:28 <colinclark> In part, I think, due to the fact that postMessage isn\'t throttled
+2014-11-12T17:19:50 <Bosmon8> colinclark - interesting
+2014-11-12T17:19:56 <colinclark> The more important reason why I use this strategy is because setTimeout is also throttled when the tab isn\'t active
+2014-11-12T17:20:06 <colinclark> but the workers are not
+2014-11-12T17:20:24 <colinclark> and appear to respond still to postMessage requests
+2014-11-12T17:20:49 <colinclark> it\'s not perfect or even in the range of good, but it is sufficient for coarse-grained scheduling
+2014-11-12T17:21:01 <colinclark> fine-grained scheduling in Flocking will soon be driven off the real-time sample clock
+2014-11-12T17:21:23 <Bosmon8> yet another peculiar "arms race"
+2014-11-12T17:21:23 <Bosmon8> Reminiscent of my attempts to paint my ceiling in increasingly white shades of white
+2014-11-12T17:21:23 <Bosmon8> colinclark - which API gives you access to that clock?
+2014-11-12T17:21:29 <colinclark> The Web Audio API
+2014-11-12T17:22:01 <colinclark> which is driven bhy a realtime-scheduled thread behind the scenes
+2014-11-12T17:22:08 <colinclark> i.e. a thread that has very high priority with the kernel
+2014-11-12T17:22:26 <Bosmon8> What horrifying modernity
+2014-11-12T17:22:27 * Bosmon7 has quit
+2014-11-12T17:22:35 <Bosmon8> Soon we will be able to create ...... **SOFTTWARE** : P
+2014-11-12T17:22:47 <colinclark> Just wait until we have a means to "flush denormals to zero!"
+2014-11-12T17:22:49 <colinclark> :P
+2014-11-12T17:22:56 <Bosmon8> I\'m waiting for the web-based "DVD burning API" .......
+2014-11-12T17:23:07 <colinclark> Justin_o: What\'s he talking about?
+2014-11-12T17:23:10 <colinclark> What\'s a "DVD"?
+2014-11-12T17:23:14 <Bosmon8> hahahaha
+2014-11-12T17:23:17 <colinclark> Is it kind of like a vinyl record?
+2014-11-12T17:23:29 <Bosmon8> It\'s very similar yes
+2014-11-12T17:23:34 <Bosmon8> You can throw them through the air, spinning
+2014-11-12T17:23:38 <Bosmon8> Very much like a MACBOOK AIR
+2014-11-12T17:23:43 <colinclark> wooo
+2014-11-12T17:23:45 <Justin_o> colinclark, Bosmon8: lol
+2014-11-12T17:24:16 <colinclark> Justin_o: I guess a DVD must be like a USB stick, but for our grandparents!
+2014-11-12T17:24:21 <Bosmon8> Actually this is a good point
+2014-11-12T17:24:32 <Bosmon8> Apple is yet to make their great entry into the world of **CIRCULAR COMPUTING**
+2014-11-12T17:24:46 <anastasiac> Justin_o, I\xe2\x80\x99ve updated my pull requests
+2014-11-12T17:25:17 <Justin_o> colinclark: i\'m wondering when we\'ll see those disappear.. you can already transfer things pretty easily via airdrop or through some form of cloud storage
+2014-11-12T17:27:00 <Bosmon8> Justin_o - not so easily, if the most modern wireless standard your laptop supports is "g" : P
+2014-11-12T17:29:23 <Justin_o> Bosmon8: oh sorry.. I hope you have a fast ethernet port
+2014-11-12T17:29:33 <Bosmon8> Justin_o - actually yes
+2014-11-12T17:29:39 <Bosmon8> It\'s the only reasonable thing on this machine
+2014-11-12T17:29:45 <Bosmon8> Since it doesn\'t even have USB3
+2014-11-12T17:29:49 <Bosmon8> Thankfully it has gigabit ethernet
+2014-11-12T17:30:04 <Bosmon8> A rather weird token of IBM\'s priorities
+2014-11-12T17:32:37 <Justin_o> :) that\'s fortunate at least, so you can still access the cloud through a wire... but USB3 is a nice speed boost
+2014-11-12T17:33:58 <Justin_o> we\'re probably moving towards a world where most computer upgrades will be done via some externally tethered device (e.g. thunderbolt drive, external disk drive) or via the cloud
+2014-11-12T18:08:15 * yzen has quit
+2014-11-12T18:14:39 * Jess__ has quit
+2014-11-12T18:39:13 * jessm joined the channel
+2014-11-12T19:01:31 * danaayotte has quit
+2014-11-12T19:03:11 * jhernandez has quit
+2014-11-12T19:26:02 <Justin_o> fluid-everyone: the community meeting today will be in the fluid-standup room and is about PGA designs
+2014-11-12T19:38:22 * anastasiac_ joined the channel
+2014-11-12T19:39:36 * anastasiac has quit
+2014-11-12T19:39:36 * anastasiac_ is now known as anastasiac
+2014-11-12T19:39:52 * yzen joined the channel
+2014-11-12T20:05:22 * jhung1 joined the channel
+2014-11-12T20:08:39 * jhung has quit
+2014-11-12T20:56:52 * anastasiac has quit
+2014-11-12T20:58:53 * anastasiac joined the channel
+2014-11-12T21:00:09 * anvk has quit
+2014-11-12T21:00:43 * heidiv has quit
+2014-11-12T21:02:03 * danaayotte joined the channel
+2014-11-12T21:07:12 * jhung1 has quit
+2014-11-12T22:02:12 * clown has left the channel
+2014-11-12T22:17:05 * jessm has quit
+2014-11-12T22:18:30 * danaayotte has quit
+2014-11-12T22:21:25 * heidiv joined the channel
+2014-11-12T22:25:35 * simonjb has quit
+2014-11-12T22:26:17 * anastasiac has quit
+2014-11-12T22:30:56 * colinclark has quit
+2014-11-12T22:31:06 * yzen has quit
+2014-11-12T22:31:34 * yzen joined the channel
+2014-11-12T22:37:02 * colinclark joined the channel
+2014-11-12T22:37:20 * colinclark has quit
+2014-11-12T23:42:22 * yzen is now known as yzen_
+2014-11-12T23:49:59 * jhernandez joined the channel
+2014-11-12T23:56:41 * jhernandez has quit
+'
+
+b'2014-11-12T00:29:08 * heidiv joined the channel
+2014-11-12T00:40:00 * heidiv has quit
+2014-11-12T01:09:52 * jhernandez has quit
+2014-11-12T01:10:07 * jhernandez joined the channel
+2014-11-12T01:14:14 * kasparnet has quit
+2014-11-12T01:14:50 * kasparnet joined the channel
+2014-11-12T01:17:52 * jhernandez has quit
+2014-11-12T01:20:13 * kasparnet has quit
+2014-11-12T01:22:00 * kasparnet joined the channel
+2014-11-12T01:25:46 * jhernandez joined the channel
+2014-11-12T01:32:17 * jhernandez has quit
+2014-11-12T01:33:54 * jhernandez joined the channel
+2014-11-12T01:34:30 * kasparnet has quit
+2014-11-12T01:35:35 * kasparnet joined the channel
+2014-11-12T01:41:51 * kasparnet has quit
+2014-11-12T01:42:25 * kasparnet joined the channel
+2014-11-12T01:44:43 * jhernandez has quit
+2014-11-12T01:44:49 * jhernandez joined the channel
+2014-11-12T07:06:52 * Justin_o has quit
+2014-11-12T07:33:27 * kasparnet has quit
+2014-11-12T07:33:52 * jhernandez has quit
+2014-11-12T08:23:25 * jhernandez joined the channel
+2014-11-12T08:40:00 * jhernandez has quit
+2014-11-12T08:41:46 * jhernandez joined the channel
+2014-11-12T09:33:50 * jhernandez has quit
+2014-11-12T10:42:13 * jhernandez joined the channel
+2014-11-12T11:00:56 * jhernandez has quit
+2014-11-12T11:08:59 * jhernandez joined the channel
+2014-11-12T11:18:12 * jhernandez has quit
+2014-11-12T11:43:29 * jhernandez joined the channel
+2014-11-12T11:50:36 * jhernandez has quit
+2014-11-12T11:51:55 * jhernandez joined the channel
+2014-11-12T11:53:45 * jhernandez has quit
+2014-11-12T12:45:26 * jhung joined the channel
+2014-11-12T13:27:04 * Justin_o joined the channel
+2014-11-12T13:30:06 * colinclark joined the channel
+2014-11-12T13:35:03 * yzen joined the channel
+2014-11-12T13:39:29 * yzen is now known as yzen_
+2014-11-12T13:41:33 * jhernandez joined the channel
+2014-11-12T13:43:59 * yzen_ has quit
+2014-11-12T14:03:16 * heidiv joined the channel
+2014-11-12T14:06:59 * yzen joined the channel
+2014-11-12T14:11:03 * anvk joined the channel
+2014-11-12T14:30:48 * anastasiac joined the channel
+2014-11-12T14:36:54 * jhernandez has quit
+2014-11-12T14:43:59 * danaayotte joined the channel
+2014-11-12T14:43:59 * jhernandez joined the channel
+2014-11-12T14:53:17 * simonjb joined the channel
+2014-11-12T14:55:42 * jhernandez has quit
+2014-11-12T14:58:51 <jhung> anastasiac: good news. The phet sim is now working with keyboard access *AND* works in iBooks.
+2014-11-12T14:59:42 <jhung> I\'m going to make some tweaks and the submit a pull request.
+2014-11-12T15:00:05 * simonjb has quit
+2014-11-12T15:02:27 * jhernandez joined the channel
+2014-11-12T15:05:18 * yzen has quit
+2014-11-12T15:06:53 * yzen joined the channel
+2014-11-12T15:06:57 * yzen has quit
+2014-11-12T15:07:24 * yzen joined the channel
+2014-11-12T15:07:25 <anastasiac> jhung, excellent! that\xe2\x80\x99s great
+2014-11-12T15:09:34 * jhernandez has quit
+2014-11-12T15:10:22 * jhernandez joined the channel
+2014-11-12T15:10:25 * jhernandez has quit
+2014-11-12T15:13:18 * simonjb joined the channel
+2014-11-12T15:29:02 * jhernandez joined the channel
+2014-11-12T15:34:59 <Justin_o> Bosmon: do you happen to know what sort of precision i can expect out of the setTimeout
+2014-11-12T15:35:15 <Justin_o> i remember you saying that javascript timing couldn\'t be counted on at some level
+2014-11-12T15:35:48 <Justin_o> I think my intervals between tests may be too small and they are getting bunched up together unexpectedly
+2014-11-12T15:37:52 * jhernandez has quit
+2014-11-12T15:38:14 <Justin_o> from this stackoverflow it sounds like it isn\'t reliable http://stackoverflow.com/questions/196027/is-there-a-more-accurate-way-to-create-a-javascript-timer-than-settimeout
+2014-11-12T15:38:59 * jhernandez joined the channel
+2014-11-12T15:42:09 * Jess__ joined the channel
+2014-11-12T15:46:16 <anastasiac> Justin_o, I\xe2\x80\x99ve issued a couple of pull requests for FLUID-5554, the initial pixel size bug
+2014-11-12T15:47:00 <Justin_o> anastasiac: thanks i\'ll take a look at those
+2014-11-12T15:55:15 * jhernandez has quit
+2014-11-12T16:00:58 * jhernandez joined the channel
+2014-11-12T16:01:04 * jhernandez has quit
+2014-11-12T16:06:00 * jhernandez joined the channel
+2014-11-12T16:11:02 * jhernandez has quit
+2014-11-12T16:11:30 * jhernandez joined the channel
+2014-11-12T16:11:34 * jhernandez has quit
+2014-11-12T16:15:27 <jhung> anastasiac: when you created the simulation HTML / script for the EPUB, how did you specify the standalone and accessibility option?
+2014-11-12T16:16:33 * jhernandez joined the channel
+2014-11-12T16:21:26 * jhernandez has quit
+2014-11-12T16:22:15 <anastasiac> jhung, do you mean \xe2\x80\x9chow did we modify the source\xe2\x80\x9d or \xe2\x80\x9chow did we add URL options\xe2\x80\x9d?
+2014-11-12T16:24:56 <jhung> anastasiac: I\'m wondering how we got the simulation to default to standalone and use keyboard a11y in the EPUB. Did we modify the phet source to do that? That was going to be my approach, but was wondering if you did it an easier way. The reason I\'m asking is that I need to do this for the updated sim.
+2014-11-12T16:25:21 <anastasiac> jhung, I recall that we modified the source code so that those were the defaults
+2014-11-12T16:25:42 <jhung> anastasiac: gotcha. i\'ll do that. thanks
+2014-11-12T16:26:05 <jhung> weasel
+2014-11-12T16:26:31 <jhung> ^darn auto correct.
+2014-11-12T16:27:12 <Justin_o> anastasiac: i left you a comment on the FLUID-5554 pull request
+2014-11-12T16:27:26 <anastasiac> thanks, Justin_o
+2014-11-12T16:28:00 * danaayotte has quit
+2014-11-12T16:33:05 * jhernandez joined the channel
+2014-11-12T16:33:12 * jhernandez has quit
+2014-11-12T16:38:23 * jhernandez joined the channel
+2014-11-12T16:40:25 * jhernandez has quit
+2014-11-12T16:43:28 * jhernandez joined the channel
+2014-11-12T16:43:34 * danaayotte joined the channel
+2014-11-12T16:48:32 * jhernandez has quit
+2014-11-12T16:49:05 * jhernandez joined the channel
+2014-11-12T16:54:03 * clown joined the channel
+2014-11-12T16:58:34 * Bosmon7 joined the channel
+2014-11-12T16:58:35 * jhernandez has quit
+2014-11-12T16:58:43 <Bosmon7> Hi there Justin_o
+2014-11-12T16:58:45 <Bosmon7> I am here now
+2014-11-12T16:58:48 <Justin_o> Bosmon7: hello
+2014-11-12T16:59:09 <Justin_o> Bosmon7: if you look back in the logs i was pinging you about setTimeout precesion
+2014-11-12T16:59:15 <Justin_o> so i take it that it\'s not very precise
+2014-11-12T16:59:18 <Bosmon7> Justin_o - ok, yes
+2014-11-12T16:59:23 <Bosmon7> You should assume that it is quite bad
+2014-11-12T16:59:29 * jhernandez joined the channel
+2014-11-12T16:59:30 <Justin_o> I am using to simulate delays and durations
+2014-11-12T16:59:36 <Bosmon7> I\'d say that a tolerance of about 100ms should be reasonable for your tests
+2014-11-12T16:59:38 <Justin_o> so my tests are failing because of this
+2014-11-12T16:59:42 <Justin_o> ah okay
+2014-11-12T16:59:45 <Bosmon7> That is, you should accept any time of arrival that is +/- 50ms of the proper time
+2014-11-12T17:00:12 <Justin_o> Bosmon7: should i make the spread between delays a minimum of 50ms and durations too
+2014-11-12T17:00:14 <Bosmon7> There\'s of course still a nonzero chance that they could fail if the machine is heavily loaded or slow
+2014-11-12T17:00:28 <Bosmon7> But this should be enough to make tests which pass "virtually all the time"
+2014-11-12T17:00:37 <Bosmon7> For example my CachingTests.js are run to this kind of precision
+2014-11-12T17:00:41 <Justin_o> Bosmon7: or should i try to implement my own timer using web workers or something similar
+2014-11-12T17:00:48 <Bosmon7> Justin_o - no, you should not : P
+2014-11-12T17:01:05 <Bosmon7> And they fail actually less often than some of our other tests....
+2014-11-12T17:01:10 <Justin_o> i take it that no is referring to the latter :)
+2014-11-12T17:02:11 <Bosmon7> Justin_o - right - not only to say, we still support some platforms where web workers are not available
+2014-11-12T17:02:17 <Justin_o> Bosmon7: okay.. so i should have minimum durations and delays of 100ms
+2014-11-12T17:02:19 <Justin_o> Bosmon7: do we
+2014-11-12T17:02:22 <Bosmon7> Even if this were a reasonable architectual approach
+2014-11-12T17:02:29 <Bosmon7> Justin_o - don\'t we still support IE9?
+2014-11-12T17:02:32 <Justin_o> i think we only support modern browsers now and they all should have at least partial support
+2014-11-12T17:02:38 <Justin_o> Bosmon7: nope
+2014-11-12T17:02:41 <Bosmon7> wow
+2014-11-12T17:02:42 <Bosmon7> ok
+2014-11-12T17:02:52 <Bosmon7> how futuristic : P
+2014-11-12T17:02:53 <Justin_o> latest IE, Chrome, Safari, Firefox
+2014-11-12T17:02:55 <Justin_o> :)
+2014-11-12T17:03:06 <Justin_o> so life building the framework should be a bit easier
+2014-11-12T17:03:10 <Justin_o> and styling things too :)
+2014-11-12T17:03:16 <Bosmon7> Yes
+2014-11-12T17:03:39 <Bosmon7> Justin_o - so yes, your test fixtures should accept any event that occurs +/- 50ms of the expected time as being in range
+2014-11-12T17:04:08 <Justin_o> Bosmon7: that\'s a pretty big window if i want to test that queues are working properly\'
+2014-11-12T17:04:14 <Justin_o> the tests are going to take a long time to run
+2014-11-12T17:04:17 <Bosmon7> Given I believe the real minimum precision of setTimeout is about 13ms, that should give us some margin for saftey
+2014-11-12T17:04:22 <Bosmon7> Justin_o - yes, they will end up being a bit slow
+2014-11-12T17:04:46 <Bosmon7> But still, CachingTests.js aren\'t even our slowest... or even our least reliable tests : P
+2014-11-12T17:04:58 <Justin_o> Bosmon7: :)
+2014-11-12T17:05:13 <Bosmon7> I think the accolade for the first goes to the ImageReorderer tests
+2014-11-12T17:05:14 <Justin_o> Bosmon7: i\'m going to have to economize on the number of items i queue
+2014-11-12T17:05:29 <Bosmon7> And for the latter, to anything run with the IoC Testing Framework
+2014-11-12T17:05:33 <Justin_o> Bosmon7: yah.. that\'s super slow.. but pretty good on the new browsers... not like when we were running it on IE 6
+2014-11-12T17:05:48 <Bosmon7> Justin_o - yes, I think a set of 3 requests per fixture should be adequate
+'
+

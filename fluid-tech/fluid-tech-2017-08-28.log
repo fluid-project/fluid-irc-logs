@@ -1,0 +1,123 @@
+b'2017-08-28T07:03:15 * javjarfer_ joined the channel
+2017-08-28T07:24:26 * javjarfer joined the channel
+2017-08-28T07:38:39 * the-t-in-rtf joined the channel
+2017-08-28T07:52:43 * javjarfer has quit
+2017-08-28T08:09:34 * stegru joined the channel
+2017-08-28T08:44:27 * javjarfer_ has quit
+2017-08-28T09:22:24 * javjarfer joined the channel
+2017-08-28T09:22:26 * javjarfer_ joined the channel
+2017-08-28T09:22:40 * javjarfer_ has quit
+2017-08-28T11:06:52 * gtirloni joined the channel
+2017-08-28T12:25:23 * alanharnum joined the channel
+2017-08-28T12:27:48 * cindyli joined the channel
+2017-08-28T12:45:28 * javjarfer has quit
+2017-08-28T13:02:29 * grrrero joined the channel
+2017-08-28T13:18:53 * michelled joined the channel
+2017-08-28T13:21:23 * clown joined the channel
+2017-08-28T13:23:14 * javjarfer_ joined the channel
+2017-08-28T13:28:43 * Jess_ joined the channel
+2017-08-28T14:37:01 * javjarfer joined the channel
+2017-08-28T14:38:54 * simonjb joined the channel
+2017-08-28T14:54:42 * mrtyler joined the channel
+2017-08-28T15:19:42 * the-t-in-rtf joined the channel
+2017-08-28T15:48:34 <mrtyler> gtirloni: i sent some emails about your terraform woes
+2017-08-28T15:49:07 <mrtyler> gtirloni: re: ingress controllers: what does the nginx ingress controller provide that is not provided by the "default" (which i guess is ELBs)?
+2017-08-28T15:49:23 <mrtyler> i.e. i can already curl preferences.<cluster>/preferences/carla
+2017-08-28T15:49:27 <mrtyler> without nginx in the mix
+2017-08-28T15:49:55 <mrtyler> this is re: your comments on GPII-2464
+2017-08-28T15:53:50 <gtirloni> mrtyler: thanks, i\'ll reply with the details
+2017-08-28T15:54:44 <gtirloni> the full range of Ingress features are only available through a L7 load balancer, that would be ALB or nginx
+2017-08-28T15:55:23 <gtirloni> the way we\'re deploying the preferences services is through a LoadBalancer service type, which translates to the creation of a ELB (L3/L4 proxy) in AWS
+2017-08-28T15:56:54 <mrtyler> what Ingress features do we need that require L7 load balancing?
+2017-08-28T16:06:36 * cindyli joined the channel
+2017-08-28T16:07:12 <gtirloni> mrtyler: TLS mainly. it\'s also useful to have a single L7 load balancer and various services behind it (so we don\'t allocate one Elastic IP per backend service)
+2017-08-28T16:09:16 <mrtyler> it looks like ELBs can handle TLS? http://docs.aws.amazon.com/elasticloadbalancing/latest/classic/elb-https-load-balancers.html
+2017-08-28T16:09:24 <mrtyler> but i haven\'t read closely and could easily be misunderstanding
+2017-08-28T16:10:16 <mrtyler> i would also be surprised if ELBs can\'t handle virtualhost-style routing on a single ip, but again i haven\'t read closely and may be missing stuff
+2017-08-28T16:10:27 <mrtyler> i guess i just feel like ELBs are the simplest thing that can possibly work
+2017-08-28T16:10:30 <gtirloni> that\'s great, I don\'t know if there\'s an ELB Ingress controller but I\'ll try to find it. Just specifying type=LoadBalancer is too limited though (in a service definition).. that\'s as much as we cay say about the internet-facing resources... it\'ll be driven by defaults only, no access to specifying routes, etc
+2017-08-28T16:10:32 <mrtyler> so i\'d like to start there
+2017-08-28T16:10:51 <mrtyler> obv if they\'re insufficient we\'ll move to something else (like nginx)
+2017-08-28T16:11:18 <gtirloni> ideally, the ALB ingress controller would be the most "native" solution on AWS.. but I\'ve had some issues (described in the issue I opened)
+2017-08-28T16:11:44 <mrtyler> i guess i still don\'t understand what is missing (re: "no access to specifying routes, etc.")
+2017-08-28T16:12:01 <mrtyler> do GCE and Azure have ALBs? they didn\'t last i looked but maybe they do now
+2017-08-28T16:12:27 <mrtyler> if they don\'t, it might be best to avoid ALBs, altho maybe GKE/ACS have different solutions for the L7 load balancing problem
+2017-08-28T16:14:23 <gtirloni> GCE has, the Ingress support in k8s integrates with what they call "HTTP Load Balancer"
+2017-08-28T16:14:56 <mrtyler> that sounds like an ALB
+2017-08-28T16:17:01 <ussjoin> mrtyler: ELBs can handle TLS, that\'s correct; however, you have to push your TLS keys to the ELB (which makes sense).
+2017-08-28T16:17:31 <ussjoin> Also, for HIPAA compliance, the ELBs also need to be connected to the backend(s) via TLS.
+2017-08-28T16:17:32 <mrtyler> ussjoin: right. we\'ll have to push our tls keys to any of these solutions afaik
+2017-08-28T16:17:55 <ussjoin> Well, right, but keys inside infra are somewhat different than keys outside your own infra.
+2017-08-28T16:18:43 <ussjoin> (E.g., there\'s no way to make ELB "understand" that it needs to go fetch a TLS key from, say, Vault. You can have a third process that does that fetch and refreshes the cert periodically, though, which may well be sufficient.)
+2017-08-28T16:19:04 <mrtyler> re: hipaa: 1. even if that traffic is on a dedicated VPC?
+2017-08-28T16:19:10 <mrtyler> probably
+2017-08-28T16:19:32 <mrtyler> 2. we\'re not necessarily worried about HIPAA right now, before we have PII to protect
+2017-08-28T16:19:52 <ussjoin> mrtyler: Yes, even if the traffic is on a dedicated VPC.
+2017-08-28T16:19:56 <mrtyler> obviously it is a medium-term requirement, but for now we may be focusing on delivery over satisfying all requirements
+2017-08-28T16:20:26 <ussjoin> Well, the issue with that is that if we adopt that approach, moving to BAAed AWS requirements will likely be a... significant undertaking.
+2017-08-28T16:20:39 <mrtyler> idk what BAA is
+2017-08-28T16:21:01 <mrtyler> business associate agreement?
+2017-08-28T16:21:11 <ussjoin> And given the alphabet soup of requirements we\'ve committed to in the proposal (my reading is NIST 800-37, NIST 800-53r4, FedRAMP Medium Impact, HIPAA, HITECH, FERPA (?)), that\'s a process we need to begin.
+2017-08-28T16:21:36 <mrtyler> i do not necessarily agree re: https between backend components specifically
+2017-08-28T16:21:51 <ussjoin> Yes---a BAA is the contract by which two things (either a HIPAA covered entity or a HIPAA business associate) agree that they can share HIPAA-covered data.
+2017-08-28T16:22:01 <mrtyler> i think it is more important to deliver something that works now which can be developed toward further requirements later
+2017-08-28T16:22:08 <ussjoin> I don\'t understand---you don\'t agree with HTTPS? Can you expand on that?
+2017-08-28T16:22:46 <mrtyler> i\'m obvjecting to https between backend components, specifically, if it adds significant complexity right now
+2017-08-28T16:23:21 <mrtyler> obvject: to object about something that is obv :p
+2017-08-28T16:23:42 <ussjoin> Ah. Unfortunately that\'s basic level stuff for AWS BAA (as in, AWS won\'t honor a BAA that involves using its ELBs for HTTPS termination *without* HTTPS to the backend).
+2017-08-28T16:24:11 <ussjoin> Also, TLS for data in transit protection is pretty much "you must be this high to ride" for all the standards I mentioned above (FERPA being the odd one out there).
+2017-08-28T16:24:12 <mrtyler> sure, but we don\'t need a BAA yet is what i\'m saying
+2017-08-28T16:24:30 <mrtyler> i\'d like for us to crawl before we try to run
+2017-08-28T16:24:48 <ussjoin> Right, I\'m aware of that approach. The issue is that we\'ve committed to... a lot of security work.
+2017-08-28T16:25:07 <mrtyler> stated another way: we\'re pretty unlikely to hit our october deadline with a fully HIPAA-compliant system
+2017-08-28T16:25:11 <ussjoin> So we\'re going to need to assemble this airplane while attempting to make it take off.
+2017-08-28T16:25:27 <ussjoin> October 2017? Agreed.
+2017-08-28T16:25:31 <mrtyler> yes
+2017-08-28T16:25:52 <mrtyler> anyway, these questions are above my pay grade. the product owner (colin) will need to help us prioritize
+2017-08-28T16:25:58 <ussjoin> However, putting in systems now that we need to tear apart and redo fully later seems like a duplication of effort that is avoidable. TLS is pretty straightforward to add to links.
+2017-08-28T16:26:19 <mrtyler> sounds like you\'re volunteering to work on that then :)
+2017-08-28T16:26:35 <ussjoin> (And issues like cert management we can handle in a variety of ways; indeed, if we use Vault for Kubernetes secrets management, we can ask Vault to become an internal CA and use that.)
+2017-08-28T16:26:55 <mrtyler> i think we will use vault in the future
+2017-08-28T16:27:11 <mrtyler> we haven\'t discussed it much but it seems like the most obvious player in the cred management space
+2017-08-28T16:27:38 <ussjoin> *nods* It seems to be the best one---even if you aren\'t using any other Hashi systems (which, of course, we are, as Terraform is one).
+2017-08-28T16:27:47 <mrtyler> we also use vagrant a lot
+2017-08-28T16:27:56 <ussjoin> Kubernetes Secrets doesn\'t actually encrypt anything, for instance (horrifyingly).
+2017-08-28T16:28:24 <ussjoin> https://medium.com/on-docker/secrets-and-lie-abilities-the-state-of-modern-secret-management-2017-c82ec9136a3d -- fun article from a few months ago.
+2017-08-28T16:28:27 <mrtyler> gross. what does it use for its backend?
+2017-08-28T16:28:51 <mrtyler> s3 supports encryption-at-rest for example (this is how kops handles its secrets)
+2017-08-28T16:29:01 <mrtyler> (and terraform)
+2017-08-28T16:29:06 <ussjoin> ...AFAICT it uses faith-based security? (Take a look at the article, it\'s pretty devastating.)
+2017-08-28T16:30:32 <ussjoin> Anyway, though, I\'m happy to assist with spinning up the Vault system, and to be one of the Shamir keyholders.
+2017-08-28T16:31:41 <mrtyler> neat, it stores it plaintext in etcd
+2017-08-28T16:32:59 <ussjoin> And to be clear, Vault is useful because it\'s all REST anyway---so you can use it from *anything* (there are language bindings in 20-odd languages, but you don\'t need to use them if you\'re willing to do a couple of quick things in setting headers), and you\'re not limited to requests from Kubernetes containers (for instance, I\'ve used it when setting up CloudFormation calls). But yeah... K-secret is... scary.
+2017-08-28T16:33:23 <mrtyler> yes, vault seems useful for a variety of things
+2017-08-28T16:33:44 <mrtyler> including some stuff we currently manage through the equivalent of sneakernet
+2017-08-28T16:34:24 <ussjoin> Heh. And, of course, Tanenbaum\'s Law abides. (Have you seen AWS Snowmobile? https://aws.amazon.com/snowmobile/ )
+2017-08-28T16:36:14 <ussjoin> But to pop the stack a bit: agreed fully that trying to spin up every compliance obligation in the next 33 days is unworkable. However, it would be my suggestion that as we spin stuff up, doing it in the way we\'re going to need to support later (or at least as closely tracking that goal as possible) will enable us to have minimum duplication of effort.
+2017-08-28T16:37:19 <mrtyler> i did see 18-wheelers filled with 250PB of storage, yes
+2017-08-28T16:37:35 <mrtyler> i agree with the stated strategy
+2017-08-28T16:37:50 <mrtyler> i happen to disagree about how "easy" it is to get end-to-end https, and about how "hard" it will be to add that later
+2017-08-28T16:38:13 <mrtyler> but as i said, above my pay grade
+2017-08-28T16:39:16 <mrtyler> fun fact: at my last job, amazon sent us a medallion that said "1 PB" to commemorate us storing 100[sic] TB of data in s3
+2017-08-28T16:39:29 <mrtyler> i\'m pretty sure the former director of operations stole it when he left :D
+2017-08-28T16:39:47 <ussjoin> That would definitely rate above post-its as "office supply most worth stealing."
+2017-08-28T16:40:03 <mrtyler> indeed
+2017-08-28T17:17:45 * cindyli joined the channel
+2017-08-28T17:54:48 * stegru has quit
+2017-08-28T18:09:16 * stegru joined the channel
+2017-08-28T18:10:36 * cindyli has quit
+2017-08-28T18:23:19 * avtar joined the channel
+2017-08-28T18:26:01 * cindyli joined the channel
+2017-08-28T19:56:59 * Jess_ joined the channel
+2017-08-28T20:06:40 * avtar has quit
+2017-08-28T21:23:21 * mrtyler joined the channel
+2017-08-28T21:32:36 * avtar joined the channel
+2017-08-28T21:42:37 * javjarfer has quit
+2017-08-28T22:14:15 * javjarfer_ has quit
+2017-08-28T22:24:45 * stegru joined the channel
+2017-08-28T23:14:44 * mrtyler has quit
+2017-08-28T23:27:59 * stegru has quit
+2017-08-28T23:31:41 * grrrero has quit
+2017-08-28T23:33:34 * stegru joined the channel
+'
+

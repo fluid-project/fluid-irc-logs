@@ -1,0 +1,222 @@
+b'2015-12-14T20:07:11 <Bosmon> I guess it\'s fine
+2015-12-14T20:08:57 * alanharnum joined the channel
+2015-12-14T20:13:42 <jhung> simonjb: I\'ve updated the Jira related to the external links issue on the docs. https://issues.fluidproject.org/browse/FLUID-5773
+2015-12-14T20:14:03 <jhung> Feel free to add a comment there simonjb
+2015-12-14T20:38:42 <Justin_o> Bosmon: okay, let me know if you change your mind when it\'s ready for review again. hopefully it\'ll be ready shortly
+2015-12-14T20:43:53 * Yan_Hu has quit
+2015-12-14T20:50:26 <Justin_o> Bosmon: does fluid.fail cause a jqUnit failure
+2015-12-14T20:50:49 <Justin_o> Bosmon: now that I\'ve switched, i guess an extra test being run and failing
+2015-12-14T20:51:29 <Bosmon> Justin_o - yes it does
+2015-12-14T20:51:39 <Justin_o> Bosmon: is there a way to prevent that
+2015-12-14T20:51:44 <Bosmon> Justin_o, yes, several
+2015-12-14T20:51:49 <Bosmon> I was running through them with simonjb earlier
+2015-12-14T20:52:00 <Justin_o> Bosmon: oh really
+2015-12-14T20:52:43 <Justin_o> Bosmon: are those in the channel logs somewhere?
+2015-12-14T20:52:45 <Bosmon> For synchronous tests, there is the utility http://docs.fluidproject.org/infusion/development/jqUnit.html#jqunit-expectframeworkdiagnostic-message-toinvoke-errortexts-
+2015-12-14T20:53:25 <Bosmon> And then for async tests using the IoC testing framework, there is this Kettle utility: https://github.com/amb26/kettle/blob/KETTLE-32/lib/test/KettleTestUtils.js#L87
+2015-12-14T20:53:32 <Bosmon> Justin_o sadly it was on a VIDDEYO chatt
+2015-12-14T20:53:57 <Justin_o> Bosmon: that\'s okay, you have docs
+2015-12-14T21:00:30 * colinclark joined the channel
+2015-12-14T21:01:36 <Justin_o> Bosmon: thanks, that worked
+2015-12-14T21:02:53 * danayo joined the channel
+2015-12-14T21:05:17 <Bosmon> Justin_o - awesome
+2015-12-14T21:06:49 <Justin_o> Bosmon: i am getting an issue with the actual app not being able to find gpii.resovlers.env now
+2015-12-14T21:07:02 <Justin_o> which seems odd
+2015-12-14T21:07:09 <Justin_o> i\'m still digging into that though
+2015-12-14T21:09:43 * anvk has quit
+2015-12-14T21:15:17 <Justin_o> Bosmon: so in my environment.json kettle config if i make a reference to {environment}.vars.SOME_NAME it works, but {gpii.resolvers.env}.vars.SOME_NAME doesn\'t
+2015-12-14T21:15:57 <Justin_o> i get the error that "could not match context with name gpii.resolvers.env from component"
+2015-12-14T21:17:25 <Bosmon> Justin_o - A typo, I imagine
+2015-12-14T21:18:06 <Justin_o> Bosmon: i\'m using "{gpii.resolvers.env}.vars.FIRST_DISCOVERY_SERVER_TCP_PORT",
+2015-12-14T21:18:46 <Justin_o> and in the gpii.configurator grade the type is set to gpii.resolvers.env
+2015-12-14T21:19:14 <Justin_o> Bosmon:  this is the definition of the gpii.resolvers.env grade
+2015-12-14T21:19:24 <Justin_o> https://www.irccloud.com/pastebin/wJz8TUGV/
+2015-12-14T21:19:32 <Justin_o> did i set the single root correctly?
+2015-12-14T21:20:01 <Justin_o> Bosmon: ^
+2015-12-14T21:27:54 <Justin_o> Bosmon: based on http://docs.fluidproject.org/infusion/development/Contexts.html#global-components-fluid-resolveroot-and-fluid-resolverootsingle-
+2015-12-14T21:28:07 <Justin_o> it seems that it is set up correctly
+2015-12-14T21:28:12 <Justin_o> so i\'m not sure what the problem is
+2015-12-14T21:28:32 <Justin_o> Bosmon: if you have any thoughts, please let me know and I\'ll try to fix it up tomorrow
+2015-12-14T21:30:59 <Justin_o> Bosmon: temporarily switching back to {environment} so that it will work
+2015-12-14T21:36:43 * cindyli has quit
+2015-12-14T21:40:10 * michelled has quit
+2015-12-14T21:40:48 * simonjb has quit
+2015-12-14T21:41:52 * colinclark joined the channel
+2015-12-14T21:51:44 <jhung> danayo: sorry I had to run. I\'d like to stay in the loop regarding the cards.
+2015-12-14T21:56:20 * bens___ joined the channel
+2015-12-14T21:59:33 * bjderzin has quit
+2015-12-14T22:05:12 * gtirloni has quit
+2015-12-14T22:06:49 * alanharnum has quit
+2015-12-14T22:07:05 * sepidehshahi has left the channel
+2015-12-14T22:10:41 * anastasiac has quit
+2015-12-14T22:16:57 <Bosmon> Justin_o - ah yes, this will be a ginger resolution issue
+2015-12-14T22:17:19 <Bosmon> But in fact you\'re sort of doing things twice - if you make the resolvers a subcomponent, you don\'t need to then also make it resolveRootSingle
+2015-12-14T22:17:23 * gtirloni joined the channel
+2015-12-14T22:17:39 <Bosmon> but since you *are* making it resolveRootSingle, you may as well just construct it in a freely floating way, rather than as part of your own tree
+2015-12-14T22:17:44 <Bosmon> And that will then make the ginger issue go away too
+2015-12-14T22:20:08 <Bosmon> We tend to use the API http://docs.fluidproject.org/infusion/development/IoCAPI.html#fluid-construct-path-options-instantiator- for this, so that the path you supply there makes it easier to find again
+2015-12-14T22:21:22 * jessm has quit
+2015-12-14T22:39:35 * gtirloni has quit
+2015-12-14T22:40:54 * colinclark has quit
+2015-12-14T22:55:28 * yzen is now known as yzen_
+2015-12-14T22:56:32 * colinclark joined the channel
+2015-12-14T22:58:52 * colinclark has quit
+2015-12-14T23:12:14 * danayo has quit
+2015-12-14T23:13:10 * amatas has quit
+2015-12-14T23:18:50 * michelled joined the channel
+2015-12-14T23:18:50 * michelled has quit
+2015-12-14T23:37:30 * Justin_o has quit
+'
+
+b"2015-12-14T04:28:30 * yzen joined the channel
+2015-12-14T04:31:30 * yzen is now known as yzen_
+2015-12-14T06:56:07 * amatas joined the channel
+2015-12-14T07:33:23 * yzen joined the channel
+2015-12-14T07:37:58 * yzen has quit
+2015-12-14T08:14:37 * the-t-in-rtf joined the channel
+2015-12-14T12:30:20 * the-t-in-rtf has quit
+2015-12-14T12:57:20 * jhung joined the channel
+2015-12-14T12:58:57 * the-t-in-rtf joined the channel
+2015-12-14T13:02:35 * jhernandez has quit
+2015-12-14T13:26:34 * simonjb joined the channel
+2015-12-14T13:34:26 * Justin_o joined the channel
+2015-12-14T13:38:50 * jhernandez joined the channel
+2015-12-14T13:39:54 <simonjb> Good afternoon Bosmon, I was wondering if you'd have some time to chat about Kettle error handling?
+2015-12-14T13:46:47 * gtirloni joined the channel
+2015-12-14T13:46:51 * gtirloni joined the channel
+2015-12-14T13:53:30 * jessm joined the channel
+2015-12-14T13:59:16 * bens_ joined the channel
+2015-12-14T14:06:15 * cindyli joined the channel
+2015-12-14T14:08:18 * anastasiac joined the channel
+2015-12-14T14:08:44 * sepidehshahi joined the channel
+2015-12-14T14:23:20 * danayo joined the channel
+2015-12-14T14:23:39 * colinclark joined the channel
+2015-12-14T14:30:34 * yzen joined the channel
+2015-12-14T14:33:14 * alanharnum joined the channel
+2015-12-14T14:37:18 * the-t-in-rtf has quit
+2015-12-14T14:40:31 * jhung is now known as jhung_away
+2015-12-14T14:40:57 * bjderzin joined the channel
+2015-12-14T14:41:41 <Bosmon> Hi there simonjb
+2015-12-14T14:41:44 <Bosmon> Sure
+2015-12-14T14:43:36 <simonjb> Bosmon: awesome
+2015-12-14T14:43:48 <simonjb> Bosmon: could we do vidyo?
+2015-12-14T14:43:56 * anastasiac has quit
+2015-12-14T14:43:59 <Bosmon> simonjb - sure
+2015-12-14T14:44:31 <simonjb> Bosmon: great, call me when it's good
+2015-12-14T14:44:57 <Justin_o> Bosmon: when you get  a chance, could you please have another look over the FLOE-430 pull request https://github.com/GPII/first-discovery-server/pull/4
+2015-12-14T14:46:39 <Bosmon> simonjb - sure, I just need a couple of minutes
+2015-12-14T14:46:41 <Bosmon> Justin_o - sure
+2015-12-14T14:47:01 <Justin_o> Bosmon: thanks
+2015-12-14T14:49:47 * anastasiac joined the channel
+2015-12-14T14:54:31 * anvk joined the channel
+2015-12-14T14:56:53 * the-t-in-rtf joined the channel
+2015-12-14T14:56:57 * the-t-in-rtf has quit
+2015-12-14T15:01:24 <anastasiac> cindyli and Justin_o: would you have a few minutes to chat about FD tool and GPII?
+2015-12-14T15:01:35 <Justin_o> anastasiac: sure
+2015-12-14T15:01:42 <anastasiac> at my desk?
+2015-12-14T15:04:55 <cindyli> sure, anastasiac and Justin_o
+2015-12-14T15:14:00 * michelled joined the channel
+2015-12-14T15:14:31 * lliskovoi joined the channel
+2015-12-14T15:35:43 * jhung_away is now known as jhung
+2015-12-14T15:54:38 <Justin_o> anastasiac: http://docs.fluidproject.org/infusion/development/tutorial-prefsFramework/CreatingAPrefsEditor.html
+2015-12-14T15:54:46 <anastasiac> Yay!!!! woohoo!
+2015-12-14T15:54:50 <anastasiac> thanks, Justin_o!
+2015-12-14T15:55:51 <Justin_o> anastasiac: thank you :)
+2015-12-14T15:57:23 * clown joined the channel
+2015-12-14T16:00:03 * alanharnum has quit
+2015-12-14T16:00:56 * bens_ saves that tutorial for later
+2015-12-14T16:01:10 * anastasiac_ joined the channel
+2015-12-14T16:01:50 * michelled1 joined the channel
+2015-12-14T16:02:40 * michelled has quit
+2015-12-14T16:03:35 * anastasiac has quit
+2015-12-14T16:03:35 * anastasiac_ is now known as anastasiac
+2015-12-14T16:03:36 <michelled1> danayo: fluid planning
+2015-12-14T16:03:48 <bens_> colinclark, you had mentioned there are some scripts to help with writing to tokens. are those online somewhere I can see them?
+2015-12-14T16:03:56 <michelled1> jhung: fluid planning
+2015-12-14T16:04:17 <jhung> thanks. I'm there.
+2015-12-14T16:11:08 * sepidehshahi has quit
+2015-12-14T16:25:41 * cindyli has quit
+2015-12-14T16:25:49 * cindyli joined the channel
+2015-12-14T16:25:52 * cindyli has quit
+2015-12-14T16:35:29 * colinclark_ joined the channel
+2015-12-14T16:36:55 * colinclark_ is now known as colinclark
+2015-12-14T16:45:43 * anastasiac has quit
+2015-12-14T16:46:26 * cindyli joined the channel
+2015-12-14T16:46:47 * sepidehshahi joined the channel
+2015-12-14T16:49:40 * michelled joined the channel
+2015-12-14T16:52:46 * anastasiac joined the channel
+2015-12-14T16:54:15 * alanharnum joined the channel
+2015-12-14T16:56:50 * jessm has quit
+2015-12-14T16:59:01 <jhung> simonjb: I'm free to chat now if you're ready.
+2015-12-14T16:59:13 <simonjb> jhung: now is good for me
+2015-12-14T16:59:17 <jhung> k
+2015-12-14T16:59:21 <simonjb> jhung: call me?
+2015-12-14T17:00:31 * bens___ joined the channel
+2015-12-14T17:03:16 <michelled> danayo: are you coming to talk about the learning dashboard?
+2015-12-14T17:32:04 * anastasiac has quit
+2015-12-14T17:32:52 * anastasiac joined the channel
+2015-12-14T17:47:54 * clown has quit
+2015-12-14T17:58:08 * clown joined the channel
+2015-12-14T18:01:21 * danayo joined the channel
+2015-12-14T18:04:10 * anastasiac_ joined the channel
+2015-12-14T18:06:03 <Justin_o> fluid-everyone: design crit
+2015-12-14T18:07:16 * anastasiac has quit
+2015-12-14T18:07:16 * anastasiac_ is now known as anastasiac
+2015-12-14T18:07:51 * alanharnum has quit
+2015-12-14T18:08:10 * michelled1 joined the channel
+2015-12-14T18:09:47 <Justin_o> simonjb: could you invite the collab room again
+2015-12-14T18:22:50 * yzen has quit
+2015-12-14T18:25:00 * cindyli joined the channel
+2015-12-14T18:25:10 * cindyli has quit
+2015-12-14T18:33:53 <colinclark> bens_: Hey, sorry I missed your ping earlier
+2015-12-14T18:34:10 <colinclark> sgithens is the person to talk to about scripts for provisioning NFC tokens
+2015-12-14T18:34:26 <colinclark> I think he did some work on it--just sketch-level work--a while ago
+2015-12-14T18:35:32 * yzen joined the channel
+2015-12-14T18:35:32 * yzen is now known as yzen_
+2015-12-14T18:43:18 <jhernandez> bens___: so far, this is what we have ATM https://github.com/GPII/linux-rfid-user-listener
+2015-12-14T18:44:07 <jhernandez> you can use https://github.com/GPII/linux-rfid-user-listener/blob/master/pcscutil.py in order to create gpii tags
+2015-12-14T18:45:11 <jhernandez> BUT, they won't work across different platforms
+2015-12-14T18:46:00 <jhernandez> what we did in Cloud4all was using a tool such as GoToTags or Android's tagwriter
+2015-12-14T18:58:52 * yzen_ is now known as yzen
+2015-12-14T19:00:34 <colinclark> so jhernandez, if you were implementing a component for writing GPII key tokens to NFC
+2015-12-14T19:00:41 <bens___> jhernandez, do you mean the pcscutil.py doesn't work across platforms or that the tags it creates don't work across platforms?
+2015-12-14T19:01:03 <colinclark> would you write a Node.js library using one of the nfc modules?
+2015-12-14T19:12:08 <jhernandez> bens___: I'd say both
+2015-12-14T19:13:29 <jhernandez> I mean, we haven't tested it on Windows
+2015-12-14T19:14:14 <jhernandez> and, that tag writer uses plain text tokens (not NDEF)
+2015-12-14T19:16:33 <jhernandez> colinclark: why not? the only thing we must be considering is whether our module will run cross-platform
+2015-12-14T19:16:43 <colinclark> yup, I think it makes sense
+2015-12-14T19:16:52 <colinclark> I just wanted to confirm that this was your impression, too
+2015-12-14T19:18:51 <jhernandez> and of course, how compatible is with different readers and tags
+2015-12-14T19:19:34 <jhernandez> and yeah, that'd be great
+2015-12-14T19:25:47 * cindyli joined the channel
+2015-12-14T19:26:42 <bens___> are there any common readers and tags in use for the GPII today?
+2015-12-14T19:30:14 * cindyli has quit
+2015-12-14T19:34:23 * michelled1 has quit
+2015-12-14T19:34:43 <jhung> For those of you who are interested, here's a link to the current PhET John Travoltage design document. https://wiki.fluidproject.org/display/fluid/PhET+John+Travoltage+Simulation+Design
+2015-12-14T19:36:48 * jessm joined the channel
+2015-12-14T19:37:53 * cindyli joined the channel
+2015-12-14T19:43:45 * clown joined the channel
+2015-12-14T19:46:34 * michelled joined the channel
+2015-12-14T19:58:20 <colinclark> bens_: Most demos are done with an ACR122U reader
+2015-12-14T19:58:34 <colinclark> sgithens has worked with the built-in NFC readers on several all-in-one PC designs
+2015-12-14T20:02:02 * danayo has quit
+2015-12-14T20:02:58 <Justin_o> Bosmon: looking at https://github.com/GPII/first-discovery-server/pull/4#discussion_r47535014
+2015-12-14T20:03:08 * Yan_Hu joined the channel
+2015-12-14T20:03:10 <Justin_o> does fluid fail cause the node app to exit with the error?
+2015-12-14T20:04:02 <Bosmon> Justin_o - if you don't do anything to customise the behaviour or catch the exception
+2015-12-14T20:04:12 <Justin_o> Bosmon: perfect, thanks
+2015-12-14T20:04:25 <Justin_o> Bosmon: and for this one https://github.com/GPII/first-discovery-server/pull/4#discussion_r47535410
+2015-12-14T20:04:41 * bens___ has quit
+2015-12-14T20:04:50 <Justin_o> would i call it like {gpii.resolvers.env}.env.someName or {env}.env.someName
+2015-12-14T20:05:27 <Justin_o> and in that case maybe we should change the second env to vars
+2015-12-14T20:05:34 <Justin_o> i.e. {env}.vars.someName
+2015-12-14T20:05:37 <Justin_o> what do you think?
+2015-12-14T20:05:38 <Bosmon> Justin_o - the former, and yes, I agree
+2015-12-14T20:05:38 <Justin_o> Bosmon: ^
+2015-12-14T20:05:52 <Justin_o> Bosmon: cool thanks
+2015-12-14T20:05:52 * colinclark has quit
+2015-12-14T20:05:55 <Bosmon> Well, I agree somewhat : P
+2015-12-14T20:06:01 <Bosmon> I guess this extra path segment is a bit annoying
+"
+

@@ -1,0 +1,331 @@
+b'2017-02-07T18:45:36 <gloob> and with comments
+2017-02-07T18:45:45 <gloob> in fact, now I consider it undocumented
+2017-02-07T18:45:52 <Bosmon> It\'s unclear what "Invoke-Environment" really does
+2017-02-07T18:47:31 <gloob> there\'s a problem with the way external scripts (as msbuild ones) set environment vars, that\'s the way to execute them successfully
+2017-02-07T18:49:28 <gloob> we want to support differents msbuild sdks, so we need to call to the environment vars setter scripts to support several types of compilations, that\'s the reason we need that
+2017-02-07T18:50:04 <gloob> It\'s a hack because they system should work flawless but executing an script from an script setting things in PS1 doesnt works always as expected
+2017-02-07T18:54:58 <Bosmon> gloob - ok, that\'s pretty interesting
+2017-02-07T18:55:15 <Bosmon> Sounds like it calls for a substantial comments block :)
+2017-02-07T18:56:05 * stegru joined the channel
+2017-02-07T18:59:59 * avtar joined the channel
+2017-02-07T19:00:48 * alanharnum joined the channel
+2017-02-07T19:02:56 <gloob> Bosmon: sure, I\'ll in next iteration
+2017-02-07T19:03:24 * clown joined the channel
+2017-02-07T19:21:04 * michelled joined the channel
+2017-02-07T19:26:20 * alanharnum joined the channel
+2017-02-07T19:30:46 * stegru has quit
+2017-02-07T19:31:08 * stegru joined the channel
+2017-02-07T19:44:36 * clown joined the channel
+2017-02-07T19:55:32 * alanharnum joined the channel
+2017-02-07T20:25:31 * avtar joined the channel
+2017-02-07T20:31:25 * javjarfer has quit
+2017-02-07T21:32:37 * clown joined the channel
+2017-02-07T22:11:30 * gtirloni joined the channel
+2017-02-07T22:12:30 <gtirloni> coreos is officially ending \'fleet\' - https://coreos.com/blog/migrating-from-fleet-to-kubernetes.html
+2017-02-07T22:39:34 * colinclark joined the channel
+'
+
+b'2017-02-07T18:02:54 <gtirloni> for 4) i\'d suggest gloob should move his c:\\windows\\system32 to c:\\windows\\i-like-powershell
+2017-02-07T18:03:08 <gtirloni> and reboot
+2017-02-07T18:03:37 <mrtyler> +1
+2017-02-07T18:03:50 <mrtyler> gtirloni: lol joke\'s on you. windows doesn\'t let you move arbitrary files on the filesystem!
+2017-02-07T18:04:02 <mrtyler> what are you, a sorceror?
+2017-02-07T18:04:24 <gtirloni> boot a linux CD, mount /dev/sdaX and have fun :) that\'s what the real gloob would do :)
+2017-02-07T18:05:04 <gtirloni> amatas: is the provisioning dir required in the new plugin?
+2017-02-07T18:05:11 <gtirloni> once we can work off the .qi.yml file
+2017-02-07T18:06:00 <mrtyler> gloob: seems like qi\'s use of provisioning is at least consistent with vagrant\'s use of that term: https://www.vagrantup.com/docs/getting-started/provisioning.html
+2017-02-07T18:06:09 <mrtyler> so... maybe just leave the names alone
+2017-02-07T18:06:26 <amatas> gtirloni, no, the provisioning directory is not required by the vagrant ci plugin. All it needs is in the .qi.yml
+2017-02-07T18:06:45 <mrtyler> if qi provisioning == "create VMs from scratch", which i think is correct, then my use of provisioning with terraform (another hashicorp tool that uses that word the same way, afaict) is consistent with this use
+2017-02-07T18:06:48 <amatas> but, maybe the tests need some previous work in the vms
+2017-02-07T18:08:48 * alanharn_ joined the channel
+2017-02-07T18:08:49 * clown joined the channel
+2017-02-07T18:08:55 <gtirloni> gloob: i\'m on a meeting but i\'ll throw this here: we talked about what would be the responsibility of the infrastructure folks and what should be worked on by developers
+2017-02-07T18:09:13 <gtirloni> for CI, we just need to run some commands and collects some exit codes (and report output)
+2017-02-07T18:09:21 * colinclark_ joined the channel
+2017-02-07T18:09:35 <gtirloni> it\'s part of that discussion if we should do stuff in PowerShell (ops people more comfortable with it) or JS (devs more comfortable with it)
+2017-02-07T18:10:00 <gloob> it\'s an interesting question
+2017-02-07T18:10:06 <gtirloni> so when we were discussing what to use, I think someone had this question.. where does the responsibility ends
+2017-02-07T18:10:08 <gloob> mapped with what I was talking before
+2017-02-07T18:10:10 <gloob> anyway
+2017-02-07T18:10:14 <gtirloni> cool
+2017-02-07T18:10:31 <gloob> I didn\'t find any full build system in pure npm/js yet
+2017-02-07T18:10:38 * colinclark has quit
+2017-02-07T18:10:43 <gloob> OR that I\'m fully aware
+2017-02-07T18:11:08 <gloob> that was something I was to discuss with Bosmon I don\'t understand exactly his view of npm
+2017-02-07T18:11:12 <gloob> npm as build system
+2017-02-07T18:11:27 <gloob> as scripts blocks? as specialized multiplatform modules with gyp?
+2017-02-07T18:11:34 <gtirloni> (it was not the ops vs dev discussion, it was more like "should devs bother with very low-level details of the QI infrastructure" and "should ops have to debug stuff deep into the GPII because some code broke (and the CI infra is initially the focus, maybe it\'s broken and not the code?")
+2017-02-07T18:11:35 <Bosmon> as scripts blocks
+2017-02-07T18:11:41 * gtirloni \'s memory fuzzy about this
+2017-02-07T18:12:00 <gloob> Bosmon: I think that adds more complexity at the end, but happy to listen
+2017-02-07T18:12:19 <Bosmon> Well, I guess the discussion was only ever half-finished
+2017-02-07T18:12:43 <gloob> Bosmon: sure, that\'s the reason I\'m bringin it up to the plate :)
+2017-02-07T18:12:48 <gloob> I don;t know if that is proper english
+2017-02-07T18:12:51 <Bosmon> But in practice we\'re suffering some problems, I think, with the "GPII app" with respect to the non-standard build process for gpii-windows
+2017-02-07T18:12:52 <gloob> but sounds good to me :D
+2017-02-07T18:13:03 <Bosmon> What we would really like is that our build process is always simply "npm install"
+2017-02-07T18:13:15 <Bosmon> Since we know that someone else has dealt with the problem of how to make this recurse properly
+2017-02-07T18:13:16 <gloob> and mostly it is
+2017-02-07T18:13:29 <Bosmon> Well, "mostly it is", but the details contain many devils :)
+2017-02-07T18:13:41 <gloob> Bosmon: absolutely right
+2017-02-07T18:13:51 * michelled joined the channel
+2017-02-07T18:13:54 <Bosmon> As we have discovered, an "npm install" which relies on, say, a "postinstall" which invokes a grunt task is unstable and unusable
+2017-02-07T18:13:55 <gloob> Bosmon: specially with our fragmented model
+2017-02-07T18:14:08 <Bosmon> alanharn_, colinclark, the-t-in-rtf have experience with this
+2017-02-07T18:14:32 <Bosmon> So this is the general source of our taste towards moving towards pure JS scripts invoked as npm scripts to organise builds
+2017-02-07T18:14:53 <amatas> which of these steps should be performed by the "npm install": https://github.com/GPII/windows/blob/master/Vagrantfile#L33-L46 ?
+2017-02-07T18:14:58 <gloob> Bosmon: and me today, I just drop that today, for me is some kind of hack https://github.com/gloob/gpii-app/commit/2cd64a9ee3927c9cd0cfff17de1f9ea814548272 (sorry for the lack of description)
+2017-02-07T18:15:34 <gloob> amatas: build and installer could
+2017-02-07T18:15:40 <amatas> agree
+2017-02-07T18:15:51 <gloob> I think the problem is that we are mixing, bootstrapping and build
+2017-02-07T18:16:03 <Bosmon> Yes, that seems correct to me
+2017-02-07T18:16:15 <gloob> I think, that *maybe* makes sense to implement in the way Bosmon say the build part
+2017-02-07T18:16:44 <gloob> Bosmon: so we agree we are discussing about the building part
+2017-02-07T18:16:54 <Bosmon> Yes
+2017-02-07T18:16:57 <gloob> in fact, I think a good example is electron-packager
+2017-02-07T18:17:01 <gloob> we can use it in two ways
+2017-02-07T18:17:05 <Bosmon> This is just an issue for constructing our own artefacts
+2017-02-07T18:17:10 <gloob> as a external command and as npm script
+2017-02-07T18:17:30 <gloob> s/and/or/
+2017-02-07T18:17:49 <Bosmon> But if we have, say, a thing called "gpii-app" which consumes a thing named "gpii-windows" which in turn consumes a thing named "gpii-universal", this containment should be expressed with respect to npm module dependencies
+2017-02-07T18:18:12 <gloob> but npm is a mess
+2017-02-07T18:18:17 <Bosmon> Although colinclark has made arguments that we should seek to abolish the thing we name "gpii-windows" and for it to become identical to "gpii-app"
+2017-02-07T18:18:24 <Bosmon> gloob - what kind of mess :)
+2017-02-07T18:19:02 <Bosmon> "It\'s the module registry that we have" : P
+2017-02-07T18:19:08 <Bosmon> And I\'ve seen a lot worse :)
+2017-02-07T18:19:21 <gloob> what happens if we reference universal-1.0 from gpii-app and universal-2.0 from gpii-windows and start to make some cool things relying on the dependency?
+2017-02-07T18:19:28 <gloob> Bosmon: maven you mean?
+2017-02-07T18:19:32 <Bosmon> Yes, that one
+2017-02-07T18:19:41 <gloob> yeah
+2017-02-07T18:20:04 <Bosmon> gloob - preventing that situation is a task for the code reviewer :)
+2017-02-07T18:20:12 <gloob> I\'m with colin in the abolishing argument
+2017-02-07T18:20:38 <gloob> Bosmon: but the developer or contributor should understand how things works
+2017-02-07T18:20:49 <gloob> Bosmon: if not the reviewer get busy
+2017-02-07T18:20:53 <Bosmon> gloob - sure
+2017-02-07T18:21:21 <Bosmon> But they face exactly the same issue if gpii-universal consumes express 3.x and gpii-pouchdb consumes express 4.x
+2017-02-07T18:21:33 <Bosmon> So I\'m not quite sure what you are arguing for
+2017-02-07T18:21:37 <Bosmon> npm solves this issue "as well as it does"
+2017-02-07T18:21:39 <gloob> that sounds kettle and gpii-express
+2017-02-07T18:21:40 <gloob> :D
+2017-02-07T18:22:14 <Bosmon> i.e. it has a solution for this problem, which is well-documented and requires the people involved to know what they are doing
+2017-02-07T18:22:25 <gloob> Well, I\'m trying to understand, do you have any project using that strategy for building complex projects?
+2017-02-07T18:22:32 <Bosmon> Are you recommending that we have developers or contributors who don\'t understand how things work? : )
+2017-02-07T18:22:56 <gloob> Bosmon: you know that no
+2017-02-07T18:23:18 <Bosmon> Currently we are a relatively small community and have managed to ensure that we agree globally on the versions of all critical dependencies
+2017-02-07T18:23:29 <Bosmon> And I don\'t see this changing over the lifetime of our current projects
+2017-02-07T18:23:57 <Bosmon> But if there is a reason for there to be a version mismatch, we know what npm/node does in this situation
+2017-02-07T18:26:24 <gloob> Bosmon: that\'s right about the core and internals, but if you want to create a new product you start to overwrite with your own monkey-patched versions the most important package.json, but I admit that, that\'s a problem with projects building, no arguing here
+2017-02-07T18:26:28 <gloob> anyway
+2017-02-07T18:26:37 <gloob> about using scripts blocks for building gpii-app in example
+2017-02-07T18:26:38 <gloob> ok
+2017-02-07T18:26:47 <gloob> we can do that for electron-packager
+2017-02-07T18:26:54 <gloob> but, what about the listeners?
+2017-02-07T18:27:39 <Bosmon> The listeners is a good question, and I think adds to the side of the argument saying that gpii-windows and gpii-app should become the same thing
+2017-02-07T18:27:52 <Bosmon> But we face a lot of things changing at the same time in the route that gets us from here to there
+2017-02-07T18:28:19 <Bosmon> For example, in the end we want our "separate process" architecture for listeners to be replaced by electron processes
+2017-02-07T18:29:01 <Bosmon> Or perhaps cindyli\'s and stegru\'s current conversations about "anonymous named pipes" will yield a magical and universally portable IPC mechanism :)
+2017-02-07T18:29:44 <gloob> although you obtain an universal ipc mechanism you need to talk with the drivers in the case of listener
+2017-02-07T18:30:05 <gloob> it\'s going to be easier and headache-free to talk in their usual language
+2017-02-07T18:30:22 <Bosmon> Yes
+2017-02-07T18:30:41 <Bosmon> I guess this is why perhaps it will indeed make more sense to adopt platform IPC primitives rather than electron/node ones.... although it\'s a great shame
+2017-02-07T18:30:48 <gloob> .net/c++/c/swift/add_here_your_platform_language
+2017-02-07T18:32:20 <Bosmon> I don\'t seem to find any JS users of Windows Anonymous Pipes....
+2017-02-07T18:33:39 <gloob> that\'s full winapi
+2017-02-07T18:33:56 <gloob> I think we used all the existing strategies :D
+2017-02-07T18:34:24 <Bosmon> So, for the listeners we currently have
+2017-02-07T18:34:25 <gloob> so! I think I\'m in the good path of separating current provisioning process in two, bootstrapping and build
+2017-02-07T18:35:08 <Bosmon> yes, sounds good
+2017-02-07T18:35:12 <gloob> we can discuss later how to approach build process I guess
+2017-02-07T18:35:24 <gloob> with what we have
+2017-02-07T18:35:27 <Bosmon> I think in theory everything that is currently written in Build.ps1 could usefully be expressed as a pure .js script
+2017-02-07T18:35:47 <gloob> in fact, is mostly npm install with mixed stuff or checks
+2017-02-07T18:35:49 <gloob> yes
+2017-02-07T18:35:59 <gloob> Js, python, whatever
+2017-02-07T18:36:03 <Bosmon> Or multiple scripts
+2017-02-07T18:36:15 <gloob> I think the strategy could be
+2017-02-07T18:36:28 <Bosmon> Anything that makes it easier for the author(s) of gpii-app to understand how they can work with it
+2017-02-07T18:36:33 <gloob> try to make a scripts what makes sense to be a script, like electron-packager
+2017-02-07T18:36:49 <gloob> but I think scripts block is weak
+2017-02-07T18:37:15 <gloob> you need a layer on top knowing which is the system and which is the correct script name in that case
+2017-02-07T18:37:22 <gloob> that\'s my gut\'s feeling
+2017-02-07T18:37:25 <Bosmon> It\'s weak, but packaging things as self-contained scripts in JS will also make our dependency structure clearer
+2017-02-07T18:37:40 <Bosmon> For example we talked about these "Import" lines before I think
+2017-02-07T18:37:41 <Bosmon> https://github.com/GPII/windows/blob/master/provisioning/Build.ps1#L10
+2017-02-07T18:37:55 <Bosmon> These import all of Provisioning.psm1 etc wholesale, which makes it hard to understand what this build really depends on
+2017-02-07T18:37:57 <gloob> yes, that\'s everything currently
+2017-02-07T18:38:49 <gloob> well, it\'s like a require
+2017-02-07T18:39:00 <gloob> Bosmon: are you banning requires in JS files? :P
+2017-02-07T18:40:10 <Bosmon> Yeah, it\'s like a require, without the corresponding insulation model : P
+2017-02-07T18:40:39 <Bosmon> If "require" had been written by a person who thinks that a sensible reuse model is to dump an unknowable collection of names into a flat global namespace : P
+2017-02-07T18:41:25 <gloob> hehehehe
+2017-02-07T18:42:14 <gloob> anyway, I think that\'s inevitable, but more used in the bootstrapping phase
+2017-02-07T18:42:30 <gloob> than in the build, in fact, it exposes 4 or 5 simple functions
+2017-02-07T18:42:43 <gloob> soon a new one, like CompileTheListeners
+2017-02-07T18:43:13 <Bosmon> Ok
+2017-02-07T18:43:21 <Bosmon> Well, perhaps we can factor Provisioning.psm1 rather better
+2017-02-07T18:43:22 <gloob> I think that\'s something we will need to live with, but I accept that we can add some sugar into the npm or into JS logic
+2017-02-07T18:43:42 <Bosmon> Or maybe it is just the comment that needs improving :)
+2017-02-07T18:43:50 <gloob> oh absolutely
+2017-02-07T18:43:56 <Bosmon> "This script execute all the needed steps to build all the Windows GPII components"
+2017-02-07T18:44:04 * stegru has quit
+2017-02-07T18:44:05 <gloob> I\'m guilty, sir
+2017-02-07T18:44:17 <Bosmon> I guess it doesn\'t really do that
+2017-02-07T18:44:46 <gloob> no, probably it was copied from Build.ps1 that was the first incarnation
+2017-02-07T18:44:49 <gloob> I need toimprove that
+2017-02-07T18:45:22 <gloob> also I\'m improving the Kasper implementation into gpii-app, we are exeecuting more than we need
+2017-02-07T18:45:31 <gloob> I think at the end with the separation all will be clearer
+'
+
+b'2017-02-07T00:07:53 * Jess_ joined the channel
+2017-02-07T01:40:50 * michelled joined the channel
+2017-02-07T03:35:48 * colinclark joined the channel
+2017-02-07T08:50:17 * the-t-in-rtf joined the channel
+2017-02-07T09:08:30 * stegru joined the channel
+2017-02-07T09:39:19 * amatas joined the channel
+2017-02-07T10:18:40 * kasparnet joined the channel
+2017-02-07T11:34:43 * javjarfer joined the channel
+2017-02-07T11:44:26 * gtirloni joined the channel
+2017-02-07T12:41:10 * Justin_o joined the channel
+2017-02-07T13:30:59 * alanharnum joined the channel
+2017-02-07T13:36:19 * kasparnet has quit
+2017-02-07T13:37:01 * Jess_ joined the channel
+2017-02-07T14:19:57 * gtirloni joined the channel
+2017-02-07T14:41:50 * colinclark joined the channel
+2017-02-07T15:04:42 * simonjb joined the channel
+2017-02-07T15:09:11 * gtirloni joined the channel
+2017-02-07T15:10:40 * michelled joined the channel
+2017-02-07T15:24:49 * avtar joined the channel
+2017-02-07T15:28:10 * gtirloni joined the channel
+2017-02-07T15:39:17 * mrtyler joined the channel
+2017-02-07T16:03:40 * clown joined the channel
+2017-02-07T16:25:55 <mrtyler> i have an ansible role / testing question
+2017-02-07T16:26:00 <mrtyler> i\'m writing a new role for influxdb
+2017-02-07T16:26:16 <mrtyler> in which i configure influxdb to talk to collectd
+2017-02-07T16:26:30 <mrtyler> it turns out that influxdb won\'t start after i enable collectd because it needs a types.db
+2017-02-07T16:26:36 <mrtyler> the types.db file is provided by the collectd package
+2017-02-07T16:26:59 <mrtyler> so i guess i need the collectd role to run as a dependency of the influxdb role
+2017-02-07T16:27:28 <mrtyler> how do i set up something like this when we keep our roles as independent git repos and glue them together with submodules later?
+2017-02-07T16:27:46 <mrtyler> i can just checkout the collectd role next to my influxdb role and muck with roles_path and make that work
+2017-02-07T16:27:56 <mrtyler> but that would require special setup for anyone who wants to use my influxdb role
+2017-02-07T16:28:34 * colinclark joined the channel
+2017-02-07T16:28:40 <mrtyler> another option would be to fetch our collectd role from galaxy and use it that way? do we upload our roles to galaxy in any kind of automated/repeatable fashion?
+2017-02-07T16:29:19 <amatas> I guess that the correct way to proceed is to set the dependencies between roles. The fetching of roles can be performed using ansible-galaxy with a requierements.yml or using the submodules of git.
+2017-02-07T16:31:17 <amatas> I think that the work is done when all the roles and their dependencies are stored in the "roles" directory and the playbook works well.
+2017-02-07T16:31:39 <gtirloni> https://galaxy.ansible.com/intro#dependencies
+2017-02-07T16:32:17 <gtirloni> collectd is very stable at this point, is the types.db likely to change? maybe it could be incorporated into your influxdb role if someone enabled collectd support in it
+2017-02-07T16:32:17 <amatas> the fetch of a dependency is not a role\'s business
+2017-02-07T16:33:10 <mrtyler> amatas: i agree dependencies seem like the right way. i don\'t see any examples in our codebase?
+2017-02-07T16:33:16 <mrtyler> tho i did find nginx-reverse/tests/requirements.yml which looks interesting
+2017-02-07T16:33:29 <mrtyler> apparently i can just point to a github url and ansible will figure it out?
+2017-02-07T16:34:09 <mrtyler> gtirloni: that link looks like it relies on us automatically, repeatably uploading our idi roles. is that something that happens?
+2017-02-07T16:34:21 <amatas> the requeriments.yml file is used in the implementation of a playbook for a concrete case. In the case of nginx-reverse it is used to prepare the system to run the tests.
+2017-02-07T16:34:41 <gtirloni> or you could install the collectd package if someone asks for collectd support in the influxdb role.. if it doesn\'t run on the influxdb server, it\'s just sitting there as a required package
+2017-02-07T16:34:50 <mrtyler> gtirloni: that might work in this specific case but a) it\'s a pretty gross hack and b) it won\'t help when i\'m writing the grafana role and it needs the influxdb role (which does some non-trivial stuff that i certainly don\'t want to pull into a grafana role directly)
+2017-02-07T16:34:52 <gtirloni> mrtyler: we don\'t upload our roles
+2017-02-07T16:35:05 <amatas> I believe that we don\'t actually use the dependencies section in our roles to require other roles. Maybe we should,....
+2017-02-07T16:35:10 <mrtyler> gtirloni: so galaxy is a non-starter, right?
+2017-02-07T16:35:25 <gtirloni> galaxy can retrieve from git
+2017-02-07T16:35:38 <gtirloni> it\'s how the QI code uses it
+2017-02-07T16:35:38 <mrtyler> oh ok
+2017-02-07T16:35:53 <gtirloni> https://github.com/GPII/qi-development-environments/blob/master/nodejs/provisioning/requirements.yml
+2017-02-07T16:35:57 <mrtyler> so it sounds like the recommendation is to use dependencies, galaxy, and links to github?
+2017-02-07T16:36:32 <gtirloni> but i think requiring the collectd package in the influxdb role (either as a mandatory requirements or a tunable) would be okay... just like php-fpm requires php
+2017-02-07T16:36:46 <mrtyler> right
+2017-02-07T16:37:02 <gtirloni> that or yeah, requirements and point to github
+2017-02-07T16:37:17 <mrtyler> galaxy seems like the more standard approach, right?
+2017-02-07T16:37:22 <mrtyler> i.e. what most ansible people would do?
+2017-02-07T16:37:49 <mrtyler> amatas: if we\'re not using dependencies, how do we handle this problem today?
+2017-02-07T16:38:04 <mrtyler> is it beause requirements != dependencies, and we currently use requirements?
+2017-02-07T16:38:17 <amatas> the roles that are used by the playbooks are in the "roles" directory of our repository
+2017-02-07T16:38:45 <gtirloni> like in these roles (but this could be decided based on user choice, say, influxdb_collect_enable:yes) https://github.com/idi-ops/ansible-docker/blob/master/vars/main.yml#L3 https://github.com/idi-ops/ansible-jenkins/blob/master/vars/main.yml#L9
+2017-02-07T16:39:17 <gtirloni> i\'m not too familiar with the dependencies.. even for the nginx-reverse role, our playbooks explicity list nginx-common and nginx-reverse
+2017-02-07T16:43:40 <mrtyler> gtirloni: i don\'t think it\'s useful to include that type of customization right now. it\'s basically a continuation of the choice to start a new, super simple role vs adapting an existing, more complex role
+2017-02-07T16:44:21 <mrtyler> however plz bring this up again in the PR if you\'re not convinced at that time :)
+2017-02-07T16:44:37 <mrtyler> alright, i\'ll take a look at some of these options
+2017-02-07T16:44:44 <mrtyler> thanks gio, thanks alf :)
+2017-02-07T16:45:10 <gtirloni> i think ansible has requirements and dependencies but i don\'t know a lot about the latter... it seems like they designed dependencies to work like that. if that works, i\'d say go for it.. we don\'t have a rule on this one
+2017-02-07T16:45:22 <gtirloni> :)
+2017-02-07T16:45:26 <mrtyler> sounds good. thx
+2017-02-07T16:45:45 <amatas> yw!
+2017-02-07T16:51:30 * alanharnum joined the channel
+2017-02-07T16:52:50 * cindyli joined the channel
+2017-02-07T16:54:32 <gloob> how you will call to the process of preparing the system for building?
+2017-02-07T16:54:47 <gloob> bootstrapping?
+2017-02-07T16:54:53 * cindyli1 joined the channel
+2017-02-07T16:55:07 <gloob> I\'m actively avoiding the provisioing word
+2017-02-07T16:55:19 <gloob> *provisioning
+2017-02-07T16:55:31 <mrtyler> gloob: are you talking to me?
+2017-02-07T16:55:43 <gloob> to the channel
+2017-02-07T16:55:47 <mrtyler> if so, i think the answer is "molecule does this for me with docker"
+2017-02-07T16:55:48 <gloob> looking for a rubber duck
+2017-02-07T16:55:52 <mrtyler> oh
+2017-02-07T16:55:56 <mrtyler> oic
+2017-02-07T16:56:08 <mrtyler> i am using "provisioning" to mean "create VMs from nothing"
+2017-02-07T16:56:20 <gloob> this case is
+2017-02-07T16:56:22 <mrtyler> tho there is disagreement in the community over the term "provisioning" and exactly what it means
+2017-02-07T16:56:26 <gtirloni> alanharnum amatas colinclark gloob mrtyler: we decided on tuesdays 12pm ET for the weekly meeting.. does that work for you _this_ week? we have some topics to discuss synchronously
+2017-02-07T16:56:30 <gloob> we have windows GPII implementation ok?
+2017-02-07T16:56:39 <mrtyler> gtirloni: yup i\'m ready
+2017-02-07T16:57:04 <gloob> there\'s a directory that is called provisioning
+2017-02-07T16:57:18 <gloob> but in reality, that directory contains two set of scripts
+2017-02-07T16:57:32 <gloob> one for bootstrapping and a second one for building
+2017-02-07T16:57:44 <mrtyler> what is "bootstrapping" and what is "building"? :)
+2017-02-07T16:57:56 <colinclark> it does, yes gtirloni
+2017-02-07T16:58:06 <gloob> it inherit the provisioning word because is inherited from the vm creations set of scripts
+2017-02-07T16:58:14 <gloob> gtirloni: plus one here
+2017-02-07T16:58:33 <gloob> mrtyler: bootstrapping is install the needed tools that the build systems for actually build
+2017-02-07T16:58:54 <gloob> install node.js, install this global package, check and install this compiler, that kind of stuff
+2017-02-07T16:59:08 <gloob> and build is the process of actually "compile" the project
+2017-02-07T16:59:18 <gloob> what make, cmake, any other build tools will do
+2017-02-07T16:59:31 <gloob> autotools, etc...
+2017-02-07T16:59:38 <alanharnum> gtirloni: yup, works for me
+2017-02-07T16:59:41 <mrtyler> ok
+2017-02-07T17:00:05 <mrtyler> so are you looking for a new name for the "provisioning" directory?
+2017-02-07T17:00:15 <mrtyler> or... what are you after gloob ?
+2017-02-07T17:00:18 <gloob> I\'m looking for three things
+2017-02-07T17:00:24 <amatas> gtirloni, works form me as well
+2017-02-07T17:00:32 <gloob> 1) I feel that the bootstrapping could be shared between modules
+2017-02-07T17:00:37 <gloob> 2) but the build process not
+2017-02-07T17:00:56 <gloob> 3) I want to minimize the copy/paste strategy
+2017-02-07T17:01:00 <gtirloni> room 2, who can open it?
+2017-02-07T17:01:13 <gloob> 4) I want to rename the provisioning dir because I like to rename things
+2017-02-07T17:01:16 <gtirloni> it\'s open, sandra is there
+2017-02-07T17:02:01 <gtirloni> https://pad.gpii.net/p/2017-02-06-nor4ny4
+2017-02-07T17:12:17 * the-t-in-rtf joined the channel
+2017-02-07T17:16:31 <cindyli1> hi simonjb, not sure if you have a chance to read https://wiki.gpii.net/w/Continued_Researches_on_Possible_Approaches_for_Protecting_Communication_btw_LFM_and_CBFM, wonder if you have any feedback before I send it to the list
+2017-02-07T17:17:29 <simonjb> cindyli1: I haven\'t read the latest changes yet, will try to get to it this afternoon
+2017-02-07T17:17:53 <cindyli1> thanks. no rush, take ur time, simonjb
+2017-02-07T17:30:07 <michelled> Bosmon: the other day you mentioned that I should be using a modelListener instead of a modelRelay here: https://github.com/michelled/gpii-app/blob/GPII-1596-pair/src/app.js#L51
+2017-02-07T17:30:09 <michelled> I\'m not sure how to go about it. When \'menu.model.menuTemplate\' changes, I need to do two things. 1. \'menu.expandMenuTemplate\' and 2. call \'app.updateMenu\' with the results.
+2017-02-07T17:33:14 <michelled> cindyli: maybe you know how I should do this? ^
+2017-02-07T17:41:38 <Bosmon> michelled - it\'s easy enough, you can just write those steps into a little function
+2017-02-07T17:42:07 <Bosmon> Not everything is reasonable to express declaratively, at least not yet :)
+2017-02-07T17:42:57 <Bosmon> Although I think in this case it\'s not unreasonable, tracing things through
+2017-02-07T17:43:14 <Bosmon> After all, I see "updateMenu" gets invoked automatically when the menu changes
+2017-02-07T17:43:42 <Bosmon> So I think what you\'ve got there already should be correct
+2017-02-07T17:43:47 <Bosmon> Does it work?
+2017-02-07T17:44:07 <michelled> the problem with the way it is - is that menu will contain functions
+2017-02-07T17:44:25 <Bosmon> Right
+2017-02-07T17:44:36 <michelled> so we were trying to get rid of that
+2017-02-07T17:44:39 <Bosmon> Now I remember
+2017-02-07T17:44:41 <Bosmon> Sorry
+2017-02-07T17:45:13 <Bosmon> Yes, ok
+2017-02-07T17:46:46 <Bosmon> So a little 2-line function attached as a modelListener would be a reasonable thing to write here
+2017-02-07T17:47:04 <michelled> ok, thx!
+2017-02-07T17:48:27 <Bosmon> More elaborately, you could have two 1-line functions as 2 different modelListeners, sequenced using a priority entry - http://docs.fluidproject.org/infusion/development/Priorities.html#example-of-priority-resolution-for-listeners
+2017-02-07T17:48:41 <Bosmon> You might use that style if you were expecting a large ecosystem of people competing to react to the menu update : P
+2017-02-07T17:48:54 <Bosmon> But this is still a little project for now
+2017-02-07T17:50:51 <Bosmon> If you stick a namespace on your listener, people can always override it easily later
+2017-02-07T17:54:34 * cindyli joined the channel
+2017-02-07T17:55:37 * alanharnum joined the channel
+2017-02-07T17:58:02 * michelled joined the channel
+2017-02-07T18:00:33 <mrtyler> gloob: 1) seems sensible but devil is in the details. if you\'re not careful, you end up in a situation where, since the "bootstrapping" step is shared, you have to install (say) ruby because ONE project needs it later
+2017-02-07T18:00:52 <mrtyler> and now everyone has to install ruby, and everyone becomes a hipster with bad code organization skills
+2017-02-07T18:00:55 <mrtyler> (:p)
+2017-02-07T18:01:09 <mrtyler> gloob: i\'m a big advocate of 3) :)
+2017-02-07T18:01:46 <mrtyler> gloob: 4) how about top level is build, sublevels are bootstrap and compile(?)
+2017-02-07T18:01:50 <mrtyler> meh
+2017-02-07T18:02:09 <mrtyler> top leel is build, sublevels are bootstrap and build (again)?
+'
+

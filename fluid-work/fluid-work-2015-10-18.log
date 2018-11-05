@@ -1,0 +1,222 @@
+b'2015-10-18T23:12:57 <Bosmon> Rather than just blindly referring to some global name, it needs to refer to some "global space of instances"
+2015-10-18T23:13:15 <Bosmon> Now since I am a little MONTEPULC. at this point my head is swimming a little
+2015-10-18T23:13:29 <colinclark> hahaha
+2015-10-18T23:13:31 <colinclark> :)
+2015-10-18T23:14:40 <Bosmon> What actually needs to happen is that there is some sense in which one can refer to..... the.... CONTEXT, say, "{npm.session}" in such a way that what you get is the result of having REQUIRED a particular version of it
+2015-10-18T23:15:11 <Bosmon> Which by default is the version of it that you would have required had you actually issued a require() from your own module, but which is amenable to IoC injection
+2015-10-18T23:15:54 <Bosmon> The other aspect of my "lying awake realisation" is that, then, we need to establish some kind of permanent correspondence between i) PARTICULAR LOCATIONS IN THE IOC TREE and ii) PARTICULAR LOCATIONS IN NODE\'S MODULE SPACE
+2015-10-18T23:16:00 <Bosmon> ("*!U(*UE(*)WRU()!\xc2\xa3"(*U(!"*\xc2\xa3U(!"*\xc2\xa3U(!"\xc2\xa3"!"\xc2\xa3
+2015-10-18T23:16:57 <Bosmon> So, without this, the ability to refer to "a name, which resolves to what you would have received had you issued require(name) from your own module" would be impossible
+2015-10-18T23:17:36 <Bosmon> That is, this association between NAMES AND WHAT YOU GET WHEN YOU REFER TO THEM needs to be mediate by the fact that resolution for the name passes up the IoC tree and hits one of these PLACES where the association has been made
+2015-10-18T23:18:19 <Bosmon> Now I guess I\'m somehow dreaming that this can be made non-chaotic in some way.... that is, that we really can establish exhaustive and separate "ownership" over subtrees of the global component tree by different modules
+2015-10-18T23:19:30 <Bosmon> "in theory this is fine" since we can simply stash this metadata somewhere out of the way in "POTENTIA II" where it doesn\'t bother the direct users.......
+2015-10-18T23:20:15 <Bosmon> But the idea is that, at the "junctions" of these domains there are things that look exactly like components, but in fact are strange "proxies" that end up issuing "require" statements and then producing stuff
+2015-10-18T23:20:43 <Bosmon> Perhaps we could reduce the boggle a bit by saying that these really ARE components
+2015-10-18T23:20:58 <Bosmon> And then you can refer to their products like this: {npm.session}.exports
+2015-10-18T23:21:08 <Bosmon> That\'s probably a bit more sane
+2015-10-18T23:21:32 <Bosmon> And then you can also helpfully refer to stuff like {npm.session}.options.version too
+2015-10-18T23:21:48 <colinclark> Yes, superficially that seems reasonable to me
+2015-10-18T23:21:56 <colinclark> that every module is in fact represented by a component
+2015-10-18T23:22:00 <Bosmon> Yes
+2015-10-18T23:22:24 <Bosmon> Although it will fail to be a REAL component in some ways, because noone will ever have written configuration for it
+2015-10-18T23:22:36 <Bosmon> I guess we will say that such components will be automatically instantiated based on a scan of package.json
+2015-10-18T23:22:51 <Bosmon> And wherever we find metadata of the kind we want, we construct such a component
+2015-10-18T23:22:59 <Bosmon> Ok
+2015-10-18T23:23:02 <Bosmon> Starting to become clearer
+2015-10-18T23:23:30 <Bosmon> This implies that FREE COMPONENTS constructed by a module will actually be housed not at the global component tree root, but as children of a specially fabricated component representing the module
+2015-10-18T23:23:40 <Bosmon> And the other children of that component are these "fabicated component"
+2015-10-18T23:24:10 <Bosmon> So whenever you write "var thing = myNamespace.myComponent()" at top level in your module, you actually get a component attached to that particular subtree
+2015-10-18T23:24:34 <Bosmon> This means that NEXUS PEOPLE will then have to do extra work to bind to particular things, but we can cross that bridge when we come to it
+2015-10-18T23:24:41 <Bosmon> Until then "people are always just calling functions"
+2015-10-18T23:25:27 <Bosmon> I guess if a NEXUS PERSON wants to create a particular subtree in a particular "npm scope", they will need to find that module\'s scope, work out its name, and then instantiate children in it
+2015-10-18T23:25:41 <Bosmon> hmmmmmmmmmmm
+2015-10-18T23:25:50 <Bosmon> What\'s interesting here is that our scoping rules work EXACTLY like npm\'s!
+2015-10-18T23:26:09 <Bosmon> That is, extra things "come into scope" in a hierarchical way
+2015-10-18T23:26:17 <Bosmon> AH
+2015-10-18T23:26:29 <Bosmon> yes
+2015-10-18T23:26:31 <Bosmon> That\'s right
+2015-10-18T23:26:48 <Bosmon> The set of things in scope is not necessarily purely deducible from your OWN package.json
+2015-10-18T23:27:02 <Bosmon> But hopefully IS deducible from the package.json files of everything in your file tree
+2015-10-18T23:27:32 <Bosmon> So this implies that the root component structure of the GLOBAL INFUSION in fact becomes an EXACT MIRROR of the directory structure of your module tree
+2015-10-18T23:27:34 <Bosmon> )(!I")"(!I\xc2\xa3)(!"(*)U\xc2\xa3$*(U*($"(*$"(*\xc2\xa3$
+2015-10-18T23:27:46 <Bosmon> THE FUTURE IS MODULES AND NOT FRAMEWORKS! THE FUTURE IS FRAMEWORKS AND NOT MODULES!
+2015-10-18T23:28:40 <colinclark> hahaha
+2015-10-18T23:28:40 <Bosmon> So the difference is that, it\'s possible, via distributeOptions, to "hit" the "scope components" representing particular paths in the tree and tell them to bind to different versions of things
+2015-10-18T23:29:12 <Bosmon> Ok
+2015-10-18T23:29:19 <Bosmon> I think this is pretty workable, although it\'s quite a bit of work
+2015-10-18T23:29:26 <Bosmon> What do we do in the meantime.....
+2015-10-18T23:29:33 <colinclark> yes
+2015-10-18T23:29:37 <Bosmon> We need to start making this "taxonomy of package.json metadata"
+2015-10-18T23:29:55 <Bosmon> Such that we can characterise various important "families" of "kinds of modules"
+2015-10-18T23:30:04 <colinclark> right
+2015-10-18T23:30:07 <colinclark> I am going to have to run out to the concert in a couple of minutes
+2015-10-18T23:30:22 <colinclark> But this was super interesting
+2015-10-18T23:30:26 <Bosmon> And then make a very simple "machine" that can, given a package.json, fabricate its "component image"
+2015-10-18T23:30:49 <colinclark> Seems like a reasonable starting point
+2015-10-18T23:30:51 <Bosmon> Which, "all things being equal" will, on construction, issue a bunch of "requires" and then perhaps a few function calls with some options
+2015-10-18T23:31:21 <Bosmon> This will then mean that, anyone constructing some components in that module can automatically bind to it
+2015-10-18T23:31:38 <Bosmon> We\'ll create a "shim" for the time being that forces everyone in the module to factor through a "nexus call"
+2015-10-18T23:31:46 <Bosmon> well
+2015-10-18T23:31:56 <Bosmon> I guess this is already a bit funny
+2015-10-18T23:32:15 <Bosmon> I imagine your users aren\'t going to want to factor through an API that looks like "flock.construct"
+2015-10-18T23:32:18 <Bosmon> But I think they\'re going to have to
+2015-10-18T23:32:39 <Bosmon> We can\'t hijack the basic action of the native component constructors which Infusion makes
+2015-10-18T23:32:54 <Bosmon> These are hard-wired to construct components in a particular context, nested directly from the global root
+2015-10-18T23:33:10 <Bosmon> So your users are going to have to forswear direct component constructors for the time being
+2015-10-18T23:33:52 <Bosmon> HOW VERY FUNNY THIS IS
+2015-10-18T23:33:57 <Bosmon> IF ONLY WE WILL LIVE LONG ENOUGH TO IMPLEMENT IT
+2015-10-18T23:40:32 * colinclark joined the channel
+'
+
+b'2015-10-18T00:01:38 * colinclark joined the channel
+2015-10-18T01:08:57 * colinclark joined the channel
+2015-10-18T01:38:08 <Bosmon> colinclark - surely with your implementation it will just log objects as [Object object] since I see you are just joining them with args.join(" ")
+2015-10-18T01:47:34 <colinclark> I can\'t see any reason why it wouldn\'t log [Object object}
+2015-10-18T01:47:45 <colinclark> I don\'t remember having observed it, though
+2015-10-18T01:48:00 <Bosmon> My certain belief is that it will :)
+2015-10-18T01:48:08 <colinclark> I think you\'re quite right
+2015-10-18T02:06:35 * colinclark has quit
+2015-10-18T02:18:50 * colinclark joined the channel
+2015-10-18T02:56:43 * colinclark joined the channel
+2015-10-18T03:04:46 * scott_gonzalez has quit
+2015-10-18T03:07:30 * scott_gonzalez joined the channel
+2015-10-18T08:32:08 * the-t-in-rtf has quit
+2015-10-18T08:41:13 * the-t-in-rtf joined the channel
+2015-10-18T09:05:47 * the-t-in-rtf has quit
+2015-10-18T09:07:13 * the-t-in-rtf joined the channel
+2015-10-18T09:15:06 * the-t-in-rtf has quit
+2015-10-18T11:22:51 * kasparnet joined the channel
+2015-10-18T12:29:26 * the-t-in-rtf joined the channel
+2015-10-18T12:30:53 * kasparnet has quit
+2015-10-18T12:33:10 * kasparnet joined the channel
+2015-10-18T14:18:01 * colinclark joined the channel
+2015-10-18T14:29:09 * colinclark has quit
+2015-10-18T15:03:39 * colinclark joined the channel
+2015-10-18T15:31:45 * the-t-in-rtf has quit
+2015-10-18T15:41:51 * slim_ joined the channel
+2015-10-18T15:41:53 * slim_ has quit
+2015-10-18T15:53:38 * kasparnet has quit
+2015-10-18T15:59:05 * kasparnet joined the channel
+2015-10-18T16:12:27 * kasparnet has quit
+2015-10-18T16:45:59 * the-t-in-rtf joined the channel
+2015-10-18T17:00:18 * kasparnet joined the channel
+2015-10-18T17:08:27 <colinclark> So, curiously, Bosmon, Electron no longer sends Chromium logs to the console
+2015-10-18T17:08:42 <colinclark> So this whole workaround is a) in the wrong place anyway and b) not apparently needed
+2015-10-18T17:08:47 <Bosmon> colinclark - awkward!
+2015-10-18T17:08:50 <Bosmon> Where do they go?
+2015-10-18T17:08:59 <colinclark> To the Chromium dev tools only
+2015-10-18T17:09:19 <colinclark> This happened somewhere between Electron 0.33.2 and 0.33.7
+2015-10-18T17:09:27 <colinclark> They update on a very regular basis
+2015-10-18T17:09:55 <colinclark> I\'ll have to see if there are debugging flags to re-enable it
+2015-10-18T17:10:18 <colinclark> But perhaps the whole thing should be just be pitched
+2015-10-18T17:13:57 * kasparnet has quit
+2015-10-18T17:14:34 * kasparnet joined the channel
+2015-10-18T17:18:53 * kasparnet has quit
+2015-10-18T17:47:30 * kasparnet joined the channel
+2015-10-18T18:05:30 * kasparnet has quit
+2015-10-18T19:05:32 * colinclark has quit
+2015-10-18T19:35:26 * the-t-in-rtf has quit
+2015-10-18T19:39:30 * colinclark joined the channel
+2015-10-18T22:46:18 * colinclark joined the channel
+2015-10-18T22:46:40 <colinclark> Hey montepulciano, do you have a moment for a question?
+2015-10-18T22:47:29 <colinclark> Bosmon: ^
+2015-10-18T22:47:40 <Bosmon> hahaha
+2015-10-18T22:47:42 <Bosmon> Hey, colinclark
+2015-10-18T22:47:43 <Bosmon> :)
+2015-10-18T22:47:46 <colinclark> :)
+2015-10-18T22:47:50 <colinclark> So it\'s not actually a question
+2015-10-18T22:47:52 <colinclark> though it could be
+2015-10-18T22:48:06 <colinclark> Talk to me about the "fluid.store" micromodule
+2015-10-18T22:48:20 <colinclark> What specifically do you think it will contain?
+2015-10-18T22:48:24 <Bosmon> Oh hey
+2015-10-18T22:48:25 <colinclark> And what kinds of things will it support?
+2015-10-18T22:49:35 <Bosmon> I imagine it will contain the following 212 lines of code: https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/Fluid.js#L1572-L1784
+2015-10-18T22:49:59 <Bosmon> Perhaps a little abstracted so that it needn\'t simply bind to an in-memory hash full of junk......
+2015-10-18T22:50:57 <Bosmon> I guess it\'ll contain a few other tiny bits - such as fluid.registerNamespace, and enough "glue" to bind itself to an arbitrary source of "globality" ....
+2015-10-18T22:51:16 <Bosmon> I guess, now I think about it further, there are TWO micromodules even in this tiny area
+2015-10-18T22:51:34 <Bosmon> Given there\'s no direct requirement for fluid.store to be able to create the actual component creator functions
+2015-10-18T22:51:35 <colinclark> the latter and the former?
+2015-10-18T22:51:40 <colinclark> ah, right
+2015-10-18T22:51:51 <colinclark> I have been sitting here sketching
+2015-10-18T22:52:00 <Bosmon> fluid.store should really just be responsible for (mostly) the bit of code I just pasted, in terms of storing and retrieving defaults
+2015-10-18T22:52:07 <colinclark> ok
+2015-10-18T22:52:16 <Bosmon> The relationship between these defaults and any particular global object might even be the responsibility of some OTHER micromodule......
+2015-10-18T22:52:30 <colinclark> ok
+2015-10-18T22:52:33 <Bosmon> So I had some interesting "cycling home from Waitrose" thoughts about this kind of area
+2015-10-18T22:52:45 <Bosmon> I realised that we need to be able to manage global functions for more than just component creators
+2015-10-18T22:52:51 <Bosmon> Which in a sense we already do, in a limited sense
+2015-10-18T22:53:00 <Bosmon> We support those things that we call "fluid.function"
+2015-10-18T22:53:12 <Bosmon> But many of the things which are npm modules are, in theory, embodiments of this
+2015-10-18T22:53:18 <Bosmon> Although some of them are embodiments of other kinds of things
+2015-10-18T22:53:46 <colinclark> Manage in what way, Bosmon?
+2015-10-18T22:53:52 <Bosmon> There is a kind of "taxonomy of node module exports" that would form a very productive thing to tackle in our "light metadata added to package.json" initiative
+2015-10-18T22:54:11 <Bosmon> Very many module exports really are purely and simply "creator functions which accept options"
+2015-10-18T22:54:17 <Bosmon> And those are the very easiest to deal with
+2015-10-18T22:54:27 <Bosmon> Some module exports are a little more exotic
+2015-10-18T22:54:56 <Bosmon> But we need to start to draw up a dialect of package.json metadata that lets us begin to grapple with the problem of describing the "complete space of useful module exports"
+2015-10-18T22:55:02 <Bosmon> ROY FIELDING would be proud :)
+2015-10-18T22:55:06 <colinclark> :)
+2015-10-18T22:55:09 <Bosmon> Even though he might not directly recognise his legacy
+2015-10-18T22:55:55 <Bosmon> But I realised, slightly anticipating tomorrow morning\'s discussion with CLOCKMOUSE, that we need to be able to usefully talk about some kinds of "inheritance" even with respect to things which are not component creator functions
+2015-10-18T22:56:10 <Bosmon> Which is part of my still fairly vaguely apprehended plan of dealing with version management
+2015-10-18T22:56:29 <colinclark> very interesting
+2015-10-18T22:56:34 <Bosmon> But say, look at this module: https://www.npmjs.com/package/express-session
+2015-10-18T22:56:42 <colinclark> yes
+2015-10-18T22:56:48 <Bosmon> It conforms to an extremely stable contract that is not going to change over its entire useful lifetime
+2015-10-18T22:56:57 <Bosmon> That is, if it failed to conform to it, it would immediately cease to be useful
+2015-10-18T22:57:10 <colinclark> Why would it cease to be useful?
+2015-10-18T22:57:17 <Bosmon> Nonetheless, people are from time to time going to want to bind to multiple variant versions of this, within what we call "the application module tree"
+2015-10-18T22:57:33 <Bosmon> Well, if it was no longer capable of functioning as some express middleware, you\'d imagine that a very large number of people would be extremely irate
+2015-10-18T22:57:59 <colinclark> yes, that makes sense
+2015-10-18T22:58:12 <colinclark> given that it claims to be, in fact, some express middleware :)
+2015-10-18T22:58:24 <Bosmon> Or at least, particularly, if it failed to conform to it in the way that require("express-session")(options) failed to produce a workable piece of middleware
+2015-10-18T22:58:49 <Bosmon> So this in particular situates this particular module in the space of "easily comprehensible modules" that I mentioned earlier
+2015-10-18T22:59:04 <Bosmon> i) you call require ii) you get a function which iii) accepts an options structure which iv) returns a THING
+2015-10-18T22:59:21 <Bosmon> The THING then goes on to serve "some kind of function" which in this case is "being some express middleware"
+2015-10-18T22:59:27 <Bosmon> SO
+2015-10-18T22:59:46 <Bosmon> THIS...... SPACE OF CAPABILITIES.... you would think, would ITSELF seem to be describable by some particular hierarchy of fluid.defaults
+2015-10-18T22:59:58 <Bosmon> Even though it isn\'t precisely one of the kinds we\'ve had before
+2015-10-18T23:00:30 <Bosmon> So far we have i) things descended from fluid.component, which are components, and ii) things descended from fluid.function which *ARE* functions
+2015-10-18T23:00:43 <colinclark> yes
+2015-10-18T23:00:44 <Bosmon> Now, this thing we just looked at is a little close to ii) but not precisely
+2015-10-18T23:00:49 <Bosmon> Given it *IS* not the function itself
+2015-10-18T23:00:58 <Bosmon> But can quickly become one, once it\'s given some options
+2015-10-18T23:01:12 <Bosmon> I guess we are starting to stare the possibility of something called "fluid.module" in the face
+2015-10-18T23:02:03 <Bosmon> And then we imagine that the "options" for a thing called "fluid.module" will be directly acquired from a "member with a particular name in the module\'s package json" or "in a completely different module\'s package.json" if we don\'t have authorial access to the original module
+2015-10-18T23:02:31 <Bosmon> But I should stop ranting and ask you about what kinds of things you have been sketching
+2015-10-18T23:03:22 <Bosmon> What I was imagining, though, was that there would be some THING that we might call.... " a requirement for something named "fluid.npm.express-session"
+2015-10-18T23:03:31 <Bosmon> Now this "requirement" would be something...... "componentlike"
+2015-10-18T23:03:41 <Bosmon> In that it would be possible to "advise it using distributeOptions"
+2015-10-18T23:04:03 <Bosmon> Based on where it was, naturally, it would be advised by whatever was in the package.json at the site it was defined
+2015-10-18T23:04:33 <Bosmon> So it would then seem to be {type: "fluid.npm.express-session", version "1.11.3"}
+2015-10-18T23:04:47 <Bosmon> But what we would like to achieve is what I would call "ANTI-TYRANNY II"
+2015-10-18T23:05:09 <Bosmon> Which is - the ability to direct any consumer of modules, anywhere, to use a different version number of that module than the one that their package.json binds to
+2015-10-18T23:05:12 <colinclark> no, this is really good
+2015-10-18T23:05:13 <colinclark> keep talking
+2015-10-18T23:05:22 <Bosmon> So the inherent goal of the npm module system is what could be called "ANTI-TYRANNY I"
+2015-10-18T23:05:41 <Bosmon> Which is "No bastard can screw up my binding to a particular version of a particular module by having already loaded a conflicting version"
+2015-10-18T23:05:53 <Bosmon> So, currently, infusion exposes everyone in the world to the full force of TYRANNY I
+2015-10-18T23:06:16 <Bosmon> Which is that, anyone who binds to anything and loads it under a global name of that kind, pollutes everyone\'s binding to that name
+2015-10-18T23:06:18 <colinclark> yes
+2015-10-18T23:06:30 <Bosmon> As I have done, with my globals "kettle.npm.session" for example
+2015-10-18T23:07:05 <Bosmon> This, in theory, would have the entire world swarming about our ears with pitchforks, if i) Kettle were ever to have more than very mild circulation, and ii) the things we bound to were to undergo more than trivial modifications
+2015-10-18T23:07:21 <Bosmon> At the moment, for various reasons, i) and ii) look like relatively distant prospects : P
+2015-10-18T23:07:34 <colinclark> One should always plan for the future :)
+2015-10-18T23:07:39 <colinclark> And assume success
+2015-10-18T23:08:06 <Bosmon> But all the same, in the fulness of time, we will need to have some answer to the fact that we expose the world to TYRANNY I - but at the same time we need to answer the fact that the world exposes all the rest of the world to TYRANNY II
+2015-10-18T23:08:24 <Bosmon> So we can see a clear sample of TYRANNY II in the case of our current boggle about jshint
+2015-10-18T23:08:57 <Bosmon> What we would LIKE to be able to do is to "direct our grunt-jshint to bind to a variant implementation of jshint that we are perfectly sure meets all of its requirements" - but because of TYRANNY II this is impossible
+2015-10-18T23:09:08 <Bosmon> We need to fork it and all its code, just to make a trivial modification to its package.json
+2015-10-18T23:09:48 <colinclark> yes
+2015-10-18T23:09:51 <colinclark> that is true
+2015-10-18T23:09:51 <Bosmon> So this implies that "what needs to happen with module version resolution" is something similar to what we can achieve with today\'s distributeOptions
+2015-10-18T23:10:08 <Bosmon> And then I started to think, if it is SIMILAR to what we can achieve with distributeOptions, why not actually make it THE SAME
+2015-10-18T23:10:20 <Bosmon> So this is the content of my "lying awake in bed on Wednesday night" thoughts
+2015-10-18T23:10:43 <Bosmon> Which seemed to suggest that we need to create some confusion between what in our previous chat with CLOCKMOUSE we named "POTENTIA I" and "POTENTIA II"
+2015-10-18T23:10:55 <Bosmon> So POTENTIA I is "the space of all registered fluid defaults, indexed by their global names"
+2015-10-18T23:11:09 <Bosmon> And POTENTIA II is "the space of all components that ARE GOING TO EXIST, indexede by their global paths"
+2015-10-18T23:11:24 <Bosmon> Now distributeOptions only act on POTENTIA II and not on POTENTIA I
+2015-10-18T23:12:08 <Bosmon> So if we mean to make "the space of resolvable packages" accessible to advice, we somehow need to map it into POTENTIA II - that is, onto something that is LIKE "instance of components" rather than "types of components"
+2015-10-18T23:12:45 <Bosmon> So this means that what someone is actually DOING when they write members: { mySessionModule: "@expand(kettle.npm.session)"} needs to be somehow significantly civilised
+'
+

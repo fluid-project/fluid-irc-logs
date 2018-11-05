@@ -1,0 +1,345 @@
+b"2018-03-01T20:22:10 <cindyli> thanks for the good work, gtirloni
+2018-03-01T20:22:15 <amatas> np, it's a good work
+2018-03-01T20:22:34 <gtirloni> i find it amazing that jenkins, in the build description where we added a link to the PR, adds a unicode zero width char (U+200B) ... if you copy and paste that into a browser, it doesn't consider it a URL
+2018-03-01T20:23:11 <gtirloni> https://github.com/GPII/univer<200b>sal/pull/586
+2018-03-01T20:23:25 * alanharnum has quit
+2018-03-01T20:23:26 <amatas> another pin to my Jenkins voodoo doll
+2018-03-01T20:24:14 <gtirloni> :)
+2018-03-01T20:27:13 <gtirloni> https://issues.jenkins-ci.org/browse/JENKINS-28022 -- from 2015
+2018-03-01T20:27:37 <cindyli> amatas, gtirloni, gtirloni's PR does fix the CI failure on my PR. thanks, guys, cheers!
+2018-03-01T20:27:47 <amatas> \\o/
+2018-03-01T20:33:36 * gtirloni has quit
+2018-03-01T20:33:44 * gtirloni joined the channel
+2018-03-01T20:34:07 * gtirloni is now known as Guest87786
+2018-03-01T20:34:29 * Guest87786 has quit
+2018-03-01T20:51:01 * alanharnum joined the channel
+2018-03-01T20:55:55 * simonjb has quit
+2018-03-01T20:58:04 * mrtyler joined the channel
+2018-03-01T20:59:04 * avtar joined the channel
+2018-03-01T21:28:29 * stegru has quit
+2018-03-01T21:30:44 * jhung has quit
+2018-03-01T21:33:04 * cindyli has quit
+2018-03-01T21:38:55 * stegru joined the channel
+2018-03-01T21:41:54 * sepidehshahi has quit
+2018-03-01T21:42:09 * sepidehshahi joined the channel
+2018-03-01T21:43:26 * sepidehshahi has quit
+2018-03-01T21:45:44 * alanharnum has quit
+2018-03-01T21:50:57 * alanharnum joined the channel
+2018-03-01T21:59:12 * clown has quit
+2018-03-01T22:09:59 * avtar has quit
+2018-03-01T22:14:15 * danayo has quit
+2018-03-01T22:22:37 * amatas has quit
+2018-03-01T22:33:17 * alanharnum has quit
+2018-03-01T23:01:13 * mrtyler has quit
+2018-03-01T23:08:08 * mrtyler joined the channel
+2018-03-01T23:09:37 * danayo joined the channel
+2018-03-01T23:16:13 * stegru has quit
+2018-03-01T23:21:45 * danayo has quit
+2018-03-01T23:46:36 * kasparnet has quit
+2018-03-01T23:46:51 * kasparnet joined the channel
+"
+
+b'2018-03-01T16:28:16 <Bosmon> No, I wouldn\'t
+2018-03-01T16:28:21 <Bosmon> But we should understand why it fails
+2018-03-01T16:28:53 * yuriy has quit
+2018-03-01T16:30:22 <Bosmon> https://curl.haxx.se/mail/archive-2010-05/0066.html
+2018-03-01T16:30:26 <Bosmon> Perhaps we should switch to wget : P
+2018-03-01T16:31:07 <cindyli> amatas, amatas[m], mrtyler: ^
+2018-03-01T16:31:51 * alanharnum has quit
+2018-03-01T16:32:17 * alanharnum joined the channel
+2018-03-01T16:34:32 <amatas> cindyli: can you send me the url of the PR?
+2018-03-01T16:34:47 <cindyli> amatas: https://github.com/GPII/universal/pull/586
+2018-03-01T16:35:09 <mrtyler> hello
+2018-03-01T16:38:51 <amatas> perhaps the couchdb container took too much time to spawn
+2018-03-01T16:39:07 <Bosmon> I imagine it couldn\'t have taken 30 seconds
+2018-03-01T16:39:22 <mrtyler> i think you have a bad imagination ;)
+2018-03-01T16:39:28 <Bosmon> From what I can guess, the issue is that it failed just once with this error condition, but that curl wasn\'t prepared to retry after that
+2018-03-01T16:39:53 <mrtyler> if the machine is loaded, couchdb startup could have been delayed
+2018-03-01T16:40:16 <mrtyler> hard to say without system metrics
+2018-03-01T16:40:23 <Bosmon> yes
+2018-03-01T16:40:34 <Bosmon> I guess we can just try again and see how often it happens
+2018-03-01T16:40:58 <amatas> the host is slight busy
+2018-03-01T16:42:01 <mrtyler> the curl on h5 is really really old: curl 7.29.0
+2018-03-01T16:43:01 <mrtyler> which doesn\'t support --retry-connrefused. but it doesn\'t complain about that so maybe i\'m looking at the wrong curl
+2018-03-01T16:43:05 <amatas> mrtyler: right, but the curl that throws the error is inside a Vagrant box
+2018-03-01T16:43:19 <mrtyler> ah
+2018-03-01T16:43:56 * sepidehshahi has quit
+2018-03-01T16:44:40 <amatas> anyway I can not see this kind of messages: "Warning: Transient problem: connection refused Will retry in 1 seconds. 25 retries left."
+2018-03-01T16:45:18 <Bosmon> Well whoop de doo it has failed again :)
+2018-03-01T16:45:23 <amatas> which the curl 7.58.0 throws
+2018-03-01T16:45:48 <cindyli> noooo.....
+2018-03-01T16:45:52 <Bosmon> And with exactly the same cause
+2018-03-01T16:45:59 <cindyli> exactly
+2018-03-01T16:46:29 <mrtyler> amatas: i agree that --retry-connrefused should be handling this case and printing an error like you pasted
+2018-03-01T16:47:08 <amatas> perhaps it\'s time to merge this: https://github.com/GPII/universal/pull/565
+2018-03-01T16:47:49 <mrtyler> we could try adding --trace-ascii to debug further, as suggested here: https://github.com/curl/curl/issues/1016
+2018-03-01T16:50:21 <mrtyler> build 699 was also affected: https://ci.gpii.net/job/universal-node-production-tests/699/console
+2018-03-01T16:50:28 <mrtyler> maybe upstream couchdb changed something?
+2018-03-01T16:50:48 <mrtyler> can someone make this build step run successfully locally?
+2018-03-01T16:52:06 <mrtyler> between the last successfull build (698) and the first failed build (699) the sleep duration changed from 10 to 5!
+2018-03-01T16:52:08 <amatas> mrtyler: I checking out the Cindy\'s PR and see how it works on my pc
+2018-03-01T16:52:18 <mrtyler> what\'s up with that?
+2018-03-01T16:52:57 <amatas> I\'d like to see the options of the curl of the Fedora26
+2018-03-01T16:53:25 * alanharnum joined the channel
+2018-03-01T16:53:44 * sepidehshahi joined the channel
+2018-03-01T16:54:01 <amatas> Gio sent this PR https://github.com/GPII/universal/pull/565 on Nov fixing the version of the Fedora and the sleep duration of the curl command
+2018-03-01T16:59:11 <cindyli> amatas, mrtyler, Gio is sick and away. when he\'s back, if he can update this pull request with the latest master (so we can make sure it works with the latest code), i can help to merge it
+2018-03-01T16:59:23 <cindyli> i will ping him when he\'s back
+2018-03-01T17:03:56 <amatas> I can confirm that the curl command in the script doesn\'t wait the delay, it fails inmediately
+2018-03-01T17:04:22 <mrtyler> amatas: i.e. the behavior is the same with and without --retry-connrefused ?
+2018-03-01T17:05:37 <amatas> it\'s odd, because if I exec the same command line at the shell (out of the script) it works as expected
+2018-03-01T17:09:52 <amatas> mrtyler: same behavior without --retry-connrefused . in fact the error is "connection reset by peer"
+2018-03-01T17:10:11 <mrtyler> that seems wrong
+2018-03-01T17:11:05 <mrtyler> maybe reset by peer != connection refused ?
+2018-03-01T17:12:10 <amatas> connection refused can be that the port is closed
+2018-03-01T17:12:33 <amatas> reset by peer , the connection is made, but it\'s closed inmediately
+2018-03-01T17:13:17 <mrtyler> right
+2018-03-01T17:13:35 <mrtyler> but idk why --retry wouldn\'t work for that case
+2018-03-01T17:14:02 <mrtyler> (i\'m also not sure why connection refused is a "special" failure case with its own --retry-connrefused command line option)
+2018-03-01T17:22:28 * yuriy joined the channel
+2018-03-01T17:24:04 <amatas> wget --retry-connrefused --waitretry=1 --read-timeout=5 --timeout=15 -t 42 http://localhost:5984
+2018-03-01T17:24:08 <amatas> works better than curl
+2018-03-01T17:25:54 * danayo has quit
+2018-03-01T17:26:21 * yuriy__ has quit
+2018-03-01T17:27:49 <mrtyler> cindyli: separate topic: i have a few more thoughts about running "production" tests against a kubernetes cluster
+2018-03-01T17:28:09 <cindyli> yay!
+2018-03-01T17:28:13 <mrtyler> i think the first step, which you could start on when you\'re ready, is to be able to run the production tests using a gpii-universal docker container
+2018-03-01T17:29:03 <mrtyler> we can chat more about this, or i can sit and pair with you, sometime today or tomorrow if you like
+2018-03-01T17:30:18 <cindyli> mrtyler: i should be ready in 10 minutes, will ping you
+2018-03-01T17:30:24 <mrtyler> ok
+2018-03-01T17:30:30 <amatas> mrtyler, cindyli: I\'m also interested on that topic, perhaps i can join the conversation if you don\'t mind
+2018-03-01T17:30:40 <mrtyler> wfm alfredo :)
+2018-03-01T17:30:47 <cindyli> that\'s great
+2018-03-01T17:31:27 <amatas> cindyli: try to change the curl command of the script scripts/vagrantCloudBasedContainers.sh by this wget command: wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 30 http://localhost:$COUCHDB_PORT
+2018-03-01T17:31:50 <cindyli> ok
+2018-03-01T17:31:56 <mrtyler> i think it\'s ok to consider changing to wget, but personally i\'d be more interested in what changed that caused this system to break in the last day
+2018-03-01T17:32:09 <mrtyler> since it worked up until yesterday, then suddenly stopped working
+2018-03-01T17:32:21 <mrtyler> to me that is more worrisome than the fact that curl seems to be dumb about handling connection resets
+2018-03-01T17:33:28 <amatas> I\'d say that the couchdb container took more than 5 sec the last time to deploy
+2018-03-01T17:33:42 <amatas> perhaps because the host was more busy than before
+2018-03-01T17:33:55 <mrtyler> fwiw upstream couchdb hasn\'t changed in 12 days, so i don\'t think upstream is to blame
+2018-03-01T17:34:02 <amatas> in fact, if the wget command works, we can get rid of the "sleep" command
+2018-03-01T17:34:20 <amatas> I\'m blaming the h-0005
+2018-03-01T17:34:36 <mrtyler> do you have any data to support that guess?
+2018-03-01T17:34:53 <amatas> mm, no
+2018-03-01T17:34:56 <amatas> BUT
+2018-03-01T17:35:15 <amatas> I\'ve run the same script in my pc and it always fails
+2018-03-01T17:35:20 <amatas> connection reset by peer
+2018-03-01T17:35:30 <mrtyler> that doesn\'t sound like it\'s caused by resource contention, then
+2018-03-01T17:35:43 <amatas> so I\'d ask why that script has been working until now
+2018-03-01T17:35:52 <mrtyler> yes, me too
+2018-03-01T17:37:21 <amatas> my guessing is that the couchdb application took too much time to be ready. I mean the "connection reset by peer" can mean that the couchdb had the port opened, but it wasn\'t able to handle any connection
+2018-03-01T17:37:35 * alanharnum has quit
+2018-03-01T17:38:01 * alanharnum joined the channel
+2018-03-01T17:38:05 * yuriy has quit
+2018-03-01T17:40:17 <mrtyler> ok but that only started in the last day?
+2018-03-01T17:42:15 * alanharnum has quit
+2018-03-01T17:47:23 <amatas> until we have metrics of h-0005 I\'d say that the entropy of the universe is playing with us
+2018-03-01T17:49:23 <mrtyler> and yet it always fails on your pc!
+2018-03-01T17:49:29 <mrtyler> that\'s some extreme entropy! :)
+2018-03-01T17:51:45 * michelled joined the channel
+2018-03-01T17:53:00 <cindyli> mrtyler, amatas, i\'m ready to talk whenever you are
+2018-03-01T17:53:23 <amatas> mrtyler: http://dilbert.com/strip/2001-10-25
+2018-03-01T17:53:42 <mrtyler> i need a few minutes, sorry
+2018-03-01T17:54:09 <cindyli> np, take ur time
+2018-03-01T17:55:22 * alanharnum joined the channel
+2018-03-01T17:57:24 * alanharnum has quit
+2018-03-01T17:57:50 * alanharnum joined the channel
+2018-03-01T18:00:18 <mrtyler> cindyli: ok, your vidyo room?
+2018-03-01T18:00:19 <mrtyler> cc amatas
+2018-03-01T18:00:29 <cindyli> sure
+2018-03-01T18:00:38 <cindyli> amatas: are you ready?
+2018-03-01T18:00:42 <amatas> yup
+2018-03-01T18:00:49 <mrtyler> alfredo was born ready :D
+2018-03-01T18:00:49 <cindyli> see u all there
+2018-03-01T18:00:56 <cindyli> :)
+2018-03-01T18:00:59 <amatas> :D
+2018-03-01T18:01:10 <mrtyler> The room you are trying to join is locked. Please contact the Room Owner.
+2018-03-01T18:01:16 <amatas> the vidyoDesktop app is "Starting up..."
+2018-03-01T18:01:24 <cindyli> just unlocked my room
+2018-03-01T18:01:57 * alanharnum has quit
+2018-03-01T18:04:42 * michelled has quit
+2018-03-01T18:05:29 * danayo joined the channel
+2018-03-01T18:05:45 * kasparnet joined the channel
+2018-03-01T18:07:28 <cindyli> my vidyo crashed at sharing screen
+2018-03-01T18:07:39 <mrtyler> heh ok
+2018-03-01T18:21:17 * gtirloni joined the channel
+2018-03-01T18:25:53 * alanharnum joined the channel
+2018-03-01T18:36:06 <cindyli> mrtyler, amatas: https://pad.gpii.net/p/ci-for-gpii-2630-oup4nne
+2018-03-01T18:39:51 * alanharnum has quit
+2018-03-01T18:45:12 * kasparnet has quit
+2018-03-01T18:47:19 * kasparnet joined the channel
+2018-03-01T19:08:27 * jhung has quit
+2018-03-01T19:10:02 * jhung joined the channel
+2018-03-01T19:11:20 * alanharnum joined the channel
+2018-03-01T19:21:05 * alanharnum has quit
+2018-03-01T19:27:33 * sepidehshahi has quit
+2018-03-01T19:34:07 * avtar has quit
+2018-03-01T19:39:47 * sepidehshahi joined the channel
+2018-03-01T19:57:44 <amatas> cindyli, gtirloni has updated the PR #565 with the master branch
+2018-03-01T19:58:07 <cindyli> having a look. thanks, amatas
+2018-03-01T20:09:45 * alanharnum joined the channel
+2018-03-01T20:10:55 * alanharnum has quit
+2018-03-01T20:11:01 * alanharnum joined the channel
+2018-03-01T20:12:04 <amatas> cindyli: did the changes to fedora 27 solve the CI failures of your PR?
+2018-03-01T20:12:42 <cindyli> amatas: waiting for the CI on my PR to complete ;)
+2018-03-01T20:13:00 <cindyli> finger crossed\xe2\x80\xa6
+2018-03-01T20:13:48 <amatas> :)
+2018-03-01T20:15:29 * mrtyler has quit
+2018-03-01T20:18:23 * alanharnum has quit
+2018-03-01T20:18:49 * alanharnum joined the channel
+2018-03-01T20:21:51 <gtirloni> amatas cindyli: thanks for reviewing and merging that PR, much appreciated
+'
+
+b'2018-03-01T00:01:56 * michelled joined the channel
+2018-03-01T00:03:53 * stegru has quit
+2018-03-01T00:25:49 * michelled has quit
+2018-03-01T01:30:37 * michelled joined the channel
+2018-03-01T02:14:12 * michelled has quit
+2018-03-01T02:45:43 * danayo joined the channel
+2018-03-01T02:47:17 * danayo has quit
+2018-03-01T05:13:06 * danayo joined the channel
+2018-03-01T05:19:08 * ashuray joined the channel
+2018-03-01T05:22:29 * danayo has quit
+2018-03-01T05:26:04 * ashuray has quit
+2018-03-01T05:31:48 * mrtyler joined the channel
+2018-03-01T05:39:44 * ashuray joined the channel
+2018-03-01T06:18:00 * ashuray has left the channel
+2018-03-01T06:39:33 * georgitodorov joined the channel
+2018-03-01T07:01:28 * danailbd_ joined the channel
+2018-03-01T08:26:54 * amatas joined the channel
+2018-03-01T08:33:23 * mrtyler has quit
+2018-03-01T09:24:47 * danailbd_ has quit
+2018-03-01T09:27:06 * georgitodorov has quit
+2018-03-01T09:51:38 * stegru joined the channel
+2018-03-01T10:05:45 * georgitodorov joined the channel
+2018-03-01T10:08:50 * kasparnet joined the channel
+2018-03-01T10:22:00 * georgit joined the channel
+2018-03-01T10:24:50 * georgitodorov has quit
+2018-03-01T10:35:18 * yuriy joined the channel
+2018-03-01T10:56:07 * amatas_ joined the channel
+2018-03-01T11:05:14 * georgitodorov joined the channel
+2018-03-01T11:05:28 * georgit has quit
+2018-03-01T11:10:29 * georgit joined the channel
+2018-03-01T11:12:09 * georgitodorov has quit
+2018-03-01T11:12:50 <Bosmon> Hi there georgit, the-t-in-rtf - I\'ll be about 15 mins late for our meeting, sorry!
+2018-03-01T11:13:12 <the-t-in-rtf> That\'s survivable.
+2018-03-01T11:13:52 <georgit> Bosmon: No problem, Antranig
+2018-03-01T11:19:11 * michelled joined the channel
+2018-03-01T11:19:46 * amatas_ has quit
+2018-03-01T11:21:19 * amatas_ joined the channel
+2018-03-01T11:25:51 * danailbd_ joined the channel
+2018-03-01T11:42:10 * michelled has quit
+2018-03-01T11:47:46 <Bosmon> ok, I am here now
+2018-03-01T11:49:38 <Bosmon> georgit, the-t-in-rtf - ready when you are
+2018-03-01T11:50:15 <the-t-in-rtf> Great.
+2018-03-01T11:50:46 <the-t-in-rtf> Do you have Skype details for @georgit?
+2018-03-01T11:50:50 <the-t-in-rtf> I don\'t.
+2018-03-01T11:51:14 <georgit> Bosmon: We will call you now and you can add Tony
+2018-03-01T12:01:05 <the-t-in-rtf> @georgit, @bosmon and others, here is the original ticket for the i18n work: https://issues.gpii.net/browse/GPII-2444
+2018-03-01T12:03:03 <the-t-in-rtf> https://github.com/the-t-in-rtf/gpii-handlebars/blob/GPII-2767/docs/i18n.md
+2018-03-01T12:03:55 <the-t-in-rtf> https://github.com/the-t-in-rtf/gpii-handlebars/tree/GPII-2767/tests/messages/primary
+2018-03-01T12:04:23 * amatas_ has quit
+2018-03-01T12:06:40 * Smirnoffq joined the channel
+2018-03-01T12:07:50 <Bosmon> https://github.com/GPII/gpii-app/blob/master/src/renderer/psp/js/footer.js#L32
+2018-03-01T12:08:21 <danailbd_> another example: https://github.com/danailbd/gpii-app/blob/master/src/renderer/psp/js/restartWarning.js#L115
+2018-03-01T12:10:11 * jhernandez has quit
+2018-03-01T12:11:15 <Bosmon> Let\'s start taking notes here: https://pad.gpii.net/p/i18n-meetings-6294n3p
+2018-03-01T12:15:31 * jhernandez joined the channel
+2018-03-01T12:15:41 <Bosmon> jhernandez - congrats on the .... ***HAWS***!
+2018-03-01T12:15:46 <Bosmon> Do you have the keys now?
+2018-03-01T12:15:50 <Bosmon> Can we see some pictures?
+2018-03-01T12:16:27 <jhernandez> Bosmon: yes, I\'ve already have the keys :)
+2018-03-01T12:16:31 <jhernandez> thanks!!
+2018-03-01T12:19:50 <Bosmon> jhernandez - brilliant
+2018-03-01T12:19:54 <Bosmon> What kind of a house is it?
+2018-03-01T12:23:30 <jhernandez> Bosmon: here you are a few pics of the front and the garden https://drive.google.com/drive/folders/1FXBPUzLernCBsIwv8m_SEaFyvIaP6hRL?usp=sharing
+2018-03-01T12:23:54 * gtirloni joined the channel
+2018-03-01T12:25:32 <jhernandez> it has a small basement, ground floor, 2 levels and a garage box/workshop
+2018-03-01T12:25:53 <jhernandez> which is on the left side of the house
+2018-03-01T12:28:50 * jhernandez has quit
+2018-03-01T12:29:05 * jhernandez joined the channel
+2018-03-01T12:32:40 * jhernandez has quit
+2018-03-01T12:32:58 * jhernandez joined the channel
+2018-03-01T12:39:07 <danailbd_> https://github.com/sgithens/gpii-devpmt/blob/GPII-2452/src/js/client/helpers.js#L10
+2018-03-01T12:57:15 * michelled joined the channel
+2018-03-01T13:05:02 * michelled has quit
+2018-03-01T13:25:07 * georgitodorov joined the channel
+2018-03-01T13:25:59 * georgit has quit
+2018-03-01T13:39:00 * alanharnum joined the channel
+2018-03-01T13:40:13 * Justin_o joined the channel
+2018-03-01T13:41:26 * cindyli joined the channel
+2018-03-01T14:01:29 <Justin_o> Bosmon: please let me know where we\'re meeting today
+2018-03-01T14:07:58 <georgitodorov> Justin_o: Probably Skype. Waiting for Antranig
+2018-03-01T14:08:38 <Justin_o> georgitodorov: okay, thanks
+2018-03-01T14:09:40 * sepidehshahi joined the channel
+2018-03-01T14:13:05 <Bosmon> Justin_o - hi there
+2018-03-01T14:13:06 <Bosmon> Sorry to be late
+2018-03-01T14:13:09 <Bosmon> Yes, let\'s Skype
+2018-03-01T14:15:57 <Justin_o> Bosmon: i\'m ready when you are
+2018-03-01T14:16:04 <Justin_o> georgitodorov: ^
+2018-03-01T14:19:24 * clown joined the channel
+2018-03-01T14:21:55 <Bosmon> alanharnum, Justin_o - we had a kind of "pre-meeting" about I18N this afternoon that I wanted to share with you the notes of:
+2018-03-01T14:22:13 <Bosmon> https://pad.gpii.net/p/i18n-meetings-6294n3p
+2018-03-01T14:23:19 * jhung joined the channel
+2018-03-01T14:26:20 <Justin_o> alanharnum: is there a JIRA for the RTL uio work that you\'ve been doing?
+2018-03-01T14:26:25 <alanharnum> Thanks Bosmon, having a look now
+2018-03-01T14:27:53 <alanharnum> Justin_o: these two JIRAs are related to that work: https://issues.fluidproject.org/browse/FLUID-6197 / https://issues.fluidproject.org/browse/FLUID-6198
+2018-03-01T14:28:17 <Justin_o> alanharnum: thanks :)
+2018-03-01T14:28:36 <alanharnum> Justin_o: there\'s also this PR: https://github.com/fluid-project/infusion/pull/850
+2018-03-01T14:30:36 * kasparnet has quit
+2018-03-01T14:45:06 * avtar joined the channel
+2018-03-01T14:55:30 * alanharnum has quit
+2018-03-01T15:09:00 <Bosmon> the-t-in-rtf - does 9am EST work for you to re-meet about I18N?
+2018-03-01T15:09:13 <Justin_o> Bosmon: as a bonus to our meeting today, you\'ve pointed me at a bug in UIO related to focus for the panels in the mobile view
+2018-03-01T15:09:36 <Bosmon> Justin_o - cool, what triggers the bug?
+2018-03-01T15:09:48 <Justin_o> well.. we don\'t adjust focus at all :(
+2018-03-01T15:10:09 <Justin_o> so if you reload, it shows the correct panel but focus will actually still move to the first one
+2018-03-01T15:10:34 <Justin_o> it seems this is also a problem if you use the mouse to click the arrows and then switch to using the keyboard
+2018-03-01T15:10:52 <Justin_o> i\'m going to write up a JIRA for this
+2018-03-01T15:11:24 <Bosmon> Ok cool
+2018-03-01T15:11:45 <Bosmon> Might be somewhat tough to write a test case for : P
+2018-03-01T15:12:06 * yuriy__ joined the channel
+2018-03-01T15:12:29 <Justin_o> sadly yes... simulating tab navigation is pretty much impossible.. maybe after we have the web driver stuff we could do that
+2018-03-01T15:15:05 * yuriy has quit
+2018-03-01T15:15:19 * mrtyler joined the channel
+2018-03-01T15:21:20 * simonjb joined the channel
+2018-03-01T15:25:01 * georgitodorov has quit
+2018-03-01T15:31:02 * danailbd_ has quit
+2018-03-01T15:50:53 <the-t-in-rtf> Yes, that\'s perfect.
+2018-03-01T15:51:00 <the-t-in-rtf> @Bosmon ^^^
+2018-03-01T15:52:56 <Justin_o> avtar: do you know how long it takes for cache fly to update. I reuploaded a file.. how long will it take to show the new version?
+2018-03-01T15:54:16 <avtar> Justin_o: i\'m not sure :/
+2018-03-01T15:54:18 <Bosmon> the-t-in-rtf - great
+2018-03-01T15:54:31 <Bosmon> Remind me how you had been getting on with the webdriver stuff?
+2018-03-01T15:55:01 <Justin_o> avtar: no worries.. i\'ll just wait.. i don\'t have to do anything to trigger it to reload do i?
+2018-03-01T15:56:25 * Smirnoffq has quit
+2018-03-01T15:58:12 * danayo joined the channel
+2018-03-01T15:58:20 <avtar> i\'m assuming it\'s a matter of time after uploading as bits get propagated
+2018-03-01T15:58:42 <avtar> unfortunately their knowledge base url leads to a 404
+2018-03-01T15:59:28 <Justin_o> avtar: thanks, looks like it\'s taken effect now
+2018-03-01T15:59:37 <avtar> there\'s this approach if you don\'t see it being updated https://cachefly.zendesk.com/hc/en-us/articles/215068746-Purging-Files
+2018-03-01T15:59:40 <avtar> sweet
+2018-03-01T16:08:40 * alanharnum joined the channel
+2018-03-01T16:09:16 <Justin_o> gmoss: Bosmon, the-t-in-rtf, alanharnum, the Astea team and I will be meeting about i18n tomorrow at 9am EST. You may be interested in joining that meeting as well
+2018-03-01T16:10:25 <Justin_o> avtar: thanks for the info on that.. good to know there is a way to clean things out
+2018-03-01T16:12:41 <gmoss> Justin_o: sounds good! I am indeed interested, thanks for pointing it out
+2018-03-01T16:16:26 * yuriy joined the channel
+2018-03-01T16:20:22 * yuriy__ has quit
+2018-03-01T16:21:46 * kavya joined the channel
+2018-03-01T16:21:51 <Bosmon> cindyli - what do you think about this failure of the production config tests?
+2018-03-01T16:21:53 <Bosmon> https://ci.gpii.net/job/universal-node-production-tests/700/console
+2018-03-01T16:23:07 <cindyli> Bosmon: it fails at running "curl": curl: (56) Recv failure: Connection reset by peer
+2018-03-01T16:23:15 <Bosmon> yes
+2018-03-01T16:23:31 <cindyli> i see, to couchdb
+2018-03-01T16:23:52 <cindyli> at http://localhost:5984/
+2018-03-01T16:24:00 <cindyli> i guess the couchdb is not up running yet
+2018-03-01T16:24:38 <Bosmon> But seemingly it retries for 30 seconds?
+2018-03-01T16:24:48 <cindyli> which pull request is this?
+2018-03-01T16:25:28 <cindyli> my pull request, haha
+2018-03-01T16:25:35 <Bosmon> Yes yours :)
+2018-03-01T16:26:08 * yuriy__ joined the channel
+2018-03-01T16:26:12 <cindyli> re-running the CI
+2018-03-01T16:27:15 <cindyli> don\'t expect the changes in this pull request would affect the production config tests
+'
+

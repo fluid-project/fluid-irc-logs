@@ -1,0 +1,118 @@
+b'2015-06-11T07:36:30 * the-t-in-rtf1 joined the channel
+2015-06-11T07:36:48 * the-t-in-rtf2 joined the channel
+2015-06-11T07:37:01 * the-t-in-rtf1 has quit
+2015-06-11T09:23:12 * kasparnet joined the channel
+2015-06-11T09:50:50 * the-t-in-rtf joined the channel
+2015-06-11T09:52:14 * the-t-in-rtf2 has quit
+2015-06-11T10:54:16 * kasparnet has quit
+2015-06-11T10:58:08 * kasparnet joined the channel
+2015-06-11T11:19:39 * kasparnet has quit
+2015-06-11T11:25:31 * kasparnet joined the channel
+2015-06-11T12:02:59 * kasparnet has quit
+2015-06-11T12:09:48 <the-t-in-rtf> I am trying to set the container for a child viewComponent.  The selector is unique within the parent component\'s container, but not within the page.
+2015-06-11T12:10:13 <the-t-in-rtf> I see messages on component creation about there being more than one of them, when I would expect the creation to be relative to the containing component.
+2015-06-11T12:10:34 <the-t-in-rtf> Is there a pattern to define the child selector relative to an arbitrary parent?
+2015-06-11T12:10:54 <the-t-in-rtf> like "{that} .class" or "{container} .class"
+2015-06-11T12:11:53 <the-t-in-rtf> or is there an alternative to viewComponent that handles child selectors differently?
+2015-06-11T12:14:59 * kasparnet joined the channel
+2015-06-11T12:21:09 <the-t-in-rtf> Found it:  https://github.com/fluid-project/infusion-docs/blob/e4f2a064d2a166c2d055360b70ba9bba8e0db813/src/documents/tutorial-gettingStartedWithInfusion/Subcomponents.md
+2015-06-11T12:21:30 <the-t-in-rtf> I\'m assuming "{nickname}.container .class" will work
+2015-06-11T12:31:35 * simonjb joined the channel
+2015-06-11T12:32:01 * jessm joined the channel
+2015-06-11T12:33:22 <the-t-in-rtf> I was able to refer to the parent\'s selectors using "{gradeName}.dom.selector" notation.
+2015-06-11T12:33:39 * anastasiac joined the channel
+2015-06-11T12:36:31 * cindyli joined the channel
+2015-06-11T12:58:27 * maozillah joined the channel
+2015-06-11T13:11:47 <Bosmon> the-t-in-rtf - that\'s correct, yes
+2015-06-11T13:11:52 <Bosmon> Sorry I missed your question earlier
+2015-06-11T13:13:51 <the-t-in-rtf> Given that the documentation contained the answer, I can hardly be too cross.
+2015-06-11T13:14:16 <the-t-in-rtf> As usual I tried to bend the first nearby answer to my well rather than scrolling down\xe2\x80\xa6 ;)
+2015-06-11T13:14:22 <the-t-in-rtf> s/well/will/
+2015-06-11T13:14:44 <Bosmon> When you say, "I was able to refer to the parent\'s selectors" you mean, "I was able to refer to the DOM node bound to the parent\'s selector"
+2015-06-11T13:34:59 * michelled joined the channel
+2015-06-11T13:43:44 * simonjb has quit
+2015-06-11T13:53:24 * simonjb joined the channel
+2015-06-11T13:56:22 * clown joined the channel
+2015-06-11T14:05:32 * Jess_ joined the channel
+2015-06-11T14:16:01 * kasparnet has quit
+2015-06-11T14:59:48 <the-t-in-rtf> Yes, thanks.
+2015-06-11T15:00:21 <the-t-in-rtf> Is there a way to use distributeOptions to replace a component in all matching child components with one from the parent?
+2015-06-11T15:00:55 <the-t-in-rtf> I am trying to make sure that a complex panel uses a single renderer so that we can send a single request for template content, and avoid compiling common templates more than once.
+2015-06-11T15:07:01 <the-t-in-rtf> ping @bosmon
+2015-06-11T15:08:42 <Bosmon> the-t-in-rtf - the clearest thing would be to write a grade definition which holds your component reference in a child of itself, and then broadcast that gradeName using the distributeOptions
+2015-06-11T15:10:25 <Bosmon> the-t-in-rtf - here is a little sketch: http://pastie.org/10235667
+2015-06-11T15:17:34 <the-t-in-rtf> What\'s the simplest gradeName to use for the grade definition?
+2015-06-11T15:17:50 <the-t-in-rtf> will fluid.littleComponent work?
+2015-06-11T15:17:54 <the-t-in-rtf> @bosmon
+2015-06-11T15:18:16 <Bosmon> the-t-in-rtf - our current best practice is to leave the gradeName blank in this case - if you have a grade that can\'t possibly function without being added to another
+2015-06-11T15:18:54 <the-t-in-rtf> Ah, got it.
+2015-06-11T15:23:58 <the-t-in-rtf> That didn\'t work.  The child components still end up instantiating their own renderer.
+2015-06-11T15:24:15 <the-t-in-rtf> @bosmon
+2015-06-11T15:25:20 <Bosmon> the-t-in-rtf - perhaps you could check in what you have for us to look at
+2015-06-11T15:25:26 <the-t-in-rtf> I can see that they have the grade
+2015-06-11T15:26:50 <the-t-in-rtf> @bosmon:  https://github.com/the-t-in-rtf/gpii-handlebars/blob/GPII-1175/src/js/client/multiTemplateAware.js
+2015-06-11T15:27:23 <the-t-in-rtf> You can see the previous approach (which works) and the form that uses the grade here:  https://github.com/the-t-in-rtf/gpii-handlebars/blob/GPII-1175/src/js/client/templateFormControl.js
+2015-06-11T15:28:53 <Bosmon> the-t-in-rtf - your implementation doesn\'t seem to agree with mine
+2015-06-11T15:29:01 <Bosmon> You have directed each component to construct its own renderer
+2015-06-11T15:29:40 <the-t-in-rtf> Yes, the base grade can also be used independently.
+2015-06-11T15:29:54 <Bosmon> the-t-in-rtf - the problem is in your so-called "singularRenderer"
+2015-06-11T15:29:59 <Bosmon> Which doesn\'t live up to its name
+2015-06-11T15:30:46 <Bosmon> All you\'ve done is copy out the same definition which is in "templateAware"
+2015-06-11T15:30:57 <Bosmon> So it will make absolutely no difference to broadcast the same options a 2nd time
+2015-06-11T15:31:12 <Bosmon> The component still ends up with the same options
+2015-06-11T15:31:53 <the-t-in-rtf> I see that now.
+2015-06-11T15:32:40 <the-t-in-rtf> I reviewed your example and fixed it.
+2015-06-11T15:32:40 <the-t-in-rtf> It works now, thanks!
+2015-06-11T15:37:07 <Bosmon> the-t-in-rtf - awesome :)
+2015-06-11T15:37:28 <Bosmon> CONFIGURATION *IS* GRATE
+2015-06-11T15:38:22 <Bosmon> I was worrying a bit that you might run into some obscure kind of "order of expansion and merging" issues, but now my confidence is increased by your positive experience, I realise that you won\'t :)
+2015-06-11T15:38:59 <Bosmon> It\'s a hugely clearer model when all you are doing is assembling a JSON document with particular contents
+2015-06-11T15:39:15 <Bosmon> As opposed to all the others, where things are actually being EVALUATED as you go
+2015-06-11T15:39:38 <Bosmon> Imagine doing this in Lisp, for example, you\'d be constantly having your shoelaces tied together by all kinds of obscure quoting and unquoting issues
+2015-06-11T16:05:30 * the-t-in-rtf has quit
+2015-06-11T16:09:50 * clown has quit
+2015-06-11T16:19:35 * clown joined the channel
+2015-06-11T16:19:35 * cindyli has quit
+2015-06-11T16:31:43 * jessm has quit
+2015-06-11T16:34:56 * michelled has quit
+2015-06-11T16:47:13 * anastasiac has quit
+2015-06-11T16:47:38 * anastasiac joined the channel
+2015-06-11T17:11:55 * cindyli joined the channel
+2015-06-11T17:39:44 * the-t-in-rtf joined the channel
+2015-06-11T17:42:30 * kasparnet joined the channel
+2015-06-11T17:42:44 * the-t-in-rtf has quit
+2015-06-11T17:45:33 * michelled joined the channel
+2015-06-11T18:22:46 * clown joined the channel
+2015-06-11T18:40:00 * the-t-in-rtf joined the channel
+2015-06-11T18:41:07 * the-t-in-rtf has quit
+2015-06-11T18:42:28 * kasparnet has quit
+2015-06-11T18:50:03 * kasparnet joined the channel
+2015-06-11T18:52:14 * kasparnet has quit
+2015-06-11T18:52:32 * the-t-in-rtf joined the channel
+2015-06-11T18:52:52 * kasparnet joined the channel
+2015-06-11T18:56:39 * kasparnet has quit
+2015-06-11T18:56:58 * kasparnet joined the channel
+2015-06-11T19:11:26 * kasparnet has quit
+2015-06-11T19:23:19 * Jess_ has quit
+2015-06-11T19:32:27 * Jess_ joined the channel
+2015-06-11T19:35:55 * michelled1 joined the channel
+2015-06-11T19:59:39 * cindyli has quit
+2015-06-11T20:03:12 * the-t-in-rtf has quit
+2015-06-11T20:09:38 * Jess_ has quit
+2015-06-11T20:44:02 * the-t-in-rtf joined the channel
+2015-06-11T20:57:58 * clown has quit
+2015-06-11T20:59:05 * michelled1 has quit
+2015-06-11T20:59:22 * cindyli joined the channel
+2015-06-11T21:00:09 * michelled joined the channel
+2015-06-11T21:03:47 * cindyli has quit
+2015-06-11T21:10:59 * maozillah has left the channel
+2015-06-11T21:11:46 * michelled has quit
+2015-06-11T21:11:52 * michelled1 joined the channel
+2015-06-11T21:12:03 * michelled1 has quit
+2015-06-11T21:21:25 * the-t-in-rtf has quit
+2015-06-11T21:46:17 * simonjb has quit
+2015-06-11T21:53:39 * anastasiac has quit
+2015-06-11T23:52:01 * Jess_ joined the channel
+2015-06-11T23:52:17 * Jess_ has quit
+'
+

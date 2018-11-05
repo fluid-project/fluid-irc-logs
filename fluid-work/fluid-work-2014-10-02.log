@@ -1,0 +1,249 @@
+b'2014-10-02T18:11:12 <Justin_o> the error that is
+2014-10-02T18:11:27 <Bosmon> Justin_o - it has been :)
+2014-10-02T18:11:34 <Bosmon> I think we ran into it in UIO a couple of times
+2014-10-02T18:11:51 <Justin_o> Bosmon: yes.. i remember being confused by something like that before
+2014-10-02T18:11:55 <Justin_o> :)
+2014-10-02T18:12:03 <Justin_o> Bosmon: question about modelListeners
+2014-10-02T18:12:09 <Bosmon> Justin_o - it\'s interesting, I was just looking over the implementation of our Autocomplete widget for CSpace
+2014-10-02T18:12:16 <Bosmon> But it seems that it doesn\'t bother to do any request queueing
+2014-10-02T18:12:18 <Justin_o> if i have an expander to create my initial model.. should this trigger the modelListener?
+2014-10-02T18:12:28 <Bosmon> I guess it was one of many UX issues we just glossed over
+2014-10-02T18:12:41 <Bosmon> Justin_o - all initial model construction occurs as part of the "initial transaction"
+2014-10-02T18:12:44 <Justin_o> Bosmon: maybe the requests didn\'t come in that fast for it?
+2014-10-02T18:13:00 <Justin_o> Bosmon: i don\'t seem to see my model listener triggering though :(
+2014-10-02T18:13:04 <Bosmon> It doesn\'t matter how complex the the process is, any modelListener will just see a single change on init
+2014-10-02T18:13:06 <Justin_o> and it doesn\'t have an exclusions set
+2014-10-02T18:13:57 <Bosmon> Justin_o - are you using a "new applier"?
+2014-10-02T18:14:21 <Justin_o> Bosmon: ah
+2014-10-02T18:14:24 <Justin_o> that\'s probably the problem
+2014-10-02T18:14:30 <Justin_o> what do i need to use
+2014-10-02T18:14:40 <Justin_o> do i need to use the model relay grade?
+2014-10-02T18:14:47 <Bosmon> Justin_o - yes
+2014-10-02T18:14:55 <Bosmon> The "old applier" didnt\' do anything interesting on init
+2014-10-02T18:15:07 <Bosmon> Actually it was completely blind to the process of model construction
+2014-10-02T18:15:25 <Justin_o> Bosmon: okay.. this is for the keyboard a11y demo i\'m converting.. i guess i can use the relay grade there
+2014-10-02T18:15:33 <Bosmon> Justin_o - should do, yes
+2014-10-02T18:15:40 <Bosmon> Since it is an example of "current best practices"
+2014-10-02T18:15:47 <Bosmon> I\'m pretty sure the sibling "five star" component does
+2014-10-02T18:15:49 <Bosmon> Doesn\'t it?
+2014-10-02T18:16:09 <Justin_o> Bosmon: it uses fluid.viewComponent
+2014-10-02T18:16:19 <Bosmon> Justin_o - shocking : P
+2014-10-02T18:16:23 <Justin_o> :)
+2014-10-02T18:16:35 <Justin_o> i might need to update that too to move the keyboard a11y code into it..
+2014-10-02T18:16:36 <Bosmon> I guess it does date from early last year
+2014-10-02T18:16:42 <Bosmon> Justin_o - yes
+2014-10-02T18:17:08 <Justin_o> okay.. i\'ll update it to the model relay grade at the same time
+2014-10-02T18:38:26 <Justin_o> Bosmon: i\'m getting this  error \'request.segs.length\'
+2014-10-02T18:38:51 <Justin_o> it happens when i\'m trying to add a model listener to a subcomponent that listens to model changes from a parent
+2014-10-02T18:52:26 <Bosmon> Justin_o - sounds like the sort of thing that might be possible if you have mixed model grades
+2014-10-02T18:52:34 <Bosmon> Did you make sure that they are all modelRelayComponents?
+2014-10-02T18:53:01 <Justin_o> Bosmon: i just changed the subcomponent which is the five-star component to use the relay grade..
+2014-10-02T18:53:21 <Justin_o> things are working but i still get an error
+2014-10-02T18:53:33 <Justin_o> TypeError: undefined is not an object (evaluating \'request.segs.length\')
+2014-10-02T18:53:42 <Justin_o> on line 1059 or DataBinding.js
+2014-10-02T18:55:55 <Bosmon> Justin_o - the only possible route I can see for that does seem to involve mixed grades
+2014-10-02T18:55:58 <Justin_o> interestingly this error only happens in safari and chrome, but firefox is okay now
+2014-10-02T18:56:01 <Bosmon> Take another check through your hierarchy....
+2014-10-02T18:56:02 <Bosmon> !!!
+2014-10-02T18:56:04 <Bosmon> Ok
+2014-10-02T18:56:07 <Bosmon> Then that\'s just caching
+2014-10-02T18:56:19 <Bosmon> You know how stubborn Chrome\'s cache is
+2014-10-02T18:56:22 <Justin_o> Bosmon: i did a new load on chrome.. i hadn\'t tried it there before
+2014-10-02T18:56:31 <Bosmon> ....
+2014-10-02T19:02:43 <Justin_o> Bosmon: cindyli figured it out.. it had to do with invoker resolution
+2014-10-02T19:03:48 <Justin_o> in the five-star code there is a modelListener that calls a function which refers internally to an invoker
+2014-10-02T19:03:48 <Justin_o> https://github.com/fluid-project/infusion/blob/master/demos/keyboard-a11y/js/five-star.js#L70-L73
+2014-10-02T19:04:06 * danaayotte_ joined the channel
+2014-10-02T19:04:34 <Justin_o> since this is updated to a relay component and this modelListener is triggered on init, the invoker isn\'t resolved yet
+2014-10-02T19:05:11 <Justin_o> this was also a problem in firefox, i just had commented something out so there was no error showing there
+2014-10-02T19:05:41 <Justin_o> Bosmon: ^
+2014-10-02T19:06:11 <Bosmon> Justin_o - i) how could this effect be non-portable, ii) what is the mechanism that a corrupt change request gets into the applier?
+2014-10-02T19:07:32 <Justin_o> Bosmon: if by portable you mean across browser it was, i had just commented out the call to the invoker so it wasn\'t being hit when i tried it in firefox :(  but there was that other segs error in the webkit browsers still..  when the line was uncommented out we would get the function is undefined error that you\'d expect
+2014-10-02T19:07:55 <Justin_o> so the change request is correct, but now everything is happening on init since i\'m using the relay components
+2014-10-02T19:11:46 <Justin_o> Bosmon: i did some refecatoring to make the call to refreshView to be another modelListener to changes on "rank"
+2014-10-02T19:11:59 <Justin_o> again things work, but i get the error in chrome and webkit
+2014-10-02T19:12:06 <Justin_o> TypeError: undefined is not an object (evaluating \'request.segs.length\')
+2014-10-02T19:12:14 <Justin_o> and only on load
+2014-10-02T19:12:22 <Justin_o> subsequent changes work fine
+2014-10-02T19:16:12 <Bosmon> Justin_o - can you show the stack for this change? How is the corrupt change object related to the missing invoker?
+2014-10-02T19:20:39 <Justin_o> Bosmon: i think i might have found it.. there was a but in another modelListener to rank that i forgot i wrote :(
+2014-10-02T19:21:07 <Justin_o> which was triggering a change applier request on the imageViewer\'s model but the values were wrong because i hadn\'t updated it with some other changes.
+2014-10-02T19:40:02 <Bosmon> Justin_o - I\'ve written up our general problems at http://issues.fluidproject.org/browse/FLUID-5519
+2014-10-02T19:40:28 * yzen has left the channel
+2014-10-02T19:50:02 * danaayotte_ has quit
+2014-10-02T19:50:30 * yzen joined the channel
+2014-10-02T20:00:48 * danaayotte_ joined the channel
+2014-10-02T20:20:04 * jhernandez joined the channel
+2014-10-02T20:32:16 * cindyli has quit
+2014-10-02T20:54:47 * anvk has quit
+2014-10-02T20:58:47 * clown has quit
+2014-10-02T21:00:18 * michelled has quit
+2014-10-02T21:07:14 * anastasiac has quit
+2014-10-02T21:07:30 * michelled joined the channel
+2014-10-02T21:09:28 * yzen has quit
+2014-10-02T21:11:45 * yzen joined the channel
+2014-10-02T21:19:16 * yzen has quit
+2014-10-02T21:37:49 * danaayotte_ has quit
+2014-10-02T21:38:23 * danaayotte_ joined the channel
+2014-10-02T22:10:15 * danaayotte_ has quit
+2014-10-02T22:23:51 * michelled has quit
+2014-10-02T22:23:52 * jessm has quit
+2014-10-02T22:28:10 * simonjb has quit
+2014-10-02T22:37:01 * kasparnet joined the channel
+2014-10-02T22:38:37 * kasparne_ joined the channel
+2014-10-02T22:38:37 * kasparnet has quit
+2014-10-02T22:41:07 * kasparne_ has quit
+'
+
+b'2014-10-02T00:00:09 * jhernandez has quit
+2014-10-02T00:58:13 * yzen joined the channel
+2014-10-02T01:02:40 * yzen has quit
+2014-10-02T01:10:18 * heidiv joined the channel
+2014-10-02T01:11:37 * heidiv has quit
+2014-10-02T03:10:21 * yzen joined the channel
+2014-10-02T03:57:34 * Justin_o has quit
+2014-10-02T04:04:32 * yzen has quit
+2014-10-02T06:25:39 * jhernandez joined the channel
+2014-10-02T07:21:04 * kasparnet joined the channel
+2014-10-02T07:49:46 * slim joined the channel
+2014-10-02T09:42:00 * kasparnet has quit
+2014-10-02T09:42:48 * kasparnet joined the channel
+2014-10-02T09:56:14 * jhernandez has quit
+2014-10-02T10:13:19 * jhernandez joined the channel
+2014-10-02T12:01:15 * michelled joined the channel
+2014-10-02T12:33:20 * Justin_o joined the channel
+2014-10-02T12:38:39 <amilchev> hi, Justin_o
+2014-10-02T12:39:22 * cindyli joined the channel
+2014-10-02T12:39:59 <amilchev> I have a general question
+2014-10-02T12:40:53 <amilchev> how can the caller of fluid.prefs.create(...) fire any of the prefsEditor component\'s events
+2014-10-02T12:41:28 <amilchev> e.g. how can events declared in the "gpii.prefsEditor" component https://github.com/GPII/prefsEditors/blob/master/demos/prefsEditor/demo.js#L68
+2014-10-02T12:41:52 <amilchev> be fired from here https://github.com/GPII/prefsEditors/blob/master/demos/prefsEditor/pcp.html#L107-L117
+2014-10-02T12:41:56 <amilchev> Justin_o ^
+2014-10-02T12:44:40 <Justin_o> hi amilchev, i\'ll take a look
+2014-10-02T12:45:16 <amilchev> Justin_o: thanks, it\'s not too urgent - we could talk about this during the meeting as well
+2014-10-02T12:51:34 <Justin_o> amilchev: okay.. you could add additional options to the prefsEditor. https://github.com/GPII/prefsEditors/blob/master/demos/prefsEditor/pcp.html#L113-L115
+2014-10-02T12:52:06 * danaayotte joined the channel
+2014-10-02T12:52:15 <Justin_o> amilchev: if you wanted to do it from outside you could use the returned component from the call to fluid.prefs.create and drill down to the prefsEditor it contains
+2014-10-02T12:52:22 <Justin_o> amilchev: does that help?
+2014-10-02T12:54:19 <amilchev> Justin_o: from what I saw one can do someObject = fluid.prefs.create(...);     someObject.prefsEditorLoader.prefsEditor  <-- this is the object representing the prefsEditor component
+2014-10-02T12:54:54 <amilchev> right?
+2014-10-02T12:55:58 <Justin_o> amilchev: yes, that looks correct
+2014-10-02T12:57:17 <amilchev> Justin_o ok, but (I think) what I need is the exact moment from when I can reference the prefsEditor object like this. Let me explain myself with an examlpe:
+2014-10-02T12:58:03 <amilchev> let\'s say the MM is sending a big payload to PCP - both some preferences with values for PCP to render + 2 status messages to show
+2014-10-02T12:59:00 <amilchev> and (in a branch of mine), I have an event declared in the prefsEditor component for message showing - onNewMessage
+2014-10-02T12:59:11 <amilchev> so what I need is to:
+2014-10-02T13:00:22 <amilchev> 1) call the create function for rendering out the whole PCP and 2) use what we just talk about to reference the onNewMessage event and fire it with the 2 messages
+2014-10-02T13:02:05 <amilchev> BUT (from what I tried) if I call 1) and 2) one after the other, 2) gets called too early; before the prefsEditor object has been referenced (throws \'undefined\'-related error obviously)
+2014-10-02T13:03:05 <amilchev> (I set 3 seconds timeout between 1) and 2) just to see if it will work, it did)
+2014-10-02T13:03:39 <Justin_o> amilchev: that\'s because the creation is asynchronous
+2014-10-02T13:03:46 <amilchev> so my question is: how can I make sure I call 2) ONLY AFTER 1) has completely finished and the reference "someObject.prefsEditorLoader.prefsEditor" can be called?
+2014-10-02T13:04:18 <Justin_o> it would be better to add another option to the prefsEditor block of the create function that listens to an event on the components creation
+2014-10-02T13:04:47 * slim has quit
+2014-10-02T13:05:30 <Justin_o> amilchev: try adding a listener to this event onCreatePrefsEditorReady
+2014-10-02T13:06:17 * michelled has quit
+2014-10-02T13:06:56 <Justin_o> amilchev: sorry.. actually try this one onReady
+2014-10-02T13:07:11 <amilchev> so right here https://github.com/radmanovi4/prefsEditors/blob/gpii-543/src/pcp/js/starter.js#L283
+2014-10-02T13:07:35 <amilchev> I could add another grade containing a listener "onReady.showMessages": {...}
+2014-10-02T13:07:38 * anvk joined the channel
+2014-10-02T13:07:56 <amilchev> and pass down the messages as argumetns to the listener?
+2014-10-02T13:08:24 <amilchev> is that what you mean or sth else
+2014-10-02T13:08:57 <Justin_o> amilchev: yes.. and the function you would call on the listener would be the one to trigger the message
+2014-10-02T13:09:13 <amilchev> sounds great!
+2014-10-02T13:09:22 <amilchev> thanks, I\'ll try that
+2014-10-02T13:09:22 <Justin_o> amilchev: let me know how that goes
+2014-10-02T13:09:36 <amilchev> sure
+2014-10-02T13:25:10 * anastasiac joined the channel
+2014-10-02T13:36:27 * yzen joined the channel
+2014-10-02T13:51:18 * jhernandez has quit
+2014-10-02T13:53:06 * jhernandez joined the channel
+2014-10-02T13:59:30 * clown joined the channel
+2014-10-02T13:59:35 * clown is now known as clown_mtg
+2014-10-02T13:59:38 * simonjb joined the channel
+2014-10-02T13:59:55 <the-t-in-rtf> is there a version of infusion that returns null or undefined if you tried to locate() something that doesn\'t exist?
+2014-10-02T14:00:11 <the-t-in-rtf> the version I have returns the container if that happens.
+2014-10-02T14:01:35 * michelled joined the channel
+2014-10-02T14:03:07 <the-t-in-rtf> I remember @Bosmon mentioning something about fixing that.
+2014-10-02T14:04:01 <Bosmon> the-t-in-rtf - it has not been fixed these 7 years
+2014-10-02T14:04:13 <Bosmon> We inherited these semantics from jQuery
+2014-10-02T14:04:39 <the-t-in-rtf> OK, I have refactored so that the item in question always exists.
+2014-10-02T14:12:13 * slim joined the channel
+2014-10-02T14:28:53 * jessm joined the channel
+2014-10-02T14:39:00 * slim has quit
+2014-10-02T14:39:29 * slim joined the channel
+2014-10-02T14:40:53 <kasparnet> Bosmon: have you learned anything new and revolutionary about socket.io unit testing over the past month?
+2014-10-02T14:41:12 <kasparnet> I was just talking with amilchev about it in the PCP/PMT meeting
+2014-10-02T14:42:01 <Bosmon> kasparnet - I learned nothing
+2014-10-02T14:42:12 <Bosmon> Since it seems that the community mood favoured ignoring the issue when I brought it up last time
+2014-10-02T14:47:05 * slim has quit
+2014-10-02T14:47:37 * slim joined the channel
+2014-10-02T14:53:16 * michelled has quit
+2014-10-02T15:44:40 * clown_mtg is now known as clown
+2014-10-02T15:49:22 * michelled joined the channel
+2014-10-02T15:53:15 * jhernandez has quit
+2014-10-02T16:25:36 * kasparnet has quit
+2014-10-02T16:56:23 * danaayotte has quit
+2014-10-02T16:57:58 * danaayotte_ joined the channel
+2014-10-02T17:07:05 * slim has quit
+2014-10-02T17:23:24 * danaayotte_ has quit
+2014-10-02T17:46:06 * danaayotte_ joined the channel
+2014-10-02T17:46:29 <Bosmon> Thanks for the pointer, Justin_o - I\'ve left some review comments on your dataSource wrapper
+2014-10-02T17:46:51 <Justin_o> Bosmon: thanks so much for that, sorry i forgot to mention that to you earlier
+2014-10-02T17:47:19 <Bosmon> It happens that the-t-in-rtf has a closely related requirement, which it would be great if we could deal with at the same time
+2014-10-02T17:47:46 <Bosmon> He has a UI which issues AJAX requests in order to populate an autocomplete field
+2014-10-02T17:47:58 <Bosmon> And for similar reasons, it is also important that he just has one such request inflight at any time
+2014-10-02T17:48:16 <Bosmon> Only in his case, these are read requests rather than write requests
+2014-10-02T17:49:09 <Justin_o> Bosmon: he pinged me on this jira http://issues.gpii.net/browse/CTR-121
+2014-10-02T17:49:17 <Bosmon> It might be worth reformulating this wrapper as a pull request to Infusion, perhaps to go into fluidRequests.js which is the most closely related location for this
+2014-10-02T17:49:21 <Justin_o> didn\'t realize they were get read requests though
+2014-10-02T17:50:07 <Justin_o> Bosmon: i\'d also have to do some refactoring to queue more than just the save request then
+2014-10-02T17:50:16 <Justin_o> Bosmon: should there be separate queues for each type of request?
+2014-10-02T17:51:04 <Bosmon> Justin_o - 2 queues, I think
+2014-10-02T17:51:15 <Bosmon> set and delete requests go into the write queue, get requests into the read queue
+2014-10-02T17:51:16 <Justin_o> Bosmon: one for get and one for set
+2014-10-02T17:51:37 <Justin_o> Bosmon: ah set and delete are the same.. i guess that makes sense because they both change the resource
+2014-10-02T17:52:01 <Bosmon> And I think there should be a top-level option for the wrapper as to whether it is "amalgamating" or not
+2014-10-02T17:52:07 <Bosmon> That is, whether it limits the queue size to 1
+2014-10-02T17:52:25 <Bosmon> Clearly for the-t-in-rtf\'s case, he doesn\'t want to keep firing off requests that relate to a stale keypress of the user
+2014-10-02T17:53:03 <Justin_o> Bosmon: okay.. so in that case, if they queue is greater than 1, it ignores further incoming requests?
+2014-10-02T17:53:27 <Bosmon> Justin_o - it doesn\'t ignore them - it instead replaces any pending request with the most recent one
+2014-10-02T17:53:41 <Justin_o> Bosmon: ah okay.. i see
+2014-10-02T17:54:26 <Justin_o> Bosmon: do we have a datasource grade in infusion?
+2014-10-02T17:54:51 <Bosmon> Justin_o - we don\'t yet
+2014-10-02T17:54:54 <Bosmon> You can add an empty one for now
+2014-10-02T17:55:15 <Justin_o> Bosmon: okay.. i figured it would be strange to have a queued datasource without a standard one :)
+2014-10-02T17:55:23 <Bosmon> I\'ve just been reforming the version in Kettle this week
+2014-10-02T17:55:42 <Bosmon> I guess I should actually rename it
+2014-10-02T17:55:56 <Justin_o> Bosmon: okay.. so an empty one would just have fluid.identity for the invokers?
+2014-10-02T17:56:02 <Bosmon> Justin_o - it may as well be completely empty
+2014-10-02T17:56:07 <Bosmon> Since there\'s nothing useful that could go into it
+2014-10-02T17:56:14 <Justin_o> oh okay
+2014-10-02T17:56:17 <Bosmon> other than some comments :)
+2014-10-02T17:56:42 <Bosmon> Thankfully we don\'t believe in having type systems, so this doesn\'t cause much problems for now
+2014-10-02T17:56:48 <Justin_o> so just fluid.defaults("fluid.dataSource", {gradeNames: ["fluid.eventedComponent", "autoInit"]});
+2014-10-02T17:56:56 <Bosmon> Justin_o - yes, that should do
+2014-10-02T17:57:03 <Justin_o> Bosmon: okay.. will do..
+2014-10-02T17:57:04 <Bosmon> Plus some comments about what the expectations are on dataSources : P
+2014-10-02T17:57:08 <Justin_o> sure
+2014-10-02T17:57:18 <Justin_o> do you know when this would be needed by?
+2014-10-02T17:57:41 <Bosmon> No real hurry, I think
+2014-10-02T17:57:49 <Bosmon> I think the-t-in-rtf will be off for a few weeks starting next week
+2014-10-02T17:58:00 <Bosmon> We\'ll converge our various dataSource implementations soon
+2014-10-02T17:58:30 <Bosmon> The conception in Kettle is a little more advanced, since it has methods which can return promises as well as accept callbacks
+2014-10-02T17:58:33 <Justin_o> Bosmon: cool.. thanks.. i\'ll try to get to this when i can.. I\'ll leave a note on the pull request for now
+2014-10-02T17:58:51 <Justin_o> Bosmon: cool
+2014-10-02T17:59:03 <Justin_o> when do we expect promises in infusion?
+2014-10-02T17:59:05 <Bosmon> It still needs to be factored somewhat better
+2014-10-02T17:59:15 <Bosmon> Justin_o - as soon as my pull request gets reviewed : P
+2014-10-02T17:59:20 <Justin_o> Bosmon: :)
+2014-10-02T17:59:21 <Bosmon> I believe colinclark will be back next week
+2014-10-02T17:59:40 <Justin_o> great.. could be really soon then
+2014-10-02T17:59:57 <Bosmon> The Kettle datasource has a few features which should be factored off into a separate gared
+2014-10-02T18:00:02 * danaayotte_ has quit
+2014-10-02T18:00:17 <Bosmon> i) it is capable of operating an "asynchronous transform chain" operated by promises, ii) its methods can return promises as well as accepting callbacks
+2014-10-02T18:00:22 <Bosmon> gared -> grade
+2014-10-02T18:01:17 <Bosmon> Fairly urgently I think I also need to implement "fluid.component" as the "completely empty grade"
+2014-10-02T18:01:35 <Bosmon> Since right now there\'s a risk of running into chaos with grade overriding from these deep grade hierarchies
+2014-10-02T18:03:44 <Bosmon> It\'s possible, for example, for someone to write a fluid.viewComponent which tries to inherit from a "fluid.eventedComponent" separately and then ends up trashing its argMap
+2014-10-02T18:11:07 <Justin_o> Bosmon: ah.. that would be confusing
+'
+

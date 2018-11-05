@@ -1,0 +1,336 @@
+b'2014-09-26T18:32:50 <Justin_o> Bosmon: solving template loading will be a big win in itself
+2014-09-26T18:32:58 <Justin_o> Bosmon: yes
+2014-09-26T18:32:59 <Bosmon> Well, we still have this big problem :)
+2014-09-26T18:33:05 <Justin_o> haha
+2014-09-26T18:33:16 <Bosmon> But now (soon) it will be valid for the value of a component\'s container to be one of these "micropromises"
+2014-09-26T18:33:24 <Bosmon> Which means that anyone who wants to know the value can subcribe to it
+2014-09-26T18:33:39 <Bosmon> And then whatever they mean to do with the container will then block on its value arriving
+2014-09-26T18:34:19 <Bosmon> All my various attempts to bodge this foundered on the difficulty of telling apart the situation "this component doesn\'t have a container and will never have one" and "this component doesn\'t have a container but it is arriving soon"
+2014-09-26T18:34:41 <Bosmon> For example, we have some framework code that will currently throw an error if the container of a ViewComponent evaluates to null or so
+2014-09-26T18:35:32 <Bosmon> Whereas really what should happen is - if we have made an attempt to observe the container and find that it is actually a promise, we should just suspend whatever it is we were trying to do with the container until it actually arrives
+2014-09-26T18:36:01 <Bosmon> Then the process that we were actually in the middle of becomes a promise itself, and so on down
+2014-09-26T18:37:05 <Bosmon> Eventually the entire return value for an Infusion component will in fact be a promise like this (although in practice we have enough semantic at the level of whole components to just say that this is a proxy for its "onCreate" event)
+2014-09-26T18:37:34 <Bosmon> But soon, less and less of a component tree will actually be delivered when you construct a component
+2014-09-26T18:37:53 <Bosmon> You will just get a "component shell" housing a large tree filled with promises
+2014-09-26T19:05:04 * cindyli has quit
+2014-09-26T19:06:54 * cindyli joined the channel
+2014-09-26T19:08:44 <Justin_o> Bosmon: cool.. so we won\'t need, or will at least have less need of the createOnEvent?
+2014-09-26T19:34:50 <Bosmon> Justin_o - that\'s right
+2014-09-26T19:35:09 <Bosmon> Any part of a component which is waiting on a promise value will just continue to wait until it arrives
+2014-09-26T20:33:54 * cindyli has quit
+2014-09-26T20:37:32 * yzen has quit
+2014-09-26T21:05:01 * slim joined the channel
+2014-09-26T21:05:01 * slim has quit
+2014-09-26T21:09:09 * yzen joined the channel
+2014-09-26T21:14:21 * yzen has quit
+2014-09-26T21:15:21 * jhernandez has quit
+2014-09-26T21:17:21 * jhernandez joined the channel
+2014-09-26T21:23:49 * anastasiac has quit
+2014-09-26T22:25:47 * simonjb has quit
+2014-09-26T22:28:42 * kasparnet has quit
+'
+
+b'2014-09-26T16:47:25 <Justin_o> okay
+2014-09-26T16:47:38 <Justin_o> i think we have quite a few at the moment
+2014-09-26T16:48:28 <Bosmon> Justin_o - what uses do we have for our bowerised Infusion right now - were you planning to use it for the builds you consume in the feedback tool?
+2014-09-26T16:48:50 <Justin_o> Bosmon: should we make a formal proposal now, so that we are ready to move when we are at that "natural pause" or would you prefer to bring up the discussion again at that time in case there are some new tech changes that might help us
+2014-09-26T16:51:17 <Bosmon> I think writing up a formal proposal could be helpful in itself - and it should include a list of use cases that we plan to handle in the near term, and the projects in which they appear
+2014-09-26T16:57:30 * slim has quit
+2014-09-26T16:58:23 <Justin_o> when you say use cases and the projects do you just mean something like metadata uses build x, gpii uses build y and etc?
+2014-09-26T16:58:32 <Bosmon> Justin_o - yup, exactly that
+2014-09-26T16:58:56 <Justin_o> Bosmon: cool thanks.. i\'ll try to write something up and send it to the list.. probably today or next week.
+2014-09-26T16:59:13 <Bosmon> Justin_o - that will be great!
+2014-09-26T16:59:14 <Bosmon> Thanks
+2014-09-26T17:03:12 * yzen_ joined the channel
+2014-09-26T17:04:00 * yzen has quit
+2014-09-26T17:36:11 <Justin_o> cindyli, anastasiac, Bosmon: I\'m working on http://issues.fluidproject.org/browse/FLUID-5469
+2014-09-26T17:36:33 <Justin_o> we are only adding back in normalize into the src/lib directory. foundation will be in the demos.
+2014-09-26T17:36:55 <Justin_o> however, we\'ll probably need some helper classes here and there.. like clearfix
+2014-09-26T17:37:28 <Justin_o> where should those go.. i could see how far i get without using any helper classes, as it may just be in the demos that they are needed, but any thoughts on where things should go in the case they are needed.
+2014-09-26T17:38:25 <Bosmon> Justin_o - whose normalize.css will we end up using?
+2014-09-26T17:38:56 <Justin_o> normalize.css
+2014-09-26T17:39:07 <Bosmon> Justin_o - where does it come from?
+2014-09-26T17:39:25 <Justin_o> Bosmon: that\'s actually the name :)
+2014-09-26T17:39:26 <Justin_o> https://necolas.github.io/normalize.css/
+2014-09-26T17:39:28 <Bosmon> I see
+2014-09-26T17:39:41 <Bosmon> I imagine it belongs in our src/lib directory then
+2014-09-26T17:39:52 <Justin_o> Bosmon: yes.. that one is going there
+2014-09-26T17:40:30 <Justin_o> wondering about cases where we have other common classes
+2014-09-26T17:40:32 <Justin_o> like a clearfix
+2014-09-26T17:40:35 <Bosmon> Ok
+2014-09-26T17:40:49 <Bosmon> What other examples are there of these?
+2014-09-26T17:41:10 <Justin_o> sorry.. i was cleaning my glasses :)
+2014-09-26T17:41:16 <Justin_o> i\'ll get you a link
+2014-09-26T17:41:35 <Bosmon> As a first guess, they could possibly go in src/framework/css
+2014-09-26T17:41:47 <Bosmon> er src/framework/core/css
+2014-09-26T17:42:13 <Justin_o> Bosmon: okay
+2014-09-26T17:42:20 <Justin_o> here are some that we might night. https://github.com/fluid-project/infusion/blob/master/src/framework/fss/css/fss-layout.css#L414-L429
+2014-09-26T17:42:40 <Justin_o> although we may not need to be distributing these now that we don\'t really have a framework
+2014-09-26T17:43:06 <Justin_o> i think we\'d more likely need this https://github.com/fluid-project/infusion/blob/master/src/framework/fss/css/fss-layout.css#L9-L19
+2014-09-26T17:43:37 <Justin_o> there is something like this in foundation, so if our components themselves don\'t seem to need them, then we\'ll be okay not to include it either i think
+2014-09-26T17:44:07 <Justin_o> i can\'t think of any other examples at the moment
+2014-09-26T17:44:14 <Bosmon> ok
+2014-09-26T17:44:30 <Bosmon> Well that seems harmless enough to go into a core css file
+2014-09-26T17:44:50 <Bosmon> Could we effectively source the "hidden" styles from Foundation, or do ours have some accessibility tweaks that are all our own?
+2014-09-26T17:45:07 * jessm has quit
+2014-09-26T17:47:19 <Justin_o> Bosmon: i think those all came from html5 boilerplate http://html5boilerplate.com/
+2014-09-26T17:48:38 <Justin_o> Bosmon: the thing about Foundation is that we decided not have a dependency on it for our components. This is to minimize compatibility issues for integrators.. so the components will use all our own styles.
+2014-09-26T17:49:01 <Bosmon> Justin_o - ok
+2014-09-26T17:49:21 <Bosmon> We should certainly add commenting to this new "hyper-lite CSS core" file indicating where the material in it has been sourced from
+2014-09-26T17:49:41 <Bosmon> It\'s looking like even the most minimal build of HTML5boilerplate includes more stuff than we need?
+2014-09-26T17:49:46 <Justin_o> Bosmon:  :) yes for sure.. there was a comment in FSS as it stood for all the attributions
+2014-09-26T17:50:01 <Justin_o> Bosmon: yes.. it\'s unfortunate that it looks like they have a single main.css file
+2014-09-26T17:50:06 <Justin_o> even in their github repo
+2014-09-26T17:50:50 <Bosmon> Justin_o - yes, I see ...
+2014-09-26T17:52:20 <Bosmon> Justin_o - well, I guess that ripping off a tiny core from some more sprawling implementation is already a strong Fluid tradition
+2014-09-26T17:52:29 <Bosmon> As my recent implementation of a Promises library demonstrates : P
+2014-09-26T17:52:30 <Bosmon> https://github.com/amb26/infusion/commit/d10333e84b89a1a48be833c0d7aec25751bec228
+2014-09-26T17:52:52 <Bosmon> Oh, that\'s the wrong commit
+2014-09-26T17:52:54 <Bosmon> I meant this one
+2014-09-26T17:52:54 <Bosmon> https://github.com/amb26/infusion/commit/c49d20d6582d2e4debb3fd4437c27843df108e07
+2014-09-26T17:55:22 <Justin_o> that\'s small
+2014-09-26T17:55:32 <Justin_o> only 68 lines and that\'s with the copyright statement
+2014-09-26T17:55:55 <Bosmon> I expanded it from the original 30-line version just for a little more sanity and readability : P
+2014-09-26T17:56:16 <Bosmon> What\'s interesting is that noone else seems to take an implementation seriously that is this small
+2014-09-26T17:56:23 <Bosmon> But I genuinely think it does everything that we need
+2014-09-26T17:56:40 <Bosmon> All the rest can be implemented in algorithms built on top of it - the first commit I pasted shows one
+2014-09-26T17:57:40 <Justin_o> that\'s cool
+2014-09-26T17:57:48 <Bosmon> https://gist.github.com/unscriptable/814052
+2014-09-26T17:57:52 <Bosmon> The original implementation is here
+2014-09-26T17:57:56 <Justin_o> have you looked at generators at all? although i don\'t know if they only work in node
+2014-09-26T17:58:16 <Bosmon> This version has only 20 lines that contain any code symbols
+2014-09-26T17:58:49 <Justin_o> i see you removed the prototype stuff :)
+2014-09-26T17:58:53 <Bosmon> Yes
+2014-09-26T17:59:04 <Bosmon> I also resolved issue 1. of the problems he described
+2014-09-26T17:59:11 <Bosmon> Issue 2. is sort of a non-issue
+2014-09-26T17:59:27 <Bosmon> In general, we believe in a world where noone is writing any code anyway
+2014-09-26T17:59:28 <kasparnet> Bosmon: it seems there might be some common functionality between the ontologyServer and MM utils - generating a (skeleton) object from an array of el-paths, can vice versa; generating an array of elpaths from an object
+2014-09-26T17:59:38 <kasparnet> I\'m not sure where I should put those functions
+2014-09-26T17:59:38 <Bosmon> kasparnet - yes, there is
+2014-09-26T17:59:48 <Bosmon> Isn\'t MM utils an ok place for them?
+2014-09-26T17:59:57 <kasparnet> yeah - it probably is
+2014-09-26T18:00:09 <Bosmon> That utility is actually so basic that it might actually go into Infusion soon
+2014-09-26T18:00:14 <kasparnet> ok
+2014-09-26T18:00:27 <Bosmon> I pasted it to colinclark to use in Flocking a couple of weeks ago
+2014-09-26T18:00:49 <kasparnet> the one in ontologyHandler is a bit special, in that it allows for *\'s in the path
+2014-09-26T18:01:04 <kasparnet> so that\'ll probably stay separate
+2014-09-26T18:01:11 <Bosmon> Justin_o - for the same reason as above (noone is writing any code), generators don\'t actually offer anything particularly useful above "micropromises"
+2014-09-26T18:01:38 <Bosmon> generators are only interesting to people who care about syntax - which implies that they are still living at the language level
+2014-09-26T18:01:43 <Justin_o> Bosmon: since the user of the framework won\'t see either
+2014-09-26T18:02:03 <Bosmon> Justin_o - right - this implementation is actually the base of what will eventually become the "asynchronous ginger world"
+2014-09-26T18:02:13 <Justin_o> Bosmon: ah cool
+2014-09-26T18:02:25 <Bosmon> I\'m thinking I might implement a little bit more of it to help kasparnet write the "new matchmaker"
+2014-09-26T18:02:41 <Bosmon> Since I\'ve already managed to shed about 50% of the code which used to be in DataSource.js
+2014-09-26T18:02:58 <Justin_o> Bosmon: all the callbacks?
+2014-09-26T18:02:59 <Bosmon> We were already getting into a crazy kind of "callback hell" that made everything impossible to debug
+2014-09-26T18:03:14 <Bosmon> Justin_o - yes, all the "callback wrappers" except for 1 have been eliminated
+2014-09-26T18:03:28 <kasparnet> Bosmon: ahh - I\'m so looking forward to coding in that!
+2014-09-26T18:03:38 <kasparnet> those wrappers were killing me
+2014-09-26T18:03:42 <kasparnet> :)
+2014-09-26T18:03:49 <Bosmon> It\'s now very easy to implement a very simple system that will accept a "tree of promises"
+2014-09-26T18:04:00 <Bosmon> That is, a JSON object in which you have embedded a bunch of promises
+2014-09-26T18:04:11 <Bosmon> And then you can say, "don\'t bother me again until ALL of these have been resolved"
+2014-09-26T18:04:23 <Bosmon> At which point you then receive the JSON object with all the values filled in
+2014-09-26T18:05:55 <Bosmon> So, this test case here shows a sample of one of these new styles
+2014-09-26T18:05:57 <Bosmon> https://github.com/amb26/infusion/commit/d10333e84b89a1a48be833c0d7aec25751bec228#diff-aaa5f1d7b813196b0c69935fa6371ca1R160
+2014-09-26T18:06:12 <Bosmon> Rather than writing endless nests of callbacks, all you need to do is configure a bunch of standard Infusion event listeners
+2014-09-26T18:06:31 <Bosmon> And the framework will take care of the rest - e.g. executing them all in the proper order, and resolving all the asynchrony between them
+2014-09-26T18:06:52 <Bosmon> In this example they are all synchronous
+2014-09-26T18:06:57 <Bosmon> But in the next test case here: https://github.com/amb26/infusion/commit/d10333e84b89a1a48be833c0d7aec25751bec228#diff-aaa5f1d7b813196b0c69935fa6371ca1R207
+2014-09-26T18:07:09 <Bosmon> In this case case they are all converted to deliver their results asynchronously
+2014-09-26T18:07:13 <Bosmon> But nothing changes, other than the invoker name
+2014-09-26T18:07:21 <Bosmon> IT IS ALL VERY STRAIGHTFORWARD!
+2014-09-26T18:07:50 <Bosmon> The error semantic also works as you would expect - if any listener bombs, any further ones are not notified
+2014-09-26T18:08:40 <Justin_o> Bosmon: are you going to use this for aggregate events too?
+2014-09-26T18:17:18 <Bosmon> Justin_o - I think those will mostly be handled by an enhanced form of model relay
+2014-09-26T18:17:31 <Justin_o> oh really
+2014-09-26T18:17:36 <Bosmon> We really need to avoid creating new types of things in the system
+2014-09-26T18:17:44 <Bosmon> This system is designed to deal with values which are available "once and once only"
+2014-09-26T18:17:52 <Bosmon> Whereas in general aggregate events my fire any number of times
+2014-09-26T18:17:56 <Bosmon> may fire
+2014-09-26T18:18:18 <Bosmon> We have a big problem in the current system that you\'ve run into a few times, which is that we don\'t have any syntax for "indefinite boiling"
+2014-09-26T18:18:39 <Bosmon> That is, any scheme which can specify boiling on an unknown number of constituent events
+2014-09-26T18:19:03 <Bosmon> Or, for example, a component which can wait on creation of an entire array of subcomponents rather than a fixed collection
+2014-09-26T18:19:28 <Bosmon> Rather than implement a new syntax for this, I think it will be best over time to simply eliminate even our existing syntax for event boiling, and instead continue to improve the model relay system
+2014-09-26T18:22:05 * yzen_ has quit
+2014-09-26T18:22:07 <Bosmon> This means at the end, there will just be two main workflows in the system - i) the "ginger world" which supervises creation of immutable values (e.g. component options) and ii) the model relay system which manages updates of mutable values (things held in models)
+2014-09-26T18:22:11 * yzen joined the channel
+2014-09-26T18:22:37 <Bosmon> I think also, finally and ambitiously, this would lead to the abolition or at least discouragement of "standard component events"
+2014-09-26T18:22:44 <Bosmon> Since as they stand, these don\'t have any clear semantic
+2014-09-26T18:22:55 <Bosmon> Looking at an event on a component, you can have no real idea what it does
+2014-09-26T18:23:16 <Bosmon> The first taste of this was our move to push things into modelListeners that used to be just in standard listeners
+2014-09-26T18:23:30 <Justin_o> Bosmon: that\'s true, but i\'d suppose there are/will be cases where you want an arbitrary event that isn\'t bound to a model value
+2014-09-26T18:23:39 <Bosmon> There might be
+2014-09-26T18:23:52 <Bosmon> But we would seek to explain and eliminate as many of such things as possible
+2014-09-26T18:24:23 <Justin_o> Bosmon: i think that sounds good
+2014-09-26T18:24:25 <Bosmon> I mean - what would an "arbitrary event" actually be - if it didn\'t correspond to i) the change of state of something in a model, or ii) the arrival of an asynchronously available value : P
+2014-09-26T18:28:00 <Justin_o> Bosmon: i\'m sure i could think of something crazy :)
+2014-09-26T18:28:24 <Bosmon> There is one important category of these, which I guess correspond to what in FRP are called "events" (confusingly enough)
+2014-09-26T18:28:34 <Bosmon> But I think these tend to only occur close to the UI layer of an application
+2014-09-26T18:28:43 <Bosmon> For example, "the user clicks on button x"
+2014-09-26T18:29:18 <Bosmon> Whilst this, in itself, does directly represent an "event", it almost immediately ceases to be relevant to the rest of the system once it becomes interpreted
+2014-09-26T18:29:29 <Bosmon> And this, in itself, could easily become "modelised" in one step
+2014-09-26T18:30:01 <Bosmon> By instead directly inviting the system to believe in a piece of model state, which includes a field holding a number - "the number of times the user has clicked on button x"
+2014-09-26T18:30:39 <Justin_o> Bosmon: interesting.. is there a way to get these bindings directly.. i guess that\'s the new renderer
+2014-09-26T18:30:46 <Bosmon> Now all of a sudden this thing which used to be a "freely floating unintepreted event" suddenly has a clear meaning in terms of a model - simply a modelListener subscribing to changes in a field holding "number of times the user clicked on button x"
+2014-09-26T18:31:12 <Bosmon> And fields alongside the number will hold any of the other fields delivered along with the event, e.g. mouse position at the time of the event etc.
+2014-09-26T18:31:26 <Bosmon> Justin_o - yes, this will be the beginning of the "new renderer"
+2014-09-26T18:32:01 <Justin_o> Bosmon: cool... it\'s great to see all the pieces building up
+2014-09-26T18:32:11 <Bosmon> Although the new renderer needs to solve all its other problems first - e.g. how do we actually construct a tree of components which refer amongst themselves to bits of markup, templates, other components, and the DOM, some or all of which might not exist yet
+2014-09-26T18:32:21 <Bosmon> For which the "micropromises" API is the first answer
+2014-09-26T18:32:33 <Bosmon> That is, the system will all start to be built on that
+2014-09-26T18:32:50 <Bosmon> For example, we used to have a big problem about the "container" value of a component which hadn\'t yet been bound to the DOM
+'
+
+b'2014-09-26T01:26:15 * kasparnet joined the channel
+2014-09-26T01:30:36 * kasparnet has quit
+2014-09-26T01:31:07 * jhernand1z has quit
+2014-09-26T02:57:12 * yzen joined the channel
+2014-09-26T05:33:10 * yzen has quit
+2014-09-26T05:33:37 * kasparnet joined the channel
+2014-09-26T07:05:32 * the-t-in-rtf joined the channel
+2014-09-26T08:29:50 * yzen joined the channel
+2014-09-26T08:33:52 * yzen has quit
+2014-09-26T08:38:02 * slim joined the channel
+2014-09-26T09:00:48 * jhernandez joined the channel
+2014-09-26T09:02:54 <kasparnet> Bosmon: ping
+2014-09-26T09:04:26 <Bosmon> GALSCUTTT!
+2014-09-26T09:05:15 <kasparnet> morning antranig
+2014-09-26T09:05:23 <kasparnet> I was just chatting with amilchev
+2014-09-26T09:05:50 <kasparnet> we talked in the PCP/PMT meeting yesterday about avoiding our current dependency on apache or some other crazy webserver when using the PCP/PMT
+2014-09-26T09:05:51 <Bosmon> In your early-morning European kind of way...
+2014-09-26T09:05:58 <Bosmon> oh yes
+2014-09-26T09:06:10 <kasparnet> and we decided it would be sensible to use kettle
+2014-09-26T09:06:14 <Bosmon> It would be sensible
+2014-09-26T09:06:28 <Bosmon> But unfortunately I don\'t think I can spare the time to make it work until we have master open again
+2014-09-26T09:06:38 <Bosmon> Although he\'s welcome to try by himself and I can help him out
+2014-09-26T09:06:57 <kasparnet> but that brings us to the issue - how the hell do you set up kettle to function as a regular webservice?
+2014-09-26T09:07:05 <kasparnet> he has kettle up and running, etc
+2014-09-26T09:07:14 <Bosmon> I think you mean, "how do you set up kettle to host files"
+2014-09-26T09:07:23 <kasparnet> yeah
+2014-09-26T09:07:25 <Bosmon> You Danes with your strange language : P
+2014-09-26T09:07:48 <Bosmon> Unfortunately I don\'t believe Kettle as it stands has a simple file mounter
+2014-09-26T09:07:59 <Bosmon> Although "it would be relatively easy" to set one up using the existing Express middleware
+2014-09-26T09:08:17 <Bosmon> Still, I am terrified at the moment to take on absolutely anything that will slow me down an atom
+2014-09-26T09:08:36 <Bosmon> Since colinclark has been quite clear that our absolute #1 priority is to get master open again as soon as possible
+2014-09-26T09:08:58 <Bosmon> So I can\'t really spare anything that, for example, will take me longer than about 10-15 minutes answering questions to someone....
+2014-09-26T09:09:39 <amilchev> Bosmon if you could point to a page where the "relatively easy" part is explained, I can give it a try
+2014-09-26T09:09:49 <Bosmon> amilchev - unfortunately we have no such thing
+2014-09-26T09:09:55 <kasparnet> Bosmon: I completely agree with Colin that your current work on getting master opened is #1 priority
+2014-09-26T09:09:58 <Bosmon> yzen didn\'t leave us with very much in the way of documentation
+2014-09-26T09:10:13 <Bosmon> But I can take a little time to explain what I understand about Kettle architecture
+2014-09-26T09:10:35 <Bosmon> It may be that the most straightforward thing for you to do would be to just write your server as an "infusion-aware express app" for now
+2014-09-26T09:10:39 <Bosmon> And we can convert it over later
+2014-09-26T09:11:20 <Bosmon> You could even express a dependency on kettle to get all your dependencies right, but just use it to then load express directly
+2014-09-26T09:11:51 <Bosmon> I imagine it wouldn\'t me more than about a dozen lines of code to get the server set up, and at least you\'d get the benefit of being able to read the express docs rather than the nonexistent kettle docs
+2014-09-26T09:12:20 <Bosmon> Although this would have to be with express 3.x which is the version we depend on, rather than the current express 4.x which has a very different architecture
+2014-09-26T09:12:37 <Bosmon> But the express 3.x docs are clear enough I think
+2014-09-26T09:13:13 <Bosmon> Then you would have i) a body of code and configuration roughly in the right language and environment, and ii) hadn\'t introduced a further dependency which we don\'t understand
+2014-09-26T09:13:40 <Bosmon> And when we have time to work on kettle architecture again, we can port your stuff over - or you can port it over yourself should you come to understand what we have in kettle : P
+2014-09-26T09:17:32 <kasparnet> cheers bosmon - I\'ll try to help amilchev to get this up and running .. perhaps throwing a few questions your way if we need help
+2014-09-26T09:43:16 <Bosmon> sure
+2014-09-26T09:43:21 <Bosmon> I\'ll be here
+2014-09-26T09:43:28 <Bosmon> Does that sound like a reasonable plan?
+2014-09-26T10:46:24 * kasparne_ joined the channel
+2014-09-26T10:49:45 * kasparnet has quit
+2014-09-26T11:16:28 * Bosmon7 joined the channel
+2014-09-26T11:26:07 * kasparne_ has quit
+2014-09-26T11:27:22 * kasparnet joined the channel
+2014-09-26T11:35:42 * Bosmon7 has quit
+2014-09-26T11:42:51 <slim> kasparnet: ping
+2014-09-26T11:44:42 * kasparnet has quit
+2014-09-26T11:52:02 * michelled joined the channel
+2014-09-26T12:05:04 * kasparnet joined the channel
+2014-09-26T12:09:06 <kasparnet> slim: pong
+2014-09-26T12:09:35 <slim> I sent you + Bosman an email :)
+2014-09-26T12:09:50 <slim> can\'t you use node as a webserver?
+2014-09-26T12:35:33 * cindyli joined the channel
+2014-09-26T13:02:31 * jhung joined the channel
+2014-09-26T13:03:21 * jhung has quit
+2014-09-26T13:03:50 * jessm joined the channel
+2014-09-26T13:18:17 * jhung joined the channel
+2014-09-26T13:34:59 * jhung has quit
+2014-09-26T13:42:56 * yzen joined the channel
+2014-09-26T13:58:16 * clown joined the channel
+2014-09-26T13:58:22 * clown is now known as clown_mtg
+2014-09-26T13:59:36 * simonjb joined the channel
+2014-09-26T14:06:24 * anastasiac joined the channel
+2014-09-26T14:47:19 * michelled has quit
+2014-09-26T15:16:36 <Justin_o> cindyli, anastasiac: i\'m blocked on feedback work now.. i\'ve taken the FLOE-230 and FLOE-196 as far as i can for the moment. There are some bugs that seem to be blocking them. So in the meantime should I start on the remove FSS work or is there something for EPub or anything else more pressing that I should pick up first
+2014-09-26T15:16:42 * clown_mtg has quit
+2014-09-26T15:20:21 <cindyli> Justin_o: i think it\'s good to start removing fss if anastasiac doesn\'t have more pressing things for us to help
+2014-09-26T15:23:19 <Justin_o> cindyli: okay.. thanks.. i\'ll start looking into that if nothing else pops up
+2014-09-26T15:23:22 <anastasiac> Justin_o, sorry for the delay, I was on a call. I think removing FSS would be a good task
+2014-09-26T15:23:36 <Justin_o> anastasiac: thanks
+2014-09-26T15:44:16 * michelled joined the channel
+2014-09-26T15:46:11 <Justin_o> anastasiac, michelled, cindyli: for foundation there are a few options Complete, Essential, Custom, Sass
+2014-09-26T15:46:11 <Justin_o> http://foundation.zurb.com/develop/download.html
+2014-09-26T15:46:30 <Justin_o> we\'re probably not going to use the Sass option, since i think we\'ve decided to go with Stylus..
+2014-09-26T15:46:49 <Justin_o> and we won\'t be using foundation in components per se, but in the demos.
+2014-09-26T15:47:02 <Justin_o> so we could go with one of the first three options.. is there a preferences for one?
+2014-09-26T15:47:16 <Justin_o> also do we plan on using foundation only in the demos, or in the examples as well
+2014-09-26T15:47:18 <Justin_o> ?
+2014-09-26T15:48:14 <michelled> I suppose it depends on the complexity of the example.
+2014-09-26T15:48:25 <anastasiac> Justin_o, I would lean toward less is better, i.e. prefer \xe2\x80\x9cessential\xe2\x80\x9d over \xe2\x80\x9ccomplete,\xe2\x80\x9d so long as \xe2\x80\x9cessential\xe2\x80\x9d has what we\xe2\x80\x99ll need. I\xe2\x80\x99m not fond of custom, because we\xe2\x80\x99d have to document exactly what was included, etc.
+2014-09-26T15:49:09 <anastasiac> Justin_o, how would you feel about starting with essential, and if you find out that there are some things you can\xe2\x80\x99t do (but want to), perhaps you could \xe2\x80\x98upgrade\xe2\x80\x99?
+2014-09-26T15:49:33 <Justin_o> anastasiac: thanks, i can do that
+2014-09-26T15:49:44 <Justin_o> one thing to note though is that both complete and essential come with js as well
+2014-09-26T15:49:56 <Justin_o> and dependencies like normalize and jQuery that we already have
+2014-09-26T15:50:07 <Justin_o> or will have in the case of normalize
+2014-09-26T15:50:15 <Justin_o> so we\'ll probably want to strip those out
+2014-09-26T15:50:24 <Justin_o> at least the dependencies.. not sure about the js
+2014-09-26T15:50:36 <Justin_o> anastasiac, cindyli, michelled ^
+2014-09-26T15:52:53 <Justin_o> michelled: yes.. i guess it depends on the complexity of the example.. although i think they are supposed to be stripped down and fairly close to the component itself. is that correct anastasiac?
+2014-09-26T15:53:47 <cindyli> Justin_o: in that case, custom would be a better option. it will also be more flexible too for the future. just that we need to keep in mind to update the doc for what\'s in the custom build, just like we update the one for the infusion build
+2014-09-26T15:53:58 <anastasiac> Justin_o: good point. Stripping things makes it sound almost as complicated as building a custom version. Would you be able to just build a custom version to produce something that doesn\xe2\x80\x99t need stripping
+2014-09-26T15:54:00 <anastasiac> ?
+2014-09-26T15:54:19 <Justin_o> anastasiac, cindyli: I\'ll see
+2014-09-26T15:56:13 <cindyli> Justin_o, michelled, anastasiac, i\'m done with the feedback work now. wonder what I should be working on next?
+2014-09-26T15:57:33 <michelled> cindyli: integration of UIO and preferences server is the next big thing :)
+2014-09-26T15:57:56 <michelled> but if you\'d rather something small to end the week on, maybe take a look at UIO on mobile and see if there are some easy to pick off bugs
+2014-09-26T15:57:57 <Justin_o> michelled: i think we need the OAuth stuff for that though
+2014-09-26T15:57:58 <cindyli> michelled: i think we are waiting for the OAUTH implementation for it
+2014-09-26T15:58:04 <Justin_o> michelled:  and designs
+2014-09-26T15:58:46 <michelled> Justin_o, cindyli: is there nothing we can do until the oauth work lands?
+2014-09-26T15:59:00 * clown joined the channel
+2014-09-26T15:59:24 <cindyli> michelled: Justin_o is working on removing fss from infusion. we think that work should come before implementing mobile version of UIO to avoid the double work on removing fss later on when Justin_o\'s work is in
+2014-09-26T16:00:03 <michelled> is Justin_o working on that actively?
+2014-09-26T16:00:18 <Justin_o> michelled: just started
+2014-09-26T16:01:23 <michelled> can you split that work?
+2014-09-26T16:02:09 <michelled> Justin_o, cindyli ^
+2014-09-26T16:02:43 <Justin_o> michelled: possibly.. i could create a branch that removes the fas files and adds normalize and foundation.. from there we could split up work getting the components and demos styled properly.
+2014-09-26T16:03:17 <cindyli> sounds good
+2014-09-26T16:05:08 <michelled> Justin_o, cindyli: just to clarify what I was asking earlier, is there no work that can be done to integrate UIO and the prefs server until the OAuth work drops? we have a 3 week estimate on that work - can it not be broken down?
+2014-09-26T16:06:45 <cindyli> michelled: i don\'t think there\'s much we can do before OAUTH is in place, since the whole work for the integration is to create a new store using OAUTH. Justin_o, what do you think?
+2014-09-26T16:06:47 <Justin_o> michelled: i think we need new designs for the login and then we\'d also need to know how to integrate with the OAuth layer.
+2014-09-26T16:07:34 <Justin_o> michelled: i\'m not sure what else could be changed until we have at least one of those
+2014-09-26T16:07:57 <michelled> let\'s talk to Dana on Monday about designs.
+2014-09-26T16:09:31 <michelled> cindyli: this JIRA you filed sounds pretty terrible: http://issues.fluidproject.org/browse/FLOE-211
+2014-09-26T16:09:34 <Justin_o> michelled: sounds good
+2014-09-26T16:10:36 <cindyli> i think yes, that is a pouchDB error. i can take a look on that, michelled
+2014-09-26T16:16:02 * michelled has quit
+2014-09-26T16:32:59 <Bosmon> Hi Justin_o - is there anything I could do to unblock your feedback work?
+2014-09-26T16:33:03 <Bosmon> That is, anything relatively simple? : P
+2014-09-26T16:35:19 <Bosmon> I don\'t have time to fix either the model relay issue FLUID-5517 or the IoC Testing framework issue (which I think is basically FLUID-5387) right now, but perhaps you can be unblocked in something else?
+2014-09-26T16:38:26 <Justin_o> Bosmon: :) thanks for the offer, but those were the two spots
+2014-09-26T16:40:23 <Justin_o> Bosmon: another unrelated question for you.. do you remember what we were waiting on for using bower in infusion.
+2014-09-26T16:40:49 <Bosmon> Justin_o - I think for a straightforward usage we weren\'t waiting on much
+2014-09-26T16:40:54 <Bosmon> We wrote up our notes from that meeting
+2014-09-26T16:41:00 <Justin_o> http://wiki.fluidproject.org/display/fluid/Notes+on+Modularisation+of+Infusion
+2014-09-26T16:41:05 <Bosmon> Yes, exactly
+2014-09-26T16:41:21 <Bosmon> I think we had decided to make a separate repo holding a build of Infusion to be bowerised
+2014-09-26T16:41:43 <Justin_o> Bosmon: yes. i remember talking about htat
+2014-09-26T16:41:45 <Justin_o> that
+2014-09-26T16:42:32 <Bosmon> So I think we could go forwards with "option 2a" as listed here?
+2014-09-26T16:42:34 <Bosmon> Does that seem right?
+2014-09-26T16:44:19 <Justin_o> Bosmon: what was the reason for the preference of 2a or 2b again, or is it just because it\'s easier to start with?
+2014-09-26T16:45:06 <Bosmon> Well 2a sounds like something we could actually do : P
+2014-09-26T16:45:28 <Bosmon> Do you fancy modularising all of infusion into 3 repositories and dealing with all the resulting fallout? : P
+2014-09-26T16:46:37 <Justin_o> Bosmon: Potentially :) but I also don\'t mind doing these things in stages
+2014-09-26T16:46:45 <Bosmon> Yes
+2014-09-26T16:46:48 <Bosmon> A staged approach would be nice
+2014-09-26T16:47:05 <Bosmon> I think if we plan any major work with Infusion, we should make sure we are at a "natural pause" with all other work
+2014-09-26T16:47:16 <Bosmon> For example, that we have cleared out essentially all outstanding pull requests
+2014-09-26T16:47:20 <Justin_o> Bosmon: sure, when do you think would be a good time?
+'
+

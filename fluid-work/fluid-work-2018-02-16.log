@@ -1,0 +1,423 @@
+b'2018-02-16T19:54:24 * mrtyler joined the channel
+2018-02-16T19:54:26 <cindyli> then the pcp channel tests fail
+2018-02-16T19:54:32 <cindyli> but they should actually failed earlier
+2018-02-16T19:54:43 <Bosmon> It is actually Kasper\'s : P
+2018-02-16T19:54:58 <cindyli> right
+2018-02-16T19:55:19 <cindyli> but anyway, the model had been in these missing-value state before the "liveness"
+2018-02-16T19:55:29 <Bosmon> ok
+2018-02-16T19:55:32 <Bosmon> Makes no sense
+2018-02-16T19:55:35 <cindyli> but the test only assert "preferences" so it\'s not discovered
+2018-02-16T19:55:57 * avtar has quit
+2018-02-16T19:56:09 <Bosmon> The system can\'t function without solutionsRegistryEntries
+2018-02-16T19:56:15 <Bosmon> You can see them being used in the workflow here: https://github.com/GPII/universal/blob/master/gpii/node_modules/lifecycleManager/src/LifecycleManager.js#L186
+2018-02-16T19:56:21 <Bosmon> So you will have to track down where they have gone
+2018-02-16T19:56:27 <cindyli> i agree
+2018-02-16T19:56:51 <Bosmon> You will probably have to step back to your last good state before the merge
+2018-02-16T19:56:56 <Bosmon> Because you are dealing with too many problems at once
+2018-02-16T19:56:57 <cindyli> solutionsRegistryEntries still appear anywhere else, but somehow not in pcp channel
+2018-02-16T19:57:02 <Bosmon> Oh, I see
+2018-02-16T19:58:06 <Bosmon> Well, that doesn\'t seem possible either
+2018-02-16T19:58:19 <Bosmon> Here is the session binder distribution: https://github.com/cindyli/universal/blob/GPII-2630/gpii/node_modules/flowManager/src/PCPChannel.js#L76
+2018-02-16T19:58:44 <Bosmon> This relay rule is attached directly to the lifecycleManager\'s session: https://github.com/cindyli/universal/blob/GPII-2630/gpii/node_modules/flowManager/src/PCPChannel.js#L12
+2018-02-16T19:59:05 <Bosmon> So the model you see in gpii.pcpChannel.sessionToPCP *is* the lifecycleManager\'s model
+2018-02-16T19:59:10 <Bosmon> There is no possibility they can diverge
+2018-02-16T19:59:33 <Bosmon> btw have you started using node 8.x and the new built-in inspector?
+2018-02-16T19:59:35 <Bosmon> It is very good
+2018-02-16T19:59:44 <cindyli> adding a debugging into FlowManagerRequests
+2018-02-16T19:59:52 <Bosmon> It may speed up your debugging a lot
+2018-02-16T20:02:10 <Bosmon> cindyli ^
+2018-02-16T20:03:23 <cindyli> Bosmon: it does help, solution registry entries become empty {} after the filtering: https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/FlowManagerRequests.js#L91, debugging more
+2018-02-16T20:05:27 <Bosmon> cindyli - looks like it is a device reporter issue
+2018-02-16T20:05:36 <Bosmon> There has been no change in the code in this area
+2018-02-16T20:05:38 <Bosmon> In recent pulls
+2018-02-16T20:05:53 <cindyli> ok
+2018-02-16T20:05:58 <Bosmon> But something in your pull may be supplying the wrong device info
+2018-02-16T20:06:04 <Bosmon> And hence all the solutions are getting filtered out
+2018-02-16T20:06:50 <Bosmon> What test case are you running?
+2018-02-16T20:10:54 <Bosmon> Hey jhernandez - the pulls are looking good
+2018-02-16T20:13:19 <cindyli> Bosmon: i think i found the problem, the master is reading device info from linux.json5, but my branch is reading from darwin.json
+2018-02-16T20:13:26 <cindyli> running this test: https://github.com/cindyli/universal/blob/GPII-2630/gpii/node_modules/flowManager/test/PCPChannelTests.js#L426-L430
+2018-02-16T20:13:36 <Bosmon> ha
+2018-02-16T20:13:38 <cindyli> looking into the config file
+2018-02-16T20:13:52 <Bosmon> Well ok, this test has a bug then in any case
+2018-02-16T20:14:01 <Bosmon> Since it should be using mock info for the device reporter
+2018-02-16T20:14:36 <cindyli> which device file is correct to be read from?
+2018-02-16T20:14:56 <cindyli> linux.json5, right?
+2018-02-16T20:15:19 <Bosmon> The testCaseHolder has this definition:     gradeNames: [
+2018-02-16T20:15:19 <Bosmon> "gpii.test.integration.testCaseHolder.linux"
+2018-02-16T20:15:19 <Bosmon> ],
+2018-02-16T20:15:26 <Bosmon> So yes, there is no way you should be reading from darwin.json
+2018-02-16T20:16:23 <cindyli> ok. looking into that grade
+2018-02-16T20:17:18 <Bosmon> Also check out the base config "gpii.tests.acceptance.linux.builtIn.config"
+2018-02-16T20:18:25 <Bosmon> I see that this is responsible for populating the "installedSolutions" within the device reporter
+2018-02-16T20:19:24 <Bosmon> https://github.com/GPII/universal/blob/master/tests/platform/linux/configs/gpii.tests.acceptance.linux.builtIn.config.json
+2018-02-16T20:19:29 <Bosmon> So check whether something has gone wrong with this as well
+2018-02-16T20:20:11 <Bosmon> Although I guess this isn\'t relevant
+2018-02-16T20:21:15 <jhernandez> Bosmon: yes, we\'re all set (I\'ve just updated gpii-app)
+2018-02-16T20:22:27 <cindyli> Bosmon: what determines which solution file to fetch, the "deviceContext" in this test looks like
+2018-02-16T20:22:28 <cindyli> { solutions:
+2018-02-16T20:22:28 <cindyli> [ { id: \'org.gnome.desktop.interface\' },
+2018-02-16T20:22:28 <cindyli> { id: \'org.gnome.desktop.a11y.magnifier\' },
+2018-02-16T20:22:28 <cindyli> { id: \'org.alsa-project\' },
+2018-02-16T20:22:28 <cindyli> { id: \'org.gnome.desktop.a11y.keyboard\' } ],
+2018-02-16T20:22:28 <cindyli> OS: { id: \'darwin\', version: \'15.6.0\' } }
+2018-02-16T20:22:39 <cindyli> OS.id === "darwin"
+2018-02-16T20:22:48 <Bosmon> cindyli - something has gone horribly wrong
+2018-02-16T20:23:01 <Bosmon> cindyli - here is the mock device reporter which should be in effect: https://github.com/GPII/universal/blob/master/gpii/node_modules/testing/src/Mocks.js#L137
+2018-02-16T20:23:04 <cindyli> is that where darwin.json is picked?
+2018-02-16T20:23:13 <Bosmon> These are the testCaseHolders
+2018-02-16T20:24:10 <cindyli> so?
+2018-02-16T20:24:18 <Bosmon> cindyli - so for example you should be using "gpii.test.integration.testCaseHolder.linux"
+2018-02-16T20:24:48 <Bosmon> Which is defined here: https://github.com/GPII/universal/blob/master/gpii/node_modules/testing/src/Integration.js#L30
+2018-02-16T20:25:12 <Bosmon> Which should then enable this mock platformReporter: https://github.com/GPII/universal/blob/master/gpii/node_modules/testing/src/Mocks.js#L137
+2018-02-16T20:25:57 <Bosmon> Somehow in your branch you have broken the connection between this mock definition and the deviceReporter which is made here: https://github.com/GPII/universal/blob/master/gpii/node_modules/testing/src/Mocks.js#L72
+2018-02-16T20:26:09 <Bosmon> And you have ended up somehow with the real deviceReporter rather than the mock one
+2018-02-16T20:26:23 <Bosmon> So I suggest you look around changes you have made in this area to see where the connection got broken
+2018-02-16T20:26:27 <cindyli> ok i se
+2018-02-16T20:26:29 <cindyli> e
+2018-02-16T21:12:49 * stegru joined the channel
+2018-02-16T21:21:42 * colinclark joined the channel
+2018-02-16T21:29:22 <cindyli> Bosmon: problem solved. was caused by a silly redundant line. this stupid one line costs me more than A DAY to debug\xe2\x80\xa6 my goodness. glad it\'s out of the way. thanks for the super effective help. cheers!
+2018-02-16T21:30:17 <Bosmon> cindyli - great
+2018-02-16T21:30:19 <Bosmon> What was the line?
+2018-02-16T21:30:38 <cindyli> pushing the change ..
+2018-02-16T21:30:51 * michelled joined the channel
+2018-02-16T21:30:56 <Bosmon> jhernandez - fantastic we are all merged up with gpii-universal!
+2018-02-16T21:31:29 <cindyli> Bosmon: https://github.com/cindyli/universal/commit/32d891a0a45bfe45eac5ee27a52d8dfe2a6720d2
+2018-02-16T21:31:50 <Bosmon> I guess we can try to ............. PPPUBBLISHE!
+2018-02-16T21:32:00 <Bosmon> Let\'s check that our README looks halfway sane first
+2018-02-16T21:33:18 <cindyli> in short, gpii.test.pouch.pouchTestCaseHolder grade cannot be added more than once thru different means
+2018-02-16T21:33:56 <Bosmon> cindyli - Well, it could, if you just fixed up the function on line 445 to merge the gradeNames rather than trash it
+2018-02-16T21:35:35 <cindyli> which function do you mean? kettle.test.bootstrapServer?
+2018-02-16T21:35:47 <Bosmon> cindyli - but if this a general requirement for all new test fixtures of this kind, shouldn\'t it be added to the core definitions in Mocks.js rather than just one time here?
+2018-02-16T21:35:56 <Bosmon> Presumably you are having to add this all over the place
+2018-02-16T21:37:15 <cindyli> Bosmon: it\'s been added to integration test case holder - https://github.com/cindyli/universal/blob/GPII-2630/gpii/node_modules/testing/src/Integration.js#L23
+2018-02-16T21:37:30 <cindyli> but for those that are not using this test case holder, it needs to be manually added
+2018-02-16T21:38:03 <Bosmon> cindyli - ah
+2018-02-16T21:38:49 <Bosmon> cindyli - it seems cleaner to add one of those relevant grades at line 315 as well
+2018-02-16T21:39:58 <Bosmon> Sticking it in the PCPCHannelTests seems like an unwelcome intrusion of an implementation detail
+2018-02-16T21:41:20 <cindyli> i believe you didn\'t mean this line 315 - https://github.com/cindyli/universal/blob/GPII-2630/gpii/node_modules/flowManager/test/PCPChannelTests.js#L315
+2018-02-16T21:42:03 <Bosmon> No this one https://github.com/cindyli/universal/blob/32d891a0a45bfe45eac5ee27a52d8dfe2a6720d2/gpii/node_modules/flowManager/test/PCPChannelTests.js#L315
+2018-02-16T21:44:36 <cindyli> Bosmon: i see. instead of sticking into the integration test case holder at here - https://github.com/cindyli/universal/blob/GPII-2630/gpii/node_modules/testing/src/Integration.js#L23
+2018-02-16T21:44:43 <cindyli> ok, i can make that chang
+2018-02-16T21:44:46 <cindyli> change
+2018-02-16T22:01:57 * colinclark has quit
+2018-02-16T22:02:31 * colinclark joined the channel
+2018-02-16T22:04:57 * clown has quit
+2018-02-16T22:12:42 <jhernandez> Bosmon: yes, we can, eventually  .... PUBLICAR!
+2018-02-16T22:13:31 <jhernandez> but yeah, probably we should review the READMEs and anything else related to the actual publishing process
+2018-02-16T22:14:53 <jhernandez> not sure since I\'ve never published in npm before, but once I created a gpii-universal.zip with fluid-publish and it "looked" very straigthforward
+2018-02-16T22:15:48 <jhernandez> unfortunately, I have no more time today
+2018-02-16T22:16:26 <jhernandez> in any case, let me know if you want me to do anything over the weekendd
+2018-02-16T22:18:00 <jhernandez> dunno, update a README file, perform a check, test, etc
+2018-02-16T22:18:16 <jhernandez> ;)
+2018-02-16T22:27:07 * amatas has quit
+2018-02-16T22:44:01 * mredigonda joined the channel
+2018-02-16T23:38:27 * mrtyler has quit
+2018-02-16T23:52:22 * mredigonda has quit
+'
+
+b'2018-02-16T12:15:05 <Bosmon> Anyway, an ecosystem depending on a gpii-launcher which has kettle updated to 1.7.1 would be great
+2018-02-16T12:15:19 <georgitodorov> Bosmon: We removed the priorities and everything is working fine, including the tests.
+2018-02-16T12:15:25 <Bosmon> georgitodorov - magnificent :)
+2018-02-16T12:15:30 <georgitodorov> But there is one "but", of course
+2018-02-16T12:15:31 <Bosmon> And jhernandez - thanks for updating your branch
+2018-02-16T12:15:36 <Bosmon> Eagerly awaiting the results of CI
+2018-02-16T12:15:45 <Bosmon> The joint is jumping on a Friday afternoon
+2018-02-16T12:15:52 <Bosmon> And the east coast hasn\'t even woken up yet :)
+2018-02-16T12:16:21 <georgitodorov> Bosmon: The only thing left is to ensure that the pspReady subcomponent is always initialized last
+2018-02-16T12:16:22 <the-t-in-rtf> Ah, crud, I merged the branch under review into the "secret" branch, let me close that pull out and create a new one.
+2018-02-16T12:16:53 <georgitodorov> Bosmon: Currently it is the last defined subcomponent and it does not have any dependency on any of the other subcomponents
+2018-02-16T12:17:06 <georgitodorov> I guess it is just a coincidence that it is initialized last
+2018-02-16T12:17:22 <Bosmon> georgitodorov - ok, in this case I suggest that you eliminate the pspReady subcomponent and replace it with a further event boiling
+2018-02-16T12:17:32 <Bosmon> Since it is just a synthetic component anyway
+2018-02-16T12:18:17 <Bosmon> Or, really, you can just add a listener on onPSPPrequisitesReady with a priority of "last" which just fires onoPSPReady
+2018-02-16T12:18:44 <Bosmon> This will guarantee to fire after all subcomponents are created (at least, in the current framework, but will be easy to fix up in future)
+2018-02-16T12:19:07 <georgitodorov> Bosmon: Hmm, I thought there was some issue with "priority:last" and it was not working as expected
+2018-02-16T12:19:10 <jhernandez> Bosmon: heh, my pleasure - let\'s see if we don\'t expose any other funky stuff :P
+2018-02-16T12:19:13 <jhernandez> the big bang is here!
+2018-02-16T12:19:15 <jhernandez> :)
+2018-02-16T12:19:20 <Bosmon> georgitodorov - I hope not, let\'s see
+2018-02-16T12:19:31 <Bosmon> jhernandez - well, at least we are lighting the touchpaper of the big bang .....
+2018-02-16T12:19:44 <Bosmon> The next step after the whole tree is ready is to move all references over to npm
+2018-02-16T12:19:51 <jhernandez> Bosmon: indeed!
+2018-02-16T12:20:08 <jhernandez> and yes, looking forward to start publishing our modules
+2018-02-16T12:20:11 <jhernandez> :)
+2018-02-16T12:20:22 <Bosmon> Yes, we will finally be entering the 20th century
+2018-02-16T12:23:18 <georgitodorov> Bosmon: The "last" listener works like a charm :)
+2018-02-16T12:23:30 <Bosmon> georgitodorov - awesome
+2018-02-16T12:23:47 <Bosmon> OK, I will tinker with the pull this afternoon and hopefully it can go in ...
+2018-02-16T12:28:30 * georgitodorov has quit
+2018-02-16T12:49:31 <Bosmon> jhernandez - ok great, it\'s in!
+2018-02-16T12:49:41 <Bosmon> Could you push it up through the stack of pulls?
+2018-02-16T12:58:28 * mredigonda has quit
+2018-02-16T13:07:22 <jhernandez> Bosmon: yay!!
+2018-02-16T13:07:50 * cindyli joined the channel
+2018-02-16T13:07:53 <jhernandez> sure, will merge my pulls in windows and gpii-app
+2018-02-16T13:08:02 <jhernandez> ;)
+2018-02-16T13:09:58 <jhernandez> Bosmon: oh no, wait https://ci.gpii.net/job/gpii-app-test/164/console
+2018-02-16T13:10:30 <jhernandez> I\'ll to check on this one first
+2018-02-16T13:38:25 * amatas_ has quit
+2018-02-16T13:42:12 * jhung joined the channel
+2018-02-16T13:49:53 <dandimitrov> Bosmon: regarding the merging of the surveys PR, currently the surveys are configured to be shown 5 seconds after user keys in. We\'d probably want to change that to a more convenient value, e.g. 5 minutes or more :?
+2018-02-16T13:56:30 * michelled joined the channel
+2018-02-16T14:01:36 * simonjb joined the channel
+2018-02-16T14:15:57 <gtirloni> fluid-everyone: confluence\'s wiki is down, I\'m checking that
+2018-02-16T14:16:04 <gtirloni> fluid\'s wiki
+2018-02-16T14:16:12 <jhung> thanks gtirloni
+2018-02-16T14:17:23 <stegru> "entering the 20th century"? shouldn\'t we be moving forward?
+2018-02-16T14:17:23 * clown joined the channel
+2018-02-16T14:33:09 * mrtyler joined the channel
+2018-02-16T14:50:59 <Bosmon> dandimitrov - sure, has bern specified anything?
+2018-02-16T14:51:58 <Bosmon> jhernandez - make sure that gpii-windows and gpii-app have their infusion updated to latest
+2018-02-16T15:07:08 <jhernandez> Bosmon: right, I saw that universal now uses updated versions of infusion, kettle and node-jqunit
+2018-02-16T15:09:42 * shubham07 joined the channel
+2018-02-16T15:10:20 * yuriy joined the channel
+2018-02-16T15:12:19 * colinclark joined the channel
+2018-02-16T15:16:50 <dandimitrov> Bosmon: we don\'t recall for an exact value to have been discussed. I believe he mentioned something like 5 or 15 minutes once
+2018-02-16T15:17:27 <dandimitrov> But it probably be better if asked him :
+2018-02-16T15:17:34 <dandimitrov> :?
+2018-02-16T15:22:44 <the-t-in-rtf> @bosmon and anyone else waiting for a new enough version of gpii-testem: 2.0.0-dev.20180216T151626Z.3612415 is now available.
+2018-02-16T15:23:33 <the-t-in-rtf> I didn\'t quite have enough time to go all the way through the stack, and my hours are nearly done for the week.  I will make a note of packages needing updates to work on on Monday morning.
+2018-02-16T15:26:05 <the-t-in-rtf> Just trying to get a sense of which (if any) are urgent.
+2018-02-16T15:26:09 <the-t-in-rtf> gpii-pouchdb?
+2018-02-16T15:33:11 * the-t-in-rtf joined the channel
+2018-02-16T15:47:10 <Bosmon> dandimitrov - well, it\'s go with 10 minutes then
+2018-02-16T16:07:46 * avtar joined the channel
+2018-02-16T16:39:30 * yuriy has quit
+2018-02-16T17:01:29 * jhernandez has quit
+2018-02-16T17:01:39 * shubham07 has quit
+2018-02-16T17:08:46 * the-t-in-rtf joined the channel
+2018-02-16T17:21:11 * simonjb joined the channel
+2018-02-16T17:25:04 * jhernandez joined the channel
+2018-02-16T17:29:08 <Bosmon> Hey there jhernandez - it passed!
+2018-02-16T17:33:43 <jhernandez> Bosmon: yeah, it passed. I was double checking here locally before pushing updates on win and gpii-app but I\'m getting a failure here
+2018-02-16T17:35:05 <Bosmon> oh, what is it?
+2018-02-16T17:35:12 <jhernandez> re-npm installing, not sure what\'s going on
+2018-02-16T17:35:27 <jhernandez> I\'ll let you know if I get the same error
+2018-02-16T17:36:43 <jhernandez> I can\'t run the acceptance tests on windows after updating the universal ref to current universal/master (it was pointing to my GPII-2568)
+2018-02-16T17:37:23 <jhernandez> weird, since I updated it yesterday with last master, so, it shouldn\'t be any difference between these two
+2018-02-16T17:38:02 <jhernandez> okay, now they are running
+2018-02-16T17:39:56 <Bosmon> excellent
+2018-02-16T17:40:12 <Bosmon> Yes, npm usually screws up on subtleties like changing a version of a head package that is also used by dependencies
+2018-02-16T17:42:19 <jhernandez> yes, looks like it was that
+2018-02-16T17:44:11 * omkar_ joined the channel
+2018-02-16T17:53:35 <jhernandez> windows pushed, now double checking gpii-app before keep going
+2018-02-16T18:09:32 * omkar_ has quit
+2018-02-16T18:21:48 * kasparnet has quit
+2018-02-16T18:30:47 * Victor joined the channel
+2018-02-16T18:31:11 * Victor is now known as Guest96576
+2018-02-16T18:31:52 <Guest96576> hello, cindly i just send a pull request to the achecker repository to solve the installation problem experience in step 1 and step 2, still working on the others
+2018-02-16T18:32:26 <Guest96576> Guest96576 == Victor
+2018-02-16T18:33:34 <colinclark> Guest96576: Great pull request\xe2\x80\x94nice work! :)
+2018-02-16T18:34:41 <Guest96576> Would work on the others
+2018-02-16T18:46:57 * kasparnet joined the channel
+2018-02-16T18:59:43 * mrtyler has quit
+2018-02-16T19:02:53 * Guest96576 has quit
+2018-02-16T19:03:33 * kasparnet has quit
+2018-02-16T19:26:23 <cindyli> hi Bosmon, i\'ve been debugging this pcp channel issue for hours and still puzzled. I wonder if you could shed some light. This problem is something wrong with PCPChannelTests in my GPII-2630 branch, in particularly these two tests: https://github.com/cindyli/universal/blob/GPII-2630/gpii/node_modules/flowManager/test/PCPChannelTests.js#L426-L437
+2018-02-16T19:26:49 <cindyli> the trace shows the `model` value received in this function is wrong: https://github.com/cindyli/universal/blob/GPII-2630/gpii/node_modules/flowManager/src/PCPChannel.js#L186
+2018-02-16T19:27:00 <cindyli> the correct model value looks like: https://pastebin.com/yaXD8qXJ
+2018-02-16T19:27:12 <cindyli> in GPII-2630 branch, it looks like: https://pastebin.com/5S7wgWPK
+2018-02-16T19:28:04 <cindyli> notice the missing values for "originalSettings", "appliedSolutions", "solutionsRegistryEntries" and "activeConfiguration.inferredConfiguration.applications"
+2018-02-16T19:29:48 <cindyli> i\'m now tracing into the lifecycle manager for the population of these values, but haven\'t found the place
+2018-02-16T19:29:54 <cindyli> any ideas?
+2018-02-16T19:44:04 <Bosmon> cindyli - what work have you done in your branch?
+2018-02-16T19:44:28 <cindyli> Bosmon: implement the new data model
+2018-02-16T19:44:46 <cindyli> lots of files have been touched but not much on pcp channel
+2018-02-16T19:44:55 <cindyli> let me paste a comparison
+2018-02-16T19:45:20 <Bosmon> Well, I see that all the solutionsRegistryEntries are gone
+2018-02-16T19:45:23 <Bosmon> Which is pretty severe
+2018-02-16T19:45:37 <Bosmon> But I can\'t really think how you could have lost it
+2018-02-16T19:45:51 <Bosmon> There\'s no way the system could function without them
+2018-02-16T19:45:59 <cindyli> oh no, are they in testData/ folder?
+2018-02-16T19:46:09 <Bosmon> cindyli - in your payloads that you pasted
+2018-02-16T19:46:09 <cindyli> https://github.com/cindyli/universal/compare/GPII-2558...cindyli:GPII-2630
+2018-02-16T19:46:15 <cindyli> right right
+2018-02-16T19:46:16 <Bosmon> You sent two pastebins
+2018-02-16T19:46:24 <cindyli> ya, also wondering why
+2018-02-16T19:47:02 <cindyli> is it the lifecycle manager that populate these data into the pcp channel model?
+2018-02-16T19:47:18 <Bosmon> cindyli - does the logon actually proceed correctly?
+2018-02-16T19:47:30 <Bosmon> As far as I can tell, you would receive the most awful errors
+2018-02-16T19:47:54 <cindyli> yes, i think
+2018-02-16T19:47:54 <Bosmon> Anyway, the solutionsRegistryEntries are fetched here: https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/FlowManagerRequests.js#L91
+2018-02-16T19:48:15 <cindyli> ok, digging...
+2018-02-16T19:48:17 <Bosmon> You should then see them pass into the "final payload" here: https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/FlowManagerRequests.js#L103
+2018-02-16T19:49:09 <Bosmon> They then enter the session here: https://github.com/GPII/universal/blob/master/gpii/node_modules/lifecycleManager/src/LifecycleManager.js#L696
+2018-02-16T19:49:16 * stegru has quit
+2018-02-16T19:49:20 * michelled has quit
+2018-02-16T19:49:29 <Bosmon> You can see that solutionsRegistryEntries are explicitly selected to appear in the session
+2018-02-16T19:49:39 <Bosmon> So if they are gone, there has been some appalling problem
+2018-02-16T19:50:06 <cindyli> :\'( what did i break
+2018-02-16T19:50:36 <Bosmon> But I can\'t believe that if they are gone by the time you get to this line https://github.com/cindyli/universal/blob/GPII-2630/gpii/node_modules/flowManager/src/PCPChannel.js#L186 - that the logon can continue properly
+2018-02-16T19:51:09 <cindyli> well it continues until you add in "liveness"
+2018-02-16T19:51:12 <cindyli> ;)
+2018-02-16T19:51:17 <Bosmon> cindyli - this diff is pretty hard to read
+2018-02-16T19:51:28 <Bosmon> Why is it based on GPII-2558 rather than trunk?
+2018-02-16T19:51:43 <cindyli> 2558 is based on the trunk
+2018-02-16T19:51:59 <cindyli> i think you may not be interested in 2558 changes
+2018-02-16T19:52:03 <Bosmon> This diff touches 512 files
+2018-02-16T19:52:08 <cindyli> exactly
+2018-02-16T19:52:09 <Bosmon> Perhaps you have a more focused one? : P
+2018-02-16T19:52:25 <cindyli> a lot of files are focused ones
+2018-02-16T19:52:42 <cindyli> the prefs server is completely rewritten
+2018-02-16T19:52:52 <cindyli> and auth server has been changed too
+2018-02-16T19:52:59 <cindyli> i guess those are the main focus in this branch
+2018-02-16T19:53:21 <cindyli> also the renaming of "userToken" -> "gpiiKey" and some other renamings on prefs safe etc
+2018-02-16T19:53:47 <cindyli> you will review this branch when it becomes a pull request. GOOD LUCK!
+2018-02-16T19:53:56 <Bosmon> Do you have any test cases passing?
+2018-02-16T19:54:17 <cindyli> all tests are now passing, until i merged in your "liveness" implementation
+'
+
+b'2018-02-16T00:12:25 * danayo joined the channel
+2018-02-16T00:53:22 * colinclark has quit
+2018-02-16T01:09:03 * mredigonda has quit
+2018-02-16T01:12:54 * mredigonda joined the channel
+2018-02-16T01:34:17 * mredigonda has quit
+2018-02-16T02:18:05 * danayo has quit
+2018-02-16T02:48:53 * danayo joined the channel
+2018-02-16T05:18:20 * mayank_ joined the channel
+2018-02-16T05:21:14 * mayank1495 has quit
+2018-02-16T05:46:10 * Sunny0794 joined the channel
+2018-02-16T06:07:21 * mayank1495 joined the channel
+2018-02-16T06:09:23 * mayank_ has quit
+2018-02-16T06:15:15 * rhitik_ joined the channel
+2018-02-16T06:15:46 * rhitik_ has quit
+2018-02-16T06:16:12 * rhitik_ joined the channel
+2018-02-16T06:16:24 * rhitik_ has quit
+2018-02-16T06:25:24 * danayo joined the channel
+2018-02-16T06:33:30 * danayo has quit
+2018-02-16T07:01:23 * mayank_ joined the channel
+2018-02-16T07:03:27 * mayank1495 has quit
+2018-02-16T07:12:19 * mayank__ joined the channel
+2018-02-16T07:14:47 * mayank_ has quit
+2018-02-16T07:45:45 * georgitodorov joined the channel
+2018-02-16T08:06:09 * Sunny0794 has quit
+2018-02-16T08:14:45 * kasparnet joined the channel
+2018-02-16T08:38:09 * mayank1495 joined the channel
+2018-02-16T08:38:18 * mayank__ has quit
+2018-02-16T08:52:37 * mayank1495 has quit
+2018-02-16T08:55:26 <kasparnet> morning Bosmon
+2018-02-16T08:56:09 <kasparnet> I\'ve pushed a fix for GPII-2842 so hopefully things will work now
+2018-02-16T08:56:22 <kasparnet> I guess we\'ll now in 20 mins when the CI has done its thing
+2018-02-16T09:23:59 * mayank1495 joined the channel
+2018-02-16T09:33:03 * stegru joined the channel
+2018-02-16T09:36:35 * amatas_ joined the channel
+2018-02-16T09:39:15 <Bosmon> That\'s awesome, thanks kasparnet - now merged
+2018-02-16T09:48:00 * mayank1495 has quit
+2018-02-16T09:58:48 * the-t-in-rtf joined the channel
+2018-02-16T10:10:02 <the-t-in-rtf> Morning.  @Bosmon, is there dev release with the merged fix from @kasparnet?
+2018-02-16T10:10:24 <the-t-in-rtf> Hoping to verify that the coverage works end to end in the universal pull.
+2018-02-16T10:12:06 <Bosmon> the-t-in-rtf - kasparnet\'s latest fix is just to universal
+2018-02-16T10:12:18 <Bosmon> HIs fix to infusion is already in the latest dev release of that
+2018-02-16T10:12:49 <Bosmon> You can just merge up your coverage work with the latest trunk of universal
+2018-02-16T10:20:18 <the-t-in-rtf> Awesome, thanks.
+2018-02-16T10:31:12 <the-t-in-rtf> Works fine for me, "npm test" now results in a combined coverage report.
+2018-02-16T10:31:54 * kasparnet_ joined the channel
+2018-02-16T10:31:56 * kasparnet_ has quit
+2018-02-16T10:32:37 <kasparnet> yay - thanks Bosmon
+2018-02-16T10:45:35 <the-t-in-rtf> Thanks for the quick fix, Kasper.
+2018-02-16T10:45:42 <the-t-in-rtf> So nice to go into the weekend with that working.
+2018-02-16T10:52:36 <Bosmon> That\'s fantastic, the-t-in-rtf!
+2018-02-16T10:53:16 <the-t-in-rtf> I know, I was kind of hopelessly clinging to that last possibility early in the week, glad it highlighted a way forward.
+2018-02-16T10:54:31 <Bosmon> Remind me what the two crucial elements were?
+2018-02-16T10:54:37 <Bosmon> i) passing the local "require" to fluid.require
+2018-02-16T10:54:51 <Bosmon> ii) getting the negated exclude expression right?
+2018-02-16T10:54:55 <the-t-in-rtf> Yes.
+2018-02-16T10:54:55 <Bosmon> Is there anything else?
+2018-02-16T10:54:59 <Bosmon> What does ii) look like
+2018-02-16T10:55:34 <the-t-in-rtf> Here is the heart of darkness: https://github.com/the-t-in-rtf/universal/blob/GPII-2486/.nycrc#L7
+2018-02-16T10:56:14 <the-t-in-rtf> We also ended up with a consistent instrumenter that bypasses the **/node_modules/** craziness.
+2018-02-16T10:56:26 <the-t-in-rtf> That means we won\'t end up with the same wrestling match for our browser tests.
+2018-02-16T10:56:37 <Bosmon> oh great
+2018-02-16T10:56:43 <the-t-in-rtf> i.e. we can sanely describe what\'s in and what\'s out, as well as what\'s source and what isn\'t.
+2018-02-16T10:57:02 <Bosmon> Well, halfway sane :)
+2018-02-16T10:57:24 <the-t-in-rtf> perhaps "more sanely" would have been better, yes.
+2018-02-16T10:57:26 <Bosmon> Perhaps if we add this .rc as a report on that istanbuljs issue, they may take pity on us
+2018-02-16T10:57:58 <the-t-in-rtf> Let me do that, as I\'d like to explain why the negated pattern is not a real solution.
+2018-02-16T10:58:06 <Bosmon> Awesome, thanks
+2018-02-16T10:58:07 <the-t-in-rtf> or not a really nice solution.
+2018-02-16T11:13:50 * gtirloni joined the channel
+2018-02-16T11:35:59 * mredigonda joined the channel
+2018-02-16T11:36:00 <Bosmon> Hey there georgitodorov, dandimitrov - I think your web view tests are looking great now
+2018-02-16T11:36:10 <Bosmon> Shall we try to think of some ways of getting rid of your component priority annotations?
+2018-02-16T11:45:04 <georgitodorov> Bosmon: Sure. Our idea of introducing the priorities was to have an event which is fired when the PSP is completely functional. This was needed for the execution of the integration tests.
+2018-02-16T11:45:23 <Bosmon> Yes, the event is fine
+2018-02-16T11:45:42 <Bosmon> But we need to find other ways of dealing with any interdependencies there might be between the subcomponents
+2018-02-16T11:45:59 <Bosmon> Or, most preferably, discovering that there aren\'t any :)
+2018-02-16T11:46:41 <georgitodorov> Bosmon: In this particular case, there are a lot of components which are created when the "onPSPPrerequisitesReady" event is fired
+2018-02-16T11:47:05 <georgitodorov> Generally, they can initialize in any order if we do not define priorities for them, right?
+2018-02-16T11:47:25 <georgitodorov> Thus, we cannot know when all the initializations have finished? Or am I missing something?
+2018-02-16T11:47:50 <Bosmon> georgitodorov - if you don\'t specify a priority they will initialise in a "data-driven order"
+2018-02-16T11:48:05 <Bosmon> So if a component has a dependency on material in another one, the other will initialise first
+2018-02-16T11:48:28 <Bosmon> So for example this priority field is unnecessary: https://github.com/GPII/gpii-app/pull/34/files#diff-bc658f47466ba31df21972f46d3f02d4R161
+2018-02-16T11:48:36 <Bosmon> Since the component\'s definition has a dependency on "settingsBroker"
+2018-02-16T11:48:51 <Bosmon> I suggest we just try getting rid of all the priority fields and see what goes wrong :)
+2018-02-16T11:56:04 <Bosmon> the-t-in-rtf - is the JSDocs pull ready to go now?
+2018-02-16T11:56:22 <the-t-in-rtf> It\'s ready for review, yes.
+2018-02-16T11:57:01 <the-t-in-rtf> I did a global search for the Array.<Type> syntax and fixed that, I hope that it more or less reflects what we\'ve discussed.
+2018-02-16T11:57:12 <the-t-in-rtf> It definitely lints, or I couldn\'t have even committed my work.
+2018-02-16T11:57:18 <Bosmon> gtirloni - should I direct all buildkite/vagrant questions to avtar?
+2018-02-16T11:57:26 <Bosmon> I was wondering what was going on with this build: https://buildkite.com/fluid-project/fluid-infusion/builds/56#b32d77db-ae69-47a2-a621-7352432041f4
+2018-02-16T11:57:44 <Bosmon> Somehow the vagrant box for infusion appears to have tried to load kettle
+2018-02-16T11:57:48 <Bosmon> Which I can\'t understand why
+2018-02-16T11:58:05 <gtirloni> let me check
+2018-02-16T11:58:17 <Bosmon> Oh
+2018-02-16T11:58:24 <Bosmon> I guess maybe it got mediated via gpii-testem....
+2018-02-16T11:59:12 <gtirloni> it\'s basically the same process as in Jenkins, even running on the same machine
+2018-02-16T11:59:34 <Bosmon> The buildkite builds run on our own machines?
+2018-02-16T11:59:56 <gtirloni> on the IDRC build server, the same used by Jenkins
+2018-02-16T12:00:01 <Bosmon> wow
+2018-02-16T12:00:15 <Bosmon> So bewildering
+2018-02-16T12:00:21 <Bosmon> So buildkite.com is just an orchestrator?
+2018-02-16T12:00:30 <gtirloni> yep
+2018-02-16T12:00:35 <gtirloni> it uses our machine, yes
+2018-02-16T12:00:53 <gtirloni> same as the GitLab work Alfredo has done.. it runs an agent on one of our servers
+2018-02-16T12:01:35 <gtirloni> it\'s just a pretty interface and the agent... underneath, it\'s our server with the old vagrant/virtualbox setup
+2018-02-16T12:01:57 <Bosmon> I see we\'ve got lots of recent gpii-testems - the-t-in-rtf, should I try 2.0.0-dev.20180201T132658Z.df2069a ?
+2018-02-16T12:02:39 <the-t-in-rtf> The last 2-3 mainly include improvements to the instrumentation, but yes, the most recent is the best to use.
+2018-02-16T12:02:43 <the-t-in-rtf> and that is the most recent.
+2018-02-16T12:02:49 <the-t-in-rtf> @Bosmon ^^^
+2018-02-16T12:03:03 <Bosmon> the-t-in-rtf - it binds to a heinously old revision of infusion
+2018-02-16T12:03:12 <Bosmon> Could we have a dep update version?
+2018-02-16T12:03:14 <the-t-in-rtf> Give me a moment.
+2018-02-16T12:03:15 <the-t-in-rtf> yup.
+2018-02-16T12:03:19 <Bosmon> awesome
+2018-02-16T12:03:43 <Bosmon> We need to get the whole tree to a version which cuts out all versions of infusion prior to 201711
+2018-02-16T12:04:16 <the-t-in-rtf> OK, that\'s a good one for a Friday afternoon, will write up a ticket before getting my lunch.
+2018-02-16T12:04:21 <Bosmon> I think your gpii-express is good
+2018-02-16T12:04:44 <Bosmon> But I wonder what route we are getting kettle from
+2018-02-16T12:05:00 <the-t-in-rtf> gpii-launcher
+2018-02-16T12:05:09 <the-t-in-rtf> almost positive on that one.
+2018-02-16T12:05:31 <Bosmon> And where are we getting *that* from : P
+2018-02-16T12:05:44 <the-t-in-rtf> there is a launcher for the instrumenter, so that you can run it as you would istanbul or nyc.
+2018-02-16T12:06:13 <Bosmon> I mean, you\'re right, but I don\'t see it in gpii-testem\'s package.json
+2018-02-16T12:06:29 <the-t-in-rtf> what does npm ls kettle say?
+2018-02-16T12:06:49 <Bosmon> It does indeed say that gpii-launcher is a dependency of gpii-testem, and gives rise to kettle
+2018-02-16T12:06:51 <Bosmon> But I can\'t see how
+2018-02-16T12:07:05 <Bosmon> https://github.com/GPII/gpii-testem/blob/master/package.json
+2018-02-16T12:07:10 <Bosmon> Perhaps the dependency went away recently?
+2018-02-16T12:07:18 <the-t-in-rtf> No, the dev release was cut from a branch.
+2018-02-16T12:07:24 <the-t-in-rtf> Specifically the one for which there is an open pull.
+2018-02-16T12:07:27 <Bosmon> arg
+2018-02-16T12:07:50 <Bosmon> It seems to be assigned to me for review :)
+2018-02-16T12:07:59 <the-t-in-rtf> Yes.
+2018-02-16T12:08:21 <Bosmon> But I notice that the branch itself contains no updates to package.json
+2018-02-16T12:08:49 <the-t-in-rtf> perhaps we combined reviews, just a moment.
+2018-02-16T12:11:39 <the-t-in-rtf> Looks like it\'s in GPII-2736: https://github.com/the-t-in-rtf/gpii-testem/blob/GPII-2736/package.json#L31
+2018-02-16T12:11:46 <the-t-in-rtf> I will make sure that is merged with the open review.
+2018-02-16T12:11:58 <Bosmon> secret branch!!
+2018-02-16T12:12:12 <the-t-in-rtf> Well, there is a ticket for it.
+2018-02-16T12:12:26 <Bosmon> Well, sure
+2018-02-16T12:12:30 <the-t-in-rtf> I thought I would have to go deeper down the rabbit hole to resolve the universal issues, and had done some early work there.
+2018-02-16T12:12:36 <Bosmon> But without a pull I would never have discovered where this dev release was built from
+2018-02-16T12:12:46 <the-t-in-rtf> Yes, that\'s not great, I will clean it up shortly.
+2018-02-16T12:12:47 <Bosmon> Or without your knowhow :)
+2018-02-16T12:13:05 <the-t-in-rtf> Perhaps we can have fluid-publish add some kind of metadata?
+2018-02-16T12:13:16 <the-t-in-rtf> I mean, git knows what branch it\'s in at the time of cutting the release.
+2018-02-16T12:13:28 <Bosmon> Well yes, but the metadata wouldn\'t be very reliable
+2018-02-16T12:13:35 <Bosmon> There need be no correspondence between local and remote branch names
+2018-02-16T12:13:43 <the-t-in-rtf> Hmm.  right.
+2018-02-16T12:13:55 <Bosmon> I often rename people\'s remote branches if they seem to have funny names...
+'
+

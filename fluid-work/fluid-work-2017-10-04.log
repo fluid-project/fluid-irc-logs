@@ -1,0 +1,415 @@
+b'2017-10-04T17:52:41 <Bosmon> Now I try to run the tests
+2017-10-04T17:53:08 <Bosmon> As it seems, it makes no change itself to the workflow by which we build our "dist" assets, including compiling CSS from Stylus files
+2017-10-04T17:53:31 <Bosmon> But it seems that, for a long time, all of our test case files have been making references to their CSS files in a location where they are not present
+2017-10-04T17:54:00 <Bosmon> That is, literally in src/preferences/css/Enactors.css
+2017-10-04T17:54:12 <Bosmon> er src/framework/preferences/css/Enactors.css
+2017-10-04T17:54:37 <Bosmon> For a long time this hasn\'t mattered, since the only result was that some content in test cases which noone could see in any case wasn\'t getting styled correctly
+2017-10-04T17:55:00 <Bosmon> But now it seems we have some test cases in SeparatedPanelPrefsEditorResponsive-test.html which depend on particular CSS rules being active
+2017-10-04T17:55:35 * javjarfer joined the channel
+2017-10-04T17:55:52 <Bosmon> It seems it would be useful to have in place i) an extra grunt task to copy these files into place, and ii) a .gitignore rule to make sure they didn\'t get committed
+2017-10-04T17:56:20 <Bosmon> Otherwise people will be "surprised" by the fact that the test cases now fail when run from within the project itself
+2017-10-04T17:57:11 <Bosmon> Interestingly it seems we must have once had a build task of this form
+2017-10-04T17:57:29 <Bosmon> Since I see there is a "clean" rule to clear the CSS files out of that location
+2017-10-04T17:57:39 <Bosmon> stylus: ["src/components/switch/css/*.css", "src/framework/preferences/css/*.css"],
+2017-10-04T17:59:58 <Bosmon> Ah, perhaps I\'m misreading this
+2017-10-04T18:00:08 <Bosmon> And the files are being built there and then cleaned out of there by the postBuild
+2017-10-04T18:12:45 <Justin_o> Bosmon: sorry, just getting back
+2017-10-04T18:12:54 <Justin_o> there is a build for those stylus files.. "grunt buildStylus"
+2017-10-04T18:13:13 <Justin_o> having a .gitignore would be a good idea.. i though there was one, but perhaps we failed to do that
+2017-10-04T18:14:10 <Justin_o> Bosmon: yes, these lines of the gitignore should prevent any of the generated css from being committed https://github.com/fluid-project/infusion/blob/master/.gitignore#L5-L6
+2017-10-04T18:17:15 <Justin_o> Bosmon: it is a good point to note thought that a build is needed for the tests to pass now.. that should be okay for the artifacts on the build site but it could be annoying or unexpected for those testing locally... i guess for manual testing of prefs framework related things you also need to run a build though..
+2017-10-04T18:24:56 * simonjb joined the channel
+2017-10-04T18:30:20 * clown joined the channel
+2017-10-04T18:31:18 * javjarfer_ joined the channel
+2017-10-04T18:31:36 <Justin_o> fluid-everyone: at today\'s community meeting we\'ll be talking about ways to better announce and share what we discuss and learn at community meetings
+2017-10-04T18:32:22 * danayo joined the channel
+2017-10-04T18:33:50 * javjarfer has quit
+2017-10-04T18:36:11 * cindyli1 joined the channel
+2017-10-04T18:36:22 * sepidehshahi joined the channel
+2017-10-04T18:38:18 <Justin_o> fluid-everyone: google doc for today\'s community meeting https://docs.google.com/document/d/1OVvlKGN84Fg-Kq2XWd5I0uRyTqG6H9MGMcckG-IEDvo/edit?usp=sharing
+2017-10-04T18:41:05 * stegru has quit
+2017-10-04T18:41:32 * sepidehshahi joined the channel
+2017-10-04T18:42:14 * jhung joined the channel
+2017-10-04T18:42:21 * sepidehshahi joined the channel
+2017-10-04T18:43:46 * danayo_ joined the channel
+2017-10-04T18:44:57 * avtar1 joined the channel
+2017-10-04T18:49:45 * mrtyler joined the channel
+2017-10-04T18:56:25 <Bosmon> Justin_o - but the build doesn\'t seem to run automatically as a result of "npm install"?
+2017-10-04T18:57:11 <Bosmon> I guess it does
+2017-10-04T18:57:22 <Bosmon> But I guess it indeed the issue that the products are cleaned away....
+2017-10-04T19:27:25 * sepidehshahi joined the channel
+2017-10-04T19:31:06 * cindyli joined the channel
+2017-10-04T19:38:10 * sepidehshahi joined the channel
+2017-10-04T19:53:06 * michelled joined the channel
+2017-10-04T19:53:53 <Justin_o> Bosmon: yes, so a dist build is kicked off on npm install and that does cleanup afterwards.. although that will not happen in the future.. you may have seen an npm warning that prepublish scripts won\'t get run on install in the future
+2017-10-04T19:55:54 <Justin_o> https://docs.npmjs.com/misc/scripts#deprecation-note
+2017-10-04T19:56:55 <Justin_o> Bosmon: we could look at adding a "prepare" step to run build or buildStylus task
+2017-10-04T20:05:10 * javjarfer_ has quit
+2017-10-04T20:07:44 * stegru joined the channel
+2017-10-04T20:11:44 * jhung joined the channel
+2017-10-04T20:19:32 * mrtyler joined the channel
+2017-10-04T20:28:49 <Justin_o> colinclark: sorry, just saw your message about the licensing.. thanks for updating the page.
+2017-10-04T20:28:59 <colinclark> no problem!
+2017-10-04T20:29:23 <Justin_o> I\'ve only had a chance to skim it but noticed that icons should be CC licenced... i\'ll have to update our infusion-icons repo which is currently BSD-3
+2017-10-04T20:30:25 <colinclark> I think that\'s correct, yes
+2017-10-04T20:30:37 <colinclark> Only code gets licensed under a source code license
+2017-10-04T20:30:39 <colinclark> the rest is CC
+2017-10-04T20:30:44 <Justin_o> colinclark:  you mean that it\'s BSD-3 or that is should be CC
+2017-10-04T20:30:49 <colinclark> the latter
+2017-10-04T20:30:52 <Justin_o> okay
+2017-10-04T20:30:57 <colinclark> the question of which CC license, specifically, is a bit more of a complex question
+2017-10-04T20:31:31 <colinclark> obviously it\'s nice to use the latest version, but in some cases we have content that is quite old, and was originally CC-BY 2.5 Canada licensed, or CC-BY 3.0 Unported
+2017-10-04T20:31:43 <colinclark> in those cases, if we\'re the rights holder, we can relicense to the latest CC-BY 4.0
+2017-10-04T20:31:52 <colinclark> but if it\'s someone\'s else, we\'d have to ask them to do so
+2017-10-04T20:32:00 <colinclark> which is a lot of work and maybe not too important
+2017-10-04T20:32:24 <Justin_o> colinclark: i think the svgs are interesting because they could be considered an artifact or source. At any rate I don\'t have a personal preference and am happy to make the change, probably tomorrow
+2017-10-04T20:32:34 <colinclark> :)
+2017-10-04T20:32:37 <colinclark> Yes, that\'s very interesting
+2017-10-04T20:33:16 <Justin_o> colinclark: the CC issue is tricky..
+2017-10-04T20:33:56 <Justin_o> i suppose for the icons the svgs didn\'t explicitly have a CC license so we should be fine to use the latest.. i\'m not sure about things like the infusion docs though
+2017-10-04T20:34:09 <Justin_o> did we have the older CC license on the wiki before?
+2017-10-04T20:34:27 <colinclark> yes, we did
+2017-10-04T20:34:38 <colinclark> although interestingly, it seems that it was updated haphazardly over the years
+2017-10-04T20:34:46 <colinclark> and quite possibly not well stated in the first place
+2017-10-04T20:35:01 <colinclark> when we started Fluid, we were using CC-BY 2.5 Canada
+2017-10-04T20:35:15 <colinclark> the Infusion docs were explicitly licensed CC-BY 3.0
+2017-10-04T20:35:31 <colinclark> and I think that\'s reasonable
+2017-10-04T20:35:42 <colinclark> I have tried to clearly reflect that history on the page
+2017-10-04T20:36:12 <colinclark> Given that the workflow for icons is generally a "content" workflow, that they often start in another format (e.g. .ai), and you\'d want the license to apply to artefacts generated from the SVG (e.g. PNGs), I think Creative Commons is the most appropriate for icons
+2017-10-04T20:36:21 <colinclark> it also seems to be the general convention by others
+2017-10-04T20:38:25 <Justin_o> okay, sounds good
+2017-10-04T20:40:35 <colinclark> it\'s not unusual for things to be distributed with mixed CC versions, I understand
+2017-10-04T20:40:59 <Justin_o> colinclark: https://issues.fluidproject.org/browse/FLUID-6210
+2017-10-04T20:41:11 <Justin_o> colinclark: ah okay, i was wondering about the Infusion Docs case
+2017-10-04T20:41:25 <Justin_o> do we have to mention explicitly which parts are which?
+2017-10-04T20:41:29 <colinclark> so in general, if there\'s a case where we\'ve got some material that we know is from another organization/individual (e.g. U of T) and we\'re continuing to modify/extend it, we can mark the new stuff as CC-BY 4.0 and the old stuff otherwise
+2017-10-04T20:41:31 <colinclark> yes, generally you do
+2017-10-04T20:41:46 <colinclark> there\'s nothing terribly wrong about using an older license, as well, in the grand scheme of things
+2017-10-04T20:42:06 <colinclark> so that\'s one we can make based on discretion\xe2\x80\x94deciding if it\'s easier to just keep it all at the same version vs. mixing it
+2017-10-04T20:42:16 <Justin_o> i wonder how we can best express the mixed case within the docs.. considering that it could be changes within a paragraph for example\'
+2017-10-04T20:42:24 <colinclark> right
+2017-10-04T20:42:38 <colinclark> in that case, it\'s probably a lot easier just not to upgrade the new contributions
+2017-10-04T20:43:45 <colinclark> a world where rights were assigned would have been much easier, I have to say :)
+2017-10-04T20:44:57 <Justin_o> colinclark: yes, for cases like this for sure
+2017-10-04T20:57:52 <Bosmon> Justin_o - could we just skip the cleanup?
+2017-10-04T20:58:00 <Bosmon> As we decided to do for some of the built files already
+2017-10-04T20:58:28 <avtar> Bosmon: justin has left the building
+2017-10-04T20:58:30 <Bosmon> Right now we have the issue that if someone checks out our project, and does an "npm install", they will find the checkout in a condition where the tests won\'t pass
+2017-10-04T21:13:25 * michelled joined the channel
+2017-10-04T21:25:46 * gtirloni_ joined the channel
+2017-10-04T21:28:01 * stegru has quit
+2017-10-04T21:44:29 * danayo joined the channel
+2017-10-04T21:52:38 <gtirloni> fluid-everyone: maintenance on the IDRC servers will start in a few minutes (6PM EDT)
+2017-10-04T22:09:34 * amatas has quit
+2017-10-04T22:39:09 * stegru joined the channel
+2017-10-04T22:46:33 * stegru has quit
+2017-10-04T23:26:39 * danayo_ joined the channel
+2017-10-04T23:31:57 * danayo_ has quit
+2017-10-04T23:50:14 * mrtyler has quit
+2017-10-04T23:52:20 * mrtyler joined the channel
+'
+
+b'2017-10-04T14:22:52 <Bosmon> But I found that given the current ChangeApplier implementation, this is almost impossibly hard
+2017-10-04T14:22:54 <alanharnum> colinclark: that same case is the one made for wholesale adoption of the AWS stack, and it\'s not necessarily invalid depending on your goals
+2017-10-04T14:23:09 <Bosmon> In the case where you\'ve pasted the code, it is easy, because all the changing code is in the same scope
+2017-10-04T14:23:17 <Bosmon> And so it doesn\'t disrupt it too much to stick in a transaction
+2017-10-04T14:23:33 <Bosmon> But in the GPII, there are multiple sites which fire changes during a logon process, and some of them are even asynchronous
+2017-10-04T14:23:35 <colinclark> alanharnum: yes, as I\'ve seen in our own effort to remain cloud-portable on APCP
+2017-10-04T14:23:55 <Bosmon> So it would be extremely hard to find them all and wrap them in a transaction, and in any case, this should be something which can be done from the outside, without having to disrupt all the code
+2017-10-04T14:23:59 <alanharnum> colinclark: it\'s an interesting needle they\'re trying to thread - making the case for well-integrated platforms and tooling and arguing that the coordination and integration cost of solo open source is too high for government to pay, but also claiming that "public" cloud is not appropriate
+2017-10-04T14:23:59 <colinclark> it would have been so much easier to simply use all of AWS\' tools
+2017-10-04T14:24:07 <colinclark> yes
+2017-10-04T14:24:24 <Bosmon> I had an idea late during my Boulder time which I named "vertical transactions" which I think is going to have to come into play sooner rather than later
+2017-10-04T14:24:38 <Justin_o> Bosmon: what is a vertical transaction?
+2017-10-04T14:24:47 <Bosmon> SInce it will also remove a lot of the special casing that we currently have around the visibility of changes within a model relay
+2017-10-04T14:25:13 <Bosmon> At the moment it\'s impossible for an ordinary user to "beat" the relay system and see any of the changes within it
+2017-10-04T14:25:32 <Bosmon> All you can do as an ordinary user is to open a transaction, which is quite disruptive and doesn\'t quite achieve the same effect
+2017-10-04T14:25:42 <Bosmon> Justin_o - well, I\'ll have to finish writing up the JIRA : P
+2017-10-04T14:25:59 <Justin_o> Bosmon: okay :)
+2017-10-04T14:26:00 <Bosmon> But this will also be increasingly important as we start adopting the Nexus and similar technologies across our stack
+2017-10-04T14:26:09 <gmoss> the-t-in-rtf: thanks for your response! I agree that partials seem like the best bet for a handlebars solution in that case. alanharnum and I ended up deciding to stick with our fluid.stringTemplate solution for the time being
+2017-10-04T14:26:14 <Bosmon> Because it is vital that these transactions can be observed OVER THE WIRE as well as just within a single system
+2017-10-04T14:27:33 <the-t-in-rtf> Thanks for closing the loop @gmoss.
+2017-10-04T14:28:18 <Justin_o> Bosmon: it would probably be useful for debugging too
+2017-10-04T14:29:05 <Bosmon> Justin_o - yes, right now it is extremely hard to debug into model relay transactions
+2017-10-04T14:29:12 <Bosmon> Because they occur in a "little private world"
+2017-10-04T14:29:28 <Bosmon> Under the new system it would be possible to write a special kind of model listener which could observe them
+2017-10-04T14:29:39 <Bosmon> Without disturbing them
+2017-10-04T14:30:03 <Justin_o> that\'s be great
+2017-10-04T14:30:48 <Justin_o> Bosmon: i don\'t think my PR from ages ago made it in, has there been any other work on debouncing and throttling model changes or datasources
+2017-10-04T14:31:15 <Bosmon> Justin_o - no, not so far
+2017-10-04T14:31:20 <Bosmon> the-t-in-rtf - do you have any reminiscences in this area?
+2017-10-04T14:33:33 <Justin_o> Bosmon: i\'m some what worried that what might also be happening is that the changes are happening in the panel, being sent by a message to the datastore but are happening fast enough that a new change is made in the panel and the previous update from the datastore is coming back and trying to change it back to the previous value.
+2017-10-04T14:34:09 <Bosmon> Justin_o - yes, that is quite possible
+2017-10-04T14:34:27 <Bosmon> You might have to do something similarly dreadful to what I did in the GPII codebase last night : P
+2017-10-04T14:34:38 <Bosmon> It\'s funny how these kinds of problems all come to a head at once
+2017-10-04T14:34:51 <Bosmon> Sometimes there is just "something in the air" ....
+2017-10-04T14:35:22 <Justin_o> what happenstance.. i actually should have hit this earlier but i thought it was specific to a certain machine. :(
+2017-10-04T14:35:24 <the-t-in-rtf> @bosmon, not that I can recall, I tend to use the model relay in a fairly basic way.  I only learned about relay transforms last week...
+2017-10-04T14:36:12 <Bosmon> the-t-in-rtf - I think you were thinking about throttling/debouncing at some point though?
+2017-10-04T14:36:51 <the-t-in-rtf> Maybe years ago with regards to requests in flight, but not with regards to model changes in flight.
+2017-10-04T14:38:02 <the-t-in-rtf> My work on the binder might be what you\'re thinking of.
+2017-10-04T14:38:27 <the-t-in-rtf> That does attempt a circular update immediately, but because the value is already stable, there are generally no problems beyond the extra attempted relay.
+2017-10-04T14:39:24 <the-t-in-rtf> by circular I mean that A is updated, B is updated, and an additional attempt is made to inform A of the change.
+2017-10-04T14:40:53 * jhung_busy is now known as jhung
+2017-10-04T14:41:04 <the-t-in-rtf> @jhung, you\'re not busy any more!\xe2\x80\xa6 ;)
+2017-10-04T14:41:25 <the-t-in-rtf> Just wanted to reach out, we can chat off to the side if the landslide of comments I left on the docs pull are at all confusing.
+2017-10-04T14:41:53 <jhung> the-t-in-rtf haha I\'ll take a look at the comments now.
+2017-10-04T14:45:03 <jhung> the-t-in-rtf: Read over the comments. Thanks a lot for making those improvements and the explanations. I\'ll pull down your latest changes and check it over now.
+2017-10-04T14:46:43 <the-t-in-rtf> cool.  I could use an experienced eye reviewing some of the fixed links, to make sure I didn\'t substitute apples for oranges or anything.
+2017-10-04T14:47:21 <the-t-in-rtf> Most were pretty obvious, with some of the "to-do" links it wasn\'t always clear to me if we intended to create a new piece of content at the link target.
+2017-10-04T14:47:51 <the-t-in-rtf> My assumption was that they were old TODOs that were now TODONEs
+2017-10-04T14:48:06 * danayo joined the channel
+2017-10-04T14:48:56 <javjarfer> hi stegru, I was about to open the issue about the "gpii.windows.closeProcessByName", just to ask if wasn\'t working for you also
+2017-10-04T14:49:14 <stegru> oh yes, let me see
+2017-10-04T14:52:24 <javjarfer> thanks
+2017-10-04T14:54:56 * avtar has quit
+2017-10-04T14:55:10 <stegru> javjarfer: well, when i logged in as elaine nothing happened (firefox didn\'t start)
+2017-10-04T14:55:12 * michelled has quit
+2017-10-04T14:55:20 <stegru> nothing happens when i logout, either
+2017-10-04T14:55:26 * kavya joined the channel
+2017-10-04T14:55:41 <javjarfer> mmm starting was working for me
+2017-10-04T14:55:45 <stegru> but, i copied the "stop" block in the magnifier solution, logged in as elod.. and the close thing worked
+2017-10-04T14:56:20 <javjarfer> okay, that was weird
+2017-10-04T14:56:23 <javjarfer> looking at it
+2017-10-04T14:58:10 <stegru> in the console log, "activeConfiguration" has no instructions inside it for elaine
+2017-10-04T14:59:36 <simonjb> cindyli: where is the meeting at 11 happening?
+2017-10-04T15:00:15 <javjarfer> stegru, for me it shows completely normal "activeConfiguration"
+2017-10-04T15:00:19 <cindyli> gotomeeing, simonjb, should be in the invite
+2017-10-04T15:00:19 <stegru> javjarfer: it\'s ok, the solution wasn\'t enabled for me - i now get the same results are you
+2017-10-04T15:00:22 <cindyli> let me find the link
+2017-10-04T15:00:44 <cindyli> simonjb: https://global.gotomeeting.com/join/619028605
+2017-10-04T15:00:56 <simonjb> thanks cindyli, I didn\'t get an invite (I think)
+2017-10-04T15:01:05 <javjarfer> stegru, okay, then... something weird is happening with closeProcessByName under some conditions
+2017-10-04T15:01:16 <cindyli> ah ok
+2017-10-04T15:01:37 <javjarfer> or maybe with lifecycle manager actions in general
+2017-10-04T15:02:44 <cindyli> Bosmon: r u coming to the meeting
+2017-10-04T15:02:52 <Bosmon> cindyli - yes
+2017-10-04T15:03:49 <Bosmon> I just wanted to push something before I forgot what I was doing :)
+2017-10-04T15:05:07 * mrtyler joined the channel
+2017-10-04T15:05:14 <stegru> god knows, javjarfer - but the close function works ok with another solution.. how about changing the "stop" block to do something else? like run notepad or something
+2017-10-04T15:07:05 <javjarfer> stegru, yes, good place to start, do you want me to open an issue and assign both of us? and take a look to it?
+2017-10-04T15:07:45 <stegru> oh! also try it with a "configure" and/or "restore" block
+2017-10-04T15:07:49 <Bosmon> dandimitrov - I\'ve pushed an update to my https://github.com/GPII/universal/pull/549 branch which now supports changing the context via the PCP
+2017-10-04T15:08:29 <stegru> i remember having this same problem now..
+2017-10-04T15:08:49 <Bosmon> Justin_o - if you\'re interested the kind of disagreeable junk which is necessary to "bulk up" changes in the absence of transactions, you can see the junk here: https://github.com/amb26/universal/blob/13a8f45683f88c6cf5ae6ff68f3eee8dff5cbc05/gpii/node_modules/flowManager/src/PCPChannel.js#L75
+2017-10-04T15:09:01 <Bosmon> And then a bit more here: https://github.com/amb26/universal/blob/13a8f45683f88c6cf5ae6ff68f3eee8dff5cbc05/gpii/node_modules/flowManager/src/PCPChannel.js#L144
+2017-10-04T15:09:10 <stegru> javjarfer: https://issues.gpii.net/browse/GPII-2106
+2017-10-04T15:09:10 <Bosmon> I imagine we\'ll have to make a little utility for this very shortly
+2017-10-04T15:10:06 <stegru> and jhernandez even says exactly what you found: "I could reproduce this problem with "elaine", firefox starts but it won\'t close when keying out. And yes, I found out that by adding the configure block made worked for me too."
+2017-10-04T15:11:39 * dandimitrov has quit
+2017-10-04T15:11:42 <javjarfer> stegru, oooookay, so deleting my recently created issue
+2017-10-04T15:11:53 * dandimitrov joined the channel
+2017-10-04T15:12:30 <javjarfer> so my pull-request is okay, I will mark the bug as blocking and continue with the day... Thanks for the catch
+2017-10-04T15:13:04 <stegru> add a comment at the bottom saying it\'s still unfixed
+2017-10-04T15:13:32 <stegru> nevermind, i reopened
+2017-10-04T15:14:20 * sepidehshahi joined the channel
+2017-10-04T15:14:49 <dandimitrov> Bosmon - great, thank you
+2017-10-04T15:15:01 <Justin_o> Bosmon: thanks, looking over those from the pcpchannel.js now
+2017-10-04T15:15:07 * michelled joined the channel
+2017-10-04T15:16:15 <Bosmon> Justin_o - this pattern of "autodestructing promise that just accepts a single listener" is clearly something paradigmatic :)
+2017-10-04T15:19:51 <Justin_o> Bosmon: does this just take the first change?
+2017-10-04T15:20:02 <Justin_o> https://github.com/amb26/universal/blob/13a8f45683f88c6cf5ae6ff68f3eee8dff5cbc05/gpii/node_modules/flowManager/src/PCPChannel.js#L146-L151
+2017-10-04T15:20:22 <Bosmon> Justin_o - no, it just ensures that we only fire one message on unblock
+2017-10-04T15:20:33 <Bosmon> But the message when it fires always contains the value of the model which is current at that point
+2017-10-04T15:23:17 <Justin_o> Bosmon: for this line https://github.com/amb26/universal/blob/13a8f45683f88c6cf5ae6ff68f3eee8dff5cbc05/gpii/node_modules/flowManager/src/PCPChannel.js#L75
+2017-10-04T15:24:08 <Justin_o> if gpii.pcpChannel.updateContext is called multiple times before the promise is resolved, i\'m assuming it just overwrites the previous promise?
+2017-10-04T15:24:54 <Bosmon> Justin_o - well indeed, that is a bug
+2017-10-04T15:25:08 <Bosmon> Showing just how race-prone this junk still is : P
+2017-10-04T15:26:01 <javjarfer> stegru, okay, thanks you
+2017-10-04T15:26:33 <stegru> de nada
+2017-10-04T15:29:45 <Justin_o> Bosmon: i\'m trying to think of how to implement something like this in my case, and actually i\'m not sure if it\'s something i need to implement in UIO+ or the prefs framework directly. This is basically all mediated by the store facility. https://github.com/jobara/gpii-chrome-extension/blob/GPII-2424/extension/src/lib/PrefsEditor.js#L18-L53
+2017-10-04T15:30:12 <Justin_o> so i created a new store type using chrome message port
+2017-10-04T15:30:27 <Justin_o> but i suppose this could have actually happened with other stores
+2017-10-04T15:31:05 <Bosmon> Justin_o - yes, this should really be done at the model listener level
+2017-10-04T15:32:27 * javjarfer_ joined the channel
+2017-10-04T15:35:37 * javjarfer has quit
+2017-10-04T15:37:19 * the-t-in-rtf joined the channel
+2017-10-04T15:39:09 * the-t-in-rtf joined the channel
+2017-10-04T15:39:34 * the-t-in-rtf joined the channel
+2017-10-04T15:49:54 * michelled joined the channel
+2017-10-04T15:52:12 * sepidehshahi joined the channel
+2017-10-04T15:55:15 <Justin_o> Bosmon: okay
+2017-10-04T15:58:47 * amatas_ has quit
+2017-10-04T16:00:39 <the-t-in-rtf> @michelled, you\'re setting up the room, right?
+2017-10-04T16:01:00 <the-t-in-rtf> Kasper is a friendly ghost this go around IIRC.
+2017-10-04T16:01:03 <michelled> yep
+2017-10-04T16:01:49 * amatas_ joined the channel
+2017-10-04T16:06:52 * avtar joined the channel
+2017-10-04T16:35:39 * michelled has quit
+2017-10-04T16:36:14 * michelled joined the channel
+2017-10-04T16:42:57 <Justin_o> Bosmon: so i guess i\'ll file a new JIRA to address this in the prefs framework, at least as a stop gap till the framework improvements are in place
+2017-10-04T16:43:03 <Justin_o> does that make sense?
+2017-10-04T16:43:52 * dandimitrov has quit
+2017-10-04T16:44:40 * amatas_ has quit
+2017-10-04T16:48:27 * yuriy__ has quit
+2017-10-04T16:53:17 <Justin_o> Bosmon: this is the JIRA i filed https://issues.fluidproject.org/browse/FLUID-6209
+2017-10-04T16:55:35 * danayo has quit
+2017-10-04T16:58:49 * danayo joined the channel
+2017-10-04T16:58:50 * kavya has quit
+2017-10-04T17:02:25 * javjarfer_ has quit
+2017-10-04T17:13:53 <colinclark> Justin_o: I\'ve spent some time updating some of the Fluid community licensing pages to be a little more modern and to reflect the current diversity of our projects and contributions: https://wiki.fluidproject.org/display/fluid/Fluid+Licensing
+2017-10-04T17:14:08 <colinclark> We had some funny issues there, like somehow our CLAs became unlinked from the page
+2017-10-04T17:14:31 <colinclark> I also wanted to make it easier for people to be able to find and copy templates for license files and headers
+2017-10-04T17:15:32 <colinclark> Jess_, I think you had copy-pasted some text related to the creative commons license last night, so I have tried to reflect that more clearly within the page as well
+2017-10-04T17:15:56 <colinclark> this is still a work in progress, but is one step closer to the process of revisiting our CLAs, which I know is important to you, Justin_o
+2017-10-04T17:16:01 <colinclark> so we\'re making progress
+2017-10-04T17:29:36 <Bosmon> Justin_o - thanks
+2017-10-04T17:40:29 * michelled joined the channel
+2017-10-04T17:41:40 * michelled joined the channel
+2017-10-04T17:52:36 <Bosmon> Hi there Justin_o - so https://github.com/fluid-project/infusion/pull/844 has raised an interesting collection of issues
+2017-10-04T17:52:36 * michelled joined the channel
+'
+
+b'2017-10-04T00:00:52 * colinclark joined the channel
+2017-10-04T00:00:52 * colinclark has quit
+2017-10-04T00:27:13 * mrtyler has quit
+2017-10-04T00:46:49 * mrtyler joined the channel
+2017-10-04T00:54:23 * grrrero has quit
+2017-10-04T01:11:29 * mrtyler has quit
+2017-10-04T01:56:33 * mrtyler joined the channel
+2017-10-04T03:47:43 * mrtyler has quit
+2017-10-04T03:48:31 * mrtyler joined the channel
+2017-10-04T06:15:50 * amatas joined the channel
+2017-10-04T06:31:35 * amatas has quit
+2017-10-04T06:36:13 * the-t-in-rtf has quit
+2017-10-04T07:08:25 * the-t-in-rtf joined the channel
+2017-10-04T07:11:53 <the-t-in-rtf> @gmoss, just looping back around on your question.
+2017-10-04T07:12:16 <the-t-in-rtf> Handlebars interprets the variable content as text, there is a separate mechanism to reuse smaller pieces of content.
+2017-10-04T07:12:30 <the-t-in-rtf> http://handlebarsjs.com/partials.html
+2017-10-04T07:12:52 <the-t-in-rtf> You would need to create partials for the bits you intend to reuse, and then you can call them like {{>partial}}
+2017-10-04T07:13:26 <the-t-in-rtf> by default they use the current context, but you can also pass them part of the context, as in {{>profile-widget user}}
+2017-10-04T07:27:25 * georgitodorov_ joined the channel
+2017-10-04T07:37:00 * amatas joined the channel
+2017-10-04T08:25:47 * stegru joined the channel
+2017-10-04T10:03:53 * javjarfer joined the channel
+2017-10-04T10:14:25 * amatas_ joined the channel
+2017-10-04T10:23:41 * gtirloni joined the channel
+2017-10-04T10:48:49 * kasparnet joined the channel
+2017-10-04T11:03:46 * dandimitrov joined the channel
+2017-10-04T11:49:56 * amatas_ has quit
+2017-10-04T11:50:05 * amatas_ joined the channel
+2017-10-04T12:02:03 * kasparne_ joined the channel
+2017-10-04T12:05:10 * kasparnet has quit
+2017-10-04T12:06:43 * kasparne_ has quit
+2017-10-04T12:07:12 * kasparnet joined the channel
+2017-10-04T12:12:28 * kasparnet has quit
+2017-10-04T12:17:02 * Jess_ joined the channel
+2017-10-04T12:31:11 * alanharnum joined the channel
+2017-10-04T12:31:27 * Caren joined the channel
+2017-10-04T12:36:52 * Caren has quit
+2017-10-04T12:42:39 * grrrero joined the channel
+2017-10-04T12:43:53 * Justin_o joined the channel
+2017-10-04T12:48:49 * jhung joined the channel
+2017-10-04T12:51:11 * colinclark joined the channel
+2017-10-04T12:53:49 * cindyli joined the channel
+2017-10-04T12:56:34 * jhung is now known as jhung_meeting
+2017-10-04T13:04:46 * sepidehshahi joined the channel
+2017-10-04T13:06:50 * simonjb joined the channel
+2017-10-04T13:23:42 <cindyli> Bosmon: can you fill up this doodle when you have a chance - https://beta.doodle.com/poll/a6m3avfgqefu75rk#table thanks
+2017-10-04T13:24:24 * colinclark joined the channel
+2017-10-04T13:29:10 * georgitodorov_ has quit
+2017-10-04T13:37:09 <colinclark> alanharnum: Oracle\'s response to the GSA modernization RFC is very interesting
+2017-10-04T13:37:27 <colinclark> and I know you follow IT in goverment issues closely
+2017-10-04T13:37:35 <colinclark> https://github.com/GSA/modernization/issues/41
+2017-10-04T13:45:06 <alanharnum> colinclark: agreed, v. interesting response - and I agree with a number of the points made
+2017-10-04T13:45:21 <colinclark> It\'s interesting to follow the money
+2017-10-04T13:46:25 <colinclark> you can see, reading creatively where companies like Oracle see threats to their ability to continue to make significant profits from the Federal government
+2017-10-04T13:47:00 * clown joined the channel
+2017-10-04T13:47:20 <colinclark> And of course this response channels a lot of hostility towards 18F and their work, which is interesting in itself
+2017-10-04T13:47:39 <alanharnum> colinclark: yup - also a lot of debatable content, especially all the claims about open source.
+2017-10-04T13:47:44 <colinclark> The critiques of open source software and agile software processes are quite laughable, yes
+2017-10-04T13:48:03 <colinclark> also the critique of aggregate purchasing is pretty interesting
+2017-10-04T13:48:12 <alanharnum> I think their point about the inattention to process reform is 100% correct, though
+2017-10-04T13:48:22 <colinclark> that\'s interesting
+2017-10-04T13:48:50 <colinclark> I\'m fascinating by the emphasis on security here, too
+2017-10-04T13:49:03 <colinclark> and on what seems to be a weighing of departmental power
+2017-10-04T13:49:19 <colinclark> in which Oracle is in favour of DHS having a more significant role in monitoring and compliance of IT systems
+2017-10-04T13:49:46 <colinclark> their observations about FedRAMP and FISMA are also quite notable
+2017-10-04T13:50:01 <alanharnum> If the Administration is serious about closing the digital delta between government and
+2017-10-04T13:50:01 <alanharnum> the private sector, it must do the hard work of process and procurement reform
+2017-10-04T13:50:20 <alanharnum> 100% agree: "If the Administration is serious about closing the digital delta between government and the private sector, it must do the hard work of process and procurement reform"
+2017-10-04T13:50:38 <colinclark> yes
+2017-10-04T13:51:03 <colinclark> what\'s interesting, in this response, however, is how much "process reform" involves a particular vision of government
+2017-10-04T13:51:14 <colinclark> which Oracle leads in with, and is thorughout this response
+2017-10-04T13:51:21 <alanharnum> it\'s an interesting mix of accurate assessments of the limitations of purely technological messianism (agile with bad processes means you quickly build systems with bad processes, at best)
+2017-10-04T13:51:21 <colinclark> and of course the current administration is responsive to
+2017-10-04T13:51:35 <colinclark> that government must mirror the "best practices" of private industry
+2017-10-04T13:51:59 <alanharnum> "best practices" is always a tell - honestly find me agreement in private industry about what "best practices" are.
+2017-10-04T13:52:08 <colinclark> yes
+2017-10-04T13:52:17 <colinclark> "Oracle sells best practices" is all over this response
+2017-10-04T13:52:42 <colinclark> which is to say, "your unique processes must give way in order for us to better sell you our products"
+2017-10-04T13:52:51 <colinclark> undoubtedly some aspect of this is indeed true
+2017-10-04T13:52:56 <alanharnum> The other thing you can read between the lines about is they are absolutely petrified at Amazon\'s dominance of the public cloud market
+2017-10-04T13:53:01 <colinclark> yes
+2017-10-04T13:53:10 <colinclark> They trotted out the same argument we heard in a different context
+2017-10-04T13:53:18 <colinclark> about "hybrid clouds"
+2017-10-04T13:54:06 <colinclark> the "you need bare metal" argument
+2017-10-04T13:54:24 <colinclark> which actually is fascinatingly circular
+2017-10-04T13:54:40 <colinclark> in that it is a reflection of precisely the sorts of IT policies that are in need of updating and reform
+2017-10-04T13:55:01 <alanharnum> the strategic goal of this is (basically) I think to delay or mitigate public cloud adoption, a lot of which is driven by open source, etc
+2017-10-04T13:55:09 <colinclark> yes
+2017-10-04T13:55:18 <colinclark> I guess their first concern is the work 18F did
+2017-10-04T13:55:27 <colinclark> with the reference cloud platform
+2017-10-04T13:55:29 <alanharnum> that said i suspect they may be successful, given the association of the 18F / government as platform model with the Obama administration
+2017-10-04T13:55:31 <colinclark> based on Kubernetes, no less
+2017-10-04T13:55:55 <colinclark> yes
+2017-10-04T13:56:58 <simonjb> colinclark, alanharnum: reading through the letter also, very interesting
+2017-10-04T13:57:10 <colinclark> great, simonjb
+2017-10-04T13:57:31 <alanharnum> a lot is also basically a very old argument that building and operating technology isn\'t a "core" function of government, so should be outsourced to experts from the private sector, etc
+2017-10-04T13:57:56 * the-t-in-rtf has quit
+2017-10-04T13:58:19 <colinclark> yes
+2017-10-04T13:58:21 <alanharnum> the same argument was made in the 80s/90s/00s to many large private sector companies, many of which have returned to in-house after decades of problems
+2017-10-04T13:58:45 <alanharnum> Tom Limoncelli writes about this a lot: https://everythingsysadmin.com/2015/10/outsourcing-was-such-a-mistake.html
+2017-10-04T13:59:22 <alanharnum> "The reason outsourcing had been such a disaster was not the skill of the outsourcing companies or the people. It was the fact that if you don\'t own your process, you can\'t control the quality. Quality comes from taking responsibility and ownership to make sure it happens. Without quality, you lose customers and go out of business."
+2017-10-04T13:59:58 * the-t-in-rtf joined the channel
+2017-10-04T14:00:19 * avtar joined the channel
+2017-10-04T14:01:25 <simonjb> "but the fact is that the use of open source software has been declining rapidly in the private sector" I would be interested in seeing stats to back up that assertion, and it\'s so broad "the private sector"
+2017-10-04T14:01:49 <colinclark> indeed
+2017-10-04T14:02:42 <alanharnum> I suspect it may be a slight-of-hand around how many companies are moving from running open source software in-house to using SaaS services built on open source software
+2017-10-04T14:03:09 <simonjb> perhaps, yes
+2017-10-04T14:03:12 <alanharnum> EG, you move from in-house SVN server to GitHub
+2017-10-04T14:03:50 <alanharnum> or from open-source application servers to public cloud
+2017-10-04T14:14:25 <Justin_o> Bosmon: hello, i have a change applier question
+2017-10-04T14:14:47 <Justin_o> Bosmon:  in the prefs framework we have do this https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L366-L367
+2017-10-04T14:15:29 <Justin_o> I believe we do this because the updated set of preferences may be less that was was there and we need a way to remove stale values.
+2017-10-04T14:16:07 <Bosmon> Justin_o - what a very timely observation
+2017-10-04T14:16:18 <Bosmon> I filed this only an hour ago: https://issues.fluidproject.org/browse/FLUID-6208
+2017-10-04T14:16:30 <Justin_o> If i understand things correctly, the calls to fireChangeRequest and change both trigger model changes that will be listened to, and will cause to model change events? Is that correct?
+2017-10-04T14:17:06 <colinclark> alanharnum: There\'s something quite profound lurking behind this ludicrous buzzwordism...
+2017-10-04T14:17:16 * michelled joined the channel
+2017-10-04T14:17:19 <colinclark> "The pilot program described in Appendix D does not account for technically complex, highly-differentiated products. Complex IT products cannot be sold off a dashboard. The commercial sector leverages holistic packages of software-as-a-service offerings for various products that knit together the functions that are able to provide synergy."
+2017-10-04T14:17:37 <Bosmon> Justin_o - yes, that\'s correct
+2017-10-04T14:17:49 <colinclark> and it\'s something that will, I imagine, resonate with simonjb and Bosmon in regards to a previous experience we had "holistic packages" being pitched to us
+2017-10-04T14:17:51 <Bosmon> And for the rest of the story, we\'ll need to consult the JIRA which I am just filing now : P
+2017-10-04T14:18:14 <Justin_o> Bosmon: ah okay...
+2017-10-04T14:18:17 <alanharnum> colinclark: trying to parse what leveraging holistic packages would amount to, and failing
+2017-10-04T14:18:20 <Justin_o> Bosmon: i\'m trying to track down this issue https://issues.gpii.net/browse/GPII-2559
+2017-10-04T14:18:22 <Justin_o> in UIO+
+2017-10-04T14:18:23 <Bosmon> Justin_o - but yes, do carry on with your thought
+2017-10-04T14:18:29 <colinclark> Fascinatingly, it appears to be completely contrary to the previous assertion that "government must organize its agency purchasing pools by function"
+2017-10-04T14:19:07 <Bosmon> Justin_o - how far have you got with reproducing it?
+2017-10-04T14:19:12 <colinclark> massive, all-in-one technical packages, alanharnum
+2017-10-04T14:19:24 <Justin_o> Bosmon: i managed to reproduce it on a Surface Pro 3
+2017-10-04T14:19:37 <colinclark> for example, the coupling of hosting platform itself with software tools
+2017-10-04T14:19:53 <colinclark> security monitoring bundled with app development and integration tools
+2017-10-04T14:19:54 <colinclark> and so on
+2017-10-04T14:20:08 <Justin_o> although I\'m not entirely sure of the problem, I\'m thinking it\'s probably a combination of system resources and model changes. but i haven\'t come to any definitive conclusions yet
+2017-10-04T14:20:11 <alanharnum> ah, yes - stack consistency and integration
+2017-10-04T14:20:11 <Justin_o> Bosmon: ^
+2017-10-04T14:20:28 <alanharnum> just as long as it\'s not on the scary public cloud, mostly owned by Amazon / MS / Google / not Oracle :)
+2017-10-04T14:20:35 <colinclark> hahaha
+2017-10-04T14:20:49 <colinclark> I guess that\'s the key differentiator, though
+2017-10-04T14:20:52 <simonjb> buy this thing that we have built and change your processes to match how our system works, just like the private sector does
+2017-10-04T14:21:02 <colinclark> Oracle can sell you SAP and the cloud hosting together
+2017-10-04T14:21:06 <Bosmon> Justin_o - yes, it is quite possible that fast sets of changes could result in model races - although it\'s worth remembering that the current ChangeApplier implementation is completely synchronous
+2017-10-04T14:21:13 <colinclark> sorry, PeopleSoft
+2017-10-04T14:21:15 <Justin_o> Bosmon: in uio+ we relay the model to/from the panel and into the content scripts via the extensions message facility
+2017-10-04T14:21:36 <colinclark> simonjb: yes, you nailed it :)
+2017-10-04T14:21:40 <Bosmon> Justin_o - a good practice at the site that you\'ve highlighted would be to wrap these two operations in a transaction
+2017-10-04T14:21:56 <Bosmon> This would make it certain that noone on the outside could observe the DELETE separately from the ADD
+2017-10-04T14:22:02 <Justin_o> Bosmon: okay, i was wondering if that was possible to make them appear as one
+2017-10-04T14:22:13 <Bosmon> But I was just talking to colinclark exactly about this issue, which has come up in my PCP work as well
+2017-10-04T14:22:39 <Bosmon> The Astea team said it would be helpful for them if the PCP just received a single change message when their editor changes between preference sets
+'
+

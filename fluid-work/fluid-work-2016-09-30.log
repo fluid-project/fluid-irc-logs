@@ -1,0 +1,202 @@
+b'2016-09-30T18:11:11 * alanharnum joined the channel
+2016-09-30T18:13:14 * kasparne_ has quit
+2016-09-30T18:29:16 * alanharnum has quit
+2016-09-30T18:44:58 <cindyli> gtirloni: i think i found what\'s causing the stack size exceeded error when running "npm install" with the universal root VM. it\'s caused by this config - https://github.com/idi-ops/ansible-nodejs/blob/master/files/npmrc
+2016-09-30T18:45:23 <cindyli> setting "bin-links" to "true" makes the error go away
+2016-09-30T18:46:14 <gtirloni> unfortunately we had to set it to false due to other issues we\'ve experienced with virtualbox shared folders (they don\'t like it)
+2016-09-30T18:46:15 <cindyli> i guess there must be some reasons that this config is set to false with VM
+2016-09-30T18:47:44 <gtirloni> https://github.com/idi-ops/ansible-nodejs/blob/master/tasks/configure.yml#L32-L38
+2016-09-30T18:50:45 <gtirloni> i think we could make that an option though
+2016-09-30T18:51:01 <gtirloni> so people running linux/osx hosts could bypass it
+2016-09-30T18:51:12 <cindyli> gtirloni: you may have read these and tried them before. here are some comments on how to get sync folders working without \xe2\x80\x94no-bin-links work arounds: https://github.com/npm/npm/issues/9953#issuecomment-165884037
+2016-09-30T18:51:47 <cindyli> and the following comment on the same page
+2016-09-30T18:51:48 <gtirloni> the key datapoint in this issue is "windows 10"
+2016-09-30T18:52:12 <gtirloni> it does work on win10, but other windows versions don\'t support the long path names
+2016-09-30T18:52:17 <cindyli> gtirloni: ok, i see. it\'s a good idea to provide a way to bypass this option too
+2016-09-30T18:52:46 <gtirloni> i\'ll make a change to the ansible-nodejs role and add a tunable
+2016-09-30T18:52:52 <cindyli> thanks, gtirloni
+2016-09-30T18:53:11 <gtirloni> thanks for verifying it works without that option
+2016-09-30T18:53:39 <cindyli> btw, the link i pasted says: "the use of UNC paths lifts the 260 chars limit of the file path.
+2016-09-30T19:05:40 * kasparnet joined the channel
+2016-09-30T19:22:11 * stegru has quit
+2016-09-30T19:23:30 * Yan_Hu has quit
+2016-09-30T19:35:41 <gtirloni> cindyli: if you edit the file provisioning/requirements.yml and change the nodejs URL to "https://github.com/gtirloni/ansible-role-nodejs" and then edit provisioning/vars.yml and add "nodejs_npm_symlinks: true" ... then vagrant destroy/up, it should work
+2016-09-30T19:40:04 <cindyli> thanks, gtirloni. but the CI job triggered by the pull request would still fail. i wonder if we can use a flag to trigger the CI with bin-links setting to true
+2016-09-30T19:41:10 <gtirloni> these changes would have to be on your PR
+2016-09-30T19:42:19 <cindyli> ah, i see. awesome!!
+2016-09-30T19:42:39 <gtirloni> i\'ll open a PR against ansible-nodejs but it\'ll need some review before it\'s merged
+2016-09-30T19:42:48 <cindyli> ok
+2016-09-30T19:46:36 <gtirloni> amatas avtar: https://github.com/idi-ops/ansible-nodejs/pull/32
+2016-09-30T19:47:37 <gtirloni> in the end, it\'d be nice if npm3 got that fixed but the number of stack exceeded issues on github isn\'t very encouraging
+2016-09-30T19:51:52 * Justin_o has quit
+2016-09-30T19:57:58 * jhung has quit
+2016-09-30T19:58:53 * jessm has quit
+2016-09-30T20:02:19 * yzen_ joined the channel
+2016-09-30T20:04:37 * yzen has quit
+2016-09-30T20:35:23 * kasparnet has quit
+2016-09-30T20:43:53 * michelled has quit
+2016-09-30T20:46:26 * gtirloni has quit
+2016-09-30T20:48:28 * cindyli has quit
+2016-09-30T20:52:03 * clown has quit
+2016-09-30T21:03:19 * the-t-in-rtf has quit
+2016-09-30T21:10:29 * yzen_ has quit
+2016-09-30T21:18:15 * lliskovoi has quit
+2016-09-30T21:29:21 * colinclark has quit
+2016-09-30T22:41:54 * amatas has quit
+2016-09-30T22:42:53 * colinclark joined the channel
+2016-09-30T22:43:07 * colinclark has quit
+2016-09-30T23:58:02 * sgithens joined the channel
+'
+
+b'2016-09-30T00:48:56 * lliskovoi_ joined the channel
+2016-09-30T00:48:59 * lliskovoi_ has quit
+2016-09-30T00:52:42 * lliskovoi has quit
+2016-09-30T03:13:59 * michelled joined the channel
+2016-09-30T04:03:28 * michelled has quit
+2016-09-30T04:11:02 * danayo joined the channel
+2016-09-30T04:11:22 * danayo has quit
+2016-09-30T06:15:03 * amatas joined the channel
+2016-09-30T06:19:23 * lliskovoi joined the channel
+2016-09-30T06:23:54 * lliskovoi has quit
+2016-09-30T07:25:14 * kasparnet joined the channel
+2016-09-30T07:25:54 * kasparne_ joined the channel
+2016-09-30T07:30:19 * kasparnet has quit
+2016-09-30T07:51:15 * stegru joined the channel
+2016-09-30T08:15:30 * kasparne_ has quit
+2016-09-30T08:16:55 * kasparne_ joined the channel
+2016-09-30T10:42:49 * gtirloni joined the channel
+2016-09-30T11:11:18 * alanharnum joined the channel
+2016-09-30T11:13:29 * lliskovoi joined the channel
+2016-09-30T11:18:19 * lliskovoi has quit
+2016-09-30T11:24:15 * Justin_o joined the channel
+2016-09-30T11:36:14 * michelled joined the channel
+2016-09-30T12:17:16 * jessm joined the channel
+2016-09-30T12:28:13 * cindyli joined the channel
+2016-09-30T12:31:54 * jhung joined the channel
+2016-09-30T12:35:35 * lliskovoi joined the channel
+2016-09-30T12:48:53 <Justin_o> Bosmon: do you have any thoughts on this https://issues.fluidproject.org/browse/FLUID-5974
+2016-09-30T12:50:18 <Justin_o> cindyli: when you have time could you look at this PR https://github.com/fluid-project/infusion/pull/758
+2016-09-30T12:50:36 <cindyli> sure, Justin_o
+2016-09-30T12:50:36 * colinclark joined the channel
+2016-09-30T12:50:41 <Justin_o> cindyli: thanks
+2016-09-30T12:50:45 <cindyli> np
+2016-09-30T12:51:00 <Justin_o> colinclark: you might have some thoughts about this issue too https://issues.fluidproject.org/browse/FLUID-5974
+2016-09-30T12:53:54 <colinclark> oh man, what a drag
+2016-09-30T12:54:20 <Justin_o> yah
+2016-09-30T12:57:14 * michelled has quit
+2016-09-30T12:57:15 <Bosmon7> Justin_o - there\'s a 5th option - patch jQuery with a polyFill to re-support the size() function
+2016-09-30T12:57:27 <Bosmon7> I guess that comes under your 3rd heading
+2016-09-30T12:57:45 <Bosmon7> I bet if we go looking we\'ll find one instantly
+2016-09-30T12:57:45 <colinclark> hey, it\'s Bosmon
+2016-09-30T12:58:13 <Bosmon7> Hey there colinclark
+2016-09-30T12:58:55 <colinclark> Is it as simple as forking the selectbox plugin and switching it from size() to .length?
+2016-09-30T12:59:22 <Bosmon7> We could do that too
+2016-09-30T12:59:26 <Justin_o> colinclark: i think so, although there may be other things that are broken that we can\'t see yet
+2016-09-30T12:59:51 <colinclark> Worth a shot, to start
+2016-09-30T13:00:03 <colinclark> just be ready not to go all the way down that rabbit hole if it turns out there are lots of issues
+2016-09-30T13:01:34 <Bosmon7> fluid-everyone - just wanted to give the headsup about an "interesting" new framework facility
+2016-09-30T13:01:35 <Bosmon7> https://github.com/fluid-project/infusion/pull/755/files#diff-5ff6cef690e40835f55cb71ff0c2e3dcR522
+2016-09-30T13:01:45 <Bosmon7> I guess I\'ll be trying to talk about this at GPII arch next week
+2016-09-30T13:18:50 * cindyli has quit
+2016-09-30T13:22:03 * cindyli joined the channel
+2016-09-30T13:31:55 * yzen joined the channel
+2016-09-30T13:32:32 * cindyli has quit
+2016-09-30T13:37:24 <Justin_o> Bosmon, colinclark: what\'s our approach for mentioning and keeping track of patches on our 3rd party lib files?
+2016-09-30T13:38:17 <colinclark> well, presumably we fork the repository and make note of the reasons why
+2016-09-30T13:38:26 <colinclark> and commit to it as any other repository so there\'s a paper trail
+2016-09-30T13:38:33 <colinclark> but is this plugin not forkable for some reason?
+2016-09-30T13:38:39 * alanharnum has quit
+2016-09-30T13:39:50 <Justin_o> colinclark: yep, no repo
+2016-09-30T13:40:16 <Justin_o> it even looks like the site it used to be on has removed it or been taken over by something else
+2016-09-30T13:40:29 <Justin_o> colinclark: this is the link in the file brainfault.com
+2016-09-30T13:42:32 <Justin_o> This stack overflow also mentions that the site is down. but the poster preserved a copy of the 1.2 version in a gist http://stackoverflow.com/questions/1072239/is-it-possible-to-style-a-select-box/1072266#1072266
+2016-09-30T13:49:18 * clown joined the channel
+2016-09-30T13:52:12 * simonjb joined the channel
+2016-09-30T13:56:53 * cindyli joined the channel
+2016-09-30T13:57:33 * alanharn_ joined the channel
+2016-09-30T14:01:12 * kavya joined the channel
+2016-09-30T14:08:27 * alanharn_ is now known as alanharnum
+2016-09-30T14:11:08 <colinclark> Justin_o: Did you just publish Infusion 0.1? :)
+2016-09-30T14:11:14 <colinclark> BLAST FROM THE PAST!
+2016-09-30T14:11:26 <Justin_o> colinclark:  :)
+2016-09-30T14:11:30 <Justin_o> yes i\'m going through and publishing all of our releases on GitHub
+2016-09-30T14:11:34 <colinclark> why?
+2016-09-30T14:11:35 <colinclark> :)
+2016-09-30T14:11:45 <Justin_o> Easier to track our history that way I feel
+2016-09-30T14:12:08 <Justin_o> although i probably won\'t put up builds for all the versions, maybe just 1.5 and on
+2016-09-30T14:13:20 <gtirloni> wow 2007.. where will the 10-year anniversary party be? :D
+2016-09-30T14:13:37 * cindyli has quit
+2016-09-30T14:13:39 <Justin_o> gtirloni: lol colinclark can we actually do that :)
+2016-09-30T14:13:46 * cindyli joined the channel
+2016-09-30T14:13:54 <colinclark> yes, we certainly can
+2016-09-30T14:15:12 * kavya has quit
+2016-09-30T14:15:42 <Justin_o> Awesome :)
+2016-09-30T14:16:00 * cindyli1 joined the channel
+2016-09-30T14:16:05 <Justin_o> colinclark: do you know when the official start date of Fluid was? April 2007?
+2016-09-30T14:16:17 <colinclark> yes, that sounds about right
+2016-09-30T14:16:28 <colinclark> I think I probably have an email announcing it
+2016-09-30T14:17:27 <colinclark> yeah, it looks like April
+2016-09-30T14:17:56 * cindyli has quit
+2016-09-30T14:21:15 <Justin_o> colinclark: yes, we should try to plan something for that.. hopefully we\'ll still remember come April 2017
+2016-09-30T14:21:26 <colinclark> let\'s put it in the calendar
+2016-09-30T14:21:40 <colinclark> and we can organize a party
+2016-09-30T14:21:41 <Justin_o> colinclark: was there a specific date for that, or April 1?
+2016-09-30T14:21:51 <Justin_o> yeah!!!
+2016-09-30T14:22:12 <colinclark> maybe we\'ll aim for the 2nd :)
+2016-09-30T14:22:36 <colinclark> that was the first real email posted to fluid-work
+2016-09-30T14:22:44 <Justin_o> colinclark: cool
+2016-09-30T14:23:01 <colinclark> in which I posted about REST and some heuristic evaluations
+2016-09-30T14:23:52 <colinclark> and when Ray and Bosmon7 sparred about DWR
+2016-09-30T14:24:09 <colinclark> and the UNIVERSAL VIEW BUS
+2016-09-30T14:24:25 <Justin_o> colinclark: cool, i added it to the calendar
+2016-09-30T14:24:57 <Bosmon7> hahaha
+2016-09-30T14:25:01 <Justin_o> and put a link to the archive of that first e-mail
+2016-09-30T14:25:21 <Bosmon7> I was thinking about something that we could consider an incarnation of the UNIVERSAL VIEW BUS in the shower just now
+2016-09-30T14:25:35 <Bosmon7> Although you could claim that we have now build the UNIVERSAL VIEW BUS for real in the form of the GPII NEXUS
+2016-09-30T14:27:15 <colinclark> what was the shower idea, Bosmon7?
+2016-09-30T14:29:40 <Bosmon7> It is for the VISIBILITY MODEL
+2016-09-30T14:29:50 <Bosmon7> I know we had a previous thing by that name that didn\'t get implemented either : P
+2016-09-30T14:30:00 <Bosmon7> I was thinking about how tooltips would work for our new "universal GUI"
+2016-09-30T14:30:16 <Bosmon7> And realised we needed to rearchitect the way we drive the evaluation of models
+2016-09-30T14:30:39 <Bosmon7> This would do double duty since the same thing would occur with any remote "API" such as the GUI itself attached to a remote nexus
+2016-09-30T14:30:53 <Bosmon7> I\'ll write up a JIRA just as soon as I get out of this bath towil : P
+2016-09-30T14:32:59 <Justin_o> Bosmon7: i think we need to improve the way enactors work and are configured through the prefs framework, perhaps something like this could help with that too
+2016-09-30T14:35:57 * michelled joined the channel
+2016-09-30T14:36:24 * alanharnum has quit
+2016-09-30T14:40:12 * alanharnum joined the channel
+2016-09-30T14:52:53 * alanharnum has quit
+2016-09-30T14:55:25 * alanharnum joined the channel
+2016-09-30T15:11:37 * cindyli1 has quit
+2016-09-30T15:12:56 * cindyli joined the channel
+2016-09-30T15:17:00 * cindyli1 joined the channel
+2016-09-30T15:19:22 <Bosmon7> Justin_o - what kinds of improvements are you thinking of?
+2016-09-30T15:20:27 <Justin_o> Bosmon7: one thing is to be able to hook up view components as enactors. we have a few but configuring it is more difficult. Also for cases like the video player
+2016-09-30T15:30:18 * alanharnum has quit
+2016-09-30T15:35:52 * clown joined the channel
+2016-09-30T15:47:35 * alanharnum joined the channel
+2016-09-30T15:58:39 * colinclark has quit
+2016-09-30T16:10:46 * alanharnum has quit
+2016-09-30T16:22:50 * jhung has quit
+2016-09-30T16:27:43 * colinclark joined the channel
+2016-09-30T16:29:14 * jhung joined the channel
+2016-09-30T16:35:17 * alanharnum joined the channel
+2016-09-30T16:53:22 * gtirloni_ joined the channel
+2016-09-30T17:01:21 <alanharnum> Bosmon / Bosmon7: if you\'re there I had an outstanding question on that PR: https://github.com/fluid-project/infusion/pull/757#discussion_r81358943
+2016-09-30T17:07:30 <Bosmon7> Cheers, alanharnum - the auto-updating github UI is still pretty imperfect : P
+2016-09-30T17:08:06 <alanharnum> Bosmon7: otoh it does seem to have more extensive support for emoji responses
+2016-09-30T17:08:10 <alanharnum> :)
+2016-09-30T17:09:06 * kavya joined the channel
+2016-09-30T17:09:24 <Bosmon7> Yes, first things first
+2016-09-30T17:09:24 <kavya> jhernandez:Hi Javi
+2016-09-30T17:21:47 * simonjb has quit
+2016-09-30T17:29:25 * Yan_Hu joined the channel
+2016-09-30T17:33:54 * kavya has quit
+2016-09-30T17:41:50 <Justin_o> fluid-everyone: In preparation for our upcoming Infusion 2.0 release, I\'ve published all of the Infusion releases on our GitHub release page https://github.com/fluid-project/infusion/releases. You can now easily find prior releases along with their release announcements and notes. GitHub provides links to download package of the repo and links to the source
+2016-09-30T17:41:50 <Justin_o> as well; however, builds of Infusion are only provided for Infusion 1.5.
+2016-09-30T17:43:01 <gtirloni> that\'s pretty cool, thanks Justin
+2016-09-30T17:43:56 * gtirloni_ has quit
+2016-09-30T17:47:31 <Justin_o> gtirloni: thanks :)
+2016-09-30T17:47:46 * cindyli1 is now known as cindyli
+2016-09-30T18:07:53 * alanharnum has quit
+'
+

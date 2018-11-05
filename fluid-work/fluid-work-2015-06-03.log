@@ -1,0 +1,337 @@
+b"2015-06-03T19:50:04 <Justin_o> cindyli: forgot to commit something, now it's ready
+2015-06-03T19:54:48 * yzen joined the channel
+2015-06-03T20:07:17 <cindyli> Bosmon: do you have some time to review this pull request - https://github.com/fluid-project/first-discovery/pull/84
+2015-06-03T20:08:11 <Bosmon> cindyli - wow, how did it get so big :)
+2015-06-03T20:08:22 <Bosmon> And why are there DINNOSSAURES in the votting demo?
+2015-06-03T20:08:39 <cindyli> i guess they should be in the assessment demo
+2015-06-03T20:08:43 <Bosmon> ah ok
+2015-06-03T20:08:48 <Bosmon> They are very cute DINNOSAURRES
+2015-06-03T20:09:02 <cindyli> good you like it :)
+2015-06-03T20:09:26 <Bosmon> There's lots of inconsistency in the way we handle language codes now
+2015-06-03T20:09:29 <Bosmon> But I guess we will punt this
+2015-06-03T20:09:34 <Bosmon> I now see three different styles
+2015-06-03T20:09:40 <Bosmon> -en-US, _en-US and _en_US
+2015-06-03T20:11:30 <Bosmon> cindyli - pull looks good to me other than the init duplication
+2015-06-03T20:12:04 <cindyli> nice. can you leave a comment on the pull, Bosmon
+2015-06-03T20:12:26 * the-t-in-rtf joined the channel
+2015-06-03T20:12:32 * the-t-in-rtf has left the channel
+2015-06-03T20:12:37 * the-t-in-rtf joined the channel
+2015-06-03T20:15:32 <cindyli> thanks, Bosmon
+2015-06-03T20:16:11 * gtirloni joined the channel
+2015-06-03T20:22:03 * yzen_ joined the channel
+2015-06-03T20:24:44 * jhung has left the channel
+2015-06-03T20:42:01 * the-t-in-rtf has quit
+2015-06-03T20:43:52 * anvk has quit
+2015-06-03T20:57:05 * maozillah has quit
+2015-06-03T21:09:24 * colinclark joined the channel
+2015-06-03T21:09:24 * kasparnet joined the channel
+2015-06-03T21:18:14 * kasparne_ joined the channel
+2015-06-03T21:19:20 * kasparnet has quit
+2015-06-03T21:23:52 * kasparne_ has quit
+2015-06-03T21:43:20 * danayo joined the channel
+"
+
+b'2015-06-03T18:00:41 * michelled joined the channel
+2015-06-03T18:02:26 <Justin_o> i checked again. It does appear to still be in there
+2015-06-03T18:03:13 * the-t-in-rtf has quit
+2015-06-03T18:03:14 <Bosmon> Justin_o - how can we reproduce the problem?
+2015-06-03T18:03:26 <Justin_o> Bosmon: if you have my FLOE-361 branch
+2015-06-03T18:03:33 <Justin_o> go to the keyboard panel
+2015-06-03T18:03:47 <Justin_o> type in something other than % to trigger the sticky keys flow
+2015-06-03T18:03:52 <Justin_o> click try it
+2015-06-03T18:04:00 <Justin_o> click "turn off"
+2015-06-03T18:04:10 <Justin_o> at this point the interface should look broken
+2015-06-03T18:04:31 <Bosmon> Oh, I see
+2015-06-03T18:04:39 <Bosmon> This is occurring whilst trying to destroy the compnoent
+2015-06-03T18:05:27 <Bosmon> Also, it appears it is triggered by our own attempt at closing
+2015-06-03T18:07:00 <Bosmon> Justin_o - ok, it looks like "target" is already null on line 36716
+2015-06-03T18:07:12 <Bosmon> Which suggests that we should just guard it there
+2015-06-03T18:07:48 <Bosmon> That is, if (!target) { delete that.openIdMap[key];}
+2015-06-03T18:11:00 <Justin_o> Bosmon: but would the tooltip close?
+2015-06-03T18:12:03 <anastasiac> cindyli, I\xe2\x80\x99ve updated my default-locale branch, ready for another review
+2015-06-03T18:12:32 <cindyli> thanks, anastasiac, will take a look soon
+2015-06-03T18:12:48 <Bosmon> Justin_o - it looks like the problem in this case is that the button is gone from the document
+2015-06-03T18:12:58 <Bosmon> it\'s another case similar to yesterday\'s problem
+2015-06-03T18:13:05 <Bosmon> Again I think this is not necessarily a bug in the tooltip component
+2015-06-03T18:13:06 <Justin_o> Bosmon: yes, since it can\'t find an element with the id
+2015-06-03T18:13:22 <Justin_o> Bosmon: i wonder why the button is being removed first
+2015-06-03T18:13:38 <Bosmon> For me, the button has id ending "-3348"
+2015-06-03T18:13:42 <Bosmon> And it\'s not in the document any more
+2015-06-03T18:14:14 <Justin_o> Bosmon: shouldn\'t the calls to destroy happen before the dom is replaced
+2015-06-03T18:14:53 <Bosmon> Justin_o - they should, but it seems there\'s a bit of manual workflow here
+2015-06-03T18:15:15 <Bosmon> This particular trigger you can see is fired off by "that.events.onOfferAssistance.fire" on line 319 of panels.js
+2015-06-03T18:15:36 <Bosmon> Again, given the issues we had yesterday, we could consider a similar bodge considering what a hurry we are in
+2015-06-03T18:15:56 <Justin_o> OBLITERATION
+2015-06-03T18:16:00 <Bosmon> If we don\'t have time to trace the workflow, we can bring back the "obliterateTooltips" action that we had listening to onRenderTree
+2015-06-03T18:16:02 <Bosmon> EXACTLY
+2015-06-03T18:16:19 <Bosmon> And we can just insert it here at this line, just before onOfferAssistance fires
+2015-06-03T18:16:38 <Justin_o> Bosmon: but we\'d still get this issue with the target being null though right?
+2015-06-03T18:16:44 <Bosmon> Justin_o - we wouldn\'t
+2015-06-03T18:16:52 <Bosmon> Because the OBLITERATION would clear the tooltips properly
+2015-06-03T18:17:03 <Bosmon> Ah sorry, I meant a slightly different kind of obliteration this time
+2015-06-03T18:17:08 <Justin_o> wouldn\'t the tooltip component still think it\'s around even though the tooltip dom element has been removed
+2015-06-03T18:17:12 <Justin_o> okay
+2015-06-03T18:17:15 <Bosmon> Not the manual obliteration of before, but this time we can just call that.tooltip.close()
+2015-06-03T18:17:31 <Justin_o> Bosmon: oh okay, that makes sense
+2015-06-03T18:17:48 <Bosmon> Actually it doesn\'t go here, this time is too late
+2015-06-03T18:17:58 <Bosmon> We should just put it in "onRenderTree" as we mentioned before
+2015-06-03T18:18:11 <Bosmon> It looks like this entire stack is listening to a refreshView event
+2015-06-03T18:18:19 <Bosmon> Listening to the keyboard panel
+2015-06-03T18:18:32 <Justin_o> Bosmon: okay.. funny that this actually happens because of a parent though.. since the underlying adjuster isn\'t even a renderer component
+2015-06-03T18:19:14 <Bosmon> ah Justin_o
+2015-06-03T18:19:15 <cindyli> anastasiac: added a comment to ur pull request
+2015-06-03T18:19:20 <Bosmon> Doesn\'t this issue have a pretty simple cause?
+2015-06-03T18:20:16 <Bosmon> I see that the "keyboard" panel doesn\'t derive from the "gpii.firstDiscovery.attachTooltip.renderer" grade as all the others do
+2015-06-03T18:20:18 * sepideh joined the channel
+2015-06-03T18:21:10 <Bosmon> Well
+2015-06-03T18:21:17 <Justin_o> Bosmon: in this case at least, the tooltip grade is actually on the subcomponent
+2015-06-03T18:21:18 <Bosmon> I guess there\'s no workflow in that grade to close the tooltips on render
+2015-06-03T18:21:29 <Bosmon> So we would still need the OBLITERATION action
+2015-06-03T18:22:26 <Justin_o> Bosmon: is there a way to do this obliteration on the subcomponent?
+2015-06-03T18:22:26 <Bosmon> That is, the more graceful obliteration of calling tooltip.close when we get rendererComponent.onRenderTree
+2015-06-03T18:23:12 <Bosmon> Justin_o - you could certainly register the listener there - but it\'s the parent component\'s refreshView which is destroying the markup
+2015-06-03T18:23:28 <Bosmon> That is, the keyboard panel\'s refreshView
+2015-06-03T18:23:40 <Bosmon> So it is the keyboard panel\'s onRenderTree which needs to trigger closing the tooltip
+2015-06-03T18:24:48 <Bosmon> But either way, you need to ensure that the close() happens whilst the button is still in the document
+2015-06-03T18:28:07 <Justin_o> Bosmon: okay, i just added it to the subcomponent configuration
+2015-06-03T18:28:11 <Justin_o> it seems to work. Thanks
+2015-06-03T18:28:14 <Bosmon> awesome
+2015-06-03T18:29:06 <Bosmon> I guess we\'ll need to add this to the list of issues to be solved by the "new renderer"
+2015-06-03T18:29:25 <Justin_o> yes please :)
+2015-06-03T18:29:33 <Bosmon> But perhaps a big root cause of this family of issues is that, long ago, for performance reasons, we decided not to use $.remove() or a similar call when we obliterate markup before rerendering
+2015-06-03T18:29:56 <Bosmon> It\'s quite likely we could fix that immediately without seeing a performance impact any more
+2015-06-03T18:30:20 <Bosmon> But this dated from the CSpace days where we found that using $.remove() was hundreds of times slower than simply assigning to .innerHTML of the parent element
+2015-06-03T18:30:21 <Justin_o> Bosmon: would that remove all the jQuery bindings?
+2015-06-03T18:30:28 <Bosmon> Justin_o - I believe it would, yes
+2015-06-03T18:30:36 <Justin_o> like in this case where a separate element was created?
+2015-06-03T18:30:38 <Bosmon> And so it would trigger the jQuery UI tooltip\'s destructor at that point
+2015-06-03T18:30:48 <Justin_o> ah okay, that makes sense
+2015-06-03T18:31:10 <Justin_o> cindyli: FLOE-361 is ready for review again, thanks to Bosmon :)
+2015-06-03T18:31:36 <cindyli> cool, thanks guys
+2015-06-03T18:31:53 <Bosmon> Justin_o - bizarrely we still have a fallback branch which defers to this strategy on IE: https://github.com/fluid-project/infusion/blob/master/src/framework/renderer/js/fluidRenderer.js#L1497
+2015-06-03T18:32:01 <Bosmon> This code hasn\'t been revisited since about 2010
+2015-06-03T18:32:18 <Bosmon> But on all other browsers, for speed, we simply assign "" to innerHTML
+2015-06-03T18:32:35 <Bosmon> CSpace used to have absolutely gigantic UIs on which $.empty() took forever
+2015-06-03T18:32:57 <Justin_o> jhung: i think the styling issue for high contrast is still present in the assessment demo
+2015-06-03T18:35:37 <Bosmon> Justin_o - it seems that the versions of jQuery in use at that time didn\'t apply the destruction properly anyway, so there was no advantage at all to the remove() route: https://forum.jquery.com/topic/jquery-empty-does-not-destroy-ui-widgets-whereas-jquery-remove-does-using-ui-1-8-4
+2015-06-03T18:37:52 <Justin_o> Bosmon: something else we could do for 2.0 i guess
+2015-06-03T18:42:38 * the-t-in-rtf joined the channel
+2015-06-03T18:42:48 <Bosmon> Justin_o - I think we could do that pretty much immediately
+2015-06-03T18:43:05 <Bosmon> We just wouldn\'t do it before the demo next week at the risk of destabilising absolutely everything :)
+2015-06-03T18:43:13 <Justin_o> Bosmon: yes, thanks :)
+2015-06-03T18:43:13 <Bosmon> Justin_o - I wrote up our experiences at https://issues.fluidproject.org/browse/FLUID-5677
+2015-06-03T18:43:20 <Justin_o> Bosmon: thanks
+2015-06-03T18:43:54 <Bosmon> tooltips really are the most astonishingly awful things
+2015-06-03T18:44:04 <Bosmon> I mean, they\'re an amazing UI affordance
+2015-06-03T18:44:30 <Bosmon> But I feel a little more sympathy with the Windows UI team now, at their obviously congenital incapability of implementing tooltips that work correctly
+2015-06-03T18:45:14 <Justin_o> Bosmon: i do get some lingering tooltips from time to time on Mac OS too :(
+2015-06-03T18:46:20 <Bosmon> I guess the only really sound solution is to build much more finegrained DOM binding events into the new renderer
+2015-06-03T18:46:39 <Bosmon> So that things like "onRenderTree" become formalised properly, as well as general components knowing how to respond to them
+2015-06-03T18:46:59 <Bosmon> This issue is particularly subtle, since the UI widget holding the tooltip may be higher up the component tree than the point at which we bind to the markup
+2015-06-03T18:47:04 <Bosmon> This issue could easily have been much worse
+2015-06-03T18:47:35 <Bosmon> And this stuff is compounded by how insufferably hard it is to test tooltip interactions other than manually
+2015-06-03T18:47:52 <Bosmon> Perhaps one day we\'ll have Selenium tasks for it
+2015-06-03T18:49:06 * the-t-in-rtf has quit
+2015-06-03T18:49:52 * jhernandez has quit
+2015-06-03T18:50:06 * colinclark joined the channel
+2015-06-03T18:50:57 <jhung> sorry Justin_o: I was afk for a bit. You said there\'s a contrast issue for assessment demo?
+2015-06-03T18:53:37 <Justin_o> jhung: yah.. i think the same thing that we had for voting regarding the step counter
+2015-06-03T18:53:42 <Justin_o> in high contrast
+2015-06-03T18:56:04 <jhung> Justin_o: hmmm. I fixed that in FLOE-365.
+2015-06-03T18:58:33 <jhung> I\'ll merge in FLOE-367 locally and and see what happens
+2015-06-03T18:59:10 <Justin_o> jhung: merge in my branch. it has all of anastasia\'s changes
+2015-06-03T18:59:16 <jhung> ok
+2015-06-03T18:59:37 <Justin_o> jhung: also how hard would it be to style the "settings" button on the vote.html page to look the same but be an <a> instead
+2015-06-03T19:01:57 <jhung> Justin_o: ah I see now. We don\'t need the spacer item in the assessment/index.html file.
+2015-06-03T19:02:03 <cindyli> anastasiac, michelled, the french version of the speech speed panel is broken, no messages found
+2015-06-03T19:02:24 <cindyli> same for the contrast panel
+2015-06-03T19:02:38 <cindyli> and some other panels
+2015-06-03T19:02:53 <jhung> Oh Justin_o the text strings need to be updated for voting.
+2015-06-03T19:03:13 <jhung> The only real change is the welcome text.
+2015-06-03T19:03:45 <jhung> I can take a look at that settings button now - shouldn\'t be a problem to turn it into a link (hopefully).
+2015-06-03T19:04:31 <Justin_o> jhung: thanks, i\'ll update the text
+2015-06-03T19:04:38 <anastasiac> cindyli, is this in master?
+2015-06-03T19:04:44 <cindyli> yes, anastasiac
+2015-06-03T19:05:54 <anastasiac> oh, cindyli, this is in your local deployment, and not on the build site, right?
+2015-06-03T19:05:56 <cindyli> Justin_o: left a comment for ur pull request for FLOE-361
+2015-06-03T19:06:24 <Justin_o> cindyli: thanks.. looking into that
+2015-06-03T19:06:42 <cindyli> ok
+2015-06-03T19:07:20 <anastasiac> cindyli, if you\xe2\x80\x99re observing broken french in your local testing, but not on the build site, then my FLOE-368 branch will fix that. Otherwise, I can\xe2\x80\x99t reproduce it on the build site
+2015-06-03T19:07:45 <cindyli> cool, that was on my localhost
+2015-06-03T19:08:21 <cindyli> btw, anastasiac, a comment left for u pull request for FLOE-368
+2015-06-03T19:08:22 <Justin_o> danayo, anastasiac: we\'re going to need translations for the welcome screen of the voting demo
+2015-06-03T19:08:24 <anastasiac> and cindyli, I just pushed to that FLOE-368 branch in response to your comment
+2015-06-03T19:08:28 <cindyli> nice
+2015-06-03T19:10:09 * danayo joined the channel
+2015-06-03T19:11:40 * jhernandez joined the channel
+2015-06-03T19:16:41 * colinclark has quit
+2015-06-03T19:17:35 * maozillah has quit
+2015-06-03T19:18:19 <jhung> Justin_o: I pushed changes to my FLOE-365 branch
+2015-06-03T19:18:36 <Justin_o> jhung: thanks
+2015-06-03T19:18:42 <jhung> np.
+2015-06-03T19:19:42 <jhung> Also I noticed that the voting demo has the "Steps" text still in place. Justin_o can you take that out? The wireframe doesn\'t show it and it does look a bit odd since there are 4 steps but only 3 screens.
+2015-06-03T19:25:50 <Justin_o> jhung: there aren\'t supposed to be steps there?
+2015-06-03T19:25:59 <Justin_o> i guess the numbers are already in the icons
+2015-06-03T19:26:28 <jhung> Justin_o: yeah, no steps text - just the icons.
+2015-06-03T19:27:04 * jessm has quit
+2015-06-03T19:29:28 * danayo has quit
+2015-06-03T19:39:16 * danayo joined the channel
+2015-06-03T19:39:18 * maozillah joined the channel
+2015-06-03T19:42:27 <Justin_o> cindyli: FLOE-361 is ready for review again
+2015-06-03T19:43:05 <cindyli> ok, Justin_o
+2015-06-03T19:48:44 <Justin_o> cindyli: FLOE-365 is ready for review now
+2015-06-03T19:49:30 <cindyli> ok
+'
+
+b'2015-06-03T00:10:42 * avtar has quit
+2015-06-03T01:20:53 * colinclark joined the channel
+2015-06-03T01:51:03 * jhung joined the channel
+2015-06-03T02:33:28 * michelled joined the channel
+2015-06-03T07:24:25 * the-t-in-rtf joined the channel
+2015-06-03T08:09:06 * kasparnet joined the channel
+2015-06-03T08:46:02 * the-t-in-rtf has quit
+2015-06-03T09:06:56 * the-t-in-rtf joined the channel
+2015-06-03T09:35:37 * the-t-in-rtf has quit
+2015-06-03T09:36:06 * the-t-in-rtf joined the channel
+2015-06-03T09:37:08 * the-t-in-rtf has quit
+2015-06-03T09:37:42 * the-t-in-rtf joined the channel
+2015-06-03T10:29:09 * kasparnet has quit
+2015-06-03T10:33:28 * kasparne_ joined the channel
+2015-06-03T10:38:05 * the-t-in-rtf has quit
+2015-06-03T11:02:44 * jhung joined the channel
+2015-06-03T11:14:42 * the-t-in-rtf joined the channel
+2015-06-03T11:43:14 * anvk joined the channel
+2015-06-03T11:44:09 * gtirloni joined the channel
+2015-06-03T11:44:27 * jessm joined the channel
+2015-06-03T12:15:55 * Justin_o joined the channel
+2015-06-03T12:21:27 <jhung> Justin_o: should I push up my voting booth page even though it\'s not complete? Most parts are there.
+2015-06-03T12:23:22 <Justin_o> jhung: when you say push, where do you mean to?
+2015-06-03T12:23:43 <jhung> To my FLOE-365 branch.
+2015-06-03T12:33:24 <jhung> Justin_o: I pushed to my FLOE-365 branch. I\'ll continue tweaking it, but the bulk of the content should be there.
+2015-06-03T12:37:53 <Justin_o> jhung: okay, thanks
+2015-06-03T12:53:30 * anastasiac joined the channel
+2015-06-03T12:55:16 * cindyli joined the channel
+2015-06-03T13:10:29 * sepideh joined the channel
+2015-06-03T13:16:38 <Justin_o> jhung: if you want to pull down my FLOE-365 changes.. i\'m using the data-attributes to set the panel icons and added the vote one, but it needs styling fixes
+2015-06-03T13:16:49 <jhung> ok Justin_o
+2015-06-03T13:17:08 <Justin_o> thanks
+2015-06-03T13:22:10 * maozillah joined the channel
+2015-06-03T13:29:10 * michelled joined the channel
+2015-06-03T13:35:52 * simonjb joined the channel
+2015-06-03T13:46:19 * clown joined the channel
+2015-06-03T13:56:13 <jhung> Justin_o: I\'ve updated my FLOE-365 branch.
+2015-06-03T13:56:28 <Justin_o> jhung: thanks
+2015-06-03T14:03:31 * lliskovoi joined the channel
+2015-06-03T14:05:16 * murilo_crivellar joined the channel
+2015-06-03T14:08:54 * colinclark joined the channel
+2015-06-03T14:12:25 <Justin_o> anastasiac: you might want to merge in my FLOE-365 branch. I\'ve modified the showNextButton method in demo.js to use the "next" button for the second last panel, and the "finish" button only on the last panel.
+2015-06-03T14:12:39 <anastasiac> thanks, Justin_o
+2015-06-03T14:13:45 <anastasiac> so Justin_o, are you taking over FLOE-365? or is cindyli still working on it also?
+2015-06-03T14:13:54 <anastasiac> btw, branch works nicely
+2015-06-03T14:14:07 <Justin_o> anastasiac: i\'m taking it over for now at least
+2015-06-03T14:14:12 <Justin_o> glad it\'s working :)
+2015-06-03T14:19:28 <cindyli> Justin_o: can you review my pull request - https://github.com/fluid-project/first-discovery/pull/82
+2015-06-03T14:33:36 <Justin_o> cindyli:  sure
+2015-06-03T14:33:48 <cindyli> thanks
+2015-06-03T14:43:02 <cindyli> Bosmon: i wonder if you have reviewed Justin_o\'s three pull requests or some of those?
+2015-06-03T14:49:44 * yzen joined the channel
+2015-06-03T14:56:43 <anastasiac> Justin_o, cindyli: my FLOE-366 branch has been updated with the code to add UIE to the \xe2\x80\x98demo\xe2\x80\x99 page. Feel free to \xe2\x80\x98code review\xe2\x80\x99 it if/when you use it
+2015-06-03T14:57:03 <cindyli> thanks, anastasiac
+2015-06-03T14:57:16 <Justin_o> anastasiac: thanks
+2015-06-03T14:59:53 <Justin_o> anastasiac: I\'ve updated my branch to link to the demo context page
+2015-06-03T15:00:11 <anastasiac> excellent, Justin_o, pulling it down
+2015-06-03T15:00:25 <Justin_o> anastasiac: you\'ll just need to create your own grade with the configuration you want to pass into the auxiliary schema. you can use the voting as an example.
+2015-06-03T15:00:33 <anastasiac> this is a neat version of \xe2\x80\x9cpair programming\xe2\x80\x9d :-)
+2015-06-03T15:02:02 * simonjb has quit
+2015-06-03T15:03:22 <Justin_o> anastasiac: :)
+2015-06-03T15:03:37 <Justin_o> anastasiac, cindyli: should we just file all this work under a single pull request?
+2015-06-03T15:03:56 <Bosmon> cindyli - those pulls look good to me
+2015-06-03T15:04:10 <Bosmon> cindyli, Justin_o - I moved FLOE-370 to FLUID-5675 since it\'s really an Infusion issue
+2015-06-03T15:04:23 <anastasiac> Justin_o: that probably makes sense, given that we\xe2\x80\x99re both merging each other\xe2\x80\x99s branches. It will be impossible to add one demo without adding the other
+2015-06-03T15:04:28 <cindyli> Bosmon: do you want me to manual test them or you already did?
+2015-06-03T15:04:45 <Justin_o> Bosmon: thanks, that makes sense
+2015-06-03T15:04:46 <Bosmon> cindyli - I tested lightly but it would be great if you could do it again
+2015-06-03T15:04:56 <cindyli> ok, Bosmon. will do
+2015-06-03T15:05:37 <michelled> Bosmon, Justin_o, cindyli: simon has issued a pull request: https://github.com/fluid-project/first-discovery/pull/83 he isn\'t feeling well so was not able to complete all the work he wanted to, so instead he has put TODOs into the code. can one of your review it? and if you feel that changes should be made before pushing, one of you will need to make them.
+2015-06-03T15:07:39 * colinclark joined the channel
+2015-06-03T15:13:09 <michelled> Justin_o: did you see my message?
+2015-06-03T15:13:48 <Justin_o> michelled: sorry, yes
+2015-06-03T15:14:04 <Justin_o> michelled: does Bosmon have time to do the review and one of use could make the changes.
+2015-06-03T15:14:07 <Justin_o> is that okay?
+2015-06-03T15:15:05 <Justin_o> jhung: anastasiac noticed some styling issues for the FD demos when in high contrast. Basically it has to do with the step message
+2015-06-03T15:15:27 <jhung> Justin_o:  let me check...
+2015-06-03T15:15:31 <Justin_o> jhung: thanks
+2015-06-03T15:16:06 <Bosmon> Justin_o, michelled - sure - I\'ve given some review
+2015-06-03T15:16:07 <anastasiac> ok, Justin_o, I\xe2\x80\x99ve updated my FLOE-366 branch. It\xe2\x80\x99s all yours, now :-)
+2015-06-03T15:16:16 <Justin_o> anastasiac: thanks
+2015-06-03T15:16:17 <Bosmon> The biggest issue seems to be that the gpii.tests.firstDiscovery.langTests have been commented out and need to be reworked
+2015-06-03T15:16:40 <Justin_o> Bosmon: is that part of the TODO?
+2015-06-03T15:16:41 <jhung> anastasiac, Justin_o: I see. The black bar that appears below the icons? I\'ll be sure to fix that. Is there anything else?
+2015-06-03T15:16:46 <Bosmon> Justin_o - yes
+2015-06-03T15:16:57 <Bosmon> https://github.com/fluid-project/first-discovery/pull/83/files#diff-030bdb460dfbb59d70e89ca1cc9b5b99R323
+2015-06-03T15:16:59 <Justin_o> Bosmon: does that mean it\'s okay to go in?
+2015-06-03T15:17:11 <Bosmon> Justin_o - I don\'t think so, no
+2015-06-03T15:17:15 <anastasiac> jhung: also, the text seems to be w-on-b when it should be b-on-w, I think
+2015-06-03T15:17:19 <anastasiac> and vice versa
+2015-06-03T15:17:33 <Bosmon> I don\'t think it can go in with the tests commented out
+2015-06-03T15:17:37 * colinclark joined the channel
+2015-06-03T15:18:18 <Bosmon> If necessary, we could think about making a "demo branch" if we have run out of time to do the work
+2015-06-03T15:19:31 <Justin_o> Bosmon: so we\'d need to have all the tests in place?
+2015-06-03T15:19:56 <Bosmon> If we want it in master, I think we should at least repair the tests that are broken
+2015-06-03T15:20:09 <Bosmon> or commented out
+2015-06-03T15:20:10 <Justin_o> Bosmon: okay
+2015-06-03T15:23:01 <michelled> Bosmon: I guess that means we have to make the demo branch
+2015-06-03T15:23:08 <Bosmon> michelled - ok
+2015-06-03T15:23:11 <michelled> since we certainly don\'t have the time to fix all the tests
+2015-06-03T15:23:26 <Bosmon> It\'s a pretty normal thing to do, I think, in this kind of situation
+2015-06-03T15:23:38 <Bosmon> And it\'ll be a far smaller branch than these things have been in the past
+2015-06-03T15:23:59 <michelled> ok. Justin_o do you have a sense of when you\'d like to make that branch?
+2015-06-03T15:24:15 <Bosmon> I think we\'ve done very well in getting to a couple of days before the event before having to make it
+2015-06-03T15:26:55 <michelled> gtirloni: once we make that branch, we are going to need to change http://build.fluidproject.org/first-discovery/demos/ to point to it
+2015-06-03T15:28:37 <michelled> does anyone know where standup will be held today?
+2015-06-03T15:29:15 <gtirloni> michelled: ok, just give me a heads up and i can change that
+2015-06-03T15:30:15 <michelled> thx!
+2015-06-03T15:30:54 * yzen_ joined the channel
+2015-06-03T15:32:08 <gtirloni> michelled: they\'re in the rha220
+2015-06-03T15:32:12 <gtirloni> (room name)
+2015-06-03T15:33:35 * yzen has quit
+2015-06-03T15:37:17 * the-t-in-rtf has quit
+2015-06-03T15:54:46 * sepideh joined the channel
+2015-06-03T15:59:49 <michelled> Bosmon: are you having issues with JIRA?
+2015-06-03T16:00:29 <Bosmon> michelled - I did yesterday for a while
+2015-06-03T16:00:31 <Bosmon> It seems to be ok now
+2015-06-03T16:00:44 <michelled> gtirloni: ^
+2015-06-03T16:01:35 <gtirloni> ah ok, thanks Bosmon
+2015-06-03T16:02:56 <gtirloni> I cannot replicate the problems mentioned in the standup meeting so, I\'m trying to collect more info.. if anyone experiences any issues, please let me know :)
+2015-06-03T16:15:59 * avtar joined the channel
+2015-06-03T16:28:24 * kasparnet joined the channel
+2015-06-03T16:32:26 * kasparne_ has quit
+2015-06-03T16:40:12 * kasparnet has quit
+2015-06-03T16:49:42 * kasparnet joined the channel
+2015-06-03T16:52:04 * kasparnet has quit
+2015-06-03T17:03:13 * cindyli joined the channel
+2015-06-03T17:08:07 <anastasiac> cindyli: I\xe2\x80\x99m looking at your default locale comments, and I think I\xe2\x80\x99m not quite clear. Would you have a few minutes to pair with me?
+2015-06-03T17:16:38 <anastasiac> cindyli: ^
+2015-06-03T17:16:50 <cindyli> sure, amatas
+2015-06-03T17:16:55 <cindyli> sure anastasiac
+2015-06-03T17:17:10 <cindyli> sorry, pinged wrong person, amatas
+2015-06-03T17:49:59 <Justin_o> Bosmon: cindyli found a  bug with FLOE-361
+2015-06-03T17:50:07 * the-t-in-rtf joined the channel
+2015-06-03T17:50:53 <Justin_o> it seems that the error is coming from https://github.com/fluid-project/infusion/blob/master/src/components/tooltip/js/Tooltip.js#L89
+2015-06-03T17:51:04 <Justin_o> as in this instance the originalTarget is undefined
+2015-06-03T17:52:23 <Justin_o> so interestingly it works if you use the keyboard, but the error occurs with the mouse
+2015-06-03T17:52:35 <Justin_o> i\'d assume it has to do with the even getting the wrong target.
+2015-06-03T17:57:37 <Bosmon> Justin_o - well, it\'s a bit awkward
+2015-06-03T17:57:49 <Bosmon> In theory we could just insert a one-line patch guarding the deletion
+2015-06-03T17:58:07 <Bosmon> But it would be hard to argue how it could be accepted without a test case : P
+2015-06-03T17:58:12 <Justin_o> Bosmon: it seems the target is getting the container instead of the tooltip triggering element, the button in this case
+2015-06-03T17:58:27 <Bosmon> On the other hand, we have virtually no test cases which cover mouse interaction
+2015-06-03T17:58:40 <Bosmon> Actually none at all, I think
+2015-06-03T17:58:49 <Justin_o> :(
+2015-06-03T17:58:50 <Bosmon> Since jQuery doesn\'t allow us to simulate these properly
+2015-06-03T17:59:40 <Justin_o> Bosmon:  but i\'m not sure that\'s the whole of the issue
+2015-06-03T17:59:57 <Justin_o> Bosmon: in the sense that we would really still want to remove the id from the openIdMap
+2015-06-03T18:00:16 <Bosmon> Justin_o - are you sure that there is one in there? And that it is not getting deleted by some other means?
+2015-06-03T18:00:29 <Justin_o> it looks like it\'s still in there
+'
+

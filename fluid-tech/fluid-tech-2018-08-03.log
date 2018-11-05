@@ -1,0 +1,216 @@
+b'2018-08-03T18:35:51 <clown> now, I should (1) delete the current dataloader job, (1a) make sure it is deleted,  and (2) rake deploy.  Right?
+2018-08-03T18:36:10 * clown who am I kidding by "slightly-used"?
+2018-08-03T18:37:31 <mrtyler> yes, sounds good
+2018-08-03T18:37:37 <mrtyler> your action plan, not your t-shirt
+2018-08-03T18:37:57 <clown> my old ratty full-of-holes-and-regrets t-shirt?
+2018-08-03T18:38:14 <mrtyler> note that preferences and flowmanager *will* get updated automatically without deletion or any other heroic measures
+2018-08-03T18:38:21 <mrtyler> dataloader is the special case
+2018-08-03T18:39:57 * cindyli joined the channel
+2018-08-03T18:40:25 <clown> I guess this line in the README also needs fixing:  "cp version.yml ../gpii-infra/modules/deploy" ?
+2018-08-03T18:40:36 <mrtyler> yeah i fixed it locally :)
+2018-08-03T18:40:49 <clown> lol
+2018-08-03T18:40:59 <mrtyler> [03.12:26:16] <        mrtyler> | i\'ve fixed the README
+2018-08-03T18:43:12 <clown> yes, I took that to mean:  I\'ve fixed the README and pushed the changes.  Bad inference on my part.
+2018-08-03T18:43:46 <mrtyler> yeah we like to send everything through the PR process. i\'ll batch these edits and publish them later. sorry for the confusion
+2018-08-03T18:46:05 <clown> no problem
+2018-08-03T18:46:35 <clown> I\'m very grateful for you help, so no way I\'m going to complain about outdate README\'s
+2018-08-03T18:58:49 * alanharnum joined the channel
+2018-08-03T18:59:35 * clown1 joined the channel
+2018-08-03T19:08:41 <clown> mrtyler:  Yay:  success to this extent that my dataloader docker image was loaded.
+2018-08-03T19:08:47 <clown> Boo:  But it didn\'t work because the environment variables are wrong.  Where is universal?
+2018-08-03T19:09:01 <clown> it thinks it\'s /home/node/universal...
+2018-08-03T19:09:17 <mrtyler> the first part is great!
+2018-08-03T19:09:42 <mrtyler> not sure i understand the second part, but you changed/added env vars right? so perhaps those need to be added to the dataloader chart
+2018-08-03T19:10:59 <mrtyler> https://github.com/gpii-ops/gpii-infra/blob/master/common/charts/gpii-dataloader/templates/job.yaml
+2018-08-03T19:11:18 * clown looks
+2018-08-03T19:12:30 <clown> yes I changed the CLEAR_INDEX (removed it).  How do I change the variables there?  What syntax is that?
+2018-08-03T19:12:50 <clown> never mind.
+2018-08-03T19:14:36 <clown> I think I need to add the values for STATIC_DIR, etc.
+2018-08-03T19:14:51 <mrtyler> i think so too
+2018-08-03T19:15:20 <mrtyler> to give a little context to your question: this file will be processed by helm, to fill in the {{ templating }}\'
+2018-08-03T19:15:34 <mrtyler> and then the processed template will be handed to kubernetes
+2018-08-03T19:15:52 <mrtyler> as a yaml "manifest"
+2018-08-03T19:20:29 <mrtyler> kubernetes uses the description in the manifest to create Jobs, which in turn create Pods where the actual container runs (including configuration such as environment variables)
+2018-08-03T19:25:04 <clown> well, that\'s mostly greek to me.  I don\'t know yaml nor yaml templates.
+2018-08-03T19:25:22 <clown> Looking at the job.yaml, would this work?
+2018-08-03T19:25:25 <clown> : - name: STATIC_DATA_DIR
+2018-08-03T19:25:25 <clown> value: \'{{ .Values.static_data_dir }}\'  would it work
+2018-08-03T19:26:38 <mrtyler> yaml: http://yaml.org/
+2018-08-03T19:26:42 <clown> and, there\'s a conceptual issue:  when running the dataloader in production, where do the prefs come from?  Environment variables?  Or from the latest master branch?
+2018-08-03T19:27:05 <clown> master branch of universal, that is.
+2018-08-03T19:28:10 <clown> if the answer is "the master branch of universal" then, don\'t bother with environmental variables.  Instead, use the clone of universal that is inside dataloader itself.
+2018-08-03T19:29:13 <mrtyler> "where do the prefs come from?" is a question for you, author of the new dataloader :)
+2018-08-03T19:29:30 <mrtyler> iirc the default behavior is to clone gpii/universal@master and use those files as the inputs?
+2018-08-03T19:30:01 <mrtyler> if that is correct, and the default behavior is what you want, then i agree you should not override STATIC_DATA_DIR (or whatever)
+2018-08-03T19:31:32 <clown> don\'t know about default behaviour.  the current distinction is between development behaviour (allow developers to provide their own prefs) vs produciont (use the latest prefs in master).
+2018-08-03T19:32:01 <mrtyler> i\'m not the right person to answer these questions
+2018-08-03T19:32:24 * colinclark has quit
+2018-08-03T19:32:33 <mrtyler> i can tell you how to make the system configure dataloader the way you want. i don\'t know how dataloader should be configured
+2018-08-03T19:32:35 <clown> okay.  I\'m having a side discussion with cindylli
+2018-08-03T19:34:13 <clown> and we\'ve come to the conclusion to for production, if the env variables are useless, use the copye of universal within the loader to get the prefs.  Likely re-visit after the aug demo.
+2018-08-03T19:34:44 <clown> pardon my typing.  Off to change the dataloader.
+2018-08-03T19:34:56 <mrtyler> hf :)
+2018-08-03T19:36:28 * michelled has quit
+2018-08-03T19:51:22 * gtirloni has quit
+2018-08-03T20:24:58 * alanharnum has quit
+2018-08-03T20:58:34 <clown> mrtyler:  I\'m off for the weekend.  Thanks again for all your help.
+2018-08-03T20:59:06 <clown> I did manage to get further, but there are still issues when running under AWS.  I\'ll get back to it on Tue (Mon is a holiday).
+2018-08-03T20:59:11 <clown> have a great weekend.
+2018-08-03T21:55:13 * Justin_o has quit
+2018-08-03T21:56:22 * mrtyler joined the channel
+2018-08-03T23:36:45 * michelled joined the channel
+2018-08-03T23:36:54 * michelled has quit
+'
+
+b'2018-08-03T03:32:58 * mrtyler joined the channel
+2018-08-03T05:14:14 * mrtyler joined the channel
+2018-08-03T05:52:45 * the-t-in-rtf joined the channel
+2018-08-03T06:04:07 * mrtyler joined the channel
+2018-08-03T06:54:23 * jhernandez joined the channel
+2018-08-03T06:54:51 * jhernandez has quit
+2018-08-03T06:55:08 * jhernandez joined the channel
+2018-08-03T07:21:37 * jhernandez has quit
+2018-08-03T08:28:39 * the-t-in-rtf joined the channel
+2018-08-03T10:33:02 * jhernandez joined the channel
+2018-08-03T10:39:44 * jhernandez has quit
+2018-08-03T12:08:48 * alanharnum joined the channel
+2018-08-03T12:14:07 * cindyli joined the channel
+2018-08-03T12:20:23 * jhernandez joined the channel
+2018-08-03T12:30:15 * jhernandez has quit
+2018-08-03T13:11:06 * clown joined the channel
+2018-08-03T13:13:08 * jhernandez joined the channel
+2018-08-03T13:44:14 * alanharnum joined the channel
+2018-08-03T13:44:24 * jhernandez has quit
+2018-08-03T14:02:08 * clown1 joined the channel
+2018-08-03T14:02:48 * clown joined the channel
+2018-08-03T14:13:34 * avtar joined the channel
+2018-08-03T14:37:33 * jhernandez joined the channel
+2018-08-03T14:38:10 * gtirloni joined the channel
+2018-08-03T15:14:21 * alanharnum has quit
+2018-08-03T15:15:27 * michelled joined the channel
+2018-08-03T15:16:31 * alanharnum joined the channel
+2018-08-03T15:33:10 * mrtyler joined the channel
+2018-08-03T15:33:27 * alanharnum joined the channel
+2018-08-03T15:42:25 * the-t-in-rtf joined the channel
+2018-08-03T16:23:46 <clown> cindyli (or mrtyler):  I just did a straight "rake" to start things going and after a while, the proces is stuck in a loop that will bail.  An example of the output is the following.  Is this to expected?
+2018-08-03T16:24:11 <clown> ssh -i /Users/clown/.ssh/id_rsa.gpii-ci -o StrictHostKeyChecking=no admin@api.dev-clown.gpii.net -- ping -c 1 8.8.8.8
+2018-08-03T16:24:11 <clown> ssh: Could not resolve hostname api.dev-clown.gpii.net: nodename nor servname provided, or not known
+2018-08-03T16:24:11 <clown> ...not ready yet. Sleeping 20s (will give up in 200s)...
+2018-08-03T16:24:50 <clown> it has since given up.
+2018-08-03T16:27:00 <cindyli> clown: the way i dealt with this kind of mysterious case is do a clean up - https://github.com/gpii-ops/gpii-infra/tree/master/aws#cleaning-up, and start over ;)
+2018-08-03T16:28:04 <clown> okay.  since this is the "first" rake, I haven\'t really gotten very far, so I will clean up and start over.
+2018-08-03T16:28:53 <clown> well, no that I\'ve read the link, um, those were the two previous things I did (rake destroy and rake clobber).  Trying again...
+2018-08-03T16:40:27 * colinclark joined the channel
+2018-08-03T16:49:27 * michelled joined the channel
+2018-08-03T17:00:50 * alanharnum joined the channel
+2018-08-03T17:27:17 * michelled has quit
+2018-08-03T17:30:24 <clown> cindyli:  I figured out why  "kubectl -n gpii delete job gpii-dataloader"  gives a "job not found" error.  The job is actually called "dataloader".  I\'m wondering why the discrepancy.
+2018-08-03T17:31:52 <cindyli> ah ha, nice finding
+2018-08-03T17:32:55 <clown> but, I\'ve deleted that one, and am now doing a \'rake deploy\' to see if my dataloader docker image will be used...
+2018-08-03T17:34:10 <clown> just so I have a second pairs of eyes looking at it, does this "components.conf" file look right to you, cindyli?
+2018-08-03T17:34:12 <clown> # Whitespace-separated list of components of the form \'service|image|tag\'.
+2018-08-03T17:34:12 <clown> flowmanager|herrclown/vagrant-universal|latest
+2018-08-03T17:34:13 <clown> preferences|herrclown/vagrant-universal|latest
+2018-08-03T17:34:13 <clown> gpii-dataloader|herrclown/gpii-dataloader|latest
+2018-08-03T17:35:03 <mrtyler> clown: lgtm
+2018-08-03T17:35:45 <mrtyler> clown: "Could not resolve hostname api.dev-clown.gpii.net: nodename nor servname provided" means your kubernetes cluster did not converge
+2018-08-03T17:35:46 <clown> thanks mrtyler.  We\'ll see if my latest \'rake deploy\' loads that one.
+2018-08-03T17:35:54 <mrtyler> actgually wait, i think it\'s something else
+2018-08-03T17:36:13 <mrtyler> a more likely explanation is:
+2018-08-03T17:36:41 <mrtyler> * kubernetes cluster comes up. when it does, it is able to run a Pod "dns-exporter" (or something) that creates the dns entry "api.dev-clown.gpii.net"
+2018-08-03T17:36:56 <clown> I don\'t think my deply worked, because I\'m getting a lot of "carla not found" error messages on my terminal window.
+2018-08-03T17:36:56 <mrtyler> * the rake code waits for that dns record to appear in route53 (aws dns service)
+2018-08-03T17:37:10 <clown> *deploy
+2018-08-03T17:37:24 <mrtyler> * when it does, the rake code waits for those dns records to be available to the local machine
+2018-08-03T17:37:50 <mrtyler> * however, because dns is a distributed system, it\'s possible that the first time you ask "where is api.dev-clown.gpii.net"
+2018-08-03T17:38:08 <mrtyler> you get the correct answer, but the next time you ask you get the wrong answer ("i don\'t know what api.dev-clown is")
+2018-08-03T17:38:32 <mrtyler> this problem is exacerbated by caches throughout the dns system, public and private
+2018-08-03T17:38:57 <mrtyler> hth. hard to say more without being able to inspect the state of things
+2018-08-03T17:41:38 <clown> mrtyler, looking at the pods in api.dev-clown.gpii.net shows no dataloader.
+2018-08-03T17:42:13 <mrtyler> it may not show up there, since the Pod runs only for a short time. does dataloader appear in Jobs?
+2018-08-03T17:43:21 * clown checks Jobs
+2018-08-03T17:43:48 <clown> "There is nothing to display here"
+2018-08-03T17:49:06 <mrtyler> sounds like something went wrong. next step is to review the rake output for errors
+2018-08-03T17:49:54 <clown> is there a pattern to search for, such as "error" or "err"?  The output is looong.
+2018-08-03T17:50:38 <mrtyler> not really, but in this case you could look for "dataloader"
+2018-08-03T17:51:31 <clown> okay, and which rake?  I made two calls (1) rake, and then after deleting the dataloader job, (2) rake deploy
+2018-08-03T17:51:41 <mrtyler> the (2) rake deploy
+2018-08-03T17:52:13 <clown> first message that seems relevant:  INFO: Helm chart gpii-dataloader is already installed and upgrades are disabled for it. Continuing.
+2018-08-03T17:52:45 <clown> actually that\'s the only one that contains "dataloader".
+2018-08-03T17:52:56 <mrtyler> sounds like you did not successfully delete the Job... which is because that has changed a bit. ok
+2018-08-03T17:53:20 <mrtyler> uh let\'s see, instead of "kubectl delete job" we should run ...
+2018-08-03T17:53:58 <mrtyler> i think it should be "helm delete --purge gpii-dataloader"
+2018-08-03T17:54:05 <mrtyler> run that and try to deploy again
+2018-08-03T17:54:07 * clown tries that
+2018-08-03T17:54:13 <clown> rake deploy?
+2018-08-03T17:54:20 * michelled joined the channel
+2018-08-03T17:54:20 <mrtyler> if it works, can you edit the README to reflect this change?
+2018-08-03T17:54:22 <mrtyler> yes, rake deploy"
+2018-08-03T17:54:38 <mrtyler> (which is the same as just "rake" fyi; i often specify "rake deploy" for clarity)
+2018-08-03T17:56:06 <clown> okay, here\'s something odd that I mentioned above:  "helm delete --purge gpii-dataloader" gives "Error: release: "gpii-dataloader" not found"
+2018-08-03T17:56:09 <clown> but "helm delete --purge dataloader" gives "release "dataloader" deleted"
+2018-08-03T17:56:34 <clown> something doesn\'t like the gpii- prefix.
+2018-08-03T17:56:35 <mrtyler> ah ok, that\'s fine
+2018-08-03T17:56:46 <clown> onto rake deploy
+2018-08-03T17:57:06 <mrtyler> there are reasons why the "gpii-" is inconsistent but it makes for a pretty boring story
+2018-08-03T17:57:15 <clown> re:  editing the README:  sure, but it\'s will be at the bottom of my stack.
+2018-08-03T17:57:35 <clown> you should publish it for insomniacs then.
+2018-08-03T17:58:20 <mrtyler> ok, i\'ll take care of the README change
+2018-08-03T17:58:44 * alanharnum has quit
+2018-08-03T17:59:10 * alanharnum joined the channel
+2018-08-03T18:03:32 <clown> mrtyler:  rake deploy has finished and there is a dataloader job (3 min old), but its log shows the old dataloader from before my changes.
+2018-08-03T18:03:34 * alanharnum has quit
+2018-08-03T18:03:55 <mrtyler> ok, let me take a look
+2018-08-03T18:04:18 <clown> thanks
+2018-08-03T18:07:35 <mrtyler> "kubectl -n gpii describe jobs/dataloader" gives me: "    Image:  gpii/gpii-dataloader@sha256:f74848c7cdd622dc9cbf1d5e02a6b58d77b111e1ccf4fe5b9bc69d2cee77d092"
+2018-08-03T18:07:43 <mrtyler> so the configuration is definitely wrong
+2018-08-03T18:08:05 <mrtyler> what does modules/deploy/version.yml say?
+2018-08-03T18:08:16 * clown gets that
+2018-08-03T18:09:32 <clown> # This file is generated by https://github.com/gpii-ops/gpii-version-updater.
+2018-08-03T18:09:32 <clown> ---
+2018-08-03T18:09:32 <clown> flowmanager: "gpii/universal@sha256:4ac8e4607da09fa9df5ecc1f4adc952134775d1bafbc174a2f3385e1172e915f"
+2018-08-03T18:09:32 <clown> gpii-dataloader: "gpii/gpii-dataloader@sha256:f74848c7cdd622dc9cbf1d5e02a6b58d77b111e1ccf4fe5b9bc69d2cee77d092"
+2018-08-03T18:09:33 <clown> preferences: "gpii/universal@sha256:4ac8e4607da09fa9df5ecc1f4adc952134775d1bafbc174a2f3385e1172e915f"
+2018-08-03T18:09:40 <mrtyler> does that look correct to you?
+2018-08-03T18:10:53 <clown> I\'ll have to check   It was created by some script based on my components.conf right?
+2018-08-03T18:11:04 <mrtyler> yes
+2018-08-03T18:11:11 <mrtyler> but it doesn\'t look like it has been updated
+2018-08-03T18:11:52 <mrtyler> so let\'s go back to the update-version steps and see what went wrong
+2018-08-03T18:12:04 <clown> if the SHA is from the git log for my branch of the gpii-dataloader, it\'s wrong.  It should be: 8c60cd82f64cf38c8d773992bbb2a7cd3fa04700
+2018-08-03T18:12:12 <clown> oky-doky
+2018-08-03T18:12:20 <mrtyler> aren\'t you trying to use an image called "herrklown/something"?
+2018-08-03T18:12:30 <mrtyler> this is using gpii/gpii-dataloader
+2018-08-03T18:12:33 <mrtyler> and also gpii/universal
+2018-08-03T18:12:38 <mrtyler> right?
+2018-08-03T18:13:14 <clown> yes, exactly.
+2018-08-03T18:13:33 * alanharnum joined the channel
+2018-08-03T18:15:17 <clown> update-version produces this log:  Looking up \'herrclown/vagrant-universal:latest\' for service \'flowmanager\'...
+2018-08-03T18:15:17 <clown> ...found digest \'sha256:95d5bc888025d5569512778adef97838dc4e0125471450882777f29137ebfa46\'.
+2018-08-03T18:15:17 <clown> Looking up \'herrclown/vagrant-universal:latest\' for service \'preferences\'...
+2018-08-03T18:15:17 <clown> ...found digest \'sha256:95d5bc888025d5569512778adef97838dc4e0125471450882777f29137ebfa46\'.
+2018-08-03T18:15:17 <clown> Looking up \'herrclown/gpii-dataloader:latest\' for service \'gpii-dataloader\'...
+2018-08-03T18:15:18 <clown> ...found digest \'sha256:4c57e671042593f3245daf75d6dbfd2f06f2824e9147931913f6937f61de7914\'.
+2018-08-03T18:15:18 <clown> Success! Writing version.yml...
+2018-08-03T18:16:22 <clown> and the version.yml is: # This file is generated by https://github.com/gpii-ops/gpii-version-updater.
+2018-08-03T18:16:22 <clown> ---
+2018-08-03T18:16:22 <clown> flowmanager: "herrclown/vagrant-universal@sha256:95d5bc888025d5569512778adef97838dc4e0125471450882777f29137ebfa46"
+2018-08-03T18:16:22 <clown> gpii-dataloader: "herrclown/gpii-dataloader@sha256:4c57e671042593f3245daf75d6dbfd2f06f2824e9147931913f6937f61de7914"
+2018-08-03T18:16:22 <clown> preferences: "herrclown/vagrant-universal@sha256:95d5bc888025d5569512778adef97838dc4e0125471450882777f29137ebfa46"
+2018-08-03T18:19:05 <clown> and, this is really odd: diff version.yml ../gpii-infra/modules/deploy/  yields no differences.  Let me double check that.
+2018-08-03T18:21:50 <clown> nope no difference.  where did I get that version.yml that I pasted here at 2:08
+2018-08-03T18:21:51 <clown> ?
+2018-08-03T18:21:58 * clown rhetorical question
+2018-08-03T18:24:10 <mrtyler> good question, but the evidence indicates that gpii-infra does not know about your updated version.yml, and that\'s why it\'s deploying the non-you versions of things
+2018-08-03T18:24:28 <mrtyler> version.yml is tracked by git. is it possible you did a git reset or something?
+2018-08-03T18:25:23 <mrtyler> oh that path is wrong
+2018-08-03T18:25:28 <mrtyler> it should be gpii-infra/aws/modules/deploy
+2018-08-03T18:26:17 <mrtyler> i\'ve fixed the README
+2018-08-03T18:29:12 <clown> okay, the "correct" one, is in gpii-infra/modules/deploy/version.yml.  The "wrong" one is in gpii-infra/aws/modules/deploy/version.yml
+2018-08-03T18:29:22 <clown> I\'m moving the correct one to the correct place.
+2018-08-03T18:30:03 <mrtyler> right. gpii-infra/modules does not and should not exist. you can and should remove it once you\'ve rescued the proper version.yml
+2018-08-03T18:30:31 <mrtyler> gpii-infra/aws/modules is the right place
+2018-08-03T18:31:39 * clown crosses my fingers and hopes this explains the issues.
+2018-08-03T18:33:05 <mrtyler> sorry for the confusion caused by docs not being updated when behavior changed. this is a class of problem i have encountered often but for which i have no solution :\\
+2018-08-03T18:34:43 <clown> been there, done that.  want my slightly used t-shirt?
+'
+
