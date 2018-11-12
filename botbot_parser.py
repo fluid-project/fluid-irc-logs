@@ -18,6 +18,13 @@ def get_formatted_log_line(log_line, current_date):
     fixed_ts = re.sub(r'\[([0-9][0-9]:[0-9][0-9]:[0-9][0-9])\]', current_date.strftime("%Y-%m-%d") + r'T\1', log_line)
     return fixed_ts
 
+def get_year_path(channel_name, current_date):
+    return channel_name + os.sep + datetime.datetime.strftime(datetime.datetime.strptime(start_date.strip(), "%Y-%m-%d"), "%Y")
+
+def make_year_path_directory(year_path):
+    if not os.path.exists(year_path):
+        os.makedirs(year_path)
+
 log_file_name = sys.argv[1]
 
 channel_name = sys.argv[2]
@@ -32,11 +39,15 @@ start_date = sys.argv[3]
 if not os.path.exists(channel_name):
     os.makedirs(channel_name)
 
+# make directory for the year if it doesn't exist
+year_path = get_year_path(channel_name, start_date)
+make_year_path_directory(year_path)
+
 log_file = open(log_file_name, "r")
 
 # print the first line to file based on the entered start_date
 
-f = open(channel_name + os.sep + channel_name + "-" + start_date + ".log", "w")
+f = open(year_path + os.sep + channel_name + "-" + start_date + ".log", "w")
 first_entry = log_file.readline()
 for log_line in first_entry.split("\\n"):
     f.write(get_formatted_log_line(log_line, datetime.datetime.strptime(start_date.strip(), "%Y-%m-%d")) + "\n")
@@ -50,7 +61,9 @@ for line in log_file:
     try:
         # line is a date, update the file we're using
         current_date = datetime.datetime.strptime(line.strip(), "%Y-%m-%d")
-        current_file = open(channel_name + os.sep + channel_name + "-" + line.strip() + ".log", "w")
+        year_path = get_year_path(channel_name, current_date)
+        make_year_path_directory(year_path)
+        current_file = open(year_path + os.sep + channel_name + "-" + line.strip() + ".log", "w")
     except ValueError:
         # not a date, write it to the file
         # split on the newline
