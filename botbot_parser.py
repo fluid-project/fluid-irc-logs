@@ -19,7 +19,7 @@ def get_formatted_log_line(log_line, current_date):
     return fixed_ts
 
 def get_year_path(channel_name, current_date):
-    return channel_name + os.sep + datetime.datetime.strftime(datetime.datetime.strptime(start_date.strip(), "%Y-%m-%d"), "%Y")
+    return channel_name + os.sep + datetime.datetime.strftime(current_date,  "%Y")
 
 def make_year_path_directory(year_path):
     if not os.path.exists(year_path):
@@ -40,7 +40,7 @@ if not os.path.exists(channel_name):
     os.makedirs(channel_name)
 
 # make directory for the year if it doesn't exist
-year_path = get_year_path(channel_name, start_date)
+year_path = get_year_path(channel_name, datetime.datetime.strptime(start_date.strip(), "%Y-%m-%d"))
 make_year_path_directory(year_path)
 
 log_file = open(log_file_name, "r")
@@ -61,7 +61,7 @@ for line in log_file:
     try:
         # line is a date, update the file we're using
         current_date = datetime.datetime.strptime(line.strip(), "%Y-%m-%d")
-        year_path = get_year_path(channel_name, current_date)
+        year_path = get_year_path(channel_name, current_date)        
         make_year_path_directory(year_path)
         current_file = open(year_path + os.sep + channel_name + "-" + line.strip() + ".log", "w")
     except ValueError:
