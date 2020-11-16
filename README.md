@@ -1,8 +1,10 @@
-# Fluid IRC Logs from BotBot.me
+# Fluid IRC Logs
+
+## BotBot.me
 
 The [BotBot.me](https://botbot.me/) logging service officially shuts down on 2018-11-05.
 
-This repository contains the following:
+This `botbot.me` directory contains the following:
 
 - the raw logs scraped from BotBot with the assistance of the BotBot operators (the `*.log` files in the root directory) - these are large dumps of the channel log over the years in a single file
     - there is one set of files from a scrape on 2018-09-20 and one for a scrape on 2018-11-05 - the later one supersedes the earlier, but both are being retained for now
@@ -11,3 +13,11 @@ This repository contains the following:
 - `parse_logs.sh`, a convenience script for running `botbot_parser.py` over multiple log files
 - `README.md` - this file
 - `timestampnotes.md` - a note on how URLs to individual messages in BotBot's logging interface are (or, unfortunately as it turns out, are not) related to timestamps
+
+## fluid-irc-bot
+
+When [BotBot.me](https://botbot.me) shutdown, we replaced the service with a Limnoria-based channel bot.
+
+This bot was deprecated when we migrated to [Matrix.org](https://wiki.fluidproject.org/display/fluid/Matrix+Channel).
+
+The `fluid-irc-bot` directory contains the logs recorded by this bot.
