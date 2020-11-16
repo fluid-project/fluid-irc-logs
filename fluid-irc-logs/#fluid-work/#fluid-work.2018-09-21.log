@@ -1,0 +1,79 @@
+2018-09-21T20:22:23  *** fluid-bot <fluid-bot!~limnoria@205.211.169.46> has joined #fluid-work
+2018-09-21T20:31:35  *** cindyli <cindyli!~Adium@67.216.44.39> has quit IRC (Quit: Leaving.)
+2018-09-21T20:36:33  *** cindyli <cindyli!~Adium@67.216.44.39> has joined #fluid-work
+2018-09-21T20:37:02  *** cindyli <cindyli!~Adium@67.216.44.39> has quit IRC (Client Quit)
+2018-09-21T20:38:29  <alanharnum> fluid-bot: are you well?
+2018-09-21T20:38:29  <fluid-bot> alanharnum: Error: "are" is not a valid command.
+2018-09-21T20:41:32  <alanharnum> fluid-bot: list
+2018-09-21T20:41:32  <fluid-bot> alanharnum: Admin, AutoMode, Channel, ChannelLogger, Config, Misc, Network, NickAuth, Owner, User, and Utilities
+2018-09-21T20:54:56  <stegru> fluid-bot: die
+2018-09-21T20:54:56  <fluid-bot> stegru: Error: "die" is not a valid command.
+2018-09-21T20:55:21  <fluid-bot> Announcement from my owner (alanharnum): I'm afraid I can't do that, stegru
+2018-09-21T20:55:32  <stegru> nerd
+2018-09-21T21:11:58  <gmoss> Bosmon: I think the issue I'm experiencing with my tests in FLUID-6300 may be due to my aggregate event upon which I am waiting to fire my tests. One of its sub-events, onSlidingPanelUpdated, will fire the first time UIO is loaded, which means that when onUioPanelsUpdated is fired after the first language change, the aggregate event will fire prematurely and trigger the tests before the change has actually finished
+2018-09-21T21:12:06  <gmoss> in case you were still thinking about that issue :)
+2018-09-21T21:12:34  <Bosmon> gmoss - that's pretty interesting
+2018-09-21T21:12:43  <Bosmon> But I'm not sure I remember that there was an existing issue with aggregate events
+2018-09-21T21:13:00  <gmoss> I don't think it's misbehaving, it's more that I've set it up in an unwise fashion
+2018-09-21T21:13:55  <clown> fluid-bot: bye, and have a nice weekend
+2018-09-21T21:13:55  <fluid-bot> clown: Error: "bye," is not a valid command.
+2018-09-21T21:14:04  * clown okay, be that way
+2018-09-21T21:14:23  *** clown <clown!~clown@ckvlon1747w-lp130-05-69-157-44-20.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2018-09-21T21:14:41  <Bosmon> fluid-bot: exeleutherostomize in your own words, if you will, to the court
+2018-09-21T21:14:41  <fluid-bot> Bosmon: Error: "exeleutherostomize" is not a valid command.
+2018-09-21T21:14:49  <Bosmon> Wow, so quick
+2018-09-21T21:15:46  <Bosmon> gmoss - what should be the signal that the change has actually finished?
+2018-09-21T21:17:29  <gmoss> for the slidingPanel component, it's one of the two possible events that fire after its refreshView function has happened. I have listeners on those which escalate to onSlidingPanelUpdated. for the other panels, I have a listener that fires "last" in a sequence which includes a call to fluid.prefs.separatedPanel.updateView. this seems to work as intended, when examining the timing
+2018-09-21T21:17:54  <gmoss> but if, as I suspect, the initial firing of onSlidingPanelUpdated is making the aggregate event fire too soon, things will get tripped up
+2018-09-21T21:18:49  <gmoss> I'm just trying to think of a way to "ignore" onSlidingPanelUpdated when it shouldn't apply, or if that even makes sense
+2018-09-21T21:20:58  <gmoss> is there a way to "reset" an aggregate event's counting?
+2018-09-21T21:21:17  <gmoss> a jedi mind trick to say "you haven't heard this event fire yet"
+2018-09-21T21:25:14  <Bosmon> gmoss - unfortunately not
+2018-09-21T21:25:18  <gmoss> Bosmon: :(
+2018-09-21T21:25:19  <Bosmon> I suggest you make a further event
+2018-09-21T21:27:12  <gmoss> Bosmon: I've started to go down this road a couple of times, Justin_o suggested it as well, but I got stuck at the point where  I'm adding it to the list of the aggregate event. When should it fire? what will keep it from triggering the aggregate event the next time, since onSlidingPanelUpdated will still be counted early?
+2018-09-21T21:27:31  <gmoss> I think I've been looking at this far too long haha
+2018-09-21T21:27:38  <sgithens> fluid-bot: help
+2018-09-21T21:27:38  <fluid-bot> sgithens: (help [<plugin>] [<command>]) -- This command gives a useful description of what <command> does. <plugin> is only necessary if the command is in more than one plugin. You may also want to use the 'list' command to list all available plugins and commands. 
+2018-09-21T21:27:43  <Bosmon> hahaha
+2018-09-21T21:28:04  <sgithens> fluid-bot: help Utilities
+2018-09-21T21:28:04  <fluid-bot> sgithens: Error: There is no command "utilities". However, "Utilities" is the name of a loaded plugin, and you may be able to find its provided commands using 'list Utilities'.
+2018-09-21T21:28:14  <sgithens> fluid-bot: list Utilities
+2018-09-21T21:28:14  <fluid-bot> sgithens: apply, countargs, echo, ignore, last, let, sample, shuffle, sort, and success
+2018-09-21T21:28:27  <gmoss> sgithens: I tried poking it in PM's, the admin functions are locked down :P
+2018-09-21T21:28:31  <Bosmon> gmoss - you just need to fire a further event at the time when the update corresponds to an update you are going to be interested in ....
+2018-09-21T21:28:44  <sgithens> fluid-bot: shuffle step shuffle step
+2018-09-21T21:28:44  <fluid-bot> sgithens: shuffle step step
+2018-09-21T21:28:58  <sgithens> nice fluid-bot!
+2018-09-21T21:30:48  <gmoss> Bosmon: at the risk of seeming obtuse, how does this differ from the update event that I'm already listening for?
+2018-09-21T21:31:41  <Bosmon> gmoss - well, someone must know that it is the right one :)
+2018-09-21T21:31:54  <Bosmon> So tell me what are the components of this aggregate event?
+2018-09-21T21:31:55  <gmoss> i.e. if I have "afterPanelHide.slidingPanelUpdated": "{fluid.uiOptions.prefsEditor.localized}.events.onSlidingPanelUpdated", which listens to the event for that component that I'm interested in, how do I fire an event at that time in a way that is materially different from what is already happening?
+2018-09-21T21:32:45  <gmoss> https://github.com/BlueSlug/infusion/blob/FLUID-6300/src/components/uiOptions/js/UIOptions.js#L72-L77
+2018-09-21T21:32:49  <Bosmon> Cheers
+2018-09-21T21:33:13  <gmoss> https://github.com/BlueSlug/infusion/blob/FLUID-6300/src/components/uiOptions/js/UIOptions.js#L144-L145 and https://github.com/BlueSlug/infusion/blob/FLUID-6300/src/components/uiOptions/js/UIOptions.js#L172
+2018-09-21T21:33:18  <gmoss> for their firers
+2018-09-21T21:34:06  <michelled> sgithens: I support teaching fluid-bot to dance
+2018-09-21T21:34:19  <Bosmon> OK, and what is the situation which leads to this "false dawn"?
+2018-09-21T21:34:24  <sgithens> :)
+2018-09-21T21:36:27  <gmoss> Bosmon: I thought I had a good handle on the answer to your question, but it has given me pause
+2018-09-21T21:39:31  <gmoss> I thought "the individual UIO panels weren't created until the language has changed", but this is not true. the prefsEditor component of prefsEditorLoader waits for templatesAndIframeReady before being created, so perhaps that's part of the answer
+2018-09-21T21:39:49  <gmoss> there are many moving parts
+2018-09-21T21:41:57  <gmoss> I think I'm all out of brain juice for the day. Bosmon as always I appreciate your assistance
+2018-09-21T21:42:06  <Bosmon> Sorry I haven't given much yet
+2018-09-21T21:42:18  <gmoss> you have indeed
+2018-09-21T21:42:28  <gmoss> the socratic questioning is useful
+2018-09-21T21:42:56  <Bosmon> http://existentialcomics.com/comic/223
+2018-09-21T21:44:05  <gmoss> Bosmon: hah, perfect
+2018-09-21T21:44:58  <gmoss> with that I'm signing off for now (I'm present in the channel 24/7, but usually not working off-hours)
+2018-09-21T21:45:05  <gmoss> thanks again!
+2018-09-21T21:45:14  <Bosmon> OK, sorry it's so complex
+2018-09-21T21:45:22  <Bosmon> I promise it will go away eventually : P
+2018-09-21T21:45:45  <gmoss> hahaha no worries. I think my relative lack of understanding of the system has contributed, not only the nature of the system
+2018-09-21T21:46:17  <Bosmon> Well, it should just work
+2018-09-21T21:46:25  <Bosmon> Without any of this nonsensical "recreating panels" etc.
+2018-09-21T21:47:45  *** colinclark <colinclark!colinclark@nat/ocadu/x-qbcbsukhpmqmtkqw> has quit IRC (Quit: colinclark)
+2018-09-21T22:01:50  *** michelled <michelled!~Adium@205.211.168.101> has quit IRC (Quit: Leaving.)
+2018-09-21T22:09:59  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-zyqqkhgwgwllwhps> has quit IRC ()
+2018-09-21T23:36:56  *** stegru <stegru!~ste@cpc120296-warr7-2-0-cust79.1-1.cable.virginm.net> has quit IRC (Ping timeout: 252 seconds)
+2018-09-21T23:39:34  *** stegru <stegru!~ste@cpc120296-warr7-2-0-cust79.1-1.cable.virginm.net> has joined #fluid-work

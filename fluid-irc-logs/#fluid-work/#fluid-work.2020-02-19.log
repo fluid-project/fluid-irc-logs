@@ -1,0 +1,380 @@
+2020-02-19T00:44:44  *** michelled <michelled!~Adium@2604:3d08:5b7d:45b0:b8ae:fde9:d534:e8b8> has joined #fluid-work
+2020-02-19T00:49:07  *** michelled <michelled!~Adium@2604:3d08:5b7d:45b0:b8ae:fde9:d534:e8b8> has quit IRC (Ping timeout: 260 seconds)
+2020-02-19T00:49:29  *** michelled <michelled!~Adium@2604:3d08:5b7d:45b0:c49a:a916:a266:be07> has joined #fluid-work
+2020-02-19T00:53:54  *** michelled1 <michelled1!~Adium@2604:3d08:5b7d:45b0:e418:83e2:3f56:c846> has joined #fluid-work
+2020-02-19T00:55:32  *** michelled <michelled!~Adium@2604:3d08:5b7d:45b0:c49a:a916:a266:be07> has quit IRC (Ping timeout: 260 seconds)
+2020-02-19T01:05:53  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-xsocwscukqutmmcm> has quit IRC (Quit: Connection closed for inactivity)
+2020-02-19T01:16:27  *** michelled <michelled!~Adium@S0106105611909051.vn.shawcable.net> has joined #fluid-work
+2020-02-19T01:18:20  *** michelled <michelled!~Adium@S0106105611909051.vn.shawcable.net> has quit IRC (Client Quit)
+2020-02-19T01:18:52  *** michelled1 <michelled1!~Adium@2604:3d08:5b7d:45b0:e418:83e2:3f56:c846> has quit IRC (Ping timeout: 260 seconds)
+2020-02-19T03:46:47  *** Shyamal <Shyamal!uid411152@gateway/web/irccloud.com/x-hzbexcofrcrfjcgi> has quit IRC (Quit: Connection closed for inactivity)
+2020-02-19T08:34:44  *** greatislander <greatislander!sid364905@gateway/web/irccloud.com/x-pasyoerdrnkphnau> has quit IRC (Ping timeout: 248 seconds)
+2020-02-19T08:36:13  *** greatislander <greatislander!sid364905@gateway/web/irccloud.com/x-qjlusvqqfdjsvkfa> has joined #fluid-work
+2020-02-19T08:53:03  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2020-02-19T09:51:31  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 260 seconds)
+2020-02-19T10:41:45  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2020-02-19T11:01:03  <javjarfer[m]> Hi there, good morning, the-t-in-rtf  do you know if we have an issue number for validations failures like this one? https://ci.gpii.net/job/universal-node-tests/2101/consoleText
+2020-02-19T11:09:34  <the-t-in-rtf> uhh
+2020-02-19T11:09:46  <the-t-in-rtf> there are new tests, and those passed before my work was merge
+2020-02-19T11:10:02  <the-t-in-rtf> so anything there should only be an issue with new data that's being added
+2020-02-19T11:12:43  <the-t-in-rtf> So, for example:
+2020-02-19T11:12:44  <the-t-in-rtf> 10:18:56.944:  Validation error in file '/home/vagrant/sync/universal/testData/preferences/amanda.json5':
+2020-02-19T11:12:44  <the-t-in-rtf> 10:18:56.944:    - http://registry.gpii.net/applications/com.microsoft.windows.animations.AnimationsEnabledConfig: The supplied value is not one
+2020-02-19T11:12:44  <the-t-in-rtf> of the allowed values (0,1).
+2020-02-19T11:13:10  <the-t-in-rtf> that solution isn't in master, so I assume that you've merged with upstream master and are now being informed about errors in the file and/or your transforms.
+2020-02-19T11:13:40  <the-t-in-rtf> the new tests are helping you avoid a couple of errors we've commonly made in the past
+2020-02-19T11:14:18  <the-t-in-rtf> namely, intra-application transforms that result in invalid values
+2020-02-19T11:14:41  <the-t-in-rtf> so when AnimationsEnabled is transformed to AnimationsEnabledConfig, the results don't match the schema
+2020-02-19T11:14:50  <the-t-in-rtf> that's what the test failure is telling you
+2020-02-19T11:14:58  <the-t-in-rtf> Make sense, @javjarfer[m]?
+2020-02-19T11:18:03  <the-t-in-rtf> I also check to ensure the defaults are valid, but I think those checks have been there for a while.
+2020-02-19T11:18:05  <the-t-in-rtf> 10:18:59.910:  Validation error in Default value for win32.json5 -> com.microsoft.windows.cursors -> CaretWidth:
+2020-02-19T11:18:05  <the-t-in-rtf> 10:18:59.911:    - : The value supplied should be a(n) integer.
+2020-02-19T11:18:22  <the-t-in-rtf> That's telling you that your default isn't valid according to the schema
+2020-02-19T11:18:34  <javjarfer[m]> the-t-in-rtf: yes, it's true, makes sense, but it's still a validation error, this payload is well formed because the transforms deliver the correct value to the setting
+2020-02-19T11:18:51  <the-t-in-rtf> uhh
+2020-02-19T11:19:15  <the-t-in-rtf> I'm not sure what you mean about a validation error
+2020-02-19T11:19:28  <the-t-in-rtf> if you mean it's reporting an error in the schema definition or the transforms or the test data, then yes
+2020-02-19T11:20:15  <the-t-in-rtf> if you shoot me a link to your branch I can investigate further
+2020-02-19T11:21:24  <javjarfer[m]> the-t-in-rtf: it's the classic renaming of setting through a transform
+2020-02-19T11:22:06  <javjarfer[m]> https://github.com/GPII/universal/pull/762/files
+2020-02-19T11:22:47  <javjarfer[m]> https://github.com/GPII/universal/pull/762/files#diff-cb7e20a6c5ff97630ea4518024a845b2R9902
+2020-02-19T11:25:55  <the-t-in-rtf> Friend.
+2020-02-19T11:26:02  <the-t-in-rtf> That value cannot match the schema.
+2020-02-19T11:26:11  <the-t-in-rtf> you haven't defined the schema in terms of the deeper structure
+2020-02-19T11:26:23  <the-t-in-rtf> i.e. you are checking the whole object as though it only contained the value
+2020-02-19T11:26:47  <the-t-in-rtf> so the transform is producing an object and the schema is checking for an enum value
+2020-02-19T11:26:51  <javjarfer[m]> the-t-in-rtf: that's also done for nativeSettingHandler, spiSettingsHandler and systemSettingsHandler
+2020-02-19T11:27:08  <the-t-in-rtf> yes, and I had to fix every single example that was broken in that way
+2020-02-19T11:27:12  <javjarfer[m]> all of them has those nested settings, but none of the settings are defined in nested structures
+2020-02-19T11:27:39  <the-t-in-rtf> then something happened in the merge from upstream
+2020-02-19T11:27:49  <the-t-in-rtf> I had to move a bunch of settings into deeper structures
+2020-02-19T11:28:17  <javjarfer[m]> the-t-in-rtf: there is a pull request or issue number for that work?
+2020-02-19T11:28:18  <the-t-in-rtf> for example
+2020-02-19T11:28:18  <the-t-in-rtf> https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L4987
+2020-02-19T11:28:25  <the-t-in-rtf> it's merged!
+2020-02-19T11:28:45  <the-t-in-rtf> anyway, that was the intra-application stuff needed to fix validation of any of those settings
+2020-02-19T11:28:47  <the-t-in-rtf> just a minute
+2020-02-19T11:29:28  <the-t-in-rtf> https://github.com/GPII/universal/pull/848
+2020-02-19T11:29:53  <the-t-in-rtf> There was another pull to make it possible to validate intra-application settings at all, and that one to fix all the problems we discovered
+2020-02-19T11:31:04  <the-t-in-rtf> i.e. there were a lot of transforms and schemas that didn't match before that pull
+2020-02-19T11:32:21  <the-t-in-rtf> and you're right that before that pull, we used the pattern a lot, i.e. transforming to an object but writing a schema for just the value.
+2020-02-19T11:34:28  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 245 seconds)
+2020-02-19T11:36:31  <javjarfer[m]> the-t-in-rtf: okay, so as I understand I now need to modify the settings in my pulls to match this new description system true?
+2020-02-19T11:45:33  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2020-02-19T11:45:47  <the-t-in-rtf> well
+2020-02-19T11:46:01  <the-t-in-rtf> you need for the output of the transform to match the schema for the setting
+2020-02-19T11:46:10  <the-t-in-rtf> the rules of schemas and transforms haven't changed
+2020-02-19T11:46:19  <the-t-in-rtf> we just never confirmed that we were producing valid output
+2020-02-19T11:49:49  <the-t-in-rtf> so the new system is to check our work better
+2020-02-19T11:50:33  <the-t-in-rtf> there is another coming in to fix broken transforms to/from common terms
+2020-02-19T11:50:38  <the-t-in-rtf> we had no checks there either
+2020-02-19T11:51:02  *** divyanshumahajan <divyanshumahajan!divyanshum@gateway/shell/matrix.org/x-pbkhlqartozlofpg> has quit IRC (*.net *.split)
+2020-02-19T11:51:41  <the-t-in-rtf> you're very much not alone in writing the old way, I didn't understand where the problems were until we added the tests and I worked through some examples
+2020-02-19T11:53:18  *** divyanshumahajan <divyanshumahajan!divyanshum@gateway/shell/matrix.org/x-ymeubxoyndfdwnsk> has joined #fluid-work
+2020-02-19T12:02:39  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 260 seconds)
+2020-02-19T12:05:28  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2020-02-19T12:09:36  *** Bosmon2 <Bosmon2!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has joined #fluid-work
+2020-02-19T12:11:14  *** Bosmon <Bosmon!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has quit IRC (Ping timeout: 240 seconds)
+2020-02-19T12:11:19  <Bosmon2> the-t-in-rtf, javjarfer[m] - chris and I have noticed that every Windows CI run has failed over the last week
+2020-02-19T12:11:21  *** Bosmon2 is now known as Bosmon
+2020-02-19T12:11:28  <Bosmon> stegru ^
+2020-02-19T12:11:38  <Bosmon> Something has mysteriously stopped the .NET 4.5.1 SDK from being resolvable
+2020-02-19T12:25:48  *** jhernandez <jhernandez!~jhernande@2a02:a03f:6189:e000:d600:afb2:8af2:1a83> has joined #fluid-work
+2020-02-19T12:29:27  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 265 seconds)
+2020-02-19T12:30:07  *** Bosmon <Bosmon!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has quit IRC (Ping timeout: 258 seconds)
+2020-02-19T12:30:42  *** Bosmon <Bosmon!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has joined #fluid-work
+2020-02-19T12:35:19  *** Bosmon <Bosmon!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has quit IRC (Ping timeout: 260 seconds)
+2020-02-19T12:37:04  *** Bosmon <Bosmon!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has joined #fluid-work
+2020-02-19T12:44:04  <javjarfer[m]> Bosmon: Since the VM box updates the unique pull that fixes current master is this one by stegru https://github.com/GPII/windows/pull/293
+2020-02-19T12:44:25  <javjarfer[m]> that's the main reason why pull fails since past week
+2020-02-19T12:44:26  <Bosmon> javjarfer[m] - but this pull fails for me
+2020-02-19T12:44:51  <javjarfer[m]> Bosmon: but it passes CI, are you using the new VM?
+2020-02-19T12:45:00  <javjarfer[m]> any specific failure?
+2020-02-19T12:45:47  <Bosmon> javjarfer[m] - yes, the processHandling failure which is in progress here: https://github.com/GPII/windows/pull/294
+2020-02-19T12:46:51  <jhernandez> Bosmon: haha, I was about to go and add an "ok to test" too :P
+2020-02-19T12:47:37  <javjarfer[m]> Bosmon: aha, had no clue of this bug, I haven't seen it before, it's something we can see in the VM boxes?
+2020-02-19T12:48:06  <jhernandez> I guess we can discuss our strategy for getting our windows ci back on the track - we need to propagate updates over to gpii-app
+2020-02-19T12:48:20  <Bosmon> I'm also very concerned that this "new VM" means that we are also doing no testing on Windows 10 builds prior to 1903
+2020-02-19T12:48:22  <javjarfer[m]> the-t-in-rtf: that means that I need to update the current settings definitions in my pulls, so they pass the new system
+2020-02-19T12:48:43  <javjarfer[m]> I will use GPII-4344 as a template for doing that
+2020-02-19T12:48:47  <the-t-in-rtf> the new tests, yes
+2020-02-19T12:49:03  <the-t-in-rtf> great, happy to help if you get stuck, as I had to fix a few dozen variations
+2020-02-19T12:49:05  <stegru> :(
+2020-02-19T12:49:18  <javjarfer[m]> the-t-in-rtf: there are no new tests in those pulls, the preference sets for the users are the ones that are failing validation
+2020-02-19T12:49:36  <jhernandez> Bosmon: there's a ticket to add ci passes on 1809 - https://issues.gpii.net/browse/GPII-4195
+2020-02-19T12:50:06  <Bosmon> jhernandez - that's really great
+2020-02-19T12:50:40  <jhernandez> we just need to get some cycles from Alfredo to create the box and setting up the ci to SHIP IT
+2020-02-19T12:50:51  <stegru> jiras are like IOU cards.. they're as good as the real thing
+2020-02-19T12:50:53  <Bosmon> jhernandez - sounds good
+2020-02-19T12:50:57  <Bosmon> How can we get those cycles?
+2020-02-19T12:51:10  <jhernandez> well, coordinating with him is enough
+2020-02-19T12:51:57  <jhernandez> I know that he always has lots of stuff to work on, but I guess we can get him to work on this if there's a clear need :)
+2020-02-19T12:52:01  <the-t-in-rtf> @javjarfer[m], they probably wouldn't have failed before the intra-application settings work
+2020-02-19T12:52:31  <the-t-in-rtf> anyway, the new tests are the ones of mine that were merged into master, I mean
+2020-02-19T12:52:41  <the-t-in-rtf> that are reporting the issue
+2020-02-19T12:53:03  <jhernandez> Bosmon: also, there's a new  channel on slack, ci, which I think is a good place to coordinate our work around CI
+2020-02-19T12:54:00  <Bosmon> ok
+2020-02-19T12:54:02  <Bosmon> Let me get on it
+2020-02-19T12:55:25  <javjarfer[m]> the-t-in-rtf: yes, so, I think I now need to use https://github.com/GPII/universal/pull/848 as a reference to update this settings schemas
+2020-02-19T12:56:06  <the-t-in-rtf> yes, usually it's just moving around the structure so that the checks are nested under properties: { value: X } }
+2020-02-19T12:56:30  <the-t-in-rtf> and adding a check for the path
+2020-02-19T12:56:42  <the-t-in-rtf> there are many examples in that pull
+2020-02-19T13:12:51  <javjarfer[m]> the-t-in-rtf: yes, this is going to take me some time, since I have a good number of them in the PRs
+2020-02-19T13:26:52  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-qhzignjqfjwkisbl> has joined #fluid-work
+2020-02-19T13:30:58  <Bosmon> jhernandez, the-t-in-rtf, stegru - is someone able to start the call?
+2020-02-19T13:31:06  <the-t-in-rtf> I can
+2020-02-19T13:31:10  <the-t-in-rtf> just a momennt
+2020-02-19T13:31:13  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-urfrhboncwcbzuln> has joined #fluid-work
+2020-02-19T13:32:28  <the-t-in-rtf> it's open
+2020-02-19T13:32:33  <the-t-in-rtf> JJ, stegru and I are thre
+2020-02-19T13:32:37  <the-t-in-rtf> there, even
+2020-02-19T13:32:46  <the-t-in-rtf> https://global.gotomeeting.com/join/161482213
+2020-02-19T13:33:27  <the-t-in-rtf> @jhernandez @Bosmon?
+2020-02-19T13:40:29  *** the-t-in-rtf1 <the-t-in-rtf1!~Adium@2a02:a210:2142:3480:19f1:f80e:cf17:71c4> has joined #fluid-work
+2020-02-19T13:40:43  <the-t-in-rtf1> sorry, crash
+2020-02-19T13:40:47  <the-t-in-rtf1> did the room close?
+2020-02-19T13:40:53  <Bosmon> We are in it
+2020-02-19T13:42:07  <the-t-in-rtf1> that's amazing, it used to torch the room if the organizer left
+2020-02-19T13:42:40  <the-t-in-rtf1> I think I may have to reconnect as an organiser to close the darned thing
+2020-02-19T13:42:55  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:10aa:8ce9:d7de:ff90> has quit IRC (Ping timeout: 272 seconds)
+2020-02-19T13:48:49  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2020-02-19T13:50:39  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2020-02-19T13:59:15  *** danielcho <danielcho!~Adium@205.211.168.103> has joined #fluid-work
+2020-02-19T14:00:47  *** danielcho1 <danielcho1!~Adium@205.211.168.103> has joined #fluid-work
+2020-02-19T14:00:47  *** danielcho <danielcho!~Adium@205.211.168.103> has quit IRC (Read error: Connection reset by peer)
+2020-02-19T14:02:11  *** Teddy__ <Teddy__!uid407930@gateway/web/irccloud.com/x-xhpkbqcvwpxdtupi> has quit IRC (Quit: Connection closed for inactivity)
+2020-02-19T14:06:25  *** cindyli <cindyli!Adium@nat/ocadu/x-fgjjftjnhhvjascg> has joined #fluid-work
+2020-02-19T14:13:18  <the-t-in-rtf1> @stegru, let me know when you've disconnected, I want to confirm the room shuts
+2020-02-19T14:13:26  <the-t-in-rtf1> I got disconnected as the only presenter
+2020-02-19T14:13:36  <stegru> i'm out
+2020-02-19T14:13:47  <stegru> i left immediately
+2020-02-19T14:14:21  <stegru> I was on the web interface, and closed the tab
+2020-02-19T14:14:22  *** the-t-in-rtf1 <the-t-in-rtf1!~Adium@2a02:a210:2142:3480:19f1:f80e:cf17:71c4> has quit IRC (Quit: Leaving.)
+2020-02-19T14:14:56  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:19f1:f80e:cf17:71c4> has joined #fluid-work
+2020-02-19T14:15:20  <the-t-in-rtf> ah, guess it was giving you the benefit of the doubt
+2020-02-19T14:16:36  <stegru> perhaps it was waiting for a keep alive timeout
+2020-02-19T14:17:51  <the-t-in-rtf> OK, I got in on the web, there's a message that it will close itself in five unless the organiser returns
+2020-02-19T14:22:28  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 248 seconds)
+2020-02-19T14:23:22  *** Teddy__ <Teddy__!uid407930@gateway/web/irccloud.com/x-cnevcsmrhawhttmi> has joined #fluid-work
+2020-02-19T14:36:35  *** cindyli <cindyli!Adium@nat/ocadu/x-fgjjftjnhhvjascg> has quit IRC (Quit: Leaving.)
+2020-02-19T14:40:16  *** cherylhjli <cherylhjli!~Adium@lnsm3-torontoxn-142-116-177-193.internet.virginmobile.ca> has joined #fluid-work
+2020-02-19T14:42:26  *** clown <clown!clown@nat/ocadu/x-gdqbwxhncfgjwrpf> has joined #fluid-work
+2020-02-19T14:44:49  *** the-t-in-rtf1 <the-t-in-rtf1!~Adium@2a02:a210:2142:3480:c015:9e6d:8497:ef59> has joined #fluid-work
+2020-02-19T14:46:26  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:19f1:f80e:cf17:71c4> has quit IRC (Ping timeout: 240 seconds)
+2020-02-19T14:48:28  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2020-02-19T14:48:40  *** cindyli <cindyli!Adium@nat/ocadu/x-jpuhzpozcexgyizx> has joined #fluid-work
+2020-02-19T14:55:49  *** jhung <jhung!~jhung@CPE0c473dc371c3-CM0c473dc371c0.cpe.net.fido.ca> has joined #fluid-work
+2020-02-19T15:07:46  *** michelled <michelled!~Adium@2604:3d08:5b7d:45b0:35ba:c3bb:7c87:48fe> has joined #fluid-work
+2020-02-19T15:10:05  <Bosmon> stegru - looks like it is a timeout after all
+2020-02-19T15:10:10  <Bosmon> I get an exit argument of null
+2020-02-19T15:20:42  <stegru> well
+2020-02-19T15:21:19  <stegru> I'm reluctant to increase the timeout, Bosmon
+2020-02-19T15:21:30  <Bosmon> stegru - right
+2020-02-19T15:22:18  <stegru> mind you, we can put a plaster over it.. until we use a hard-coded translations
+2020-02-19T15:25:14  *** avtar <avtar!~avtar@ip-45-3-17-180.user.start.ca> has joined #fluid-work
+2020-02-19T15:33:40  *** avtar <avtar!~avtar@ip-45-3-17-180.user.start.ca> has quit IRC (Remote host closed the connection)
+2020-02-19T15:42:59  <Bosmon> stegru - sure
+2020-02-19T15:43:23  <Bosmon> But - any idea why it is not producing the message?
+2020-02-19T15:51:24  <stegru> well, Bosmon, I presume jqUnit.fail is using .toString(), rather than JSON.stringify?
+2020-02-19T15:51:51  <stegru> .fail is being incorrectly used
+2020-02-19T15:52:10  <Bosmon> stegru - I don't mean the logged message
+2020-02-19T15:52:27  <Bosmon> I mean why the process isn't producing the message with the language info
+2020-02-19T15:52:30  <stegru> oh, what's causing the delay?
+2020-02-19T15:53:07  <Bosmon> Yes, that
+2020-02-19T15:53:23  <stegru> 2 theories..
+2020-02-19T15:53:40  <stegru> 10 seconds isn't enough to start a new process, under a heavily loaded system
+2020-02-19T15:54:36  <stegru> or, the child process is dealing with memory buffers.. perhaps something isn't being explicitly zeroed, or something like that
+2020-02-19T15:55:23  <stegru> either would explain the randomness
+2020-02-19T15:57:25  *** christop_ <christop_!~textual@24.50.234.55> has joined #fluid-work
+2020-02-19T15:58:05  <stegru> anyway, now that christop_ is here i can ask how the hard-coded language thing is coming long
+2020-02-19T15:58:14  <christop_> Hey stegru
+2020-02-19T15:58:17  <christop_> Some good news there...
+2020-02-19T15:58:42  <stegru> you have the PR?
+2020-02-19T15:58:45  <christop_> I found some (published!) core macOS APIs that provide the translated human-readable languages (and country/locale names) :)
+2020-02-19T15:58:59  <christop_> stegru whichi PR?
+2020-02-19T15:59:03  <stegru> have you came across "CLDR"?
+2020-02-19T15:59:27  <stegru> ah no.. i was inferring your good news was there is you have a PR ready :)
+2020-02-19T15:59:31  <christop_> "Display names for languages, time zones, territories, scripts and currencies"
+2020-02-19T15:59:32  <christop_> Oh sweet :)
+2020-02-19T15:59:36  <christop_> https://www.npmjs.com/package/cldr
+2020-02-19T15:59:41  <christop_> This is from the Unicode consortium?
+2020-02-19T15:59:59  <stegru> i've only just started reading http://cldr.unicode.org/
+2020-02-19T16:00:13  <christop_> cldr.unicode.org
+2020-02-19T16:00:14  <christop_> yup
+2020-02-19T16:00:15  <christop_> sweet
+2020-02-19T16:00:18  <christop_> That's a great link!
+2020-02-19T16:00:49  <christop_> I wonder if this is where Apple/MSFT got the data from ;)
+2020-02-19T16:00:50  <stegru> there's a slight problem with the current implementation, and I'm considering just going towards the hard-coded solution
+2020-02-19T16:01:07  <christop_> Not a bad idea.  Should we create a JIRA for this?
+2020-02-19T16:01:53  <christop_> I like your idea of getting away from using "not so published" API calls on Windows for the human-readable forms.
+2020-02-19T16:02:56  <stegru> well, having a hard-coded list is a maintenance burden - but then, so is undocumented APIs :)
+2020-02-19T16:04:48  <jhernandez> stegru poking undocumented APIs https://media.giphy.com/media/AIOu57hT8mi4g/giphy.gif
+2020-02-19T16:06:09  <stegru> haha
+2020-02-19T16:07:19  *** cindyli <cindyli!Adium@nat/ocadu/x-jpuhzpozcexgyizx> has quit IRC (Quit: Leaving.)
+2020-02-19T16:08:09  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2020-02-19T16:10:43  <christop_> jhernandez, stegru I always imagined it more like this:
+2020-02-19T16:10:44  <christop_> https://gph.is/28ZdB55
+2020-02-19T16:11:43  <stegru> reality: https://gph.is/VxeS7F
+2020-02-19T16:11:58  <christop_> Oh, that's painful to watch.
+2020-02-19T16:12:24  <christop_> The JSON database would be good for online usage as well.
+2020-02-19T16:13:20  <christop_> As for Morphic on macOS...I'm actually kind of partial now to using Apple's APIs because they list the names a little bit differently (or maybe they just use different country codes than on Windows...they have a whole API just to translate from "Windows codes" too...and the APIs on macOS should make things consistent with the "Preferences > Language" pane.
+2020-02-19T16:13:20  *** the-t-in-rtf1 <the-t-in-rtf1!~Adium@2a02:a210:2142:3480:c015:9e6d:8497:ef59> has quit IRC (Quit: Leaving.)
+2020-02-19T16:14:02  <christop_> But it would be really good to have an non-os-specific lookup table that we could use _everywhere_.
+2020-02-19T16:14:57  <stegru> ok ok
+2020-02-19T16:16:04  <stegru> here's the money shot: https://github.com/unicode-cldr/cldr-localenames-modern/tree/master/main
+2020-02-19T16:16:51  *** christop_ <christop_!~textual@24.50.234.55> has quit IRC (Quit: My MacBook has gone to sleep. ZZZzzz…)
+2020-02-19T16:21:32  *** christop_ <christop_!~textual@24.50.234.55> has joined #fluid-work
+2020-02-19T16:21:47  <christop_> Considering all the codes and all the languages to translate to/from, that's gonna be several MBs :D
+2020-02-19T16:21:53  <christop_> No biggie for the website.
+2020-02-19T16:22:15  <stegru> yeh, i'll fix my code instead
+2020-02-19T16:24:51  <christop_> Okay, let me know what you're thinking structure-wise.  Are you going to create a new repo for this (so this can be shared as a component), and then include that in gpii-windows's package.json dependencies?
+2020-02-19T16:25:05  <christop_> That seems ideal, so that we can use it in the cloud etc. too at that point.
+2020-02-19T16:26:52  <stegru> well, i'm happy to not do anything - considering you have an API for the mac
+2020-02-19T16:28:33  *** clown <clown!clown@nat/ocadu/x-gdqbwxhncfgjwrpf> has quit IRC (Ping timeout: 258 seconds)
+2020-02-19T16:30:18  *** colinclark <colinclark!~colinclar@205.211.168.104> has joined #fluid-work
+2020-02-19T16:30:23  *** clown <clown!clown@nat/ocadu/x-vufihrvmalqcsyeb> has joined #fluid-work
+2020-02-19T16:33:12  <Bosmon> stegru - I've confirmed that the process exits through being killed via the timeout branch
+2020-02-19T16:33:26  <Bosmon> And having failed once, it continues to fail lots of times on the same run
+2020-02-19T16:33:38  <Bosmon> I'm wondering whether there's just some bizarre way that the Windows API calls could deadlock
+2020-02-19T16:34:01  <Bosmon> The machine really isn't terribly heavily loaded, there's no way it will take 10 seconds to create the process
+2020-02-19T16:34:01  *** jhernandez <jhernandez!~jhernande@2a02:a03f:6189:e000:d600:afb2:8af2:1a83> has quit IRC (Read error: Connection reset by peer)
+2020-02-19T16:34:21  *** jhernandez <jhernandez!~jhernande@2a02:a03f:6189:e000:d600:afb2:8af2:1a83> has joined #fluid-work
+2020-02-19T16:36:36  <stegru> do you know how many languages you have installed?
+2020-02-19T16:36:49  <stegru> oh, that doesn't matter
+2020-02-19T16:40:41  <Bosmon> stegru - just the one : P
+2020-02-19T16:40:47  <javjarfer[m]> Hi Bosmon , the-t-in-rtf , do you know why this setting definition has this new property "path"? https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L4783
+2020-02-19T16:41:00  <javjarfer[m]> I'm not aware of such property being needed there
+2020-02-19T16:44:15  <Bosmon> javjarfer[m] - looks pretty mystifying to me
+2020-02-19T16:44:23  <Bosmon> We can ask Adtkins at the end of Arch
+2020-02-19T16:46:16  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Quit: sepidehshahi)
+2020-02-19T16:46:40  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2020-02-19T16:46:45  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Client Quit)
+2020-02-19T16:50:34  <javjarfer[m]> Bosmon: great thanks!
+2020-02-19T16:51:16  *** cherylhjli <cherylhjli!~Adium@lnsm3-torontoxn-142-116-177-193.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2020-02-19T16:53:30  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC (Remote host closed the connection)
+2020-02-19T16:59:25  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:c015:9e6d:8497:ef59> has joined #fluid-work
+2020-02-19T17:01:11  *** cherylhjli <cherylhjli!~Adium@lnsm3-torontoxn-142-116-177-193.internet.virginmobile.ca> has joined #fluid-work
+2020-02-19T17:03:34  <jhernandez> FYI, arch meeting time!!
+2020-02-19T17:03:36  <jhernandez> :)
+2020-02-19T17:20:23  *** Shyamal <Shyamal!uid411152@gateway/web/irccloud.com/x-uyuatwzsiujqxdsw> has joined #fluid-work
+2020-02-19T17:23:30  *** cindyli <cindyli!Adium@nat/ocadu/x-bbotwvjouuvwtnca> has joined #fluid-work
+2020-02-19T17:31:00  *** cherylhjli <cherylhjli!~Adium@lnsm3-torontoxn-142-116-177-193.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2020-02-19T17:36:46  *** simonjb <simonjb!~simonjb@205.211.168.101> has joined #fluid-work
+2020-02-19T17:43:25  *** kris_HA <kris_HA!~yanachkov@95.111.73.80> has joined #fluid-work
+2020-02-19T18:04:00  *** kris_HA <kris_HA!~yanachkov@95.111.73.80> has quit IRC (Ping timeout: 258 seconds)
+2020-02-19T18:07:02  *** danielcho1 <danielcho1!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2020-02-19T18:12:59  <sgithens> jhernandez: You mentioned you were about to start putting together a new morphic build, at least for the remainder of this week is GPII-4214.GPII-3572 still what I should be testing off of?
+2020-02-19T18:13:39  <sgithens> Do you think you'll be merging in the masters of each repo for the next build? I've had to mostly do that at least for universal to bring in the changes
+2020-02-19T18:25:07  *** danielcho <danielcho!~Adium@205.211.168.103> has joined #fluid-work
+2020-02-19T18:32:33  *** cherylhjli <cherylhjli!~Adium@205.211.168.102> has joined #fluid-work
+2020-02-19T18:33:46  <Bosmon> Hi there cindyli - I have just rolled a gpii-windows release of 0.3.0-dev.20200219T182555Z.58c6940a
+2020-02-19T18:34:05  <Bosmon> Do you think you could try updating your gpii-app pull https://github.com/GPII/gpii-app/pull/178 to reference this and see what happens?
+2020-02-19T18:39:10  <jhernandez> sgithens: yeah, next week's build will be based on GPII-4214.GPII-3572
+2020-02-19T18:39:25  <sgithens> cool, thx
+2020-02-19T18:39:28  <jhernandez> and I'll be updating them as soon as I can
+2020-02-19T18:39:41  <jhernandez> not sure yet what I need to pull in, but yeah
+2020-02-19T18:39:55  <jhernandez> I'll figure out during the rest of the week, next week
+2020-02-19T18:40:32  <jhernandez> but if you want to keep it cool on your side, just stick with what you have right now and then I can send you the updates once the next build is ready
+2020-02-19T18:40:42  <jhernandez> ;)
+2020-02-19T18:41:07  <jhernandez> Bosmon: thanks for merging/rolling up 0.3.0-dev.20200219T182555Z.58c6940a
+2020-02-19T18:41:28  <jhernandez> today it's time for me to run away from the computer
+2020-02-19T18:41:37  <jhernandez> I'll get to it tomorrow morning
+2020-02-19T18:41:42  <jhernandez> :)
+2020-02-19T18:41:58  <sgithens> jhernandez: will do
+2020-02-19T18:47:08  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:c015:9e6d:8497:ef59> has quit IRC (Quit: Leaving.)
+2020-02-19T18:49:42  *** clown1 <clown1!clown@nat/ocadu/x-qkpbnihlkslyfkfg> has joined #fluid-work
+2020-02-19T18:53:04  *** clown <clown!clown@nat/ocadu/x-vufihrvmalqcsyeb> has quit IRC (Ping timeout: 255 seconds)
+2020-02-19T18:55:46  *** clown <clown!clown@nat/ocadu/x-mgwouvcjmrnmqgxu> has joined #fluid-work
+2020-02-19T18:56:59  <Bosmon> stegru, javjarfer[m] - I found it: https://github.com/GPII/windows/blob/master/gpii/node_modules/gpii-localisation/test/testLanguage.js#L26
+2020-02-19T18:59:49  *** clown1 <clown1!clown@nat/ocadu/x-qkpbnihlkslyfkfg> has quit IRC (Ping timeout: 255 seconds)
+2020-02-19T19:01:18  <Bosmon> stegru: https://issues.gpii.net/browse/GPII-4365
+2020-02-19T19:02:56  *** jhernandez <jhernandez!~jhernande@2a02:a03f:6189:e000:d600:afb2:8af2:1a83> has quit IRC (Quit: jhernandez)
+2020-02-19T19:04:11  *** jhernandez <jhernandez!~jhernande@109.131.217.102> has joined #fluid-work
+2020-02-19T19:05:15  *** jhernandez <jhernandez!~jhernande@109.131.217.102> has quit IRC (Client Quit)
+2020-02-19T19:05:26  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2020-02-19T19:06:26  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:c015:9e6d:8497:ef59> has joined #fluid-work
+2020-02-19T19:07:18  <Bosmon> Thanks for the update, cindyli!
+2020-02-19T19:07:39  <cindyli> finger cross…
+2020-02-19T19:18:34  *** simonjb <simonjb!~simonjb@205.211.168.101> has quit IRC ()
+2020-02-19T19:20:05  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:c015:9e6d:8497:ef59> has quit IRC (Quit: Leaving.)
+2020-02-19T19:25:28  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2020-02-19T19:28:54  *** simonjb <simonjb!~simonjb@205.211.168.101> has joined #fluid-work
+2020-02-19T19:31:32  *** avtar <avtar!avtar@nat/ocadu/x-nlkmucflwnsjwzor> has joined #fluid-work
+2020-02-19T19:31:49  *** avtar <avtar!avtar@nat/ocadu/x-nlkmucflwnsjwzor> has quit IRC (Client Quit)
+2020-02-19T19:31:52  <Justin_o> fluid-everyone: the community meeting is about to start
+2020-02-19T19:32:27  *** avtar <avtar!avtar@nat/ocadu/x-cipyscenjivhgsix> has joined #fluid-work
+2020-02-19T19:33:40  <jhung> We will be using this document to take notes for the community meeting today https://docs.google.com/document/d/1CKZny8qdMkyVzOsPEnS1dD-OAZM3KhkaMzGzKDeELus/edit?usp=sharing
+2020-02-19T19:34:30  <cherylhjli> jhung running a bit late, will join momentarily
+2020-02-19T19:35:59  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:c015:9e6d:8497:ef59> has joined #fluid-work
+2020-02-19T19:36:33  *** danielcho <danielcho!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2020-02-19T19:37:15  *** danielcho <danielcho!~Adium@205.211.168.103> has joined #fluid-work
+2020-02-19T19:49:37  <stegru> Bosmon :*
+2020-02-19T19:50:42  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2020-02-19T20:06:29  <cindyli> Bosmon: there's an issue discovered by clown's GPII-4273 branch when LFM fetches SR from Github. our workflow is:
+2020-02-19T20:06:51  <cindyli> 1. "flowManagerReady" is fired when: (1) SR and default settings are fetched from remote URL; (2) kettle server is ready
+2020-02-19T20:06:58  <cindyli> https://github.com/klown/universal/blob/GPII-4273iii/gpii/node_modules/flowManager/src/FlowManager.js#L229-L235
+2020-02-19T20:07:52  <cindyli> 2. when "flowManagerReady" is fired: (1) key in "noUser"; (2) when noUser is keyed in, reset to default settings
+2020-02-19T20:07:53  <cindyli> https://github.com/klown/universal/blob/GPII-4273iii/gpii/node_modules/flowManager/src/FlowManager.js#L279-L286
+2020-02-19T20:08:30  <cindyli> now when SR is fetched from the remote, it takes much longer for "flowManagerReady" to be fired and for "noUser" to be keyed in
+2020-02-19T20:08:42  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:c015:9e6d:8497:ef59> has quit IRC (Quit: Leaving.)
+2020-02-19T20:08:54  <cindyli> at the time "flowManagerReady" is ready, kettle is long time ready to serve key in/out requests
+2020-02-19T20:10:13  <cindyli> when our test programmatically send key in requests, the workflow gets messed up and becomes:
+2020-02-19T20:10:31  <cindyli> 1. the kettle is ready;
+2020-02-19T20:10:38  <cindyli> 2. the test user is keyed in
+2020-02-19T20:10:47  <cindyli> 3. "flowManagerReady" is fired
+2020-02-19T20:11:01  <cindyli> 4. "noUser" is keyed in, which keys out the test user
+2020-02-19T20:11:52  <cindyli> 5. when test user key out request is received by LFM, the test user has already been keyed out and now it's "noUser" in the system.
+2020-02-19T20:12:07  <cindyli> This causes the keyout to fail
+2020-02-19T20:13:20  <cindyli> The solution in my mind is to start the test when noUser has been keyed in and reset to default has completed. it means start the test when "resetAtStartSuccess" is fired
+2020-02-19T20:14:05  <cindyli> this also means for the windows auto key-in needs to happen at "resetAtStartSuccess" event is fired
+2020-02-19T20:15:19  <cindyli> Bosmon: what do you think about this solution?
+2020-02-19T20:19:02  <cindyli> i imagine you might say: fix the core to only process http requests when "resetAtStartSuccess" is fired, which I don't know how to implement :-(
+2020-02-19T20:19:59  *** clown1 <clown1!clown@nat/ocadu/x-dgbkwwqswtyirtyv> has joined #fluid-work
+2020-02-19T20:22:09  *** clown <clown!clown@nat/ocadu/x-mgwouvcjmrnmqgxu> has quit IRC (Ping timeout: 265 seconds)
+2020-02-19T20:23:05  *** clown1 is now known as clown
+2020-02-19T20:24:44  *** christop_ <christop_!~textual@24.50.234.55> has quit IRC (Quit: My MacBook has gone to sleep. ZZZzzz…)
+2020-02-19T20:28:54  <cindyli> well, to fix the core, not only the timing to process http requests needs to be taken care, also the process timing for function calls such as lifecycleManager.performLogin(), performProximityTriggered() etc
+2020-02-19T20:46:28  <sgithens> cindyli: The refactored matchmaker utils (now in the lifecycle utils) work well, thanks!
+2020-02-19T20:47:45  <cindyli> great
+2020-02-19T20:48:52  *** danielcho <danielcho!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2020-02-19T20:53:49  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:c015:9e6d:8497:ef59> has joined #fluid-work
+2020-02-19T20:55:51  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:c015:9e6d:8497:ef59> has quit IRC (Client Quit)
+2020-02-19T20:59:52  *** danielcho <danielcho!~Adium@205.211.168.103> has joined #fluid-work
+2020-02-19T21:05:36  <Bosmon> cindyli - somehow the VM build failed again for your gpii-app pull
+2020-02-19T21:06:38  <Bosmon> I think it is indeed something to do with the mismatched .NET SDK version
+2020-02-19T21:06:57  <cindyli> oh, well
+2020-02-19T21:08:22  <cindyli> Bosmon: shall I do some debugging to find out if it's the code problem
+2020-02-19T21:08:46  <Bosmon> cindyli - I think your proposed solution to the test race is good - you should just delay the test fixtures to start on noUser keyin
+2020-02-19T21:08:54  <Bosmon> cindyli - no, there is no need for you to debug
+2020-02-19T21:09:09  <Bosmon> I think the fix for gpii-app will either have to come from Alfredo or Christopher
+2020-02-19T21:09:20  <cindyli> ok. cool.
+2020-02-19T21:11:56  <Bosmon> I have asked about it in our shiny new #ops Slack channel : P
+2020-02-19T21:12:03  <Bosmon> er #ci ops Slack channel
+2020-02-19T21:13:44  <cindyli> good to know there's a #ci slack channel, although i don't seem to have access to it
+2020-02-19T21:14:31  <Bosmon> I think you can just join it
+2020-02-19T21:14:33  <cindyli> that's ok as long as i have access to #ops slack channel
+2020-02-19T21:14:34  <Bosmon> Once you know its name
+2020-02-19T21:14:48  <Bosmon> The interface is rather poorly worded for Slack
+2020-02-19T21:16:30  <cindyli> "browser channel" doesn't give me a channel named "ci"
+2020-02-19T21:17:19  <cindyli> i think i found it. great
+2020-02-19T21:19:18  <cindyli> no, i was wrong… nvm, i have #ops channel
+2020-02-19T21:22:08  *** kris_HA <kris_HA!~yanachkov@95.111.73.80> has joined #fluid-work
+2020-02-19T21:28:17  *** cindyli <cindyli!Adium@nat/ocadu/x-bbotwvjouuvwtnca> has quit IRC (Quit: Leaving.)
+2020-02-19T21:29:48  *** jhernandez <jhernandez!~jhernande@2a02:a03f:6189:e000:751d:c036:7f7b:37a6> has joined #fluid-work
+2020-02-19T21:50:42  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Quit: sepidehshahi)
+2020-02-19T21:54:23  *** kris_HA <kris_HA!~yanachkov@95.111.73.80> has quit IRC (Ping timeout: 260 seconds)
+2020-02-19T21:54:55  *** jhung <jhung!~jhung@CPE0c473dc371c3-CM0c473dc371c0.cpe.net.fido.ca> has quit IRC (Quit: Leaving)
+2020-02-19T21:56:29  *** Shyamal <Shyamal!uid411152@gateway/web/irccloud.com/x-uyuatwzsiujqxdsw> has quit IRC (Quit: Connection closed for inactivity)
+2020-02-19T22:01:49  *** clown1 <clown1!clown@nat/ocadu/x-gbcnmgfjvzkmeyby> has joined #fluid-work
+2020-02-19T22:02:38  *** clown1 <clown1!clown@nat/ocadu/x-gbcnmgfjvzkmeyby> has quit IRC (Client Quit)
+2020-02-19T22:04:46  *** clown <clown!clown@nat/ocadu/x-dgbkwwqswtyirtyv> has quit IRC (Ping timeout: 240 seconds)
+2020-02-19T22:05:57  *** danielcho <danielcho!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2020-02-19T22:11:16  *** colinclark <colinclark!~colinclar@205.211.168.104> has quit IRC (Quit: colinclark)
+2020-02-19T22:21:59  *** cherylhjli <cherylhjli!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2020-02-19T22:23:55  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2020-02-19T22:26:13  *** avtar <avtar!avtar@nat/ocadu/x-cipyscenjivhgsix> has quit IRC (Quit: Quit)
+2020-02-19T22:28:38  *** jhernandez <jhernandez!~jhernande@2a02:a03f:6189:e000:751d:c036:7f7b:37a6> has quit IRC (Quit: jhernandez)
+2020-02-19T22:28:52  *** simonjb <simonjb!~simonjb@205.211.168.101> has quit IRC ()
+2020-02-19T22:37:25  *** jhernandez <jhernandez!~jhernande@109.131.217.102> has joined #fluid-work
+2020-02-19T23:09:41  *** michelled <michelled!~Adium@2604:3d08:5b7d:45b0:35ba:c3bb:7c87:48fe> has quit IRC (Quit: Leaving.)

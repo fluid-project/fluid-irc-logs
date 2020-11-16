@@ -1,0 +1,248 @@
+2020-06-17T12:01:53  *** sachin10101998 is now known as dogeman
+2020-06-17T13:32:36  <Sachinn10101998> Justin_o does gmoss work on Wednesdays?
+2020-06-17T13:33:09  <Sachinn10101998> I need to get my PRs reviewed. I have made all the changes but it's still not merged.
+2020-06-17T13:35:09  <Justin_o> Sachinn10101998: he does but he's probably not started for the day yet. jhung is also heads down at the moment working for a deadline so his availability is a bit tight right now. Sorry about that, and thanks for checking in. Is there something in particular that I could help with, are you currently blocked
+2020-06-17T13:35:11  <Justin_o> ?
+2020-06-17T14:08:16  <gmoss> Sachinn10101998: Most days I start at 11 eastern. Sorry to have kept you waiting, life has been a little busy lately. I have a bit of time to look at your PRs now, so I'll do that. Merging will probably happen when we're satisfied the code is ready for use in production, so it may take a few iterations.
+2020-06-17T14:09:32  <gtirloni> gmoss Sachinn10101998: https://github.com/sachin10101998/fluidproject.org/pull/1
+2020-06-17T14:09:45  <gmoss> Sachinn10101998: gtirloni made a pull request against your fluidproject.org repo to set up Docker functionality ^
+2020-06-17T14:55:03  <colinclark> simonjb, danielcho: Could I take a look at your audio playback code for the C2LC environment? Just because I’m very curious
+2020-06-17T14:55:45  <simonjb> colinclark: yes, that would be great. it's extremely minimal at the moment
+2020-06-17T14:55:57  <colinclark> is it in a particular branch?
+2020-06-17T14:56:03  <danielcho> colinclark: sure, the latest version should be on demo branch
+2020-06-17T14:56:09  <colinclark> ok
+2020-06-17T14:56:15  <simonjb> https://github.com/codelearncreate/c2lc-coding-environment/blob/demo/src/AudioManager.js
+2020-06-17T14:56:26  <simonjb> colinclark ^
+2020-06-17T14:56:35  <colinclark> thanks!
+2020-06-17T14:57:02  <simonjb> colinclark: we are constructing HTML5 Audio elements and using play(), and that's all right now, very basic
+2020-06-17T14:57:09  <colinclark> yes
+2020-06-17T14:57:18  <colinclark> it strikes me as one of these classic cases...
+2020-06-17T14:57:29  <colinclark> this is EXACTLY what I would have done for some quick audio playback too
+2020-06-17T14:58:04  <danielcho> there were some experiments around how to load up the wav files, because there was difference in browsers
+2020-06-17T14:58:11  <colinclark> whereas the Web Audio API would have been more complex to set up, with the MediaElementSource or AudioBufferSourceNode
+2020-06-17T14:58:19  <colinclark> right
+2020-06-17T14:58:43  <colinclark> what were the differences you saw, danielcho?
+2020-06-17T14:59:53  <colinclark> so previously you had a little collection of Audio elements that were initialized up front with the URL of the sound file
+2020-06-17T14:59:59  <danielcho> not sure if it was a bug in specific IOS version, but we were having problem of loading the wav files using webpack import for iPad I was using
+2020-06-17T15:00:08  <colinclark> ah
+2020-06-17T15:00:19  <colinclark> how does Webpack influence the issue?
+2020-06-17T15:00:42  <simonjb> there's some interaction that we don't understand yet between iPad Safari, webpack, and webserver
+2020-06-17T15:00:47  <colinclark> ah
+2020-06-17T15:01:09  <danielcho> yeah, it's still unsure what was causing the issue
+2020-06-17T15:01:13  <colinclark> I’ve actually basically stopped supporting WebPack users on one of my libraries
+2020-06-17T15:01:27  <colinclark> beacuse they very often don’t seem to have any idea how the tool actually works :)
+2020-06-17T15:02:29  <colinclark> so what’s in the demo branch now works on iOS Safari?
+2020-06-17T15:02:36  <simonjb> yes
+2020-06-17T15:03:17  <simonjb> though there's an issue where if a sound is triggered too soon following another one, it won't be played
+2020-06-17T15:03:48  <colinclark> interesting
+2020-06-17T15:03:53  <simonjb> for some definition of "too soon" that I don't understand yet
+2020-06-17T15:04:13  <colinclark> I think this may be inviting a set of new issues…
+2020-06-17T15:04:31  <colinclark> but I can’t help but feel that using BufferSourceNode will be more robust
+2020-06-17T15:05:07  <colinclark> it’ll definitely involve more set up for you
+2020-06-17T15:05:09  <simonjb> yes, I would be happy to move to a more explicit implementation that gives us more control and a better user experience
+2020-06-17T15:05:18  <colinclark> obviously, in due time
+2020-06-17T15:05:22  <simonjb> yeah
+2020-06-17T15:05:24  <colinclark> since this was a quick implementation
+2020-06-17T15:05:25  <danielcho> yeah
+2020-06-17T15:05:50  <danielcho> I'd happy to spend more time to implement the feature :)
+2020-06-17T15:05:53  <colinclark> you’ll havet to load audio files yourself, decode the buffers, and then set up the correct audio graph
+2020-06-17T15:06:15  <colinclark> but the advantage of AudioBufferSourceNode is that it’s designed for “one shot” playback
+2020-06-17T15:06:23  <colinclark> they’re cheap to create, play, and forget about
+2020-06-17T15:06:56  <simonjb> I think loading the audio files ourselves will be an advantage: if we manage that part then we will have more success working with webpack and pwa offline
+2020-06-17T15:06:56  <colinclark> which should also allow you to deal with mixing sounds in the cases where you’ve got someone quickly adding actions
+2020-06-17T15:07:05  <colinclark> or in Susie’s “audio hover” use case
+2020-06-17T15:07:14  <simonjb> yes
+2020-06-17T15:07:21  <danielcho> right
+2020-06-17T15:08:21  <colinclark> all in due time
+2020-06-17T15:08:28  <colinclark> it’s just interesting to follow this
+2020-06-17T15:08:34  <danielcho> something like this version https://testing-4a21c.firebaseapp.com/ on chrome is what would be ideal
+2020-06-17T15:08:40  <colinclark> i’ve had no lack of issues supporting iOS Safari and audio
+2020-06-17T15:08:46  <colinclark> but I wasn’t expecting you’d have an issue like this
+2020-06-17T15:09:21  <simonjb> colinclark: it would be really good to get your help with the future audio work
+2020-06-17T15:09:48  <danielcho> yeah, that would be really great
+2020-06-17T15:09:51  <colinclark> any time
+2020-06-17T15:10:01  <colinclark> happy to draw a picture with you
+2020-06-17T15:10:19  <colinclark> or maybe even write some code with you! ;)
+2020-06-17T15:10:30  <simonjb> :)
+2020-06-17T15:14:13  <colinclark> Justin_o: Something slightly frightening struck me last night while I was working on some issues…
+2020-06-17T15:14:34  <colinclark> I wonder if we’re the only users of testem these days? :P
+2020-06-17T15:15:05  <colinclark> I was noticing that Firefox wasn’t quitting on Windows while running some testem tests
+2020-06-17T15:15:08  <colinclark> and I did some Googling
+2020-06-17T15:15:25  <colinclark> and sure enough the first hit I find is the-t-in-rtf reporting the issue, and it’s still open
+2020-06-17T15:15:41  <colinclark> and then I do other Googling for other issues I’ve encountered in the past, just to see the state of things
+2020-06-17T15:15:54  <colinclark> and I find you reporting, for example, the Safari issue
+2020-06-17T15:15:56  <colinclark> etc. etc.
+2020-06-17T15:16:14  <colinclark> It was both awesome to see how community-minded we are…
+2020-06-17T15:16:38  <colinclark> and also made me worry that testem might largely be unmaintained these days
+2020-06-17T15:19:42  <Justin_o> it looks like work has picked up in the pandemic months based on the commit logs
+2020-06-17T15:20:22  <Justin_o> colinclark: also I wonder if someone else has taken over maintenance
+2020-06-17T15:21:14  <Justin_o> colinclark: anyways, that being said it might be worth a revisit.
+2020-06-17T15:21:37  <colinclark> yeah, they definitely have a new maintainer
+2020-06-17T15:21:47  <colinclark> the original author doesn’t look like he’s done much in a while
+2020-06-17T15:21:57  <colinclark> I wonder what other people do for this kind of functionality?
+2020-06-17T15:22:02  <colinclark> Is Karma more widely used?
+2020-06-17T15:22:42  <Justin_o> that's another option, it might be more widely used because I think it's more integrated with other unit testing frameworks.. but I could be mistaken, I haven't really looked
+2020-06-17T15:24:17  <Justin_o> colinclark: there is a qunit runner https://github.com/karma-runner/karma-qunit
+2020-06-17T15:24:35  <colinclark> though of course we’re stuck on an ancient QUnit
+2020-06-17T15:24:40  <colinclark> so that may or may not be viable for us
+2020-06-17T15:24:42  <Justin_o> colinclark: yep ;(
+2020-06-17T15:24:47  <colinclark> I’m not saying we should switch
+2020-06-17T15:24:52  <Justin_o> we need a GSoC project to port our unit tests
+2020-06-17T15:24:57  <colinclark> It just occurred to me
+2020-06-17T15:25:00  <colinclark> that’s a great idea :)
+2020-06-17T15:25:06  <Justin_o> it might take more than a summer though
+2020-06-17T15:26:43  <colinclark> I guess it depends on the experience of the student
+2020-06-17T15:26:48  <Justin_o> colinclark: that's true
+2020-06-17T15:26:53  <colinclark> but they could at least get one code base up and running with new infrastructure
+2020-06-17T15:26:57  <colinclark> and then we can follow the template
+2020-06-17T15:27:05  <colinclark> This is a real goal for Sachinn10101998
+2020-06-17T15:27:12  <colinclark> for Sachinn10101998’s work on static sties
+2020-06-17T15:27:18  <colinclark> (not on testing infrastructure)
+2020-06-17T15:27:25  <Justin_o> lol I wasn't sure what you meant for a moment
+2020-06-17T15:27:32  <colinclark> sorry, i hit return accidentally
+2020-06-17T15:27:39  <colinclark> I HATE this MacBook keyboard
+2020-06-17T15:27:51  <colinclark> But yeah, for static sites...
+2020-06-17T15:27:59  <Justin_o> yep.. me too.. but the new/old keyboards are really nice
+2020-06-17T15:28:15  <Justin_o> or nicer anyways, depending on your preference
+2020-06-17T15:28:23  <colinclark> we port over the two sites he’s working on, but the goal is to have a really easy-to-follow “kit” so that someone else can come along later and use the same tools really quickly
+2020-06-17T15:28:30  <colinclark> either to build a new static site or to port an existing one over
+2020-06-17T15:28:42  <colinclark> like, with the eco-op site
+2020-06-17T15:29:22  <colinclark> there was work greatislander had to do to figure out the best pattern for i11n with 11ty, for example
+2020-06-17T15:29:30  <colinclark> wow that was acronym soup right there ^ :)
+2020-06-17T15:30:08  <colinclark> if Sachinn10101998 is able to determine the patterns for all the crucial stuff, and create starter  boilerplate and documentation/tutorials/FAQs for how to make great Fluidic 11ty sites
+2020-06-17T15:30:12  <simonjb> a11y and i11n for 11ty
+2020-06-17T15:30:14  <colinclark> then that’s a very successful summer project :)
+2020-06-17T15:30:19  <colinclark> lol, simonjb
+2020-06-17T15:30:39  <gtirloni> should run in k8s too
+2020-06-17T15:30:52  <colinclark> i guess on a keyboard this bad, I should be grateful for the acronyms
+2020-06-17T15:31:00  <colinclark> gtirloni: since you’re here, i have a question for you!
+2020-06-17T15:31:14  <colinclark> I decided to revisit WSL2 in the new shell along with VS Code...
+2020-06-17T15:31:22  <colinclark> and it was a little smoother than last time I tried it
+2020-06-17T15:31:34  <colinclark> but there is still a “dual universe” thing happening that maybe you have some experience with
+2020-06-17T15:31:48  <colinclark> when I ran testem from the WSL2 shell, it couldn’t find any browsers
+2020-06-17T15:31:57  <colinclark> whereas from good old DOS, it could
+2020-06-17T15:32:16  <colinclark> (it is accurate to refer to cmd.exe as DOS?)
+2020-06-17T15:32:23  <colinclark> I guess it is the “Windows Shell” or something?
+2020-06-17T15:33:02  <gtirloni> hmm I haven't used the shell very much.. but yeah, it's probably running things inside WSL2
+2020-06-17T15:33:44  <simonjb> cmd.exe or powershell
+2020-06-17T15:36:24  <colinclark> gtirloni: Does that mean I need to install browsers in WSL2 somehow?
+2020-06-17T15:38:52  <Sachinn10101998> gmoss gtirloni should I merge the PR you made against eleventy branch of my fork?
+2020-06-17T15:39:09  <Sachinn10101998> Or are there still some remaining commits
+2020-06-17T15:39:19  <gtirloni> Sachinn10101998: yes, please. then push your branch again so it gets included in your PR :)
+2020-06-17T15:39:54  <Sachinn10101998> on it
+2020-06-17T15:40:20  <gtirloni> colinclark: I think so, like it was a separate Linux VM
+2020-06-17T15:40:38  <colinclark> right
+2020-06-17T15:40:40  <colinclark> ok
+2020-06-17T15:41:59  <Sachinn10101998> colinclark Justin_o I didn't really get what you mean by porting the unit tests
+2020-06-17T15:42:00  <gtirloni> if you need to see the broweser.. start X apps from WSL.. you'll need a Xserver of sorts. Otherwise it's all headless I think
+2020-06-17T15:42:24  <colinclark> Sachinn10101998: I think there were two dicussions interleaved there
+2020-06-17T15:42:38  <colinclark> I wasn’t referring to unit tests in relation to your work :)
+2020-06-17T15:42:49  <Sachinn10101998> ohh
+2020-06-17T15:43:11  <Sachinn10101998> That seems a really great idea. Making boiler plate code for 11ty sites
+2020-06-17T15:43:16  <colinclark> here’s the key point: “the goal is to have a really easy-to-follow “kit” so that someone else can come along later and use the same tools really quickly… either to build a new static site or to port an existing one over”
+2020-06-17T15:44:12  <Sachinn10101998> I studied a lot about 11ty and how it works and what the standard pactices are being followed for amking 11ty sites in most of the famous projects. I can create a really nice boilerplate code for the same which would have options fr automatic integration of UIO.
+2020-06-17T15:44:40  <Sachinn10101998> Configuring UIO sometimes causes pain when the URL Root changes
+2020-06-17T15:45:06  <Sachinn10101998> for example when we switch from floeproject.org/somepage.html to floeproject.org/posts/somepage.html, UIO breaks
+2020-06-17T15:45:14  <Justin_o> Sachinn10101998: also, Yash is or has tried to get in touch with you about porting the Infusion-Docs site. It would be good to share any of your research with him.
+2020-06-17T15:45:26  <Justin_o> :( that's not good
+2020-06-17T15:45:38  <Justin_o> probably related to paths to templates and message bundles
+2020-06-17T15:46:21  <Sachinn10101998> I made it work in fluidproject. The site is serving well both from fluidproject.org/somepage.html and fluidproject.org/posts/som,epage.html
+2020-06-17T15:46:47  <Sachinn10101998> In the boilerplate I can use the same configuration, so people won't have to go through all that hustle again
+2020-06-17T15:47:39  <Justin_o> that's great
+2020-06-17T15:47:52  <Sachinn10101998> About the infuision docs , I got in touch with yash. The next release of 11ty will probably support the use of that bundling modules in order to support that particular script we use in order to create index data.
+2020-06-17T15:48:52  <Justin_o> gmoss, danayo: I won't be able to make it to the story telling meeting today because of the APCP architecture meeting. I can sync up after 1pm ET if you need anything from me.
+2020-06-17T15:48:58  <Sachinn10101998> I am working on a way around that thing. We'll have to separate the search and keep it as a different service somehow so that even in future if we plan to change the SSG, such discrepancy deoesn't arise
+2020-06-17T15:49:46  <Sachinn10101998> I can get the boilerplate ocde up and running in a copuple of days. But I'll need a new repository for that.
+2020-06-17T15:50:06  <Sachinn10101998> Can we make a new empty repo in fluid project org for the same? Justin_o colinclark
+2020-06-17T15:50:19  *** Sachinn10101998 is now known as dogeman
+2020-06-17T15:50:32  <dogeman> gmoss ^
+2020-06-17T15:50:38  <Justin_o> dogeman: what would the new repo be for or how would it be used
+2020-06-17T15:50:45  <Justin_o> dogeman: also when is the next release of 11ty scheduled for
+2020-06-17T15:50:53  <dogeman> In order to have the boilerplate code.
+2020-06-17T15:51:12  <dogeman> The next release is scheduled for next month I believe
+2020-06-17T15:51:23  <Justin_o> dogeman: so how would someone make use of that, would they fork that repo? is there some way to init an 11ty project from a template?
+2020-06-17T15:51:45  <dogeman> They'll have to clone it from there.
+2020-06-17T15:53:04  <dogeman> Someone who wants to make an 11ty website can clone that repo and make the required changes.
+2020-06-17T15:53:06  <colinclark> maybe the thing to start with is a tutorial or example
+2020-06-17T15:53:13  <dogeman> All they have to do is npm install after cloning it.
+2020-06-17T15:53:51  <colinclark> dogeman: but then what happens when they want to commit their site to a Github repository? :)
+2020-06-17T15:54:32  <dogeman> They fork the site which they want to migrate and then copy the contnts from thr cloned template into the local of their fork and commit it.
+2020-06-17T15:54:39  <dogeman> contents*
+2020-06-17T15:56:19  <dogeman> or people can simply fork it and change the remote to their own repo and then push it.
+2020-06-17T15:56:26  <dogeman> not really sure if that would be feasible.
+2020-06-17T15:57:00  <dogeman> I even have the netlifyt cms part configured and ready to push, which I can add to the boilerplate.
+2020-06-17T15:57:04  <dogeman> netlify cms*
+2020-06-17T15:57:33  <dogeman> and search service using lunr.
+2020-06-17T15:57:56  <dogeman> However, it depends what kind of site the person would like to migrate or build.
+2020-06-17T15:58:23  <dogeman> Infusion docs, I guess, has versioning. I am not sure how versioning can be handled in the boilerplate code.
+2020-06-17T16:01:36  <dogeman> I can create a sample boilerplate in my account and If it turns out to be good enough, we can keep a copy in the fluid project org.
+2020-06-17T16:03:40  <gmoss> Justin_o: no worries, we can talk tomorrow :)
+2020-06-17T16:03:40  <gmoss> dogeman: just caught up with the discussion. to be clear, are you suggesting that we have a separate repo for the boilerplate code, which the fluidproject and floeproject sites are kept in line with? and also a separate repo for search logic and indexing?
+2020-06-17T16:04:27  <dogeman> No. Separate repo just for boilerplate or minimal starter code in order to get started with an 11ty site which would have search, cms and uio pre configured.
+2020-06-17T16:04:42  <Justin_o> dogeman: yes, versions are a special thing need for the Infusion-Docs site. There will likely be some special cases from time to time, but I'd guess most sites would work similar
+2020-06-17T16:04:44  <gmoss> dogeman: okay, that seems reasonable
+2020-06-17T16:05:11  <Justin_o> gmoss: if my meeting finishes in time, I'll join the story telling call.
+2020-06-17T16:05:28  <dogeman> If someone wants to make a fluidic 11ty site, he'll have to fork it or clone it. change the remote rigin to the requisite repo and make changes as required, and then push it.
+2020-06-17T16:06:33  <dogeman> I can make a really detailed description of how to use that boilerplate code. so , it becomes easy for someone with no prior experience working with 11ty to make a fluidic 11ty site.
+2020-06-17T16:07:15  <Justin_o> dogeman: would that work for a pre-existing site that wants to port?
+2020-06-17T16:07:22  <Justin_o> and already has a git repo
+2020-06-17T16:07:34  <dogeman> yes, it would.
+2020-06-17T16:08:12  <gmoss> Justin_o: okay, I guess we'll see :)
+2020-06-17T16:08:12  <gmoss> dogeman: one concern I have with keeping a separate boilerplate repo is that it will fragment the codebase, i.e. if you find a bug in your setup for fluidproject.org, for instance, you'll need to fix it in the boilerplate too, and potentially floeproject.org. I really like the idea of a self-contained "starter kit" though
+2020-06-17T16:09:11  <dogeman> I was talking about something on the lines of this https://github.com/trey/avarmint-11ty
+2020-06-17T16:09:38  <dogeman> Could you explain more what do you mean by starter kits and how it would be diferent from boilerplate code?
+2020-06-17T16:10:04  <gmoss> dogeman: I mean the same thing when I use either of those terms, sorry
+2020-06-17T16:10:29  <gmoss> a base upon which a developer could build their own version of the 11ty site
+2020-06-17T16:10:37  <dogeman> yes
+2020-06-17T16:10:40  <gmoss> just like the one you just shared :)
+2020-06-17T16:10:50  <dogeman> yeah
+2020-06-17T16:10:56  <gmoss> brb few minutes
+2020-06-17T16:11:01  <dogeman> okay
+2020-06-17T16:12:29  <dogeman> gtirloni should we add docker code to floeproject too?
+2020-06-17T16:30:12  <gtirloni> dogeman: that'd be great! if you could use my PR as the basis for that work, I'm available for questions :)
+2020-06-17T16:30:45  <dogeman> I'' tr to do it myself. If I run into errors, I'll ask you.
+2020-06-17T16:30:51  <dogeman> I'll*
+2020-06-17T16:30:54  <dogeman> try*
+2020-06-17T16:41:46  <gtirloni> awesome
+2020-06-17T16:41:47  <gtirloni> thanks
+2020-06-17T16:58:49  <Bosmon> cindyli - I'm missing working through this LifecycleManager issue with you : P
+2020-06-17T16:59:09  <Bosmon> I can hear you saying things like, "Yes, that would be very simple!", etc : P
+2020-06-17T16:59:10  <cindyli> which one?
+2020-06-17T16:59:29  <cindyli> haha, is that me? that sounds like you, @Bosmon ;)
+2020-06-17T16:59:48  <Bosmon> "Oh look, the utility seems to be mysteriously written already, although strangely for a different purpose"
+2020-06-17T17:00:31  <Bosmon> https://issues.gpii.net/browse/GPII-4468
+2020-06-17T17:00:42  <Bosmon> Oddly it seems that our handling of the "/enabled" setting has never worked at all
+2020-06-17T17:00:54  <cindyli> ah ha, it looks familiar
+2020-06-17T17:00:58  <Bosmon> But I guess not so surprising given noone ever actually tested it in the real app
+2020-06-17T17:01:12  <Bosmon> Since until we had the capture tool working noone generated any prefs sets that were relevant
+2020-06-17T17:01:39  <cindyli> right. but there's a test for the handling of "/enable". checking…
+2020-06-17T17:01:47  <Bosmon> cindyli - no, don't check!
+2020-06-17T17:02:01  <Bosmon> You are in the peaceful world beyond this project :)
+2020-06-17T17:02:33  <cindyli> that's absolutely true. much more peaceful indeed :)
+2020-06-17T17:03:04  <cindyli> but i'll still check...
+2020-06-17T17:03:15  <Bosmon> Hahah, don't worry, I think I can see what to do
+2020-06-17T17:03:23  <Bosmon> I linked the relevant code from a comment on that JIRA
+2020-06-17T17:03:30  <Bosmon> But unfortunately the breakage there is just the first problem
+2020-06-17T17:06:54  <cindyli> good findings. here's the test but it's probably buggy based on your findings - https://github.com/GPII/universal/blob/master/tests/shared/ResetDefaultSettingsTestDefs.js#L38-L47
+2020-06-17T17:08:15  <Bosmon> cindyli - thanks for the test reference :)
+2020-06-17T17:08:37  <Bosmon> Very helpful actually
+2020-06-17T17:08:37  <Bosmon> Since I will need to write extra tests at this location : P
+2020-06-17T17:08:39  <cindyli> np. although testing the truthy condition doesn't change the fact that "/enabled" could be defaulted to true when it shouldn't be
+2020-06-17T17:08:46  <Bosmon> Confirms my suspicion, that all we ever tested was /enabled: true
+2020-06-17T17:08:51  <Bosmon> And we never wrote any tests with /enabled: false
+2020-06-17T17:08:51  <cindyli> right
+2020-06-17T17:15:38  <Bosmon> The other bug is at this site: https://github.com/GPII/universal/blob/master/gpii/node_modules/lifecycleManager/src/LifecycleManager.js#L1439
+2020-06-17T17:16:04  <Bosmon> The system assumes that the value of the "active" flag is actually equivalent to whether the solution should be running or not
+2020-06-17T17:16:17  <Bosmon> But in fact it is just the directive from the matchmaker that the solution is relevant
+2020-06-17T17:16:40  <Bosmon> So the result is, yet, a second-level overriding of whether "/enabled" is false
+2020-06-17T17:20:25  <Justin_o> gtirloni: I think all of the docker PRs are taken care of. Are there any still needing review?
+2020-06-17T17:20:44  <Justin_o> gtirloni: also is it safe to archive this repo https://github.com/inclusive-design/websavvy or do you need to setup some redirects first
+2020-06-17T19:07:41  <gtirloni> Justin: thanks for the reviews and merges, much appreciated
+2020-06-17T19:08:04  <Justin_o> gtirloni: no problem, thanks for all the infrastructure improvements
+2020-06-17T19:11:53  <gtirloni> Justin_o: it's fine to archive websavvy now, I'll setup the redirects in Ansible
+2020-06-17T19:12:09  <Justin_o> gtirloni: thanks
+2020-06-17T19:15:43  <Justin_o> gtirloni: it's been archived
+2020-06-17T20:18:56  *** bryan__ is now known as bryan_
+2020-06-17T20:18:59  *** gmoss_ is now known as gmoss
+2020-06-17T20:18:59  *** gtirloni_ is now known as gtirloni
+2020-06-17T20:19:28  *** gtirloni is now known as Guest69257

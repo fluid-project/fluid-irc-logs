@@ -1,0 +1,150 @@
+2019-11-22T01:34:35  *** clown <clown!~clown@ckvlon1747w-lp140-04-70-27-184-205.dsl.bell.ca> has joined #fluid-work
+2019-11-22T02:23:30  *** jhernandez <jhernandez!~jhernande@63.2-67-87.adsl-dyn.isp.belgacom.be> has joined #fluid-work
+2019-11-22T02:25:12  *** jhernandez <jhernandez!~jhernande@63.2-67-87.adsl-dyn.isp.belgacom.be> has quit IRC (Client Quit)
+2019-11-22T02:44:00  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-11-22T03:07:00  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-11-22T03:43:56  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-11-22T03:43:56  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Client Quit)
+2019-11-22T05:47:07  *** clown <clown!~clown@ckvlon1747w-lp140-04-70-27-184-205.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2019-11-22T05:56:10  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:3844:bc8:98a6:cc61> has joined #fluid-work
+2019-11-22T10:14:57  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-11-22T12:00:48  *** kris <kris!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-11-22T12:00:59  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 250 seconds)
+2019-11-22T12:25:33  <Bosmon> the-t-in-rtf - your and klown's pulls are now merged and I have issued 0.3.0-dev.20191122T122441Z.d141625ca of universal in advance of the BIG PUSH on Monday
+2019-11-22T12:27:01  <Justin_o> Bosmon:  did my PR fix up all the issues in your PR?
+2019-11-22T12:27:10  <Bosmon> Justin_o - just checking now
+2019-11-22T12:27:42  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e72:c800:afce:ea01:d362:3594> has joined #fluid-work
+2019-11-22T12:28:09  <Bosmon> Actually I had found exactly the same issue in my previous adjustment to the enactor tests here: https://github.com/fluid-project/infusion/pull/970/commits/e45140a6dd6d064ed24b2cf1670d2b2a519b7d3a#diff-0322b3f60fc2ecfad187809947f88218R370
+2019-11-22T12:28:20  <Bosmon> I just failed to spot that in your case it was the faulty name that had been resolved FIRST : P
+2019-11-22T12:33:28  <Justin_o> Bosmon: I guess this is a new change to the framework. Is there a way to guard against this, or to have the member name be the first resolvable value.
+2019-11-22T12:34:11  <Bosmon> Justin_o - I'm just filing an issue : P
+2019-11-22T12:34:17  <Justin_o> and what happens if there is another grade name on the component that is used as the type, that happens to match the member name.. that is, it wouldn't be visible in the defaults block. would that affect the name resolution?
+2019-11-22T12:34:19  <Justin_o> Bosmon: thanks :)
+2019-11-22T12:34:39  <Justin_o> Bosmon: did you happen to also see the issue with testem that I was getting with your branch?
+2019-11-22T12:35:03  <Bosmon> We've always had this ambiguity, but there wasn't a possibility for inconsistent behaviour until we created the "fast path" for scope resolution for "fast invokers" etc.
+2019-11-22T12:35:28  <Bosmon> In order to fix the FLUID-6426 aliasing issues I finished moving over the last remaining sites from their faulty use of "fluid.expandOptions" to "fluid.expandImmediate"
+2019-11-22T12:35:48  <Bosmon> Which created new sites where it is possible to observe the "other" scope resolution rules
+2019-11-22T13:09:31  <Bosmon> Justin_o: https://issues.fluidproject.org/browse/FLUID-6433
+2019-11-22T13:09:40  <Bosmon> Just pushing your pulls through my various branches now ....
+2019-11-22T13:11:16  <Justin_o> Bosmon: thanks.. and the JIRA looks good too. I wonder if we should create a dev tool plugin/extension at some point
+2019-11-22T13:11:31  <Justin_o> maybe that would help as an intermediate step between what we have now and a full authoring tool
+2019-11-22T13:12:23  <Bosmon> Justin_o - yes, once we start to have some "new rendering" stuff in master this tool could be helpful
+2019-11-22T13:13:15  <Bosmon> For example we could stuff a more souped-up version of this interface into the extension: https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/FluidViewDebugging.js
+2019-11-22T13:13:46  <Bosmon> You may remember I gave a little demo of this interface in 2015 : P
+2019-11-22T13:15:47  <Justin_o> Right I think you were in Toronto at the time, if I'm not mistaken.
+2019-11-22T13:21:21  <Justin_o> Bosmon: yesterday we had been talking a bit about how to pass down the configuration for things like the TableOfContents templates and message bundles. It would also cover any other configuration that someone using the tool wants to supply outside of values in the schema.
+2019-11-22T13:22:32  <Justin_o> I was remember how things used to work for the builder, and is actually still present, which is that you can supply an auxiliary schema directly to the options when you are instantiating the component. Before this was passed through fluid.prefs.create, but now I'm making the builder be that create grade. Anyways, what are you thoughts on this configuration at instantiation?
+2019-11-22T13:22:40  <Justin_o> https://www.irccloud.com/pastebin/guGsAsOz/
+2019-11-22T13:23:23  <Bosmon> Justin_o - perhaps a relatively clean and not too intrusive scheme might introduce top-level component options areas named after the names of nested grades, e.g. ....
+2019-11-22T13:23:27  <Bosmon> Yes, quite similar to what I was thinking
+2019-11-22T13:23:29  <Justin_o> I had written distribute options for the items at the top level of the auxiliarySchema (e.g. terms, defeaultLocale) so those could be passed as top level options, but maybe those should be left in the auxiliarySchema as is depicted here
+2019-11-22T13:23:41  <Bosmon> Perhaps we could name the options area after the full grade name, since they have just used it anyway in the configuration at the bottom
+2019-11-22T13:23:49  <Bosmon> "fluid.prefs.tableOfContents"
+2019-11-22T13:24:05  <Bosmon> It would help to tie things together in their mind, and also keep the top-level options a bit less crowded-looking
+2019-11-22T13:24:32  <Justin_o> Bosmon: I believe I've been thinking the same thing.. instead of keying it tableOfContents, we'd key it fluid.prefs.tableOfContents, which is the pref that they have to specify anyways, so we can expect them to know what it is
+2019-11-22T13:24:50  <Justin_o> currently they would have to find the related auxiliarySchema to know the path to the options to set
+2019-11-22T13:25:23  <Bosmon> awesome
+2019-11-22T13:25:40  <Justin_o> Bosmon: so are you suggesting that I remove the "auxiliarySchema" wrapper from the options?
+2019-11-22T13:26:08  <Justin_o> or when you say top-level did you mean inside of the auxiliaryShema options?
+2019-11-22T13:27:16  <Bosmon> Justin_o - top level in there, yes
+2019-11-22T13:27:55  <Justin_o> Bosmon: cool.. so I think that this change would also mean we can drop the "type" field from those blocks in the auxiliarySchemas, because the key is the type
+2019-11-22T13:28:27  <Bosmon> Although I think it would be better if the auxSchema stuff were itself more clearly attached to a grade of some kind
+2019-11-22T13:28:49  <Justin_o> Bosmon: what do you mean?
+2019-11-22T13:29:50  <Bosmon> Well I guess it's ok the way it is for now, but eventually people will want to compose these things somehow.... the-t-in-rtf will deal with similar kinds of issues in his "live solutions registry"
+2019-11-22T13:30:36  <Bosmon> "typeFilter" is named pretty strangely
+2019-11-22T13:31:15  <Bosmon> I don't think any user will grasp what that does from its name : P
+2019-11-22T13:31:38  <Justin_o> Bosmon: here are the split out schema holding grades. https://github.com/jobara/infusion/blob/FLUID-6420/src/framework/preferences/js/StarterSchemas.js
+2019-11-22T13:32:01  <Bosmon> Justin_o - right, I forgot we have these already : P
+2019-11-22T13:32:05  <Justin_o> Bosmon: yes, the typeFilter is legacy from the primaryBuilder, I'm going to rename that to preferences or something like that when I've gotten all the parts working and start the clean up
+2019-11-22T13:33:28  <Justin_o> Bosmon: so one wrinkle is that I'm now using a similar approach that the primary builder does to source the auxiliary schemas using fluid.indexDefaults
+2019-11-22T13:33:29  <Justin_o> https://github.com/jobara/infusion/blob/FLUID-6420/src/framework/preferences/js/PrimaryBuilder.js
+2019-11-22T13:33:46  <Justin_o> I'll need to do some clean up here to reduce duplication, but haven't done that yet either.
+2019-11-22T13:34:24  <Justin_o> anyways, the issue would be that if you create another grade with a previous schema as a base grade, I think fluid.indexDefaults would find both
+2019-11-22T13:34:34  <Justin_o> I'm not sure we want that, but also it may not make a differnce
+2019-11-22T13:35:26  <Justin_o> because we just add all of these as gradeNames onto the top level component to merge all of the options.
+2019-11-22T13:35:41  <Justin_o> also if there is a better way to do all of this now, I'm open to just switching everything
+2019-11-22T13:35:47  <Justin_o> related to this part anyways
+2019-11-22T13:36:39  *** cindyli <cindyli!~Adium@198.52.178.16> has joined #fluid-work
+2019-11-22T13:38:23  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-jfqalxxljugfvmdm> has joined #fluid-work
+2019-11-22T13:39:39  <Bosmon> Justin_o - well, there should only be one such schema handling a particular preference
+2019-11-22T13:41:27  <Justin_o> Bosmon: okay, I think that makes sense. I guess we can revisit if something comes up.
+2019-11-22T13:58:35  *** danielcho <danielcho!~Adium@hmtnon1497w-130-02-65-95-64-90.dsl.bell.ca> has joined #fluid-work
+2019-11-22T14:01:14  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e72:c800:afce:ea01:d362:3594> has quit IRC (Quit: jhernandez)
+2019-11-22T14:12:40  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-11-22T14:17:50  *** clown <clown!~clown@ckvlon1747w-lp140-04-70-27-184-205.dsl.bell.ca> has joined #fluid-work
+2019-11-22T14:42:33  <the-t-in-rtf> @sgithens, I hadn't forgotten you, I finally looked at the pull: https://github.com/GPII/gpii-binder/pull/13
+2019-11-22T14:43:04  <the-t-in-rtf> "finally" for me is at least only two days later and not two of any larger unit of time... ;)
+2019-11-22T14:46:53  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-11-22T14:49:37  *** kris <kris!~yanachkov@185.97.75.80> has quit IRC (Remote host closed the connection)
+2019-11-22T14:49:57  *** kris <kris!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-11-22T14:54:15  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e72:c800:afce:ea01:d362:3594> has joined #fluid-work
+2019-11-22T15:13:54  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-ifxuurosvpmqeicz> has joined #fluid-work
+2019-11-22T15:56:43  *** michelled <michelled!~Adium@205.211.168.102> has joined #fluid-work
+2019-11-22T15:57:48  *** kris <kris!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 245 seconds)
+2019-11-22T16:25:03  <jhernandez> cindyli: hey
+2019-11-22T16:25:07  <jhernandez> are you around?
+2019-11-22T16:25:20  <cindyli> yes, jhernandez
+2019-11-22T16:25:27  <jhernandez> have a question about the allowedPrefsToWrite block
+2019-11-22T16:26:15  <jhernandez> so, as we are including new controls to deal with recently onboarded stuff
+2019-11-22T16:26:58  <jhernandez> I guess that we need to update our allowedPrefsToWrite block in our client credentials to allow users to save those new settings
+2019-11-22T16:28:07  <cindyli> yes, jhernandez
+2019-11-22T16:28:27  <jhernandez> Gregg asked me if there was a way to not having to update such field each time we add new settings
+2019-11-22T16:28:41  <jhernandez> :)
+2019-11-22T16:29:10  <cindyli> this is a security check. removing it means removing a layer of guard, jhernandez
+2019-11-22T16:29:18  <jhernandez> and skip the step of updating the credentials that are already in the cloud
+2019-11-22T16:29:23  <jhernandez> exactly
+2019-11-22T16:29:28  <jhernandez> I know what that means
+2019-11-22T16:29:39  <jhernandez> that's exactly what I told him
+2019-11-22T16:31:21  <cindyli> jhernandez: it's easy to remove it from the code, but i hope his decision is not to…
+2019-11-22T16:31:45  <cindyli> it's not hard to add a new setting to the cloud, there's only a couple of credentials need to be updated
+2019-11-22T16:31:58  <jhernandez> yes
+2019-11-22T16:32:08  <cindyli> and once we have UI for editing these records, it would be even easier
+2019-11-22T16:32:26  <jhernandez> for now we should be ok with that
+2019-11-22T16:33:03  <jhernandez> so, in order to update the credentials
+2019-11-22T16:33:50  <jhernandez> do you recommend creating a script that updates them?
+2019-11-22T16:33:51  <cindyli> start couchdb_ui -> open fauxton in a browser -> update credential records
+2019-11-22T16:33:55  <jhernandez> well, yes
+2019-11-22T16:34:00  <jhernandez> that's the other option
+2019-11-22T16:34:07  <cindyli> we can write a script too
+2019-11-22T16:34:13  <jhernandez> but, will devops be happy with thay approach?
+2019-11-22T16:34:19  <jhernandez> s/thay/that
+2019-11-22T16:34:22  <jhernandez> :P
+2019-11-22T16:34:26  <cindyli> maybe not ;)
+2019-11-22T16:34:29  <jhernandez> ok
+2019-11-22T16:34:44  <jhernandez> I'll ask in #devops on slack
+2019-11-22T16:59:51  *** michelled <michelled!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-11-22T17:09:36  *** michelled <michelled!~Adium@205.211.168.102> has joined #fluid-work
+2019-11-22T17:14:37  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-klbnloijcvnueddd> has quit IRC (Quit: Connection closed for inactivity)
+2019-11-22T17:30:21  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-11-22T17:50:23  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Quit: sepidehshahi)
+2019-11-22T18:07:37  *** clown <clown!~clown@ckvlon1747w-lp140-04-70-27-184-205.dsl.bell.ca> has quit IRC (Ping timeout: 240 seconds)
+2019-11-22T18:17:29  <sgithens> the-t-in-rtf: hahahahhaa, thanks :)
+2019-11-22T18:21:42  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-11-22T18:22:41  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e72:c800:afce:ea01:d362:3594> has quit IRC (Quit: jhernandez)
+2019-11-22T18:46:19  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:3844:bc8:98a6:cc61> has quit IRC (Quit: Leaving.)
+2019-11-22T19:07:30  *** cindyli1 <cindyli1!~Adium@198.52.178.16> has joined #fluid-work
+2019-11-22T19:07:30  *** cindyli <cindyli!~Adium@198.52.178.16> has quit IRC (Read error: Connection reset by peer)
+2019-11-22T19:39:19  *** christopher <christopher!~textual@24.171.222.55> has joined #fluid-work
+2019-11-22T19:43:53  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-11-22T19:44:14  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Quit: sepidehshahi)
+2019-11-22T19:48:02  *** christopher <christopher!~textual@24.171.222.55> has quit IRC (Ping timeout: 240 seconds)
+2019-11-22T20:02:36  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.101> has joined #fluid-work
+2019-11-22T20:04:35  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-ifxuurosvpmqeicz> has quit IRC (Ping timeout: 250 seconds)
+2019-11-22T20:05:21  *** lliskovoi_ <lliskovoi_!uid367571@gateway/web/irccloud.com/x-roirzyarjqojriga> has joined #fluid-work
+2019-11-22T20:12:45  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.101> has quit IRC (Read error: Connection reset by peer)
+2019-11-22T20:12:54  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e72:c800:afce:ea01:d362:3594> has joined #fluid-work
+2019-11-22T20:12:56  *** cherylhjli <cherylhjli!~Adium@205.211.168.101> has joined #fluid-work
+2019-11-22T20:34:26  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-11-22T20:39:45  *** michelled <michelled!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-11-22T20:44:05  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-11-22T20:57:56  *** clown <clown!~clown@ckvlon1747w-lp140-04-70-27-184-205.dsl.bell.ca> has joined #fluid-work
+2019-11-22T21:46:33  *** cherylhjli <cherylhjli!~Adium@205.211.168.101> has quit IRC (Quit: Leaving.)
+2019-11-22T21:50:40  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has joined #fluid-work
+2019-11-22T21:53:14  *** cindyli1 <cindyli1!~Adium@198.52.178.16> has quit IRC (Quit: Leaving.)
+2019-11-22T22:06:39  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e72:c800:afce:ea01:d362:3594> has quit IRC (Quit: jhernandez)
+2019-11-22T22:09:43  *** danielcho <danielcho!~Adium@hmtnon1497w-130-02-65-95-64-90.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2019-11-22T22:21:13  *** clown <clown!~clown@ckvlon1747w-lp140-04-70-27-184-205.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2019-11-22T22:22:30  *** cherylhjli <cherylhjli!~Adium@toroon0949w-lp130-04-65-94-96-30.dsl.bell.ca> has joined #fluid-work
+2019-11-22T22:23:14  *** cherylhjli <cherylhjli!~Adium@toroon0949w-lp130-04-65-94-96-30.dsl.bell.ca> has quit IRC (Client Quit)
+2019-11-22T23:01:42  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has quit IRC (Quit: Leaving.)
+2019-11-22T23:54:50  *** lliskovoi_ <lliskovoi_!uid367571@gateway/web/irccloud.com/x-roirzyarjqojriga> has quit IRC (Quit: Connection closed for inactivity)

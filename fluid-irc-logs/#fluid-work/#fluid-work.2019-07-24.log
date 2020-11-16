@@ -1,0 +1,194 @@
+2019-07-24T00:06:05  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto46-142-116-184-124.internet.virginmobile.ca> has joined #fluid-work
+2019-07-24T00:06:15  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto46-142-116-184-124.internet.virginmobile.ca> has quit IRC (Client Quit)
+2019-07-24T00:22:14  *** lliskovoi_ <lliskovoi_!uid367571@gateway/web/irccloud.com/x-ychexywxzjnvlegs> has quit IRC (Quit: Connection closed for inactivity)
+2019-07-24T01:14:35  *** jhung <jhung!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-07-24T01:52:02  *** jhung <jhung!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Ping timeout: 248 seconds)
+2019-07-24T03:00:25  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:3160:7ec:6d53:96bc> has quit IRC (Ping timeout: 252 seconds)
+2019-07-24T04:56:35  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:2d64:ced8:50dd:4db7> has joined #fluid-work
+2019-07-24T05:22:11  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-chvvivocwpsbbpta> has quit IRC (Quit: Connection closed for inactivity)
+2019-07-24T05:32:22  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:2d64:ced8:50dd:4db7> has quit IRC (Quit: Leaving.)
+2019-07-24T07:05:05  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-07-24T07:40:47  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has joined #fluid-work
+2019-07-24T09:23:07  <the-t-in-rtf> So, @Bosmon or anyone else keeping score, I have confirmed that if I switch the PSP channel tests to use the windows grades, it works, but only if I run the integration and dev tests first.
+2019-07-24T09:24:35  <the-t-in-rtf> I will try to narrow it down, but it seems like we'll need at least two rounds of fixes, one to get the mocks the right kind of dirty to pass CI, another to reset the mocks and fix any errors revealed.
+2019-07-24T09:29:56  <the-t-in-rtf> OK, running just the integration tests first allows it to pass.
+2019-07-24T09:30:14  <the-t-in-rtf> Trying now with just the dev tests.
+2019-07-24T09:30:32  <the-t-in-rtf> that was fast, with just the dev tests dies as usual.
+2019-07-24T09:34:32  <the-t-in-rtf> As you might expect, seems like it's tests/platform/index-windows.js that primes the mocks.
+2019-07-24T09:38:37  <the-t-in-rtf> jackpot.
+2019-07-24T09:38:56  <the-t-in-rtf> https://github.com/GPII/universal/blob/dea903d5192668f59323d385534c5cc704c6e0f1/tests/platform/index-windows.js#L26
+2019-07-24T09:39:20  <the-t-in-rtf> Only running the builtIn test spec primes the mocks well enough for the PSP channel tests to pass.
+2019-07-24T09:39:37  <the-t-in-rtf> continuing down the well
+2019-07-24T09:41:40  <the-t-in-rtf> https://github.com/GPII/universal/blob/aa30145076127c33e2b274bae51a704dd01e6570/tests/platform/windows/windows-builtIn-testSpec.js#L1792
+2019-07-24T09:41:57  <the-t-in-rtf> The tests fail if I only run the builtIn ones, but pass if I only run the high contrast.
+2019-07-24T09:48:15  <the-t-in-rtf> OK, I can get the PSP channel tests working in isolation
+2019-07-24T09:48:33  <the-t-in-rtf> by adding gpii.test.integration.actionHandlersAware.windows to the context's gradeNames
+2019-07-24T09:49:44  <the-t-in-rtf> I will tidy up what I have and submit for review shortly.  I hope it will be adequate until mock-clearing work is done.
+2019-07-24T09:50:03  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 245 seconds)
+2019-07-24T09:51:56  <the-t-in-rtf> Looks like they still can't run in isolation
+2019-07-24T09:52:06  <the-t-in-rtf> but they now run in combination with the preceding tests.
+2019-07-24T09:55:42  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-07-24T10:08:42  *** javjarfer[m] <javjarfer[m]!javjarferm@gateway/shell/matrix.org/x-fzrjczynhjwktzqo> has quit IRC (Ping timeout: 252 seconds)
+2019-07-24T10:47:49  *** javjarfer[m] <javjarfer[m]!javjarferm@gateway/shell/matrix.org/x-fbaikskcvgtdwrma> has joined #fluid-work
+2019-07-24T10:49:18  <the-t-in-rtf> CI still fails, now with the pcsc user listener errors.
+2019-07-24T10:49:28  <the-t-in-rtf> https://ci.gpii.net/job/universal-node-tests/1821/console
+2019-07-24T10:49:53  <the-t-in-rtf> setting up for a local vagrant run, but those tests have always worked in isolation for me.
+2019-07-24T10:59:05  <the-t-in-rtf> I had to move the listener tests forward, I left a TODO about cleaning up the order once the mocks are isolated between tests.
+2019-07-24T10:59:21  <the-t-in-rtf> i.e. the user listener tests work on their own but fail if run last.
+2019-07-24T11:57:32  *** jhung <jhung!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-07-24T11:59:16  <Bosmon> the-t-in-rtf - I issued a pull already
+2019-07-24T11:59:32  <Bosmon> https://github.com/GPII/universal/pull/806
+2019-07-24T11:59:47  <Bosmon> This should be sufficient to ward off "crazy races"
+2019-07-24T12:00:30  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-zaaqjmcggrvgjevz> has joined #fluid-work
+2019-07-24T12:00:59  <the-t-in-rtf> great
+2019-07-24T12:10:34  *** jhung <jhung!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Ping timeout: 272 seconds)
+2019-07-24T12:21:27  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Remote host closed the connection)
+2019-07-24T12:21:51  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-07-24T12:24:28  <the-t-in-rtf> does that include something to help with assertions outside of test contexts?
+2019-07-24T12:35:09  <the-t-in-rtf> Anyway, I'm looking through now and leaving comments
+2019-07-24T12:57:02  <the-t-in-rtf> Anyway, @Bosmon, I left comments, let me know if there's anything I can do to help expedite getting that merged.
+2019-07-24T12:58:37  *** jhernandez <jhernandez!~jhernande@48.121-240-81.adsl-dyn.isp.belgacom.be> has joined #fluid-work
+2019-07-24T12:59:28  *** cindyli <cindyli!Adium@nat/ocadu/x-atadopqjenzkufos> has joined #fluid-work
+2019-07-24T13:08:39  *** jhung <jhung!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-07-24T13:19:30  <the-t-in-rtf> Anyway, I am firmly mired in a new problem, I get a mix of "assertion outside of test context" errors and "X expected, 0 run"
+2019-07-24T13:28:21  *** jhung_2 <jhung_2!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-07-24T13:28:23  <cindyli> jhernandez: will you be available one hour before the APCP meeting?
+2019-07-24T13:29:38  *** jhung <jhung!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Ping timeout: 248 seconds)
+2019-07-24T13:32:48  <jhernandez> cindyli: yes, no prob
+2019-07-24T13:33:18  *** jhung <jhung!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-07-24T13:33:33  <cindyli> thanks, jhernandez
+2019-07-24T13:34:10  *** jhung_2 <jhung_2!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Ping timeout: 246 seconds)
+2019-07-24T13:34:23  <jhernandez> :)
+2019-07-24T13:35:18  *** jhung_2 <jhung_2!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-07-24T13:37:38  *** jhung <jhung!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Ping timeout: 248 seconds)
+2019-07-24T13:38:15  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-dwogzjfohhbmqihp> has joined #fluid-work
+2019-07-24T13:39:48  *** jhung_2 is now known as jhung
+2019-07-24T13:43:13  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-07-24T13:48:37  <cindyli> jhernandez: can you open a gotomeeting room for the meeting in 12 mins?
+2019-07-24T13:54:02  <Justin_o> alanharnum: I've left a couple more comments on the PR https://github.com/fluid-project/infusion/pull/956
+2019-07-24T13:54:16  <alanharnum> Justin_o: thanks, having a look now
+2019-07-24T13:54:32  *** clown <clown!clown@nat/ocadu/x-fcrvogzqxbfjogye> has joined #fluid-work
+2019-07-24T13:54:35  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-07-24T13:54:53  <Justin_o> alanharnum: thanks
+2019-07-24T13:55:50  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has joined #fluid-work
+2019-07-24T13:56:01  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has quit IRC (Client Quit)
+2019-07-24T13:58:38  <jhernandez> cindyli: yes, doing it now
+2019-07-24T13:59:07  <cindyli> which room?
+2019-07-24T13:59:22  <jhernandez> I'm on room 2
+2019-07-24T13:59:25  <jhernandez> https://app.gotomeeting.com/?meetingId=619028605
+2019-07-24T14:00:48  <alanharnum> Justin_o: Question for clarification on a comment: https://github.com/fluid-project/infusion/pull/956#discussion_r306825544
+2019-07-24T14:02:06  <cindyli> Bosmon: we're in room 2 for the NOVA deploy planning
+2019-07-24T14:07:16  <Justin_o> alanharnum: replied. Hopefully that clears up my comment, but please let me know if more clarification is needed.
+2019-07-24T14:07:35  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has quit IRC (Quit: Leaving.)
+2019-07-24T14:07:37  <alanharnum> Justin_o: I guess I don't really understand what is being suggested, aside from the general "make more Grunt-like".
+2019-07-24T14:08:49  <alanharnum> Q1: Should we be generating the list of files to check in /dist/ programatically? Q2: What would this look like, run-wise? Targets like verifyDistFiles:JS, verifyDistFiles:CSS, etc?
+2019-07-24T14:09:14  <Justin_o> alanharnum: I guess that is the gist of it :) It would be more consistent to configure the files in the standard config location in grunt. for example if we add another font or remove one we'd have to modify the function instead of the config.
+2019-07-24T14:10:12  <Justin_o> alanharnum: I'm not sure if this is exactly possible because there are distinction between the CSS, JS, and font tests, but it would be ideal if they were actually a single verification task that you just had targets for with the specific config for each.
+2019-07-24T14:10:42  <Justin_o> then if we need to validate templates, message bundles, etc, it would just be adding another target.
+2019-07-24T14:11:03  <alanharnum> Justin_o: OK, I think we're on the same page then - I'll factor towards that.
+2019-07-24T14:11:41  <Justin_o> alanharnum: okay great... thinking now though how would changes for https://issues.fluidproject.org/browse/FLUID-6359 affect this
+2019-07-24T14:12:44  *** jhung is now known as jhung_away
+2019-07-24T14:12:55  <Justin_o> I'm not entirely sure where we'll go with that yet, it could be copying over the entire src dir into dist, it could be only putting templates and messages into related directories in dist, or copying over src minus the JS files used to create the infusion-all.js
+2019-07-24T14:13:03  <Justin_o> could be something else too, but probably one of those
+2019-07-24T14:13:07  <Justin_o> alanharnum: ^
+2019-07-24T14:15:03  <alanharnum> Justin_o: I don't think it will change it too significantly (at least while we still have current build process). A change to the /dist directory structure / files will require changes to any code that verifies the /dist directory structure / files. I think what I can do for now is refactor what we currently have to make that change easier in the future by putting what's possible to configure on the grunt config, etc.
+2019-07-24T14:17:27  <Justin_o> alanharnum: awesome thanks... if there is going to be too much throw away work though, don't worry, we can tackle it in that other JIRA instead.
+2019-07-24T14:18:11  <alanharnum> Justin_o: No, I had a similar thought along these lines yesterday - I remember (like two years ago) writing those "verifyDist" tasks quickly because we had some issues with the dist build process, and thinking then "these should be more grunt-like".
+2019-07-24T14:18:40  <alanharnum> So I'll tackle them now while they're in front of me, shouldn't take too long.
+2019-07-24T14:19:16  <Justin_o> alanharnum: thanks so much :)
+2019-07-24T14:24:16  *** avtar <avtar!~avtar@ip-45-3-19-215.user.start.ca> has joined #fluid-work
+2019-07-24T14:29:52  *** cherylhjli <cherylhjli!~Adium@75.98.19.133> has joined #fluid-work
+2019-07-24T14:38:43  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-07-24T14:58:39  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:554:289d:df40:7dbe> has joined #fluid-work
+2019-07-24T14:59:26  *** avtar <avtar!~avtar@ip-45-3-19-215.user.start.ca> has quit IRC (Quit: Leaving.)
+2019-07-24T15:00:04  <colinclark> Justin_o: I’ll just be an extra five minutes, then i’m all se to meet
+2019-07-24T15:02:05  <Justin_o> colinclark: sounds good, please ping me when you're ready
+2019-07-24T15:04:26  *** cherylhjli <cherylhjli!~Adium@75.98.19.133> has quit IRC (Quit: Leaving.)
+2019-07-24T15:06:10  <colinclark> ok, i think i’m ready Justin_o. where would you like to meet?
+2019-07-24T15:06:52  <Justin_o> colinclark: skype or vidyo would work for me
+2019-07-24T15:08:26  <Justin_o> colinclark: can you call me back, I can't seem to call you directly on vidyo
+2019-07-24T15:08:32  <colinclark> ok
+2019-07-24T15:12:56  <jhernandez> heads up! JIRA review meeting is starting now :)
+2019-07-24T15:13:02  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-07-24T15:13:18  <jhernandez> stegru, the-t-in-rtf: ?
+2019-07-24T15:23:23  <the-t-in-rtf> I had a conflict
+2019-07-24T15:23:27  <the-t-in-rtf> which Sandra scheduled
+2019-07-24T15:23:51  <the-t-in-rtf> but I can jump on there now
+2019-07-24T15:26:04  <the-t-in-rtf> I'm in.
+2019-07-24T15:31:17  *** jhung_away is now known as jhung
+2019-07-24T15:42:34  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-07-24T15:49:22  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 248 seconds)
+2019-07-24T16:01:05  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-07-24T16:15:10  *** jhung_2 <jhung_2!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-07-24T16:18:35  *** jhung <jhung!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Ping timeout: 258 seconds)
+2019-07-24T16:25:04  *** avtar <avtar!uid113407@gateway/web/irccloud.com/x-kpkymggisnryxcfw> has joined #fluid-work
+2019-07-24T16:33:02  *** jhung_2 is now known as jhung
+2019-07-24T16:47:57  <cindyli> clown: https://ci.gpii.net/job/docker-gpii-universal-master-calculate-tag/8/console
+2019-07-24T16:54:04  <clown> thanks cindyli.  I'll let you know when I've updated my cronjob pull request vis-a-vis the above tag.
+2019-07-24T16:54:11  <cindyli> thanks
+2019-07-24T17:09:58  *** colinclark <colinclark!~colinclar@lan2.penham.iasl.com> has joined #fluid-work
+2019-07-24T17:18:46  *** kendraf <kendraf!Adium@nat/ocadu/x-cdrmpbuzjumbqphk> has joined #fluid-work
+2019-07-24T17:19:17  *** crystalchan <crystalchan!Adium@nat/ocadu/x-xteyykbtzmbwfzuj> has joined #fluid-work
+2019-07-24T17:20:15  *** simonjb <simonjb!~simonjb@205.211.168.103> has joined #fluid-work
+2019-07-24T17:22:36  <alanharnum> Justin_o: finished initial refactoring (w/break for a meeting in between), please have a look when you have some cycles and let me know your thoughts: https://github.com/fluid-project/infusion/pull/956#discussion_r306928381
+2019-07-24T17:23:27  *** simonjb <simonjb!~simonjb@205.211.168.103> has quit IRC (Client Quit)
+2019-07-24T17:29:15  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has joined #fluid-work
+2019-07-24T18:07:45  <Justin_o> alanharnum: thanks, I probably won't have time to review till tomorrow, though.
+2019-07-24T18:08:11  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-07-24T18:08:44  <Justin_o> colinclark: https://github.com/fluid-project/infusion/pull/921 is ready for another look. The list of copyright holders is a bit harder to determine. I culled some from my original list because it didn't appear to be any substantive code changes left in the repo.
+2019-07-24T18:09:26  <Justin_o> colinclark: but another interesting thing is that I don't see any contributors from Berkeley on the contributors list.
+2019-07-24T18:09:41  <colinclark> That doesn’t actually surprise me
+2019-07-24T18:10:09  <colinclark> I suppose it’s possible that there’s still some of Eli’s code deep in the uploader, but it wouldn’t surprise me if that’s been removed over the years
+2019-07-24T18:10:46  <Justin_o> colinclark: although running this command against the repo  does show 536 lines authored by Eli.
+2019-07-24T18:10:47  <Justin_o> git ls-tree --name-only -r HEAD | grep -E './' | xargs -n1 git blame -w --line-porcelain | grep "^author "|sort|uniq -c|sort -nr
+2019-07-24T18:10:53  <Justin_o> that ignores whitespace changes.
+2019-07-24T18:11:06  <Justin_o> in terms of authorship
+2019-07-24T18:11:16  <colinclark> interesting
+2019-07-24T18:11:55  <Justin_o> however, I don't know what those lines were. They could all be comments, or something like that, or html files.
+2019-07-24T18:12:00  <Justin_o> Or could be real code
+2019-07-24T18:12:39  <Justin_o> colinclark: it could be something like this https://github.com/fluid-project/infusion/blame/master/src/components/textfieldControl/js/TextfieldStepper.js
+2019-07-24T18:13:35  <Justin_o> I removed the copyright for this because I believe it was refactored/replaced enough.. although let me know if I'm wrong about that.
+2019-07-24T18:13:40  <colinclark> Imagine being the exclusive author of some whitespace? :)
+2019-07-24T18:13:46  <Justin_o> lol
+2019-07-24T18:13:59  <colinclark> 
+2019-07-24T18:15:19  <Justin_o> colinclark: it's funny, if you look at the number of changes I have made, it looks like I've done as much as Bosmon, but it's probably mostly due to project wide refactoring of directories and things like he copyrights ;)
+2019-07-24T18:16:20  <colinclark> you’ve done so much work on Infusion
+2019-07-24T18:17:04  <Justin_o> colinclark: so in this file it looks like the only changes left are related to braces and whitespace https://github.com/fluid-project/infusion/blame/master/src/components/uploader/js/FileQueue.js
+2019-07-24T18:17:15  <Justin_o> but I guess it's hard to determine if the logic is still present but was just moved around
+2019-07-24T18:19:02  <colinclark> I’m SO proud of that }; I contributed on line 119
+2019-07-24T18:21:18  <Justin_o> lol
+2019-07-24T18:22:45  *** simonjb <simonjb!~simonjb@205.211.168.104> has joined #fluid-work
+2019-07-24T18:31:14  <colinclark> so despite these issues, Justin_o, do you think this is ready to be merged?
+2019-07-24T18:32:15  *** simonjb <simonjb!~simonjb@205.211.168.104> has quit IRC ()
+2019-07-24T18:32:16  <clown> cindyli I've updated the tag of universal to use in the GCP cronjob.  Starting up…
+2019-07-24T18:32:31  <cindyli> thanks, clown
+2019-07-24T18:32:54  <cindyli> gmoss: shall we move today's check in to after the community meeting? 4:15PM
+2019-07-24T18:34:46  *** cindyli1 <cindyli1!~Adium@205.211.168.103> has joined #fluid-work
+2019-07-24T18:35:10  *** colinclark <colinclark!~colinclar@lan2.penham.iasl.com> has quit IRC (Quit: colinclark)
+2019-07-24T18:36:22  *** colinclark <colinclark!~colinclar@lan2.penham.iasl.com> has joined #fluid-work
+2019-07-24T18:37:44  *** cindyli <cindyli!Adium@nat/ocadu/x-atadopqjenzkufos> has quit IRC (Ping timeout: 258 seconds)
+2019-07-24T18:40:44  *** colinclark <colinclark!~colinclar@lan2.penham.iasl.com> has quit IRC (Read error: No route to host)
+2019-07-24T18:43:40  *** cindyli1 is now known as cindyli
+2019-07-24T18:46:43  *** simonjb <simonjb!~simonjb@205.211.168.104> has joined #fluid-work
+2019-07-24T18:47:11  *** colinclark <colinclark!~colinclar@24.114.64.74> has joined #fluid-work
+2019-07-24T18:54:33  *** cindyli <cindyli!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-07-24T18:55:40  <gmoss> cindyli: sure, 4:15 should be okay. I was in a location with no internet reception until moments ago, sorry for the late reply :)
+2019-07-24T19:05:43  *** cindyli <cindyli!~Adium@205.211.168.103> has joined #fluid-work
+2019-07-24T20:03:40  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 272 seconds)
+2019-07-24T20:27:35  *** cindyli <cindyli!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-07-24T20:30:16  *** simonjb <simonjb!~simonjb@205.211.168.104> has quit IRC (Ping timeout: 272 seconds)
+2019-07-24T20:33:30  *** jhung <jhung!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving)
+2019-07-24T20:35:03  *** crystalchan <crystalchan!Adium@nat/ocadu/x-xteyykbtzmbwfzuj> has quit IRC (Quit: Leaving.)
+2019-07-24T20:36:10  *** simonjb <simonjb!~simonjb@205.211.168.104> has joined #fluid-work
+2019-07-24T20:37:23  *** cindyli <cindyli!~Adium@205.211.168.103> has joined #fluid-work
+2019-07-24T20:38:09  *** cindyli <cindyli!~Adium@205.211.168.103> has quit IRC (Client Quit)
+2019-07-24T20:38:18  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has quit IRC (Quit: sepidehshahi)
+2019-07-24T20:39:03  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:554:289d:df40:7dbe> has quit IRC (Ping timeout: 264 seconds)
+2019-07-24T20:46:05  *** jhernandez <jhernandez!~jhernande@48.121-240-81.adsl-dyn.isp.belgacom.be> has quit IRC (Quit: jhernandez)
+2019-07-24T21:05:30  *** clown <clown!clown@nat/ocadu/x-fcrvogzqxbfjogye> has quit IRC (Quit: Leaving.)
+2019-07-24T21:40:11  *** simonjb <simonjb!~simonjb@205.211.168.104> has quit IRC ()
+2019-07-24T21:41:20  *** colinclark <colinclark!~colinclar@24.114.64.74> has quit IRC (Quit: colinclark)
+2019-07-24T22:01:53  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-07-24T22:01:59  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-07-24T22:50:15  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-zaaqjmcggrvgjevz> has quit IRC (Quit: Connection closed for inactivity)
+2019-07-24T23:16:32  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-dwogzjfohhbmqihp> has quit IRC (Quit: Connection closed for inactivity)

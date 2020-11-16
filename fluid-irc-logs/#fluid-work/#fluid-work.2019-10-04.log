@@ -1,0 +1,135 @@
+2019-10-04T01:27:57  *** scott_gonzalez <scott_gonzalez!gonzasi0@gateway/shell/jquery.com/x-lzkwgtfponewcmkz> has quit IRC (Ping timeout: 245 seconds)
+2019-10-04T01:33:26  *** scott_gonzalez <scott_gonzalez!gonzasi0@gateway/shell/jquery.com/x-bkwtehpuuzalygyz> has joined #fluid-work
+2019-10-04T01:33:43  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-10-04T01:33:45  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Client Quit)
+2019-10-04T02:05:40  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-xviwdnnqtaphhhlc> has quit IRC (Quit: Connection closed for inactivity)
+2019-10-04T02:17:22  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-ccnongffvtuebysl> has quit IRC (Quit: Connection closed for inactivity)
+2019-10-04T04:01:09  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:bce0:a963:6fa3:5e00> has joined #fluid-work
+2019-10-04T06:26:32  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-10-04T07:07:46  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Remote host closed the connection)
+2019-10-04T07:08:04  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-10-04T07:56:29  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 250 seconds)
+2019-10-04T07:59:21  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-10-04T10:06:48  *** Danail_HA <Danail_HA!~Dddd_HA@109.120.246.31> has joined #fluid-work
+2019-10-04T10:27:09  <the-t-in-rtf> @Bosmon, I'm starting to see these types of errors pretty often: rec.event.removeListener
+2019-10-04T10:27:14  <the-t-in-rtf> sorry
+2019-10-04T10:27:15  <the-t-in-rtf> TypeError: rec.event.removeListener is not a function
+2019-10-04T10:28:22  <the-t-in-rtf> If you refresh the gpii-handlebars pull in progress, here's a handy block to set a breakpoint in: https://github.com/the-t-in-rtf/gpii-handlebars/blob/c14d795ca61c711b54fa8d63e51736fba8ca3907/tests/browser-fixtures/js/tests-renderer-serverResourceAware.js#L190
+2019-10-04T10:29:01  <the-t-in-rtf> When I first saw it I worked around by calling fluid.destroy myself, but now it seems I need to call destroy wrapped in a try/catch block.
+2019-10-04T10:29:39  <the-t-in-rtf> This is about the third repo I'm updating to use the latest potentia-ii Infusion where I've seen some variation on this.
+2019-10-04T10:30:04  *** Danail_HA <Danail_HA!~Dddd_HA@109.120.246.31> has quit IRC (Ping timeout: 264 seconds)
+2019-10-04T10:32:02  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 240 seconds)
+2019-10-04T10:55:12  *** yzen <yzen!sid1017@gateway/web/mozilla/x-ocwklbvvskklrcwm> has quit IRC (Remote host closed the connection)
+2019-10-04T11:47:02  <Bosmon> the-t-in-rtf - you shouldn't ever need to call fluid.destroy by yourself
+2019-10-04T11:47:06  <Bosmon> What is on the stack frame when this happens?
+2019-10-04T11:51:00  <the-t-in-rtf> Let me dig for a moment, the latest tests are webdriver ones, which complicates the troubleshooting
+2019-10-04T11:51:42  <the-t-in-rtf> I think if you comment out the stop sequence in those tests you should see the error.
+2019-10-04T11:55:26  <the-t-in-rtf> Let me put it in a gist or something
+2019-10-04T11:56:34  <the-t-in-rtf> https://pastebin.com/ChKfAr2h
+2019-10-04T11:56:47  <the-t-in-rtf> Jeez their Captcha is just awful
+2019-10-04T11:56:54  <the-t-in-rtf> anyway, there it is.
+2019-10-04T12:00:05  <the-t-in-rtf> if you comment out the stop sequence, you should see the context in the gpii-handlebars browser tests
+2019-10-04T12:00:33  <the-t-in-rtf> it starts complaining about jqUnit start being called again at the end of the first test run, and displays the error at the start of the second test run
+2019-10-04T12:07:53  <Bosmon> the-t-in-rtf - that won't be the location of the first error
+2019-10-04T12:07:58  <Bosmon> See if you can track it down more accurately
+2019-10-04T12:32:35  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-10-04T12:38:57  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea3:2a00:37f6:b4f8:45d4:8631> has joined #fluid-work
+2019-10-04T12:47:27  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-10-04T12:52:03  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea3:2a00:37f6:b4f8:45d4:8631> has quit IRC (Quit: jhernandez)
+2019-10-04T12:57:48  *** danielcho <danielcho!~Adium@205.211.168.104> has joined #fluid-work
+2019-10-04T13:03:38  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea3:2a00:37f6:b4f8:45d4:8631> has joined #fluid-work
+2019-10-04T13:03:44  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea3:2a00:37f6:b4f8:45d4:8631> has quit IRC (Remote host closed the connection)
+2019-10-04T13:20:22  *** cherylhjli <cherylhjli!~Adium@142.120.70.10> has joined #fluid-work
+2019-10-04T13:47:49  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea3:2a00:37f6:b4f8:45d4:8631> has joined #fluid-work
+2019-10-04T13:47:53  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-lltovqjyumnhyljg> has joined #fluid-work
+2019-10-04T13:59:08  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-10-04T14:18:43  *** danielcho <danielcho!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-10-04T14:19:06  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-10-04T14:19:15  *** clown <clown!clown@nat/ocadu/x-sfapmohhlrxtjsmo> has joined #fluid-work
+2019-10-04T14:20:13  *** danielcho <danielcho!~Adium@205.211.168.104> has joined #fluid-work
+2019-10-04T14:21:14  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-10-04T14:22:56  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-10-04T14:37:41  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-10-04T14:46:03  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-10-04T14:52:53  *** avtar <avtar!~avtar@ip-45-3-5-117.user.start.ca> has joined #fluid-work
+2019-10-04T15:11:00  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-10-04T15:18:05  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-work
+2019-10-04T15:49:59  *** clown <clown!clown@nat/ocadu/x-sfapmohhlrxtjsmo> has quit IRC (Quit: Leaving.)
+2019-10-04T15:50:26  *** clown <clown!clown@nat/ocadu/x-finvjkblvrqqrgkm> has joined #fluid-work
+2019-10-04T15:51:04  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-10-04T16:02:55  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-work
+2019-10-04T16:11:14  *** danielcho <danielcho!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-10-04T16:11:23  *** danielcho <danielcho!~Adium@205.211.168.104> has joined #fluid-work
+2019-10-04T16:11:38  *** danielcho <danielcho!~Adium@205.211.168.104> has quit IRC (Client Quit)
+2019-10-04T16:13:31  *** avtar <avtar!~avtar@ip-45-3-5-117.user.start.ca> has quit IRC (Quit: Leaving.)
+2019-10-04T16:21:08  *** danielcho <danielcho!~Adium@205.211.168.104> has joined #fluid-work
+2019-10-04T16:24:10  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea3:2a00:37f6:b4f8:45d4:8631> has quit IRC (Quit: jhernandez)
+2019-10-04T16:44:53  <colinclark> greatislander: Just for context, I’m largely editing for brevity at this point—I love what we’ve got
+2019-10-04T16:45:14  <greatislander> colinclark sounds good!
+2019-10-04T16:46:22  <colinclark> still 33 words over
+2019-10-04T16:49:55  <colinclark> I love the “The outcome…” paragraph
+2019-10-04T16:51:00  <colinclark> down to 23 over
+2019-10-04T16:53:54  <colinclark> greatislander, cherylhjli: maybe take another look? somehow i added an extra word. we’re close; 224 words right now
+2019-10-04T16:55:39  <greatislander> colinclark I am getting 198 words!
+2019-10-04T16:55:52  <greatislander> Having accepted all your suggestions :)
+2019-10-04T16:56:11  <colinclark> oh wow
+2019-10-04T16:56:16  <colinclark> how did i miscount?
+2019-10-04T16:56:26  <greatislander> I think the wordcount double counts if you have suggestions that aren't accepted
+2019-10-04T16:56:31  <greatislander> e.g. it counts the before and after
+2019-10-04T16:56:37  <greatislander> but who knows
+2019-10-04T16:56:40  <colinclark> yeah, 196 now
+2019-10-04T16:56:47  <colinclark> if there are four words you really miss here, feel free to add them :)
+2019-10-04T16:57:06  <greatislander> I think it looks great-- cherylhjli jhung michelled want to give a last pass? Then I can send to Trebor & Michael
+2019-10-04T16:58:06  <colinclark> thanks for your help greatislander
+2019-10-04T16:59:22  <michelled> nice! I like it a lot!
+2019-10-04T16:59:51  <greatislander> my pleasure!
+2019-10-04T16:59:54  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-10-04T17:01:11  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-10-04T17:01:39  <colinclark> I made one comment, while re-reading
+2019-10-04T17:01:43  <colinclark> I’m not sure the answer to it
+2019-10-04T17:01:55  <colinclark> Do we want to bill this as being about our project? Or is our project just one of the contributors?
+2019-10-04T17:02:31  <colinclark> (regarding the title)
+2019-10-04T17:05:55  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Client Quit)
+2019-10-04T17:07:27  <cherylhjli> colinclark I like the idea of again getting away from the idea that we're the centralized hub - perhaps we can "host" aka initiate and facilitate, and be a contributor, but not necessarily be about our project
+2019-10-04T17:08:28  <colinclark>  right, that makes sense
+2019-10-04T17:08:32  *** clown <clown!clown@nat/ocadu/x-finvjkblvrqqrgkm> has quit IRC (Ping timeout: 265 seconds)
+2019-10-04T17:08:36  <colinclark> “hosting” is great, and works perfectly with our metaphor
+2019-10-04T17:08:56  <colinclark> so the question is just if our title should be slightly different, or not
+2019-10-04T17:09:01  <colinclark> i dunno :)
+2019-10-04T17:10:40  <greatislander> I like your suggested title change colinclark
+2019-10-04T17:10:58  <greatislander> "Designing technologies for the cooperative ecosystem"
+2019-10-04T17:14:06  <colinclark> I’ll leave it to you and cherylhjli
+2019-10-04T17:14:09  <colinclark> this looks AWESOME
+2019-10-04T17:14:16  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-10-04T17:18:24  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-work
+2019-10-04T17:26:45  *** clown <clown!clown@nat/ocadu/x-egnlnyzhpclfngbe> has joined #fluid-work
+2019-10-04T17:31:48  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-10-04T17:35:28  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-work
+2019-10-04T17:35:59  *** cherylhjli <cherylhjli!~Adium@142.120.70.10> has quit IRC (Quit: Leaving.)
+2019-10-04T17:36:42  *** clown <clown!clown@nat/ocadu/x-egnlnyzhpclfngbe> has quit IRC (Ping timeout: 268 seconds)
+2019-10-04T17:36:57  *** cherylhjli <cherylhjli!~Adium@142.120.70.10> has joined #fluid-work
+2019-10-04T17:41:17  *** cherylhjli <cherylhjli!~Adium@142.120.70.10> has quit IRC (Ping timeout: 240 seconds)
+2019-10-04T17:46:17  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Ping timeout: 240 seconds)
+2019-10-04T17:47:15  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-10-04T17:48:41  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-10-04T18:03:39  *** danielcho <danielcho!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-10-04T18:12:24  *** cherylhjli <cherylhjli!~Adium@209.216.151.185> has joined #fluid-work
+2019-10-04T18:13:23  *** danielcho <danielcho!~Adium@205.211.168.104> has joined #fluid-work
+2019-10-04T18:25:33  *** clown <clown!clown@nat/ocadu/x-lzqmsnzbqqlupkdy> has joined #fluid-work
+2019-10-04T18:26:20  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-10-04T18:28:32  *** avtar <avtar!uid113407@gateway/web/irccloud.com/x-fevcdxjxgspdktlc> has joined #fluid-work
+2019-10-04T18:30:36  *** cherylhjli <cherylhjli!~Adium@209.216.151.185> has quit IRC (Read error: Connection reset by peer)
+2019-10-04T18:50:30  *** cherylhjli <cherylhjli!~Adium@209.216.151.185> has joined #fluid-work
+2019-10-04T19:36:48  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-10-04T19:56:31  *** danielcho <danielcho!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-10-04T19:59:19  *** danielcho <danielcho!~Adium@205.211.168.104> has joined #fluid-work
+2019-10-04T20:13:28  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving)
+2019-10-04T20:18:00  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-10-04T20:37:40  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-10-04T21:01:45  *** cherylhjli <cherylhjli!~Adium@209.216.151.185> has quit IRC (Quit: Leaving.)
+2019-10-04T21:14:14  *** clown <clown!clown@nat/ocadu/x-lzqmsnzbqqlupkdy> has quit IRC (Quit: Leaving.)
+2019-10-04T21:19:00  *** danielcho <danielcho!~Adium@205.211.168.104> has left #fluid-work
+2019-10-04T21:32:45  *** cherylhjli <cherylhjli!~Adium@142.120.70.10> has joined #fluid-work
+2019-10-04T21:42:09  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-10-04T21:49:17  *** cherylhjli <cherylhjli!~Adium@142.120.70.10> has quit IRC (Quit: Leaving.)
+2019-10-04T23:48:10  *** avtar <avtar!uid113407@gateway/web/irccloud.com/x-fevcdxjxgspdktlc> has quit IRC (Quit: Connection closed for inactivity)

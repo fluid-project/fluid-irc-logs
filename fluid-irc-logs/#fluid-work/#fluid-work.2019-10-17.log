@@ -1,0 +1,239 @@
+2019-10-17T00:01:25  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-10-17T00:01:26  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Client Quit)
+2019-10-17T00:18:57  *** Bosmon <Bosmon!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has quit IRC (Ping timeout: 240 seconds)
+2019-10-17T00:44:41  *** Bosmon <Bosmon!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has joined #fluid-work
+2019-10-17T01:44:23  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea3:2a00:37f6:b4f8:45d4:8631> has quit IRC (Quit: jhernandez)
+2019-10-17T05:04:40  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:645d:640f:fd29:5df3> has joined #fluid-work
+2019-10-17T09:09:28  *** stegru <stegru!~ste@cpc120296-warr7-2-0-cust79.1-1.cable.virginm.net> has quit IRC (Remote host closed the connection)
+2019-10-17T09:15:43  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-10-17T09:16:13  *** stegru <stegru!~ste@cpc120296-warr7-2-0-cust79.1-1.cable.virginm.net> has joined #fluid-work
+2019-10-17T09:40:58  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea3:2a00:37f6:b4f8:45d4:8631> has joined #fluid-work
+2019-10-17T09:51:54  <jhernandez> Bosmon: morning
+2019-10-17T09:51:56  <jhernandez> FYI
+2019-10-17T09:52:13  <jhernandez> Alfredo and I are updating the CI windows vm to windows 1903
+2019-10-17T09:52:34  <Bosmon> jhernandez - brilliant
+2019-10-17T09:52:38  <Bosmon> What was the cause of the failure before?
+2019-10-17T09:52:39  <jhernandez> but we need a couple of PRs to get in to actually get the tests passing again
+2019-10-17T09:52:52  <jhernandez> we had 2 problems
+2019-10-17T09:54:44  <jhernandez> 1- the language tests were failing due to a mismatch between the output that both 1803 and 1903 provide when we ask for available/installed languages
+2019-10-17T09:54:57  <Bosmon> jhernandez - what does the mismatch look like?
+2019-10-17T09:55:00  <Bosmon> Is there a JIRA? : P
+2019-10-17T09:55:39  <jhernandez> https://github.com/GPII/windows/pull/280/files
+2019-10-17T09:56:12  <jhernandez> yes, https://issues.gpii.net/browse/GPII-4178
+2019-10-17T09:56:20  <Bosmon> Wow, very wierd
+2019-10-17T09:56:23  <Bosmon> What is this "Sysnative"?
+2019-10-17T09:56:45  <Bosmon> And I guess whatever it is doesn't exist before windows 1903?
+2019-10-17T09:57:35  <jhernandez> 2- there was a problem when referencing a win library during an edge-js call
+2019-10-17T09:58:19  <jhernandez> about sysnative: https://www.samlogic.net/articles/sysnative-folder-64-bit-windows.htm
+2019-10-17T09:59:03  <Bosmon> Oh wow
+2019-10-17T09:59:07  <Bosmon> So it has existed in Windows 7
+2019-10-17T09:59:29  <Bosmon> Let me try and verify this :)
+2019-10-17T10:00:13  <Bosmon> I have to say that this is false
+2019-10-17T10:00:15  <Bosmon> It does not exist : P
+2019-10-17T10:00:32  <jhernandez> hahaha
+2019-10-17T10:00:41  <Bosmon> Anyway, that isn't terribly relevant - I guess the big question is, are the changes in this pull backwards compatible to pre-1903 Windows 10?
+2019-10-17T10:00:57  <stegru> yes, it does exist.. you just can't see it
+2019-10-17T10:01:05  <jhernandez> Bosmon: nope, they aren't backwards compatible
+2019-10-17T10:01:24  <jhernandez> and yeah, I was about to say the same as stegru
+2019-10-17T10:01:32  <jhernandez> it's there, but you can't see it
+2019-10-17T10:01:34  <jhernandez> :P
+2019-10-17T10:02:26  <Bosmon> Well I can't see it in a pretty big way
+2019-10-17T10:02:30  <Bosmon> e.g. I can't cd into it : P
+2019-10-17T10:03:31  <Bosmon> jhernandez - can you refine a bit - are you saying just the changes to the tests are not backwards compatible, but also the changes to the proximity listener as well?
+2019-10-17T10:03:50  <jhernandez> same thing
+2019-10-17T10:04:32  <jhernandez> but we can make them backwards compatible if we really need it
+2019-10-17T10:06:00  <stegru> I think the proximity fixes are backwards compatible
+2019-10-17T10:06:01  <Bosmon> jhernandez - so if we apply the changes to the proximity listener, the app will not run properly on pre-1903?
+2019-10-17T10:08:40  <jhernandez> well, the proximity listener is broken anyway
+2019-10-17T10:10:03  <jhernandez> remember, this proximity user listener is for the vaio built-in nfc reader
+2019-10-17T10:11:25  <stegru> c:\windows\sysnative only exists for 32-bit processes: http://i.imgur.com/0PGsrvd.png
+2019-10-17T10:11:39  <jhernandez> and also, it's not being used at this moment, maybe we should either remove it (there are no plans to use it at this moment) or unplug it from our app tree to avoid it from being loaded
+2019-10-17T10:12:58  <stegru> I don't think this will work on 32-bit systems
+2019-10-17T10:19:56  <stegru> it's ok, it wont break unless it's running on a 32-bit OS, and the proximity listener is fixed
+2019-10-17T10:24:25  <jhernandez> anyway, since updating the box in CI is easy, Alfredo just updated it  for me to run my PRs against the new version of windows
+2019-10-17T10:25:27  <stegru> it looks like the upgrade "worked"
+2019-10-17T10:29:09  <jhernandez> yes
+2019-10-17T10:29:11  <jhernandez> haha
+2019-10-17T10:29:13  <jhernandez> sorry
+2019-10-17T10:32:30  <stegru> what is christopher's name in jira? (or github)
+2019-10-17T11:09:36  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-vxywhpjpgpayltwp> has joined #fluid-work
+2019-10-17T11:32:19  <jhernandez> stegru: sorry, left for a walk while CI was running
+2019-10-17T11:32:21  <jhernandez> no idea
+2019-10-17T11:32:30  <stegru> that's ok
+2019-10-17T11:32:32  <jhernandez> did you figure out?
+2019-10-17T11:32:42  <stegru> no, it's not urgent
+2019-10-17T11:32:56  <jhernandez> ok ok
+2019-10-17T11:34:03  <jhernandez> btw, the pr against gpii-app that I'm passing through CI at this moment is going to fail
+2019-10-17T11:34:10  <jhernandez> 04:09:26.223:  Test case listener has not responded after 5000ms - at sequence pos 2 of 8 sequence element {
+2019-10-17T11:35:00  <jhernandez> full error: https://pastebin.com/9fSLawVB
+2019-10-17T11:35:37  <jhernandez> this is coming from this CI pass https://ci.gpii.net/job/gpii-app-tests/860/
+2019-10-17T11:35:55  <stegru> it would be nice to have a "stop" button
+2019-10-17T11:36:11  <jhernandez> agree
+2019-10-17T11:38:19  <jhernandez> Bosmon, the-t-in-rtf: have you seen this error before? -> https://pastebin.com/9fSLawVB
+2019-10-17T11:39:03  <the-t-in-rtf> Yes, I think there may be periodic corruption of the test container that hasn't come up often enough to troubleshoot.
+2019-10-17T11:39:17  <the-t-in-rtf> You should be able to get past it by manually deleting the container.
+2019-10-17T11:39:43  *** yanachkov__ <yanachkov__!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-10-17T11:40:04  <jhernandez> ok ok
+2019-10-17T11:40:31  <Bosmon> corruption of the test container?!
+2019-10-17T11:40:35  <jhernandez> sorry, looked at the vm's creation log and the couch setup didn't succeed
+2019-10-17T11:40:37  <the-t-in-rtf> It hasn't come up in CI as far as I know, as that always starts fresh.
+2019-10-17T11:40:44  <the-t-in-rtf> that's the kind of thing I mean
+2019-10-17T11:40:46  <stegru> "hasn't come up often enough to troubleshoot" - I'll try that one with gregg
+2019-10-17T11:40:50  <the-t-in-rtf> and makes perfect sense
+2019-10-17T11:41:04  <the-t-in-rtf> well, if  you're writing test libraries that work fine in CI, go ahead.
+2019-10-17T11:41:10  <jhernandez> I'll re-ok to test it
+2019-10-17T11:41:16  <the-t-in-rtf> wait, what?
+2019-10-17T11:41:21  <the-t-in-rtf> this happened in CI?
+2019-10-17T11:41:25  <jhernandez> yup
+2019-10-17T11:41:26  <the-t-in-rtf> if that's the case, shoot me a link.
+2019-10-17T11:41:34  <jhernandez> https://ci.gpii.net/job/gpii-app-tests/860/
+2019-10-17T11:41:52  <jhernandez> we're talking about windows
+2019-10-17T11:42:09  <the-t-in-rtf> aaaah
+2019-10-17T11:42:22  <the-t-in-rtf> So that's probably an error installing CouchDB then.
+2019-10-17T11:43:03  <the-t-in-rtf> or setting it up.
+2019-10-17T11:43:11  <the-t-in-rtf> If it happens consistently I can look into it.
+2019-10-17T11:43:47  <jhernandez> that's what I said, "sorry, looked at the vm's creation log and the couch setup didn't succeed"
+2019-10-17T11:43:57  <the-t-in-rtf> yes, where are those logs?
+2019-10-17T11:44:04  <the-t-in-rtf> I mean, timestamp?
+2019-10-17T11:44:12  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 265 seconds)
+2019-10-17T11:45:16  <jhernandez> https://ci.gpii.net/job/create-gpii-app-vm/851/consoleText
+2019-10-17T11:45:19  <jhernandez> look for couchdb
+2019-10-17T11:55:39  <the-t-in-rtf> I'm having trouble correlating the error to the script, but mainly because I know next to nothing about powershell
+2019-10-17T11:55:40  <the-t-in-rtf> https://github.com/GPII/windows/blob/master/provisioning/CouchDB.ps1#L82
+2019-10-17T11:56:08  <the-t-in-rtf> It's difficult to say even which command failed.
+2019-10-17T11:57:53  <the-t-in-rtf> The line and char number is not anything useful, sadly.
+2019-10-17T12:04:04  <stegru> it looks like 2 scripts are running at the same time
+2019-10-17T12:04:15  <the-t-in-rtf> Yes, I wondered about the interleaving of messages
+2019-10-17T12:04:27  <the-t-in-rtf> didn't know if that was normal.
+2019-10-17T12:11:16  <stegru> perhaps there's a difference between the buffering of stderr and stdout - the scripts appear to be synchronous
+2019-10-17T12:34:00  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:645d:640f:fd29:5df3> has quit IRC (Quit: Leaving.)
+2019-10-17T12:46:11  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-10-17T12:53:00  *** danielcho <danielcho!~Adium@205.211.168.103> has joined #fluid-work
+2019-10-17T13:02:09  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-ctjfyjxkjfloofqk> has joined #fluid-work
+2019-10-17T13:03:50  *** michelled <michelled!~Adium@205.211.168.102> has joined #fluid-work
+2019-10-17T13:05:57  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-10-17T13:07:50  *** danayo_ <danayo_!~danayo@205.211.168.103> has joined #fluid-work
+2019-10-17T13:09:14  *** cindyli1 <cindyli1!~Adium@198.52.178.28> has joined #fluid-work
+2019-10-17T13:09:14  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Read error: Connection reset by peer)
+2019-10-17T13:10:17  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-10-17T13:12:56  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving)
+2019-10-17T13:35:21  *** michelled <michelled!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-10-17T13:46:59  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-vxywhpjpgpayltwp> has quit IRC (Quit: Connection closed for inactivity)
+2019-10-17T13:47:18  *** avtar <avtar!~avtar@ip-24-50-186-218.user.start.ca> has joined #fluid-work
+2019-10-17T13:49:03  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea3:2a00:37f6:b4f8:45d4:8631> has quit IRC (Read error: Connection reset by peer)
+2019-10-17T13:49:33  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea3:2a00:37f6:b4f8:45d4:8631> has joined #fluid-work
+2019-10-17T14:01:06  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-upuaiuaqmvgnzzlx> has joined #fluid-work
+2019-10-17T14:04:03  *** michelled <michelled!~Adium@205.211.168.102> has joined #fluid-work
+2019-10-17T14:21:56  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-qbbcixmsrmeanftk> has joined #fluid-work
+2019-10-17T14:24:21  *** michelled <michelled!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-10-17T14:28:06  *** simonjb <simonjb!~simonjb@205.211.168.103> has joined #fluid-work
+2019-10-17T14:45:52  <jhernandez> stegru, Bosmon: ok, the gpii-app tests passed on win10 1903 too
+2019-10-17T14:46:14  <stegru> well done
+2019-10-17T14:47:30  <jhernandez> shall we keep going? or hold on  a bit? - I can tell Alfredo to roll the CI back to 1803
+2019-10-17T14:48:32  <Bosmon> Sure, we should keep going
+2019-10-17T14:48:44  <Bosmon> Out of interest, what is the distribution at our pilot sites of those running 1903?
+2019-10-17T14:50:11  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:645d:640f:fd29:5df3> has joined #fluid-work
+2019-10-17T14:50:42  <jhernandez> Bosmon: what do you mean by "distribution"?
+2019-10-17T14:50:51  <Bosmon> Well, how many are on what version?
+2019-10-17T14:51:24  <jhernandez> I don't think we have specific numbers
+2019-10-17T14:51:26  <jhernandez> let me check
+2019-10-17T14:51:36  <Bosmon> Well, just a rough sense...
+2019-10-17T14:56:46  *** michelled <michelled!~Adium@205.211.168.102> has joined #fluid-work
+2019-10-17T15:01:59  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-10-17T15:02:29  <jhernandez> hmmm
+2019-10-17T15:03:00  <jhernandez> from what I'm seeing in yao's "shiny metrics app"
+2019-10-17T15:03:48  <jhernandez> 1903s are not very used, but not sure if Yao's thing is up to date
+2019-10-17T15:08:08  *** avtar <avtar!~avtar@ip-24-50-186-218.user.start.ca> has quit IRC (Quit: Leaving.)
+2019-10-17T15:15:19  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-10-17T15:18:05  <jhernandez> according to Yao's app, there are 72 computers running on 1903 out of 426
+2019-10-17T15:20:45  <jhernandez> but in terms of pilot sites, I assume most of them are from the ajc pilot 3
+2019-10-17T15:25:28  <jhernandez> stegru, Bosmon: can any of you merge this one? https://github.com/GPII/windows/pull/280
+2019-10-17T15:25:58  <jhernandez> I can publish the npm package myself to properly update gpii-app
+2019-10-17T15:27:34  <Bosmon> jhernandez - ok, well I'd like to try it out in a local windows box first
+2019-10-17T15:28:08  <Bosmon> Just out of interest, my local vagrant box reports "build 17134", do these numbers not correspond?
+2019-10-17T15:28:37  <stegru> build and version numbers are different
+2019-10-17T15:28:45  <jhernandez> https://en.wikipedia.org/wiki/Windows_10_version_history
+2019-10-17T15:28:50  <jhernandez> you're on 1803
+2019-10-17T15:29:19  <Bosmon> "I see" : P
+2019-10-17T15:29:25  <Bosmon> Does nothing in the Windows UI report the version? : P
+2019-10-17T15:29:45  <jhernandez> Bosmon: you can update it by running vagrant box update && vagrant destroy -f && vagrant up
+2019-10-17T15:29:55  <Bosmon> yes, I kneeuw datt : P
+2019-10-17T15:30:15  <stegru> yes, in the "About" section of the setting app
+2019-10-17T15:30:38  <stegru> type "About" in the start menu - and it's not the java related one
+2019-10-17T15:30:39  <jhernandez> yes, in "About this PC"
+2019-10-17T15:30:44  *** clown <clown!clown@nat/ocadu/x-qihnpddufaoonxxx> has joined #fluid-work
+2019-10-17T15:30:50  <jhernandez> or something like that
+2019-10-17T15:30:55  <jhernandez> :P
+2019-10-17T15:31:42  <Bosmon> Do I understand from this diagram that the LTSC version of windows actually corresponds to version 1809?
+2019-10-17T15:31:52  <Bosmon> It seems then that we have an obligation to support this indefinitely
+2019-10-17T15:32:12  <Bosmon> To the extent that we should consider setting up a separate CI for it ....
+2019-10-17T15:32:22  <jhernandez> it's actually "About your PC"
+2019-10-17T15:32:46  <stegru> yes, considering it's about to be deployed to thousands of LTSC machines
+2019-10-17T15:32:50  <jhernandez> yes, that's true
+2019-10-17T15:33:35  <jhernandez> so, are you suggesting to use Alfredo's vagrant gpii plugin to build and test against 2 versions of windows?
+2019-10-17T15:33:54  <Bosmon> I'm certainly suggesting *something* to build and test against 2 versions of windows : P
+2019-10-17T15:34:01  <jhernandez> haha
+2019-10-17T15:34:13  <jhernandez> ok
+2019-10-17T15:34:30  <Bosmon> It's something we've had on the cards for a while anyway
+2019-10-17T15:34:40  <Bosmon> We dodged some bullets in having Windows 8 support canned, etc.
+2019-10-17T15:35:25  <jhernandez> then I guess we need Alfredo to create another vagrant box with LTSC and figure out the best way to make the CI to build and run the tests in the 2 boxes
+2019-10-17T15:35:33  <jhernandez> update our ci definitions, etc
+2019-10-17T15:36:11  <Bosmon> I advise this!
+2019-10-17T15:36:18  <Bosmon> Unless we want to be prepared for some nasty surprises
+2019-10-17T15:36:45  <jhernandez> haha
+2019-10-17T15:36:51  <jhernandez> fair enough
+2019-10-17T15:42:41  *** yanachkov__ <yanachkov__!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 246 seconds)
+2019-10-17T15:51:46  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-10-17T15:51:46  *** cindyli1 <cindyli1!~Adium@198.52.178.28> has quit IRC (Read error: Connection reset by peer)
+2019-10-17T15:58:14  *** danayo_ <danayo_!~danayo@205.211.168.103> has quit IRC (Quit: danayo_)
+2019-10-17T16:00:12  *** colinclark <colinclark!colinclark@nat/ocadu/x-mdocboyfzvrinjsb> has joined #fluid-work
+2019-10-17T16:05:09  <Bosmon> Good grief, it's all a hideous light blue ...
+2019-10-17T16:20:51  *** danayo_ <danayo_!~danayo@205.211.168.103> has joined #fluid-work
+2019-10-17T16:26:05  *** danayo_ <danayo_!~danayo@205.211.168.103> has quit IRC (Quit: danayo_)
+2019-10-17T16:44:57  *** colinclark <colinclark!colinclark@nat/ocadu/x-mdocboyfzvrinjsb> has quit IRC (Ping timeout: 240 seconds)
+2019-10-17T16:48:40  <jhernandez> Bosmon: thanks for the merge, just noticed
+2019-10-17T16:48:54  <jhernandez> btw, I created this ticket https://issues.gpii.net/browse/GPII-4195
+2019-10-17T16:50:15  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-10-17T16:51:53  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-10-17T16:57:21  <jhernandez> also, created the gpii-windows npm release and updated https://github.com/GPII/gpii-app/pull/161
+2019-10-17T16:57:38  <jhernandez> everything is in place now
+2019-10-17T16:57:46  <jhernandez> :)
+2019-10-17T17:13:59  *** danayo_ <danayo_!~danayo@205.211.168.103> has joined #fluid-work
+2019-10-17T17:42:02  *** clown <clown!clown@nat/ocadu/x-qihnpddufaoonxxx> has quit IRC (Ping timeout: 240 seconds)
+2019-10-17T18:00:10  *** colinclark <colinclark!~colinclar@205.211.168.103> has joined #fluid-work
+2019-10-17T18:11:14  *** michelled <michelled!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-10-17T18:41:44  *** clown <clown!clown@nat/ocadu/x-fyifpjsundpfxfbz> has joined #fluid-work
+2019-10-17T18:57:28  *** michelled <michelled!~Adium@205.211.168.102> has joined #fluid-work
+2019-10-17T18:57:38  *** michelled <michelled!~Adium@205.211.168.102> has quit IRC (Client Quit)
+2019-10-17T19:01:50  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea3:2a00:37f6:b4f8:45d4:8631> has quit IRC (Quit: jhernandez)
+2019-10-17T19:03:46  *** michelled <michelled!~Adium@205.211.168.102> has joined #fluid-work
+2019-10-17T19:10:01  *** michelled <michelled!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-10-17T19:14:32  *** danielcho <danielcho!~Adium@205.211.168.103> has left #fluid-work
+2019-10-17T19:57:30  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-10-17T20:10:41  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.102> has joined #fluid-work
+2019-10-17T20:10:47  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.102> has quit IRC (Client Quit)
+2019-10-17T20:12:50  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-upuaiuaqmvgnzzlx> has quit IRC (Ping timeout: 240 seconds)
+2019-10-17T20:13:34  *** cherylhjli <cherylhjli!~Adium@205.211.168.102> has joined #fluid-work
+2019-10-17T20:17:44  *** danayo_ <danayo_!~danayo@205.211.168.103> has quit IRC (Quit: danayo_)
+2019-10-17T20:18:19  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-10-17T20:25:17  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea3:2a00:cd2c:c395:ae82:7582> has joined #fluid-work
+2019-10-17T20:36:21  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Ping timeout: 265 seconds)
+2019-10-17T20:41:04  *** simonjb <simonjb!~simonjb@205.211.168.103> has quit IRC ()
+2019-10-17T20:44:25  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-10-17T20:58:01  *** cherylhjli <cherylhjli!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-10-17T21:03:01  *** clown <clown!clown@nat/ocadu/x-fyifpjsundpfxfbz> has quit IRC (Quit: Leaving.)
+2019-10-17T21:08:40  *** danayo_ <danayo_!~danayo@205.211.168.103> has joined #fluid-work
+2019-10-17T21:12:03  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:645d:640f:fd29:5df3> has quit IRC (Quit: Leaving.)
+2019-10-17T21:13:42  *** danayo_ <danayo_!~danayo@205.211.168.103> has quit IRC (Quit: danayo_)
+2019-10-17T21:19:55  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-10-17T21:24:16  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea3:2a00:cd2c:c395:ae82:7582> has quit IRC (Quit: jhernandez)
+2019-10-17T21:28:02  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving)
+2019-10-17T21:36:17  *** colinclark <colinclark!~colinclar@205.211.168.103> has quit IRC (Quit: colinclark)
+2019-10-17T22:36:59  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-qbbcixmsrmeanftk> has quit IRC (Quit: Connection closed for inactivity)
+2019-10-17T23:32:06  *** Guest60 <Guest60!~textual@2607:f2c0:e352:2b:60bd:a96:54ce:11b6> has joined #fluid-work
+2019-10-17T23:32:41  *** Guest60 <Guest60!~textual@2607:f2c0:e352:2b:60bd:a96:54ce:11b6> has left #fluid-work
+2019-10-17T23:32:49  *** Guest60 <Guest60!~textual@2607:f2c0:e352:2b:60bd:a96:54ce:11b6> has joined #fluid-work
+2019-10-17T23:33:15  *** Guest60 is now known as yzen
+2019-10-17T23:47:45  *** yzen <yzen!~textual@2607:f2c0:e352:2b:60bd:a96:54ce:11b6> has quit IRC (Quit: My MacBook has gone to sleep. ZZZzzz…)
+2019-10-17T23:57:55  *** yzen <yzen!~yzen@2607:f2c0:e352:2b:407f:19d5:7dfd:6ffd> has joined #fluid-work
+2019-10-17T23:58:40  *** yzen <yzen!~yzen@2607:f2c0:e352:2b:407f:19d5:7dfd:6ffd> has quit IRC (Client Quit)

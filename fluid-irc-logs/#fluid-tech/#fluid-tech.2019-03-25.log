@@ -1,0 +1,279 @@
+2019-03-25T07:13:46  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:2c35:aaec:d757:c855> has quit IRC (Remote host closed the connection)
+2019-03-25T08:09:51  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:c9a1:66bb:d58a:4518> has quit IRC (Quit: Leaving.)
+2019-03-25T08:49:09  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has joined #fluid-tech
+2019-03-25T10:43:40  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:5407:1cf:e78b:7500> has joined #fluid-tech
+2019-03-25T12:21:58  *** alanharnum <alanharnum!~alanharnu@toroon0717w-lp130-03-74-12-183-230.dsl.bell.ca> has joined #fluid-tech
+2019-03-25T12:22:38  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-tech
+2019-03-25T13:07:40  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-tech
+2019-03-25T13:15:49  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has joined #fluid-tech
+2019-03-25T13:25:49  <simonjb> good morning cindyli, I have an Infusion promises question if you are available
+2019-03-25T13:26:19  <cindyli> sure, simonjb
+2019-03-25T13:26:57  <simonjb> if I have a set of promises that I want to run in parallel, what's the best way to communicate (say with an overall promise) when they are all done?
+2019-03-25T13:30:59  <cindyli> simonjb: in parallel, not in sequence, right. You just wanna be notified when they are all done
+2019-03-25T13:31:12  <simonjb> yeah cindyli
+2019-03-25T13:31:31  <cindyli> thinking...
+2019-03-25T13:31:39  <simonjb> like fluid.promise.sequence() but in parallel
+2019-03-25T13:33:41  <cindyli> simonjb: seems like matching the javascript native API Promise.all() - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all
+2019-03-25T13:34:16  <cindyli> Bosmon: does infusion promise framework provide an equivalent of Promise.all()? ^
+2019-03-25T13:34:26  <cindyli> not i know of
+2019-03-25T13:34:33  <simonjb> I can write something explicitly myself that gathers the promise resolutions, but I was wonder if we had an existing mechanism
+2019-03-25T13:34:47  <simonjb> wondering
+2019-03-25T13:35:34  <Bosmon> simonjb - if you actually have the promises in hand right now, then fluid.promise.sequence() will be good enough
+2019-03-25T13:35:45  <Bosmon> But I am imagining that instead you have functions returning promises?
+2019-03-25T13:37:39  <simonjb> yes functions returning promises -- ah, yes, of course, I call each of the functions returning promises and then put them in fluid.promise.sequence()
+2019-03-25T13:38:54  <simonjb> and the promises returning tasks will run in parallel but the overall sequence will wait for each to be resolved in turn before resolving
+2019-03-25T13:39:09  <Bosmon> simonjb - yes
+2019-03-25T13:39:17  <simonjb> thanks Bosmon!
+2019-03-25T13:39:32  <Bosmon> The only other algorithm that we have in circulation is this "test quality" one - https://github.com/GPII/universal/blob/master/gpii/node_modules/testing/src/TestUtils.js#L31
+2019-03-25T13:39:45  <Bosmon> But this doesn't solve any more of the problem for you than fluid.promise.sequence already does, since it doesn't accept tasks
+2019-03-25T13:40:39  <simonjb> yes Bosmon, I wasn't thinking clearly about the difference between promise and task
+2019-03-25T13:41:19  <simonjb> thanks cindyli and Bosmon
+2019-03-25T13:44:34  <cindyli> btw, simonjb, i think with fluid.promise.sequence(), you can directly place "functions returning promises" into the "sources" array rather than calling functions first and put the returning promises into the array
+2019-03-25T13:45:04  <cindyli> https://docs.fluidproject.org/infusion/development/PromisesAPI.html#fluidpromisesequencesources-options
+2019-03-25T13:45:05  <simonjb> but I think in that case cindyli, they will execute in sequence
+2019-03-25T13:45:14  <simonjb> rather than parallel
+2019-03-25T13:45:39  <simonjb> "In the case that the source element is a function returning a promise (a task), fluid.promise.sequence will ensure that at most one of these in "in flight" at a time - that is, the succeeding function will not be invoked until the promise at the preceding position has resolved."
+2019-03-25T13:45:55  <cindyli> i thought with promises in array, they will still be executed in sequence
+2019-03-25T13:47:37  <cindyli> the doc for "sources" argument - An array of sources of values or promises which will be evaluated in sequence.
+2019-03-25T13:47:59  <simonjb> if the functions are called outside of fluid.promise.sequence(), it has no management of those functions
+2019-03-25T13:48:09  <simonjb> only when they are resolved
+2019-03-25T13:48:24  <simonjb> only when the promises are resolved
+2019-03-25T13:50:56  <simonjb> so fluid.promise.sequence() can hook into the promise resolution but won't be able to control the functions returning the promises, as it has no reference to the functions
+2019-03-25T13:51:21  <cindyli> simonjb: ya, understand this part. what i'm not sure about is, with having only promises in "sources" array, will these promises be executed in parallel?
+2019-03-25T13:52:12  <simonjb> the promises are executed by fluid.promise.sequence() -- they express when the tasks that returned them have completed
+2019-03-25T13:52:30  <simonjb> SORRY
+2019-03-25T13:52:34  <simonjb> AREN'T
+2019-03-25T13:52:45  <simonjb> the promises AREN'T executed by fluid.promise.sequence() -- they express when the tasks that returned them have completed
+2019-03-25T13:53:27  <cindyli> ah ha
+2019-03-25T13:53:54  <cindyli> makes sense
+2019-03-25T13:53:59  <simonjb> thinking out loud -- maybe we should split fluid.promise.sequence() into 2 functions -- one that takes tasks and does the execution
+2019-03-25T13:54:15  <simonjb> and one that takes promises and call in fluid.promise.all()?
+2019-03-25T13:54:23  <simonjb> might be clearer?
+2019-03-25T13:54:26  <simonjb> Bosmon ^
+2019-03-25T13:55:51  <Bosmon> simonjb - I don't think that is even logically possible
+2019-03-25T13:56:00  <simonjb> ok
+2019-03-25T13:56:13  <Bosmon> Once you have a structure that is full of promises, you have lost all possible control over serialisation
+2019-03-25T13:56:32  <Bosmon> That is, it doesn't make sense to talk about a structure full of promises being resolved in one order rather than another
+2019-03-25T13:57:04  <simonjb> yes, that's why I'm thinking fluid.promise.all() is clearer for the promises case
+2019-03-25T13:57:22  <simonjb> and .sequence is clearer for the tasks case
+2019-03-25T13:58:07  <simonjb> at the moment we have a function called .sequence that takes a collection of promises but which doesn't sequence them
+2019-03-25T13:58:55  <simonjb> or doesn't serialize them
+2019-03-25T14:01:46  <simonjb> maybe there's somthing I'm still not getting Bosmon but when you say "it doesn't make sense to talk about a structure full of promises being resolved in one order rather than another" isn't that what fluid.promise.sequence() is advertising, that I'm suggesting could be made clearer by splitting into 2 functions?
+2019-03-25T14:03:05  <Bosmon> simonjb - well to the extent it is advertising it, it is advertising something impossible
+2019-03-25T14:03:18  <Bosmon> I mean, it also accepts plain values in its array and doesn't attempt to sequence those : P
+2019-03-25T14:03:39  <simonjb> the docs currently say "Accepts an array of values, promises, functions returning values or functions returning promises and evaluates them in sequence."
+2019-03-25T14:03:56  <Bosmon> Yes
+2019-03-25T14:04:00  <Bosmon> This could certainly be reworded
+2019-03-25T14:04:47  <simonjb> yeah, maybe it would be enough to update the docs to make it clearer what happens in each of the different input cases
+2019-03-25T14:04:55  <Bosmon> Although "evaluates" is a bit of a loaded word in CS
+2019-03-25T14:05:04  <simonjb> sure
+2019-03-25T14:05:16  <Bosmon> By a kind of strict interpretation you could say that this is correct, but it is an interpretation which is not specified
+2019-03-25T14:05:25  <Bosmon> In that either a plain value, or a promise, "evaluates" to itself
+2019-03-25T14:05:31  <Bosmon> And a function returning a promise "evaluates" to the promise
+2019-03-25T14:05:53  <simonjb> yes, that is reasonable
+2019-03-25T14:07:54  *** clown <clown!clown@nat/ocadu/x-odfawlbfwwbsgcaf> has joined #fluid-tech
+2019-03-25T14:08:59  <simonjb> we do have notes on the value case and task case, maybe we could just add a note on the promise case?
+2019-03-25T14:09:30  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-tech
+2019-03-25T14:15:39  <Bosmon> simonjb - that sounds like it would be helpful to readers
+2019-03-25T14:17:12  <simonjb> I can have a go at writing Bosmon, and maybe you could fix? if I try to write it, it will help me to clarify my understanding
+2019-03-25T14:22:16  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-tech
+2019-03-25T14:34:36  *** alanharnum <alanharnum!~alanharnu@toroon0717w-lp130-03-74-12-183-230.dsl.bell.ca> has quit IRC (Quit: Leaving)
+2019-03-25T14:41:53  <Bosmon> simonjb - I'd love to, thanks for writing!
+2019-03-25T14:48:21  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-03-25T15:07:00  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-tech
+2019-03-25T15:20:46  <simonjb> Bosmon, cindyli: https://issues.fluidproject.org/browse/FLUID-6374
+2019-03-25T15:21:18  <cindyli> thanks, simonjb
+2019-03-25T15:38:12  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-xexsqsuqfrirykqk> has joined #fluid-tech
+2019-03-25T15:38:14  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has quit IRC (Quit: Leaving.)
+2019-03-25T15:44:34  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-xexsqsuqfrirykqk> has quit IRC (Ping timeout: 246 seconds)
+2019-03-25T15:45:06  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-jvcbujvtjpipvqos> has joined #fluid-tech
+2019-03-25T16:07:39  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-03-25T16:10:31  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-03-25T16:24:41  *** michelled <michelled!Adium@nat/ocadu/x-crfmcibztyfvnmxj> has joined #fluid-tech
+2019-03-25T17:01:44  *** michelled <michelled!Adium@nat/ocadu/x-crfmcibztyfvnmxj> has quit IRC (Quit: Leaving.)
+2019-03-25T17:07:50  *** michelled <michelled!Adium@nat/ocadu/x-xmvtxpqfbzlvwizh> has joined #fluid-tech
+2019-03-25T17:10:16  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:744e:1300:6cfb:b8f9> has joined #fluid-tech
+2019-03-25T17:12:32  *** colinclark <colinclark!~colinclar@205.211.168.105> has joined #fluid-tech
+2019-03-25T17:15:56  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-jvcbujvtjpipvqos> has quit IRC (Remote host closed the connection)
+2019-03-25T17:16:24  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-kcguezbhfcydlxph> has joined #fluid-tech
+2019-03-25T17:23:33  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-03-25T17:39:23  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-03-25T17:48:11  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-kcguezbhfcydlxph> has quit IRC (Remote host closed the connection)
+2019-03-25T17:48:20  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-swlvpwtfjeggodww> has joined #fluid-tech
+2019-03-25T17:50:13  *** clown <clown!clown@nat/ocadu/x-odfawlbfwwbsgcaf> has quit IRC (Ping timeout: 246 seconds)
+2019-03-25T17:58:09  *** avtar <avtar!~avtar@ip-45-3-24-73.user.start.ca> has joined #fluid-tech
+2019-03-25T18:09:57  *** clown <clown!clown@nat/ocadu/x-zvgrtaxjbikctxth> has joined #fluid-tech
+2019-03-25T18:19:00  *** colinclark <colinclark!~colinclar@205.211.168.105> has quit IRC (Quit: colinclark)
+2019-03-25T18:20:55  *** colinclark <colinclark!~colinclar@205.211.168.105> has joined #fluid-tech
+2019-03-25T18:24:20  *** simonjb <simonjb!~simonjb@205.211.168.105> has joined #fluid-tech
+2019-03-25T18:25:14  *** cherylhjli <cherylhjli!~Adium@205.211.168.105> has joined #fluid-tech
+2019-03-25T18:25:43  *** cherylhjli <cherylhjli!~Adium@205.211.168.105> has left #fluid-tech
+2019-03-25T18:25:53  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-miukzjycdnsxotwu> has joined #fluid-tech
+2019-03-25T18:31:57  <clown> cindyli:  when you have a few moments, could you look over:  https://gist.github.com/klown/faf38994a563d921de21c6dd645b853d?  Thanks.
+2019-03-25T18:33:28  <cindyli> sure, clown
+2019-03-25T18:34:31  <clown> thanks!
+2019-03-25T18:58:12  *** michelled1 <michelled1!~Adium@205.211.168.104> has joined #fluid-tech
+2019-03-25T19:00:40  *** michelled <michelled!Adium@nat/ocadu/x-xmvtxpqfbzlvwizh> has quit IRC (Ping timeout: 250 seconds)
+2019-03-25T19:03:01  <cindyli> clown: the test will work by modifying the definition of the sequence grade "gpii.tests.development.commonTestSequence" to - https://pastebin.com/vJ8ZkRFE
+2019-03-25T19:03:53  <clown> ah, there's the mistake.
+2019-03-25T19:07:32  <clown> so, was the couchSequenceGrade automatically put in before (before using sequenceElements etc.?)
+2019-03-25T19:10:40  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-swlvpwtfjeggodww> has quit IRC (Remote host closed the connection)
+2019-03-25T19:11:09  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-pfacxmirfwiciyzv> has joined #fluid-tech
+2019-03-25T19:18:08  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-pfacxmirfwiciyzv> has quit IRC (Remote host closed the connection)
+2019-03-25T19:18:17  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-unsbzhnzwqjkfnuh> has joined #fluid-tech
+2019-03-25T19:19:13  <cindyli> clown: sorry, just saw ur message. ping my name pls when you talk to me. couchSequenceGrade was put in automatically here - https://github.com/GPII/universal/blob/master/gpii/node_modules/testing/src/RunTestDefs.js#L95. now your sequence grade is overriding it so you need to take care of it in your new sequence grade
+2019-03-25T19:20:03  <cindyli> the overriding happens here - https://github.com/GPII/universal/blob/master/gpii/node_modules/testing/src/RunTestDefs.js#L73
+2019-03-25T19:24:56  *** clown <clown!clown@nat/ocadu/x-zvgrtaxjbikctxth> has quit IRC (Quit: Leaving.)
+2019-03-25T19:37:19  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.105> has joined #fluid-tech
+2019-03-25T19:40:05  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-miukzjycdnsxotwu> has quit IRC (Ping timeout: 268 seconds)
+2019-03-25T20:10:30  *** avtar <avtar!~avtar@ip-45-3-24-73.user.start.ca> has left #fluid-tech
+2019-03-25T20:13:47  *** colinclark <colinclark!~colinclar@205.211.168.105> has quit IRC (Quit: colinclark)
+2019-03-25T20:22:01  *** simonjb <simonjb!~simonjb@205.211.168.105> has quit IRC (Ping timeout: 268 seconds)
+2019-03-25T20:34:11  <Bosmon> Hi there cindyli - would you be able to take a look at https://github.com/fluid-project/infusion/pull/954 ?
+2019-03-25T20:34:32  <cindyli> sure, Bosmon
+2019-03-25T20:34:46  <Bosmon> Cheers!
+2019-03-25T20:35:34  <Bosmon> jhernandez - this installer takes about 5 minutes!
+2019-03-25T20:36:27  <Bosmon> Actually now it seems to be stalled....
+2019-03-25T20:40:49  <Bosmon> OK, it really is stalled
+2019-03-25T20:43:37  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-03-25T20:48:24  <Bosmon> ok it worked now
+2019-03-25T20:48:34  <Bosmon> jhernandez - oddly it seems I can't reproduce the issue so far
+2019-03-25T20:49:06  <Bosmon> I log in to Windows and get a green morphic and a working Save button
+2019-03-25T20:50:00  *** colinclark <colinclark!~colinclar@205.211.168.105> has joined #fluid-tech
+2019-03-25T20:50:11  <Bosmon> Although it says: keyed in with null
+2019-03-25T20:50:14  *** colinclark <colinclark!~colinclar@205.211.168.105> has quit IRC (Client Quit)
+2019-03-25T20:50:19  <Bosmon> Is this what it usually says?
+2019-03-25T20:51:14  *** michelled1 <michelled1!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-03-25T20:51:34  <Bosmon> Ah, now I got the Morphic: undefined
+2019-03-25T20:51:37  <Bosmon> On 3rd attempt
+2019-03-25T20:52:26  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-03-25T21:04:10  <jhernandez> Bosmon: yes, unless there's a user keyed in, the tooltip says "Morphic: Ready"
+2019-03-25T21:04:47  <Bosmon> jhernandez - so are all the sources somehow compiled in to morphic-app.exe , or are they hiding somewhere?
+2019-03-25T21:05:33  <jhernandez> if you want to see the problem of the qss not showing the user prefs, save some prefs and sign-out/back into windows
+2019-03-25T21:05:49  <jhernandez> they're all in Program files (x86)/Morphic/windows/resources/app
+2019-03-25T21:06:01  <Bosmon> Oh yes great
+2019-03-25T21:10:22  <Bosmon> Hmph
+2019-03-25T21:10:24  <Bosmon> It worked again
+2019-03-25T21:10:36  <Bosmon> So it does say Morphic: undefined when it is working ok?
+2019-03-25T21:11:57  <Bosmon> Worked a 2nd time
+2019-03-25T21:12:53  <Bosmon> OK, failed 3rd time
+2019-03-25T21:13:00  <Bosmon> How often does it fail for you?
+2019-03-25T21:13:15  <jhernandez> when the tooltip says "undefined" that indicates that the qss has "completely" realized that a user is keyed in
+2019-03-25T21:13:23  <jhernandez> it fails most of the time
+2019-03-25T21:13:43  <jhernandez> on our windows vagrant box
+2019-03-25T21:14:11  <jhernandez> but even with that, do the right settings are reflected in the qss?
+2019-03-25T21:14:22  <Bosmon> The first two times they were
+2019-03-25T21:14:27  <jhernandez> ok
+2019-03-25T21:14:29  <Bosmon> 3rd time I got wrong settings and greyed out save
+2019-03-25T21:15:20  <jhernandez> ok ok
+2019-03-25T21:15:30  <jhernandez> then you can see it happening
+2019-03-25T21:15:41  <Bosmon> This is nuts, I have a userToken of null
+2019-03-25T21:15:49  <jhernandez> apparently, works great in Maureen's VAIOs
+2019-03-25T21:15:51  <jhernandez> heh
+2019-03-25T21:15:53  <jhernandez> really?
+2019-03-25T21:16:48  <jhernandez> Bosmon: remember, do not confuse userToken and gpiiKey - if you're reading through the logs
+2019-03-25T21:17:03  <Bosmon> jhernandez - I added my own logging
+2019-03-25T21:17:30  <jhernandez> ok ok
+2019-03-25T21:17:44  <jhernandez> just in case
+2019-03-25T21:17:46  <jhernandez> :)
+2019-03-25T21:36:11  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-unsbzhnzwqjkfnuh> has quit IRC ()
+2019-03-25T21:47:36  <Bosmon> jhernandez - well, this is tough
+2019-03-25T21:47:40  <Bosmon> It's succeeded 7 times in a row now
+2019-03-25T21:49:24  <jhernandez> then you have a lucky day
+2019-03-25T21:49:27  <jhernandez> :P
+2019-03-25T21:49:47  <Bosmon> Aha
+2019-03-25T21:49:52  <Bosmon> 10th time unlucky!
+2019-03-25T21:52:08  *** clown <clown!~clown@ckvlon1747w-140-01-65-94-140-209.dsl.bell.ca> has joined #fluid-tech
+2019-03-25T21:52:54  <jhernandez> haha
+2019-03-25T21:56:06  <jhernandez> yes, it's frustrating - it's like flipping a coin
+2019-03-25T21:58:29  <Bosmon> :(
+2019-03-25T21:58:36  <Bosmon> I've now been through the logs side by side, line by line
+2019-03-25T21:58:55  <Bosmon> There is absolutely no visible difference between the sequence of a failed login and a good one
+2019-03-25T22:00:31  <jhernandez> yes, I was doing the same yesterday night and I came to the same thought - that I did't see differences between a good and a bad pass
+2019-03-25T22:01:44  <Bosmon> There must be some incredible kind of race within the QSS implementation
+2019-03-25T22:01:51  <Bosmon> But so far I can't even see it happening
+2019-03-25T22:13:25  <jhernandez> I'd also say that the problem's been there for some time (if not always) and that we're just noticing
+2019-03-25T22:20:43  <Bosmon> Interestingly the Save button stays greyed out forever
+2019-03-25T22:20:51  <Bosmon> Whatever you do to the settings
+2019-03-25T22:25:59  <jhernandez> yes, when it's greyed out, it's greyed forever
+2019-03-25T22:28:24  <jhernandez> so, what does "PSPReady" really means? what about the "onPSPPrerequisitesReady" one?
+2019-03-25T22:30:20  <jhernandez> shouldn't we wait for some "qssReady" one? are we already doing this? if not, does it really matter?
+2019-03-25T22:30:41  <jhernandez> what is true is that you can see the "right" settings coming over the psp channel
+2019-03-25T22:36:53  <Bosmon> jhernandez - the only explanation for this could be that the model on the renderer's side has somehow become out of step with the one on the app's side
+2019-03-25T22:36:58  <Bosmon> And that it believes that no user is keyed in
+2019-03-25T22:37:06  <Bosmon> Something like this
+2019-03-25T22:37:18  <Bosmon> jhernandez - is there some way to bring up the HTML console in the production app?
+2019-03-25T22:37:41  <jhernandez> yes ... there was a shortcut
+2019-03-25T22:37:47  <jhernandez> a key shortcut
+2019-03-25T22:38:42  <jhernandez> https://discuss.atom.io/t/how-to-make-developer-tools-appear/16232
+2019-03-25T22:40:20  <Bosmon> Ugh
+2019-03-25T22:40:24  <Bosmon> It needs to be added in the code?
+2019-03-25T22:40:32  <jhernandez> nope
+2019-03-25T22:40:47  <jhernandez> I think I managed to get it open in the past
+2019-03-25T22:41:05  <jhernandez> but can't figure out now how
+2019-03-25T22:41:07  <jhernandez> let me see
+2019-03-25T22:46:02  <jhernandez> Bosmon: yup
+2019-03-25T22:46:56  <jhernandez> run with --inspect flag and you can open the quickstrip and click on ctrl+shift+i
+2019-03-25T22:47:11  <jhernandez> is that what you're looking for?
+2019-03-25T22:47:24  <Bosmon> jhernandez - ok, and how do I arrange to do that when the thing is started from the service.....
+2019-03-25T22:47:34  <Bosmon> Given it appears we can only reproduce this issue together with the service?
+2019-03-25T22:48:10  <jhernandez> in program files (x86)/morphic/windows/
+2019-03-25T22:48:26  <jhernandez> ther's a file called service.json5
+2019-03-25T22:49:22  <jhernandez> https://github.com/GPII/gpii-app/pull/89/files#diff-7c0169d4a67b5769c0a20ac33bca8311R5
+2019-03-25T22:49:35  <Bosmon> Yeah
+2019-03-25T22:49:38  <Bosmon> Got it, thanks
+2019-03-25T22:49:44  <jhernandez> put morphic-app.exe --inspect
+2019-03-25T22:49:51  <Bosmon> OK
+2019-03-25T22:49:58  <Bosmon> And now relog in 10 times :)
+2019-03-25T22:50:30  <jhernandez> haha
+2019-03-25T22:51:26  <Bosmon> Oh great
+2019-03-25T22:51:28  <jhernandez> sorry, usually it's me who performs this kind of dirty jobs
+2019-03-25T22:51:29  <Bosmon> I was lucky 2nd time :)
+2019-03-25T22:51:32  <jhernandez> haha
+2019-03-25T22:52:02  <Bosmon> Ah
+2019-03-25T22:52:08  <Bosmon> Shit, I forgot to restart the service
+2019-03-25T22:53:08  <jhernandez> Bosmon: in powershell, as admin
+2019-03-25T22:53:21  <Bosmon> jhernandez - I just did it via the Services panel....
+2019-03-25T22:53:25  <jhernandez> Restart-Service "Morphic Service" is your friend
+2019-03-25T22:53:53  <jhernandez> and also, Start/Stop-Service works
+2019-03-25T22:56:01  <jhernandez> also, another tip
+2019-03-25T22:57:03  <jhernandez> when opening the devtools, you'll find yourself in a ridiculous window (limited to the qss size)
+2019-03-25T22:57:37  <Bosmon> jhernandez - I got into --inspect
+2019-03-25T22:57:40  <Bosmon> I can see the main process
+2019-03-25T22:57:49  <Bosmon> But unfortunately ctrl-shift-i doesn't work in the UI
+2019-03-25T22:57:59  <jhernandez> it does for me
+2019-03-25T22:58:05  <jhernandez> oh
+2019-03-25T22:58:19  <jhernandez> I see, isn't it expected to be used to debug the webview component?
+2019-03-25T22:58:36  <Bosmon> jhernandez - can you say that more clearly? : P
+2019-03-25T22:58:57  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-tech
+2019-03-25T22:59:49  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Client Quit)
+2019-03-25T23:00:06  <jhernandez> I mean, the rendered component
+2019-03-25T23:00:41  <Bosmon> jhernandez yes, I just can't understand what you're saying
+2019-03-25T23:00:45  <Bosmon> "Isn't it expected to be used"
+2019-03-25T23:01:08  <jhernandez> you said it doesn't work in the UI
+2019-03-25T23:01:26  <Bosmon> Clearly you have used it this way, given you have found yourself in a ridiculous window
+2019-03-25T23:01:36  <Bosmon> I think you were about to give me a tip : P
+2019-03-25T23:01:41  <jhernandez> you mean that the devtools aren't coming up?
+2019-03-25T23:01:47  <Bosmon> WHich I guess will be useful once I've ever succeeded in bringing the devtools up
+2019-03-25T23:01:51  <Bosmon> No, they are not coming up
+2019-03-25T23:01:52  <jhernandez> okk
+2019-03-25T23:02:06  <Bosmon> All I can do so far is inspect the main process via chrome://inspect
+2019-03-25T23:03:07  <jhernandez> ok, you're not seeing this https://snag.gy/4Ifunr.jpg
+2019-03-25T23:03:08  <jhernandez> right?
+2019-03-25T23:03:20  <Bosmon> This issue has indeed clearly been caused by some kind of IPC shite since as far as I can see the model on the main process side is completely correct
+2019-03-25T23:03:40  <Bosmon> jhernandez - no, I am seeing nothing like that
+2019-03-25T23:03:47  <Bosmon> All the key combos I've tried so far do nothing
+2019-03-25T23:03:57  <jhernandez> are on native win? vm?
+2019-03-25T23:04:10  <Bosmon> In the standard vagrant box
+2019-03-25T23:04:21  <jhernandez> first
+2019-03-25T23:04:55  <jhernandez> ensure tht you're using the english keyboard layout
+2019-03-25T23:04:57  <jhernandez> :P
+2019-03-25T23:06:01  <Bosmon> How could I type anything if I wasn't : P
+2019-03-25T23:06:02  <jhernandez> hold a second, I'm testing running from source - let me see if it works with the installed one
+2019-03-25T23:06:07  <Bosmon> It is the only layout installed anyway
+2019-03-25T23:08:56  <jhernandez> oh, doesn't work with the installed gpii
+2019-03-25T23:08:59  <jhernandez> :/
+2019-03-25T23:09:14  <Bosmon> OK
+2019-03-25T23:09:32  <Bosmon> Well perhaps in the morning you can talk me through how to start up the service based on a source build
+2019-03-25T23:10:09  <Bosmon> Since as I mentioned, the config we currently get when we run npm run start is junk
+2019-03-25T23:13:17  <jhernandez> ok ok

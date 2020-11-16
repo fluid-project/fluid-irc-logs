@@ -1,0 +1,56 @@
+2020-06-18T11:08:52  <Justin_o> gtirloni: not sure if you heard of this bug, but I think I ran into it yesterday. https://github.com/docker/for-mac/issues/3499
+2020-06-18T14:07:15  <gtirloni> Justin_o: I've not noticed that on Linux but I've heard about it on macOS.. it's been there for a while :(
+2020-06-18T14:09:40  <Justin_o> gtirloni: yah, doesn't seem like they know what's causing it
+2020-06-18T15:22:39  *** christopher is now known as Guest3809
+2020-06-18T17:12:20  <Justin_o> Bosmon: we're talking about this comment you left on the story telling pr https://ocadu.zoom.us/j/727986784
+2020-06-18T17:12:26  <Justin_o> oops that's the room we're in
+2020-06-18T17:12:38  <Justin_o> this is the comment https://github.com/fluid-project/sjrk-story-telling/pull/84#pullrequestreview-431017684
+2020-06-18T17:13:29  <Justin_o> wondering what you meant by "resources", also prior to this change the action was relied on by the modelListener but what was happening is that the it was occurring before the markup was ready on init.
+2020-06-18T17:13:33  <Justin_o> gmoss: is that correct
+2020-06-18T17:13:59  <Bosmon> Justin_o - you know, "resources", those things consumed by fluid.resourceLoader
+2020-06-18T17:14:09  <Bosmon> Which is the main point of control over asynchrony in the new framework
+2020-06-18T17:14:26  <Bosmon> I think you even wrote this block yourself : P
+2020-06-18T17:15:40  <Bosmon> The main idiom in the new framework is to eliminate, if possible, this messy dependence on custom, specially named events which signal whether things are ready or not
+2020-06-18T17:15:46  <Bosmon> And this might be a good point to apply it
+2020-06-18T17:16:23  <Justin_o> Bosmon: another point is that it looks like Story Telling is using a dev release of Infusion from December. Will the changes needed be available in that version?
+2020-06-18T17:22:48  <gmoss> Justin_o: sorry, yes your assessment of the situation pre-Bosmon's comment is correct
+2020-06-18T17:23:24  <gmoss> Bosmon: if there's a way to eliminate this dependence on onReady-type events that hang on all the resourceLoaders we're using, that would be amazing
+2020-06-18T17:23:34  <gmoss> I feel like that refactoring may be better done in a separate Jira
+2020-06-18T17:23:53  <gmoss> i.e. it might count as scope creep in SJRK-288 :P
+2020-06-18T17:29:47  <Justin_o> gmoss: I think these docs cover what Bosmon was referring too https://github.com/fluid-project/infusion-docs/blob/a46115785fff485ecae3b827eedfc2c2b3072b5e/src/documents/ResourceLoader.md
+2020-06-18T17:30:43  <Justin_o> gmoss: more specifically https://github.com/fluid-project/infusion-docs/blob/a46115785fff485ecae3b827eedfc2c2b3072b5e/src/documents/ResourceLoader.md#resourceloader-lifecycle
+2020-06-18T17:35:49  <gmoss> Justin_o: so if I'm understanding this correctly, if I specified the template and message file paths in the model of the resourceLoader for each of those, they will be fetched on init and we can safely assume that they are there before each resourceLoader's onCreate event?
+2020-06-18T17:36:34  <Justin_o> gmoss: if those resources are referenced from the model, here's an example. https://github.com/fluid-project/infusion-docs/blob/a46115785fff485ecae3b827eedfc2c2b3072b5e/src/documents/ResourceLoader.md#using-fluidresourceloader---fast-path
+2020-06-18T17:37:22  <gmoss> Justin_o: hmm okay, I'm getting some ideas on how we can really tidy up the `templateManager`
+2020-06-18T17:37:31  <Justin_o> above that is the example of the slow path, which might also be sufficient depending on how things are structured
+2020-06-18T17:37:36  <gmoss> (assuming SJRK-52 doesn't eliminate the need for it entirely)
+2020-06-18T17:39:35  <gmoss> okay, so I agree that this work would be valuable, I'm just not sure about when it should be tackled (i.e. in the scope of which Jira)
+2020-06-18T17:39:53  <gmoss> it doesn't look like a simple config change for the blockUi component
+2020-06-18T17:40:10  <gmoss> *blockUi.editor
+2020-06-18T17:42:10  <Justin_o> gmoss: who will be merging this code, cindyli?
+2020-06-18T17:42:20  <gmoss> Justin_o: I assume so
+2020-06-18T17:42:41  <gmoss> cindyli has been the primary reviewer for the last while
+2020-06-18T17:42:42  <Justin_o> gmoss: okay, let's check with cindyli then. And go with that.
+2020-06-18T17:42:44  <gmoss> okay
+2020-06-18T17:43:13  <cindyli> catching up..
+2020-06-18T17:50:17  <cindyli> gmoss, Justin_o, i wonder if the infusion upgrade to the latest FLUID-6148 branch only affects the template manager or more than that
+2020-06-18T17:52:01  <gmoss> cindyli: we'd want to be using the latest 6145 branch, iirc. the last time I tried updating to latest (to incorporate the fix to FLUID-6512), I got a number of npm errors and the site didn't run properly and tests were failing, so I backed off
+2020-06-18T17:52:12  <gmoss> which is to say it might take a bit to get that working
+2020-06-18T17:52:21  <cindyli> ok
+2020-06-18T17:52:43  <gmoss> we'll have to do it eventually, of course
+2020-06-18T17:52:50  <gmoss> just a matter of deciding wehn
+2020-06-18T17:52:51  <gmoss> *when
+2020-06-18T17:54:07  <cindyli> gmoss: upgrading infusion itself sounds worth a separate ticket. i'm just not sure if it should be a part of SJRK-52, which was to improve the template manager
+2020-06-18T17:55:09  <gmoss> cindyli: I agree that it should be a separate Jira. I'm also not sure about whether we should incorporate this into SJRK-52. I feel like we'll want to update infusion before we prioritize that work
+2020-06-18T17:55:19  <gmoss> *before SJRK-52 hits the top of our priority list
+2020-06-18T17:56:27  <cindyli> i agree. upgrading infusion to get the code base back to work before working on SJRK-52 might be the way to go, gmoss
+2020-06-18T18:01:33  <gmoss> cindyli: okay. So would you be okay if I don't address Bosmon's review comment at this point, assuming he is also okay with that?
+2020-06-18T18:01:43  <gmoss> (I'm using the word "okay" a lot today :P)
+2020-06-18T18:05:06  <cindyli> i'm ok with it, gmoss. could you create a jira, reply to Bosmon's review comment explaining what happens. also add a TODO comment in the code pointing to the review comment
+2020-06-18T18:05:14  <gmoss> cindyli: sure!
+2020-06-18T18:05:16  <gmoss> thanks
+2020-06-18T18:05:27  <cindyli> thank you!
+2020-06-18T18:08:22  <Justin_o> gmoss: please also add references to the new JIRA in those spots too
+2020-06-18T18:09:15  <gmoss> Justin_o: can do :)
+2020-06-18T18:09:34  <Justin_o> gmoss: thanks
+2020-06-18T18:44:55  *** jhung_2 is now known as jhung

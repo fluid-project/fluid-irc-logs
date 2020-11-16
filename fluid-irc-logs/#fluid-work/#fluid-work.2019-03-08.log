@@ -1,0 +1,646 @@
+2019-03-08T00:40:49  *** colinclark <colinclark!~colinclar@192.0.159.124> has joined #fluid-work
+2019-03-08T00:40:49  *** colinclark <colinclark!~colinclar@192.0.159.124> has quit IRC (Client Quit)
+2019-03-08T00:57:09  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-03-08T02:02:09  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:bc85:b758:ff6f:d25b> has quit IRC (Remote host closed the connection)
+2019-03-08T02:02:47  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:bc85:b758:ff6f:d25b> has joined #fluid-work
+2019-03-08T02:07:16  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:bc85:b758:ff6f:d25b> has quit IRC (Ping timeout: 258 seconds)
+2019-03-08T05:57:51  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-03-08T07:33:45  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 252 seconds)
+2019-03-08T08:49:07  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:2902:c2d6:bcaa:bfd6> has quit IRC (Quit: Leaving.)
+2019-03-08T09:20:22  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has joined #fluid-work
+2019-03-08T09:20:30  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:e073:7655:6bd3:5344> has joined #fluid-work
+2019-03-08T09:42:32  <the-t-in-rtf> Morning @jhernandez, just seeing if you're around
+2019-03-08T09:42:50  <the-t-in-rtf> I was going to clarify what needs to be added where to fix the timing problems in your pull
+2019-03-08T09:43:46  <jhernandez> the-t-in-rtf: yes, I'm around - responding to reported issues, but yes, I am
+2019-03-08T09:43:59  <jhernandez> :)
+2019-03-08T09:44:15  <the-t-in-rtf> Cool, I'll lay out what it looks to me needs to be done and we can discuss whether it's faster for you to try it of for me to put together a quick pull
+2019-03-08T09:44:33  <Bosmon> Brilliant, guys
+2019-03-08T09:44:40  <Bosmon> Happy to test anything that gets brewed up
+2019-03-08T09:45:03  <jhernandez> let's see what you're thinking about and I'll see if I can easily check here - will ask for your help only if I just can't do it
+2019-03-08T09:45:14  <jhernandez> Bosmon: hey
+2019-03-08T09:45:48  <jhernandez> great, a "make the damn tests pass again" brigade
+2019-03-08T09:45:50  <jhernandez> :P
+2019-03-08T09:50:34  <the-t-in-rtf> So, step 1 is to not use the new config, you'll want a "dev" config again
+2019-03-08T09:50:44  <the-t-in-rtf> Step 2 is to insert two steps here: https://github.com/GPII/gpii-app/blob/7bbf642fdf6e4e1f772732a9302a10903040054c/tests/IntegrationTests.js#L65
+2019-03-08T09:50:48  <the-t-in-rtf> steps to follow shortly
+2019-03-08T09:51:29  <the-t-in-rtf> you need this step: https://github.com/GPII/universal/blob/master/gpii/node_modules/testing/src/Fixtures.js#L153
+2019-03-08T09:51:40  <the-t-in-rtf> that will start the harness and wait for it to finish starting up
+2019-03-08T09:52:12  <the-t-in-rtf> Step 3 hopefully involves celebrating the fix with a pub lunch.
+2019-03-08T09:52:34  <the-t-in-rtf> If you can link me to where you use the configs in your branch, I can suggest a replacement
+2019-03-08T09:53:17  <the-t-in-rtf> I can try to fix it locally, but that will involve provisioning a VM
+2019-03-08T09:53:26  <the-t-in-rtf> which I just started
+2019-03-08T09:54:39  <the-t-in-rtf> So, we're still trying to unblock this pull/branch, is that right?
+2019-03-08T09:54:39  <the-t-in-rtf> https://github.com/GPII/gpii-app/pull/93
+2019-03-08T09:56:54  <jhernandez> the-t-in-rtf: yes, that pull
+2019-03-08T09:58:20  <jhernandez> step 1, which is the "new" config?
+2019-03-08T10:03:18  <the-t-in-rtf> it's an old one
+2019-03-08T10:03:26  <the-t-in-rtf> just a sec, keep working on issues, I'm testing my fix
+2019-03-08T10:03:34  <the-t-in-rtf> the VM didn't take an age to provision this time
+2019-03-08T10:03:40  <jhernandez> heh
+2019-03-08T10:03:43  <the-t-in-rtf> oh, I lied, it's still provisioning
+2019-03-08T10:03:49  <the-t-in-rtf> there's just a VM window open
+2019-03-08T10:03:56  <jhernandez> you can skip the installer creation
+2019-03-08T10:03:59  <jhernandez> ;)
+2019-03-08T10:04:16  <the-t-in-rtf> I was just gonna run the integration tests, which should confirm whether my fix works
+2019-03-08T10:04:59  <the-t-in-rtf> Anyway, this is the config
+2019-03-08T10:05:01  <the-t-in-rtf> %gpii-universal/gpii/configs/shared/gpii.config.untrusted.development.json5
+2019-03-08T10:05:09  <jhernandez> oh
+2019-03-08T10:05:13  <jhernandez> right
+2019-03-08T10:05:26  <the-t-in-rtf> it's once again a sane choice for, you know, tests
+2019-03-08T10:05:33  <jhernandez> sorry, I might be told you that that's the pull that we want to get passing
+2019-03-08T10:05:44  <the-t-in-rtf> yes, I know, working my way there
+2019-03-08T10:05:45  <jhernandez> but yesterday I shared a different branch with Cindy
+2019-03-08T10:06:02  <jhernandez> that includes the changes to use the new config
+2019-03-08T10:06:07  <the-t-in-rtf> well, the fix is the same either way
+2019-03-08T10:06:15  <jhernandez> exactly
+2019-03-08T10:06:16  <the-t-in-rtf> use the shared config, add sequence steps, profit
+2019-03-08T10:06:29  <the-t-in-rtf> once we confirm, I can just put my branch up and you can look at the commit
+2019-03-08T10:06:34  <the-t-in-rtf> it'll be like ten lines
+2019-03-08T10:06:36  <jhernandez> I assume you know how and where to change things
+2019-03-08T10:06:45  <the-t-in-rtf> I believe so, yes.
+2019-03-08T10:06:46  <jhernandez> sure
+2019-03-08T10:06:57  <jhernandez> let me know if you run into any "weird" problem
+2019-03-08T10:07:00  <the-t-in-rtf> will do
+2019-03-08T10:16:13  <jhernandez> Bosmon: btw, just issued https://github.com/GPII/universal/pull/753
+2019-03-08T10:17:09  <jhernandez> I think that Cindy forgot removing (or git adding the change) to remove resetAtStart from that config
+2019-03-08T10:17:12  <jhernandez> right?
+2019-03-08T10:17:25  <Bosmon> jhernandez - I'm not sure - the-t-in-rtf, what do you think of that pull?
+2019-03-08T10:17:37  <the-t-in-rtf> just a moment, I'll look
+2019-03-08T10:18:17  <jhernandez> Bosmon: you asked her to remove it here https://github.com/GPII/universal/pull/750/files/9d6f05680000c0d6ad5ac2394ce052e9e2966f7d#r263085820
+2019-03-08T10:18:20  <the-t-in-rtf> that doesn't seem a broad enough remedy
+2019-03-08T10:18:30  <the-t-in-rtf> depends on what the flow manager reset does
+2019-03-08T10:18:54  <the-t-in-rtf> it might fix tests related to that, but isn't likely to fix the broader issue at least from what I can see now
+2019-03-08T10:19:46  <jhernandez> and she replied that she had put the reset in a different config file that we can add from gpii-app, but gpii.flowManager.config.local.base is used by both production and dev configs of the flowmanager
+2019-03-08T10:20:28  <jhernandez> FYI, this is about the resetAtStart flowmanager functionality - nothing to do with the broken tests
+2019-03-08T10:20:50  <jhernandez> (I think)
+2019-03-08T10:20:57  <the-t-in-rtf> seems that way to me as well
+2019-03-08T10:21:06  <the-t-in-rtf> I mean, if it fixed the broken tests it would be purely coincidental
+2019-03-08T10:21:12  <jhernandez> nope
+2019-03-08T10:21:27  <the-t-in-rtf> for example, if it delayed the readiness of some other bit long enough for oouch to be ready
+2019-03-08T10:21:35  <the-t-in-rtf> couch
+2019-03-08T10:21:45  <the-t-in-rtf> but oouch really seems to fit at times
+2019-03-08T10:23:14  <Bosmon> the-t-in-rtf, jhernandez - sorry, I understand now
+2019-03-08T10:23:21  <Bosmon> I had a brain fit since it is "so early in the morning"
+2019-03-08T10:23:31  <Bosmon> And read "resetAtStart" as something to do with couch : P
+2019-03-08T10:24:05  <the-t-in-rtf> I recommend a healthy dose of Chopin
+2019-03-08T10:24:07  <jhernandez> sorry, maybe I should have indicated that it was unrelated before sharing the link :P
+2019-03-08T10:24:12  <the-t-in-rtf> coats, soothes, relieves
+2019-03-08T10:24:50  <the-t-in-rtf> I hope the provisioning is nearly there.  @jhernandez, what's the simplest test I can run to confirm if the problem is fixed
+2019-03-08T10:25:03  <the-t-in-rtf> i.e. it'll go faster if I'm not running the whole suite every time
+2019-03-08T10:25:29  <jhernandez> the-t-in-rtf: npm run test:psp:noCoverage
+2019-03-08T10:25:37  <the-t-in-rtf> thanks
+2019-03-08T10:25:46  <jhernandez> you can also disable some of the tests
+2019-03-08T10:26:00  <jhernandez> let me look for an url for you to take a look
+2019-03-08T10:26:07  <the-t-in-rtf> great, thanks.
+2019-03-08T10:27:32  <jhernandez> the-t-in-rtf: https://github.com/javihernandez/gpii-app/commit/cd1fcbeffbc3147f7de56a766821eeb68fca8519
+2019-03-08T10:28:02  <the-t-in-rtf> great, I will make the same change
+2019-03-08T10:28:08  <jhernandez> look at tests.js and at tests/IntegrationTests.js
+2019-03-08T10:28:21  <jhernandez> this is the way I was hitting the problem
+2019-03-08T10:29:38  <jhernandez> I guess that once you get that test always passing, you should uncomment the rest of tests and see what happens
+2019-03-08T10:30:37  <jhernandez> :)
+2019-03-08T10:35:23  <the-t-in-rtf> https://github.com/the-t-in-rtf/gpii-app/commit/902617a591381551af9d01a8d847c5657cd4db64
+2019-03-08T10:35:29  <the-t-in-rtf> I'm still waiting on the provisioning
+2019-03-08T10:35:37  <the-t-in-rtf> but there are the key changes all in one commit
+2019-03-08T10:36:06  <jhernandez> I'm seeing it now
+2019-03-08T10:36:12  <jhernandez> great, thanks
+2019-03-08T10:36:18  <the-t-in-rtf> provisioning just finished
+2019-03-08T10:36:22  <jhernandez> the-t-in-rtf: question
+2019-03-08T10:36:35  <the-t-in-rtf> I did my think where I set TTS to say something when a job finishes, which I know would be a torment for some
+2019-03-08T10:36:42  <the-t-in-rtf> s/think/thing
+2019-03-08T10:36:44  <the-t-in-rtf> yup
+2019-03-08T10:36:57  <jhernandez> then, we don't need to add the couch config ?
+2019-03-08T10:37:20  <the-t-in-rtf> that's correct
+2019-03-08T10:37:26  <the-t-in-rtf> you don't need suspenders and a belt
+2019-03-08T10:37:45  <the-t-in-rtf> it's better to have both handled in a test sequence step so you can both start it and wait for it
+2019-03-08T10:37:55  <the-t-in-rtf> if we used a config you might miss the startup event depending
+2019-03-08T10:38:09  <jhernandez> ok, got it
+2019-03-08T10:38:23  <the-t-in-rtf> anyway, almost ready to run the tes
+2019-03-08T10:38:24  <the-t-in-rtf> t
+2019-03-08T10:40:18  <jhernandez> I wish they pass, but I'm not that confident
+2019-03-08T10:40:21  <jhernandez> :P
+2019-03-08T10:42:04  <jhernandez> in any case, the pr needs a few updates before it can go in
+2019-03-08T10:44:53  <the-t-in-rtf> sigh
+2019-03-08T10:45:14  <the-t-in-rtf> I assume your more recent work actually includes gpii-couchdb-test-harness as a dev dependency?
+2019-03-08T10:45:21  <the-t-in-rtf> that's the error I get, but working through it
+2019-03-08T10:45:57  <jhernandez> nope
+2019-03-08T10:46:19  <the-t-in-rtf> Anyway, I think it's only a dev dependency in universal, so you will ultimately need it.
+2019-03-08T10:46:20  <jhernandez> I "thought" that universal would bring it in
+2019-03-08T10:46:41  <Bosmon> It isn't how npm works : P
+2019-03-08T10:46:48  <the-t-in-rtf> huh
+2019-03-08T10:46:52  <the-t-in-rtf> it is a full dependency
+2019-03-08T10:46:58  <Bosmon> Even so
+2019-03-08T10:47:00  <the-t-in-rtf> it complained about gpii-express
+2019-03-08T10:47:01  <Bosmon> These are not transitive
+2019-03-08T10:47:04  <the-t-in-rtf> so it might be my fault
+2019-03-08T10:47:24  <Bosmon> I've already asked for gpii-express to be added in this WIP - https://github.com/GPII/gpii-app/pull/98
+2019-03-08T10:47:32  <the-t-in-rtf> ah, there we go
+2019-03-08T10:48:19  <jhernandez> great
+2019-03-08T10:48:25  <the-t-in-rtf> I mean, that explains it
+2019-03-08T10:48:29  <the-t-in-rtf> I will confirm the rest shortly I hope
+2019-03-08T10:49:03  *** Danail_Dido <Danail_Dido!~Karadalie@109.120.246.31> has joined #fluid-work
+2019-03-08T10:50:51  *** kris_HA <kris_HA!~kris@212.5.154.113> has joined #fluid-work
+2019-03-08T10:55:05  <the-t-in-rtf> ugh.
+2019-03-08T10:55:10  <the-t-in-rtf> the branch doesn't actually include CouchDB.ps1
+2019-03-08T10:55:20  <the-t-in-rtf> I mean, that branch could never have worked
+2019-03-08T10:55:23  <the-t-in-rtf> at least not in Vagrant
+2019-03-08T10:55:32  <the-t-in-rtf> where can I pick that up from?
+2019-03-08T10:56:05  <the-t-in-rtf> disturbingly, it has provisioning steps to call CouchDB.ps1 but not the actual file.
+2019-03-08T10:56:54  <the-t-in-rtf> This is vagrant-unique stuff, but we'd have hit it in CI soon enough.
+2019-03-08T10:57:30  <the-t-in-rtf> @jhernandez ^^^
+2019-03-08T10:57:59  <jhernandez> the-t-in-rtf: it should have pulled it in
+2019-03-08T10:58:28  <jhernandez> it pulls it from the windows repo
+2019-03-08T10:59:25  <jhernandez> https://github.com/GPII/gpii-app/pull/93/files#diff-866f91ab20a75d820a5605091210da79R43
+2019-03-08T11:00:08  <jhernandez> how did you provision your vm? maybe with master and then you switched the branch?
+2019-03-08T11:00:38  <the-t-in-rtf> https://raw.githubusercontent.com/javihernandez/windows/GPII-3744/provisioning
+2019-03-08T11:00:44  <the-t-in-rtf> that file doesn't exist.
+2019-03-08T11:00:56  <the-t-in-rtf> but yes, I did provision with master, I can recreate it
+2019-03-08T11:01:14  <the-t-in-rtf> but how could it work even then?
+2019-03-08T11:01:20  <the-t-in-rtf> I mean, the file you're pointing to doesn't exist
+2019-03-08T11:01:26  <jhernandez> the-t-in-rtf: you missed the filename
+2019-03-08T11:01:27  <jhernandez> https://raw.githubusercontent.com/javihernandez/windows/GPII-3744/provisioning/CouchDB.ps1
+2019-03-08T11:01:33  <the-t-in-rtf> ah
+2019-03-08T11:01:50  <the-t-in-rtf> OK, I see it
+2019-03-08T11:02:01  <the-t-in-rtf> I will try to rerun build.ps1 rather than reprovisioning
+2019-03-08T11:02:24  <jhernandez> you can just run CouchDB.ps1
+2019-03-08T11:02:31  <the-t-in-rtf> I could if it existed
+2019-03-08T11:02:37  <the-t-in-rtf> Build.ps1 never downloaded it
+2019-03-08T11:02:38  <jhernandez> gran it
+2019-03-08T11:02:43  <jhernandez> *grab it
+2019-03-08T11:02:54  <the-t-in-rtf> yes, good idea
+2019-03-08T11:02:57  <jhernandez> and run it with admin privileges on powershell
+2019-03-08T11:02:59  <jhernandez> :P
+2019-03-08T11:04:09  <jhernandez> you have to put it in the provisioning folder because it uses Provisioning.psm1
+2019-03-08T11:06:07  <the-t-in-rtf> yup, working
+2019-03-08T11:06:14  <the-t-in-rtf> (the install)
+2019-03-08T11:12:02  <the-t-in-rtf> OK, looks like I also need to ensure the case holder has a harness, just a minute
+2019-03-08T11:13:08  <jhernandez> sure, I'm busy here - I have all the day :P
+2019-03-08T11:26:27  <the-t-in-rtf> So, looks like I just need to figure out the path to the harness once it's mixed in
+2019-03-08T11:26:33  <the-t-in-rtf> working on it
+2019-03-08T11:29:04  <jhernandez> yeah, yesterday night I took a quick look at that and wasn't obvious to me
+2019-03-08T11:37:42  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:e073:7655:6bd3:5344> has quit IRC (Read error: Connection reset by peer)
+2019-03-08T11:38:09  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:e073:7655:6bd3:5344> has joined #fluid-work
+2019-03-08T11:43:56  <the-t-in-rtf> So, something is really wrong
+2019-03-08T11:43:58  <the-t-in-rtf> 03:43:21.877:  Test case listener has not responded after 5000ms - at sequence pos 2 of 12 sequence element {
+2019-03-08T11:43:58  <the-t-in-rtf>     "event": "{that gpii.app}.events.onPSPReady",
+2019-03-08T11:43:58  <the-t-in-rtf>     "listener": "fluid.identity"
+2019-03-08T11:43:58  <the-t-in-rtf> } of fixture GPII application integration tests
+2019-03-08T11:44:07  <the-t-in-rtf> just a moment for the other shoe
+2019-03-08T11:44:41  <the-t-in-rtf> hmm
+2019-03-08T11:45:04  <the-t-in-rtf> it's weird, if I try to do anything else that refers to {that gpii.app} it fails to resolve the reference and throws a clear error
+2019-03-08T11:45:23  <the-t-in-rtf> but the clear error isn't thrown for that one.
+2019-03-08T11:45:42  <the-t-in-rtf> I'm just reverting to the original unaltered sequence and adding a few logging statements to help me understand what's where.
+2019-03-08T11:49:08  <the-t-in-rtf> so, if I add step like this, for example:
+2019-03-08T11:49:09  <the-t-in-rtf> {
+2019-03-08T11:49:09  <the-t-in-rtf>     funcName: "fluid.log",
+2019-03-08T11:49:09  <the-t-in-rtf>     args: ["EVENTS:", "@expand:Object.keys({that gpii.app}.events)"]
+2019-03-08T11:49:09  <the-t-in-rtf> },
+2019-03-08T11:50:07  <the-t-in-rtf> Then I get errors like:
+2019-03-08T11:50:08  <the-t-in-rtf> Failed to resolve reference {that gpii.app}.events - could not match context with name that gpii.app from component
+2019-03-08T11:50:21  <the-t-in-rtf> (and the component is the case holder)
+2019-03-08T11:53:31  <jhernandez> hmmm, that's weird the-t-in-rtf
+2019-03-08T11:53:35  <the-t-in-rtf> what's nutty is the timeout
+2019-03-08T11:53:40  <the-t-in-rtf> this is the last bit before I stop things
+2019-03-08T11:53:41  <the-t-in-rtf> 03:47:16.954:  Test case listener has not responded after 5000ms - at sequence pos 3 of 13 sequence element {
+2019-03-08T11:53:41  <the-t-in-rtf>     "event": "{that gpii.app}.events.onPSPReady",
+2019-03-08T11:53:41  <the-t-in-rtf>     "listener": "fluid.identity"
+2019-03-08T11:53:41  <the-t-in-rtf> } of fixture GPII application integration tests
+2019-03-08T11:53:59  <jhernandez> are you using the untrusted.development config?
+2019-03-08T11:54:16  <the-t-in-rtf> So, it's complaining that it can't resolve {that gpii.app}.events earlier but still times out on a listener based on the same rough IoC reference
+2019-03-08T11:54:35  <the-t-in-rtf> I am using your config with the couch harness
+2019-03-08T11:55:16  <the-t-in-rtf> but why should it fail to resolve the IoC reference earlier and then not complain about the event definition?
+2019-03-08T11:55:41  <the-t-in-rtf> I mean, if it can't resolve the reference in one place, how can it in the other?
+2019-03-08T11:56:03  <javjarfer[m]> Good morning Bosmon !
+2019-03-08T11:56:06  <jhernandez> not a clue
+2019-03-08T11:57:17  <jhernandez> the-t-in-rtf: can you push whatever you have so I can give it a try locally?
+2019-03-08T11:57:43  <the-t-in-rtf> I sent the link earlier to the branch
+2019-03-08T11:58:05  <the-t-in-rtf> or to the commit, just a minute
+2019-03-08T11:58:33  <jhernandez> you pushed to my branch in fact
+2019-03-08T11:58:46  <the-t-in-rtf> sorry, that was a client issue
+2019-03-08T11:58:51  <the-t-in-rtf> I thought it had bombed out
+2019-03-08T11:58:57  <the-t-in-rtf> https://github.com/the-t-in-rtf/gpii-app/tree/GPII-3744
+2019-03-08T11:59:31  <the-t-in-rtf> I didn't think it had managed to push to your branch
+2019-03-08T12:00:22  <jhernandez> no prob
+2019-03-08T12:00:33  <jhernandez> I'll take care of it
+2019-03-08T12:01:04  <the-t-in-rtf> so what I have now is just commenting out bits of that and adding log statements to see what I can find, it's very low value.
+2019-03-08T12:01:19  <jhernandez> okay
+2019-03-08T12:01:30  <jhernandez> let me pull and test here
+2019-03-08T12:01:58  <the-t-in-rtf> great, I'll refresh my VM and get some lunch for a minute
+2019-03-08T12:02:43  <jhernandez> sure
+2019-03-08T12:08:37  <jhernandez> the-t-in-rtf: FYI, just updated the windows reference and pushed it to the pr
+2019-03-08T12:09:04  <Bosmon> the-t-in-rtf - you should remember you can never do that
+2019-03-08T12:09:27  <Bosmon> You can't resolve IoCSS style references except i) in options distributions, ii) in event binding specifications in IoC testing sequences
+2019-03-08T12:09:33  <Bosmon> That is, those references with spaces in them
+2019-03-08T12:10:19  <Bosmon> Isn't the problem here that we are listening to two asynchronous operations which could complete in either order?
+2019-03-08T12:10:26  <Bosmon> i.e. the PSP being ready and couch being ready
+2019-03-08T12:11:11  <jhernandez> Bosmon: I'd say so
+2019-03-08T12:11:34  <Bosmon> In which case we will need to create a combined boiled event which listens to both of them
+2019-03-08T12:11:39  <Bosmon> This is our standard pattern for this problem
+2019-03-08T12:13:01  <Bosmon> I suggest adding an "onAppReady" event here: https://github.com/GPII/gpii-app/blob/master/src/main/app.js#L358
+2019-03-08T12:13:07  <jhernandez> as the onPSPReady does, right?
+2019-03-08T12:13:17  <Bosmon> It doesn't look like it does this explicitly
+2019-03-08T12:13:29  <jhernandez> ok
+2019-03-08T12:13:32  <Bosmon> So I suggest you make a new event
+2019-03-08T12:13:35  <Bosmon> That looks something like this:
+2019-03-08T12:13:38  <Bosmon> onAppReady: {
+2019-03-08T12:13:45  <Bosmon>     onPSPReady: "onPSPReady",
+2019-03-08T12:13:55  <Bosmon>    onCouchReady: "..... some couch event here"
+2019-03-08T12:13:57  <Bosmon> }
+2019-03-08T12:14:14  <Bosmon> Oh wait sorry
+2019-03-08T12:14:15  <Bosmon> I am wrong
+2019-03-08T12:14:20  <the-t-in-rtf> I see.  I guess my problem earlier was that I couldn't figure out the right non-IoCSS path to the harness
+2019-03-08T12:14:22  <Bosmon> There is a boiled event here as you say - https://github.com/GPII/gpii-app/blob/master/src/main/app.js#L350
+2019-03-08T12:14:33  <the-t-in-rtf> i.e. {harness} did not work
+2019-03-08T12:14:35  <Bosmon> So you just need to add the couch ready event into this existing boiled mixture
+2019-03-08T12:14:42  <the-t-in-rtf> wait
+2019-03-08T12:14:52  <the-t-in-rtf> we also need a reference that will let us start the harness
+2019-03-08T12:14:56  <Bosmon> And there is already an appReady event
+2019-03-08T12:14:57  <Bosmon> ok
+2019-03-08T12:14:59  <the-t-in-rtf> it also couldn't resolve {harness}
+2019-03-08T12:15:03  <Bosmon> So we just need to figure out where the harness is
+2019-03-08T12:15:08  <the-t-in-rtf> which is why I started down the rabbit hole
+2019-03-08T12:15:09  <the-t-in-rtf> yet
+2019-03-08T12:15:10  <the-t-in-rtf> yes
+2019-03-08T12:15:41  <Bosmon> Note that we arrange for the app to be injected into the middle of the flowManager
+2019-03-08T12:15:46  <Bosmon> So it can resolve references it needs more easily
+2019-03-08T12:16:00  <Bosmon> Which will account perhaps for any peculiarities in its binding environment
+2019-03-08T12:16:43  <Bosmon> This is where the gpii.app ends up: https://github.com/GPII/gpii-app/blob/master/configs/app.base.json#L7
+2019-03-08T12:16:53  *** Danail_Dido <Danail_Dido!~Karadalie@109.120.246.31> has quit IRC (Read error: Connection reset by peer)
+2019-03-08T12:25:30  <the-t-in-rtf> Aha: https://github.com/GPII/gpii-app/blob/7bbf642fdf6e4e1f772732a9302a10903040054c/tests/IntegrationTests.js#L104
+2019-03-08T12:26:03  <the-t-in-rtf> It's also exposed as {that}.app
+2019-03-08T12:26:05  <the-t-in-rtf> right?
+2019-03-08T12:26:17  <the-t-in-rtf> I mean in the context of the test caseholder
+2019-03-08T12:29:25  <jhernandez> I think so
+2019-03-08T12:31:45  <the-t-in-rtf> great, then just need to wait for the reprovision
+2019-03-08T12:32:01  <the-t-in-rtf> I thought walking to the store, buying lunch, bringing it back, and eating it would be long enough.
+2019-03-08T12:32:31  <javjarfer[m]> Bosmon: can I take you a few moments? I have a recent issue regarding the wallpaper
+2019-03-08T12:32:40  <javjarfer[m]> https://issues.gpii.net/browse/GPII-3780
+2019-03-08T12:33:21  <Bosmon> javjarfer[m] - nice that the-t-in-rtf 's schema checks are starting to bite :)
+2019-03-08T12:33:24  <javjarfer[m]> I wanted to know you opinion about the fact that is need to add the datatype in the "options" block for a setting that isn't actually there
+2019-03-08T12:34:10  <Bosmon> I guess I don't know about why the "Scaling" option is exposed : P
+2019-03-08T12:37:33  <javjarfer[m]> Bosmon: exactly, I have the honor of being the first one being bitten
+2019-03-08T12:38:13  <javjarfer[m]> the "Scaling" option is exposed because it's in reality a combination of 3 different registry keys doing different things
+2019-03-08T12:38:28  <javjarfer[m]> so it was mapped to "Scaling" to have a 1-1 mapping with Microsoft exposed settings
+2019-03-08T12:44:36  <the-t-in-rtf> 04:42:54.984:  jq: FAIL: Module "gpii.tests.production.config tests" Test name "GPII application integration tests" - Message: Died on test #1     at Object.asyncTest (V:\node_modules\infusion\tests\lib\qunit\js\qunit.js:405:9)
+2019-03-08T12:44:37  <the-t-in-rtf> ...    at fluid.test.testEnvironment.runTests (V:\node_modules\infusio .... [output suppressed at 1024 chars - for more output, increase fluid.logObjectRenderChars]
+2019-03-08T12:44:37  <the-t-in-rtf> 04:42:54.984:  jq: Source: TypeError: Cannot read property 'apply' of undefined
+2019-03-08T12:44:51  <the-t-in-rtf> That to me suggests the "func" I'm trying to execute as a task doesn't exist.
+2019-03-08T12:45:01  <the-t-in-rtf> I used: task:        "{that}.app.harness.startup",
+2019-03-08T12:45:15  <the-t-in-rtf> Still need help figuring out the right path.
+2019-03-08T12:49:24  <the-t-in-rtf> looks like the caseholder only has the following keys
+2019-03-08T12:49:25  <the-t-in-rtf> gubbins:[
+2019-03-08T12:49:25  <the-t-in-rtf>     "typeName",
+2019-03-08T12:49:25  <the-t-in-rtf>     "id",
+2019-03-08T12:49:25  <the-t-in-rtf>     "lifecycleStatus",
+2019-03-08T12:49:25  <the-t-in-rtf>     "destroy",
+2019-03-08T12:49:25  <the-t-in-rtf>     "options",
+2019-03-08T12:49:25  <the-t-in-rtf>     "events",
+2019-03-08T12:49:26  <the-t-in-rtf>     "configuration",
+2019-03-08T12:49:26  <the-t-in-rtf>     "cookieJar"
+2019-03-08T12:49:27  <the-t-in-rtf> ]
+2019-03-08T12:49:30  <the-t-in-rtf> i.e. those are under {that}
+2019-03-08T12:54:03  <the-t-in-rtf> {testEnvironment} has
+2019-03-08T12:54:03  <the-t-in-rtf> [
+2019-03-08T12:54:04  <the-t-in-rtf>     "typeName",
+2019-03-08T12:54:04  <the-t-in-rtf>     "id",
+2019-03-08T12:54:04  <the-t-in-rtf>     "lifecycleStatus",
+2019-03-08T12:54:04  <the-t-in-rtf>     "destroy",
+2019-03-08T12:54:04  <the-t-in-rtf>     "options",
+2019-03-08T12:54:04  <the-t-in-rtf>     "events",
+2019-03-08T12:54:05  <the-t-in-rtf>     "activeTests",
+2019-03-08T12:54:05  <the-t-in-rtf>     "capturedMarkup",
+2019-03-08T12:54:06  <the-t-in-rtf>     "tests",
+2019-03-08T12:54:06  <the-t-in-rtf>     "sequenceListener",
+2019-03-08T12:54:07  <the-t-in-rtf>     "testCaseHolders"
+2019-03-08T12:54:07  <the-t-in-rtf> ]
+2019-03-08T12:54:13  <the-t-in-rtf> I would expect to see a "server" somewhere, right?
+2019-03-08T12:54:23  <Bosmon> That will be under "tests"
+2019-03-08T12:54:41  <Bosmon> Somewhat minimally named, by yzen of sacred memory : P
+2019-03-08T12:55:03  <Bosmon> Your best help in these situations is to just look in the globalInstantiator in the debugger
+2019-03-08T12:55:10  <the-t-in-rtf> yes, working in a VM
+2019-03-08T12:55:12  <Bosmon> It's one of the main supports that Infusion supplies for visualising component trees
+2019-03-08T12:55:17  <Bosmon> Yes, you can do this just fine in a VM
+2019-03-08T12:55:20  <the-t-in-rtf> yes
+2019-03-08T12:56:02  <Bosmon> It will take forever figuring out the geometry just printing out lists of keys from components here and there
+2019-03-08T12:57:23  <Bosmon> The main geometry can be determined by looking at fluid.globalInstantiator.pathToComponent
+2019-03-08T12:59:47  <the-t-in-rtf> so, how do I run electron with the built-in debugging?
+2019-03-08T12:59:57  <jhernandez> the-t-in-rtf: electron --inspect-brk
+2019-03-08T13:00:02  <the-t-in-rtf> thanks
+2019-03-08T13:00:27  <Bosmon> One of the main virtues of getting the electron version upgrade through a few months back...
+2019-03-08T13:00:33  <Bosmon> Then you just mosey along to chrome://inspect
+2019-03-08T13:00:35  <jhernandez> and then, just fire up a chrome browser's chrome://inspect
+2019-03-08T13:01:02  <Bosmon> In an electron app you then have the additional hazard of navigating to an actual source file in the project, since the break on startup dumps you in the middle of some rather unhelpful startup code
+2019-03-08T13:01:11  <jhernandez> yup, debugging is working very good these days
+2019-03-08T13:01:25  <Bosmon> That line of 3 vertical dots at the top right end of the left pane is your main friend
+2019-03-08T13:01:38  <Bosmon> This opens up the only UI I have seen for loading an arbitrary source file
+2019-03-08T13:07:24  <the-t-in-rtf> great, working my way there.
+2019-03-08T13:07:44  <the-t-in-rtf> I got to the unhelpful starting point on my own
+2019-03-08T13:09:26  <the-t-in-rtf> OK, I'm stopped right before the test run
+2019-03-08T13:09:41  <the-t-in-rtf> where should I wait to inspect the path to component?
+2019-03-08T13:18:07  <the-t-in-rtf> nm, looked at a recent stack trace
+2019-03-08T13:18:11  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-03-08T13:21:03  <javjarfer[m]> Bosmon: do you agree then that adding the type in the options block is the correct solution for now?
+2019-03-08T13:22:24  <the-t-in-rtf> I see the harness as serverEnvironment-5607as2a-142.tests.configuration.harness
+2019-03-08T13:22:39  <Bosmon> the-t-in-rtf - great
+2019-03-08T13:22:59  <Bosmon> javjarfer[m] - certainly you should do whatever you need to make the setting actually operable : P
+2019-03-08T13:23:39  <javjarfer[m]> Bosmon: great, I will follow with adding tests for the transforms and adding that, thanks!
+2019-03-08T13:25:37  <Bosmon> javjarfer[m] - but leave a comment in the SR entry explaining that we would plan to remove/revise this once we implement https://issues.gpii.net/browse/GPII-3734
+2019-03-08T13:26:49  <javjarfer[m]> Bosmon:  that's a cool issue right there, sure, will add it.
+2019-03-08T13:26:56  <Bosmon> Looks like we are thrashing CI very heavily today : P
+2019-03-08T13:27:15  <Bosmon> kris_HA 's pull has now been in progress for 1 hour - https://ci.gpii.net/job/gpii-app-tests/557/
+2019-03-08T13:28:32  <kris_HA> Bosmon: thanks I'll check it :)
+2019-03-08T13:29:43  <Bosmon> Darn
+2019-03-08T13:29:44  <Bosmon> It has failed
+2019-03-08T13:40:39  <kris_HA> Bosmon: hmm, strange it's working on local. Can we rerun it again?
+2019-03-08T13:41:24  <Bosmon> Sure
+2019-03-08T13:42:34  <Bosmon> Testing locally now too
+2019-03-08T13:48:53  <Bosmon> ok, tests have passed locally
+2019-03-08T13:48:55  <Bosmon> Waiting on CI now
+2019-03-08T13:48:58  <the-t-in-rtf> working on the boiled event, seems like it is indeed required
+2019-03-08T13:49:20  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has joined #fluid-work
+2019-03-08T14:02:11  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-03-08T14:04:43  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has quit IRC (Quit: Leaving.)
+2019-03-08T14:05:11  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has joined #fluid-work
+2019-03-08T14:15:32  *** clown <clown!~clown@ckvlon1747w-lp130-03-64-231-43-240.dsl.bell.ca> has joined #fluid-work
+2019-03-08T14:15:36  *** michelled <michelled!~Adium@192.0.151.7> has joined #fluid-work
+2019-03-08T14:29:43  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-vrbwcbjzyypirugl> has joined #fluid-work
+2019-03-08T14:33:59  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has quit IRC (Quit: Leaving.)
+2019-03-08T14:35:04  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has joined #fluid-work
+2019-03-08T14:45:29  *** clown1 <clown1!~clown@ckvlon1747w-lp130-03-64-231-43-240.dsl.bell.ca> has joined #fluid-work
+2019-03-08T14:45:29  *** clown <clown!~clown@ckvlon1747w-lp130-03-64-231-43-240.dsl.bell.ca> has quit IRC (Read error: Connection reset by peer)
+2019-03-08T14:45:33  *** clown1 is now known as clown
+2019-03-08T14:53:40  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-03-08T14:57:14  *** colinclark <colinclark!~colinclar@192.0.159.124> has joined #fluid-work
+2019-03-08T15:01:53  <the-t-in-rtf> OK, I've got a little further.
+2019-03-08T15:02:30  <the-t-in-rtf> It seems like neither the flow manager nor the test case holder have an "app" property when the first test hits this point (link in a moment)
+2019-03-08T15:03:16  <the-t-in-rtf> https://github.com/GPII/gpii-app/blob/7bbf642fdf6e4e1f772732a9302a10903040054c/tests/IntegrationTestDefs.js#L27
+2019-03-08T15:03:47  <the-t-in-rtf> I set a breakpoint where the case holder should have received a copy, it wasn't hit
+2019-03-08T15:03:48  <the-t-in-rtf> https://github.com/GPII/gpii-app/blob/7bbf642fdf6e4e1f772732a9302a10903040054c/tests/IntegrationTests.js#L104
+2019-03-08T15:04:02  *** kris_HA_ <kris_HA_!~Mutter@212.5.154.113> has joined #fluid-work
+2019-03-08T15:06:22  <the-t-in-rtf> This also doesn't appear to be hit:
+2019-03-08T15:06:26  <the-t-in-rtf> https://github.com/GPII/gpii-app/blob/7bbf642fdf6e4e1f772732a9302a10903040054c/tests/IntegrationTestDefs.js#L77
+2019-03-08T15:08:18  *** kris_HA_ <kris_HA_!~Mutter@212.5.154.113> has quit IRC (Remote host closed the connection)
+2019-03-08T15:09:36  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-03-08T15:11:25  <the-t-in-rtf> this makes me wonder about this and similar lines: https://github.com/GPII/gpii-app/blob/7bbf642fdf6e4e1f772732a9302a10903040054c/tests/configs/gpii.tests.all.config.json5#L27
+2019-03-08T15:11:33  <the-t-in-rtf> @Bosmon @jhernandez
+2019-03-08T15:11:38  <the-t-in-rtf> ^^^
+2019-03-08T15:11:57  *** kris_HA_ <kris_HA_!~Mutter@212.5.154.113> has joined #fluid-work
+2019-03-08T15:12:27  <the-t-in-rtf> I think that's a byproduct of not using a local config
+2019-03-08T15:12:32  <the-t-in-rtf> gonna check the naming in the base grade
+2019-03-08T15:12:43  <the-t-in-rtf> i.e. half the wiring broke when I stopped using the local config
+2019-03-08T15:13:00  <Bosmon> the-t-in-rtf - you may be looking at the wrong flowManager
+2019-03-08T15:13:03  <Bosmon> Since there will be two
+2019-03-08T15:13:48  <Bosmon> This distribution explicitly only targets the "untrusted local" flowManager: https://github.com/GPII/gpii-app/blob/7bbf642fdf6e4e1f772732a9302a10903040054c/configs/app.base.json#L8
+2019-03-08T15:14:08  <Bosmon> And it is certain, that at any time you can issue a breakpoint, that the "app" will have to have been constructed there
+2019-03-08T15:14:35  <Bosmon> Certainly at any moment during an executing test sequence
+2019-03-08T15:14:45  <the-t-in-rtf> this is a breakpoint set before it even starts
+2019-03-08T15:14:54  <the-t-in-rtf> and neither of those wiring bits are hit
+2019-03-08T15:15:05  <the-t-in-rtf> whereas the check in the same file is
+2019-03-08T15:16:29  <Bosmon> Yes
+2019-03-08T15:16:39  <Bosmon> It seems there is an explicit expectation that there is a "localConfig"
+2019-03-08T15:17:17  <the-t-in-rtf> yes, and the dev grade is now pulling from the base: https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/configs/gpii.flowManager.config.base.json5
+2019-03-08T15:17:21  <the-t-in-rtf> which lacks the key bit
+2019-03-08T15:17:24  <Bosmon> You could easily rewrite that so that it makes the same expectation as in the original distribution of the app - that is, that it is a gpii.flowManager.untrusted
+2019-03-08T15:17:31  *** kris_HA_ <kris_HA_!~Mutter@212.5.154.113> has quit IRC (Remote host closed the connection)
+2019-03-08T15:17:33  <the-t-in-rtf> https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/configs/gpii.flowManager.config.local.base.json5#L4
+2019-03-08T15:17:45  <Bosmon> It would make the whole setup less rickety if the same assumption were made at both ends
+2019-03-08T15:18:58  <the-t-in-rtf> so, to fix the config, I can replace paths like "that localConfig flowManager" with "that gpii.flowManager.untrusted"?
+2019-03-08T15:19:07  <Bosmon> the-t-in-rtf - yes
+2019-03-08T15:19:15  <Bosmon> If one distribution works, the other must
+2019-03-08T15:19:51  *** kris_HA_ <kris_HA_!~Mutter@212.5.154.113> has joined #fluid-work
+2019-03-08T15:22:11  <the-t-in-rtf> well, that definitely did something, I see a lot more activity in the logs.  I still get the same error, debugging again now.
+2019-03-08T15:23:28  <the-t-in-rtf> OK, it's inspecting app.tray.menu
+2019-03-08T15:23:32  <the-t-in-rtf> and app.tray doesn't exist
+2019-03-08T15:24:53  <the-t-in-rtf> I could use help from someone more familiar with gpii-app to understand why a tray might or might not exist.
+2019-03-08T15:25:07  *** kris_HA_ <kris_HA_!~Mutter@212.5.154.113> has quit IRC (Quit: Mutter: www.mutterirc.com)
+2019-03-08T15:25:28  <Bosmon> Where is the expectation expressed that the tray should exist?
+2019-03-08T15:26:02  <Bosmon> The app's tray subcomponent is timed on             createOnEvent: "onPSPPrerequisitesReady",
+2019-03-08T15:26:28  <Bosmon> https://github.com/GPII/gpii-app/blob/master/src/main/app.js#L320
+2019-03-08T15:27:36  <the-t-in-rtf> so, now that I fixed the distribution, I can reenable the boiled event
+2019-03-08T15:27:53  <the-t-in-rtf> looks like it's completing all the sub-parts, but I was only waiting for Couch in early testing
+2019-03-08T15:29:54  <the-t-in-rtf> OK, the combined event is fired and triggers the rest of the tests, now jumping back into the debugger to see what this spot looks like, which is where it should exist
+2019-03-08T15:29:55  <the-t-in-rtf> https://github.com/GPII/gpii-app/blob/7bbf642fdf6e4e1f772732a9302a10903040054c/tests/IntegrationTestDefs.js#L27
+2019-03-08T15:30:01  <the-t-in-rtf> that's hit from the first test
+2019-03-08T15:30:10  <the-t-in-rtf> the second argument is just so I can look up the tree at an ancestor
+2019-03-08T15:30:22  <the-t-in-rtf> sorry, there's a second argument I added in my code to do that
+2019-03-08T15:30:30  <the-t-in-rtf> so I can see where the chain is breaking down
+2019-03-08T15:30:40  <the-t-in-rtf> previously, there was no app at all because of the distribution failure
+2019-03-08T15:30:45  <Bosmon> ok kris_HA so we have a pass on GPII-3777 which I'll put it in, but we should note that there is a race condition in the test cases which I will write up
+2019-03-08T15:32:08  <the-t-in-rtf> @bosmon, here's the test sequence step that suggests that that's a tray: https://github.com/GPII/gpii-app/blob/7bbf642fdf6e4e1f772732a9302a10903040054c/tests/IntegrationTestDefs.js#L92
+2019-03-08T15:32:19  <the-t-in-rtf> or a menu under the tray
+2019-03-08T15:32:27  <the-t-in-rtf> so, {that}.app now exists, yay,
+2019-03-08T15:32:35  <the-t-in-rtf> but {that}.app.tray and below do not
+2019-03-08T15:32:35  *** kris_HA_ <kris_HA_!~Mutter@212.5.154.113> has joined #fluid-work
+2019-03-08T15:34:19  <the-t-in-rtf> oh, no
+2019-03-08T15:34:31  <the-t-in-rtf> the tray is also created when the prereqs are satisfied
+2019-03-08T15:35:16  <the-t-in-rtf> https://github.com/GPII/gpii-app/blob/7bbf642fdf6e4e1f772732a9302a10903040054c/src/main/app.js#L322
+2019-03-08T15:35:41  <the-t-in-rtf> that's basically the same event that results in the psp reporting itself ready
+2019-03-08T15:36:15  <Bosmon> the-t-in-rtf - that's right
+2019-03-08T15:36:33  *** kris_HA_ <kris_HA_!~Mutter@212.5.154.113> has quit IRC (Remote host closed the connection)
+2019-03-08T15:37:03  <the-t-in-rtf> the tray has no event to indicate that it's ready, but it definitely doesn't even partially exist when the test function is called
+2019-03-08T15:38:49  <Bosmon> the-t-in-rtf - presumably the test function is invoked by the event then?
+2019-03-08T15:40:28  <the-t-in-rtf> yes, the sequence-munging waits for a rollup of couch, psp ready, and noUser logged in
+2019-03-08T15:40:34  <the-t-in-rtf> all of which occur
+2019-03-08T15:40:40  <the-t-in-rtf> and psp ready is based on the same underlying event
+2019-03-08T15:40:45  <Bosmon> OK
+2019-03-08T15:40:48  <the-t-in-rtf> but at the point it inspects things, the app component lacks ALL of its material that is created based on event firing.
+2019-03-08T15:41:08  <the-t-in-rtf> like the gpiiConnector also does not exist
+2019-03-08T15:41:11  <Bosmon> Yes, there will have to be a priority placed on the listener
+2019-03-08T15:41:15  <Bosmon> Or else a further event creatd
+2019-03-08T15:41:38  <Bosmon> This is actually just the kind of issue I needed to disintermediate when I fixed up universal for compatibility with the "upcoming framework"
+2019-03-08T15:41:55  <Bosmon> And just the kind of thing I feared there would be in gpii-app which made me hold off trying to update it
+2019-03-08T15:43:18  <Bosmon> So we may just need to create a further event here
+2019-03-08T15:43:32  <the-t-in-rtf> I was going to suggest reusing appReady
+2019-03-08T15:43:35  <Bosmon> Or else do some other kind of sequencing in order to put some group of listeners before/after others
+2019-03-08T15:43:36  <Bosmon> Sure
+2019-03-08T15:43:40  <the-t-in-rtf> which is currently just fired onCreate
+2019-03-08T15:43:50  <Bosmon> I was speculating an onAppReady way way up in the transcript
+2019-03-08T15:43:58  <Bosmon> Before I had found the onPSPReady boiling
+2019-03-08T15:44:20  <the-t-in-rtf> onAppReady is included in that
+2019-03-08T15:44:23  <the-t-in-rtf> which is why I suggest it
+2019-03-08T15:44:33  <the-t-in-rtf> instead of just flipping that switch, it'll line everything up
+2019-03-08T15:44:45  <the-t-in-rtf> but does not itself block any sub-component creation
+2019-03-08T15:45:04  <the-t-in-rtf> so I'd make it a rollup that all onCreate components chip into
+2019-03-08T15:49:26  *** kris_HA_ <kris_HA_!~Mutter@212.5.154.113> has joined #fluid-work
+2019-03-08T15:52:26  *** kris_HA_ <kris_HA_!~Mutter@212.5.154.113> has quit IRC (Remote host closed the connection)
+2019-03-08T15:52:51  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-03-08T15:54:30  <the-t-in-rtf> nm, I do need a new event
+2019-03-08T15:54:34  <the-t-in-rtf> although
+2019-03-08T15:54:54  <the-t-in-rtf> I could get rid of the app ready on startup and move that out of the prerequisites check
+2019-03-08T15:55:23  <the-t-in-rtf> no, we need that
+2019-03-08T15:55:29  <the-t-in-rtf> it's an event tied to a promise
+2019-03-08T15:55:33  <the-t-in-rtf> I'll make a new event.
+2019-03-08T15:57:46  <Bosmon> I think that is very likely to be the best choice
+2019-03-08T16:11:07  *** kris_HA <kris_HA!~kris@212.5.154.113> has quit IRC (Ping timeout: 240 seconds)
+2019-03-08T16:19:04  *** cherylhjli <cherylhjli!~Adium@205.211.168.101> has joined #fluid-work
+2019-03-08T16:21:32  <stegru> Bosmon or cindyli, are there any restrictions on what a user's key should be like? also, are they case-sensitive?
+2019-03-08T16:21:47  <Bosmon> stegru - no restrictions
+2019-03-08T16:21:56  <stegru> so this is ok? xkN9R+XXcOaYZAvCjlPb1quAdpeJWKyUFn2iMA0S9Ow=
+2019-03-08T16:21:57  <Bosmon> In theory any UTF-8 string is acceptable, but don't go wild : P
+2019-03-08T16:22:10  <Bosmon> No reason why not, but weren't we planning to smash the info into a GUID syntax?
+2019-03-08T16:22:10  <stegru> ah ok great
+2019-03-08T16:22:20  <stegru> yes, that can be done
+2019-03-08T16:22:43  <Bosmon> I have the feeling it's the kind of thing Gregg would be expecting, feel free to throw away some bits if they don't fit ....
+2019-03-08T16:24:02  <the-t-in-rtf> OK, I am much further along, I now see actual evidence that morphic is responding to test inputs.
+2019-03-08T16:26:43  <the-t-in-rtf> It complains about not being connected to the network
+2019-03-08T16:26:56  <the-t-in-rtf> which might suggest that the local bit was important somehow
+2019-03-08T16:27:23  <the-t-in-rtf> I will commit what I have for you to review, @Bosmon and @jhernandez, but I think we are much further along.
+2019-03-08T16:27:43  <the-t-in-rtf> i.e. things are sane when the tests start, huge bits of wiring aren't missing any longer.
+2019-03-08T16:29:43  <stegru> hmm.. gregg might not be please about limiting the number of users to 2^128
+2019-03-08T16:29:47  <jhernandez> the-t-in-rtf: great, thanks for such whack-a-mole session
+2019-03-08T16:32:47  <jhernandez> will be testing it as soon as you're done with your commit
+2019-03-08T16:36:15  <the-t-in-rtf> https://github.com/the-t-in-rtf/gpii-app/tree/GPII-3744
+2019-03-08T16:36:23  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-08T16:36:34  <the-t-in-rtf> so, one caveat, I can't run npm install on the host machine because of the windows dependencies and grunt was too slow in the VM
+2019-03-08T16:36:39  <the-t-in-rtf> so there might be a stray comma
+2019-03-08T16:37:02  <the-t-in-rtf> ordinarily I wouldn't tolerate that, but I'm an hour late heading home and I like spending time with my family
+2019-03-08T16:37:18  <the-t-in-rtf> I will be around on chat in a bit and have a solid block of time on Monday
+2019-03-08T16:38:20  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has quit IRC (Quit: Leaving.)
+2019-03-08T16:41:53  *** avtar <avtar!~avtar@ip-24-50-164-218.user.start.ca> has joined #fluid-work
+2019-03-08T16:55:20  *** avtar1 <avtar1!~avtar@ip-45-3-13-80.user.start.ca> has joined #fluid-work
+2019-03-08T16:58:05  *** avtar <avtar!~avtar@ip-24-50-164-218.user.start.ca> has quit IRC (Ping timeout: 268 seconds)
+2019-03-08T17:03:23  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:d80b:7f4:a562:5bb0> has joined #fluid-work
+2019-03-08T17:15:37  *** avtar1 <avtar1!~avtar@ip-45-3-13-80.user.start.ca> has quit IRC (Quit: Leaving.)
+2019-03-08T17:18:34  <javjarfer[m]> Hi there Bosmon , are you still around?
+2019-03-08T17:23:47  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Ping timeout: 240 seconds)
+2019-03-08T17:28:30  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-03-08T17:39:28  *** lliskovoi <lliskovoi!~lliskovoi@80.215.132.103> has joined #fluid-work
+2019-03-08T17:45:41  *** colinclark <colinclark!~colinclar@192.0.159.124> has quit IRC (Quit: colinclark)
+2019-03-08T17:45:42  *** lliskovoi <lliskovoi!~lliskovoi@80.215.132.103> has quit IRC (Read error: No route to host)
+2019-03-08T17:46:12  *** colinclark <colinclark!~colinclar@192.0.159.124> has joined #fluid-work
+2019-03-08T17:46:37  <javjarfer[m]> so, my question is regarding this transform, https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L5030
+2019-03-08T17:47:52  <javjarfer[m]> as you can see, it's only composed of literal values, so settingsHandler should always receive a payload with those literals, thing is, that isn't happening, settings handler ins't receiving anything at all
+2019-03-08T17:48:21  <javjarfer[m]> interestingly, I used the same approach during ZoomText onboarding, and this transform worked https://github.com/GPII/universal/blob/0129fee87bb8d0cfc38190c91e2f17f456d6324d/testData/solutions/win32.json5#L6189
+2019-03-08T17:50:05  * javjarfer[m] sent a long message:  < https://matrix.org/_matrix/media/v1/download/matrix.org/BuxRUbMAJwhLRGlKjAqnWFKd >
+2019-03-08T17:50:23  <javjarfer[m]> and other ones using literal values, so far, no one have worked
+2019-03-08T18:00:13  *** clown is now known as clown_afk
+2019-03-08T18:01:57  <Bosmon> javjarfer[m] - I'm wondering why the transform on this line is written so strangely: https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L5031
+2019-03-08T18:02:57  <Bosmon> Why does it use "outputPath" rather than just writing stuff on the left hand side?
+2019-03-08T18:05:53  *** clown_afk <clown_afk!~clown@ckvlon1747w-lp130-03-64-231-43-240.dsl.bell.ca> has quit IRC (Ping timeout: 255 seconds)
+2019-03-08T18:07:44  <javjarfer[m]> Bosmon: it have been a common pattern with the spiSettingsHandler settings for a while https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L7312
+2019-03-08T18:07:49  <javjarfer[m]> how should it be?
+2019-03-08T18:09:00  <Bosmon> Also javjarfer[m], I was thinking it odd that both solutions have an "ImageConfig" property
+2019-03-08T18:09:03  <Bosmon> Is this really right?
+2019-03-08T18:09:39  <Bosmon> Both "com.microsoft.windows.desktopBackground" and "com.microsoft.windows.desktopBackgroundColor" have got an ImageConfig
+2019-03-08T18:10:18  <Bosmon> I see that their "configureImage" settings handlers are identical
+2019-03-08T18:10:22  <Bosmon> I guess this is an accident?
+2019-03-08T18:11:01  <javjarfer[m]>  Bosmon , its weird, but it isn't an accident, it's because the second use of the setting is just for setting the setting to an empty string, which triggers the color mode for the background
+2019-03-08T18:11:09  <Bosmon> Oh I see ok
+2019-03-08T18:12:38  <Bosmon> I guess outputPath: "value" is pretty frequently used
+2019-03-08T18:13:25  <javjarfer[m]> yes, but if you think there is a better way, they could be replaced
+2019-03-08T18:14:21  <Bosmon> javjarfer[m] - It's probably best for you to trace this through the transformer and see what happens to it - https://github.com/GPII/universal/blob/master/gpii/node_modules/transformer/src/js/Transformer.js#L115
+2019-03-08T18:15:17  <javjarfer[m]> Bosmon: doing it
+2019-03-08T18:15:56  *** lliskovoi <lliskovoi!~lliskovoi@80.215.132.103> has joined #fluid-work
+2019-03-08T18:17:46  <Bosmon> To me the more natural way to express this would have been: https://gist.github.com/amb26/ea59b9fd049ff8105e7abce61e7f6b2d
+2019-03-08T18:17:54  <Bosmon> If this is indeed what is meant
+2019-03-08T18:17:59  <Bosmon> You could try this to see if it works any better
+2019-03-08T18:20:17  <Bosmon> I've added a suggested more logical expression for "SolidColorConfig" further down in the doc now
+2019-03-08T18:20:37  <Bosmon> The SR has certainly filled up with a huge number of transforms which are expressed in a peculiar and cumbersome way, but this may not be the current issue
+2019-03-08T18:21:26  <Bosmon> Interestingly the inverse is written straightforwardly
+2019-03-08T18:23:39  *** lliskovoi <lliskovoi!~lliskovoi@80.215.132.103> has quit IRC (Read error: Connection reset by peer)
+2019-03-08T18:27:38  <javjarfer[m]> Bosmon: this is what I can see at that breakpoint
+2019-03-08T18:27:41  * javjarfer[m] uploaded an image: image.png (7KB) < https://matrix.org/_matrix/media/v1/download/matrix.org/nXcakNivdRmJWptZWafnLLtF >
+2019-03-08T18:27:55  <javjarfer[m]> So, branch is never taken because hasSuppertedSettings being false
+2019-03-08T18:28:59  <javjarfer[m]> Nice example, I tried something similar before, because I remembered your last suggestion of simplifying this things using the "literalValue"
+2019-03-08T18:29:13  <Bosmon> aha!
+2019-03-08T18:29:28  <Bosmon> Well, that's a great discovery
+2019-03-08T18:29:52  <Bosmon> This was part of cindyli's recent improvements to avoid dispatching settings to unused settingsHandlers
+2019-03-08T18:30:05  <Bosmon> Which was caused by your earlier report about the SystemSettingsHandler being sent invalid payloads : P
+2019-03-08T18:31:27  <javjarfer[m]> Oh, I see, so we may be filtering this settings because the recent optimizations
+2019-03-08T18:31:38  <Bosmon> That's correct
+2019-03-08T18:31:48  <Bosmon> The way around this is to explictly add a "capabilities" block to the solution
+2019-03-08T18:31:58  <Bosmon> Sorry I had forgotten about this possibility
+2019-03-08T18:32:15  <Bosmon> It's a bit annoying that we have to trace manually into the code to remind ourselves why this stuff gets optimised out, but there it is...;.
+2019-03-08T18:32:50  <the-t-in-rtf> if capabilities are required, I can easily add that to the schema
+2019-03-08T18:32:54  <the-t-in-rtf> and you'll never forget again
+2019-03-08T18:33:01  <Bosmon> the-t-in-rtf - that will not help
+2019-03-08T18:33:07  <Bosmon> YOu will need to read the discussion in detail : P
+2019-03-08T18:33:11  <the-t-in-rtf> it's good
+2019-03-08T18:33:21  <the-t-in-rtf> ah, explicitly
+2019-03-08T18:33:21  <Bosmon> The capabilities are required only if the meaning of the particular solution requires it
+2019-03-08T18:33:22  <javjarfer[m]> Bosmon: haha, well, that may be how human minds work, not much we can do there
+2019-03-08T18:33:29  <Bosmon> One could never deduce schematically that it is required
+2019-03-08T18:33:43  <Bosmon> javjarfer[m] - so it looks like here that you will need to add "http://registry\\.gpii\\.net/applications/com\\.microsoft\\.windows\\.desktopBackgroundColor.SolidColor" to your "capabilities"
+2019-03-08T18:33:56  <Bosmon> In order to make it clear that this settingsHandler should be activated whenever the solution is activated at all
+2019-03-08T18:34:05  <Bosmon> Also you need to get rid of your inverse block because there is nothing to be inverted
+2019-03-08T18:34:25  <Bosmon> This kind of problem always arises now when a settingsHandler needs to be activated purely for its side-effects on the system
+2019-03-08T18:34:43  <Bosmon> The transformation system can never deduce without help that it is just the side-effects that are required
+2019-03-08T18:40:55  <javjarfer[m]> Bosmon: so far, having being able to get it triggered, I'm going to take a look at the Transformer code again
+2019-03-08T18:42:45  <javjarfer[m]> the value still "false" for the "hasSupportedSettings"
+2019-03-08T18:43:51  * javjarfer[m] sent a long message:  < https://matrix.org/_matrix/media/v1/download/matrix.org/OHSzPAUatKAWaRxeexLydaCy >
+2019-03-08T18:44:09  <javjarfer[m]> one for each configure block of the solution, and removed the inverseCapabilities block
+2019-03-08T18:49:16  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-03-08T18:54:46  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-03-08T18:54:51  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-03-08T19:18:51  *** clown <clown!~clown@ckvlon1747w-lp130-03-64-231-43-240.dsl.bell.ca> has joined #fluid-work
+2019-03-08T19:19:11  <Bosmon> javjarfer[m] - so what does the preference set you are testing with look like
+2019-03-08T19:19:22  <Bosmon> You'd imagine that your changes should have been enough to get "hasSupportedSettings" of true
+2019-03-08T19:20:21  <Bosmon> Since "capabilities" are taken into account via this path: https://github.com/GPII/universal/blob/master/gpii/node_modules/transformer/src/js/Transformer.js#L75
+2019-03-08T19:21:08  * javjarfer[m] sent a long message:  < https://matrix.org/_matrix/media/v1/download/matrix.org/zyhnbZdTNaUlCZpOaJzpCgbb >
+2019-03-08T19:21:43  <javjarfer[m]> after taking a look, only this settings are being considered for the "actualSettingsPaths" array
+2019-03-08T19:21:46  * javjarfer[m] uploaded an image: image.png (11KB) < https://matrix.org/_matrix/media/v1/download/matrix.org/gFKNeTgAKYicxYunfPPFmsRd >
+2019-03-08T19:21:54  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-03-08T19:22:00  <Bosmon> aha!
+2019-03-08T19:22:10  <Bosmon> How interesting
+2019-03-08T19:22:25  <Bosmon> A little fault for cindyli to fix up : P
+2019-03-08T19:22:30  <Bosmon> Also the last value seems anomalous
+2019-03-08T19:22:39  <Bosmon> I imagine you can work around this problem in the short term
+2019-03-08T19:22:58  <Bosmon> You can just cheat and depend on xxxx.xxx.SolidColor.r
+2019-03-08T19:23:01  <Bosmon> And write up the remainder in a JIRA
+2019-03-08T19:23:41  <Bosmon> Or else you can just drop back and depend on desktopBackgroundColor itself
+2019-03-08T19:25:33  <javjarfer[m]> that's interesting, is the kind of trick I was looking for, but haven't been able to find yet
+2019-03-08T19:25:34  <javjarfer[m]> thanks, trying it
+2019-03-08T19:26:57  <Bosmon> The presence of "SolidColor" itself as an isolated preference path suggests there is a bug in that code
+2019-03-08T19:27:14  <Bosmon> So once you have got this working, please do circle back and write up what you found : P
+2019-03-08T19:31:54  <javjarfer[m]> Bosmon: sure, I'm still in the phase of trying to make it works xD
+2019-03-08T19:33:17  <Bosmon> javjarfer[m] - no worries, I think you are likely extremely close now : P
+2019-03-08T19:38:04  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 250 seconds)
+2019-03-08T19:50:52  *** michelled <michelled!~Adium@192.0.151.7> has quit IRC (Quit: Leaving.)
+2019-03-08T20:09:04  <javjarfer[m]> Bosmon: I was so close...
+2019-03-08T20:09:23  * javjarfer[m] sent a long message:  < https://matrix.org/_matrix/media/v1/download/matrix.org/IRkyTLpaQRVQsJevCtexDqaf >
+2019-03-08T20:09:57  <javjarfer[m]> I tried to use that trick, and worked, but when trying to resolve the: "inputPath": "http://registry\.gpii\.net/applications/com\.microsoft\.windows\.desktopBackgroundColor.SolidColor"
+2019-03-08T20:09:58  <javjarfer[m]> I have a crash
+2019-03-08T20:11:59  <javjarfer[m]> maybe it's because the path for the actual setting path not being represented correctly due to the bug, so when trying to access, "http://registry\.gpii\.net/applications/com\.microsoft\.windows\.desktopBackgroundColor.SolidColor", which is split between "http://registry\.gpii\.net/applications/com\.microsoft\.windows\.desktopBackgroundColor" and "SolidColor", I'm trying to access a undefined place
+2019-03-08T20:12:21  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has joined #fluid-work
+2019-03-08T20:32:12  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has quit IRC (Quit: Leaving.)
+2019-03-08T20:33:48  * javjarfer[m] sent a long message:  < https://matrix.org/_matrix/media/v1/download/matrix.org/DhhnpKExhnPqsmTrdsExmbxm >
+2019-03-08T20:37:32  * javjarfer[m] sent a long message:  < https://matrix.org/_matrix/media/v1/download/matrix.org/fhYzyTvpVMiyTigSXnClGxJS >
+2019-03-08T20:41:11  <javjarfer[m]> I will follow with that, and add a comment in the SR about the bug, and why this transforms looks like this
+2019-03-08T20:53:16  <Bosmon> javjarfer[m] - hilarious, yes
+2019-03-08T20:53:56  <javjarfer[m]> I certainly laughed alone when tried that
+2019-03-08T20:53:57  <Bosmon> But wasn't your mission to output the empty string? : P
+2019-03-08T20:54:03  <Bosmon> I don't think you need the "conditionPath" value
+2019-03-08T20:54:17  *** colinclark <colinclark!~colinclar@192.0.159.124> has quit IRC (Quit: colinclark)
+2019-03-08T20:54:46  <javjarfer[m]> well, I had two missions, I'm going to create a pull, and I will point you "the code"
+2019-03-08T20:57:45  *** colinclark <colinclark!~colinclar@192.0.159.124> has joined #fluid-work
+2019-03-08T21:01:54  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-03-08T21:14:40  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-03-08T21:20:26  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-03-08T21:27:48  *** cherylhjli <cherylhjli!~Adium@205.211.168.101> has quit IRC (Quit: Leaving.)
+2019-03-08T21:43:04  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has joined #fluid-work
+2019-03-08T21:48:22  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-vrbwcbjzyypirugl> has quit IRC (Quit: sepidehshahi)
+2019-03-08T22:02:41  <kris_HA> Bosmon: hmm, strange again is failed, but on local I've not experienced any issues :/
+2019-03-08T22:03:20  <Bosmon> The CI boxes are a little underpowered compared to our local machines, and can be more prone to kinds of race conditions - especially the Windows VMs
+2019-03-08T22:04:06  <Bosmon> In practice we do have a number of implementational flaws in our test sequences
+2019-03-08T22:06:54  <kris_HA> Bosmon: Is there any way to make our tests more stable to this type of conditions?
+2019-03-08T22:07:24  <Bosmon> Yes, in practice I expect all the failures are related to expecting a particular order amongst fundamentally unordered asynchronous events
+2019-03-08T22:07:51  *** clown <clown!~clown@ckvlon1747w-lp130-03-64-231-43-240.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2019-03-08T22:08:10  <Bosmon> On one view this represents a bug in our testing framework - https://issues.fluidproject.org/browse/FLUID-5502 - but on another view it really represents a bug in the particular sequence which commits itself to a particular ordering
+2019-03-08T22:09:27  <kris_HA> Ok, I'll think about it this days :)
+2019-03-08T22:09:51  <Bosmon> We should have a testing primitive which allows for n events to be received in either order, but in practice you have to do this at the implementation level, with constructs like this one - https://docs.fluidproject.org/infusion/development/EventInjectionAndBoiling.html#boiling-multiple-events
+2019-03-08T22:10:19  <Bosmon> This was the kind of thing that the-t-in-rtf and I were talking about earlier, with fixing the current race conditions that are stopping our gpii-app tests from running after we merge up with the current windows master
+2019-03-08T22:11:29  <kris_HA> aha
+2019-03-08T22:12:06  <Bosmon> For example, the Couch database and the initialisation of the electron process could occur in any order
+2019-03-08T22:22:29  <kris_HA> Ok thanks, I will go because here is after midnight. Have a nice weekend!
+2019-03-08T22:23:12  <colinclark> thanks for staying up to late to look at it, kris_HA
+2019-03-08T22:23:29  <colinclark> have a good weekend
+2019-03-08T22:27:19  <javjarfer[m]> Bosmon: here you can see the two necessary transforms
+2019-03-08T22:27:21  <javjarfer[m]> https://github.com/GPII/universal/blob/4f910c6c4fa11f70b4119e911e218215f0263f7e/testData/solutions/win32.json5#L5032
+2019-03-08T22:27:29  <javjarfer[m]> https://github.com/GPII/universal/blob/4f910c6c4fa11f70b4119e911e218215f0263f7e/testData/solutions/win32.json5#L5090
+2019-03-08T22:27:32  <Bosmon> javjarfer[m] - I have seen them : P
+2019-03-08T22:28:00  <javjarfer[m]> Bosmon: haha that was fast
+2019-03-08T22:28:05  <javjarfer[m]> and the related issue? https://issues.gpii.net/browse/GPII-3780
+2019-03-08T22:29:07  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 246 seconds)
+2019-03-08T22:35:41  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has quit IRC (Quit: Leaving.)
+2019-03-08T22:37:02  <Bosmon> Thanks, although https://issues.gpii.net/browse/GPII-3784 seems more clearly related, which I've commented
+2019-03-08T22:49:54  <javjarfer[m]> Bosmon , yes sry, I pasted the wrong one, thanks for the comments
+2019-03-08T22:52:17  <javjarfer[m]> Have a nice weekend!

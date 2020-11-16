@@ -1,0 +1,264 @@
+2019-02-15T02:40:50  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-02-15T03:43:25  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-02-15T06:25:49  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-02-15T07:33:29  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:1ef:d4d9:2fc5:5ca8> has quit IRC (Quit: Leaving.)
+2019-02-15T08:07:00  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has joined #fluid-work
+2019-02-15T08:11:21  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has quit IRC (Client Quit)
+2019-02-15T08:12:00  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has joined #fluid-work
+2019-02-15T08:38:04  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 272 seconds)
+2019-02-15T09:20:40  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-02-15T11:36:52  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:4cd9:80b0:efb8:e624> has joined #fluid-work
+2019-02-15T11:41:59  <javjarfer[m]> Hi there the-t-in-rtf ! Are you available for a fast schema question?
+2019-02-15T11:42:24  <the-t-in-rtf> sure
+2019-02-15T11:44:10  <javjarfer[m]> nice, so we are currently using this schema for representing a object holding rgb valueshttps://github.com/GPII/universal/pull/657/files#diff-cb7e20a6c5ff97630ea4518024a845b2R3921
+2019-02-15T11:44:51  * javjarfer[m] sent a long message:  < https://matrix.org/_matrix/media/v1/download/matrix.org/HVpHMgegAZWgJxqlRDUHgCkH >
+2019-02-15T11:45:07  <javjarfer[m]> but I don't know how to represent such enum
+2019-02-15T11:46:20  <the-t-in-rtf> what do you mean, "such enum"?
+2019-02-15T11:46:55  <javjarfer[m]> the one I wrote, holding a "rgbObject" of that kind
+2019-02-15T11:47:05  <the-t-in-rtf> why are you using an enum?
+2019-02-15T11:47:14  <the-t-in-rtf> is there another completely different type of value?
+2019-02-15T11:47:27  <the-t-in-rtf> I mean, enum is literal values
+2019-02-15T11:47:42  <the-t-in-rtf> there are other constructs when you have multiple completely different data types
+2019-02-15T11:48:13  <javjarfer[m]> Okay, I wasn't using a enum yet, I wasn't using anything really because I didn't know how to express it
+2019-02-15T11:48:24  <the-t-in-rtf> describe it in words and I can talk you through it
+2019-02-15T11:48:54  <the-t-in-rtf> links to examples of values would be good if you have any
+2019-02-15T11:49:28  <javjarfer[m]> okay, so basically is a object holding two possible types, or it holds the "rgbObject" described above, or it holds the literal "auto"
+2019-02-15T11:51:39  <the-t-in-rtf> then you need the "oneOf" construct
+2019-02-15T11:51:57  <the-t-in-rtf> where you have two definitions, one for the string, one for the object
+2019-02-15T11:52:20  <the-t-in-rtf> you should add titles and descriptions, as Steve Githens won't have enum labels or anything to work with.
+2019-02-15T11:52:35  <the-t-in-rtf> just a sec, link for oneOf is coming
+2019-02-15T11:52:49  <javjarfer[m]> nice, was about to ask
+2019-02-15T11:53:01  <javjarfer[m]> another tool in the box for describing settings
+2019-02-15T11:53:22  <the-t-in-rtf> http://json-schema.org/latest/json-schema-validation.html#rfc.section.6.7.3
+2019-02-15T11:53:42  <the-t-in-rtf> you should at mention Steve Githens once you've committed your work and get his feedback
+2019-02-15T11:53:56  <the-t-in-rtf> as he'll have to figure out whether and how people can enter those
+2019-02-15T11:54:50  <the-t-in-rtf> since only "auto" is allowed, I'm going to suggest something a little counterintuitive
+2019-02-15T11:55:02  <the-t-in-rtf> each part of your oneOf is a "sub schema"
+2019-02-15T11:55:11  <the-t-in-rtf> one "sub schema" will simply describe the rgb object
+2019-02-15T11:55:17  <the-t-in-rtf> the other will be a one-item enum
+2019-02-15T11:55:32  <the-t-in-rtf> i.e. enum: ["auto"], enumLabels:["Auto"]
+2019-02-15T11:56:08  <the-t-in-rtf> you could also do it with a pattern, but it seems clearer to use enum for literal values even if there's only one
+2019-02-15T11:57:22  <the-t-in-rtf> so your overall structure is something like: { oneOf: [ { // enum definition for 'auto' }, { // rgb object definition} ] }
+2019-02-15T11:57:25  <the-t-in-rtf> make sense?
+2019-02-15T12:00:33  <javjarfer[m]> yes, it's exactly was I was thinking, I was not thinking into restricting the first one with enum tho, but it's what makes more sense, since it's a literal value
+2019-02-15T12:03:11  <the-t-in-rtf> cool, let me know if you need more help
+2019-02-15T12:04:01  <javjarfer[m]> the-t-in-rtf:  well, I was just going to pass you this https://pastebin.com/duG4MX9Z
+2019-02-15T12:04:13  <javjarfer[m]> so, I left it like that
+2019-02-15T12:04:36  <the-t-in-rtf> looks great
+2019-02-15T12:05:03  <the-t-in-rtf> do please at mention Steve Githens to get him thinking about how to enter that
+2019-02-15T12:05:05  <javjarfer[m]> nice
+2019-02-15T12:05:19  <the-t-in-rtf> he may just come back to me, but it's the kind of thing he and I need to be talking about anyway
+2019-02-15T12:06:07  <javjarfer[m]> of course, I will mention him in Github once I have updated the pull with this
+2019-02-15T12:18:31  <javjarfer[m]> Hi the-t-in-rtf , another question that may become relevant soon
+2019-02-15T12:19:08  <javjarfer[m]> do we have any tag to put inside the settings schema to specify that the setting is just for internal usage?
+2019-02-15T12:20:53  <the-t-in-rtf> no, that metadata will have to live outside of the schema for the allowed values
+2019-02-15T12:21:20  <the-t-in-rtf> so, think of the setting definition, that also has rules that govern what you can enter
+2019-02-15T12:21:40  <the-t-in-rtf> we would add a rule to say that you can specific "internal": true optionally, or something like that
+2019-02-15T12:21:54  <javjarfer[m]> okay, what about leaving that setting without schema? Could that mean that we are "not exposing it"?
+2019-02-15T12:22:02  <the-t-in-rtf> no, that means I have to killyou
+2019-02-15T12:22:17  <javjarfer[m]> then that's not the best option
+2019-02-15T12:22:26  <the-t-in-rtf> just kidding, but there should be no settings that we ourselves don't know enough about to describe
+2019-02-15T12:22:27  <javjarfer[m]> xdddd
+2019-02-15T12:22:41  <the-t-in-rtf> someone might stuff whatever they like in there
+2019-02-15T12:23:22  <the-t-in-rtf> https://gifer.com/en/91t
+2019-02-15T12:24:04  <the-t-in-rtf> anyway, think of it as a bit of metadata for our use, like "liveness"
+2019-02-15T12:24:32  <the-t-in-rtf> although in your case the metadata would be in the setting rather than the configuration level
+2019-02-15T12:24:48  <the-t-in-rtf> this is another good one to hit Steve Githens up about
+2019-02-15T12:24:58  <the-t-in-rtf> as he'd have to know about and decide not to expose the setting
+2019-02-15T12:25:07  <the-t-in-rtf> he may already be using a similar convention in his work
+2019-02-15T12:25:57  <javjarfer[m]> yes... he might be already doing that
+2019-02-15T12:26:00  <the-t-in-rtf> exactly
+2019-02-15T12:26:31  <the-t-in-rtf> anyway, that "schema" field within a setting is only used to describe the allowed values that can be passed around
+2019-02-15T12:26:31  <javjarfer[m]> great, so I will leave it like that, and mention him in the pull too
+2019-02-15T12:26:38  <javjarfer[m]> let's move the conversation to Github
+2019-02-15T12:26:40  <the-t-in-rtf> we shouldn't be stuffing any other info in there, IMO
+2019-02-15T12:26:43  <the-t-in-rtf> sounds great
+2019-02-15T12:26:58  <the-t-in-rtf> since he and I have such limited overlap that's better for that particular conversation
+2019-02-15T12:27:04  <javjarfer[m]> <freenode_the "we shouldn't be stuffing any oth"> makes total sense
+2019-02-15T12:27:24  <javjarfer[m]> for us or for anyone, the spec still being the spec
+2019-02-15T12:27:48  <the-t-in-rtf> the only bits of metadata in the schema are those that describe how it should be presented as a UI
+2019-02-15T12:28:01  <the-t-in-rtf> which is another key use for the schema data
+2019-02-15T12:28:28  <javjarfer[m]> agree
+2019-02-15T12:28:38  <the-t-in-rtf> any other metadata like how to configure the setting, etc. belongs higher up and not in the schema
+2019-02-15T12:28:57  <the-t-in-rtf> anyway, we're agreeing, just spelling it out in case anyone is listening who didn't already know or had another opinino
+2019-02-15T12:28:59  <the-t-in-rtf> opinion
+2019-02-15T12:29:33  <the-t-in-rtf> opiniño sounds like an opiononated boy.
+2019-02-15T12:32:00  <javjarfer[m]> <freenode_the "anyway, we're agreeing, just spe"> yes, totally
+2019-02-15T12:32:22  <javjarfer[m]> <freenode_the "opiniño sounds like an opiononat"> haha it sounds at least in Spanish
+2019-02-15T12:38:42  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:4cd9:80b0:efb8:e624> has quit IRC (Read error: Connection timed out)
+2019-02-15T12:39:13  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:4cd9:80b0:efb8:e624> has joined #fluid-work
+2019-02-15T12:42:49  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 258 seconds)
+2019-02-15T12:54:43  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:4cd9:80b0:efb8:e624> has quit IRC (Read error: Connection timed out)
+2019-02-15T12:55:43  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:4cd9:80b0:efb8:e624> has joined #fluid-work
+2019-02-15T12:56:41  <stegru> Bosmon, well be a few minutes late to this 1pm meeting
+2019-02-15T12:59:24  <Bosmon> stegru - no worries
+2019-02-15T13:02:47  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-02-15T13:14:17  <Bosmon> Please add any risk analyses you can think of to the doc at https://docs.google.com/document/d/1KGnOXn_9ooamwcks3911Ed8uNHVog4yXWhcKnHdNARk/edit for the "Interim Deployment"
+2019-02-15T13:14:40  <stegru> ta
+2019-02-15T13:15:05  <Bosmon> JIRA filter view for "Intermediate deployment" - https://issues.gpii.net/issues/?jql=labels%20%3D%20Intermediate_NOVA_Deployment
+2019-02-15T13:30:33  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-02-15T13:59:34  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has quit IRC (Quit: Leaving.)
+2019-02-15T14:01:33  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has joined #fluid-work
+2019-02-15T14:11:04  *** cherylhjli <cherylhjli!~Adium@142.122.106.129> has joined #fluid-work
+2019-02-15T14:31:24  *** clown <clown!clown@nat/ocadu/x-rxnsduwqdmqmzpgn> has joined #fluid-work
+2019-02-15T14:49:52  <stegru> jhernandez, I'd love to your C:\ProgramData\Morphic\morphic-service.log file?
+2019-02-15T14:49:52  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has joined #fluid-work
+2019-02-15T14:50:10  <stegru> love to see
+2019-02-15T14:57:43  <jhernandez> stegru: hm, late - got rid of that vm
+2019-02-15T14:58:39  <stegru> ok
+2019-02-15T14:58:49  <jhernandez> what are you looking for?
+2019-02-15T14:59:10  <stegru> to see if there's anything regarding the instability
+2019-02-15T15:02:50  <jhernandez> I checked it and couldn't see anything relevant such as an error or the like
+2019-02-15T15:10:13  *** Danail_Dido <Danail_Dido!~Karadalie@109.120.246.31> has quit IRC (Read error: Connection reset by peer)
+2019-02-15T15:10:31  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has quit IRC (Quit: Leaving.)
+2019-02-15T15:12:51  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has joined #fluid-work
+2019-02-15T15:16:09  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 258 seconds)
+2019-02-15T15:29:10  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has quit IRC (Quit: Leaving.)
+2019-02-15T16:07:36  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:b1ad:ccdc:d0a7:f819> has joined #fluid-work
+2019-02-15T16:47:14  *** colinclark <colinclark!~colinclar@192.0.159.124> has joined #fluid-work
+2019-02-15T16:49:56  <colinclark> sepidehshahi: This is pretty interesting https://www.thestar.com/news/gta/2019/02/15/google-vision-for-port-lands-a-no-go-with-ontario-government-source-says.html
+2019-02-15T16:50:27  <colinclark> both in terms of Sidewalk's proposal for the deal they'd get if the redeveloped more of the portlands area, as well as the fact that it seems it won't fly with the province
+2019-02-15T16:52:03  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-02-15T17:11:00  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 250 seconds)
+2019-02-15T17:16:03  <jhernandez> cindyli, Bosmon: hey there
+2019-02-15T17:16:14  <jhernandez> I have a quick question regarding the "Reset to STD" file
+2019-02-15T17:16:15  <sepidehshahi> this is unbelievable colinclark! this puts them in a more difficult situation
+2019-02-15T17:17:11  <jhernandez> we copy the defaultSettings.json5 file to the user's Roaming folder
+2019-02-15T17:17:53  <jhernandez> but, what if the site admins want to update that file?
+2019-02-15T17:18:09  <jhernandez> (after there is one that has been used for some time)
+2019-02-15T17:18:51  <cindyli> jhernandez: the admin edit defaultSettings.json5 in the user's Roaming folder
+2019-02-15T17:19:05  <jhernandez> for every user in the computer, right?
+2019-02-15T17:19:06  <cindyli> should edit
+2019-02-15T17:19:32  <cindyli> because every user has its own roaming folder? if so, would be a yes
+2019-02-15T17:20:21  *** colinclark <colinclark!~colinclar@192.0.159.124> has quit IRC (Quit: colinclark)
+2019-02-15T17:21:15  <jhernandez> okay, my question then is: wouldn't be easier for them if we can say "oh, there's a new defaultSettings.json5, let's replace the old with the new one" ?
+2019-02-15T17:22:16  <jhernandez> I'm okay with the current behavior, we can always provide a script to siteadmins that does that
+2019-02-15T17:24:06  <cindyli> jhernandez: so, what's your suggestion about pushing the new defaultSettings.json5? detect the change of defaultSettings.json5 automatically in the universal/testData/defaultSettings folder?
+2019-02-15T17:24:42  <jhernandez> dunno
+2019-02-15T17:25:24  <jhernandez> maybe, we can assume that the right defaultSettings.json5 file is whatever is in the app's folder, not the user's one ?
+2019-02-15T17:25:29  <jhernandez> by a diff?
+2019-02-15T17:26:11  <jhernandez> this is
+2019-02-15T17:27:38  <jhernandez> the system starts and check if the user's defaultSettings.json5 file is there AND that it is in fact the one that is under the app's folder (a.k.a. universal/testData/defaultSettings)
+2019-02-15T17:29:05  <jhernandez> if it doesn't exist or is different than the one in the app's folder, copy it there
+2019-02-15T17:30:26  <cindyli> one drawback of this approach is, at a gpii-app reinstall, universal folder will be replaced and whatever changes to universal/testData/defaultSettings will be lost
+2019-02-15T17:32:48  <cindyli> i think this is the main reason that it's decided to copy defaultSettings.json5 from universal folder to user's own folder at implementing this feature. Users have controls of their own defaultSettings but the one in the universal folder will be in sync with the suggested defaults
+2019-02-15T17:40:40  <jhernandez> hmm
+2019-02-15T17:40:45  <jhernandez> right
+2019-02-15T17:41:34  <jhernandez> okay
+2019-02-15T17:42:52  <jhernandez> well, in any case, I guess that we might revisit this once the "Reset to STD" prefSet is retrieved from the prefs server, as planned (not sure by when, but yeah)
+2019-02-15T17:44:59  <jhernandez> cindyli: thanks for the help! :)
+2019-02-15T17:59:16  <cindyli> np :)
+2019-02-15T18:00:26  <cindyli> umm.. didn't know the "Reset to STD" prefSet is planned to be retrieved from the cloud. good to be aware. thanks.
+2019-02-15T18:01:01  *** cherylhjli <cherylhjli!~Adium@142.122.106.129> has quit IRC (Quit: Leaving.)
+2019-02-15T18:03:48  <jhernandez> cindyli: there is this ticket https://issues.gpii.net/browse/GPII-3602
+2019-02-15T18:04:08  <jhernandez> but not sure if it's in our radar for now
+2019-02-15T18:04:19  <jhernandez> Bosmon: knows better ma
+2019-02-15T18:04:28  <jhernandez> *than me
+2019-02-15T18:06:57  <cindyli> i see. thanks.
+2019-02-15T18:20:17  <Bosmon> It's a pretty distant issue on the radar
+2019-02-15T18:20:35  <Bosmon> Given we will raise the point that there is not intended to be any ability to retrieve preferences from the client
+2019-02-15T18:30:25  <cindyli> ok
+2019-02-15T18:31:26  <jhernandez> ok
+2019-02-15T18:32:18  <cindyli> gmoss: are pull requests for SJRK-195 and SJRK-207 ready to go in? is creating new JIRAs for remaining issues the only left over?
+2019-02-15T18:33:09  <gmoss> cindyli: let me double-check real quick, but yes I believe that's right, we just need to make a Jira for the styling bug and the firefox spacebar issue
+2019-02-15T18:33:17  <gmoss> I can file themn
+2019-02-15T18:33:18  <cindyli> can you leave comments on those pull requests with new jiras once they are created? thanks
+2019-02-15T18:33:18  <gmoss> *themn
+2019-02-15T18:33:23  <cindyli> cool
+2019-02-15T18:33:32  <gmoss> gah *them lol...  Yes I'll make them now and do that
+2019-02-15T18:42:56  <gmoss> cindyli: both PR's have comments linking to their respective Jiras, now
+2019-02-15T18:43:05  <cindyli> great. thanks, gmoss
+2019-02-15T18:43:21  <gmoss> I suspect SJRK-225 may have to be escalated to Mozilla
+2019-02-15T18:43:22  <gmoss> but we'll see
+2019-02-15T18:43:26  *** colinclark <colinclark!~colinclar@205.211.168.101> has joined #fluid-work
+2019-02-15T18:47:24  <gmoss> cindyli: I'm thinking, today, about the combining of the repos, and I feel that it might be best to wait until the current PR's are merged in before I go ahead with that. what do you think?
+2019-02-15T18:50:12  <cindyli> i agree, gmoss
+2019-02-15T18:53:04  <gmoss> cindyli: Okay great :) in that case, I'll continue reading about the best way to do it, and will plan for today. I'll probably hold off the actual merging work until I'm back on the 25th
+2019-02-15T18:54:39  <cindyli> sounds a good plan. thanks, gmoss
+2019-02-15T18:55:50  *** cherylhjli <cherylhjli!~Adium@205.211.168.102> has joined #fluid-work
+2019-02-15T18:58:07  <sgithens> javjarfer[m] the-t-in-rtf Just catching up on the IRC from early today.  Which branch / ticket are the oneOf's you're working on for?  Along with why the setting is internal use only?
+2019-02-15T18:59:24  <the-t-in-rtf> there are a few that have TODOs and comments about their not being for public use, but yes, context is good
+2019-02-15T19:00:04  <sgithens> I guess we don't really have any concept about settings that aren't for public use...
+2019-02-15T19:00:18  <sgithens> what does mean?  That they are too difficult to understand for a person to set up?
+2019-02-15T19:00:33  <sgithens> That would apply to a vast numder of settings in on our solutions :)
+2019-02-15T19:01:04  <the-t-in-rtf> well, some of them we hard-code
+2019-02-15T19:01:22  <the-t-in-rtf> those are perfect examples of ones we need to set but that we can't allow people to change
+2019-02-15T19:01:29  <sgithens> ah
+2019-02-15T19:01:30  <the-t-in-rtf> I mean, the voice profile for JAWS is a prime example
+2019-02-15T19:01:37  <sgithens> oh i see
+2019-02-15T19:01:51  <sgithens> so does the schema for it have only possible value?
+2019-02-15T19:01:58  <sgithens> in that event, even if it showed up in an editor
+2019-02-15T19:01:59  <the-t-in-rtf> Yes, it's a single-value enum
+2019-02-15T19:02:03  <sgithens> it would be the only option
+2019-02-15T19:02:06  <the-t-in-rtf> right
+2019-02-15T19:02:09  <sgithens> although I guess it could still be deleted
+2019-02-15T19:02:26  <the-t-in-rtf> but we have talked about having metadata to make circles of configurability
+2019-02-15T19:02:35  <the-t-in-rtf> like a first circle that's stuff most people care about
+2019-02-15T19:02:44  <the-t-in-rtf> and eventually a circle where you can edit absolutely everything
+2019-02-15T19:02:50  <sgithens> I think that it is the name of your next electronic album
+2019-02-15T19:03:01  <the-t-in-rtf> you're not wrong
+2019-02-15T19:03:30  <sgithens> :)
+2019-02-15T19:03:52  <sgithens> But the first circle is something that would show up in a reasonable tool, like the PSP or QSS, and then everything would show up in the PPT
+2019-02-15T19:04:41  <the-t-in-rtf> you could also talk about metadata to group settings, which we haven't really done yet
+2019-02-15T19:04:51  <the-t-in-rtf> there's a whole range of stuff we could do to categorise settings
+2019-02-15T19:05:19  <the-t-in-rtf> I'm remembering now our earlier discussions, visibility might be stored elsewhere as a layer over the SR
+2019-02-15T19:05:38  <the-t-in-rtf> like a list of settings that are visible at a given level of complexity
+2019-02-15T19:05:58  <sgithens> the-t-in-rtf: Did your big Jaws pull make it in to master yet?
+2019-02-15T19:06:00  <the-t-in-rtf> my point with JJ was that the visibility was definitely not part of the schema
+2019-02-15T19:06:05  <the-t-in-rtf> I think the first one did
+2019-02-15T19:06:17  <the-t-in-rtf> the smaller aftershocks are stalled behind the couch pull
+2019-02-15T19:06:49  <the-t-in-rtf> as are the NVDA and MAGic pulls
+2019-02-15T19:06:54  <sgithens> I want to get Amarja set up with editing RWG, JAWS, and Zoomtext next week, and trying to figure out which solutions registry branches I might need to pull in for the schema drving the PPT she's using
+2019-02-15T19:07:11  <the-t-in-rtf> my hope is that we can unstick a bunch of stuff once the couch pull is in
+2019-02-15T19:09:21  <the-t-in-rtf> I believe master has most of the settings
+2019-02-15T19:09:33  <the-t-in-rtf> the pulls cover new stuff for JAWS 2019
+2019-02-15T19:09:56  <the-t-in-rtf> JJ would be better able to comment on the other two
+2019-02-15T19:10:23  <the-t-in-rtf> maybe hit him up when you're making coffee before yoga, I'm sure he's already off to enjoy his evening
+2019-02-15T19:10:31  <the-t-in-rtf> I'm only here by pure coincidence
+2019-02-15T19:12:23  <the-t-in-rtf> i.e. I happened to sit down to research weekend stuff
+2019-02-15T19:16:54  <sgithens> :)
+2019-02-15T19:17:03  <sgithens> the-t-in-rtf: Big plans?
+2019-02-15T19:17:23  <the-t-in-rtf> biking around various playgrounds, nice lunch, building new instruments
+2019-02-15T19:17:32  <sgithens> nice
+2019-02-15T19:17:33  <the-t-in-rtf> the usual
+2019-02-15T21:32:13  *** cherylhjli <cherylhjli!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-02-15T21:43:07  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has left #fluid-work
+2019-02-15T21:46:22  <cindyli> clown: is there an example of how to use aria attributes for a busy animation spinner?
+2019-02-15T21:47:05  <clown> cindyli:  thinking …
+2019-02-15T21:47:28  <clown> what does the spinning tell the user?
+2019-02-15T21:47:51  <clown> is this a visual cue that the app is doing something, and the user is to wait?
+2019-02-15T21:48:25  <cindyli> it has a spinner with a text "publishing, please wait…" besides
+2019-02-15T21:49:46  <clown> okay.  that's what would be captured in aria as an "indeterminate progress bar".  There's progress, but no indication of how much remains.
+2019-02-15T21:49:59  <gmoss> clown: (I think it's safe to assume cindyli is reviewing my SJRK-216 PR's) indeed, the intention is that the user is alerted that their submission is being processed and that they should wait until it completes. this does not disable any other aspects of the page
+2019-02-15T21:50:07  <cindyli> exactly, gmoss
+2019-02-15T21:50:12  <clown> Here is the aria specification for that:  https://www.w3.org/TR/wai-aria-1.1/#progressbar
+2019-02-15T21:50:33  <gmoss> cindyli clown: lliskovoi was suggesting perhaps using aria-role="alert" but somehow it didn't seem right to me
+2019-02-15T21:51:12  <gmoss> clown: I had trouble grokking the progressbar in the case where I wouldn't have a max, min or currentvalue, but i'll give it another look :) thanks!
+2019-02-15T21:51:28  <cindyli> my search shows an use of - role="alert" aria-busy="true"
+2019-02-15T21:51:34  <cindyli> but not sure if it's right
+2019-02-15T21:51:52  <clown> yes, gmoss look closely at the description for the word "indeterminate" and how to set min/max/now for that case.
+2019-02-15T21:54:09  <gmoss> clown: I think this was the source of my confusion. in this case, it looks like I should omit the aria-valuenow attribute, but what about aria-valuemax and aria-valuemin? would it be appropriate to set them both to 0 or some other value?
+2019-02-15T21:55:00  <clown> gmoss, I'd set them to 0% and 100%
+2019-02-15T21:55:31  <clown> in essence, saying, that progress starts at nothing and is complete when progress is finished.
+2019-02-15T21:56:43  <clown> or, actually  aria-valuemin="0" and aria-valuemax="100"
+2019-02-15T21:58:01  <gmoss> clown: thanks! I'll give that a shot
+2019-02-15T21:59:02  <clown> gmoss, does the page change when progress is complete?  There's stuff in the aria spec about the progress bar showing the status of some other region of the page.  Does that apply to your case?
+2019-02-15T21:59:41  <gmoss> clown: if progress completes successfully, the user is redirected to another page. if it fails, the progress bar is hidden and a message is displayed
+2019-02-15T22:00:18  <gmoss> clown: it's not loading other parts of the page, if that's what you're asking about
+2019-02-15T22:00:54  <clown> okay, then the stuff in the spec about using aria-desribedby and aria-busy on the region that is updating does *not* apply.  You can ignore that part.
+2019-02-15T22:02:21  <gmoss> clown: indeed, I found some posts on SO suggesting using both of those attributes, but then I read the docs on W3C and, like you say, ignored it :)
+2019-02-15T22:02:43  <gmoss> it's tricky stuff
+2019-02-15T22:02:52  <gmoss> well, for the uninitiated
+2019-02-15T22:02:53  <stegru> jhernandez, I can't reproduce the service related instability - I'd love it if you could see if you still get it next week
+2019-02-15T22:03:22  <clown> nah, it's tricky stuff period.
+2019-02-15T22:03:52  <clown> okay, gmoss — it's past 5pm and my carriage is about to turn back into a pumpkin.  Time to split.
+2019-02-15T22:04:02  <gmoss> clown: thanks for your help!
+2019-02-15T22:04:17  <gmoss> sorry to hijack your review cindyli  :)
+2019-02-15T22:05:08  <cindyli> nah, i'm glad you explained in such a great detail. thanks, gmoss. i'm going to leave a comment on the pull for this part as a reminder
+2019-02-15T22:07:25  <clown> no problem, gmoss.  have a nice weekend everyone.
+2019-02-15T22:07:45  *** clown <clown!clown@nat/ocadu/x-rxnsduwqdmqmzpgn> has quit IRC (Quit: Leaving.)
+2019-02-15T22:08:08  <gmoss> cindyli: sounds good! it'll be helpful when I'm back in the office on the 25th, i'll likely forget a lot of it by then
+2019-02-15T22:13:14  <cindyli> that's very possible ;)
+2019-02-15T22:16:33  <cindyli> heading offline. have a great time off, gmoss. see you in a week
+2019-02-15T22:16:39  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-02-15T22:42:14  *** colinclark <colinclark!~colinclar@205.211.168.101> has quit IRC (Quit: colinclark)

@@ -1,0 +1,420 @@
+2019-08-08T00:11:27  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-yuoawoqgqbzbinrh> has quit IRC (Quit: Connection closed for inactivity)
+2019-08-08T00:45:04  *** danielcho <danielcho!~Adium@hmtnon1497w-lp130-08-70-54-52-188.dsl.bell.ca> has joined #fluid-work
+2019-08-08T00:49:11  *** danielcho <danielcho!~Adium@hmtnon1497w-lp130-08-70-54-52-188.dsl.bell.ca> has left #fluid-work
+2019-08-08T01:25:48  *** danielcho <danielcho!~Adium@hmtnon1497w-lp130-08-70-54-52-188.dsl.bell.ca> has joined #fluid-work
+2019-08-08T01:26:03  *** danielcho <danielcho!~Adium@hmtnon1497w-lp130-08-70-54-52-188.dsl.bell.ca> has left #fluid-work
+2019-08-08T01:26:33  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-08-08T02:48:57  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-08-08T06:42:03  *** yanachkov__ <yanachkov__!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-08-08T06:45:00  *** yanachkov__ <yanachkov__!~yanachkov@185.97.75.80> has quit IRC (Remote host closed the connection)
+2019-08-08T09:26:21  <the-t-in-rtf> @javjarfer[m] or @Bosmon, how did you identify the memory issues earlier this week?  I'd like to look for similar patterns.
+2019-08-08T09:26:45  <Bosmon> the-t-in-rtf - at this stange, not through any particularly incisive means
+2019-08-08T09:27:02  <Bosmon> javjarfer[m] looked at the heap contents and found that it had a lot of certain strings in it
+2019-08-08T09:27:41  <the-t-in-rtf> right, but under what conditions did he take the heap snapshot?
+2019-08-08T09:27:57  <the-t-in-rtf> running the system and exercising it manually, tests?
+2019-08-08T09:43:15  <javjarfer[m]> the-t-in-rtf: hi there, I basically used this script, https://github.com/JavierJF/GpiiPerformanceScripts/blob/master/request-locust.py, to simulate 100 users load with a hatch rate of 10 users,  and when the system was around 1GB of memory usage, take a snapshot using the node memory profiler
+2019-08-08T09:43:36  <the-t-in-rtf> thanks, that's helpful.
+2019-08-08T09:44:05  <the-t-in-rtf> oh, wow, this is really helpful.
+2019-08-08T09:44:13  <the-t-in-rtf> I was just starting to research adding auth to the smoke tests
+2019-08-08T09:45:31  <javjarfer[m]> the-t-in-rtf: thanks! nice to hear. I'm off until Monday, but I can async answer things!
+2019-08-08T09:45:40  <the-t-in-rtf> it's fine, I'll look around and catch up with you
+2019-08-08T09:45:44  <the-t-in-rtf> enjoy your time off!
+2019-08-08T09:46:05  <javjarfer[m]> also, if you want to simulate multiple users and not just one, just comment this lines https://github.com/JavierJF/GpiiPerformanceScripts/blob/master/request-locust.py#L138
+2019-08-08T09:46:23  <javjarfer[m]> you know, may be helpful in the next testing phase!
+2019-08-08T09:46:41  <javjarfer[m]> <the-t-in-rtf "enjoy your time off!"> Thanks!
+2019-08-08T09:46:51  <javjarfer[m]> <the-t-in-rtf "it's fine, I'll look around and "> Great!
+2019-08-08T09:52:35  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3efc:f800:d376:38c:8f16:2324> has joined #fluid-work
+2019-08-08T10:28:54  <the-t-in-rtf> So, @Bosmon, using JJ's scripts, I can't seem to get the memory usage to drift above 150Mb
+2019-08-08T10:29:07  <Bosmon> the-t-in-rtf - you mean, after your heroic fix?
+2019-08-08T10:29:08  <the-t-in-rtf> it oscillates, but does not grow indefinitely
+2019-08-08T10:29:09  <the-t-in-rtf> yes
+2019-08-08T10:29:16  <Bosmon> Well that's an extremely good improvement
+2019-08-08T10:29:21  <the-t-in-rtf> I figured it was the least I could do to at least verify
+2019-08-08T10:29:31  <Bosmon> Try increasing the concurrency yet further, to see where our new ceiling is?
+2019-08-08T10:30:00  <Bosmon> Or perhaps we are now capable of clearing out requests faster than we can accept them
+2019-08-08T10:30:32  <the-t-in-rtf> what was the old apparent ceiling?
+2019-08-08T10:31:06  <the-t-in-rtf> I see about a 20% failure rate attempting 200 users
+2019-08-08T10:31:45  <the-t-in-rtf> I'll try a bit less just to see
+2019-08-08T10:32:11  <the-t-in-rtf> but after I stop the swarm, the memory usage drops to around 60Mb within a few seconds
+2019-08-08T10:37:33  <the-t-in-rtf> I took a snapshot at around 107Mb
+2019-08-08T10:38:43  <the-t-in-rtf> I still see a bunch of copies of the SR data
+2019-08-08T10:39:00  <the-t-in-rtf> around 35 of them at the point I snapshotted, around 381k each
+2019-08-08T10:42:48  <Bosmon> If they are that small, perhaps that is the "solutionsRegistryEntries" records
+2019-08-08T10:43:07  <the-t-in-rtf> link?
+2019-08-08T10:44:01  <the-t-in-rtf> https://github.com/GPII/universal/blob/67ceed6c0067f47be73d45d248c796b0b1b5d615/gpii/node_modules/lifecycleManager/src/LifecycleManager.js#L563
+2019-08-08T10:44:04  <the-t-in-rtf> like this?
+2019-08-08T10:55:52  <the-t-in-rtf> Anyway, if I fire up master and run even a smaller swarm (50 users), I see the memory climb much higher
+2019-08-08T10:56:01  <the-t-in-rtf> like twice as high, around 300Mb
+2019-08-08T10:57:07  <the-t-in-rtf> once I stop the tests, it claws back all but around 70 of that as sessions are reclaimed
+2019-08-08T10:57:42  <the-t-in-rtf> So, it seems like we still have the smaller filtered views that are copied when they are stuffed in the session's model.
+2019-08-08T10:58:05  <the-t-in-rtf> I mean the solutionsEntries
+2019-08-08T10:59:19  <the-t-in-rtf> I can get master to go over 500Mb with 100 users
+2019-08-08T10:59:39  <the-t-in-rtf> where the fixed version stays under 150Mb with 200
+2019-08-08T11:00:42  <the-t-in-rtf> I will summarise that on the ticket, but it seems like we have definitely handled the worst bloat
+2019-08-08T11:04:18  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-08-08T11:14:00  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-xtqcaxlcjfrbbtii> has joined #fluid-work
+2019-08-08T11:30:29  <the-t-in-rtf> @sgithens and @cindyli, Antranig pinged me, he may be a few minutes late
+2019-08-08T11:30:39  <the-t-in-rtf> I can start the call already if you want to talk about side topics
+2019-08-08T11:32:38  <sgithens> the-t-in-rtf: almost ready
+2019-08-08T11:36:20  <Bosmon> ok I am here now
+2019-08-08T11:37:13  <Bosmon> Where is the call?
+2019-08-08T11:37:20  <sgithens> SKYPE
+2019-08-08T11:38:58  <cindyli> the-t-in-rtf: can you pull me again
+2019-08-08T11:39:15  <the-t-in-rtf> yup
+2019-08-08T11:45:07  <Justin_o> Bosmon: I too am definitely looking forward to FLUID-6393 :)
+2019-08-08T11:45:14  <Justin_o> and I've updated my PR with the comment about it.
+2019-08-08T12:08:03  <Justin_o> Bosmon: https://github.com/fluid-project/infusion/pull/958 is also ready for more review.
+2019-08-08T12:42:58  *** jhung <jhung!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-08-08T12:48:36  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-tpwhbjqswckwqmne> has joined #fluid-work
+2019-08-08T13:00:11  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-08-08T13:02:33  *** danielcho <danielcho!~Adium@205.211.168.105> has joined #fluid-work
+2019-08-08T13:29:14  <Bosmon> Justin_o - cheers, I've merged 958, it might be worth merging 959 up with it now to see if the CI issues go away
+2019-08-08T13:29:22  *** clown <clown!clown@nat/ocadu/x-otmwyzkouocgyfbt> has joined #fluid-work
+2019-08-08T13:30:32  <Justin_o> Bosmon: sure, will do
+2019-08-08T13:30:41  <Justin_o> and thanks for merging
+2019-08-08T13:31:26  *** crystalchanOT <crystalchanOT!~Adium@205.211.168.105> has joined #fluid-work
+2019-08-08T13:31:31  *** crystalchanOT <crystalchanOT!~Adium@205.211.168.105> has left #fluid-work
+2019-08-08T13:33:14  <Justin_o> Bosmon: I've merged in master and pushed up. Hopefully the tests all pass.
+2019-08-08T13:34:10  *** Kendraf <Kendraf!~Adium@205.211.168.101> has joined #fluid-work
+2019-08-08T13:40:18  *** cherylhjli <cherylhjli!~Adium@205.211.168.101> has joined #fluid-work
+2019-08-08T13:48:19  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-08-08T14:00:52  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3efc:f800:d376:38c:8f16:2324> has quit IRC (Read error: Connection reset by peer)
+2019-08-08T14:06:05  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3efc:f800:d376:38c:8f16:2324> has joined #fluid-work
+2019-08-08T14:14:29  <Justin_o> Bosmon: looks like the tests are passing now https://github.com/fluid-project/infusion/pull/959
+2019-08-08T14:19:41  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-flcblathxdvayiqj> has joined #fluid-work
+2019-08-08T14:29:13  <Bosmon> Justin_o - yes, it looks like it was the same failure, doesn't it
+2019-08-08T14:29:21  <Bosmon> Just as well we now have that race condition fixed :)
+2019-08-08T14:36:56  <Justin_o> :)
+2019-08-08T14:38:48  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-08-08T14:38:49  <Justin_o> Bosmon: I'm trying out FLUID-6148 in UIO+ right now.. things worked the firs time but now I'm getting failures.. probably was working the first time because of some left overs from npm. Anyways, the error I'm getting now is ""Assertion failure - check console for more details: Couldn't locate resource loader for resource spec {"url":"%templatePrefix/PrefsEditorPanel.html"}; it should have one of the fields
+2019-08-08T14:38:49  <Justin_o> resourceText,promiseFunc,dataSource filled out"
+2019-08-08T14:39:20  <Justin_o> unfortunately it's a bit hard to debug because we concatenate and minify all the infusion files, and for some reason the debugger doesn't want to use the source maps anymore ;(
+2019-08-08T14:39:27  <Bosmon> Justin_o - what you will have is a missing include
+2019-08-08T14:39:36  <Bosmon> You now need to include ResourceLoader-browser.js into the bundle
+2019-08-08T14:39:45  <Bosmon> Perhaps I missed it out of the JSON file
+2019-08-08T14:39:50  <Bosmon> Let me just add that in now
+2019-08-08T14:40:00  <Justin_o> ah okay thanks.. I was looking at your changes and the template prefixes all looked the same so I was kind of confused, but that makes sense now
+2019-08-08T14:40:22  <Justin_o> Bosmon: not sure, we make our own minified builds in UIO+ to keep things extra small
+2019-08-08T14:40:52  <Justin_o> I guess I should rexplore if that's actually necessary though, but there are different builds for different parts of UIO+
+2019-08-08T14:41:13  <Bosmon> Justin_o - ok, it is frameworkDependencies.json but perhaps I need to add it somewhere else?
+2019-08-08T14:42:28  <Bosmon> Justin_o - btw I implemented cancellable promises last night : P
+2019-08-08T14:42:30  <Bosmon> https://github.com/amb26/infusion/blob/FLUID-6148/src/framework/core/js/FluidPromises.js#L61
+2019-08-08T14:43:14  <Bosmon> As soon as I got the implementation of relocalisation nearly right for gmoss, they turned out to be essential
+2019-08-08T14:47:43  <Justin_o> Bosmon: I think the frameworkDependencies.json should be fine.. It's really just a UIO+ thing from the sounds of it. We create our own bundles https://github.com/GPII/gpii-chrome-extension/blob/master/Gruntfile.js#L31-L64
+2019-08-08T14:48:05  <Justin_o> I should look into dropping that though with all our dist builds now.
+2019-08-08T14:48:16  *** Kendraf <Kendraf!~Adium@205.211.168.101> has quit IRC (Quit: Leaving.)
+2019-08-08T14:48:21  <Bosmon> Justin_o - ok, cool, glad there's a clear explanation
+2019-08-08T14:48:26  <Bosmon> Thanks for those fixes btw :)
+2019-08-08T14:48:32  <Bosmon> It's great to have you back
+2019-08-08T14:48:58  <Justin_o> cancellable promises look good.. seems pretty simple and looks like it just fits in there.
+2019-08-08T14:49:01  <Justin_o> thanks :)
+2019-08-08T14:49:51  *** crystalchan <crystalchan!Adium@nat/ocadu/x-bcvgrebdjawxegwt> has joined #fluid-work
+2019-08-08T14:50:12  *** kendraf <kendraf!Adium@nat/ocadu/x-dzpwdtzmtxladhvo> has joined #fluid-work
+2019-08-08T14:58:21  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-08-08T15:07:49  *** simonjb <simonjb!~simonjb@205.211.168.104> has joined #fluid-work
+2019-08-08T15:18:11  <cindyli> Bosmon: can you review my pull request that modifies scripts for NOVA deployment - https://github.com/GPII/universal/pull/810 it's quite stable now
+2019-08-08T15:27:52  <Bosmon> cindyli - I have given you some review
+2019-08-08T15:28:15  <cindyli> thanks, Bosmon. working on it…
+2019-08-08T15:29:20  <Justin_o> Bosmon: another issue now.. "Cannot read property 'FetchOne' of undefined"
+2019-08-08T15:29:35  <Bosmon> Justin_o - another missing include
+2019-08-08T15:30:18  <Bosmon> You'll have managed to miss off ResourceLoader.js itself somehow
+2019-08-08T15:30:20  <Justin_o> Bosmon: okay, I only see it in DataBinding and ResourceLoader and both of those should be included in my file.. or am I missing something else?
+2019-08-08T15:30:41  <Bosmon> Justin_o - that should be enough
+2019-08-08T15:31:05  <Justin_o> hmm.. okay.. hmm.. it looks like it should be there, but could be something wrong the UIO+ build
+2019-08-08T15:33:17  *** Kendraf1 <Kendraf1!~Adium@205.211.168.101> has joined #fluid-work
+2019-08-08T15:33:32  *** Kendraf1 <Kendraf1!~Adium@205.211.168.101> has quit IRC (Client Quit)
+2019-08-08T15:36:18  <Justin_o> Bosmon: yes, that was the problem.. it was just that it was missing from a different build in UIO+ than I was expecting.. we have a few custom builds there ;(
+2019-08-08T15:38:40  <Bosmon> Justin_o - perhaps this is a good opportunity to rationalise those : P
+2019-08-08T15:40:05  <Justin_o> Bosmon: if I remember correctly we had a problem concatenating the extension's own code with the concatenated versions of infusion.. also by doing them manually in UIO+ we can trim off some files here and there.
+2019-08-08T15:40:22  <Justin_o> practically speaking I wonder how much the file size savings helps.
+2019-08-08T15:42:01  <Bosmon> Justin_o - I guess we'll have some significant file savings once we finally manage to delete the old renderer : P
+2019-08-08T15:42:08  <Bosmon> It may be time for a big rationalisation at that point
+2019-08-08T15:42:27  <Bosmon> My current feeling is that we will just have to shed fluid.pager and fluid.pagedTable for the time being
+2019-08-08T15:42:43  <Bosmon> They are not in use by anyone that we know of and they are one of the major remaining clients of the old renderer
+2019-08-08T15:44:18  <Justin_o> Bosmon: I'm surprised we don't have any use for those with any of our projects, but I guess that's fine.. the prefs framework is probably the other big user of the renderer
+2019-08-08T15:45:12  <Justin_o> Bosmon: regarding rationalisation, I think we can have tighter package options once we break out the components into their own packages too.. right now I need to manually strip parts of the framework out too.. so it would be nice to be able to have different dists of the framework itself
+2019-08-08T15:46:05  <Bosmon> Justin_o - right
+2019-08-08T15:46:24  <Bosmon> And once we strip stuff out a bit we can shed lots of strange little bits of cruft in places like FluidDocument.js etc
+2019-08-08T15:46:50  <Bosmon> Well actually there's very little in there ...
+2019-08-08T15:47:36  <Bosmon> FluidDOMUtilities I think is used only by the Reorderer
+2019-08-08T15:49:36  <Justin_o> Bosmon: I see you got rid of fluidRequests too
+2019-08-08T15:52:00  <Bosmon> Justin_o - yes, it was full of strange and verbose cruft : P
+2019-08-08T15:52:21  <Bosmon> Although I think on balance there won't be a code savings once ResourceLoader is complete
+2019-08-08T15:57:30  *** Kendraf1 <Kendraf1!~Adium@205.211.168.101> has joined #fluid-work
+2019-08-08T15:57:32  *** danielcho <danielcho!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-08-08T15:57:36  *** Kendraf1 <Kendraf1!~Adium@205.211.168.101> has quit IRC (Client Quit)
+2019-08-08T15:59:01  *** danielcho <danielcho!~Adium@205.211.168.105> has joined #fluid-work
+2019-08-08T16:00:59  <Justin_o> okay, more along the lines of replacing what's there and adding some new features?
+2019-08-08T16:05:24  <Bosmon> Justin_o - well, most of the "features" in FluidRequests are obsoleted by a combination of i) much more reliable caching algorithms in modern browsers, ii) promises
+2019-08-08T16:06:05  <Bosmon> And of course replacing the crazed old "proleptic joinsets" business with the new-style ResourceLoader which is capable of loading resources before onCreate
+2019-08-08T16:11:13  <Bosmon> It suddenly dawned on me today that the use of Proxies will actually be far more significant than merely a "syntactic sugar" for users of code
+2019-08-08T16:11:30  <Bosmon> Since they will enable huge savings in memory allocation for component options or members that are unused
+2019-08-08T16:12:04  <Bosmon> Right now for example we do some pretty funny things to cut down on allocation costs for events which never have listeners, but we could never remove the object reference allocated for the actual event itself
+2019-08-08T16:12:16  *** crystalchan <crystalchan!Adium@nat/ocadu/x-bcvgrebdjawxegwt> has quit IRC (Quit: Leaving.)
+2019-08-08T16:12:18  <Bosmon> Whereas with the use of proxies we could save everything
+2019-08-08T16:15:51  <Justin_o> Bosmon: so you'd only add the proxy when you actually bind a listener for example?
+2019-08-08T16:16:23  <Bosmon> Justin_o - the proxy would BE the definition of the event
+2019-08-08T16:16:37  <Bosmon> So unless something attempted to access the event, it would not exist
+2019-08-08T16:17:08  <Bosmon> This would also mean the end of "onCreate" as a time with a particular special meaning for a component's lifecycle
+2019-08-08T16:17:20  <Bosmon> Which, right now, is the main marker at which one can expect "the component is fully initialised"
+2019-08-08T16:17:29  <Justin_o> is something replacing that?
+2019-08-08T16:17:41  <Justin_o> or maybe in the new world it won't matter?
+2019-08-08T16:18:06  <Bosmon> Justin_o - well eventually we will do fewer and fewer things on onCreate
+2019-08-08T16:18:11  <Justin_o> Bosmon: side question, is the jQuery.standalone.js only used in the node module thing?
+2019-08-08T16:18:13  <Bosmon> In practice, we will do fewer and fewer things on events at all
+2019-08-08T16:18:28  <Bosmon> Justin_o - yes, it is used to run the bare minimum definitions that we need from jQuery on thes erver
+2019-08-08T16:18:39  <Justin_o> Bosmon: that seems like a big change because we do almost everything on events now ;)
+2019-08-08T16:19:58  <Bosmon> Justin_o - for sure
+2019-08-08T16:20:21  <Justin_o> Bosmon: okay.. I'm jQuery.standalone.js in the extension because it's background is kind of like a node environment, but there probably isn't a way for me to get access to that without manually including it
+2019-08-08T16:20:36  <Justin_o> that is, we don't really have a dist I can use I don't think
+2019-08-08T16:20:38  <Justin_o> or do dwe
+2019-08-08T16:21:04  <Bosmon> Justin_o what do you mean?
+2019-08-08T16:23:55  <Justin_o> in a dist package.. but now I'm wondering if I can just "require" infusion in the extension. Currently it's added via a "UIO+ custom build" that's added through the manifest to the background page.
+2019-08-08T16:24:30  <Justin_o> https://github.com/GPII/gpii-chrome-extension/blob/master/extension/manifest.json#L58-L63
+2019-08-08T16:25:25  <Justin_o> here are the infusion files that get mixed into that concatenated file https://github.com/GPII/gpii-chrome-extension/blob/master/Gruntfile.js#L21-L30
+2019-08-08T16:26:04  <Justin_o> I'm just trying to experiment with using the dist builds of infusion again because I keep having missing dependencies when switching to FLUID-6148
+2019-08-08T16:37:29  <Bosmon> Justin_o - I imagine not, since there is no node-style module loader in the extension?
+2019-08-08T16:41:27  <Justin_o> Bosmon: well we do this https://github.com/GPII/gpii-chrome-extension/blob/master/extension/src/lib/chromeEvented.js#L20
+2019-08-08T16:44:46  <Bosmon> Justin_o - that's pretty odd, I wonder how it works
+2019-08-08T16:45:54  <Bosmon> Justin_o - surely it only works because the fluid.require statement is never hit
+2019-08-08T16:46:29  <Justin_o> I need to look into that more.. that came from some of jhernandez original work. It was working so I didn't think much about how the require stuff actually functions.
+2019-08-08T16:46:35  <Bosmon> : P
+2019-08-08T16:47:49  <sgithens> javjarfer[m]: This is the most up to date work on zoomtext right? https://github.com/GPII/universal/pull/735   And it hasn't made it in to any Morphic builds right? Has it been merged in to any custom deployments?
+2019-08-08T16:48:27  <sgithens> I'm just wondering because someone mentioned that zoomtext isn't being picked up by the capture tool, which is becuase I'm just using the win32.json from master
+2019-08-08T16:52:01  <jhernandez> Justin_o: can't remember exactly the reason behind that weird module loading strategy
+2019-08-08T16:52:32  <jhernandez> oh wait
+2019-08-08T16:53:22  <jhernandez> yes, that should being hit when running the node tests
+2019-08-08T16:53:31  <jhernandez> and only in that situation
+2019-08-08T16:55:04  <jhernandez> sgithens: nope, we've only used zoomtext in demo builds - it is under review process right now
+2019-08-08T16:56:24  <jhernandez> see https://github.com/GPII/universal/pull/735
+2019-08-08T16:57:15  <jhernandez> AFAIK, this is not a top-priority in JJ's plate - maybe it should if you're willing to start dealing with it from the capture tool
+2019-08-08T16:58:29  <jhernandez> honestly, I haven't been aware of the onboarding priorities for months (a year and a half to be more concrete :P)
+2019-08-08T16:59:45  <jhernandez> well, yes, but only from JJ's perspective
+2019-08-08T16:59:52  <jhernandez> from time to time I know things but because either Sandra, stegru or javjarfer[m] tell me about them
+2019-08-08T17:00:11  <Justin_o> jhernandez: oh yes, that makes sense because that mocks out the chrome calls.. okay thanks.. I remember that now.
+2019-08-08T17:00:45  <sgithens> jhernandez: Aha, thanks for the update.  Is there a branch somewhere that you used for this demo build?
+2019-08-08T17:01:21  <Bosmon> jhernandez - but how does this file run in some node tests?
+2019-08-08T17:04:38  <sgithens> I'm curious what other apps are in the demo... I'm trying to get the installer from Amarja, so I can prepare for other random things people may expect to be captured
+2019-08-08T17:06:43  *** simonjb <simonjb!~simonjb@205.211.168.104> has quit IRC (Ping timeout: 245 seconds)
+2019-08-08T17:09:03  <javjarfer[m]> sgithens , yes that's the most recent work done on ZoomText have been demoed several times and included in demo builds but never reached master yet
+2019-08-08T17:09:56  <sgithens> javjarfer[m]: Do you know if there is a branch somewhere that has the win32.json file that was used for this demo build? (otherwise I'll extract it from this .msi file )
+2019-08-08T17:16:07  *** crystalchan <crystalchan!Adium@nat/ocadu/x-wxjefpmmcaujwike> has joined #fluid-work
+2019-08-08T17:16:54  <stegru> everything has high priority, jhernandez! when will you learn that?
+2019-08-08T17:17:36  *** crystalchan <crystalchan!Adium@nat/ocadu/x-wxjefpmmcaujwike> has quit IRC (Client Quit)
+2019-08-08T17:17:37  <sgithens> hahahahah
+2019-08-08T17:19:12  *** crystalchan <crystalchan!Adium@nat/ocadu/x-gsnnulavsqketjqv> has joined #fluid-work
+2019-08-08T17:19:24  <sgithens> or at the very least, what else besides zoomtext was added to the July 17th 2019 demo build
+2019-08-08T17:22:56  *** simonjb <simonjb!~simonjb@205.211.168.104> has joined #fluid-work
+2019-08-08T17:23:47  <kendraf> sepidehshahi: crystalchan and I are ready to meet
+2019-08-08T17:25:15  *** crystalchan <crystalchan!Adium@nat/ocadu/x-gsnnulavsqketjqv> has quit IRC (Quit: Leaving.)
+2019-08-08T17:25:19  <javjarfer[m]> sgithens, this is the branch I have used for recent demos, I don't know it's current state with master https://github.com/JavierJF/universal/tree/F2FDemo
+2019-08-08T17:26:05  <jhernandez> Justin_o: yw
+2019-08-08T17:26:33  <sgithens> javjarfer[m]: Thanks! That's fine I just want to see what people are asking me for
+2019-08-08T17:26:44  *** sepidehshahi_ <sepidehshahi_!~sepidehsh@205.211.168.105> has joined #fluid-work
+2019-08-08T17:26:49  <sgithens> Since I think if a solution is in the demo, they are expecting that it's being captured now
+2019-08-08T17:26:59  <jhernandez> Bosmon: https://github.com/GPII/gpii-chrome-extension/blob/master/package.json#L31
+2019-08-08T17:27:10  <jhernandez> or need more explanation on it?
+2019-08-08T17:27:44  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-08-08T17:29:09  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-flcblathxdvayiqj> has quit IRC (Ping timeout: 244 seconds)
+2019-08-08T17:29:09  *** sepidehshahi_ is now known as sepidehshahi
+2019-08-08T17:29:29  <jhernandez> sgithens: but I think that you should also pull the windows side of the zoomtext PR (https://github.com/GPII/windows/pull/241) if you want it to get it working in your installer rather than failing when trying to use zoomtext - is that correct javjarfer[m] ?
+2019-08-08T17:44:43  <javjarfer[m]> That's right jhernandez , probably that merge will involve conflicts if I don't remember badly, conflicts that are solved in the same previous branch I passed but it's windows side
+2019-08-08T18:04:12  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-08-08T18:26:25  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-08-08T18:30:36  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-08-08T18:36:33  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-08-08T18:36:54  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-08-08T18:38:03  <Bosmon> Hi there gmoss, so I think I am finally at a point where I've got a build which is free of your headline race condition, although I'm running into an oddity that the version of UIO which you are bound to is a bit older than master and doesn't have matching message bundles
+2019-08-08T18:38:33  <Bosmon> For example the textFont bundle at https://github.com/fluid-project/sjrk-story-telling/blob/stories-floe-dev/themes/base/messages/uio/textFont_en.json is missing the Open Dyslexic entry which we have in https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/messages/textFont_en.json
+2019-08-08T18:38:54  <Bosmon> I was wondering if you had a script that copied these over, or whether it wouldn't be better to just resolve these bundles from within Infusion itself?
+2019-08-08T18:39:54  <gmoss> Bosmon: that's great news! re UIO, we're running off what was current as of March 2018, at which point FLUID-6300 was yet to be filed (it has since been merged into Infusion). I think it would be best to resolve within infusion itself
+2019-08-08T18:40:35  <gmoss> no script was written to copy things over, I did the comparison manually since I was also providing spanish translations at the time
+2019-08-08T18:41:19  <Justin_o> Bosmon, jhernandez: would you be able to review this PR https://github.com/GPII/gpii-chrome-extension/pull/31
+2019-08-08T18:41:28  <Bosmon> gmoss - the good news is we can shed most of the code from your UIO localisation
+2019-08-08T18:41:45  <gmoss> Bosmon: that's excellent, I've been quite eager to do so
+2019-08-08T18:41:45  <Bosmon> gmoss - the bad news is, we need to figure out how to correspondingly shed the code that is doing the same job within SJRK itself : P
+2019-08-08T18:41:52  <Bosmon> I notice that you are doing quite a bit of resource shuttling
+2019-08-08T18:42:08  <Bosmon> Which in theory is unnecessary, but in practice will have to all become a bit unplumbed in order to work with the new system
+2019-08-08T18:42:32  <gmoss> Bosmon: indeed. I was hoping with the work outlined in SJRK-52 that we might switch to using gpii-handlebars on the server side and take advantage of the l10n capabilities that the-t-in-rtf put in last year
+2019-08-08T18:42:43  <Bosmon> ok
+2019-08-08T18:42:54  <gmoss> which would cut out the need for templateManager, and maybe even the ui grade
+2019-08-08T18:43:03  <gmoss> will have to see when I get there
+2019-08-08T18:43:06  <Bosmon> the-t-in-rtf and I should get together and make a compliant version of his stuff, which I think he was partway through
+2019-08-08T18:43:25  *** crystalchan <crystalchan!Adium@nat/ocadu/x-ikjtsfuwwqhnnzqd> has joined #fluid-work
+2019-08-08T18:43:42  <Bosmon> But I'm not quite sure what the quickest way to get you a fix for your branch is right now, since although the "server" tests pass, they don't actually test very much, and I suspect the rest of the stuff is going to be a bit of a mess
+2019-08-08T18:45:45  <gmoss> Bosmon: I think if the browser tests are passing consistently, that would be more valuable and a better indicator that your fix is working. The kettle/node tests are basically just checking that the routing and some basic DB formatting are working as expected
+2019-08-08T18:46:07  <Bosmon> Perhaps it's easier than I'm expecting, and all we need to do is swap out "resourceText" for "parsed" everywhere which is one of the few substantive changes between my branch and current master
+2019-08-08T18:46:08  <Bosmon> ok
+2019-08-08T18:46:26  <Bosmon> I'll just push ahead then and try to get the browser tests passing, the problem is I'm away for next week
+2019-08-08T18:47:19  <gmoss> Bosmon: is "parsed" a model endpoint? I know I was being a bad boy and mutating the options for resourceText (which, as you say was only ever intended to hold the data loaded by the resourceLoader)
+2019-08-08T18:47:43  <gmoss> And there's no big rush :)
+2019-08-08T18:47:43  <Bosmon> gmoss - all that's happened is that you now need to access that.resources.thing.parsed where you used to grab that.resources.thing.resourceText
+2019-08-08T18:48:01  <Bosmon> Since the latter now just genuinely holds the actual text, as its name always suggested : P
+2019-08-08T18:48:16  <gmoss> Bosmon: that sounds like a pretty easy fix :)
+2019-08-08T18:48:22  <Bosmon> And yes, I've been going through removing all the places where the options for resourceText are mutated : P
+2019-08-08T18:50:18  <jhernandez> Justin_o: oh wow, you managed to make that bug bite the dust! :)
+2019-08-08T18:50:30  <jhernandez> sure, I think I can find some time tomorrow to test that PR and eventually merge it
+2019-08-08T18:53:00  <Justin_o> jhernandez: excellent, thanks jhernandez.
+2019-08-08T18:54:26  <Justin_o> you were right that the issue had to do with ads.. they were spawning iframes all over the place. But the issue was that we were cancelling the TTS every time we initialized the enactor, which was happening in each iframe. So we don't do that anymore. But that was a fix in Infusion, and this PR just updates to the latest Infusion dev release.
+2019-08-08T18:55:59  <cindyli> Bosmon: i addressed most comments except ones related to this - https://github.com/GPII/universal/pull/810#pullrequestreview-272654690. as mentioned in #fluid-tech, I've tried a couple of ways but no luck. do you think if it's possible that i create a jira for it and fix it later?
+2019-08-08T18:57:32  <Bosmon> cindyli - all the line numbers have changed a bit, I am trying to follow .....
+2019-08-08T18:58:29  <cindyli> Bosmon: it's about pushing process.exit() to the top caller - https://github.com/GPII/universal/pull/810/files#diff-f6a29bb169fb13c5fa06b7bb1becd857R192
+2019-08-08T19:04:20  <jhernandez> Justin_o: yeah, I saw your comments on JIRA - great to see that we could make something in our side to make it happen :)
+2019-08-08T19:06:12  <Justin_o> :) and turned out to be a relatively small change too
+2019-08-08T19:11:08  <Bosmon> Justin_o, I've found to my astonishment and horror that we have *no* tests for fluid.messageResolver in the framework image!!!!
+2019-08-08T19:12:30  <Bosmon> I guess there is a little bit of one inside RendererTests.js
+2019-08-08T19:12:36  <Bosmon> But it doesn't actually test any interpolation
+2019-08-08T19:13:01  <Justin_o> Bosmon: I'm surprised by this too
+2019-08-08T19:13:50  <Bosmon> Given we have MessageResolver.js, logically there should be a file MessageResolverTests.js
+2019-08-08T19:13:51  <Bosmon> But there isn't
+2019-08-08T19:16:19  *** sepidehshahi_ <sepidehshahi_!sepidehsha@nat/ocadu/x-uuqvklncfrihxdcd> has joined #fluid-work
+2019-08-08T19:17:03  <Justin_o> Bosmon: I'm just running the tests to see if it shows up in the reporting
+2019-08-08T19:17:07  <Justin_o> I don't remember seeing it missing
+2019-08-08T19:17:14  <Bosmon> Justin_o - but there is no such file
+2019-08-08T19:17:20  <Bosmon> And I assume never has been
+2019-08-08T19:17:42  <Justin_o> but shouldn't the MessageResolver.js show up as having 0 tests?
+2019-08-08T19:17:55  <Bosmon> You mean in coverage, or what?
+2019-08-08T19:18:22  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.105> has quit IRC (Ping timeout: 245 seconds)
+2019-08-08T19:18:22  *** sepidehshahi_ is now known as sepidehshahi
+2019-08-08T19:18:47  <Justin_o> yes, in the coverage report
+2019-08-08T19:19:02  <Bosmon> Justin_o - in practice it will get exercised pretty thoroughly by the prefs framework tests
+2019-08-08T19:19:09  <Bosmon> It's just that it has no dedicated tests of its own
+2019-08-08T19:22:18  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-08-08T19:26:19  <Justin_o> Bosmon: ah right.. okay.. looking at the reports now too the coverage is actually pretty good, but as you say not through its own dedicated tests
+2019-08-08T19:27:11  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-08-08T19:29:39  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:68b9:e41e:f75c:7d08> has quit IRC (Ping timeout: 252 seconds)
+2019-08-08T19:42:19  <cindyli> Bosmon: my pull request is ready for another look - https://github.com/GPII/universal/pull/810
+2019-08-08T19:43:50  <cindyli> Bosmon: do you think if it's possible to revert tony's change from the master and merge this pull request today? so that we can do a round of staging deployment tomorrow
+2019-08-08T19:50:21  <Bosmon> cindyli - I believe I have now done the revert
+2019-08-08T19:50:36  <Bosmon> Somehow it seems more complex than last time, in that I needed the -m 1 option
+2019-08-08T19:50:39  <Bosmon> Which I don't remember
+2019-08-08T19:50:51  <Bosmon> but perhaps I never actually reverted it properly the previous time and just did that "soft revert"
+2019-08-08T19:51:00  <Bosmon> Would you like to doublecheck that the current state of master looks ok to you?
+2019-08-08T19:51:02  <Bosmon> https://github.com/GPII/universal
+2019-08-08T19:51:05  <cindyli> sure
+2019-08-08T19:58:00  <cindyli> Bosmon: the revert looks good
+2019-08-08T19:58:36  <cindyli> the comparison before and after the "merge -> revert" shows identical - https://github.com/GPII/universal/compare/9ecfcf40e44e5ba87804d8b1cff80e6b1ccad60c..26be63fa167f2692c521437965197fd54d59c233
+2019-08-08T19:59:05  <Bosmon> Thanks very much for the check, cindyli
+2019-08-08T19:59:19  <cindyli> np
+2019-08-08T20:06:16  <Bosmon> Justin_o - so here is a fun new test - https://github.com/amb26/infusion/blob/FLUID-6148/tests/framework-tests/core/js/ResourceLoaderTests.js#L510
+2019-08-08T20:06:36  <Bosmon> Notice how the messageResolver doesn't have any createOnEvent junk
+2019-08-08T20:06:57  <Bosmon> And yet it is able to resolve messages from the asynchronously loaded bundle on its own startup
+2019-08-08T20:07:51  <Bosmon> It will also continue to naturally track any updated contents of the bundle if it gets reloaded as a result of relocalisation
+2019-08-08T20:10:57  <Justin_o> Bosmon: so the messageResolver doesn't trigger its onCreate event until after the messageBase has been asynchronously resolved?
+2019-08-08T20:11:25  <Justin_o> and there's no explicit config to tell the messageResolver that the messageBase has been fetched>
+2019-08-08T20:11:27  <Justin_o> ?
+2019-08-08T20:19:45  <Bosmon> Justin_o - that's right
+2019-08-08T20:20:00  <Bosmon> In fact, no component in an instantiating set can proceed to onCreate until ALL dependent I/O has resolved
+2019-08-08T20:20:11  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-08-08T20:20:40  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-08-08T20:24:37  <Justin_o> Bosmon: how do you know if it is dependent?
+2019-08-08T20:24:42  <Justin_o> is there a way to define that?
+2019-08-08T20:25:22  <Bosmon> Justin_o - it infers it, by virtue of you writing an option which attempts to resolve it : P
+2019-08-08T20:25:40  <Justin_o> Bosmon: because options are immutable?
+2019-08-08T20:25:57  *** jhung <jhung!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving)
+2019-08-08T20:26:12  <Justin_o> although in the example you pasted, if the localization changes, wouldn't the message base change and thereby mutate the option?
+2019-08-08T20:26:20  <Bosmon> Justin_o - in fact, the option never changes
+2019-08-08T20:26:39  <Bosmon> If you look in my branch, I have handled the apparent demand for mutation via a dodge....
+2019-08-08T20:26:58  <Bosmon> I have shifted all the mutable stuff in the ResourceLoader into an explicitly mutable non-component named "ResourceFetcher"
+2019-08-08T20:27:05  <Bosmon> And that is the one you tinker with when you want mid-life changes
+2019-08-08T20:27:39  <Bosmon> Here's the example: https://github.com/amb26/infusion/blob/FLUID-6148/tests/framework-tests/core/js/ResourceLoaderTests.js#L178
+2019-08-08T20:28:29  <Bosmon> This way we can have our cake and eat it - options of proper components stay immutable, yet we can cause an apparent change in the loaded resource, which also ends up in the resourceFetcher, or else as a top-level element "resources" which is also notionally mutable
+2019-08-08T20:28:55  <Justin_o> Bosmon: why note make it a model value though?
+2019-08-08T20:28:58  <Bosmon> It is a bit of a dodge, but it is the best we can do before we have the "far future" framework featuring the so-called "Queen of Sheba adaptation" : P
+2019-08-08T20:29:04  <Justin_o> and how about if we wanted to tie that to a model relay of some sort
+2019-08-08T20:29:13  <Bosmon> Justin_o - it could be a model value too, I just haven't fixed up that bit yet ....
+2019-08-08T20:29:23  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-08-08T20:29:46  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-08-08T20:30:09  <Bosmon> We will mirror this bit of state into resourceLoader.model.resouceOptions.locale so people can do all the usual relay/listener stuff with that
+2019-08-08T20:30:49  <Bosmon> It just needs me to adjust the way the model's init transaction gets scheduled, yet again ......
+2019-08-08T20:30:54  *** kendraf <kendraf!Adium@nat/ocadu/x-dzpwdtzmtxladhvo> has quit IRC (Quit: Leaving.)
+2019-08-08T20:31:30  <Bosmon> There's an obvious problem scheduling a bit of the model whose value depends on having resolved some other bit of the model, and yet arranging for this all to apparently magically appear atomically as part of a single transaction : P
+2019-08-08T20:32:08  <Bosmon> I mean, it *would* be a model value, if someone had written model: "{that}.resources.messages.parsed" - which is something they will need to be able to do
+2019-08-08T20:32:15  <Justin_o> Bosmon: I do take for granted how well the IoC system works given how complex it all is :)
+2019-08-08T20:33:06  <Bosmon> So we won't be able to arrange for the updates to be atomic in mid-life, since we can't currently support asynchronous model transactions
+2019-08-08T20:33:36  <Bosmon> But we do need to arrange for the initial model value to all arrive at the appropriate time in the workflow, perhaps with both the locale and resources jumbled into the same model
+2019-08-08T20:34:29  <Bosmon> Well, perhaps the model holding the locale needs to be on the resourceFetcher too, since otherwise the user may trash it
+2019-08-08T20:35:20  *** crystalchan <crystalchan!Adium@nat/ocadu/x-ikjtsfuwwqhnnzqd> has quit IRC (Quit: Leaving.)
+2019-08-08T20:36:00  *** crystalchan <crystalchan!Adium@nat/ocadu/x-vyhfblfjsuelwljr> has joined #fluid-work
+2019-08-08T20:36:34  <Justin_o> Bosmon: this would also be useful for fetching the store preferences.. it's a bit messy with the arranging the model initialization for that at the moment too
+2019-08-08T20:36:57  <Bosmon> Yes, this pattern will allow us to trash these strange "loading" events all over the place
+2019-08-08T20:37:03  <Justin_o> Bosmon: side question, related to FLUID-6148 in UIO+. I think I have the dependency issues ironed out, but I'm getting an error which I believe is coming from https://github.com/amb26/infusion/blob/FLUID-6148/src/framework/core/js/ResourceLoader.js#L148
+2019-08-08T20:37:10  <Bosmon> In fact you can declare a "resource" to be absolutely anything you like which is resolved via a promise
+2019-08-08T20:37:10  <Justin_o> although again it's hard to tell because of the minification
+2019-08-08T20:37:29  <Justin_o> Bosmon: I think that will help a lot
+2019-08-08T20:37:32  <Bosmon> Justin_o - ok, what does the error text say?
+2019-08-08T20:39:09  <Bosmon> I don't think there can be an error on that line precisely since it would be impossible to get there with resourceSpec undefined
+2019-08-08T20:39:38  <Justin_o> sorry, forgot to add that
+2019-08-08T20:39:40  <Justin_o> Bosmon: Uncaught TypeError: Cannot read property 'locale' of null
+2019-08-08T20:40:19  <Bosmon> Justin_o btw I've just rolled 3.0.0-dev.20190808T200426Z.ff8753d18.FLUID-6148 which incorporates the improvements I made for gmoss UIO relocalisation in SJRK
+2019-08-08T20:41:13  <Bosmon> Justin_o - it's impossible from that line, but I guess there is a chance it is on this line: https://github.com/amb26/infusion/blob/FLUID-6148/src/framework/core/js/ResourceLoader.js#L138
+2019-08-08T20:41:35  <Bosmon> But this implies that you might have overridden a resource with "null" somehow
+2019-08-08T20:43:10  <cindyli> Bosmon: i agree with what you said in this comment - https://github.com/GPII/universal/pull/810#pullrequestreview-272814301. but haven't found a way to get the recursive function to return a promise of its own. this recursive function could be called repeatedly many times and many promises will be returned. how to chain up those promises is a problem. the only solution i found so far is to get the caller to pass in an independent pro
+2019-08-08T20:43:10  <cindyli> mise for capture the final processing status
+2019-08-08T20:43:20  <Justin_o> Bosmon: unfortunately for me the line looks like this in the debugger.
+2019-08-08T20:43:28  <Justin_o> https://www.irccloud.com/pastebin/uv3e0Ddi/
+2019-08-08T20:44:31  <Bosmon> Justin_o - ok, do you not get to see any local variables?
+2019-08-08T20:46:21  <Justin_o> Bosmon: yes, I can.. I added a break point. is there something that might be of particular interest
+2019-08-08T20:46:34  <Justin_o> n = null
+2019-08-08T20:48:47  <Bosmon> Justin_o - well, which thing is actually null? : P
+2019-08-08T20:49:05  <Justin_o> n :)
+2019-08-08T20:49:29  <Justin_o> it looks like n is coming from the third argument to l.exploadLocalisedName
+2019-08-08T20:50:13  <Justin_o> sorry that's not correct
+2019-08-08T20:50:26  <Justin_o> n is coming from a call to each
+2019-08-08T20:50:33  <Bosmon> Justin_o - so yes, it looks like somehow you have ended up with null as one of your resourceSpecs
+2019-08-08T20:50:40  <Bosmon> You will have to take a look to see how that happened
+2019-08-08T20:51:00  <Justin_o> oh boy.. okay thanks
+2019-08-08T20:52:12  <Justin_o> ah okay, not too bad, I checked what was being iterated. seems the object is {tocMessage: null}
+2019-08-08T20:53:27  <Justin_o> Bosmon: although I don't fully understand because in the debugger it appears that fetchResources.explodeForLocales is taking two arguments. but in the code it only takes 1
+2019-08-08T20:53:42  <Justin_o> https://github.com/amb26/infusion/blob/FLUID-6148/src/framework/core/js/ResourceLoader.js#L131
+2019-08-08T20:53:54  <Justin_o> l.fetchResources.explodeForLocales = function(o, e)
+2019-08-08T20:53:59  <Justin_o> the latter is from the debugger
+2019-08-08T20:54:22  <Bosmon> Does e have a value?
+2019-08-08T20:54:47  <Justin_o> {tocMessage: null}
+2019-08-08T20:54:53  <Justin_o> that is what was being iterated over
+2019-08-08T20:54:59  <Justin_o> to produce the null value
+2019-08-08T20:55:34  <Justin_o> o looks like some resource object.. it has properties such as completionPromise, fetchAll, fetchOneResource, option, transformResourceURL
+2019-08-08T20:55:38  <Justin_o> Bosmon: ^
+2019-08-08T20:56:29  <Bosmon> I think it has supplied a "cunning optimisation" to fuse the two function calls together
+2019-08-08T20:56:38  <Bosmon> o is just the value of resourceFetcher.resourceSpecs
+2019-08-08T20:56:56  <Bosmon> Well no, o is just resourceFetcher
+2019-08-08T20:58:21  <Bosmon> cindyli - here is a gist outlining how I think the function body should look - https://gist.github.com/amb26/b24f04f17692dc8035a269b96e4a153d
+2019-08-08T20:58:47  <Bosmon> You may as well also just turn this into a general utility parameterised by doOneWork
+2019-08-08T21:00:26  <cindyli> thanks, Bosmon. trying…
+2019-08-08T21:00:45  <Bosmon> I may have missed something obvious, but "by eye" all the promises seem to join up : P
+2019-08-08T21:00:48  <Bosmon> How does it look to you?
+2019-08-08T21:01:51  <Justin_o> Bosmon: thanks for your help.. I have to run now, but I'll keep plugging away at this when I get some more time.
+2019-08-08T21:03:12  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-uuqvklncfrihxdcd> has quit IRC (Quit: sepidehshahi)
+2019-08-08T21:04:06  *** clown <clown!clown@nat/ocadu/x-otmwyzkouocgyfbt> has quit IRC (Quit: Leaving.)
+2019-08-08T21:10:45  <Bosmon> OK gmoss - here is my work in progress on the SJRK update - https://github.com/BlueSlug/sjrk-story-telling/pull/27
+2019-08-08T21:10:58  <Bosmon> Unfortunately I won't be able to get back to this until week after next
+2019-08-08T21:11:18  <gmoss> Bosmon: no worries :) I'll take a look today or tomorrow
+2019-08-08T21:11:30  <cindyli> Bosmon: works perfectly!!
+2019-08-08T21:11:46  <Bosmon> cindyli - sure, surely this was the first thing you tried? : P
+2019-08-08T21:12:34  <cindyli> ;)
+2019-08-08T21:21:27  *** simonjb <simonjb!~simonjb@205.211.168.104> has quit IRC ()
+2019-08-08T21:39:07  *** danielcho <danielcho!~Adium@205.211.168.105> has left #fluid-work
+2019-08-08T21:39:53  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3efc:f800:d376:38c:8f16:2324> has quit IRC (Quit: jhernandez)
+2019-08-08T21:44:11  <cindyli> Bosmon: the reject semantic via GPII-NO-MORE-DOCS is useful when the process uses a sequence like "find -> update", the rejection will stop at "find" without going furthur into "update"
+2019-08-08T21:47:20  <cindyli> there are 4 scripts using recursion. 2 of them have 2 steps actions that need rejections, while the other 2 only have 1 step action and can use resolve(0)
+2019-08-08T21:51:33  <Bosmon> cindyli - why might a find not go into update?
+2019-08-08T21:58:07  <cindyli> Bosmon: "find" queries a view and returns the query result in a promise. "update" receives this result and do bulk update and returns a promise with the update result
+2019-08-08T21:58:43  *** cherylhjli <cherylhjli!~Adium@205.211.168.101> has quit IRC (Quit: Leaving.)
+2019-08-08T21:59:33  <Bosmon> cindyli - and so when does it not proceeed?
+2019-08-08T22:01:19  <cindyli> when "find" part finds no more records need to be updated
+2019-08-08T22:01:56  <cindyli> everytime when "update" finishing updating a batch of results, these records will no longer appear in the "find" result
+2019-08-08T22:02:27  <Bosmon> cindyli - finding 0 records still seems to me like a "resolve"
+2019-08-08T22:03:20  <cindyli> to have "update" pass along 0 to the top caller?
+2019-08-08T22:03:39  <cindyli> rather than having the process stop at the "find" stage?
+2019-08-08T22:04:18  <Bosmon> cindyli - yes, I think making update explicitly do a no-op on 0 input is a better idiom
+2019-08-08T22:04:28  <cindyli> ok
+2019-08-08T22:17:39  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-08-08T22:20:13  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-08-08T22:30:57  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-08-08T22:38:00  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-08-08T22:41:17  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Client Quit)
+2019-08-08T23:22:12  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-08-08T23:23:41  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-08-08T23:31:54  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Quit: sepidehshahi)
+2019-08-08T23:37:24  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-08-08T23:56:38  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)

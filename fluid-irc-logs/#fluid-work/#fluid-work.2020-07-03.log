@@ -1,0 +1,80 @@
+2020-07-03T15:41:54  <Uttara> Cindyli: Do you have time for a quick meet? I was able to address some of the questions from yesterday
+2020-07-03T15:42:47  <cindyli> sure, Uttara. we count room?
+2020-07-03T15:42:52  <Uttara> yes
+2020-07-03T15:42:55  <Uttara> will be right there
+2020-07-03T15:43:52  <gmoss> cindyli: I'd like to begin executing the "SHIP IT" part of the plan :) Should I file PR's for each branch, or is there any action required on my part at all in order to get master pushed out?
+2020-07-03T15:48:15  <gmoss> oh yeah, gtirloni I meant to ask, we used to have a db backup job that we would run before deploying to production branches. the build process should be idempotent, but we did it just in case. is there any sort of backup job being run on the docker volumes?
+2020-07-03T15:49:09  <gtirloni> gmoss: yeah, we have daily backups
+2020-07-03T15:49:13  <gmoss> awesome :)
+2020-07-03T15:50:47  <cindyli> gmoss: i will push master into each production branch. no action required on your part for that.
+2020-07-03T15:50:57  <gmoss> cindyli: okay great. thank you!
+2020-07-03T15:51:27  <cindyli> gmoss, gtirloni: are daily backups good enough for this deploy? or do we need an extra backup before I push?
+2020-07-03T15:52:24  <cindyli> gtirloni: just saw your email. sorry to hear it. hope you will feel better soon
+2020-07-03T15:52:27  <gmoss> cindyli: there haven't been any new stories added anywhere in a couple months, so I think if there's a backup file available from the last 24 hours, that should be good enough
+2020-07-03T15:52:52  <cindyli> great. pushing now…
+2020-07-03T15:53:00  * gmoss holds breath
+2020-07-03T15:53:29  <gtirloni> of anything breaks, I'm still here 🤞
+2020-07-03T16:00:10  <cindyli> all pushed
+2020-07-03T16:01:20  <gmoss> cindyli: awesome! I'll test them all out
+2020-07-03T16:02:17  <cindyli> thanks, gmoss
+2020-07-03T16:16:08  <gmoss> cindyli: it looks like the Karisma site is broken, I'm investigating https://karisma-stories.floeproject.org/
+2020-07-03T16:16:08  <gmoss> my initial hunch is it's an environment difference, since it's running fine when I host the server locally. I'll let you know if I find anything
+2020-07-03T16:16:25  <gmoss> all other sites are working fine
+2020-07-03T16:19:20  <gmoss> cindyli: looks like there was a build error https://github.com/fluid-project/sjrk-story-telling/runs/834953268#step:3:41
+2020-07-03T16:27:14  <cindyli> thanks, gmoss. the build script for karisma looks good tho
+2020-07-03T16:30:02  <gmoss> Indeed. it's a little puzzling. shall we check-in?
+2020-07-03T16:30:30  <cindyli> sure, gmoss
+2020-07-03T16:30:49  <cindyli> i'm in stansup
+2020-07-03T16:57:26  <gmoss> cindyli: just to be sure, I did a file-by-file comparison (automated, of course) for the entire Karisma branch vs the AIHEC branch, and they're identical
+2020-07-03T16:59:33  <gmoss> cindyli: are you able to re-run the deploy action?  I don't have permissions. maybe that'll fix it?
+2020-07-03T17:06:47  <cindyli> gmoss: just re-ran, same error - https://github.com/fluid-project/sjrk-story-telling/runs/835119932
+2020-07-03T17:07:06  <gmoss> cindyli: thanks. well, at least it's consistent :)
+2020-07-03T17:07:20  <cindyli> :)
+2020-07-03T17:51:07  <gtirloni> back
+2020-07-03T17:51:27  <gtirloni> cindyli gmoss: want me to check it?
+2020-07-03T17:51:46  <cindyli> that would be great, gtirloni
+2020-07-03T17:52:02  <gtirloni> ok
+2020-07-03T17:52:21  <cindyli> thanks, gtirloni. no rush
+2020-07-03T17:59:12  <gmoss> gtirloni: thank you! Hope you're feeling better
+2020-07-03T18:05:14  <gtirloni> gmoss: thanks, still got a headache but it's bearable now :)
+2020-07-03T18:05:17  <gtirloni> cindyli gmoss: https://github.com/fluid-project/sjrk-story-telling/runs/835237764
+2020-07-03T18:05:23  <gtirloni> two problems:
+2020-07-03T18:05:53  <gtirloni> https://www.irccloud.com/pastebin/ljCreBAI/first%20problem%2C%20it%20was%20pointing%20to%20alan's%20repo%20where%20I%20think%20karisma%20existed%20exclusively%20before
+2020-07-03T18:06:23  <gtirloni> second problem was lack of a config file.. I created one using an example and set it to the karisma theme. please let me know if it looks okay
+2020-07-03T18:06:37  <gtirloni> https://www.irccloud.com/pastebin/bc4oUyra/
+2020-07-03T18:09:23  <cindyli> gtirloni: "themeIndexFile" for karisma should be "karismaWelcome.html"
+2020-07-03T18:09:34  <gmoss> gtirloni: that's surprising! I thought we'd "moved" the job off of alan's repo, but I'm glad it's an easy fix. The config file looks good, except `themeIndexFile` should be `karismaWelcome.html`
+2020-07-03T18:09:41  <gmoss> whoops cindyli beat me to it ;)
+2020-07-03T18:10:17  <cindyli> gmoss: should the authoring be enabled for karisma site?
+2020-07-03T18:10:27  <gmoss> cindyli: oh, sorry good catch. no it should not
+2020-07-03T18:10:30  <gmoss> gtirloni ^
+2020-07-03T18:10:47  <cindyli> gtirloni: the last line in the config file: "authoringEnabled": false
+2020-07-03T18:10:47  <gmoss> only AIHEC should have authoringEnabled set to true
+2020-07-03T18:10:54  <gmoss> and staging site
+2020-07-03T18:10:54  <cindyli> ok
+2020-07-03T18:16:04  <gtirloni> ok changed and redeployed
+2020-07-03T18:16:52  <gmoss> gtirloni: awesome! Thanks very much :) it all looks good
+2020-07-03T18:17:41  <gtirloni> great! :)
+2020-07-03T20:14:15  <colinclark> how’s your awesome new fixie, philip?
+2020-07-03T20:14:52  <philip> It's parked for the moment, as getting a helmet is currently tricky
+2020-07-03T20:16:15  <colinclark> oh shoot, how come?
+2020-07-03T20:17:18  <philip> Our local bike shop is taking some pretty serious precautions: they can't really sanitize their products so you can't touch anything before buying it
+2020-07-03T20:21:05  <philip> so I'm not sure I want to roll the dice and maybe buy a helmet that doesn't fit my noggin
+2020-07-03T20:23:37  <gtirloni> fixie uh
+2020-07-03T20:23:48  * gtirloni laughs in 12 speeds
+2020-07-03T20:23:52  <gtirloni> :)
+2020-07-03T20:28:50  <philip> Look, the person who sold it to me was extremely convincing
+2020-07-03T20:32:58  <philip> and I got a good enough deal that I'm willing to be made a little fun of
+2020-07-03T20:43:01  <colinclark> hahaha
+2020-07-03T20:43:03  <colinclark> I have a single speed bike
+2020-07-03T20:43:05  <colinclark> I love it
+2020-07-03T20:43:19  <colinclark> gtirloni’s just jealous
+2020-07-03T20:43:41  <colinclark> Also, would anyone like to buy a single speed bike?
+2020-07-03T20:50:51  <gtirloni> LOL
+2020-07-03T20:51:03  <gtirloni> jk ;)
+2020-07-03T21:02:44  <colinclark> :)
+2020-07-03T21:02:53  <colinclark> Seriously
+2020-07-03T21:02:56  <colinclark> The hills are too much
+2020-07-03T21:03:00  <colinclark> I need a bike with gears
+2020-07-03T21:21:46  <gtirloni> I had one with 27 gears and I switched to 12 gears this week (no gear on the front, just the back). Much easier to switch gears and stuff. Also less maintenance. I recommend
+2020-07-03T21:39:20  <colinclark> that’s exactly the kind of bike i want, gtirloni

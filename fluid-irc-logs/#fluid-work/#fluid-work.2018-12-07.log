@@ -1,0 +1,216 @@
+2018-12-07T00:50:40  *** danayo_ <danayo_!~danayo@S01069050ca694f23.vc.shawcable.net> has joined #fluid-work
+2018-12-07T01:07:29  *** danayo_ <danayo_!~danayo@S01069050ca694f23.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2018-12-07T02:11:47  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-nzivplpznvvooqvm> has quit IRC (Quit: Connection closed for inactivity)
+2018-12-07T03:35:28  *** danayo_ <danayo_!~danayo@S01069050ca694f23.vc.shawcable.net> has joined #fluid-work
+2018-12-07T03:46:03  *** danayo_ <danayo_!~danayo@S01069050ca694f23.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2018-12-07T08:51:33  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has joined #fluid-work
+2018-12-07T09:29:36  <the-t-in-rtf> So, I'm onboarding MAGic, but whenever I try to key in using the pref set it still tries to write JAWS settings
+2018-12-07T09:29:56  <the-t-in-rtf> I'm trying to figure out why
+2018-12-07T09:30:00  <the-t-in-rtf> anyone seen anything like that?
+2018-12-07T09:31:18  *** georgit <georgit!~georgi.to@37.157.190.158> has joined #fluid-work
+2018-12-07T09:48:47  <the-t-in-rtf> Here's the new solution entry: https://github.com/the-t-in-rtf/universal/blob/GPII-3555/testData/solutions/win32.json5#L3374
+2018-12-07T09:49:23  <the-t-in-rtf> And here's the test pref set: https://github.com/the-t-in-rtf/universal/blob/GPII-3555/testData/preferences/magic.json5
+2018-12-07T09:51:02  <the-t-in-rtf> I get errors on keying in, like:
+2018-12-07T09:51:40  <the-t-in-rtf> ENOENT no such file or directory (obvious JAWS 2018 path)
+2018-12-07T09:56:37  <the-t-in-rtf> refreshing the VM now just in case there's some deep cruft from earlier attempts and teeing the logs to see if I can find any clues
+2018-12-07T10:52:16  <the-t-in-rtf> looks like it's adding jaws settings to the inferred configuration block during matchmaking
+2018-12-07T10:55:13  <the-t-in-rtf>     "activeContextName": "gpii-default",
+2018-12-07T10:55:13  <the-t-in-rtf>     "activeConfiguration": {
+2018-12-07T10:55:13  <the-t-in-rtf>         "inferredConfiguration": {
+2018-12-07T10:55:13  <the-t-in-rtf>             "applications": {
+2018-12-07T10:55:13  <the-t-in-rtf>                 "com.freedomscientific.jaws": {
+2018-12-07T10:55:13  <the-t-in-rtf>                     "active": true,
+2018-12-07T10:55:13  <the-t-in-rtf>                     "settings": {
+2018-12-07T10:55:14  <the-t-in-rtf>                         "http://registry.gpii.net/common/keyEcho": false,
+2018-12-07T10:55:14  <the-t-in-rtf>                         "http://registry.gpii.net/common/wordEcho": true
+2018-12-07T10:55:15  <the-t-in-rtf>                     }
+2018-12-07T10:55:15  <the-t-in-rtf>                 },
+2018-12-07T10:55:16  <the-t-in-rtf>                 "com.freedomscientific.magic": {
+2018-12-07T10:55:47  <the-t-in-rtf> I guess there are some settings that have a crosswalk to JAWS settings via a shared common term?
+2018-12-07T11:25:08  <javjarfer[m]> Good Friday morning Bosmon ! I have addressed the latest feedback, you can see the changes in the pad
+2018-12-07T11:25:19  <javjarfer[m]> https://pad.gpii.net/p/jjs-pull-status-67c4nr5
+2018-12-07T11:34:55  <Bosmon> javjarfer[m] - yup, work is ongoing!
+2018-12-07T11:35:02  <Bosmon> Looks like we are going to have a massive sweep of these today
+2018-12-07T11:35:03  <dandimitrov> hey, stegru, me again
+2018-12-07T11:35:18  <stegru> hi
+2018-12-07T11:35:36  <dandimitrov> tried the latest version of GPII-3544 - here’s a little something  https://pastebin.com/cNpiPbFe : )
+2018-12-07T11:36:04  <dandimitrov> Looks like the trouble comes from here - https://github.com/GPII/windows/blob/0e8a5e3f82ad8f321e895abb80f27444e27e8835/gpii/node_modules/gpii-localisation/src/language.js#L279
+2018-12-07T11:39:09  <javjarfer[m]> Bosmon: that will be great, moving to new stuff!
+2018-12-07T11:42:05  <stegru> dandimitrov, try it now :)
+2018-12-07T11:42:59  <dandimitrov> Hey, Bosmon, would you have the time today to take a look at our Morphic 1.0.1 PR :?
+2018-12-07T11:45:35  <dandimitrov> stegru: nope :/
+2018-12-07T11:45:36  <dandimitrov> https://pastebin.com/cs9mhXqL
+2018-12-07T11:47:23  <the-t-in-rtf> So, my latest theory was correct, I have inverse transforms in my solution that produce a common term that in turn is transformed to JAWS-specific settings
+2018-12-07T11:48:37  <Bosmon> dandimitrov - sure
+2018-12-07T11:48:41  <javjarfer[m]> Nice catch with the retrying Bosmon , I will remove all the present in that pull and will update others
+2018-12-07T11:48:55  <stegru> dandimitrov - now?
+2018-12-07T11:49:18  <stegru> If I keep entering random pieces of code, it will eventually work
+2018-12-07T11:52:19  <dandimitrov> stegru: flawlessly ;)
+2018-12-07T11:53:18  <dandimitrov> everything seems ok now
+2018-12-07T11:53:24  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has left #fluid-work
+2018-12-07T11:53:39  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has joined #fluid-work
+2018-12-07T11:59:19  <the-t-in-rtf> @stegru, is there a better code page to use than 65001 for logging console output with tee?
+2018-12-07T11:59:38  <the-t-in-rtf> I still have to run the results through dos2unix on the OSX side, and not just for the CR/LFs
+2018-12-07T12:01:22  <stegru> using powershell tee? I don't know
+2018-12-07T12:02:08  <stegru> i usually do "> log", then "tail -f log" on the host
+2018-12-07T12:02:14  <Bosmon> dandimitrov - looks pretty good to me, only a few minor comments and bumps of a couple of old comments
+2018-12-07T12:04:02  <dandimitrov> the-t-in-rtf, stegru: `tee` doesn’t work in case you force quit the application
+2018-12-07T12:04:42  <the-t-in-rtf> redirecting to a file does?
+2018-12-07T12:04:58  <dandimitrov> I use cmder (instead of powershell) on the VM with two windows like the approach stegru suggested
+2018-12-07T12:05:03  <dandimitrov> yep
+2018-12-07T12:05:44  <dandimitrov> “tee” command never writes to file in case the previous command doens’t finish
+2018-12-07T12:05:52  <dandimitrov> or so it looks to me
+2018-12-07T12:05:53  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has left #fluid-work
+2018-12-07T12:16:14  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has joined #fluid-work
+2018-12-07T12:19:43  *** alf_ <alf_!~alf@static-129-53-85-188.ipcom.comunitel.net> has joined #fluid-work
+2018-12-07T12:19:51  <dandimitrov> the-t-in-rtf, one other thing I use - In case the logs are flooding you could also try `tail -f .log | grep -A 5 -e "<message1 prefix>" -e "<message2 prefix>" …` to see only console.logs you need
+2018-12-07T12:19:57  *** alf_ is now known as amatas
+2018-12-07T12:20:23  <the-t-in-rtf> yes, I can't do that because the encoding is borked
+2018-12-07T12:20:52  <the-t-in-rtf> maybe I can pipe it through dos2unix in real time on my end
+2018-12-07T12:21:17  <the-t-in-rtf> there are also options to force proper BOM-less utf8 encoding in powershell, but I'd have to do that every time I recreate the VM
+2018-12-07T12:21:24  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3fc2:1300:8cb:9833:37d5:8237> has joined #fluid-work
+2018-12-07T12:21:25  <the-t-in-rtf> I was hoping for something as simple as chcp to work
+2018-12-07T12:22:26  <amatas> Hi Bosmon, the ops team was revisiting some issues in our backlog. We were wondering about the status of https://issues.gpii.net/browse/GPII-3309 and https://issues.gpii.net/browse/GPII-3310 . Can you give us how is the progress of both issues?
+2018-12-07T12:22:55  <the-t-in-rtf> But this works:  https://stackoverflow.com/questions/40098771/changing-powershells-default-output-encoding-to-utf-8
+2018-12-07T12:28:07  <javjarfer[m]> HI Bosmon regarding to this comment https://github.com/GPII/universal/pull/636#discussion_r239781017, are you referring to every "fluid.transform.value" with no input?
+2018-12-07T12:28:19  <javjarfer[m]> Should I remove all the inverses in the SR like those?
+2018-12-07T12:32:39  <dandimitrov> the-t-in-rtf, yeah, I also had troubles with the encoding - using http://cmder.net/ instead of PowerShell fixed that for me
+2018-12-07T12:34:15  <the-t-in-rtf> interesting, thanks.
+2018-12-07T12:46:30  *** alf_ <alf_!~alf@static-129-53-85-188.ipcom.comunitel.net> has joined #fluid-work
+2018-12-07T12:49:26  *** amatas <amatas!~alf@static-129-53-85-188.ipcom.comunitel.net> has quit IRC (Ping timeout: 272 seconds)
+2018-12-07T12:50:35  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has joined #fluid-work
+2018-12-07T12:51:03  <the-t-in-rtf> OK, so I'm now stuck with the registry resolver apparently returning undefined for various solutions
+2018-12-07T12:51:06  <the-t-in-rtf> I see stuff like:
+2018-12-07T12:51:06  <the-t-in-rtf>                 "setTrue": [
+2018-12-07T12:51:06  <the-t-in-rtf>                     {
+2018-12-07T12:51:06  <the-t-in-rtf>                         "type": "gpii.launch.exec",
+2018-12-07T12:51:06  <the-t-in-rtf>                         "command": undefined
+2018-12-07T12:51:06  <the-t-in-rtf>                     }
+2018-12-07T12:51:07  <the-t-in-rtf>                 ],
+2018-12-07T12:51:19  <the-t-in-rtf> that's for an entry I haven't changed, JAWS 2018
+2018-12-07T12:51:28  <the-t-in-rtf> which used to launch when I onboarded it
+2018-12-07T12:51:55  <the-t-in-rtf> that should be resolving from the registry:
+2018-12-07T12:51:55  <the-t-in-rtf> "command": "\"${{registry}.HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\JAWS2018.exe\\}\""
+2018-12-07T12:52:24  <the-t-in-rtf> I see that nvda and others use the registry resolver
+2018-12-07T12:53:16  <the-t-in-rtf> hmm, I suspect that it's simply that it's trying to launch JAWS because of the crosswalk and not able to find the registry key
+2018-12-07T13:02:14  *** alf_ is now known as amatas
+2018-12-07T13:06:10  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has quit IRC (Quit: dandimitrov)
+2018-12-07T13:26:53  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:205c:326:112c:586b> has joined #fluid-work
+2018-12-07T13:45:50  *** dandimitrov <dandimitrov!~danailbd@62.44.101.78> has joined #fluid-work
+2018-12-07T13:45:59  *** dandimitrov <dandimitrov!~danailbd@62.44.101.78> has quit IRC (Client Quit)
+2018-12-07T13:46:41  *** amatas <amatas!~alf@static-129-53-85-188.ipcom.comunitel.net> has quit IRC (Quit: amatas)
+2018-12-07T13:48:26  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2018-12-07T13:50:11  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Client Quit)
+2018-12-07T13:53:24  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2018-12-07T14:01:21  *** clown <clown!~clown@ckvlon1747w-lp130-03-64-231-43-240.dsl.bell.ca> has joined #fluid-work
+2018-12-07T14:01:47  * javjarfer[m] sent a long message:  < https://matrix.org/_matrix/media/v1/download/matrix.org/skIwVZjgUTeHGybUUtMWxqjr >
+2018-12-07T14:02:06  <javjarfer[m]> undefined settings in the universal node tests
+2018-12-07T14:05:23  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-tedncmpodqbnmsoc> has joined #fluid-work
+2018-12-07T14:06:21  <Justin_o> alanharnum: i've run into a problem trying to get the docpad configuration working. It seems that the config for handlebars helpers are not being passed down to the plugin. I'm  still trying to figure out why. I'll be heading offline at about 10:30, but I'll keeping pressing on in the meantime. Not sure I'll get something working before then though.
+2018-12-07T14:08:10  <alanharnum> Justin_o: OK, thanks - if you've got your code in a branch I'll try and have a look at that point, I may be able to pintpoint it
+2018-12-07T14:09:00  <Justin_o> alanharnum: thanks.. i haven't committed anything yet, but i will do that before i head off
+2018-12-07T14:11:28  *** amatas <amatas!~alf@static-129-53-85-188.ipcom.comunitel.net> has joined #fluid-work
+2018-12-07T14:11:32  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2018-12-07T14:18:46  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2018-12-07T14:21:09  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2018-12-07T14:23:01  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.101> has joined #fluid-work
+2018-12-07T14:27:22  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has joined #fluid-work
+2018-12-07T14:49:47  *** amatas <amatas!~alf@static-129-53-85-188.ipcom.comunitel.net> has quit IRC (Ping timeout: 246 seconds)
+2018-12-07T15:23:01  <Justin_o> alanharnum: here's the branch with my work https://github.com/jobara/infusion-docs/tree/FLUID-6324
+2018-12-07T15:23:54  <Justin_o> still have the same issue. When you run "docpad run" it only creates an empty "out" directory. When you run "docpad generate" it throws an error because it can't find the handlebar helpers that are configured in docpad.js
+2018-12-07T15:25:58  <Justin_o> alanharnum: this could be related to the docpad v6.24.0 change ( https://libupdate.com/libs/b9b44047-be7a-4e8c-888b-e4553f57abad ) to how configuring is set with setConfig. But the plugin appears to have been updated for that. Also the plugin's documentation ( https://github.com/docpad/docpad-plugin-handlebars/blob/master/README.md#getting-helpers-and-partials-to-work ) and tests (
+2018-12-07T15:25:58  <Justin_o> https://github.com/docpad/docpad-plugin-handlebars/blob/master/test/docpad.coffee ) both appear to show that our setup is correct.
+2018-12-07T15:26:26  <alanharnum> Justin_o: OK, I'll have a look myself and see if I can figure anything out
+2018-12-07T15:27:02  <Justin_o> alanharnum: thanks.. please let me know if you do. If i have time later today I'll try to look into it again some more.
+2018-12-07T15:35:28  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:205c:326:112c:586b> has quit IRC ()
+2018-12-07T15:36:29  *** georgit <georgit!~georgi.to@37.157.190.158> has quit IRC (Quit: Leaving)
+2018-12-07T15:38:11  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has quit IRC (Quit: Leaving.)
+2018-12-07T15:46:39  <cindyli> Justin_o: with UIO+, how is "selection highlight" supposed to work? to test it, is it to select a block of text and the background of the selected text should be the color picked in "selection highlight"?
+2018-12-07T15:47:09  <Justin_o> cindyli: yes
+2018-12-07T15:47:25  <Justin_o> but you can select any amount of text you like
+2018-12-07T15:47:58  <cindyli> the background color doesn't seem to change
+2018-12-07T15:48:11  <Justin_o> can you quickly screen share with me
+2018-12-07T15:48:28  <cindyli> ok. calling u
+2018-12-07T15:52:39  <jhernandez> Bosmon: stegru hey there
+2018-12-07T15:52:50  <stegru> hola
+2018-12-07T15:53:00  <jhernandez> any thoughts about creating an installer today with whatever we have in place?
+2018-12-07T15:53:54  <jhernandez> it's only for internal testing
+2018-12-07T15:53:58  <stegru> I would like the metrics in
+2018-12-07T15:54:31  <jhernandez> yeah, I think that one is a MUST HAVE, I've seen your exchange today about it with Alfredo
+2018-12-07T15:54:47  <stegru> yes, I need to do something for that
+2018-12-07T15:54:49  <jhernandez> stegru: do you also need to do anything in the filebeat side?
+2018-12-07T15:55:04  <stegru> i'll give a filebeat.msm in a moment
+2018-12-07T15:55:19  <stegru> by the way, we need to work out how to get that building automatically
+2018-12-07T15:55:27  <jhernandez> the filebeat?
+2018-12-07T15:55:31  <stegru> yeh
+2018-12-07T15:56:18  * jhernandez nods
+2018-12-07T15:56:21  <Bosmon> OK
+2018-12-07T15:56:31  <Bosmon> I'll try to put in https://github.com/GPII/windows/pull/215 now
+2018-12-07T15:57:44  <jhernandez> stegru: it would be great if you can write a JIRA with that you would like to have in place for the automatic filebeat thing
+2018-12-07T15:58:13  <jhernandez> I barely know about the build process
+2018-12-07T15:58:52  <jhernandez> I took a look in the past, but since you always give us the msm file ...
+2018-12-07T15:59:07  <stegru> what about also including #222, the tray button? it's not ready to be merged, but it's ready for "internal testing"
+2018-12-07T15:59:20  <stegru> when do you plan on producing this build, jhernandez ?
+2018-12-07T15:59:24  <jhernandez> I guess we also should include it as part of our gpii organization in github
+2018-12-07T15:59:30  <jhernandez> Bosmon: thanks for that
+2018-12-07T15:59:31  <stegru> yeh
+2018-12-07T15:59:50  <jhernandez> stegru: I can work tonight on creating one with whatever we want to include
+2018-12-07T16:00:04  <jhernandez> it's starting to become a tradition
+2018-12-07T16:00:35  <jhernandez> wait until the next is over and put things together and see if it's feasible or not to produce a meaningful installer
+2018-12-07T16:00:36  <jhernandez> :P
+2018-12-07T16:00:57  <stegru> heh yes
+2018-12-07T16:01:24  <jhernandez> *until the week is over
+2018-12-07T16:01:51  <jhernandez> in an hour or so I'll be heading to the airport
+2018-12-07T16:02:12  <stegru> well, i'm going to the chippy soon
+2018-12-07T16:02:38  <jhernandez> and I'll have diner with him
+2018-12-07T16:02:53  <jhernandez> but I can put the pieces together at night
+2018-12-07T16:03:30  <stegru> ok ping ming just before you start getting it together
+2018-12-07T16:03:36  <stegru> or ping me
+2018-12-07T16:03:49  <jhernandez> stegru: chippy = fish and chips place?
+2018-12-07T16:03:58  <stegru> yes, that's right
+2018-12-07T16:14:35  <Bosmon> Hi there cindyli - how are you getting on?
+2018-12-07T16:14:39  <Bosmon> What is on your plate at the moment
+2018-12-07T16:16:04  <cindyli> Bosmon: working on this one - https://issues.gpii.net/browse/GPII-3424
+2018-12-07T16:16:33  <Bosmon> cindyli - wow, cool
+2018-12-07T16:17:08  <cindyli> Bosmon: nothing urgent in my plate. let me know if you are aware of something that is more urgent?
+2018-12-07T16:18:17  <Bosmon> cindyli - something for https://issues.gpii.net/browse/GPII-3396 since currently I always comment out that test whenever I test a pull : P
+2018-12-07T16:18:31  <Bosmon> But similarly not urgent
+2018-12-07T16:20:47  <cindyli> the difficulty with GPII-3396 is I never successfully reproduced the failure
+2018-12-07T16:25:20  <bryan_> @Bosmon: I'm trying that new VM to see if it fixes my issue
+2018-12-07T16:25:30  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-btjapgwxtjnmaufv> has joined #fluid-work
+2018-12-07T16:25:47  <jhernandez> stegru: re the tray button, I can include it, yes - just one thing, we want to configure gpii-app to ONLY use the new tray button, right?
+2018-12-07T16:26:04  <stegru> I don't know about that
+2018-12-07T16:26:11  <stegru> i presume so
+2018-12-07T16:26:16  <jhernandez> okay
+2018-12-07T16:44:53  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-btjapgwxtjnmaufv> has quit IRC (Remote host closed the connection)
+2018-12-07T16:45:22  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-xmaceajecdqfizwu> has joined #fluid-work
+2018-12-07T16:49:58  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-xmaceajecdqfizwu> has quit IRC (Remote host closed the connection)
+2018-12-07T16:50:10  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-tfsxquztkuifccua> has joined #fluid-work
+2018-12-07T16:54:48  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-tfsxquztkuifccua> has quit IRC (Remote host closed the connection)
+2018-12-07T16:55:17  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-ucspakqsrpjdnazu> has joined #fluid-work
+2018-12-07T16:55:47  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has quit IRC (Quit: colinclark)
+2018-12-07T18:08:59  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has joined #fluid-work
+2018-12-07T18:16:40  *** colinclark <colinclark!~colinclar@205.211.168.101> has joined #fluid-work
+2018-12-07T18:50:50  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2018-12-07T18:58:21  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-ucspakqsrpjdnazu> has quit IRC (Remote host closed the connection)
+2018-12-07T18:58:29  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-lckiatrgqoxeijim> has joined #fluid-work
+2018-12-07T19:04:00  *** colinclark <colinclark!~colinclar@205.211.168.101> has quit IRC (Quit: colinclark)
+2018-12-07T20:40:11  *** colinclark <colinclark!colinclark@nat/ocadu/x-xvonbzeeaypzppbx> has joined #fluid-work
+2018-12-07T20:55:54  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2018-12-07T21:02:38  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2018-12-07T21:15:17  *** colinclark <colinclark!colinclark@nat/ocadu/x-xvonbzeeaypzppbx> has quit IRC (Quit: colinclark)
+2018-12-07T21:15:30  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2018-12-07T21:15:35  *** colinclark <colinclark!colinclark@nat/ocadu/x-lykvhkwbronkuhia> has joined #fluid-work
+2018-12-07T21:32:35  <stegru> jhernandez, I have nothing else for your installer.. just gpii-app#70 + gpii-windows#222 for the tray button
+2018-12-07T21:33:37  <stegru> if you're including the 1.0.1 branch from astea, then you'll also need gpii-windows#223 (gpii-3544)
+2018-12-07T21:50:43  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.101> has quit IRC (Quit: sepidehshahi)
+2018-12-07T22:06:41  <jhernandez> stegru: aye
+2018-12-07T22:07:54  <jhernandez> yeah, I was planning to include 1.0.1 branch from Astea
+2018-12-07T22:08:00  <jhernandez> thanks for the heads up!
+2018-12-07T22:08:19  <jhernandez> I'll let you know over the weekend
+2018-12-07T22:08:54  <jhernandez> and thanks for the great job!
+2018-12-07T22:08:55  <jhernandez> :)
+2018-12-07T22:29:01  *** clown <clown!~clown@ckvlon1747w-lp130-03-64-231-43-240.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2018-12-07T22:33:47  *** colinclark <colinclark!colinclark@nat/ocadu/x-lykvhkwbronkuhia> has quit IRC (Ping timeout: 244 seconds)
+2018-12-07T22:58:29  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-lckiatrgqoxeijim> has quit IRC ()
+2018-12-07T23:18:20  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has quit IRC (Quit: Leaving.)

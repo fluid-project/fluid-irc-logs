@@ -1,0 +1,157 @@
+2020-09-17T12:33:32  <Justin_o> Bosmon2, Bosmon: I'm working my way through FLUID-6538 again while I wait for those other related PRs for the linting to be reviewed. Anyways, an issue I'm running into now is that the Uploader uses an async function as a handler for an onCreate event. And it seems that this is causing some issues in one of the tests. I'm pretty sure I can work around this by adding more events.
+2020-09-17T12:34:00  <Justin_o> However, it also got me wondering if components should be all asynchronous and just return a promise that resolves with "that"
+2020-09-17T12:34:02  <Bosmon2> Cheers, Justin_o - which is the handler?
+2020-09-17T12:34:19  <Bosmon2> Justin_o - well, in the new framework they pretty much are
+2020-09-17T12:34:21  <Justin_o> of course that would make everything in infusion async
+2020-09-17T12:34:27  *** Bosmon2 is now known as Bosmon
+2020-09-17T12:34:37  <Justin_o> Bosmon2: yes, I was thinking that might be the case given the timing things you were working out
+2020-09-17T12:35:03  <Bosmon> Although in practice what you get is a partially constructed component rather than a promise, but you can access the promise pretty easily using the new API
+2020-09-17T12:35:16  <Bosmon> We couldn't actually make component creator functions return promises since that would break compatibility with everything
+2020-09-17T12:35:33  <Justin_o> Bosmon: here is the listener https://github.com/fluid-project/infusion/blob/master/src/components/uploader/js/FileQueueView.js#L428
+2020-09-17T12:36:36  <Justin_o> so this is from a subcomponent so I haven't traced it all the way back up yet.
+2020-09-17T12:37:14  <Justin_o> That particular handler is async because of the internal call to fluid.selectable  https://github.com/fluid-project/infusion/blob/master/src/components/uploader/js/FileQueueView.js#L277
+2020-09-17T12:37:20  <Justin_o> which is async
+2020-09-17T12:38:22  <Bosmon> Justin_o - I don't think it should be
+2020-09-17T12:38:29  <Bosmon> Perhaps you've gone a bit far with the asyncifying?
+2020-09-17T12:38:44  <Justin_o> as was mentioned in that post from gmoss it would probably be easier if everything was just async or treated as such.. trying to trace these things out and their insidious nature is a challenge, and it isn't at all clear to someone using the function that it is async.
+2020-09-17T12:38:56  <Justin_o> fluid.selectable?
+2020-09-17T12:40:43  <Bosmon> Justin_o - yes, that
+2020-09-17T12:41:39  <Justin_o> Bosmon: that all filters down to this fluid.focus call in reifyIndex https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/jquery.keyboard-a11y.js#L303
+2020-09-17T12:42:45  <Bosmon> Justin_o - oh yes, I see
+2020-09-17T12:42:47  <Bosmon> How awkard
+2020-09-17T12:42:56  <Justin_o> let me know if you want me to push up any of my work so far so you can look at it
+2020-09-17T12:42:59  <Justin_o> Bosmon: ^
+2020-09-17T12:43:23  <Justin_o> Bosmon: changing a low level function to async is like a butterfly flapping it's wings
+2020-09-17T12:43:31  <Bosmon> Justin_o - it's horrific
+2020-09-17T12:43:39  <Bosmon> The WHOLE WORLD IS TURNING BLUE : P
+2020-09-17T12:46:03  <Bosmon> To be honest, I would perform the same trick with fluid.selectable that we do in the new framework
+2020-09-17T12:46:20  <Bosmon> Which is have the creator function pretend to be synchronous and stick a promise on it that people can listen to who really care
+2020-09-17T12:46:41  <Bosmon> We can't afford to make the onCreate workflow of fluid.uploader asynchronous, the knockon impact of that would be unworable
+2020-09-17T12:46:45  <Bosmon> unworkable
+2020-09-17T12:46:53  <Bosmon> And in practice, the component *is* constructed
+2020-09-17T12:48:31  <Justin_o> Bosmon: I'm thinking we can leave the keyboard a11y stuff as is with the proper async and treat it's use in uploader as synchronous maybe..
+2020-09-17T12:48:51  <Justin_o> I mean we can just add more events in terms of the fileQueueView to say when the keyboard bindings are actually done
+2020-09-17T12:49:03  <Justin_o> and wait on those for case we actually need it.. does that seem okay?
+2020-09-17T12:49:22  <Bosmon> Justin_o - the keyboard bindings *are* done when fluid.selectable returns
+2020-09-17T12:49:24  <Justin_o> I mean I guess I'll have to work more things out but that should get past this particular test failure I think
+2020-09-17T12:49:32  <Bosmon> It's just that the DOM may not have focused itself yet
+2020-09-17T12:50:04  <Justin_o> Bosmon: but that's a problem when you do all these things programatically to move or track focus
+2020-09-17T12:50:13  <Bosmon> And even if it never does, we certainly don't want to hold up construction of the component
+2020-09-17T12:50:35  <Justin_o> Bosmon: well that's another problem, in that the promises never return if something isn't actually focused/blurred
+2020-09-17T12:50:43  <Bosmon> Justin_o - exactly
+2020-09-17T12:50:48  <Justin_o> in the old world things would carry on, but now they just stop
+2020-09-17T12:51:05  <Bosmon> In practice, focus is an unfathomable external interaction
+2020-09-17T12:51:19  <Bosmon> Justin_o - well, many test cases did jam, even in the old world
+2020-09-17T12:51:22  <Justin_o> I had to write a timeout for a test for the keyboard a11y plugin for a test that intentionally tried to focus an unfocusable element
+2020-09-17T12:52:32  <Bosmon> Justin_o - yes, the timeout is a great plan
+2020-09-17T12:53:24  <Justin_o> Bosmon: here's a draft PR with my work so far https://github.com/fluid-project/infusion/pull/1008
+2020-09-17T12:53:29  <Justin_o> probably easier to look at things there
+2020-09-17T12:53:43  <Justin_o> that doesn't include anything for the uploader yet
+2020-09-17T12:54:01  <Justin_o> trying to sort through uploader and reorder changes may be the hardest part.. we'll see ;)
+2020-09-17T12:54:05  <Bosmon> Justin_o - sure - I think if you return the signature of fluid.selectable to what it was, you shouldn't need to do anything for the uploader
+2020-09-17T12:56:09  <Justin_o> Bosmon: I think I'll still need to fix something for this test https://github.com/fluid-project/infusion/blob/master/tests/component-tests/uploader/js/FileQueueViewTests.js#L285-L301
+2020-09-17T12:56:20  <Justin_o> which needs focus to actually be all setup because it attempts to move it
+2020-09-17T12:56:28  <Justin_o> that moving of selection is also async I think
+2020-09-17T12:57:05  <Bosmon> Justin_o - wow, this really is pretty abominable
+2020-09-17T12:57:12  <Bosmon> Perhaps we really should just do the main Infusion upgrade
+2020-09-17T12:57:22  <Bosmon> It would certainly make Colin happier
+2020-09-17T12:57:36  <Justin_o> what is the main Infusion upgrade?
+2020-09-17T12:57:41  <Bosmon> Because we don't really have an answer for problems like this unless we can somehow express the fact that component construction might be asynchronous
+2020-09-17T12:57:47  <Bosmon> Justin_o - I mean, to merge my FLUID-6145 branch
+2020-09-17T12:57:55  <Bosmon> Pretty much everyone is depending on it anyway
+2020-09-17T12:58:42  <Bosmon> And after that we then at least have the option to stuff a funny "focus" entry into the "resources" block of the component, to express the fact that it is not actually ready until it manages to shift focus
+2020-09-17T12:59:36  <Bosmon> Well ok, I think that's going a bit far
+2020-09-17T12:59:50  <Bosmon> This test only depends that the result of fluid.focus itself is async
+2020-09-17T13:01:22  <Justin_o> Bosmon: I wouldn't mind seeing your work get into master for other reasons too. Like the fact that all our dev releases are based off of it anyways. And also there are big UIO changes that were merged into there and we should really have public docs for those too.
+2020-09-17T13:02:01  <Justin_o> Bosmon: yes, I think that's the case. There were other tests higher up that also had to be made async but those were more straightforward than this case..
+2020-09-17T13:02:56  <Bosmon> Justin_o - in any case I think we need to think even more carefully about what the contract of fluid.selectable really is
+2020-09-17T13:03:20  <Bosmon> I mean, just imagine the situation in which a whole bunch of components that have called fluid.selectable have just been instantiated on the page
+2020-09-17T13:03:29  <Bosmon> At most one of them, in practice, can finally get the focus
+2020-09-17T13:03:44  <Bosmon> And the browser is perfectly within its rights to eliminate the focus events for all of the ones that lose the race
+2020-09-17T13:03:55  <Justin_o> hmm.. well I guess they could all get focus at some point, but only at most one would retain it
+2020-09-17T13:04:05  <Justin_o> yes, I guess that's true
+2020-09-17T13:06:00  <Bosmon> Justin_o - well, none of them may retain it
+2020-09-17T13:06:06  <Bosmon> If yet some further unrelated component requests it
+2020-09-17T13:06:24  <Bosmon> In practice, it's not really clear that fluid.selectable should be attempting to shift focus at all
+2020-09-17T13:09:37  <Justin_o> Bosmon: it's a good point because of what you mentioned above.. but what would happen with the navigation functions? no-ops if there if the related elements don't already have focus.. move focus anyways?
+2020-09-17T13:10:25  <Bosmon> Well, we should sit and write down these semantics carefully at some point, but my feeling about fluid.selectable is that its selection model is intended to be "sticky"
+2020-09-17T13:10:58  <Bosmon> That is, that if focus moves on to one of the elements under control, it should bind onto that state, but if focus then moves outside its management completely, it shouldn't react at all, but continue with its former state
+2020-09-17T13:11:27  <Bosmon> So the navigation functions, when they are operated, should proceed on the model that whatever of the managed elements was previously focused, is still focused
+2020-09-17T13:13:05  <Bosmon> I suspect that this is what the component does already
+2020-09-17T13:13:18  <Bosmon> Since I notice that the containerBlurHandler is essentially a no-op
+2020-09-17T13:13:43  <Bosmon> Oh wait, no
+2020-09-17T13:14:02  <Bosmon> There is a selectableBlurHandler
+2020-09-17T13:14:30  <Bosmon> Which does indeed restore the selectable state to nothing being selected
+2020-09-17T13:14:58  <Bosmon> Good to remind ourselves of all these things : P
+2020-09-17T13:16:39  <Justin_o> :) I didn't really work on this part of the code before so it's mostly new to me
+2020-09-17T13:20:27  <Bosmon> Justin_o - ok, looking at this in more detail, I believe that the uploader startup should not result in fluid.focus being called at all
+2020-09-17T13:20:54  <Bosmon> The default initial value for activeItemIndex is NO_SELECTION
+2020-09-17T13:22:24  <Bosmon> This implies that when we hit reifyIndex it should not attempt to focus anything
+2020-09-17T13:50:52  <Justin_o> Bosmon: sorry, had to take care of something.. back now..
+2020-09-17T13:50:59  <Bosmon> Justin_o - hi
+2020-09-17T13:51:12  <Justin_o> Bosmon: but the problem with reifyIndex is that we don't know if it will result in an async call or not
+2020-09-17T13:51:22  <Justin_o> so we need to treat it like an async call all the time
+2020-09-17T13:52:00  <Justin_o> but maybe you're saying that in practice it should be resolving immediately.. but I wonder if the async/await is moving it off the thread anyways
+2020-09-17T13:52:19  <Justin_o> I think I'm getting the terms wrong
+2020-09-17T13:52:56  <Bosmon> Justin_o - well, we don't
+2020-09-17T13:53:05  <Bosmon> Because the uploader *does* know that it will not result in an async call : P
+2020-09-17T13:53:18  <Bosmon> This has always been one of the crucial differences between our promise model and those of others .....
+2020-09-17T13:53:43  <Bosmon> In the wider industry, these kinds of issues go by the name of "ZALGO"
+2020-09-17T13:53:52  <Bosmon> Which is a kind of condition that can make some people very agitated
+2020-09-17T13:54:14  <Bosmon> But this is exactly one of the cases where this kind of agitation would lead one to needlessly complicate a design
+2020-09-17T13:58:58  <Justin_o> I'm not sure I understand ZALGO, do you have a reference or maybe I don't want to see it ;)
+2020-09-17T14:03:37  <stegru> ḧ̴̼̥͈̙̩͉̲̬͋̀̏ͩ̐͝ȇ̢̡̙̻̗̖̤̀̋l̵̗̩̝͔ͦ̄ͮ͋͆̀̌l̸̝̞̩͕̼͖̹̜͌̊̒͋̈̕͢o̸ͧ̊͐҉̗͚̥͔̦̣
+2020-09-17T14:04:29  <Justin_o> stegru: your name is showing up in a strange font for me.. did you make it do that?
+2020-09-17T14:05:23  <stegru> it's "zalgo" text
+2020-09-17T14:07:57  <Justin_o> ohhh spooky
+2020-09-17T14:08:08  <Justin_o> how were you able to type like that in IRC?
+2020-09-17T14:09:05  <stegru> well, it's quite complicated...
+2020-09-17T14:10:48  <stegru> i typed into google "zalgo text", clicked the first link that came up, i then typed in "hello". I highlighted the output... clicked the "Copy" button on the Morphic Community bar.. then I clicked on my irc client, and clicked the "Paste" button on the bar
+2020-09-17T14:11:39  <Justin_o> amazing.. I thought it would have stripped the text formatting.
+2020-09-17T14:12:33  <stegru> ah, it's special unicode characters that modify the adjactent character
+2020-09-17T14:12:57  <stegru> and you can stack them up
+2020-09-17T14:13:33  <stegru> i doubt this is what Bosmon is on about, however
+2020-09-17T14:13:41  <Justin_o> å̷̒ͩ̓̔ͬ̒̃̍ͧ͛ͫͪ͋͊́͟͏̵͚̰̬̣͉̩ș̢͇̦̪̮̭̍̌ͧ̆͜y̷̛͈̳̼̫̼̰̳̼̤̬͖̫ͭͯ̅n̨̫̗͖̩̟̭̥̠͓̦̳̄̌̓ͬͤ̌̇̋ͤ͑̓͛̒ͫ̔ͫ͋ͫ̑̀͠cͧ̓̏͌̌̔̊̐͡͏̞̤̝͚͇̠̞͙͜͞
+2020-09-17T14:13:41  <Justin_o> ̵͖̞̘̰̮̠̠̞̦͉̮̳̤͉̆̀̎̾̎̈́̔̂ͭ̅̂ͅc̶͔̺̼͓̣̟̮̳̼̥͖̞̞͖̆̃ͥ̒̌̑̿ͧͩͮ͌̑̾̾͂̍͗͆ͮ͘͝o͉͖̬̣̼̲̹̭̮̖̾͗͗̓̈́͆̐ͧ̃ͦͪ̊͂͡͝ͅͅḑ̦̖̰͎̹̼̻̒̂͂́ͨͩ͌ͯ̋͋ͣ́͜͞e̒̉̉̿͆̎ͬͯ̅̚͏̵͏̥̪̫͙͇͕̲̺̥̜͍̪̗̫̟̤̜
+2020-09-17T14:13:56  <Justin_o> that's crazy stuff.. really feels like what I'm working on actually
+2020-09-17T14:14:18  <stegru> we have similar jobs
+2020-09-17T14:17:27  <Justin_o> lol good luck
+2020-09-17T14:57:30  *** clown is now known as clown_afk
+2020-09-17T14:59:57  <Bosmon> Justin_o - well this is pretty interesting
+2020-09-17T15:00:14  <Bosmon> I find in the years since the original Zalgo debate, someone has agreed with my viewpoint on it and gathered evidence in favour of the viewpoint : P
+2020-09-17T15:00:15  <Bosmon> https://medium.com/@bluepnume/intentionally-unleashing-zalgo-with-promises-ab3f63ead2fd
+2020-09-17T15:01:12  <Bosmon> Thankfully my IRC client is so old it simply displayed stegru's zalgo text as ordinary text : P
+2020-09-17T15:02:24  <Justin_o> Bosmon: you missed out on my "async code" Zalgo text too
+2020-09-17T15:02:41  <Justin_o> it's a nice analogy to the spread that dropping a bit of async has
+2020-09-17T15:02:57  <Bosmon> I did actually see some semi-visible corrupt stuff for that : P
+2020-09-17T15:03:18  <Justin_o> how fitting :)
+2020-09-17T15:04:02  <Justin_o> Bosmon: I'm reading through the article you shared.. I had been puzzling over your comment about the uploader treating things as sync... maybe this article will help with that
+2020-09-17T15:04:12  <Bosmon> Anyway, yes, what I recommend is that you make the return value of selectable as the component as usual, and then stick a promise on it that someone can listen to if they want to
+2020-09-17T15:05:13  <Justin_o> Bosmon: would that mean that the other functions stay as async, and its only the "constructor" function that is still treated as sync?
+2020-09-17T15:05:29  <Bosmon> Justin_o - yes
+2020-09-17T15:06:55  <Justin_o> Bosmon: okay, I'll work out that change and hopefully things will just sort themselves out up the chain.. thanks for the help with this.. it's all so mindbending
+2020-09-17T15:12:00  <Justin_o> Bosmon: is there a "standard" or conventional name I should use for attaching the promise to the "that"?
+2020-09-17T15:20:54  <Bosmon> Justin_o - I've used names like "completionPromise" or "constructionPromise"... or in the case of IoC transaction promises, simply "promise" ...
+2020-09-17T15:59:06  *** clown_afk is now known as clown
+2020-09-17T16:16:32  <Justin_o> Bosmon: thanks, I'll think what makes sense in this case..
+2020-09-17T16:16:39  <Justin_o> I guess it'll still be a native promise thoug
+2020-09-17T16:16:51  <Justin_o> or we could do both a native and infusion promise I suppose
+2020-09-17T16:17:58  <Bosmon> Justin_o - well, if we ignore the promise, it doesn't really matter what kind of promise it was :)
+2020-09-17T16:18:18  <Justin_o> that's true
+2020-09-17T16:18:19  <Justin_o> :)
+2020-09-17T16:18:31  <Bosmon> I think, to avoid hideous incompatibility, we need the return value of fluid.selectable to remain the component
+2020-09-17T16:18:40  <Bosmon> Just as we did for all "real" Infusion components
+2020-09-17T18:25:09  <colinclark> jhung, Justin_o, michelled: I’m so sorry to have missed our meeting
+2020-09-17T18:25:26  <colinclark> my errand ran much longer than I expected
+2020-09-17T18:26:40  <jhung> colinclark no worries. We went over michelled's rainbow spreadsheet to get a better understanding of the timeline.
+2020-09-17T18:26:45  <colinclark> oh great
+2020-09-17T18:26:48  <colinclark> that’s good
+2020-09-17T18:27:34  <Justin_o> colinclark: no problem, we're planning to do the brainstorming part when Lisa's back.
+2020-09-17T18:27:54  <jhung> I'm going to follow-up with VR and LL to see how I can assist with any of the guidelines work.
+2020-09-17T18:28:18  <colinclark> cool, that sounds great
+2020-09-17T19:06:30  <Justin_o> Bosmon: sorry, missed your last message.. I meant for the promise we attached to the "that" not that we'd return a promise instead of "that"
+2020-09-17T19:27:13  <Bosmon> Justin_o - right
+2020-09-17T19:28:30  <Justin_o> Bosmon: I just pushed up the change to the Keyboard a11y plugin that does this
+2020-09-17T19:28:41  <Justin_o> I'm going to try to do the Uploader integration again now
+2020-09-17T19:40:37  <Justin_o> Bosmon: well that was a lot easier to get the Uploader tests working. Only had to update one test and things are passing now.
+2020-09-17T19:41:58  <Bosmon> Justin_o - cool, I hoped that this approach would be minimally disruptive : P

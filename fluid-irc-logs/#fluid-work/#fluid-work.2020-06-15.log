@@ -1,0 +1,82 @@
+2020-06-15T15:10:06  <danayo> d
+2020-06-15T15:30:50  *** christopher is now known as Guest5945
+2020-06-15T15:37:14  <gtirloni> Should this repo be archived? https://github.com/fluid-project/handbook.floeproject.org (the handbook is actually deployed from https://github.com/fluid-project/docs-inclusive-learning)
+2020-06-15T15:45:35  <Justin_o> jhung: ^
+2020-06-15T15:45:49  <Justin_o> gtirloni: I think I had that question on the issue tracker sheet as well
+2020-06-15T15:48:11  <jhung> gtirloni wow. That's pretty old and should be archived to avoid confusion. I think it was the theme / media wiki installation for what was the first iteration of the ILDH.
+2020-06-15T15:49:17  <gtirloni> yeah, I almost worked on containerizing it :P -- I'll archive it if there are no concerns
+2020-06-15T15:55:37  <colinclark> hey Justin_o, what’s the most recent version of testem that you’ve used?
+2020-06-15T15:56:55  <Justin_o> colinclark: uio-plus is using testem v3.1.0 with gpii-testem v2.1.12
+2020-06-15T15:57:12  <colinclark> did you have any issues with the upgrade to 3.1.0?
+2020-06-15T15:57:44  <colinclark> I’m seeing an odd behaviour where testem seems to magically include my Gruntfile.js into the QUnit test runner HTML
+2020-06-15T16:02:18  <Justin_o> colinclark: in the report or actually trying to run it as a test file?
+2020-06-15T16:02:36  <colinclark> it includes it in the head of my HTML file
+2020-06-15T16:02:51  <colinclark> and of course this explodes due to the fact that Gruntfile.js is a Node module
+2020-06-15T16:02:57  <colinclark> not intended to be run in a browser :)
+2020-06-15T16:03:18  <Justin_o> I haven't noticed that.. and it seems like it would be obvious
+2020-06-15T16:04:54  <Justin_o> colinclark: I just ran the uio-plus tests again and didn't notice anything. you can try checking out this repo to see if you have the same issue https://github.com/fluid-project/uio-plus
+2020-06-15T16:05:17  <Justin_o> colinclark: also do you have an example you could show me of your testem config
+2020-06-15T16:06:29  <Justin_o> colinclark: do you have this line https://github.com/fluid-project/uio-plus/blob/master/tests/browser/testem.js#L26-L31
+2020-06-15T16:06:37  <Justin_o> although I don't think that would affect what you're seeing
+2020-06-15T16:08:17  <colinclark> no, but that’s probably exactly it
+2020-06-15T16:08:20  <colinclark> the question is why?!
+2020-06-15T16:08:37  <colinclark> or does the instrumentation related to test coverage?
+2020-06-15T16:08:46  <colinclark> what does gpii-testem actually do?
+2020-06-15T16:08:48  <colinclark> :)
+2020-06-15T16:09:15  <Justin_o> I thought it was related to test coverage
+2020-06-15T16:16:17  <colinclark> ok
+2020-06-15T16:16:31  <colinclark> so gpii-testem is really gpii-testem-and-nyc?
+2020-06-15T16:24:25  <Justin_o> I think testem is just for the browser tests, and nyc is used for the node ones. But the reports are all combined, and I think gpii-testem helps with that if I'm not mistaken
+2020-06-15T16:25:09  <colinclark> yeah
+2020-06-15T16:25:14  <colinclark> i just sort of meant conceptually...
+2020-06-15T16:25:32  <colinclark> gpii-testem is actually responsive for cross environment (node and browser) test runs, as well as test coverage reporting
+2020-06-15T16:27:32  <Justin_o> sort of, I'm not really sure the node based stuff is done through gpii-testem except possibly the combining of coverage reports. I seem to have to configure and call nyc directly
+2020-06-15T16:27:36  <Justin_o> colinclark: ^
+2020-06-15T16:27:47  <colinclark> ok
+2020-06-15T16:28:01  <Justin_o> or at least that's how I'm using it..
+2020-06-15T16:38:27  <Justin_o> clown: did you want to talk now?
+2020-06-15T16:38:47  <Justin_o> sorry, never mind, I forgot I have another meeting now
+2020-06-15T16:43:49  <Justin_o> clown: okay, now I'm ready.. please let me know when it's a good time for you to meet.
+2020-06-15T16:43:51  <clown> Justin_o:  He giveth, then taketh away
+2020-06-15T16:44:00  <clown> Then giveth back.
+2020-06-15T16:44:02  <Justin_o> haha
+2020-06-15T16:44:22  <clown> I was about to break for lunch.  How about 1:45?
+2020-06-15T16:44:27  <Justin_o> sure
+2020-06-15T16:44:38  <clown> See you soon, then.
+2020-06-15T16:44:56  <Justin_o> enjoy your lunch
+2020-06-15T16:45:11  <clown> you too (make assumption that you are having lunch too)
+2020-06-15T16:51:52  *** christopher is now known as Guest3847
+2020-06-15T17:13:09  <gmoss> Justin_o: I was looking into Bosmon's question on my SJRK-288/359 PR, and it seems he's correct that $.html() is synchronous. I'm now reviewing the events we're depending on to know when a template is rendered and all markup is in place, and I may have found something that would explain the race condition woes we've been having: the `storyEditor` and `blockUi.editor` grades both have a `gpii.binder` and a
+2020-06-15T17:13:09  <gmoss> templateManager components, and *both* components of each grade will fire `onReadyToBind` when they're ready. `onReadyToBind` is the event upon which everything else is predicated. It should only fire once, when everything is ready. I think what I need to do is make `onReadyToBind` a compound event (well, it is for `storyEditor` already, but the binder is circumventing that structure for some reason). Some of this
+2020-06-15T17:13:09  <gmoss> might be in place for l10n, but it's been a while so I need to refresh my memory
+2020-06-15T17:15:47  <gmoss> this issue is also holding up getting the block reorder up/down buttons from working quite right. they're set up properly, but I need to be able to call the reorderer's `refresh` invoker once each block is done rendering
+2020-06-15T17:24:02  <Justin_o> gmoss: nice find, when you say storyEditor and blockUI.editor both fire onReadyToBind.. is it that the event is firing too soon, or that we are listening to the wrong one? Also a storyEditor contains man blockUI.editors?
+2020-06-15T17:24:08  <Justin_o> many
+2020-06-15T17:26:49  <gmoss> Justin_o: it's possibly firing too soon, since setting up click handlers etc should wait until both the binder component is ready and the template is rendered. there have been many tests hanging off of this event in the past, iirc, but maybe we were just getting lucky. and yes, `storyEditor` has a blockManager that contains many blockUi.editor instances
+2020-06-15T17:29:21  <Justin_o> gmoss: I suppose with the reorder we actually need to have all of the blockUI.Editors in place first before triggering the refresh. So on init we need to wait for them all, and then on addition of blocks we need to wait for each. Actually I think this is the issue we are running into.. is that we are calling refresh too soon. So the first blockUI is rendered, we call refresh, but the second is in the process of
+2020-06-15T17:29:21  <Justin_o> rendering and we pick up a partial. This would also explain why quickly adding blocks also triggers the issue.
+2020-06-15T17:30:43  <Justin_o> we may have already come to that conclusion, which is why we were using the focus event, but I don't quite remember
+2020-06-15T17:31:42  <gmoss> Justin_o: right, that's why we set up the call to refresh on focusin, since that's somewhat more reasonable to wait for, but we're only waiting on that because we can't depend on onTemplateRendered (I think)
+2020-06-15T17:31:58  <gmoss> well, I guess I'm trying to find out whether we can or can't depend on it
+2020-06-15T17:32:58  <Justin_o> gmoss: in thinking about this, with the reasoning I left above, I think you're going to have problems either way. And it's sort of like or really basically the same reason we had issues with the mutation observer for fast clicks..
+2020-06-15T17:33:10  <Justin_o> it's that you need to capture all operations before refreshing the reorderer
+2020-06-15T17:33:23  <gmoss> mhmm
+2020-06-15T17:33:40  <Justin_o> operations being additions of blockUI.editors
+2020-06-15T17:34:04  <Justin_o> I wonder if there is another way to add them into the reorderers knowledge without having to do the global search
+2020-06-15T17:40:03  <gmoss> Justin_o: as in without calling the `refresh` invoker? (which in turn calls dom.refresh which in turn calls dom.locate)
+2020-06-15T17:52:14  <sachin10101998> gmoss jhung I made the requested changes in the PRs. should we merge them now.
+2020-06-15T17:52:21  *** sachin10101998 is now known as dogeman
+2020-06-15T17:52:38  <gmoss> sachin10101998: that's great :) I'll have to take another look before I give my opinion
+2020-06-15T17:53:26  <dogeman> sure. I'll wait
+2020-06-15T18:15:34  <Justin_o> gmoss: sorry, missed your message.. yes exactly.. I think it's actually do-able with using self() or something like that from jQuery but it would be a pain.  because there are several selectors that need to be updated
+2020-06-15T18:18:21  <gmoss> Justin_o: this is quite the challenge... :)
+2020-06-15T18:19:11  <gmoss> I had the up/down thing working, then tried a bunch of event refactoring, totally broke the tests, reverted it but now the up/down buttons are in the state they were when I stopped on Friday, only updating per block instead of all at once -_-  this is one of those days haha
+2020-06-15T18:34:34  <gmoss> Justin_o: do you have any time to pair on this, today?
+2020-06-15T19:02:39  <Justin_o> gmoss: possibly, just finished meeting with clown. Let me see if I'm needed at the wecount meeting.
+2020-06-15T19:02:48  <Justin_o> cindyli: did you need me to attend the wecount meeting today?
+2020-06-15T19:05:56  <Justin_o> gmoss: I can pair up now if you like
+2020-06-15T19:06:06  <cindyli> Justin_o: i think you can skip today's meeting ;) i will ping you if your help is needed
+2020-06-15T19:06:15  <gmoss> Justin_o: that would be great, thanks!
+2020-06-15T19:06:26  <Justin_o> cindyli: sounds good, thanks.
+2020-06-15T19:06:35  <Justin_o> gmoss: okay, should we meet in the standup room?
+2020-06-15T19:06:41  <gmoss> Justin_o: sure\

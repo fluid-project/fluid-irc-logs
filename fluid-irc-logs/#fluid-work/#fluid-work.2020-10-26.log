@@ -1,0 +1,54 @@
+2020-10-26T14:53:37  <cindyli> Justin_o: i installed 'fluid-grunt-lint-all" 2.0. node_modules/fluid-grunt-lint-all/ is in there. when running "npx grunt lint", it throws:
+2020-10-26T14:53:38  <cindyli> grunt-cli: The grunt command line interface (v1.2.0)
+2020-10-26T14:53:38  <cindyli> Fatal error: Unable to find local grunt.
+2020-10-26T14:54:44  <cindyli> "grunt" should be a dependency of "fluid-grunt-lint-all", right? i think it's not necessary to install "grunt" separately. did i do something wrong?
+2020-10-26T14:56:19  <cindyli> looking at https://github.com/fluid-project/fluid-grunt-lint-all/blob/master/package.json, "grunt" is a dev Dependency
+2020-10-26T14:56:52  <cindyli> wonder if it should be a dependency
+2020-10-26T14:57:03  <cindyli> rather than just for dev
+2020-10-26T15:04:47  <gmoss> Justin_o: thanks for tagging and merging SJRK-412 PR!
+2020-10-26T15:04:49  <michelled> alanharnum, clown: what time can we meet today?
+2020-10-26T15:05:11  <alanharnum> michelled clown: I don't have anything booked, so available any time that works for you both
+2020-10-26T15:05:24  <clown> same here, alanharnum, michelled
+2020-10-26T15:05:31  <Justin_o> gmoss: no problem, thanks for the PR
+2020-10-26T15:06:28  <Justin_o> cindyli: sorry, missed your message. not sure it will work using npx grunt usually looks for a local grunt-cli as well.. that could be the issue too
+2020-10-26T15:06:42  <michelled> alanharnum, clown: let's meet after the connections meeting then
+2020-10-26T15:06:56  <clown> works for me, michelled
+2020-10-26T15:07:32  <alanharnum> clown michelled: 👍
+2020-10-26T15:07:39  <michelled> yay :)
+2020-10-26T15:08:12  <cindyli> Justin_o: running "grunt lint" gives the same error. would you recommend to install grunt-cli globally as a pre-requisite?
+2020-10-26T15:08:43  <cindyli> i would prefer to be able to run it in the local repo
+2020-10-26T15:09:46  <Justin_o> grunt-cli as a global install is usually what grunt recommends. But for some projects I've found it easier to just install as a dependency so that things work in Github Actions for example
+2020-10-26T15:21:51  <Bosmon> Justin_o, cindyli - our general standard is to install grunt as a local dependency
+2020-10-26T15:22:01  <Bosmon> That is, a dev dependency
+2020-10-26T15:22:34  <Bosmon> There's no point installing it as a non-dev dependency since it just stuffs up through being unable to find its plugins
+2020-10-26T15:24:10  <Bosmon> That is, you will not succeed in running it from a transitive dependency
+2020-10-26T15:24:20  <Bosmon> But I might not be understanding your situation?
+2020-10-26T15:24:51  <Justin_o> Bosmon: I'm not entirely sure either, but I was thinking it might be an issue with "grunt-cli" as opposed to "grunt"
+2020-10-26T15:25:38  <Bosmon> I guess I'm not sure why one might try to run npx grunt lint rather than just plain grunt lint
+2020-10-26T15:25:57  <Bosmon> If you would npx anything, you would probably prefer it was just a plain script
+2020-10-26T15:27:01  <Justin_o> Bosmon: yes we do add npm scripts that call the grunt, so something like `npm run lint` is possible. In that case you may not need grunt-cli. But haven't ever tried npx with grunt
+2020-10-26T15:31:31  <Bosmon> Not sure it adds anything here
+2020-10-26T15:40:43  <Justin_o> gtirloni: I've completed the migration from "master" to "main". Could you please review that none of our deploys have broken in the process?
+2020-10-26T15:41:23  <gtirloni> Justin_o: will check it this afternoon. thanks!
+2020-10-26T15:46:06  <Justin_o> gtirloni: thanks :)
+2020-10-26T15:46:45  <gtirloni> Justin_o: thank you for the migration, great work!!!
+2020-10-26T15:58:57  <Justin_o> np :)
+2020-10-26T17:01:21  <sgithens> the-t-in-rtf: I think I've asked you this before, but you use inkscape on your mac and it works pretty good right? (I'm ok with the interface being early of an early naughts era)
+2020-10-26T18:24:39  <the-t-in-rtf> @sgithens, good to hear from you man.
+2020-10-26T18:24:44  <the-t-in-rtf> I do, and it does.
+2020-10-26T18:25:08  <the-t-in-rtf> I have used the brew cask version lately.
+2020-10-26T18:25:17  <the-t-in-rtf> but before that I downloaded their latest manually.
+2020-10-26T18:26:26  <the-t-in-rtf> I use it for laser-cut designs and animation.
+2020-10-26T18:26:59  <the-t-in-rtf> their system to let you add id/class metadata isn't all that helpful, but if you edit the SVG and add the metadata you need, it leaves it alone if you go back to tweak the layout in inkscape.
+2020-10-26T18:42:51  <cindyli> Justin_o, Bosmon: the issue of "Unable to find local grunt" was solved by adding "grunt" as a dev dependency in my own repo. if this is another pre-requisite for using "fluid-grunt-lint-all", shall we update the doc. the other prerequisite is to install grunt-cli globally
+2020-10-26T18:43:19  <Bosmon> cindyli - yes, grunt as a dev dependency should be documented as a requirement for use of fluid-grunt-lint-all
+2020-10-26T18:43:37  <cindyli> cool
+2020-10-26T18:46:10  <cindyli> Justin_o, Bosmon: another issue with using "fluid-grunt-lint-all" is i hit a few warnings - https://pastebin.com/pNqe62YR and the result is "Aborted due to warnings."
+2020-10-26T18:47:32  <Bosmon> cindyli - that's odd, that the behaviour on finding no files seems to be inconsistent between the different tasks - the-t-in-rtf ?
+2020-10-26T18:48:29  <Justin_o> cindyli: also are you sure your configuration in the Gruntfile.js is correct?
+2020-10-26T18:48:31  <cindyli> and i do have .md files
+2020-10-26T18:49:21  <cindyli> Justin_o: here's my config - https://pastebin.com/n8ctgX63
+2020-10-26T18:49:41  <Justin_o> cindyli: do you want to pair up for a bit, I also have some questions about the comments you left on the uio-plus PR so we could talk about both at the same time
+2020-10-26T18:50:00  <Justin_o>  it seems you aren't linting any of the md files
+2020-10-26T18:50:35  <cindyli> certainly, Justin_o, now in standup room?
+2020-10-26T18:50:43  <Justin_o> cindyli: sure

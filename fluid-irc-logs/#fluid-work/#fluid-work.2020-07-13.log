@@ -1,0 +1,47 @@
+2020-07-13T13:26:40  *** christopher is now known as Guest7467
+2020-07-13T13:35:52  <Justin_o> clown: I have an aria questions. For aria-controls if it's used for a dialog, is it okay if it points at an element that wraps the content, but is not the dialog's container. That is, an element inside of the dialog.
+2020-07-13T13:38:50  <clown> Justin_o:  can you point to an example?
+2020-07-13T13:39:26  <Justin_o> clown: unfortunately no :(
+2020-07-13T13:40:06  <clown> Okay, why do you want to focus on an inner element?  If the controller is for the whole dialog, why put to something inside it?
+2020-07-13T13:40:41  <Justin_o> clown: not sure, maybe it more closely references the actual content.
+2020-07-13T13:43:08  <clown> heh, I just realized I confused the situation.  When I said "focus on an inner element", I didn't mean keyboard focus.  But, that does lead to another question:  where is keybaord focus when this dialog is opened?
+2020-07-13T13:46:28  <clown> my intuition is that aria-controls point to the whole dialog, and something reasonable gets keyboard focus when the dialog is opened, perhaps the inner element you mentioned.
+2020-07-13T13:46:55  * clown checking the authoring guide.
+2020-07-13T13:53:32  <clown> Justin_o, After looking at the guide, and the specs for aria-controls, I'm not sure it is of much use in a dialog situation.  Here are some urls:
+2020-07-13T13:53:45  <clown> https://www.w3.org/TR/wai-aria-practices-1.1/#dialog_modal
+2020-07-13T13:54:43  <clown> https://www.w3.org/TR/wai-aria-1.1/#aria-controls
+2020-07-13T13:55:51  <clown> However, I'm imagining a situation where an menu item or a button invokes the dialog, and that might not be the situation you  and lisa are working on.
+2020-07-13T14:00:23  <Justin_o> clown: Thanks, I looked at an example of a modal dialog but it didn't make use of aria-controls perhaps as you've mentioned above
+2020-07-13T14:00:59  <Justin_o> clown: https://www.w3.org/TR/wai-aria-practices-1.1/examples/dialog-modal/dialog.html
+2020-07-13T14:03:54  <clown> thanks, Justin_o.  And to formally confirm that, here's the link into the example that lists the aria state and properties used:  https://www.w3.org/TR/wai-aria-practices-1.1/examples/dialog-modal/dialog.html#rps_label
+2020-07-13T14:04:08  <clown> no aria-controls listed.
+2020-07-13T14:06:06  <clown> Speculation:  there is an expectation here that a dialog is going to pop open when the "Add Delivery Example" button is pushed.  In general, if that is the userr's expectation, no need to highlight that with an aria-controls.  The user already knows that a dialog is coming up.
+2020-07-13T14:09:24  <Justin_o> So you think that if it isn't obvious that a dialog will open, that the aria-controls would still be necessary?
+2020-07-13T14:13:29  <clown> I'm heading that direction, but a counter example is a disclosure triangle:  there is an expectation that clicking it will disclose/hide other information.  And, yet, aria-controls is typically used in that design pattern.  Hmmm….
+2020-07-13T14:15:21  <clown> I've also looked at the guide's date picker example (https://www.w3.org/TR/wai-aria-practices-1.1/examples/dialog-modal/datepicker-dialog.html).  I would have put an aria-controls on the button that pops up the calendar, but the example doesn't.
+2020-07-13T14:19:42  <Justin_o> clown: okay, thanks.. I'm also not sure how well supported aria-controls actually is, in terms of ATs.
+2020-07-13T14:23:49  <clown> Justin_o:  If you want to get into the details of where aria-controls is and is going, see the discussion here:  https://github.com/w3c/aria/issues/995
+2020-07-13T14:26:42  <clown> I  think ATs support of aria-controls is a bit misleading.  The presence of aria-controls affects what is in the AOM, which is what the AT is looking at.  So, the question is better put: how well do AOMs support aria-controls, and, in turn are ATs sensistive to the way that aria-controls is represented in the AOM.
+2020-07-13T14:35:39  <Justin_o> Interesting too that they mention not using aria-controls for elements that aren't visible. In the case of a modal dialog you'll never have the control and the dialog "visible" at the same time.
+2020-07-13T14:41:57  <clown> That's because the non-visible element won't exist in the AOM, so there is nothing for the referring AOM node to point to.  Also, some AOMs auto-compute the back pointer (conrolled-by), and that's impossible where there is nothing to put the attach the controlled-by to.
+2020-07-13T14:44:26  <clown> An implication is that aria-controls is dynamic — you add it when the controlled item is brought into existence.
+2020-07-13T14:51:27  <Justin_o> but still with a modal dialog, I can't see that ever being useful as you'd never actually be able to get to the controller indicating the aria-controls state while the modal dialog is visible
+2020-07-13T15:50:55  <cindyli> Justin_o: i left a comment regarding the next step for the pull request for FLUID-6525: https://github.com/fluid-project/infusion/pull/999#issuecomment-657639896
+2020-07-13T15:56:33  <clown> Justin_o: a thought about your last comment:  yes, the user cannot navigate back to the element that spawned the dialog, but the AT knows the relationship, if there is an aria-controls.  So, (science fiction), the AT could provide some indication to the user where they came from, and where they are going back to when the dialog is dismissed.  Aria is not always about UI directly, but providing info to ATs so they can use it fo
+2020-07-13T15:56:33  <clown>  for internal bookkeeping.
+2020-07-13T15:57:10  <Justin_o> okay, that's reasonable
+2020-07-13T15:57:17  <Justin_o> clown: ^
+2020-07-13T15:57:20  <Justin_o> clown: thanks for the clarification
+2020-07-13T15:58:03  <Justin_o> cindyli: thanks for comment on the PR, that was what I was forgetting
+2020-07-13T15:58:48  <cindyli> good it helps :)
+2020-07-13T16:04:50  <Justin_o> colinclark, and anyone else interested: I've temporarily bumped up gtirloni's permissions in the fluid-project org so that he can get the CI/CD tasks setup.
+2020-07-13T16:05:03  <colinclark> perfect, I think that’s great
+2020-07-13T17:21:04  <Bosmon> Useful new feature implemented in my branch - https://github.com/fluid-project/infusion/pull/972/commits/b0721eb1368d3a39d9386c2953fc0bc200b9620e#diff-ab93103a69113cb998d7630a3c4f4451R4492
+2020-07-13T17:21:15  <Bosmon> For https://issues.fluidproject.org/browse/FLUID-6372
+2020-07-13T17:21:41  <Bosmon> It looks like IE11 in the market is something more like 1.5% ....
+2020-07-13T17:28:17  *** jhung_3 is now known as jhung
+2020-07-13T17:38:26  <Justin_o> Bosmon: So this basically means that we can just pass in a "that" references and any memebers/invokers accessed off of it in a function will be resolved when we use it? We don't have to force resolution by passing in the exact reference via IoC anymore?
+2020-07-13T17:41:01  <Bosmon> Justin_o - that's correct
+2020-07-13T17:41:36  <Bosmon> The support isn't perfect because it doesn't yet work for nested material, but it already solves a lot of annoyance
+2020-07-13T17:42:10  <Bosmon> The next level of support might implement multiple levels of proxies for resolving material inside "that.options"... but that might involve much more undesirable costs
+2020-07-13T17:45:40  <Justin_o> Bosmon: that's great news though, that tripped us up a bunch before.

@@ -1,0 +1,179 @@
+2020-07-23T12:01:26  *** Bosmon2 is now known as Bosmon
+2020-07-23T12:02:08  <Bosmon> Justin_o - good investigation - I guess as well as a resolution for the error we should try to figure out why we get the double resolution (resolve + reject) - which suggests that there is an error in the promise geometry
+2020-07-23T12:03:58  <Justin_o> Bosmon: so I've done some more digging. it seems that the issue causing the error is the lang attribute of the speech synthesis utterance. If you specify a lang that there isn't a synthesizer specifically for, it will throw an error. The other browsers seem to fall back to another synthesizer. So in this case we are asking for "en-CA" but in my VM there are only a few synthesizers and all are for "en-US". If we
+2020-07-23T12:03:58  <Justin_o> specify "en-US" or nothing, it works.
+2020-07-23T12:04:25  <Bosmon> Justin_o - is there a way to query what synthesizers there are?
+2020-07-23T12:05:04  <Justin_o> Bosmon: well yes, speechSynthesis.getVoices()
+2020-07-23T12:05:13  <Bosmon> I have my first passing test for "new Table of Contents" - the one that verifies that no links are rendered when there are no headings
+2020-07-23T12:05:19  <Bosmon> This was surprisingly hard to achieve : P
+2020-07-23T12:05:47  <Justin_o> Bosmon: however, here's where that get's annoying. In some browsers that's returned asynchronously, some only after you do some other speechsynthesis call, and some right away
+2020-07-23T12:06:04  <Justin_o> there is an onvoiceschanged event, but again that might not fire if they are returned immediately.
+2020-07-23T12:06:51  <Justin_o> Bosmon: how did you write that test?
+2020-07-23T12:09:38  <Bosmon> Justin_o - well I just fixed up the existing test : P
+2020-07-23T12:09:48  <Bosmon> The one of Harris' that always passed because it queried a nonexistent selector
+2020-07-23T12:11:37  <Bosmon> A helpful usability innovation with the new renderer is not having to write "selectorsToIgnore" and "repeatingSelectors" any more
+2020-07-23T12:11:42  <Bosmon> IT JUST KNOWS
+2020-07-23T12:11:53  <Justin_o> Bosmon: that's amazing
+2020-07-23T12:12:06  <Justin_o> that'll make things so much easier
+2020-07-23T12:12:15  <Justin_o> and require less prior knowledge
+2020-07-23T12:12:15  <Bosmon> The new ToC component is 80 lines shorter than the old one
+2020-07-23T12:12:24  <Bosmon> And the stuff that has been shed is the most gnarled and complex
+2020-07-23T12:12:33  <Justin_o> Bosmon: that's great!!
+2020-07-23T12:12:35  <Bosmon> The horrific stuff which generated the old "renderer component tree"
+2020-07-23T12:12:37  <Justin_o> how about the template?
+2020-07-23T12:12:56  <Justin_o> can we re-use bits so we don't have to predefine each level
+2020-07-23T12:12:56  <Bosmon> The template is less than 1/3 the size
+2020-07-23T12:13:03  <Justin_o> yeah!!
+2020-07-23T12:13:10  <Bosmon> 9 lines vs 32
+2020-07-23T12:13:35  <Bosmon> But what has been enormously interesting is getting the new renderer to "look ahead to nonexistent components"
+2020-07-23T12:13:49  <Bosmon> Thankfully the new framework has enough self-knowledge that it knows that there was a subcomponent that it didn't render
+2020-07-23T12:14:06  <Bosmon> But rendering nothing when there are no headings is surprisingly complex (in the renderer implementation)
+2020-07-23T12:14:24  <Bosmon> Since you need to be able to look ahead at the definition of the renderer subcomponent that WOULD have rendered if there had been something in the model
+2020-07-23T12:14:29  <Justin_o> Bosmon: this reminds me, I was thinking for the prefs framework we should really be able to just have types of adjuster panels, and not have to pre-specify the templates and etc for each. That way you could just pick how you want to display your adjuster and it goes from there. And we'd be able to use the same template for all of the adjusters of the same type
+2020-07-23T12:14:31  <Bosmon> In order to know that there is something that you need to remove from the DOM
+2020-07-23T12:14:40  <Bosmon> Justin_o - for sure
+2020-07-23T12:15:47  <Justin_o> Bosmon: ah, I was going to ask why that part was difficult.. is this for re-rendering, or just stripping things from the template in general?
+2020-07-23T12:18:38  <Justin_o> Bosmon: regarding the issue I'm having with TTS. Is it worth adding in a workaround for Edge 44? I guess we don't officially support it, if we are only supporting latest browsers. Although it is the last of the pre-chromium edge
+2020-07-23T12:20:01  <Justin_o> If we don't add a workaround in Infusion for storytelling we could either not support older versions of Edge as well, or we could add a workaround in there to either remove the lang attribute or disable the Orator completely.
+2020-07-23T12:20:22  <Justin_o> I guess we still need to sort out the promise rejection issue either way though.
+2020-07-23T13:41:57  <Bosmon> Justin_o - just for stripping things out at this stage
+2020-07-23T13:42:02  <Bosmon> I haven't started to look at re-rendering yet
+2020-07-23T13:42:45  <Justin_o> Bosmon: okay, hopefully all this work you are doing now will make re-rendering easy
+2020-07-23T13:43:11  <Justin_o> Bosmon: I've found the locations where the promises weren't being handled. I've filed a JIRA for that https://issues.fluidproject.org/browse/FLUID-6533
+2020-07-23T13:43:25  <Bosmon> Justin_o - not only easier, but STAGGERINGLY MORE EFFICIENT even than React : P
+2020-07-23T13:43:37  <Justin_o> wow.. that's great
+2020-07-23T13:43:38  <Bosmon> At least, for the case of most typical updates
+2020-07-23T13:43:52  <Justin_o> I'm really interested to see all of this
+2020-07-23T13:44:21  <Justin_o> Bosmon: when I get some time I'm planning to go back and do some more investigation on performance for UIO related things too.
+2020-07-23T13:44:39  <Bosmon> Probably after I get all these tests working again I'll circle back and reimplement the TextfieldSlider AGAIN
+2020-07-23T13:44:53  <Bosmon> I had done a basic port of it to our "new renderer plus transitional jQuery" model
+2020-07-23T13:45:03  <Justin_o> Bosmon: oh that reminds, me, when you have some time can you review this PR https://github.com/fluid-project/infusion/pull/1002 it should make our code coverage more visible and easier to track.
+2020-07-23T13:45:24  <Bosmon> But perhaps before I tackle the prefs framework I should take it all the way and implement it on top of INTEGRAL BINDINGS and so remove any visible dependence on jQuery
+2020-07-23T13:45:29  <Justin_o> Bosmon: are we still planning on dropping jQuery?
+2020-07-23T13:45:41  <Bosmon> Justin_o - we have always been planning on dropping jQuery : P
+2020-07-23T13:45:45  <Justin_o> :)
+2020-07-23T13:45:48  <Bosmon> I guess since about 2012 or so
+2020-07-23T13:46:05  <Justin_o> Bosmon: I'm not sure what we'll do with keyboard a11y plugin
+2020-07-23T13:46:15  <Bosmon> It's been "an" Achilles heel of the framework for a very long time
+2020-07-23T13:46:22  <Bosmon> Although one could say in many ways the framework is all heels : P
+2020-07-23T13:46:31  <Bosmon> Justin_o - we will MODERNISE it
+2020-07-23T13:46:46  <Bosmon> Its idea of what is a "declarative" keyboard binding was always pretty primitive
+2020-07-23T13:48:13  <Bosmon> I now can't even remember what was the project in which I made that sketch of a more substantial keyboard binding system .........
+2020-07-23T13:50:46  <Bosmon> Incredibly, we don't yet seemed to have moved the keyboard-11y plugin documentation off our wiki
+2020-07-23T13:50:53  <Bosmon> Perhaps a good task for a GSoC student .....
+2020-07-23T13:52:36  <Justin_o> Bosmon: in terms of key code values we can use these instead of the constants from jQuery UI https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code/code_values
+2020-07-23T13:52:51  <Bosmon> Justin_o - yup, sounds good
+2020-07-23T13:53:05  <Bosmon> So much of the stuff we used to rely on jQuery for is now done adequately by the modern browsers
+2020-07-23T13:53:37  <Bosmon> And most of the rest of our uses were stuff like DOM manipulation which noone should be doing anyway : P
+2020-07-23T13:53:38  <Justin_o>  yes, jQuery really filled a gap back them, and I guess maybe pushed on some of these things becoming standardized
+2020-07-23T13:57:36  <michelled> yeah, you have to wonder what happens as more people don't depend on jquery- do we get another round of the browser wars?
+2020-07-23T13:57:53  <Bosmon> I don't think any appreciable number of people depend on jquery any more : P
+2020-07-23T13:58:34  <Bosmon> It's yet another respect in which we are incredible dinosaurs
+2020-07-23T13:58:59  <Bosmon> Or horseshoe crabs, or whatever sgithens calls us :)
+2020-07-23T13:59:04  <michelled> hehe
+2020-07-23T14:00:59  <Bosmon> Justin_o - an interesting discussion here on the implications of various ES6 module approaches - https://philipwalton.com/articles/using-native-javascript-modules-in-production-today/
+2020-07-23T14:01:12  <Bosmon> Looks like this area, as expected, is going to remain a minefield for many years to come
+2020-07-23T14:01:40  <sgithens> Yes
+2020-07-23T14:01:43  <sgithens> "Given their origin 450 million years ago, horseshoe crabs are considered living fossils."
+2020-07-23T14:03:19  <Bosmon> Pretty interesting that it claims that HTTP/2 can load about 50 individual files before the performance hit becomes noticeable
+2020-07-23T14:03:35  <Bosmon> But I'm not really clear what the implications are of making sure that all the servers we deploy through are HTTP/2-enabled
+2020-07-23T14:03:47  <Bosmon> And I imagine this will be that much harder for third-party deployments
+2020-07-23T14:05:37  <Bosmon> I found it hard enough even to think about or arrange that Andrew Simon's Wordpress site even enabled gzip compression .... so I decided to implement my own in-browser compression
+2020-07-23T14:06:29  <Justin_o>  Bosmon: I'd assume that most services like netlify would provide those options for us
+2020-07-23T14:06:35  <Justin_o> but I haven't looked into it
+2020-07-23T14:06:50  <Bosmon> Justin_o - I imagine they would, but we are always going to face users who have deployments over which they have little or no control
+2020-07-23T14:06:53  <Bosmon> As I did : P
+2020-07-23T14:07:22  <Bosmon> I'm not sure Andrew even recalls where his WordPress site is hosted : P
+2020-07-23T14:13:37  <Justin_o> Bosmon: fortunately it seems we are past the point where dynamic imports aren't supported
+2020-07-23T14:14:06  <Justin_o> Bosmon: also I think tree shaking would be a huge performance improvement for sites using Infusion
+2020-07-23T14:14:33  <Justin_o> assuming they are using a bundler that supports it
+2020-07-23T14:14:53  <Justin_o> but we could at least pre-shake trees for our custom builds I guess
+2020-07-23T14:16:29  <Justin_o> Bosmon: I think generally speaking many performance issues are going to depend on the integrator. For those cases I think the best we can do is not prevent optimization and to document ways to get the best performance.
+2020-07-23T14:17:15  <Bosmon> Justin_o - yes well.... I'm not entirely clear at this point what we can do to make tree-shaking viable
+2020-07-23T14:17:35  <Bosmon> But no doubt there is something
+2020-07-23T14:18:03  <Bosmon> We're going to have to arrange for at least some kind of correspondence between particular elements in Infusion's global namespace and the return values of "import" statements
+2020-07-23T14:18:12  <Bosmon> But I'm not sure what exactly this can be
+2020-07-23T14:18:47  <Bosmon> We certainly want, at the very least, for people to be able to "shake" out entire unused components
+2020-07-23T14:19:21  <Justin_o> Bosmon: yes, exactly. I wonder if we can automatically export things that we created with fluid.defaults or whatever we call that in the future
+2020-07-23T14:19:45  <Bosmon> Unfortunately "preventing optimisation" is exactly what a lot of our authorial goals inevitably tend towards
+2020-07-23T14:19:48  <Justin_o> and if we did that would it automatically bring in anything hanging off it's namesake?
+2020-07-23T14:19:59  <Bosmon> But naturally we don't plan to prevent ALL optimisation : P
+2020-07-23T14:20:35  <Bosmon> But, it is the same story, stretching back to the beginning of time - for example, our use of global names has prevented minifiers from properly munging our code down since the very earliest days
+2020-07-23T14:20:51  <Bosmon> And we will continue to face incarnations of the same issues stretching to the end of time : P
+2020-07-23T14:22:00  <Bosmon> A system which has been completely optimised is one which is completely authorially closed
+2020-07-23T14:22:03  <Justin_o> I think in terms of tree shaking the ideal case  would be to hand over everything to a user and let their bundler shake things out.. and in cases where they can't do that, our custom builds only include the very minimal basics.. so UIO would only include the parts that are needed for it, or a component build would only include it's parts.. those would be much more limiting for integrators to use though.
+2020-07-23T14:23:27  <Bosmon> Justin_o - well, we will have to be prepared for this not to be easy at all
+2020-07-23T14:23:48  <Justin_o> Bosmon: I guess there are levels. 1) framework author decides 2) integrator decides 3) end user decides
+2020-07-23T14:23:49  <Bosmon> The "use" of an Infusion grade is not going to be visible to the shaking algorithm in any traditional kind of way
+2020-07-23T14:24:59  <Justin_o> Bosmon: yep.. I wonder if we need to write our own tree shaker... we can call diffusion ;) or something
+2020-07-23T14:25:06  <Bosmon> Hahahaha
+2020-07-23T14:25:17  <Bosmon> Well, it's possible there are such things as "rollup plugins", who knows
+2020-07-23T14:26:00  <Bosmon> But we do need to keep in mind that particularly aggressive kinds of tree shaking are directly opposed to our aims in building authoring tools
+2020-07-23T14:26:05  <Justin_o> Bosmon: here are the critical rollup plugins https://github.com/rollup/plugins
+2020-07-23T14:26:14  <Justin_o> so they do have some sort of infrastructure for it
+2020-07-23T14:26:28  <Bosmon> Nonetheless we also have to keep in mind that we have not yet produced any such tools and that all use of our stuff in the wild is in the role of more or less traditional "apps"
+2020-07-23T14:26:55  <Bosmon> Justin_o - this one is quite promising - https://github.com/rollup/plugins/tree/master/packages/inject
+2020-07-23T14:26:59  <Justin_o> Bosmon: I don't know.. I think actually what we might want is for the base code to be shaken out and then a way for users to load in removed or new modules
+2020-07-23T14:27:09  <Bosmon> And suggests that plugins in the kind of role that we want are possible
+2020-07-23T14:28:24  <Justin_o> in my above statement I meant end users, not integrators
+2020-07-23T14:28:30  <Bosmon> If you can "inject" imports based on the appearance of global variables, then you can probably also inject them based on the apparent or anticipated use of grades
+2020-07-23T14:29:21  <Bosmon> This then implies some other bit of infrastructure that we were always going to have to build anyway, which builds a map of grades and which file they are implemented in
+2020-07-23T14:29:28  <Justin_o> I suppose even if that doesn't work in this plugin, following a similar approach we should be able to write our own plugin to do something similar for our grades.
+2020-07-23T14:29:35  <Bosmon> Which SOURCE PART as sgithens would say
+2020-07-23T14:29:57  <Bosmon> Interestingly Infusion already makes a fairly boneheaded attempt to build up such a mapping which it currently does absolutely nothing with
+2020-07-23T14:30:03  <Justin_o> Bosmon: that would be really helpful.. currently I use global search in my IDE for that ;)
+2020-07-23T14:30:36  <Justin_o> Bosmon: if we can manage all of this, we should write some IDE plugins and dev tools plugin to expose all of this
+2020-07-23T14:30:58  <Bosmon> Justin_o - you probably never speculated on what this particularly obtuse piece of code appears to be doing: https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/Fluid.js#L1987
+2020-07-23T14:31:34  <Bosmon> But in theory Infusion does know where some defaults came from ....
+2020-07-23T14:31:34  <Justin_o> I'm not sure I've ever even noticed that particular line
+2020-07-23T14:32:27  <Bosmon> It's been there for about 10 years
+2020-07-23T14:32:36  <Bosmon> Back when we believed that advanced authoring tools were "just around the corner" : P
+2020-07-23T14:34:07  <Bosmon> Well I tell a lie, it's only been there for 6 years :)
+2020-07-23T14:34:47  <Bosmon> Ah right
+2020-07-23T14:35:00  <Bosmon> I implemented this when I actually *did* implement some barebones authoring tools
+2020-07-23T14:35:20  <Bosmon> Do you remember that demo I gave in Toronto around 2014 of the "Visual viewComponent debugger"
+2020-07-23T14:35:32  <Bosmon> That lets you hover around the DOM and see what viewComponents are bound to it, and what defaults they have ....
+2020-07-23T14:36:21  <Justin_o> Bosmon: yes, I think that's still integrated into the UIO demo too
+2020-07-23T14:36:30  <Bosmon> Yes, I think it is
+2020-07-23T14:37:01  <Bosmon> The "new renderer" will have viewComponent mapping integrated into it ... otherwise lots of infrastructure will be impossible
+2020-07-23T14:37:12  <Bosmon> Including very simple stuff like stopping the DOM binder accidentally reaching into nested components
+2020-07-23T14:37:32  <Bosmon> I recall that worry was one of the many things behind the particular template structure you chose for "original ToC"
+2020-07-23T14:38:27  <Bosmon> Ah, here's the commit - https://github.com/fluid-project/infusion/commit/13ab88e619820f9c2717f885acb9a137a69619eb
+2020-07-23T14:38:28  <Bosmon> Feb 2015
+2020-07-23T14:38:39  <Bosmon> So the "stack decoding" stuff is what existed for 10 years
+2020-07-23T14:39:01  <Bosmon> "// TODO: This infrastructure is several years old and probably still only works on Firefox if there"
+2020-07-23T14:40:37  <Bosmon> I can't offhand remember what it was actually used for .... probably something experimental in the CollectionSpace era
+2020-07-23T14:40:49  <Justin_o> well at least you were able to remove that TODO in that commit :)
+2020-07-23T14:41:12  <Bosmon> Yes, I think browsers had pretty much standardised their stack trace format even by then
+2020-07-23T15:56:46  <batey96> Hello All
+2020-07-23T19:00:21  <Bosmon> Justin_o - good-looking fix for the issue - I guess the unhandled promise rejection message did highlight a real design problem
+2020-07-23T19:00:31  <Bosmon> But didn't you say you had already tried adding a rejection handler before?
+2020-07-23T19:01:27  <Justin_o> Bosmon:  I had just tried using fluid.identity to no-op the resolve and rejection handlers. but I put them in the wrong spot.
+2020-07-23T19:01:40  <Justin_o> that is I put them on the root promise
+2020-07-23T19:01:46  <Justin_o> but I hadn't handled the promise at the top
+2020-07-23T19:02:03  <Bosmon> OK
+2020-07-23T19:02:09  <Bosmon> These things are quite tricksy aren't they
+2020-07-23T19:02:19  <Bosmon> I had my own unhandled rejection error to struggle with yesterday too
+2020-07-23T19:03:09  <Bosmon> And it was extremely hard to find - in the end I had to look at what other handlers were on the same promise, and then get the previous one to scrawl a marker onto the promise when it got registered, and then hack fluid.promise.then to tip into the debugger when it saw the marker
+2020-07-23T19:03:38  <Bosmon> Without JavaScript being as malleable as it is I think it would have been extremely hard to find what code was responsible for leaving the rejection handler dangling
+2020-07-23T19:05:42  <Bosmon> https://github.com/fluid-project/infusion/blob/573b5f3c5d87b5bd8f294edc174753264f3a438e/src/framework/core/js/ResourceLoader.js#L371
+2020-07-23T19:05:48  <Bosmon> It turned out to be this line here, which is pretty ironic
+2020-07-23T19:05:58  <Bosmon> Since the line looks like it is trying to be careful by adding a rejection handler
+2020-07-23T19:06:07  <Bosmon> But in fact what it is doing is forwarding the rejection to a "dead-end promise"
+2020-07-23T19:06:26  <Bosmon> "thisPromise" on the previous line is often listened to by nobody
+2020-07-23T19:17:04  <Justin_o> Bosmon: ah so it was "thisPromise" that wasn't handling the rejection?
+2020-07-23T20:11:02  <Bosmon> Justin_o - right
+2020-07-23T20:11:12  <Bosmon> So one needs to be very careful creating these "leaf promises" ....
+2020-07-23T20:11:43  <Bosmon> On the one hand, I am feeling that the "unhandled rejection handler" is paying its way pretty well in highlighting potential design issues
+2020-07-23T20:12:03  <Bosmon> But on the other hand, it is also further highlighting how incredibly authorially closed the calculus of promises is
+2020-07-23T20:12:21  <Bosmon> Once you are in the middle of one, you've got absolutely no way of determining where it is, or who added any handlers to it
+2020-07-23T20:12:29  <Bosmon> So, like jQuery, this is another thing that is on its way OUT .....
+2020-07-23T20:15:39  <Justin_o> Bosmon: I see.. that's too bad, I liked promises, but it it hard to know what is bound to them. I assume native promises suffer from the same issue?
+2020-07-23T20:15:57  <Bosmon> Justin_o - the native promises are even worse
+2020-07-23T20:16:06  <Bosmon> SInce in most cases you can't even see the site they are constructed from
+2020-07-23T20:16:27  <Justin_o> Bosmon: so what will we replace them with?
+2020-07-23T20:16:47  <Bosmon> Well, we don't quite have a name for it yet : P
+2020-07-23T20:16:48  <Bosmon> https://wiki.fluidproject.org/display/fluid/Plan+to+Abolish+Invokers+and+Events
+2020-07-23T20:16:54  <Bosmon> You probably remember this page ...
+2020-07-23T20:21:15  <Justin_o> yes I remember this.. looks like you updated it recently
+2020-07-23T21:11:49  <Bosmon> Not by much

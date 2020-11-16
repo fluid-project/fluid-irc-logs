@@ -1,0 +1,163 @@
+2019-11-21T00:10:27  *** colinclark <colinclark!~colinclar@205.211.168.104> has quit IRC (Read error: Connection reset by peer)
+2019-11-21T00:10:53  *** colinclark <colinclark!~colinclar@205.211.168.104> has joined #fluid-design
+2019-11-21T01:00:53  *** colinclark <colinclark!~colinclar@205.211.168.104> has quit IRC (Quit: colinclark)
+2019-11-21T02:08:31  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-design
+2019-11-21T02:10:07  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Client Quit)
+2019-11-21T03:38:39  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-design
+2019-11-21T04:35:20  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-11-21T12:33:19  *** cindyli <cindyli!~Adium@198.52.178.16> has joined #fluid-design
+2019-11-21T12:58:47  <Justin_o> Bosmon: still working on FLUID-6420 and the issues I'm having with getting the subcomponents.. I think the issue may actually be that the "loaderGrade" isn't being passed along at all.. that might just be part of the problem though.
+2019-11-21T12:58:58  <Justin_o> Bosmon: so the issue I'm seeing is that my distribution isn't working.
+2019-11-21T12:59:14  <Bosmon> Justin_o - what kind of not working is it? : P
+2019-11-21T12:59:24  <Justin_o> sorry, getting something to show you
+2019-11-21T12:59:45  <Justin_o> https://www.irccloud.com/pastebin/va8M6Bd0/
+2019-11-21T12:59:49  <Justin_o> so that's the distribution
+2019-11-21T13:00:02  <Justin_o> and it doesn't appear to be passing along the value from the source.
+2019-11-21T13:00:22  <Justin_o> I did a simple test of targeting a new option, and it didn't appear
+2019-11-21T13:00:55  <Justin_o> however, if I changed the source to "{that}.options.auxSchema" I do get the whole auxSchema object distributed and it includes the loaderGrades property
+2019-11-21T13:02:01  <Justin_o> Bosmon: ^
+2019-11-21T13:12:58  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-vgvarauurmgekiek> has joined #fluid-design
+2019-11-21T13:14:31  <Bosmon> Justin_o - that's pretty odd
+2019-11-21T13:14:38  <Bosmon> And you're in master's framework?
+2019-11-21T13:14:44  <Justin_o> Bosmon: yes
+2019-11-21T13:16:35  <Bosmon> Justin_o - "by eye" this actually looks like it might be a bug
+2019-11-21T13:16:37  <Bosmon> https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/FluidIoC.js#L212
+2019-11-21T13:18:06  <Bosmon> It looks like it only throws in the material from the block if it is an exact match with the source structure
+2019-11-21T13:19:14  <Justin_o> but isn't it a match?
+2019-11-21T13:19:17  <Justin_o> in my case
+2019-11-21T13:19:39  <Bosmon> Well, I imagine that you have no configuration explicitly written with the path {that}.options.auxSchema.loaderGrades
+2019-11-21T13:20:57  <Bosmon> Don't you have an issue in any case that ordinarily this stuff is evaluated at the target rather than at the source?
+2019-11-21T13:23:05  <Bosmon> "source" options distributions are really pretty literal-minded and simply move the entire source configuration from place to place
+2019-11-21T13:24:47  <Justin_o> Bosmon: okay, so you mean that it would have to actually be directly written into the defaults of a grade?
+2019-11-21T13:25:05  <Bosmon> This may not always be what people want, there is a lot of discussion worrying about "source" distributions here: https://issues.fluidproject.org/browse/FLUID-5836
+2019-11-21T13:25:29  <Justin_o> the auxSchema property currently is created through a mergePolicy that just copies basically distributes the objected stored at the expandedAuxSchema property
+2019-11-21T13:25:47  <Bosmon> Justin_o - it may be safer, although look a bit nutty, to instead distribute a "record" which resolves upwards onto where you know the gradeName has been computed
+2019-11-21T13:25:47  <Justin_o> which is itself created from an expander that takes in the auxiliarySchema property as an argument
+2019-11-21T13:26:29  <Bosmon> "source" distributions are primarily meant for facade-type applications where you want some component to behave as if it had directly received some INPUT configuration which had been written elsewhere
+2019-11-21T13:26:49  <Bosmon> Right now if you want to consume "output", that is, some fully expanded/evaluated material, it is better to just reference it in place
+2019-11-21T13:27:13  <Justin_o> Bosmon: well, this stuff was done before with an IoC expression in the gradeNames
+2019-11-21T13:27:20  <Justin_o> maybe I'll try that again
+2019-11-21T13:29:02  <Bosmon> Justin_o - note that we are in fluid-design : P
+2019-11-21T13:29:11  <Justin_o> oh :(
+2019-11-21T13:29:17  <Justin_o> thanks
+2019-11-21T13:29:56  <Justin_o> we had a recent meeting about the IDRC site and it was mentioned that we might want to open a new more general channel, and I mentioned how I often talk about things in the wrong channel already
+2019-11-21T13:44:07  *** cindyli <cindyli!~Adium@198.52.178.16> has quit IRC (Quit: Leaving.)
+2019-11-21T13:51:49  *** danielcho <danielcho!~Adium@205.211.168.105> has joined #fluid-design
+2019-11-21T13:57:04  *** clown <clown!~clown@ckvlon1747w-lp140-04-70-27-184-205.dsl.bell.ca> has joined #fluid-design
+2019-11-21T14:05:30  *** cindyli <cindyli!~Adium@198.52.178.16> has joined #fluid-design
+2019-11-21T14:17:05  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has joined #fluid-design
+2019-11-21T14:20:52  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-design
+2019-11-21T14:57:24  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-design
+2019-11-21T14:59:58  *** avtar <avtar!~avtar@ip-45-3-29-85.user.start.ca> has joined #fluid-design
+2019-11-21T15:05:40  *** jhung_2 <jhung_2!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-design
+2019-11-21T15:09:26  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Ping timeout: 246 seconds)
+2019-11-21T15:14:08  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-11-21T15:22:29  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-oqfkrrqvukxdmwxb> has joined #fluid-design
+2019-11-21T15:24:19  <alanharnum> really good presentation on "AI snake oil", of relevance to WeCount specifically: https://www.cs.princeton.edu/~arvindn/talks/MIT-STS-AI-snakeoil.pdf
+2019-11-21T15:25:41  <michelled> alanharnum: you might like this too https://www.essence.com/feature/these-black-women-are-fighting-for-justice-in-a-world-of-biased-algorithms/
+2019-11-21T15:34:36  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-design
+2019-11-21T15:35:00  <michelled> cindyli: I had expected that once editing was on the story site that the button would also be gone. Is this not the case? http://stories.sojustrepairit.org/storyBrowse.html
+2019-11-21T15:35:47  <michelled> I mean 'off' not 'on' :D
+2019-11-21T15:36:55  <cindyli> michelled: right. the button is still there although the page it leads to doesn't show an editor.
+2019-11-21T15:37:55  <michelled> ah, well, that's not ideal :)
+2019-11-21T15:38:01  <michelled> pretty confusing all around
+2019-11-21T15:38:19  <cindyli> agree
+2019-11-21T15:40:13  <cindyli> how can i miss it when testing the branch
+2019-11-21T15:40:35  <michelled> no worries, we'll talk to greg when he's back
+2019-11-21T15:41:16  <cindyli> thanks, michelled
+2019-11-21T16:01:08  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-design
+2019-11-21T16:08:39  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-21T16:10:00  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-design
+2019-11-21T16:17:49  <greatislander> WYSIWYG editors as D&D alignments (reminded me of the Storytelling design crit from a couple weeks back :) cc: gmoss https://usercontent.irccloud-cdn.com/file/Jn5QNno0/wysiwyg.jpg.JPG
+2019-11-21T16:18:52  <alanharnum> greatislander: I am such a nerd my first response was "some of these are Markdown or HTML editors, they're not all WYSIWYG"
+2019-11-21T16:19:01  <greatislander> hahaha
+2019-11-21T16:19:16  <greatislander> you’re not wrong alanharnum
+2019-11-21T16:20:21  <alanharnum> despite my love for Markdown personally I disagree on it being on the side of Good. It is definitely a Lawful Neutral/Evil vibe for me. :)
+2019-11-21T16:21:45  <alanharnum> Markdown's "the best way to quickly mark up text for rendering to HTML is to pretend you're writing a well-organized Usenet FAQ in 1992" attitude is like the most Lawful Neutral vibe of all time for me
+2019-11-21T16:26:54  <greatislander> I tend to agree
+2019-11-21T16:44:52  *** clown is now known as clown_afk
+2019-11-21T16:48:08  *** clown_afk is now known as clown
+2019-11-21T16:49:24  *** clown is now known as clown_afk
+2019-11-21T16:52:10  <gmoss> greatislander: that's amazing :)
+2019-11-21T16:54:17  <gmoss> michelled cindyli: the button isn't hidden yet because the code still needs to be promoted to stories-sojustrepairit-production. I think I forgot to mention that part this time. Usually I add a note in the PR
+2019-11-21T16:55:09  *** clown_afk <clown_afk!~clown@ckvlon1747w-lp140-04-70-27-184-205.dsl.bell.ca> has quit IRC (Ping timeout: 246 seconds)
+2019-11-21T16:55:23  <cindyli> great! thanks, gmoss
+2019-11-21T16:55:25  <gmoss> Just checked, it's in the PR but maybe it wasn't in my email. https://github.com/fluid-project/sjrk-story-telling/pull/47
+2019-11-21T16:58:41  <cindyli> gmoss: if the editing hasn't been disabled on the production, why the edit page isn't showing the story editor?
+2019-11-21T17:05:17  <gmoss> cindyli: the editing is now disabled since alanharnum flipped the switch this morning (thanks alanharnum!) and the edit page no longer shows anything, but the code update to hide the button hasn't made its way to that branch yet.
+2019-11-21T17:06:53  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-11-21T17:07:08  <cindyli> i see. great to know. thanks, gmoss
+2019-11-21T17:07:28  <gmoss> :)
+2019-11-21T17:09:03  <michelled> cool, cindyli can you do the merge that gmoss mentioned? https://github.com/fluid-project/sjrk-story-telling/pull/47
+2019-11-21T17:09:14  <michelled> This change is meant to be merged into the stories-floe-dev branch and thence immediately into stories-sojustrepairit-production
+2019-11-21T17:09:38  <cindyli> sure
+2019-11-21T17:10:23  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-21T17:10:58  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-design
+2019-11-21T17:12:22  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-design
+2019-11-21T17:13:03  <cindyli> done
+2019-11-21T18:01:05  <danayo_> cherylhjli: I’m in the PC zoom room
+2019-11-21T18:02:32  <avtar> danielcho, michelled, simonjb: are we meeting?
+2019-11-21T18:02:47  <michelled> avtar: yes, let's meet here https://ocadu.zoom.us/j/988876997
+2019-11-21T18:02:56  <michelled> avtar: simonjb won't join us, but let's check in
+2019-11-21T18:03:07  <avtar> ok cool
+2019-11-21T18:03:11  <cherylhjli> danayo_ be right there!
+2019-11-21T18:03:11  <avtar> one sec
+2019-11-21T18:03:39  <danielcho> ok, I will join shortly :)
+2019-11-21T18:19:31  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-11-21T18:33:28  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-design
+2019-11-21T19:09:34  *** clown <clown!~clown@ckvlon1747w-lp140-04-70-27-184-205.dsl.bell.ca> has joined #fluid-design
+2019-11-21T19:15:17  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-11-21T19:19:22  <danielcho> michelled: avtar I got an email from Zev about the police check — Toronto police returned the fee and form to Zev
+2019-11-21T19:19:41  <danielcho> I need to get it done by Hamilton police
+2019-11-21T19:23:16  <avtar> danielcho: good to hear they returned the funds
+2019-11-21T19:23:27  <danielcho> yep :)
+2019-11-21T19:23:28  <avtar> otherwise we'd have to call the cops
+2019-11-21T19:24:13  <danielcho> oh well I didn't ask Iris about the fee yet, I was going to ask her after I get the check
+2019-11-21T19:25:06  <danielcho> I will just get one done in Hamilton sometime next week
+2019-11-21T19:28:10  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-design
+2019-11-21T19:36:07  <avtar> danielcho: that sounds good
+2019-11-21T19:45:54  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.103> has joined #fluid-design
+2019-11-21T19:46:24  *** cindyli <cindyli!~Adium@198.52.178.16> has quit IRC (Read error: Connection reset by peer)
+2019-11-21T19:46:50  *** cindyli <cindyli!~Adium@198.52.178.16> has joined #fluid-design
+2019-11-21T19:47:57  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-oqfkrrqvukxdmwxb> has quit IRC (Ping timeout: 240 seconds)
+2019-11-21T19:48:52  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-11-21T20:01:29  <cindyli> gmoss: it's been a while I merged stories-floe-dev into stories-floe-production and pushed, but the production site hasn't been updated. do you know what's going on?
+2019-11-21T20:03:34  <cindyli> i hope it's not because I pushed the entire stories-floe-dev instead of just GPII-297 pull request. I looked at the difference btw stories-floe-dev and stories-floe-production before the push, seemed safe but i could be wrong …
+2019-11-21T20:05:39  <cindyli> just tested stories-floe-production again on my local machine. it works well with hiding the edit link
+2019-11-21T20:06:42  <cindyli> alanharnum: ^ the site i'm checking is http://stories.sojustrepairit.org/
+2019-11-21T20:19:00  <gmoss> cindyli: the branch for the SJRK site is stories-sojustrepairit-production. The one you mentioned is at https://stories.floeproject.org
+2019-11-21T20:19:20  <gmoss> I have to drive a few hours now, but I'll check in once I arrive to make sure everything is okay :)
+2019-11-21T20:19:23  <cindyli> ah oh, that's why
+2019-11-21T20:19:35  <cindyli> man. i got totally confused with these branches …
+2019-11-21T20:19:44  <gmoss> Haha yeah...
+2019-11-21T20:19:57  <cindyli> great discovery, gmoss. thanks. pushing again
+2019-11-21T20:20:10  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-21T20:23:17  *** jhung_2 is now known as jhung
+2019-11-21T20:23:32  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has quit IRC (Quit: Leaving.)
+2019-11-21T20:26:13  <cindyli> done. now http://stories.sojustrepairit.org/ is looking expected. Cheers!
+2019-11-21T20:32:23  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-design
+2019-11-21T20:35:36  *** clown is now known as clown_afk
+2019-11-21T20:35:45  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Client Quit)
+2019-11-21T20:36:10  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-design
+2019-11-21T20:37:20  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Client Quit)
+2019-11-21T20:41:56  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-design
+2019-11-21T20:44:52  *** avtar <avtar!~avtar@ip-45-3-29-85.user.start.ca> has quit IRC (Quit: Quit)
+2019-11-21T20:45:54  *** avtar <avtar!~avtar@ip-45-3-29-85.user.start.ca> has joined #fluid-design
+2019-11-21T20:46:58  *** clown_afk <clown_afk!~clown@ckvlon1747w-lp140-04-70-27-184-205.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2019-11-21T20:48:16  *** cindyli <cindyli!~Adium@198.52.178.16> has quit IRC (Quit: Leaving.)
+2019-11-21T21:02:15  *** cindyli <cindyli!~Adium@198.52.178.16> has joined #fluid-design
+2019-11-21T21:11:57  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has joined #fluid-design
+2019-11-21T21:26:33  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving)
+2019-11-21T21:37:32  *** cindyli <cindyli!~Adium@198.52.178.16> has quit IRC (Quit: Leaving.)
+2019-11-21T21:50:51  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-design
+2019-11-21T21:54:44  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Client Quit)
+2019-11-21T22:04:44  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has quit IRC (Quit: Leaving.)
+2019-11-21T22:04:49  *** danielcho <danielcho!~Adium@205.211.168.105> has left #fluid-design
+2019-11-21T22:23:14  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-vgvarauurmgekiek> has quit IRC (Quit: Connection closed for inactivity)
+2019-11-21T22:30:05  *** avtar <avtar!~avtar@ip-45-3-29-85.user.start.ca> has quit IRC (Quit: Quit)
+2019-11-21T22:31:35  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-design
+2019-11-21T22:32:37  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-21T22:40:55  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-design
+2019-11-21T22:55:00  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-11-21T23:10:54  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-21T23:33:40  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)

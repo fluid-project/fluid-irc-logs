@@ -1,0 +1,313 @@
+2019-11-28T00:13:27  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has joined #fluid-work
+2019-11-28T00:13:44  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has quit IRC (Client Quit)
+2019-11-28T01:01:43  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-vxnuasenomlhduho> has quit IRC (Quit: Connection closed for inactivity)
+2019-11-28T01:36:45  *** lliskovoi_ <lliskovoi_!uid367571@gateway/web/irccloud.com/x-nvnngltdqiblruks> has quit IRC (Quit: Connection closed for inactivity)
+2019-11-28T02:52:50  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has joined #fluid-work
+2019-11-28T03:03:17  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-11-28T03:03:21  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Client Quit)
+2019-11-28T03:04:32  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-11-28T03:06:35  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Client Quit)
+2019-11-28T03:18:36  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has quit IRC (Quit: Leaving.)
+2019-11-28T06:21:31  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:ec34:cbaf:410:85be> has joined #fluid-work
+2019-11-28T07:06:08  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-11-28T11:10:15  <the-t-in-rtf> Has anyone set up their windows client to point to staging recently?  Trying to find the right environment variable.
+2019-11-28T11:36:14  <Justin_o> the-t-in-rtf: I made some more progress on the CI setup I'm working on. It seems that the last set of timeouts were related to a failing test.. I wonder if the particular failure was causing testem to not report. Actually this might have been the case because the failure was a missing dependency for a file is added ahead of the testem scripts.
+2019-11-28T11:36:37  <the-t-in-rtf> Woo, Dad life, up early!
+2019-11-28T11:36:44  <Justin_o> the-t-in-rtf: :)
+2019-11-28T11:37:23  <Justin_o> I had trouble sleeping and have to take my daughter in for a checkup later today, so figured I might as well start a bit earlier
+2019-11-28T11:37:39  <the-t-in-rtf> Anyway, yes, there is a callback that has to be called before Testem will consider a run complete.
+2019-11-28T11:38:11  <the-t-in-rtf> and you can get to a hung state if something  breaks further up the chain from the tests
+2019-11-28T11:38:40  <the-t-in-rtf> One trick I use to narrow things down is to manually run the testem tests in CI mode and look at the console output
+2019-11-28T11:38:44  <Justin_o> the-t-in-rtf: okay, so that's probably what it was in this case.. I have that fixed up now by not running some tests that probably should only be running in node anyways.
+2019-11-28T11:39:04  <the-t-in-rtf> great
+2019-11-28T11:39:14  <Justin_o> the-t-in-rtf: so I'm trying to expand the browser coverage in the tests now, and have two new issues. one is that it doesn't seem to work with safari at least not in cataline
+2019-11-28T11:39:16  <Justin_o> catalina
+2019-11-28T11:39:49  <the-t-in-rtf> you mean no coverage is reported, or the tests don't run/complete?
+2019-11-28T11:39:49  <Justin_o> The tests are hanging in Ci and when I try to run on my local machine, safari is triggered but a file open dialog is hit
+2019-11-28T11:40:10  <Justin_o> test don't run/complete
+2019-11-28T11:40:35  <Justin_o> I wonder if something has changed with Catalina or Safari 13 that is preventing the file from opening
+2019-11-28T11:41:43  <the-t-in-rtf> just a moment, I have a repo I used to demonstrate a problem with testem to their devs.
+2019-11-28T11:41:52  <the-t-in-rtf> it's useful for testing things in total isolation.
+2019-11-28T11:42:19  <Justin_o> that's helpful
+2019-11-28T11:42:42  <the-t-in-rtf> I was getting it confused with chokidar, I think I just use testem's examples
+2019-11-28T11:42:46  <the-t-in-rtf> just a minute
+2019-11-28T11:45:31  <the-t-in-rtf> OK, so, check out testem somewhere
+2019-11-28T11:45:31  <the-t-in-rtf> https://github.com/testem/testem
+2019-11-28T11:45:44  <the-t-in-rtf> change to this dir
+2019-11-28T11:45:45  <the-t-in-rtf> https://github.com/testem/testem/tree/master/examples/qunit_simple
+2019-11-28T11:45:48  <the-t-in-rtf> run npm install
+2019-11-28T11:46:10  <the-t-in-rtf> node ../../testem.js ci --file testem.json --launch Safari
+2019-11-28T11:46:35  <the-t-in-rtf> I think I had already previous installed testem's dependencies when creating a PR
+2019-11-28T11:46:42  <the-t-in-rtf> so I guess you need to do that after checking it out
+2019-11-28T11:47:04  <the-t-in-rtf> but that should make it immediately clear if Safari can launch/run tests/stop on your machine
+2019-11-28T11:52:38  <Justin_o> the-t-in-rtf: thanks, I'm trying to get that setup now. It seems to need PhantomJS but I'm getting download failures from both the npm install and trying to install through brew
+2019-11-28T11:53:02  <the-t-in-rtf> bummer
+2019-11-28T11:53:18  <Justin_o> might be an issue with where they are hosting a zip file
+2019-11-28T11:53:41  <Justin_o> okay, we'll put the safari issue on hold for a minute. I'm also running into an issue with Firefox 70 on ubuntu in CI
+2019-11-28T11:53:50  <Justin_o> the-t-in-rtf: the error is
+2019-11-28T11:53:51  <Justin_o> FATAL ERROR: Uncaught exception: Relogin from an unknown browser Firefox 70.0 with id null
+2019-11-28T11:54:16  <Justin_o> the-t-in-rtf:  you can see the log from https://github.com/jobara/gpii-chrome-extension/runs/323814920
+2019-11-28T11:54:29  <Justin_o> if you got the ubuntu build and click on Tests
+2019-11-28T11:55:57  <the-t-in-rtf> why are you running the chrome plugin tests on Firefox again?
+2019-11-28T11:56:04  <the-t-in-rtf> or are you not trying to?
+2019-11-28T11:57:11  <Justin_o> the-t-in-rtf: I'm just running the browser related code there. It doesn't actually use any chrome apis specifically, any calls to them are mocked with sinon-chrome
+2019-11-28T11:57:12  <the-t-in-rtf> I was thinking over night that you have the only good case for using the "launch" option
+2019-11-28T11:57:32  <Justin_o> the-t-in-rtf:  :) yes, I could go back to just running them in chrome
+2019-11-28T11:57:48  <Justin_o> we haven't yet ported the extension to work in other browsers
+2019-11-28T11:58:12  <Justin_o> But I'm also trying to work out issues for potentially switching infusion over to GitHub actions
+2019-11-28T11:58:27  <Justin_o> or at least getting an idea if that would be an option
+2019-11-28T11:58:35  <the-t-in-rtf> sounds interesting
+2019-11-28T11:59:39  <the-t-in-rtf> hopefully they have good options for who can trigger builds, that was always a sticking point with other cloud based options
+2019-11-28T12:00:02  <the-t-in-rtf> although I guess if it's their servers we may be more OK with leaving it more open.
+2019-11-28T12:00:02  <Justin_o> the-t-in-rtf: you mean for PRs
+2019-11-28T12:00:07  <the-t-in-rtf> yes
+2019-11-28T12:00:26  <Justin_o> I'll have to look into that, I had forgotten about that issue
+2019-11-28T12:05:09  <Justin_o> the-t-in-rtf: did you know that PhantomJS development has been suspended and the repo archived? https://github.com/ariya/phantomjs
+2019-11-28T12:05:17  <Justin_o> I wonder if that's related to why I'm not able to install it
+2019-11-28T12:05:26  <the-t-in-rtf> eep.
+2019-11-28T12:05:42  <the-t-in-rtf> I understand why they support it, but that's rough.
+2019-11-28T12:05:53  <the-t-in-rtf> even if we ourselves probably shouldn't use it IMO.
+2019-11-28T12:06:42  <the-t-in-rtf> OK, so you should be able to move forward running npm install with NODE_ENV=production
+2019-11-28T12:06:46  <the-t-in-rtf> it's a dev dependency
+2019-11-28T12:07:09  <the-t-in-rtf> (of testem, assuming that's who's bringing it in)
+2019-11-28T12:07:17  <the-t-in-rtf> that's not a good solution longer term
+2019-11-28T12:07:21  <the-t-in-rtf> let me check their issues
+2019-11-28T12:07:52  <Justin_o> the-t-in-rtf:  the macOS X download doesn't work from their site either https://phantomjs.org/download.html
+2019-11-28T12:09:28  <the-t-in-rtf> AHA
+2019-11-28T12:09:40  <the-t-in-rtf> yeah, I can install things because I have phantomjs installed locally.
+2019-11-28T12:10:55  <the-t-in-rtf> the OS X download works for me
+2019-11-28T12:11:53  <Justin_o> the-t-in-rtf: hmm.. I wonder if my ad blocker is preventing access to that location
+2019-11-28T12:12:09  <Justin_o> it's running on my network though, so not really easy to disable it :(
+2019-11-28T12:12:27  <the-t-in-rtf> it might explain some of the other issues
+2019-11-28T12:12:28  <Justin_o> oh well.. I got around that with the environment variable you suggested
+2019-11-28T12:12:32  <the-t-in-rtf> maybe try it with the opera VPN?
+2019-11-28T12:12:42  <the-t-in-rtf> I mean for the installer
+2019-11-28T12:13:09  <the-t-in-rtf> Glad the environment variable works, but eventually you'll need to be able to install your own dev dependencies
+2019-11-28T12:13:43  <Justin_o> yah I could probably just download it from work and  send the zip file to myself by some means I guess
+2019-11-28T12:15:07  <Justin_o> the-t-in-rtf: also I'm running into the same Safari issue. It seems that it needs the user to confirm the file being opened
+2019-11-28T12:15:29  <the-t-in-rtf> you mean with their simple test?
+2019-11-28T12:15:53  <the-t-in-rtf> anyway, hopefully there is a preference or setting or something
+2019-11-28T12:16:47  <the-t-in-rtf> Anyway, my new machine will be here very soon, and then I'll be right there with you
+2019-11-28T12:17:10  <the-t-in-rtf> we should put in a bug against testem, as I'm sure it'll start coming up more often as people upgrade
+2019-11-28T12:17:37  <Justin_o> yes, with the simple test.. I'll have to see if there is a setting in safari, but I'm not sure I can change that in CI
+2019-11-28T12:17:50  <the-t-in-rtf> wait, how are you running Safari in CI?
+2019-11-28T12:18:00  <the-t-in-rtf> I mean, I'd be stunned if they had that.
+2019-11-28T12:18:05  <Justin_o> GitHub Actions has a macOS runner
+2019-11-28T12:18:09  <the-t-in-rtf> holy cow!
+2019-11-28T12:18:11  <the-t-in-rtf> that's awesome.
+2019-11-28T12:18:20  <Justin_o> yep that's one of the reasons why I want to consider switching
+2019-11-28T12:19:26  <Justin_o> the-t-in-rtf: https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners
+2019-11-28T12:20:29  <Justin_o> the-t-in-rtf: by the way, the Opera VPN worked for downloading the phantomJS install file. thanks
+2019-11-28T12:20:38  <the-t-in-rtf> yay
+2019-11-28T12:22:33  <Justin_o> the-t-in-rtf: what are you getting for a new machine?
+2019-11-28T12:23:10  <the-t-in-rtf> 16" MBP
+2019-11-28T12:23:36  <the-t-in-rtf> To replace my 5+ year old 15" MBP
+2019-11-28T12:23:46  <the-t-in-rtf> which is doing its best but lagging.
+2019-11-28T12:23:47  <Justin_o> the-t-in-rtf: nice.. I'm jealous.. I'm quite tempted to get one of those for my personal machine... really like that they've fixed the keyboard
+2019-11-28T12:24:21  <Justin_o> I have the original retina MBP from 2012 (I think).
+2019-11-28T12:24:28  <the-t-in-rtf> yes, it's nice I was going to grit my teeth and live with it, as I use an external keyboard 99% of the time, but I like that they fixed that and also have a physical escape key.
+2019-11-28T12:25:08  <the-t-in-rtf> wow
+2019-11-28T12:46:12  *** kris <kris!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-11-28T12:46:14  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Remote host closed the connection)
+2019-11-28T12:57:31  <the-t-in-rtf> @Bosmon or anyone else around, I am still looking for an environment variable use to test gpii-app against the updated staging cloud.
+2019-11-28T12:58:47  <Bosmon> Hey there Justin_o - given you are awake, my current thinking was that the shortest approach to your override problem might be to write a mergePolicy
+2019-11-28T12:58:53  <Bosmon> We find we are doing this a lot these days anyway
+2019-11-28T13:00:25  <Bosmon> https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/Fluid.js#L2620
+2019-11-28T13:00:50  <Bosmon> We have this one in the current framework which got renamed "fluid.deferringMergePolicy" in the upcoming framework since it seems that we have little choice but to use it in all kinds of places
+2019-11-28T13:01:13  <Bosmon> My feeling is that it does what the "Infusion compiler" version of the framework will largely do by default
+2019-11-28T13:13:23  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-11-28T13:15:12  *** javjarfer[m] <javjarfer[m]!javjarferm@gateway/shell/matrix.org/x-jnkamqwjbxxhtcic> has quit IRC (Write error: Connection reset by peer)
+2019-11-28T13:15:54  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-jmtzjqqzkwlyopiv> has joined #fluid-work
+2019-11-28T13:17:23  <the-t-in-rtf> seems like GPII_CLOUD_URL is what I need, I assume that is mean to point to the flow manager.
+2019-11-28T13:25:51  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has joined #fluid-work
+2019-11-28T13:26:03  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has quit IRC (Client Quit)
+2019-11-28T13:41:24  *** cindyli <cindyli!~Adium@198.52.178.16> has joined #fluid-work
+2019-11-28T13:45:00  <Justin_o> Bosmon: sorry missed this while testing testem with safari.. thanks for the feedback
+2019-11-28T13:56:19  *** danielcho <danielcho!~Adium@hmtnon1497w-130-02-65-95-64-90.dsl.bell.ca> has joined #fluid-work
+2019-11-28T14:04:50  *** Bosmon <Bosmon!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has quit IRC (Ping timeout: 265 seconds)
+2019-11-28T14:07:58  *** Bosmon <Bosmon!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has joined #fluid-work
+2019-11-28T14:14:00  *** the-t-in-rtf1 <the-t-in-rtf1!~Adium@2a02:a210:2142:3480:754b:aeee:c55f:ab2b> has joined #fluid-work
+2019-11-28T14:14:31  <the-t-in-rtf1> So, maybe I should ask a much more basic question.  Does any action on the QSS result in contacting the cloud?
+2019-11-28T14:17:17  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:ec34:cbaf:410:85be> has quit IRC (Ping timeout: 246 seconds)
+2019-11-28T14:34:55  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-11-28T14:35:17  *** javjarfer[m] <javjarfer[m]!javjarferm@gateway/shell/matrix.org/x-mtawwowdjbixttha> has joined #fluid-work
+2019-11-28T14:36:02  *** avtar <avtar!~avtar@ip-24-50-165-3.user.start.ca> has joined #fluid-work
+2019-11-28T14:43:18  *** cherylhjli <cherylhjli!~Adium@vlnsm2-toronto63-142-116-82-223.internet.virginmobile.ca> has joined #fluid-work
+2019-11-28T14:57:59  *** clown <clown!clown@nat/ocadu/x-nirqwvrizqdxhlnq> has joined #fluid-work
+2019-11-28T15:10:29  *** kris <kris!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 246 seconds)
+2019-11-28T15:25:57  *** simonjb <simonjb!~simonjb@205.211.168.103> has joined #fluid-work
+2019-11-28T15:49:34  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-11-28T15:54:05  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Client Quit)
+2019-11-28T16:08:19  *** danayo_ <danayo_!~danayo@S01061cabc0accd23.vc.shawcable.net> has joined #fluid-work
+2019-11-28T16:17:01  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-work
+2019-11-28T16:19:28  <cindyli> Bosmon: with the new framework, what's the recommended way to fix the option modification as https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/FlowManager.js#L282-L284?
+2019-11-28T16:20:04  <Bosmon> cindyli - in the new framework, we will use the ResourceLoader system for any such I/O dependent material
+2019-11-28T16:20:13  <Bosmon> In the current framework I recommend you use and expander
+2019-11-28T16:20:16  <Bosmon> an
+2019-11-28T16:21:26  <cindyli> so, instead of assigning calculated values to options, shall i assign them to member options, then use "@expand:{that}.defaultLifecycleInstructions" to assign it back to options.defaultLifecycleInstructions in the component declaration?
+2019-11-28T16:22:49  <cindyli> Bosmon: but how can I control the execution of the expander to make sure it expands after the calculation of the member option has completed?
+2019-11-28T16:23:26  <Bosmon> cindyli - that would be unhelpful
+2019-11-28T16:23:34  <Bosmon> You should do everything in options
+2019-11-28T16:23:35  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-11-28T16:24:05  <Bosmon> Having an expander consume a member just raises the risk of races
+2019-11-28T16:24:44  <cindyli> Bosmon: ok. these two lines are in the resolve call back of a async promise - https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/FlowManager.js#L279
+2019-11-28T16:25:06  <Bosmon> cindyli - right
+2019-11-28T16:25:34  <Bosmon> I remember that now : P
+2019-11-28T16:25:42  <Bosmon> In that case, we are stuffed keeping these things in options
+2019-11-28T16:26:03  <Bosmon> The best route is to as closely approximate what the new framework will do, and turn both of these into promise transform chain elements
+2019-11-28T16:26:57  <Bosmon> Turn both defaultSnapshot and defaultLifecycleInstructions into members which are promises holding the resolved chain result
+2019-11-28T16:27:41  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-work
+2019-11-28T16:29:09  <Bosmon> cindyli - I notice there is something dubious here too: https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/FlowManager.js#L131
+2019-11-28T16:29:43  <cindyli> Bosmon: ya, that's why they are in options not members
+2019-11-28T16:30:30  <Bosmon> cindyli - so, in the chain model, you will now distribute to listeners in the chain rather than everyone trying to pile into the optiosn
+2019-11-28T16:31:06  <cindyli> Bosmon: i don't think i understand :( is there an example?
+2019-11-28T16:31:54  <Bosmon> cindyli - you have been using one all the time : P
+2019-11-28T16:31:54  <Bosmon> https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/MatchMaking.js#L188
+2019-11-28T16:34:44  <cindyli> Bosmon: what does it mean "distribute to listeners in the chain"? is this to replace what I'm doing with distributing these 2 values with distributeOptions? i don't know how this example would help
+2019-11-28T16:35:29  <cindyli> is there an example in the new framework about how to use resourceLoader to deal with this kind of situation? Bosmon
+2019-11-28T16:36:31  <Bosmon> cindyli - we can't use the new framework since I don't think it is wise to expect to update universal in time
+2019-11-28T16:37:53  <Bosmon> cindyli - you can also see this pattern in the DataSource that we use everywhere - https://github.com/fluid-project/kettle/blob/master/lib/dataSource-core.js#L169
+2019-11-28T16:38:14  <Bosmon> These pseudoevents get a bunch of listeners: https://github.com/fluid-project/kettle/blob/master/lib/dataSource-core.js#L179
+2019-11-28T16:38:47  <Bosmon> In your distribution case these might well just be fluid.identity which receives whatever static value you want to distribute to it, or else something which returns a promise for some I/O or a matchmaker output
+2019-11-28T16:40:00  <cindyli> ok. i will ponder on it. will bug you again if i cannot figure out
+2019-11-28T16:40:31  <Bosmon> cindyli - so this one becomes a genuine transforming function: https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/FlowManager.js#L282
+2019-11-28T16:41:06  <Bosmon> And the other ones become lumps of fluid.identity which just recycle a static value
+2019-11-28T16:41:20  <Bosmon> cindyli - to be honest I think this rewrite is essential since I can't clearly understand the existing workflow : P
+2019-11-28T16:41:44  <Bosmon> How is it that defaultLifecycleInstructions is targetted both by an options distribution as well as a computation?
+2019-11-28T16:41:47  <cindyli> haha, we all try to understand each other's logic
+2019-11-28T16:42:38  <Bosmon> Oh wait
+2019-11-28T16:42:41  <Bosmon> This is a distribution OUT
+2019-11-28T16:46:49  <Bosmon> I see these are consumed here: https://github.com/GPII/universal/blob/master/gpii/node_modules/lifecycleManager/src/UserLogonStateChange.js#L27
+2019-11-28T16:46:54  <Bosmon> Yes, there is no way these are options
+2019-11-28T16:47:44  <Bosmon> They are even consumed "blind", there is no hint in the definition of gpii.lifecycleManager.userLogonHandling.stateChangeHandler that they are consumed
+2019-11-28T16:47:46  <cindyli> well, using options is the only way I can come up with in order to make use of distributeOptions
+2019-11-28T16:48:31  <Bosmon> cindyli - yes, I see
+2019-11-28T16:52:41  <Bosmon> cindyli - well, here is a trick : P
+2019-11-28T16:53:24  <Bosmon> It's an interesting issue I've discussed with Philip who is joining you soon.... the issue of how things are resolved in options distributions
+2019-11-28T16:53:58  <Bosmon> Actually now I look at it, this distribution looks incorrect anyway: https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/FlowManager.js#L134
+2019-11-28T16:54:33  <Bosmon> You have written "{that}" together with "record"
+2019-11-28T16:54:43  <cindyli> ah ha
+2019-11-28T16:54:47  <cindyli> should be "source"
+2019-11-28T16:54:49  <Bosmon> And so all this does is to distribute the material to itself?
+2019-11-28T16:54:58  <Bosmon> Well shouldn't be source, because as we know it can't be in options
+2019-11-28T16:55:09  <cindyli> ya ok
+2019-11-28T16:55:12  <Bosmon> The great question is, if this distribution doesn't work, how does the material ever get there?
+2019-11-28T16:55:40  <Bosmon> Both these two distributions are no-ops
+2019-11-28T16:55:51  <cindyli> good question. I will debug
+2019-11-28T16:57:25  <Bosmon> But anyway, my suggested answer is that, once you fix these up to be promise generators, that you now distribute downwards "{gpii.flowManager.local}.defaultLifecycleInstructionsPromise" where the promise is a member which is defined in options but resolved by the event
+2019-11-28T16:57:53  <Bosmon> And at the same time make sure you write a definition of the promise at the target so it is clear from the grade definition that it consumes this material
+2019-11-28T16:58:39  *** lliskovoi_ <lliskovoi_!uid367571@gateway/web/irccloud.com/x-gudojqfnaoxdpooc> has joined #fluid-work
+2019-11-28T16:59:45  <Bosmon> This pattern will also save you from doing unsightly things like the following: https://github.com/GPII/universal/pull/820/files#diff-e28b72dafa8f53a9b7285f6ed50f7449R81
+2019-11-28T17:01:12  <cindyli> Bosmon: so "defaultLifecycleInstructionsPromise" will be a member option. is it possible to distribute a member option?
+2019-11-28T17:02:32  <Bosmon> cindyli - we won't distribute the member, we distribute a "record" which resolves to the member ....
+2019-11-28T17:06:27  <cindyli> i see!
+2019-11-28T17:06:32  <cindyli> thanks, Bosmon
+2019-11-28T17:07:25  <cindyli> now I understand better about the difference between "record" and "source" ;)
+2019-11-28T17:07:46  <Bosmon> cindyli - it had better work this way otherwise we have an even more horrific bug
+2019-11-28T17:07:56  <Bosmon> I am worried about the possible reasons that the system is currently working
+2019-11-28T17:11:12  <cindyli> Bosmon: i know you worry about the race condition and how these values are distributed down. I will debug the latter. regarding the former, if i rmb correctly, it's controlled by all these events - https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/FlowManager.js#L215-L222 and the event at line 247
+2019-11-28T17:11:48  <cindyli> using promise chain should solve the possibility of the race condition
+2019-11-28T17:12:10  <Bosmon> cindyli - yeah, but how does defaultLifecycleInstructions ever get there currently?
+2019-11-28T17:12:38  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-11-28T17:13:00  <cindyli> i wanna know too ;) i agree it looks buggy but reset does work…
+2019-11-28T17:13:39  *** clown <clown!clown@nat/ocadu/x-nirqwvrizqdxhlnq> has quit IRC (Ping timeout: 250 seconds)
+2019-11-28T17:34:55  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-work
+2019-11-28T17:36:56  *** colinclark <colinclark!~colinclar@205.211.168.101> has joined #fluid-work
+2019-11-28T17:41:00  *** clown <clown!clown@nat/ocadu/x-wpvvtydodvgbxbey> has joined #fluid-work
+2019-11-28T17:55:06  *** danayo_ <danayo_!~danayo@S01061cabc0accd23.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-28T17:55:32  *** danayo_ <danayo_!~danayo@S01061cabc0accd23.vc.shawcable.net> has joined #fluid-work
+2019-11-28T18:00:56  *** danayo_ <danayo_!~danayo@S01061cabc0accd23.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-28T18:13:14  *** clown <clown!clown@nat/ocadu/x-wpvvtydodvgbxbey> has quit IRC (Ping timeout: 276 seconds)
+2019-11-28T18:23:03  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving)
+2019-11-28T18:51:26  *** clown <clown!clown@nat/ocadu/x-ywfgbtrwvhznhofp> has joined #fluid-work
+2019-11-28T19:11:32  *** cindyli <cindyli!~Adium@198.52.178.16> has quit IRC (Quit: Leaving.)
+2019-11-28T19:11:54  *** cherylhjli <cherylhjli!~Adium@vlnsm2-toronto63-142-116-82-223.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-11-28T19:17:09  *** cherylhjli <cherylhjli!~Adium@vlnsm2-toronto63-142-116-82-223.internet.virginmobile.ca> has joined #fluid-work
+2019-11-28T19:17:48  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-11-28T19:24:18  *** cindyli <cindyli!~Adium@198.52.178.16> has joined #fluid-work
+2019-11-28T19:25:57  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Quit: sepidehshahi)
+2019-11-28T19:43:13  *** simonjb <simonjb!~simonjb@205.211.168.103> has quit IRC (Ping timeout: 245 seconds)
+2019-11-28T20:04:59  <cindyli> Bosmon: i debugged this distribution https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/FlowManager.js#L133-L140 and found they do work. the distributed values are pointing to the source component - flowManager. changing "record" to "source" will stop the distribution from working. so I wrote this little test case - https://pastebin.com/n0QAYfDz, it does pass
+2019-11-28T20:05:19  <cindyli> i'm not sure if this is a bug or not. even tho it is, it's a thankful bug ;)
+2019-11-28T20:05:45  <cindyli> let me know if i should fire a jira with this test case, Bosmon
+2019-11-28T20:05:55  <Bosmon> cindyli - please do :(
+2019-11-28T20:05:59  <cindyli> ok
+2019-11-28T20:08:57  <Bosmon> cindyli - well, now I look at the source, I realise I completely forgot how I had implemented this :(
+2019-11-28T20:09:30  <cindyli> Bosmon: does the new framework change this part?
+2019-11-28T20:09:55  <Bosmon> cindyli - I could hardly change something I had forgotten about : P
+2019-11-28T20:10:04  <Bosmon> https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/FluidIoC.js#L1237
+2019-11-28T20:10:08  <cindyli> lol
+2019-11-28T20:10:52  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-11-28T20:10:56  <Bosmon> I guess, of course, all the times I've advised people to generate options that would resolve at the target, they have automatically ended up generating things that would resolve at the source too
+2019-11-28T20:11:26  <cindyli> what a great and confusing feature ;)
+2019-11-28T20:11:28  <Bosmon> Except when you inadvertently wrote "{that}" expecting it to work
+2019-11-28T20:11:40  <Bosmon> I guess this validates that what I implemented is actually the expected behaviour
+2019-11-28T20:12:04  <cindyli> Bosmon: you do have a test case for vice versus tho - https://github.com/fluid-project/infusion/blob/master/tests/framework-tests/core/js/FluidIoCTests.js#L3435-L3447
+2019-11-28T20:12:47  <cindyli> although it's not distributing a source option
+2019-11-28T20:12:55  <cindyli> but the source component itself
+2019-11-28T20:12:56  <Bosmon> cindyli - neither were you
+2019-11-28T20:13:30  <Bosmon> But you can see why this works, in the expansion context, {that} does indeed naturally resolve to the parent
+2019-11-28T20:13:52  <Bosmon> Since {that} could never resolve to the child since it hasn't constructed yet
+2019-11-28T20:14:16  <cindyli> ok. seems really smart
+2019-11-28T20:14:24  <Bosmon> OK well
+2019-11-28T20:15:23  <Bosmon> cindyli - I mean, if you write a record like this:     record: "{gpii.flowManager.local}.lifecycleManager",
+2019-11-28T20:15:37  <Bosmon> It is completely unambiguous what it means, regardless of what I implemented : P
+2019-11-28T20:15:38  <cindyli> it won't work
+2019-11-28T20:15:39  <cindyli> i tried
+2019-11-28T20:15:45  <Bosmon> But this is what you wrote!
+2019-11-28T20:15:47  <Bosmon> And it does work!
+2019-11-28T20:16:01  <Bosmon> https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/FlowManager.js#L148
+2019-11-28T20:16:20  <Bosmon> The point is, the meaning of this record is the same at both the target and the source
+2019-11-28T20:16:20  <cindyli> wrong wrong, i meant these ones https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/FlowManager.js#L133-L140
+2019-11-28T20:16:35  <cindyli> if i change it to
+2019-11-28T20:16:43  <cindyli> record: "{gpii.flowManager.local}.options.defaultLifecycleInstructions",
+2019-11-28T20:16:50  <cindyli> it won't work
+2019-11-28T20:17:07  <Bosmon> cindyli - why not?
+2019-11-28T20:18:06  <cindyli> i don't know, the only special i can see is the target component "gpii.lifecycleManager.userLogonHandling.stateChangeHandler" is a dynamic component
+2019-11-28T20:18:37  <Bosmon> Should make no difference
+2019-11-28T20:18:43  <cindyli> ok
+2019-11-28T20:18:54  <Bosmon> Can you check that in, if that doesn't work, it is certainly a bug
+2019-11-28T20:19:04  <cindyli> let me try again, just double check
+2019-11-28T20:19:56  <cindyli> Bosmon: false alarm, it does work
+2019-11-28T20:19:59  <cindyli> cool
+2019-11-28T20:20:01  <Bosmon> cindyli - phew
+2019-11-28T20:21:03  <cindyli> Bosmon: btw, sounds like this is not a bug - https://pastebin.com/n0QAYfDz
+2019-11-28T20:21:11  <cindyli> well, it might be
+2019-11-28T20:21:18  <Bosmon> cindyli - in general we have this issue: https://issues.fluidproject.org/browse/FLUID-6214
+2019-11-28T20:21:19  <cindyli> no, it shouldn't be
+2019-11-28T20:21:29  <Bosmon> Which appears to have been filed after the time I had forgotten what was implemented
+2019-11-28T20:22:05  <Bosmon> Ah of course, it refers to https://issues.fluidproject.org/browse/FLUID-5258
+2019-11-28T20:22:27  <Bosmon> FLUID-6214 wrongly says "Since FLUID-5258 was filed, we changed the behaviour to always resolve at target"
+2019-11-28T20:22:46  <Bosmon> What it should say was, "since FLUID-5258 was filed, we forgot what was implemented"
+2019-11-28T20:23:16  <Bosmon> I guess in moving from the US back to the UK I lost part of my brain
+2019-11-28T20:23:22  <cindyli> lol
+2019-11-28T20:25:13  <cindyli> Bosmon: the current implementation is smart and perfect. it seems "{that}" distributed using "record" will first try to resolve at the target, when no success, it looks up the source component. what a perfect fall back!
+2019-11-28T20:25:54  <cindyli> anyway, i will fire the jira and you can decide if it should be fixed
+2019-11-28T20:31:57  <cindyli> Bosmon: actually the fall back doesn't exist. a little change to my test case shows this statement
+2019-11-28T20:31:58  <cindyli> record: "{that}.options.toDistribute"
+2019-11-28T20:32:12  <cindyli> always points to the source component
+2019-11-28T20:32:29  <cindyli> even though the same option with a different value exists in the target component
+2019-11-28T20:32:32  <cindyli> filing the jira
+2019-11-28T20:43:44  <cindyli> Bosmon: https://issues.fluidproject.org/browse/FLUID-6437
+2019-11-28T20:44:34  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-11-28T20:52:05  *** simonjb <simonjb!~simonjb@205.211.168.103> has joined #fluid-work
+2019-11-28T20:56:17  *** michelled <michelled!Adium@nat/ocadu/x-klwxqoglklkopjwx> has joined #fluid-work
+2019-11-28T20:57:15  <Bosmon> cindyli - yes, there is no fallback
+2019-11-28T20:57:19  <Bosmon> It always resolves at the source
+2019-11-28T20:57:33  <Bosmon> Thanks for the issue, I will link it to the others : P
+2019-11-28T21:05:46  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Quit: sepidehshahi)
+2019-11-28T21:10:04  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-28T21:29:09  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-11-28T21:36:39  *** cindyli <cindyli!~Adium@198.52.178.16> has quit IRC (Quit: Leaving.)
+2019-11-28T21:47:08  *** the-t-in-rtf1 <the-t-in-rtf1!~Adium@2a02:a210:2142:3480:754b:aeee:c55f:ab2b> has quit IRC (Quit: Leaving.)
+2019-11-28T21:57:47  *** colinclark <colinclark!~colinclar@205.211.168.101> has quit IRC (Quit: colinclark)
+2019-11-28T22:10:03  *** clown <clown!clown@nat/ocadu/x-ywfgbtrwvhznhofp> has quit IRC (Quit: Leaving.)
+2019-11-28T22:10:55  *** cherylhjli <cherylhjli!~Adium@vlnsm2-toronto63-142-116-82-223.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-11-28T22:11:42  *** michelled <michelled!Adium@nat/ocadu/x-klwxqoglklkopjwx> has quit IRC (Quit: Leaving.)
+2019-11-28T22:27:00  *** avtar <avtar!~avtar@ip-24-50-165-3.user.start.ca> has quit IRC (Quit: Quit)
+2019-11-28T22:29:54  *** simonjb <simonjb!~simonjb@205.211.168.103> has quit IRC ()
+2019-11-28T22:43:05  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-28T23:06:51  *** danielcho <danielcho!~Adium@hmtnon1497w-130-02-65-95-64-90.dsl.bell.ca> has left #fluid-work
+2019-11-28T23:07:06  *** lliskovoi_ <lliskovoi_!uid367571@gateway/web/irccloud.com/x-gudojqfnaoxdpooc> has quit IRC (Quit: Connection closed for inactivity)
+2019-11-28T23:55:04  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-11-28T23:55:04  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Client Quit)

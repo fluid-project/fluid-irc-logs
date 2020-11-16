@@ -1,0 +1,79 @@
+2020-09-29T11:39:51  <Justin_o> Bosmon: looking at your comment https://github.com/fluid-project/infusion/pull/1009#pullrequestreview-497890579
+2020-09-29T11:40:16  <Justin_o> Bosmon: how have we defined the type of markup in jsDOC
+2020-09-29T11:40:28  <Bosmon> I dunno, is it just a String?
+2020-09-29T11:40:32  <Bosmon> I was wondering how it came to be in an array
+2020-09-29T11:43:55  <Justin_o> Bosmon: it's just a string in the arguments. It looks like we are converting it to a DOM node by making it a jQuery and pulling it out
+2020-09-29T11:53:41  <Justin_o> Bosmon: I've added some comments to that  function
+2020-09-29T12:07:48  <Bosmon> Oh yeah sorry, I misread the position of the brackets
+2020-09-29T12:25:32  <Justin_o> no worries, it's probably helpful to have some docs for that function anyways.
+2020-09-29T15:15:10  <greatislander> Bosmon, colinclark, cindyli, and gtirloni — I was reading back through the logs from your conversation yesterday
+2020-09-29T15:16:05  <greatislander> I have an idea about replicating the Netlify deploy preview functionality that might be achievable without an overwhelming effort. I'll try to capture my thoughts and share them sometime later today.
+2020-09-29T15:16:36  <gtirloni> nice!
+2020-09-29T15:17:03  <cindyli> super. thanks, greatislander
+2020-09-29T15:30:28  <colinclark> ooh, sounds great greatislander
+2020-09-29T16:22:19  <Bosmon> greatislander - sounds great
+2020-09-29T16:22:23  <Bosmon> But replicating them.... IN WHAT? : P
+2020-09-29T16:22:27  <cindyli> philip_, Teddy___, Bosmon and I talked about how the data change in the COVID data repo gets reflected on the map site. we figured out a simple way is to directly access the URL of the data file rather than redeploying the map site everytime. so the plan is to create a "latest.csv" file in the root folder that the map can point to this fixed URL.
+2020-09-29T16:27:37  <cindyli> Bosmon, philip, Teddy___: while working on it, one problem i found is, we may need separate directories to track ODS source datasets and merged datasets. now this data repo https://github.com/inclusive-design/covid-assessment-centres/ only has one "versions" directory that i think for holding merged versions (i'm not really sure). what i'm thinking is to create a "ODS_datasets" for unmodified ODS original datasets and a "merged_datas
+2020-09-29T16:27:38  <cindyli> ets" for merged datasets. The "latest.csv" always pointing to the latest version in "merged_datasets". what do you think?
+2020-09-29T16:28:02  <cindyli> when there are more data sources in the future, we could add more folders for each data source
+2020-09-29T16:33:49  <Teddy___> @cindyli  great idea
+2020-09-29T16:34:49  <Teddy___> cindyli:, and I the version folder in the data repo is currently being used to hold all datasets
+2020-09-29T16:35:41  <Teddy___> after the new folders are created I will change the poc scripts accordingly
+2020-09-29T16:37:08  <cindyli> Teddy___: ya, I think the "version" folder should be renamed to "ODS_datasets"
+2020-09-29T16:37:59  <Teddy___> I can make that PR
+2020-09-29T16:38:07  <Teddy___> cindyli:
+2020-09-29T16:39:37  <cindyli> Teddy___: that's ok. i'm modifying my old PR to accommodate this change
+2020-09-29T16:45:21  <Teddy___> cindyli: okay, awesome
+2020-09-29T16:50:03  <greatislander> Bosmon the short version is GitHub Actions can be triggered by a pull request being opened or closed, and I think it should be possible to build and upload a static site to (for example)  Azure Blob Storage when a pull request is opened, and delete the static deployment from Azure Blob Storage when the pull request is closed or merged.
+2020-09-29T16:50:40  <greatislander> Will share what I figure out once I've done some more research :)
+2020-09-29T17:01:30  *** clown is now known as clown_afk
+2020-09-29T17:07:52  <greatislander> gtirloni colinclark cindyli Bosmon never mind, Azure has a Netlify equivalent with pull request previews and everything
+2020-09-29T17:07:53  <greatislander> hahaha
+2020-09-29T17:08:12  <greatislander> I will add relevant links to my wiki page and circulate it shortly
+2020-09-29T17:11:03  <greatislander> gtirloni ^
+2020-09-29T17:11:33  <gtirloni> thanks :)
+2020-09-29T17:19:19  <Bosmon> greatislander - sounds really interesting
+2020-09-29T17:19:26  <Bosmon> But yes, I saw the Azure pipes thing
+2020-09-29T17:19:44  <Bosmon> See chat from yesterday - the issue is how we do stuff like managing lifetimes the way we want
+2020-09-29T17:22:09  <Bosmon> Justin_o, cindyli - looks like there was one leftover review comment on the syllabification pull that didn't make the cut: https://github.com/fluid-project/infusion/pull/1009/commits/b5bc4848358b4fbc54b3c31a6e35eacfdf00800a#r496693754
+2020-09-29T17:27:00  <cindyli> oh no
+2020-09-29T17:27:05  <cindyli> sorry
+2020-09-29T17:27:10  <greatislander> gtirloni colinclark cindyli Bosmon https://wiki.fluidproject.org/x/5ABbD
+2020-09-29T17:27:15  <greatislander> let me know if you can see that
+2020-09-29T17:27:43  <Justin_o> Bosmon: I've been looking into that actually. but it seems that we still need to initial conditional. Adding the one you suggested might help with some performance for other things, but sadly it doesn't prevent the issue.
+2020-09-29T17:27:55  <cindyli> greatislander: yes, i can view
+2020-09-29T17:28:02  <greatislander> thanks cindyli
+2020-09-29T17:28:40  <greatislander> It also supports running Azure Functions so with a little work we would be able to migrate our Netlify Functions to Azure Functions for the We Count site, cindyli
+2020-09-29T17:29:54  <Bosmon> Justin_o - it should prevent the issue since it is stronger than the test you already had
+2020-09-29T17:30:19  <Justin_o> Bosmon: I've tried it and it doesn't :(
+2020-09-29T17:30:42  <Justin_o> I think partly because you can have the empty one as the first segment of something that has multiple segments
+2020-09-29T17:30:55  <cindyli> ya, greatislander
+2020-09-29T17:30:56  <Justin_o> it keeps crashing my browser so it's hard to really debug it
+2020-09-29T17:30:58  <Justin_o> Bosmon: ^
+2020-09-29T17:32:35  <Bosmon> Justin_o - I meant, to only run the syllabification if the number of segments is 2 or greater
+2020-09-29T17:32:48  <Bosmon> The logic you currently have only runs it if the number of segments is 1 or greater
+2020-09-29T17:37:55  <cindyli> greatislander: the wiki page and your example is comprehensive and cool. thanks
+2020-09-29T18:00:34  <jhung> fluid-everyone: the design crit will be starting soon.
+2020-09-29T18:07:37  <Justin_o> Bosmon: sorry, my IRC client went down. Anyways, yes, that's what I was trying as well. I think it's because the empty segment might be the first in the set of segments. Also having trouble debugging because it stalls the browser.
+2020-09-29T18:55:29  <Bosmon> Justin_o - a bit worrying, suggests that we don't understand the problem completely
+2020-09-29T18:55:35  <Bosmon> Or at least that I don't : P
+2020-09-29T19:35:48  <Justin_o> Bosmon: no I don't either, still investigating.. . just been delayed by meetings, and the issue with it messing up the browser.
+2020-09-29T19:36:12  <Bosmon> Justin_o - I suggest for debugging purposes you manually put in a recursion bailout
+2020-09-29T19:36:24  <Bosmon> To be honest I think it might even be wise to leave the thing in the code permanently
+2020-09-29T19:36:48  <Bosmon> The risk that this condition be triggered accidentally and ruin the user's session is too serious to contemplate, even if we think we have fixed the problem
+2020-09-29T19:37:13  <Justin_o> Bosmon: that's a good point.. do you have a suggestion for how to accomplish such a bailout
+2020-09-29T19:37:30  <Bosmon> Justin_o - well, I suggest a good-old-fashioned namespaced global variable :)
+2020-09-29T19:37:59  <Justin_o> Bosmon: scary
+2020-09-29T19:38:26  <Justin_o> I'll look into that.. the problem is that there are naturally going to be many potential loops as it is intended to handle dynamically added content
+2020-09-29T19:38:29  <Bosmon> Less scary than even a tiny risk of ruining some arbitrary 3rd-party page : P
+2020-09-29T19:39:08  <Justin_o> that't just pretty awful.. I'm somewhat surprised we haven't run into this before, but I guess soft hyphens aren't used that often
+2020-09-29T19:42:26  <Bosmon> Well, I guess we need to understand why the action of this function isn't "naturally idempotent by design"
+2020-09-29T19:43:05  <Justin_o> Bosmon: yes, it should be.
+2020-09-29T19:58:39  <Justin_o> Bosmon: okay, I think I got it.. so there is a soft hyphen already existing in the source text. When we pass it through hypher it also adds soft hyphens for the splits, but because there is one already in the text it uses that existing one. This is probably what we want, although our algorithm now doesn't know that the soft hyphen was in the original text so our calculations are now a character off. and it leaves
+2020-09-29T19:58:39  <Justin_o> the original soft hyphen in the text. The next thing that happens is we inject the separators which cause a dom mutation and triggers the mutation observer. Which in turn triggers the process again. Because the soft hyphen is at the front it splits the same text node into two segments but now the soft hyphen is at the front and has a length of 0. So we are also putting a separator in front and constantly replacing
+2020-09-29T19:58:39  <Justin_o> the same text node with the same content.
+2020-09-29T20:00:44  <Justin_o> so somehow we need to replace that soft hyphen from the original text node with something else so that we can not get hung up on it and also put it back when syllabification is turned off.
+2020-09-29T20:01:50  <Bosmon> Justin_o - I would say that just axing it completely whenever we start syllabifying would be completely reasonable
+2020-09-29T20:02:12  <Justin_o> Bosmon: maybe we can ask Cindy about that in the upcoming meeting
+2020-09-29T20:02:14  <Justin_o> cindyli: ^

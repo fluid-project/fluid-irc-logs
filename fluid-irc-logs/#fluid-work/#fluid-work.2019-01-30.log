@@ -1,0 +1,396 @@
+2019-01-30T00:00:09  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has left #fluid-work
+2019-01-30T00:50:46  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e6a:1b00:4863:9295:4397:7bac> has joined #fluid-work
+2019-01-30T00:58:34  *** avtar <avtar!avtar@nat/ocadu/x-kpxjhrvnimpfygxi> has quit IRC (Read error: Connection reset by peer)
+2019-01-30T01:16:11  *** danayo_ <danayo_!~danayo@S01069050ca694f23.vc.shawcable.net> has joined #fluid-work
+2019-01-30T01:27:16  *** danayo_ <danayo_!~danayo@S01069050ca694f23.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-01-30T01:31:47  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has joined #fluid-work
+2019-01-30T02:46:57  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e6a:1b00:4863:9295:4397:7bac> has quit IRC (Remote host closed the connection)
+2019-01-30T03:03:05  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has quit IRC (Quit: Leaving.)
+2019-01-30T05:35:21  *** kris_ <kris_!~kris@95.111.73.80> has joined #fluid-work
+2019-01-30T06:59:56  *** kris_ <kris_!~kris@95.111.73.80> has quit IRC (Ping timeout: 246 seconds)
+2019-01-30T07:43:13  *** kris_ <kris_!~kris@95.111.73.80> has joined #fluid-work
+2019-01-30T08:12:43  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:c042:8a76:5c64:3847> has quit IRC (Quit: Leaving.)
+2019-01-30T08:20:18  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e6a:1b00:b9c3:ca37:fea7:a278> has joined #fluid-work
+2019-01-30T08:55:03  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has joined #fluid-work
+2019-01-30T09:13:30  *** Danail_Dido <Danail_Dido!~karadalie@109.120.246.31> has joined #fluid-work
+2019-01-30T09:24:50  *** kris_ <kris_!~kris@95.111.73.80> has quit IRC (Ping timeout: 250 seconds)
+2019-01-30T09:55:18  *** Danail_Dido <Danail_Dido!~karadalie@109.120.246.31> has quit IRC (Ping timeout: 272 seconds)
+2019-01-30T10:07:42  <jhernandez> stegru: hey there
+2019-01-30T10:08:50  <jhernandez> finally I found out what's going on with the error reported by Kavya
+2019-01-30T10:09:31  <jhernandez> (Talking about K1, Language didn't change after changing multiple ...)
+2019-01-30T10:11:33  <jhernandez> looks like a problem introduced in universal recently - looks like at some point, the lifecycleManager does not apply the settings updates coming from the pspChannel (it only changes the first one received)
+2019-01-30T10:12:30  <jhernandez> so any further setting changes in the QS are not being applied to the system
+2019-01-30T10:12:35  <jhernandez> Bosmon: ^
+2019-01-30T10:13:17  <jhernandez> maybe I should pair up with Cindy when she's around
+2019-01-30T10:13:25  <Bosmon> Hi jhernandez - that's interesting, since the-t-in-rtf had also found some issues with the PSPChannel <-> lifecycleManager linkage
+2019-01-30T10:13:34  <jhernandez> hmm
+2019-01-30T10:13:37  <Bosmon> jhernandez - sure, getting cindy involved sounds good
+2019-01-30T10:13:48  <jhernandez> did he reported a JIRA about it?
+2019-01-30T10:13:49  <Bosmon> Do you have a sense how to reproduce the issue at the moment?
+2019-01-30T10:13:52  <jhernandez> yes
+2019-01-30T10:14:02  <the-t-in-rtf> (puts hand to ear)
+2019-01-30T10:14:04  <jhernandez> 100% reproducible
+2019-01-30T10:14:05  <Bosmon> jhernandez - it's currently only affecting his work removing pouchDB
+2019-01-30T10:14:16  <Bosmon> But it suggests we have some irregularities in that area
+2019-01-30T10:14:46  <Bosmon> My sense is if it happened recently, it is probably caused by cindyli's recent work removing sessions from the lifecycleManager
+2019-01-30T10:14:51  <jhernandez> yeah, we're suffering from it in the demo-ATIA build (which uses last universal)
+2019-01-30T10:15:06  <jhernandez> yes, I guess it's just that
+2019-01-30T10:15:07  <the-t-in-rtf> please describe what you have to do to reproduce
+2019-01-30T10:16:00  <the-t-in-rtf> I'm still staring at master versus my work and struggling to explain what's happening
+2019-01-30T10:16:09  <the-t-in-rtf> any additional avenues to explore would be greatly helpful
+2019-01-30T10:16:36  <jhernandez> 1) Select any language from QS language menu
+2019-01-30T10:16:36  <jhernandez> 2) Change H/L contrast to black on yellow
+2019-01-30T10:16:36  <jhernandez> 3) Click on reset to standard
+2019-01-30T10:16:38  <jhernandez> 4) Select any different language from QS
+2019-01-30T10:17:02  <jhernandez> literally copy/pasted from Kavya's report
+2019-01-30T10:17:12  <the-t-in-rtf> but what's missing is what you should see and what you do
+2019-01-30T10:17:35  <the-t-in-rtf> i.e. how do you know that the state after 4 is bad and what makes you think it's a session problem?
+2019-01-30T10:17:46  <jhernandez> I can't type as quick as you
+2019-01-30T10:17:50  <the-t-in-rtf> it's fine, man
+2019-01-30T10:17:52  <the-t-in-rtf> sorry
+2019-01-30T10:17:53  <jhernandez> :)
+2019-01-30T10:17:53  <the-t-in-rtf> go on
+2019-01-30T10:17:58  <the-t-in-rtf> I'll get some tea or something
+2019-01-30T10:18:07  <jhernandez> too much coffee maybe?
+2019-01-30T10:18:08  <jhernandez> :P
+2019-01-30T10:18:31  <the-t-in-rtf> or maybe too much time spent playing mavis beacon teaches typing in my youth
+2019-01-30T10:18:41  <Bosmon> Shush, atkins
+2019-01-30T10:18:53  <jhernandez> any further update from the QS result in no changes
+2019-01-30T10:19:03  <Bosmon> jhernandez - does this seem to affect any successive changes over the PSP channel?
+2019-01-30T10:19:06  <jhernandez> xDD
+2019-01-30T10:19:11  <Bosmon> That is, does itm atter which one you select at step 2?
+2019-01-30T10:19:36  <Bosmon> And/or do you have to "reset to standard" in order to trigger the problem?
+2019-01-30T10:19:41  <jhernandez> not really
+2019-01-30T10:19:51  <jhernandez> it's one way to reproduce it
+2019-01-30T10:20:20  <jhernandez> but after a reset to STD action, only the first setting change is taken into account
+2019-01-30T10:20:32  <jhernandez> (in the system)
+2019-01-30T10:21:16  <Bosmon> ok
+2019-01-30T10:21:17  <jhernandez> and the QS is also showing wrong values in the controls
+2019-01-30T10:21:46  <the-t-in-rtf> is this with the local express-pouchdb, or with a real CouchDB instance?
+2019-01-30T10:22:09  <Bosmon> jhernandez - ok so is the state of this in a branch we can check out?
+2019-01-30T10:22:12  <Bosmon> Also, is there a JIRA?
+2019-01-30T10:22:52  <jhernandez> no JIRA yet
+2019-01-30T10:23:30  <jhernandez> yes, you can grab my gpii-app/demo-ATIA-2019 and you're ready to go
+2019-01-30T10:24:32  <Bosmon> jhernandez - ok - I guess you're going to have to make the demo installer with an old universal for now?
+2019-01-30T10:24:42  <jhernandez> I haven't tried, but I assume you can use gpii-app/master AND update it to use universal/master
+2019-01-30T10:25:39  <Bosmon> I guess there is a problem since there are a bunch of solutions that we want in the current universal
+2019-01-30T10:27:12  <jhernandez> Bosmon: yes, I can do that if really needed - just found that and my universal/demo-ATIA-2019 is based on the most recent master. And we included a bunch of new things (mostly around onboarding), but I can do a new universal/demo-ATIA-2019 branch based on the last "working" version of universal
+2019-01-30T10:30:12  <jhernandez> it's just a matter of carefully accommodate the things needed for the demo in that version of universal
+2019-01-30T10:31:20  <jhernandez> well, at lest we spotted the problem before 1.1
+2019-01-30T10:32:40  <jhernandez> the-t-in-rtf: yes, it's with the local express pouch
+2019-01-30T10:32:48  <the-t-in-rtf> that's interesting
+2019-01-30T10:32:57  <the-t-in-rtf> the tests in master pass running against pouch
+2019-01-30T10:37:52  <Bosmon> the-t-in-rtf - I'd hope so, given this is what CI does : P
+2019-01-30T10:38:16  <the-t-in-rtf> yes, but I was hoping that the behaviour suddenly showed up in the demo simply by virtue of using CouchDB
+2019-01-30T10:38:31  <the-t-in-rtf> that would point me towards further work with views, for example
+2019-01-30T10:38:43  <the-t-in-rtf> or perhaps with the cleanup mechanisms we used with pouch
+2019-01-30T10:42:50  <the-t-in-rtf> holy crap.
+2019-01-30T10:42:57  <the-t-in-rtf> I fixed my tests.
+2019-01-30T10:43:01  <Bosmon> :)
+2019-01-30T10:43:03  <the-t-in-rtf> anyway, seems unrelated
+2019-01-30T10:43:09  <Bosmon> What did you do?
+2019-01-30T10:43:11  <the-t-in-rtf> but it would be good to understand what's up.
+2019-01-30T10:43:21  <the-t-in-rtf> I provisioned couch AFTER starting the server
+2019-01-30T10:43:25  <the-t-in-rtf> which is how it works in master
+2019-01-30T10:43:35  <Bosmon> odd
+2019-01-30T10:43:38  <the-t-in-rtf> yes, verry
+2019-01-30T10:43:47  <the-t-in-rtf> if it had been the other way around, that might have made sense
+2019-01-30T10:43:55  <the-t-in-rtf> some kind of initial checks getting stale data
+2019-01-30T10:44:31  <the-t-in-rtf> I'm gonna see just how much that one change fixes.
+2019-01-30T10:44:48  <the-t-in-rtf> to me this suggests timing bug
+2019-01-30T10:45:15  <the-t-in-rtf> i.e. leaving the extra time after server startup to provision couch gets us past some mystery thing that's not properly tied into the startup cycle
+2019-01-30T10:45:57  <the-t-in-rtf> i.e. the server merrily reports ready when it still needs five minutes to make its breakfast
+2019-01-30T10:47:02  <Bosmon> I wonder why "electron" is on the path for stuff in gpii-app's package.json but not at the command line .....
+2019-01-30T10:51:30  <the-t-in-rtf> holy cow, the integration tests even work
+2019-01-30T10:51:46  <the-t-in-rtf> there's still stuff that doesn't, but it seems more a matter of unpacking test-munging engines
+2019-01-30T10:52:01  <the-t-in-rtf> anyway, I'll commit what I have, I suspect this might address the test instability I was seeing in CI
+2019-01-30T10:52:10  <the-t-in-rtf> i.e. random tests didn't quite have long enough to start up
+2019-01-30T10:52:24  <the-t-in-rtf> or if it's still there in non-couch tests, that's also an explanation
+2019-01-30T10:53:05  <jhernandez> Bosmon: npm magic -> https://i.gifer.com/8Lf.gif
+2019-01-30T11:09:27  <the-t-in-rtf> nearly everything works now, 1736 tests
+2019-01-30T11:09:39  <the-t-in-rtf> I really was not expecting to get that far today, I was kind of settling in for the long haul
+2019-01-30T11:10:00  <Bosmon> the-t-in-rtf - that's awesome, although we should try to understand what was going on : P
+2019-01-30T11:10:02  <the-t-in-rtf> anyway, good luck with that other problem, I will have to write up a description of mine
+2019-01-30T11:10:06  <the-t-in-rtf> oh, sure
+2019-01-30T11:10:15  <the-t-in-rtf> it should be trivial to reproduce in either my branch or master
+2019-01-30T11:10:28  <the-t-in-rtf> just shift a line around, i.e. put the db provisioning first
+2019-01-30T11:10:44  <Bosmon> jhernandez - so I have now got as far as starting the system up, under the debugger
+2019-01-30T11:10:54  <Bosmon> That only took an hour and hand-editing of some code in node_modules : P
+2019-01-30T11:11:03  <Bosmon> I see that our default VM only has the US language installed
+2019-01-30T11:11:19  <Bosmon> Can you remind me whether the QS will display any language pack that I install or only some?
+2019-01-30T11:12:06  <jhernandez> Bosmon: yeh, debugging takes time :/
+2019-01-30T11:12:19  <jhernandez> yes, you have to install some new languages
+2019-01-30T11:12:21  *** Danail_Dido <Danail_Dido!~karadalie@109.120.246.31> has joined #fluid-work
+2019-01-30T11:12:23  <Bosmon> I'm installing French in the meantime
+2019-01-30T11:12:25  <Bosmon> Will this work?
+2019-01-30T11:12:29  <jhernandez> but you don't need that to reproduce the issue
+2019-01-30T11:12:40  <Bosmon> jhernandez - no
+2019-01-30T11:12:41  <Bosmon> ?
+2019-01-30T11:12:46  <Bosmon> You've got some alternative steps?
+2019-01-30T11:13:29  <stegru> well, you could use the language auto-installer that gregg asked me to produce
+2019-01-30T11:13:37  <stegru> unfortunately, I haven't done it :)
+2019-01-30T11:13:48  <jhernandez> right, let me check
+2019-01-30T11:14:43  <the-t-in-rtf> @jhernandez, I assume the behaviour would be the same for any pref available in the QS with more than two options?
+2019-01-30T11:14:54  <the-t-in-rtf> i.e. select A first, reset, select B and A is applied instead.
+2019-01-30T11:15:09  <jhernandez> yup
+2019-01-30T11:15:20  <the-t-in-rtf> that's what I thought and should save @Bosmon some time
+2019-01-30T11:15:56  <jhernandez> Bosmon: 1) increase the Screen Zoom 2) change the high contrast theme 3) reset to STD 4) increase the Screen Zoom again
+2019-01-30T11:16:03  <Bosmon> Well still, I've just verified that the QS panel does indeed know how to choose French
+2019-01-30T11:16:08  <Bosmon> Pretty cool system we've built : P
+2019-01-30T11:16:19  <jhernandez> yes, it's pretty cool!
+2019-01-30T11:16:40  <jhernandez> after those steps, try changing the high contrast
+2019-01-30T11:18:18  <jhernandez> you'll see that any further setting updates are being sent from the QS but not processed in the other end
+2019-01-30T11:20:08  <jhernandez> where you will see settings handler SET actions passing by, but ONLY for the first setting. this is, the screen scale (DPIScale)
+2019-01-30T11:20:49  <jhernandez> and yeah, the QS is also showing that a high contrast theme is enabled, when it's not
+2019-01-30T11:31:52  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has joined #fluid-work
+2019-01-30T11:38:19  <the-t-in-rtf> @Bosmon: https://issues.gpii.net/browse/GPII-3692
+2019-01-30T11:38:45  <Bosmon> jhernandez - Yes I can reproduce some of this problem
+2019-01-30T11:39:06  <Bosmon> It's rather hard to say what the state of the system is since it is all pretty inconsistent
+2019-01-30T11:39:21  <Bosmon> I have a suspicion that something has actually thrown an exception during the previous transaction, but we haven't seen it
+2019-01-30T11:39:41  <Bosmon> Can you tell me where the output of console.log or fluid.log goes in gpii-app? : P
+2019-01-30T11:43:17  <jhernandez> C:/Users/vagrant/AppData/Roaming/gpii
+2019-01-30T11:43:57  <jhernandez> Bosmon: ^
+2019-01-30T11:45:00  <jhernandez> and FYI, I already have an alternative working branch of universal for the demo
+2019-01-30T11:45:08  <Bosmon> jhernandez - I am very glad of it
+2019-01-30T11:45:11  <Bosmon> You are a magician :)
+2019-01-30T11:45:30  <Bosmon> Certainly something very bad has happened, in that as far as I can tell the pspChannel's model is actually empty, yet its UI is not reflecting this fact
+2019-01-30T11:45:52  <jhernandez> I reverted cindy's work on GPII-3594 and "seems to be working fine"
+2019-01-30T11:47:15  <jhernandez> oh, I see
+2019-01-30T11:54:31  *** kris_ <kris_!~kris@83-148-84-242.ip.btc-net.bg> has joined #fluid-work
+2019-01-30T12:30:33  <Bosmon> OK
+2019-01-30T12:30:47  <Bosmon> Just going through the pull looking for anything suspicious
+2019-01-30T12:31:05  <Bosmon> I'm pretty sure the problem, whatever it is, is caused by this material : P
+2019-01-30T12:31:06  <Bosmon> https://github.com/GPII/universal/pull/727/files#diff-8a7134f9543a18e937f101d44221703fR137
+2019-01-30T12:31:41  <Bosmon> Well maybe not
+2019-01-30T12:31:46  <Bosmon> Looks like this object doesn't really go anywhere
+2019-01-30T12:35:35  <Bosmon> OK
+2019-01-30T12:35:58  <Bosmon> I'm pretty sure the problem is that the new "restoreSession" just sticks around forever - https://github.com/GPII/universal/pull/727/files#diff-2a48866aecf7478e0d32381b8179c327R42
+2019-01-30T12:36:07  <Bosmon> Together with all of its model linkages
+2019-01-30T12:36:19  <Bosmon> This fits in with the fact that we mysterious seem to see two different models in play in the PSPChannel
+2019-01-30T12:37:04  <Bosmon> The whole point of the work was that there should cease to be "many" sessions, but at least under the old system we were pretty quick about cleaning up old sessions when they had finished, so there was only one session "almost all of the time"
+2019-01-30T12:37:19  <Bosmon> BUt under the new system things are worse because there are two sessions all of the time : P
+2019-01-30T12:38:37  <Bosmon> It will probably be best to revert this work, at least for the time being
+2019-01-30T12:39:58  <Bosmon> And I'm wondering whether it might even be best to revert it permanently, if we can't think of a better way of improving the stability of the system
+2019-01-30T12:41:17  <Bosmon> But maybe the simplest change is to cut the linkage here https://github.com/GPII/universal/pull/727/files#diff-b495ca9553a00e8dcdfdd74e69e534aaR127 - so that it only applies to the true user session and ignores the restore session
+2019-01-30T12:43:21  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has quit IRC (Quit: Leaving.)
+2019-01-30T12:45:54  *** kris_ <kris_!~kris@83-148-84-242.ip.btc-net.bg> has quit IRC (Read error: Connection reset by peer)
+2019-01-30T12:46:32  <jhernandez> I "git reverted" it here: https://github.com/javihernandez/universal/commit/b0ee35c8d6ebcfc095278b4c71da50a459d3f3f5
+2019-01-30T12:47:01  <jhernandez> just in case you want to go that way in master
+2019-01-30T12:51:13  <jhernandez> and yeah, 2 models make sense to me
+2019-01-30T12:51:48  <jhernandez> when looking at the logs, I could see empty SET payloads around
+2019-01-30T13:10:48  *** kris_ <kris_!~kris@83-148-84-242.ip.btc-net.bg> has joined #fluid-work
+2019-01-30T13:33:52  <Bosmon> Cheers jhernandez - I am writing up a JIRA now
+2019-01-30T13:34:02  <Bosmon> Could you link me to the doc where kavya has written her original report?
+2019-01-30T13:34:48  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has joined #fluid-work
+2019-01-30T13:37:20  <jhernandez> great
+2019-01-30T13:37:20  <jhernandez> sure
+2019-01-30T13:37:45  <jhernandez> Bosmon: https://docs.google.com/document/d/1Ohi07CdjmH3WzBATBvJBZfql8blBdcSBTpE-IsHXmuA/edit#heading=h.5dfxhibyvazl
+2019-01-30T13:40:41  *** alanharnum <alanharnum!~alanharnu@CPEa84e3f430953-CMa84e3f430950.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-01-30T13:41:10  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-01-30T13:41:35  <Bosmon> Cheer jhernandez
+2019-01-30T13:41:38  <Bosmon> Morning cindyli!
+2019-01-30T13:41:46  <Bosmon> Just writing up an awkward JIRA for you : P
+2019-01-30T13:42:04  <jhernandez> hahah
+2019-01-30T13:43:08  <cindyli> for both us?! ok
+2019-01-30T13:46:39  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:f13d:f25d:4aa3:b8e1> has joined #fluid-work
+2019-01-30T13:58:48  <Bosmon> OK, jhernandez, cindyli - here it is!
+2019-01-30T13:58:49  <Bosmon> https://issues.gpii.net/browse/GPII-3693
+2019-01-30T13:59:01  <Bosmon> I've also linked to this issue in a comment on the original doc
+2019-01-30T14:00:11  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-01-30T14:08:12  <cindyli> oh, no, sorry for introducing this bug. working on it
+2019-01-30T14:08:38  <Bosmon> cindyli - no, the fault is mine for not catching it during review : P
+2019-01-30T14:09:06  <Bosmon> cindyli - see how much work this is looking like, and whether it is worth reverting in trunk, etc.
+2019-01-30T14:09:21  <cindyli> sure. it's hard to catch without a test case
+2019-01-30T14:09:39  <Bosmon> Yes, and I think the issue is that our PSP integration tests failed to keep pace with the increasing complexity of the system
+2019-01-30T14:09:52  <Bosmon> We added some new functionality without corresponding test cases to verify this at the integration level
+2019-01-30T14:12:39  <cindyli> i'm surprised the existing test sequences don't catch this problem. we do have "sequentially change settings" test case. ya, there must be some uncovered checking
+2019-01-30T14:13:25  <cindyli> ok, jhernandez has a pull request to revert the master
+2019-01-30T14:13:51  <jhernandez> Bosmon: thanks for the report
+2019-01-30T14:14:11  <jhernandez> and yeah, just created a pr to see if it passes CI
+2019-01-30T14:14:46  <Bosmon> jhernandez - awesome, thanks for that
+2019-01-30T14:15:16  <Bosmon> I imagine the costs of reversion following that, given your legwork, will be tiny, and we should JFDI
+2019-01-30T14:17:40  <jhernandez> haha
+2019-01-30T14:17:55  <jhernandez> at your choice
+2019-01-30T14:18:48  <jhernandez> in any case, there were no conflicts when reverting, it was a clean revert
+2019-01-30T14:19:01  <Bosmon> Well I guess the core issue is what makes less work for you over the expected lifetime of this work - that is, when will be the next time you have to build an installer from trunk and what we expect the state of trunk to be then
+2019-01-30T14:23:35  <jhernandez> yeah, I guess that the next one will be for 1.1
+2019-01-30T14:25:01  <jhernandez> which I was going to start working on after the demo one
+2019-01-30T14:25:33  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-01-30T14:37:49  *** clown <clown!clown@nat/ocadu/x-xtibsdwckuzcafzs> has joined #fluid-work
+2019-01-30T14:47:40  <stegru> want me to get rid of the trayicon from the installer, jhernandez? I'm already in a build/install debugging cycle at the moment
+2019-01-30T14:49:32  <stegru> (the old useless one)
+2019-01-30T14:52:39  *** danayo_ <danayo_!~danayo@173.183.108.108> has joined #fluid-work
+2019-01-30T14:58:43  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-rlmyvjjusnimvowk> has joined #fluid-work
+2019-01-30T15:03:38  *** avtar <avtar!~avtar@ip-45-3-24-208.user.start.ca> has joined #fluid-work
+2019-01-30T15:10:25  *** Bosmon <Bosmon!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has quit IRC (Ping timeout: 246 seconds)
+2019-01-30T15:16:56  *** Bosmon <Bosmon!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has joined #fluid-work
+2019-01-30T15:25:38  <cindyli> jhernandez: which gpii-app branch i can use to reproduce the problem. the master is not pointing to the latest master
+2019-01-30T15:25:47  <cindyli> i mean universal master
+2019-01-30T15:28:10  *** alanharnum <alanharnum!~alanharnu@CPEa84e3f430953-CMa84e3f430950.cpe.net.cable.rogers.com> has quit IRC ()
+2019-01-30T15:29:58  <jhernandez> stegru: yeah, I was going to take care of it, but can't find the time at this moment
+2019-01-30T15:30:20  <jhernandez> if you don't have more exciting stuff to work on, sure
+2019-01-30T15:30:22  <jhernandez> :)
+2019-01-30T15:30:28  <stegru> consider it done
+2019-01-30T15:30:35  <stegru> i'm already in the guts of wix
+2019-01-30T15:30:37  <jhernandez> cindyli: hmmm
+2019-01-30T15:30:59  <jhernandez> okay, I updated my gpii-app branch
+2019-01-30T15:31:56  <cindyli> ok, i will update my own too
+2019-01-30T15:33:06  <jhernandez> you need to pull my gpii-app/demo-ATIA-2019, and then, reset it to the previous commit
+2019-01-30T15:33:51  <jhernandez> oh, wait
+2019-01-30T15:34:01  <jhernandez> there's windows in the middle
+2019-01-30T15:34:59  <jhernandez> cindyli: okay
+2019-01-30T15:36:24  <jhernandez> grab my gpii-app/demo-ATIA-2019 branch and update the gpii-windows ref to javihernandez/windows#8c677f4848a54d51153b2f00fcb53987ebdb7774
+2019-01-30T15:36:36  <jhernandez> that should do the trick
+2019-01-30T15:36:36  <cindyli> cool. thanks
+2019-01-30T15:36:54  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has quit IRC (Quit: dandimitrov)
+2019-01-30T15:38:27  *** Danail_Dido <Danail_Dido!~karadalie@109.120.246.31> has quit IRC (Ping timeout: 268 seconds)
+2019-01-30T15:51:19  <Bosmon> cindyli - btw, I have now had good success in running the gpii-app electron app in the Chrome inspector
+2019-01-30T15:51:43  <Bosmon> Although unfortunately it currently requires patching around an annoying Kettle command line parsing issue which I wrote up here - https://issues.fluidproject.org/browse/KETTLE-75
+2019-01-30T15:51:57  <cindyli> whoa, that's great
+2019-01-30T15:55:02  <Bosmon> I've added a "hot patch" for anyone who wants to get debugging today in a hurry :)
+2019-01-30T15:56:01  <Bosmon> Since the upgrade of gpii-app to electron 3.x, the Chrome inspector experience seems very smooth
+2019-01-30T16:07:49  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-kbhirdjfqylarorj> has joined #fluid-work
+2019-01-30T16:08:00  <stegru> I just have a --require that swallows the argv's until the final two
+2019-01-30T16:23:03  <cindyli> jhernandez: is the problem only reproducible with the steps of "change language -> change high contrast -> reset all -> changing high contrast here stops working"? the window branch you gave me is not pointing to the latest universal master so I created my own windows, gpii-app branches based off their master branches. when starting gpii-app, the only available language selection is "english", so instead of changing language pref, i
+2019-01-30T16:23:03  <cindyli> follow the same step but replacing the language change to screen zoom change, and couldn't reproduce the problem
+2019-01-30T16:23:19  <cindyli> is there a way to get language menu to show multiple language selections?
+2019-01-30T16:24:09  <stegru> do you have multiple languages installed, cindyli ?
+2019-01-30T16:24:29  <stegru> installed on windows
+2019-01-30T16:24:47  <cindyli> i don't know. i use gpii-app vm
+2019-01-30T16:25:04  <cindyli> checking
+2019-01-30T16:25:48  <cindyli> right, system setting shows only english is available
+2019-01-30T16:25:53  <cindyli> installing other languages
+2019-01-30T16:25:56  <stegru> ok from the start menu type "add a language", hit the thing it matches.. and from there you can add a new language
+2019-01-30T16:26:14  <stegru> you can pick any language you like
+2019-01-30T16:26:39  <cindyli> installing french
+2019-01-30T16:27:08  <stegru> bonjour
+2019-01-30T16:27:13  <cindyli> taking a few mins. will french show on the language menu once it's installed, stegru
+2019-01-30T16:27:21  <stegru> i hope so, yes
+2019-01-30T16:28:32  *** colinclark <colinclark!colinclark@nat/ocadu/x-elbibnbvxjbrhkyc> has joined #fluid-work
+2019-01-30T16:29:58  <cindyli> yes, french is showing. thanks, stegru
+2019-01-30T16:30:20  <stegru> good - i'm curious, did you need to restart gpii-app?
+2019-01-30T16:30:30  <cindyli> yes, i do
+2019-01-30T16:30:39  <stegru> ok
+2019-01-30T16:31:28  <cindyli> jhernandez: but i still cannot reproduce the problem with changing language -> high contrast etc. do you have a few mins for a vidyo or skype call so i can share screen
+2019-01-30T16:31:41  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-kbhirdjfqylarorj> has quit IRC (Remote host closed the connection)
+2019-01-30T16:32:10  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-ykbshehodeubgxik> has joined #fluid-work
+2019-01-30T16:37:47  *** kris_ <kris_!~kris@83-148-84-242.ip.btc-net.bg> has quit IRC (Ping timeout: 240 seconds)
+2019-01-30T16:41:08  <cindyli> nvm, jhernandez. the problem is the first setting change after "reset all" works but not the subsequent.
+2019-01-30T16:50:54  <jhernandez> cindyli: sorry, was afk
+2019-01-30T16:51:23  <jhernandez> right, only works with the first setting
+2019-01-30T16:53:39  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has quit IRC (Quit: Leaving.)
+2019-01-30T16:58:50  *** danayo_ <danayo_!~danayo@173.183.108.108> has quit IRC (Quit: danayo_)
+2019-01-30T17:00:56  <jhernandez> arch meeting time!
+2019-01-30T17:00:59  <clown> jhernandez:  is the arch meeting room 3 or 2 or somewhere else?
+2019-01-30T17:01:07  <jhernandez> REMEMBER, ROOM 2
+2019-01-30T17:01:09  <jhernandez> :)
+2019-01-30T17:01:12  <jhernandez> clown: ;)
+2019-01-30T17:01:29  * clown tattoos the room number on his left wrist
+2019-01-30T17:01:37  <clown> thanks, jhernandez
+2019-01-30T17:02:01  <jhernandez> avec plaisir
+2019-01-30T17:02:02  <jhernandez> :)
+2019-01-30T17:03:18  *** danayo_ <danayo_!~danayo@24.244.23.185> has joined #fluid-work
+2019-01-30T17:04:37  <jhernandez> cindyli: arch meeting?
+2019-01-30T17:04:44  <jhernandez> sgithens: ?
+2019-01-30T17:04:49  <jhernandez> javjarfer[m]: ?
+2019-01-30T17:06:55  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-ykbshehodeubgxik> has quit IRC (Remote host closed the connection)
+2019-01-30T17:06:57  *** avtar <avtar!~avtar@ip-45-3-24-208.user.start.ca> has quit IRC (Quit: Leaving.)
+2019-01-30T17:07:01  <javjarfer[m]> yes here I'm
+2019-01-30T17:07:05  *** alanharnum2 <alanharnum2!alanharnum@nat/ocadu/x-lrrnvrmsaxhppnpn> has joined #fluid-work
+2019-01-30T17:07:18  <javjarfer[m]> jhernandez: was late because I don't know why my calendar doesn't show up the correct room
+2019-01-30T17:08:14  <cindyli> right
+2019-01-30T17:42:28  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-01-30T17:42:30  *** alanharnum2 is now known as alanharnum
+2019-01-30T17:45:33  *** danayo_ <danayo_!~danayo@24.244.23.185> has quit IRC (Quit: danayo_)
+2019-01-30T17:46:45  *** danayo_ <danayo_!~danayo@173.183.108.108> has joined #fluid-work
+2019-01-30T17:46:48  <clown> jhernandez:  FYI:  if it's helpful to you, the "purge" request actually worked on CI.
+2019-01-30T17:46:52  *** danayo_ <danayo_!~danayo@173.183.108.108> has quit IRC (Client Quit)
+2019-01-30T17:46:55  <clown> I'll still remove the request from my code, but you might find it useful, given your comment in the pirate pad.
+2019-01-30T17:47:13  <jhernandez> oh wow
+2019-01-30T17:47:16  <jhernandez> nice to know
+2019-01-30T17:47:21  <jhernandez> thanks for the heads up
+2019-01-30T17:47:32  <clown> avec plaisir, mon ami!
+2019-01-30T17:48:09  <clown> I guess CI uses a different version of Couch ?
+2019-01-30T17:49:16  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-rlmyvjjusnimvowk> has quit IRC (Quit: Leaving.)
+2019-01-30T17:50:03  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-lrrnvrmsaxhppnpn> has quit IRC (Remote host closed the connection)
+2019-01-30T17:50:31  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-cellkkglsdjdkwyf> has joined #fluid-work
+2019-01-30T17:54:27  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-cellkkglsdjdkwyf> has quit IRC (Remote host closed the connection)
+2019-01-30T17:54:35  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-zrrdequjjowlkuxg> has joined #fluid-work
+2019-01-30T17:56:30  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-zrrdequjjowlkuxg> has quit IRC (Remote host closed the connection)
+2019-01-30T17:56:59  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-maxipfgwffldznch> has joined #fluid-work
+2019-01-30T17:58:27  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-01-30T17:58:27  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Client Quit)
+2019-01-30T17:58:55  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-01-30T18:03:12  <jhernandez> clown: not sure
+2019-01-30T18:04:39  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-01-30T18:04:40  <jhernandez> it *should* be the same
+2019-01-30T18:05:53  *** stegru <stegru!~ste@cpc120296-warr7-2-0-cust79.1-1.cable.virginm.net> has quit IRC (Ping timeout: 245 seconds)
+2019-01-30T18:14:02  <clown> jhernandez:  you're correct; it should be since CI also uses the same box (inclusivedesign/fedora28)
+2019-01-30T18:14:14  * clown scratches head
+2019-01-30T18:17:08  *** stegru <stegru!~ste@cpc120296-warr7-2-0-cust79.1-1.cable.virginm.net> has joined #fluid-work
+2019-01-30T18:26:24  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-jnchttzvxvmpuytq> has joined #fluid-work
+2019-01-30T18:26:35  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-jnchttzvxvmpuytq> has quit IRC (Client Quit)
+2019-01-30T18:29:44  *** michelled <michelled!~Adium@205.211.168.101> has joined #fluid-work
+2019-01-30T18:40:02  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-maxipfgwffldznch> has quit IRC (Remote host closed the connection)
+2019-01-30T18:40:11  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-wzqkuxmvlzoslewp> has joined #fluid-work
+2019-01-30T18:46:07  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-vxermldbmhqapdul> has joined #fluid-work
+2019-01-30T18:47:06  <cindyli> jhernandez: the gpii-app log file at c:\Users\vagrant\AppData\Roaming\gpii is: 1. a mix of gpii-app log and univeral log; 2. some universal log is missing. there used to be a separate log for universal in c:\Users\vagrant\AppData\Local\Temp\gpii directory, which no longer exists. any idea?
+2019-01-30T18:50:01  <jhernandez> cindyli: yes, in that log you might be seeing logs from universal, windows and gpii-app
+2019-01-30T18:50:13  <Bosmon> cindyli - what do you mean by it being missing?
+2019-01-30T18:50:27  <Bosmon> Isn't this just a list of whatever is sent to console.log from anywhere in the main process?
+2019-01-30T18:50:37  <Bosmon> So I imagine it includes all output to fluid.log as well as raw logs
+2019-01-30T18:51:06  <jhernandez> maybe cindyli's missing stegru's log files? the ones used for metrics?
+2019-01-30T18:51:20  <jhernandez> yeah, that log includes everything
+2019-01-30T18:52:50  <cindyli> ok. the message from this line - https://github.com/GPII/universal/blob/master/gpii/node_modules/lifecycleManager/src/UserLogonStateChange.js#L31, as well as line 35 never show up. but it might 'cuz these lines were never hit, which should be impossible. debugging...
+2019-01-30T18:53:29  <Bosmon> cindyli - yes, did you manage to use my patch to Kettle to get the inspector working?
+2019-01-30T18:53:54  <cindyli> nah, still using the old way...
+2019-01-30T18:55:14  <cindyli> ya, those lines were never hit. interesting…
+2019-01-30T18:59:58  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-lojajfadncjntjsm> has joined #fluid-work
+2019-01-30T19:49:43  *** kris_ <kris_!~kris@95.111.73.80> has joined #fluid-work
+2019-01-30T20:05:18  *** kris_ <kris_!~kris@95.111.73.80> has quit IRC (Ping timeout: 250 seconds)
+2019-01-30T20:06:16  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-01-30T20:06:43  *** kris_ <kris_!~kris@95.111.73.80> has joined #fluid-work
+2019-01-30T20:14:08  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-01-30T20:40:01  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e6a:1b00:b9c3:ca37:fea7:a278> has quit IRC (Remote host closed the connection)
+2019-01-30T20:51:36  *** jhernandez <jhernandez!~jhernande@40.58-136-217.adsl-dyn.isp.belgacom.be> has joined #fluid-work
+2019-01-30T20:59:47  *** avtar <avtar!avtar@nat/ocadu/x-tlfudhemcybstanq> has joined #fluid-work
+2019-01-30T21:12:51  *** michelled <michelled!~Adium@205.211.168.101> has quit IRC (Quit: Leaving.)
+2019-01-30T21:13:21  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-01-30T21:13:26  *** colinclark_ <colinclark_!~colinclar@205.211.168.101> has joined #fluid-work
+2019-01-30T21:13:46  *** michelled <michelled!~Adium@205.211.168.101> has joined #fluid-work
+2019-01-30T21:17:14  *** colinclark <colinclark!colinclark@nat/ocadu/x-elbibnbvxjbrhkyc> has quit IRC (Ping timeout: 250 seconds)
+2019-01-30T21:17:15  *** colinclark_ is now known as colinclark
+2019-01-30T21:25:14  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-01-30T21:27:33  *** colinclark <colinclark!~colinclar@205.211.168.101> has quit IRC (Quit: colinclark)
+2019-01-30T21:28:28  *** colinclark <colinclark!~colinclar@205.211.168.101> has joined #fluid-work
+2019-01-30T21:31:37  *** colinclark <colinclark!~colinclar@205.211.168.101> has quit IRC (Client Quit)
+2019-01-30T21:35:42  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-wzqkuxmvlzoslewp> has quit IRC (Remote host closed the connection)
+2019-01-30T21:36:10  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-iowqblkpyjajhyms> has joined #fluid-work
+2019-01-30T21:36:21  *** kris_ <kris_!~kris@95.111.73.80> has quit IRC (Ping timeout: 246 seconds)
+2019-01-30T21:40:03  *** jhernandez <jhernandez!~jhernande@40.58-136-217.adsl-dyn.isp.belgacom.be> has quit IRC (Remote host closed the connection)
+2019-01-30T21:40:50  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-iowqblkpyjajhyms> has quit IRC (Remote host closed the connection)
+2019-01-30T21:40:59  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-xlxxzltxbificfcl> has joined #fluid-work
+2019-01-30T21:41:08  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-01-30T21:48:18  *** michelled <michelled!~Adium@205.211.168.101> has quit IRC (Quit: Leaving.)
+2019-01-30T21:49:25  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-xlxxzltxbificfcl> has quit IRC (Remote host closed the connection)
+2019-01-30T21:49:53  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-bzfsyixendkecrsf> has joined #fluid-work
+2019-01-30T21:50:36  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-bzfsyixendkecrsf> has quit IRC (Remote host closed the connection)
+2019-01-30T21:50:45  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-dsqccjqqniijvhoo> has joined #fluid-work
+2019-01-30T21:52:51  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-lojajfadncjntjsm> has quit IRC (Ping timeout: 268 seconds)
+2019-01-30T22:01:09  *** clown <clown!clown@nat/ocadu/x-xtibsdwckuzcafzs> has quit IRC (Quit: Leaving.)
+2019-01-30T22:03:47  *** danayo <danayo!~danayo@S01069050ca694f23.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-01-30T22:12:19  *** michelled <michelled!~Adium@205.211.168.101> has joined #fluid-work
+2019-01-30T22:21:27  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-01-30T22:28:43  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-dsqccjqqniijvhoo> has quit IRC (Remote host closed the connection)
+2019-01-30T22:29:11  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-jyigikcxhbjiylde> has joined #fluid-work
+2019-01-30T22:39:15  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-jyigikcxhbjiylde> has quit IRC (Remote host closed the connection)
+2019-01-30T22:39:24  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-hgoxaykpuoqxgiqi> has joined #fluid-work
+2019-01-30T22:45:12  *** michelled <michelled!~Adium@205.211.168.101> has quit IRC (Quit: Leaving.)
+2019-01-30T22:50:46  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-hgoxaykpuoqxgiqi> has quit IRC (Remote host closed the connection)
+2019-01-30T22:51:15  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-stpxksbylidsjwca> has joined #fluid-work
+2019-01-30T22:56:14  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-stpxksbylidsjwca> has quit IRC (Remote host closed the connection)
+2019-01-30T22:56:22  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-jlchhgxnhowickyt> has joined #fluid-work
+2019-01-30T22:56:29  *** colinclark <colinclark!~colinclar@205.211.168.101> has joined #fluid-work
+2019-01-30T23:01:11  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-vxermldbmhqapdul> has quit IRC (Quit: Leaving.)
+2019-01-30T23:10:27  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-jlchhgxnhowickyt> has quit IRC (Remote host closed the connection)
+2019-01-30T23:35:52  *** colinclark <colinclark!~colinclar@205.211.168.101> has quit IRC (Quit: colinclark)

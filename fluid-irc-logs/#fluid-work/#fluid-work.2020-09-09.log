@@ -1,0 +1,110 @@
+2020-09-09T00:24:25  <dmahajan980> Thanks gmoss and dogeman_! It was an amazing summer for me and I look forward to more engagement with the community.
+2020-09-09T00:24:39  <dmahajan980> Congrats to you too, dogeman_
+2020-09-09T00:24:47  <dmahajan980> :)
+2020-09-09T01:36:31  <dogeman_> hey gmoss, how do I transfer ownership of fluidic-11ty repo
+2020-09-09T01:37:57  <gmoss> dogeman_: under "Options" on the "Settings" page, at the very bottom is a list of "dangerous" actions for your repo, and one of the choices is to transfer ownership
+2020-09-09T01:38:42  <gmoss> dogeman_: this link doesn't work for me but it should for you https://github.com/sachin10101998/fluidic-11ty/settings
+2020-09-09T01:39:20  <dogeman_> It says I don't have permissions to create public repos in fluid-project
+2020-09-09T01:39:35  <dogeman_> after I try to transfer
+2020-09-09T01:39:52  <dogeman_> Exact error is "You don’t have the permission to create public repositories on fluid-project"
+2020-09-09T01:40:28  <gmoss> dogeman_: ah, you may have to transfer it to Justin_o first, so maybe we should hold off until he has a chance to answer
+2020-09-09T01:40:45  <dogeman_> cool, no problem. will coordinate with him
+2020-09-09T01:40:54  <gmoss> awesome, thanks very much dogeman_ :)
+2020-09-09T01:41:30  <dogeman_> np
+2020-09-09T12:58:17  <Justin_o> Bosmon: hello.. so I'm making some headway on FLUID-6538 but ran into an issue with https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/jquery.keyboard-a11y.js#L41-L63
+2020-09-09T12:58:57  <Justin_o> basically some of the exposed functions now need to be asynchronous because they make calls that filter down to possibly using fluid.focus or fluid.blur
+2020-09-09T13:00:30  <Justin_o> I don't know enough about the thatistBridge to know how to best address the issue. Possibly we could treat all functions as async and provide callbacks for when they are complete? not sure. anythoughts?
+2020-09-09T13:03:49  <Bosmon> Justin_o - well, the returned value is the returned value, right?
+2020-09-09T13:03:57  <Bosmon> I don't see a problem with this being a promise when it needs to be
+2020-09-09T13:05:54  <Justin_o> okay, I'll experiment with that. I was afraid about the chaining breaking, but I guess not all of them are chainable actually.
+2020-09-09T13:09:19  <Justin_o> Bosmon: well actually the togo function in the thatist bridge will need to become asynchronous because I suppose what happens here may asynchronous https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/jquery.keyboard-a11y.js#L53
+2020-09-09T13:09:53  <Justin_o> Bosmon: which would mean that we end up always returning a promise, if I'm not mistaken
+2020-09-09T14:04:17  <Bosmon> Justin_o - I don't see why, we can just return whatever gets returned
+2020-09-09T14:19:20  <Justin_o> Bosmon: yes, doing that now actually.. you're right. I just modified the check for the return to pass through the promise
+2020-09-09T14:20:21  <Bosmon> Justin_o - I don't think it needs to be modified?
+2020-09-09T14:20:41  <Bosmon> Although, to be honest, it is a pretty crummy check
+2020-09-09T14:20:49  <Bosmon> But I don't think it needs to be modified for this particular reason
+2020-09-09T14:21:07  <Justin_o> Bosmon: promises are objects, so it would return the "this" instead
+2020-09-09T14:21:35  <Justin_o> the modification just checks if the object is thenable and returns the "ret" instead of "this" in that case.
+2020-09-09T14:21:45  <Bosmon> Oh I see ... I wonder why it censors any object returns
+2020-09-09T14:22:11  <Bosmon> I see, the comment explains
+2020-09-09T14:22:11  <Justin_o> Bosmon: seems like it's related to chaining in jQuery
+2020-09-09T14:22:17  <Bosmon> It's a pretty nutty policy
+2020-09-09T14:23:26  <Bosmon> I suggest that you replace the check with return fluid.isComponent(ret) ? this : ret;
+2020-09-09T14:24:36  <Bosmon> Or if you're worried about the dependency on Fluid.js, you could replace it with return $.isPlainObject(ret) && ret.constructor ? this : ret;
+2020-09-09T14:25:06  <Bosmon> 2008 was a very different era
+2020-09-09T14:28:16  <Justin_o> Bosmon: thanks for that suggestion I'll do that.
+2020-09-09T14:29:58  <Bosmon> Although I have a feeling that at some point we might be wanting to give constructors to our promises
+2020-09-09T14:30:05  <Bosmon> Actually, native promises most likely have constructors already
+2020-09-09T14:30:25  <Bosmon> So I'd go with the isComponent approach, the ship has long sailed on when we ever dreamed of contributing this code back to jQuery : P
+2020-09-09T14:36:56  <Justin_o> Bosmon: native promises have a constructor called AsynConstructor
+2020-09-09T14:37:24  <Justin_o> but this seems to work because Promises don't pass the $.isPlainObject check
+2020-09-09T14:37:44  <Bosmon> Oh right.... well if they don't, component's won't either
+2020-09-09T14:37:48  <Bosmon> components
+2020-09-09T14:40:08  <Justin_o> Bosmon: just to clarify when I said Promise above, I meant native promises
+2020-09-09T14:40:16  <Bosmon> Justin_o - yes
+2020-09-09T14:40:19  <Justin_o> not sure about fluid promises
+2020-09-09T14:44:23  <Justin_o> Bosmon: are you saying that we need to catch our fluid components and return "this" in those cases?
+2020-09-09T14:44:38  <Bosmon> Justin_o - well this is what the comment explained was the intention of the wierd test
+2020-09-09T14:44:47  <Bosmon> So we may as well actually honour what the comment says
+2020-09-09T14:45:09  <Justin_o> Bosmon: okay.. so yes, our components do fail the isPlainObject check as you mentioned
+2020-09-09T14:45:24  <Justin_o> is there another way to check this without requiring fluid?
+2020-09-09T14:48:18  <Bosmon> Justin_o - not that I can think of
+2020-09-09T14:48:40  <Justin_o> Bosmon: makes me wonder if we should provide a constructor name for Infusion components.. that is constructor.name  === "infusionConstructor" or something like that
+2020-09-09T14:48:55  <Bosmon> Justin_o - yes, I was just thinking of the same idea
+2020-09-09T14:49:30  <Bosmon> You could write fluid.componentConstructor.name = "fluid.componentConstructor" on line 1938 of Fluid.js
+2020-09-09T14:49:41  <Bosmon> And then sniff for that name in your dependence-free test
+2020-09-09T14:51:17  <Justin_o> Bosmon: I think our lines might be different. https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/Fluid.js#L1938
+2020-09-09T14:51:27  <Justin_o> maybe you have some local changes or are in a branch.
+2020-09-09T14:51:29  <Bosmon> Justin_o - sorry yes, I am in my funny branch
+2020-09-09T14:51:54  <Bosmon> 1818 in your branch
+2020-09-09T14:52:29  <Justin_o> Bosmon: okay, thanks that's where I was going to add it.
+2020-09-09T15:03:11  <Justin_o> Bosmon: well that doesn't work because for functions "name" is read-only
+2020-09-09T15:03:21  <Bosmon> Justin_o - yowsers!
+2020-09-09T15:03:36  <Bosmon> Justin_o - I guess we can write the name inline?
+2020-09-09T15:03:43  <Bosmon> Although I guess it can't contain a dot at that point
+2020-09-09T15:04:23  <Justin_o> Bosmon: we might be able to make it writable in this instance, but I'm not sure it's worth doing https://stackoverflow.com/a/44288357
+2020-09-09T15:05:22  <Bosmon> Justin_o - oh right
+2020-09-09T15:05:33  <Bosmon> Well Object.defineProperty isn't so hideous
+2020-09-09T15:06:21  <Justin_o> Bosmon: okay, so I'm using that and rather than making it writeable I'm just setting the name value.
+2020-09-09T15:06:23  <Justin_o> will see if that works
+2020-09-09T15:07:17  <Justin_o> okay, I think that worked.
+2020-09-09T15:08:46  <Bosmon> Justin_o - what does it look like?
+2020-09-09T15:10:00  <Justin_o> https://www.irccloud.com/pastebin/eETdxY2t/
+2020-09-09T15:10:38  <Justin_o> then when you access it through a component like comp.constructor.name it will return "fluid.componentConstructor"
+2020-09-09T15:10:53  <Bosmon> Justin_o - that's really good
+2020-09-09T15:10:53  <Justin_o> Bosmon: ^
+2020-09-09T15:13:55  <Justin_o> :)
+2020-09-09T16:07:29  <gmoss> Bosmon Justin_o: a slight tangent, but your discussion is reminding me of this colourful article from a few years ago: https://journal.stuffwithstuff.com/2015/02/01/what-color-is-your-function/
+2020-09-09T16:07:55  <gmoss> dated, now, but it's still a fun read :)
+2020-09-09T16:16:24  <Bosmon> gmoss - yes it is indeed an interesting read
+2020-09-09T16:16:42  <Bosmon> Interestingly it pretty much pulls its punches and doesn't push its argument to its logical conclusion
+2020-09-09T16:16:57  <Bosmon> Which is that programming languages based on the function call and stack idiom need to be abolished : P
+2020-09-09T16:19:32  <Bosmon> One of the core aims of Infusion is to make this horrific distinction go away - but since in the absence of an "Infusion compiler" I couldn't afford to make abolutely every Infusion option potentially asynchronous ("colour the entire component tree red" in the article's language) we've ended up with a somewhat lopsided system
+2020-09-09T16:20:39  <Bosmon> Right now, you have to put anything potentially asynchronous into the "resources" block of a ResourceLoader - and only certain specialised things attached to the component can consume those before onCreate, which are currently i) the component's model, ii) the markup that the "new renderer" renders from the model
+2020-09-09T16:21:41  <Bosmon> "resources are red, options are blue" : P
+2020-09-09T16:33:43  <Justin_o> Bosmon: what is the limitation on making everything red in infusion. In theory couldn't we treat all functions as asynchronous/promises and some just return immediately. You'd then just use async/await everywhere, which I guess is a pain and probably a bit wasteful. Is that the problem, or something more?
+2020-09-09T16:34:04  <gmoss> Bosmon: fun poetry, and a helpful mnemonic :)
+2020-09-09T16:34:04  <gmoss> I do sometimes imagine a post-JavaScript or more language-agnostic version of Infusion (maybe agnostic in the same way that .Net can be written in multiple functionally-equivalent languages, or maybe more broadly via multiple language-specific "runtimes" in the same way Java does), and one aspect I often imagine is not having to worry about (i.e. add configuration to handle) when a particular value becomes available.
+2020-09-09T16:34:04  <gmoss> One can dream!
+2020-09-09T16:34:55  <gmoss> *in the same way Java compiles to be able to run on different systems
+2020-09-09T16:44:35  <Justin_o> gmoss: async/await is nice to work with, but having to manage and know what is asynchronous is still a pain. It would really be great if things did just works seamlessly
+2020-09-09T16:44:59  <gmoss> Justin_o: indeed!
+2020-09-09T18:22:14  <dmahajan980> Hi Justin_o, thanks for pointing out the error in manifest file. I'm currently occupied with academic stuff, but I'll try to get back to you with the update early next week.
+2020-09-09T18:22:39  <Justin_o> dmahajan980: sounds good and thanks for letting me know.
+2020-09-09T18:23:47  <dmahajan980> Cool! Also, is there versioning strategy for dev and standard releases in the UIO+ extension?
+2020-09-09T18:27:30  <dmahajan980> I mean, how does it go with differentiating between a dev and a standard/full release in the manifest file?
+2020-09-09T18:29:11  <Justin_o> dmahajan980: I sort of ran into that issue when we were starting out with UIO+ so I just did 0.1.0.xx where I incremented the final number for dev releases. For the stable release I just did 0.2.0 I'm not sure that was the best strategy but I just stuck with it. The thing with the chrome web store is that you can't publish multiple versions of the same item so they are kind of all releases
+2020-09-09T18:31:09  <dmahajan980> I see, so the Chrome Web store only offers the latest published package, unlike npm.
+2020-09-09T18:31:20  <Justin_o> I think what I'd suggest at the moment is to treat anything published to the chrome web store as a standard release. If you want to have a dev release just distribute it for loading via unpacked extension or maybe crx file. And in that case use the version_name to indicate the dev release.
+2020-09-09T18:31:28  <Justin_o> dmahajan980: that's correct
+2020-09-09T18:33:50  <dmahajan980> Justin_o: from your earlier suggestion, I was starting to think if we use a binary system for dev and full release. So like, XX.XX.XX.0 would go as a dev release, and XX.XX.XX.1 as a standard/full release.
+2020-09-09T18:35:23  <dmahajan980> Your latest suggestion also sounds good.
+2020-09-09T18:36:11  <dmahajan980> I guess I should also discuss it with the-t-in_ before choosing a strategy.
+2020-09-09T18:45:13  <Justin_o> dmahajan980: yes, makes sense to talk to the-t-in-rtf. Also please add documentation to your repo for the approach you decide to take.
+2020-09-09T18:47:00  <dmahajan980> There's already one we added recently: https://github.com/fluid-lab/gamepad-navigator/blob/master/docs/PUBLISHING.md
+2020-09-09T18:47:18  <dmahajan980> But yes, I'll update it as we finalize the strategy.
+2020-09-09T19:00:32  <Justin_o> dmahajan980: excellent thanks
+2020-09-09T19:46:36  <Bosmon> Justin_o - we couldn't afford i) the performance hit in the inner loop of options merging to check every value to see if it is a promise, ii) the boggle of unwrapping the entire pipeline of functions to make it async
+2020-09-09T19:47:19  <Bosmon> The total rewrite for when we move to the "Infusion compiler" will be a great time to solve both of these issues
+2020-09-09T19:47:54  <Bosmon> gmoss - I met a rather indirect 3rd cousin last months who convinced me that we might want to rewrite Infusion in Rust in about 20 years : P

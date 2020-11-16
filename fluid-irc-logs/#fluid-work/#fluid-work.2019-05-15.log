@@ -1,0 +1,274 @@
+2019-05-15T00:00:29  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-05-15T00:00:44  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Client Quit)
+2019-05-15T01:08:52  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.101> has joined #fluid-work
+2019-05-15T01:08:57  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.101> has quit IRC (Client Quit)
+2019-05-15T05:10:11  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.101> has joined #fluid-work
+2019-05-15T05:10:13  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.101> has quit IRC (Client Quit)
+2019-05-15T06:12:19  *** yanachkov__ <yanachkov__!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-05-15T07:32:32  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:2c02:4c48:70af:33de> has quit IRC (Quit: Leaving.)
+2019-05-15T09:11:05  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ec7:7b00:71b4:d871:c25c:20db> has joined #fluid-work
+2019-05-15T09:15:39  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ec7:7b00:71b4:d871:c25c:20db> has quit IRC (Ping timeout: 248 seconds)
+2019-05-15T09:19:22  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has joined #fluid-work
+2019-05-15T10:41:31  <the-t-in-rtf> @stegru or @javjarfer[m], which of you onboarded the language settings?
+2019-05-15T10:41:43  <the-t-in-rtf> I see a lot of "languages" settings that are represented as single values.
+2019-05-15T10:41:43  <the-t-in-rtf> https://github.com/GPII/universal/blob/fa470c92ae1079229367ed4c888916dbdbb364a7/testData/solutions/win32.json5#L6648
+2019-05-15T10:41:47  <stegru> me
+2019-05-15T10:41:56  <the-t-in-rtf> In looking at my registry, I see that those are actually stored as reg_multi_sz
+2019-05-15T10:42:03  <the-t-in-rtf> is that something that sometimes or always happens?
+2019-05-15T10:42:30  <the-t-in-rtf> I noticed it looking at the machine preferred ui language
+2019-05-15T10:42:46  <stegru> well, at the time we didn't have special support for REG_SZ
+2019-05-15T10:43:15  <the-t-in-rtf> so it should be reg_multi_sz?
+2019-05-15T10:43:17  <stegru> I don't think it matters, because both types are stored the same
+2019-05-15T10:43:21  <the-t-in-rtf> well
+2019-05-15T10:43:29  <the-t-in-rtf> why do we even enter it then?
+2019-05-15T10:44:20  <the-t-in-rtf> anyway, I can leave an appropriate TODO nearby and leave it for now
+2019-05-15T10:44:24  <stegru> the type? so the handler knows it's a string and stores it accordingly
+2019-05-15T10:44:40  <the-t-in-rtf> but how does that work for reg_multi_sz values?
+2019-05-15T10:45:38  <the-t-in-rtf> I mean, why is it safe to indicate that the "languages" are stored as single strings in this case?
+2019-05-15T10:45:44  <stegru> reg_multi_sz values are just C arrays, reg_sz are strings (which can have null characters)
+2019-05-15T10:45:57  <stegru> it's probably not
+2019-05-15T10:46:07  <the-t-in-rtf> So I should make the attempt to clean it up then?
+2019-05-15T10:46:08  <the-t-in-rtf> ;)
+2019-05-15T10:46:36  <stegru> sure
+2019-05-15T10:46:38  <the-t-in-rtf> All I'd do is make the field accurate and then make the transforms output a single-element array
+2019-05-15T10:47:11  <the-t-in-rtf> I am happy to tidy up as long as I know they aren't mangled for a particular reason.
+2019-05-15T10:47:54  <stegru> there's no good reason for it to be like that
+2019-05-15T10:48:15  <stegru> apart from "if it's not broke, don't fix it" ;)
+2019-05-15T10:50:51  <the-t-in-rtf> yeah, I may just leave it
+2019-05-15T10:51:06  <the-t-in-rtf> we also detect the language by trying to read it as a REG_SZ
+2019-05-15T10:51:07  <the-t-in-rtf> it's a mess
+2019-05-15T10:51:12  <the-t-in-rtf> I will leave a TODO for the future
+2019-05-15T10:51:23  <the-t-in-rtf> if, for example we end up having problems when someone sets an array, then fine
+2019-05-15T10:51:37  <the-t-in-rtf> but I'd assume we get the "most preferred" single value with our strategy or things just wouldn't work
+2019-05-15T10:52:37  <stegru> yes, that's right
+2019-05-15T10:52:51  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ec7:7b00:5574:1f5e:2d76:d96f> has joined #fluid-work
+2019-05-15T10:54:15  <the-t-in-rtf> My motto is if it is broken, fix it if you can
+2019-05-15T10:54:30  <the-t-in-rtf> I mean, this is probably just something we're getting away with for now
+2019-05-15T10:54:36  <the-t-in-rtf> but I know my limits
+2019-05-15T11:00:20  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ec7:7b00:5574:1f5e:2d76:d96f> has quit IRC (Remote host closed the connection)
+2019-05-15T11:02:58  <the-t-in-rtf> So, @ste
+2019-05-15T11:03:07  <the-t-in-rtf> @stegru (actually hitting tab instead of enter)
+2019-05-15T11:03:08  <the-t-in-rtf> https://github.com/GPII/universal/blob/fa470c92ae1079229367ed4c888916dbdbb364a7/testData/solutions/win32.json5#L8838
+2019-05-15T11:03:30  <the-t-in-rtf> I'm not as familiar with the SPI settings handler, usually I can intuit the actual format from the transforms, but not in this case
+2019-05-15T11:04:14  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ec7:7b00:5861:de51:7a31:21b8> has joined #fluid-work
+2019-05-15T11:04:17  <stegru> ok
+2019-05-15T11:04:29  <the-t-in-rtf> so, it's an object with a path and value?
+2019-05-15T11:04:33  <the-t-in-rtf> (just found the test data)
+2019-05-15T11:04:45  <the-t-in-rtf> and in this case the value is true or false?
+2019-05-15T11:05:24  <stegru> this is like saying: pvParam.dwFlags |= SKF_STICKYKEYSON, pvParam is a STICKYKEYS structure that gets passed to the SPI api call
+2019-05-15T11:05:47  <stegru> yes, if true then set the bit, otherwise don't
+2019-05-15T11:06:17  <the-t-in-rtf> https://github.com/GPII/universal/blob/f0de96f0b520cd2e1782c205847e88b5d2df08ec/tests/platform/windows/windows-builtIn-testSpec.js#L394
+2019-05-15T11:08:11  <the-t-in-rtf> so, confessional time, do we ever omit the value instead of specifying it as false?
+2019-05-15T11:08:21  <the-t-in-rtf> I want to know whether I can safely require the value
+2019-05-15T11:08:29  <stegru> hmm
+2019-05-15T11:08:31  <the-t-in-rtf> if we should be setting the value, I can add the check and fix whatever data is broken
+2019-05-15T11:09:29  <stegru> so, you want to determine it's broke if it's undefined?
+2019-05-15T11:10:25  <stegru> the only thing that the value comes from is the preferences
+2019-05-15T11:12:18  <the-t-in-rtf> so, what would the SPI settings handler do if the value was not set?  Is it a simple falsey check?
+2019-05-15T11:12:32  <stegru> yes, i presume so
+2019-05-15T11:12:35  <the-t-in-rtf> just curious, I think it's still better to try and require it if we can
+2019-05-15T11:13:25  <the-t-in-rtf> so, I'm afraid I've discovered another can of worms then.
+2019-05-15T11:13:37  <the-t-in-rtf> I mean, that setting is just the one that hadn't been sketched out
+2019-05-15T11:13:47  <the-t-in-rtf> I see many others that are represented as "type": "boolean"
+2019-05-15T11:13:57  <the-t-in-rtf> are those also actually using paths and values?
+2019-05-15T11:14:39  <the-t-in-rtf> oh, no
+2019-05-15T11:14:40  <the-t-in-rtf> https://github.com/GPII/universal/blob/f0de96f0b520cd2e1782c205847e88b5d2df08ec/tests/platform/windows/windows-builtIn-testSpec.js#L413
+2019-05-15T11:15:07  <the-t-in-rtf> https://github.com/GPII/universal/blob/fa470c92ae1079229367ed4c888916dbdbb364a7/testData/solutions/win32.json5#L6221
+2019-05-15T11:15:23  <the-t-in-rtf> either the test data is wrong or the schema is
+2019-05-15T11:15:29  <the-t-in-rtf> you make it sound like the schema is
+2019-05-15T11:15:43  <the-t-in-rtf> I will add that pocket of madness to my test data checks.
+2019-05-15T11:16:08  <the-t-in-rtf> the schemas are only really useful if valid means valid
+2019-05-15T11:17:06  <the-t-in-rtf> Anyway, please confirm that all those settings do indeed need to have paths and values, or if the path/value stuff is only used if the path is non-standard
+2019-05-15T11:17:50  <stegru> yes, the path is to a field within the structure which is passed to the API call
+2019-05-15T11:18:42  <stegru> well, it's a path to a bit of a field in a structure
+2019-05-15T11:19:04  <stegru> (bit as in 8th of a byte)
+2019-05-15T11:19:21  <the-t-in-rtf> just to confirm, the schemas are wrong.
+2019-05-15T11:19:51  <the-t-in-rtf> or can you also simply pass a boolean instead of {path: "string", value: true}?
+2019-05-15T11:21:56  <stegru> I think the intention here (i'm looking at FilterKeysEnable) is the schema is related to the value
+2019-05-15T11:22:19  <stegru> the value of the value field
+2019-05-15T11:23:02  <the-t-in-rtf> uhhh
+2019-05-15T11:23:04  <the-t-in-rtf> it can't be
+2019-05-15T11:23:12  <the-t-in-rtf> the schema is related to what's stored in the prefssafe
+2019-05-15T11:23:18  <the-t-in-rtf> and what's passed when setting and getting the value
+2019-05-15T11:23:44  <the-t-in-rtf> so the observed data in windows-builtIn-testSpec is a prime example
+2019-05-15T11:24:22  <stegru> yes, you mean this thing? http://registry\\.gpii\\.net/common/debounce/enabled
+2019-05-15T11:24:23  <the-t-in-rtf> if we pass the more complex structure around when getting/setting prefs, then we either need for the schema to reflect that, or to have a documented means of going from entered values to what the settings handler needs
+2019-05-15T11:24:56  <the-t-in-rtf> no, I'm talking about the one I sent earlier
+2019-05-15T11:24:56  <the-t-in-rtf> https://github.com/GPII/universal/blob/f0de96f0b520cd2e1782c205847e88b5d2df08ec/tests/platform/windows/windows-builtIn-testSpec.js#L413
+2019-05-15T11:25:13  <stegru> ok ok
+2019-05-15T11:25:14  <the-t-in-rtf> that's a sample settings payload from the windows tests
+2019-05-15T11:25:20  <the-t-in-rtf> and it's stored using the deep structure
+2019-05-15T11:26:43  <stegru> hmm!
+2019-05-15T11:26:45  <the-t-in-rtf> Which suggests to me that if you just passed "FilterKeysEnable": false to the settings handler, it would barf
+2019-05-15T11:27:14  <the-t-in-rtf> I will leave some TODOs in the right area for now and we can discuss as we push validation further into the guts of things
+2019-05-15T11:27:40  <stegru> yes, which is why there's a transform in the SR? to transform "bool" into {path:xx, value:bool}
+2019-05-15T11:27:41  <the-t-in-rtf> although my inclination is to have the schema match the test data and have the TODO talk about making it easier to actually enter a value in a UI
+2019-05-15T11:28:06  <stegru> yes ok
+2019-05-15T11:29:38  <the-t-in-rtf> anyway, thanks for your help, it's good to find and flag this stuff even if we agree to leave it be
+2019-05-15T11:30:34  <the-t-in-rtf> so, my next question is, which things do I need to add the paths for for it to accurately describe what's stored in the prefs safe?
+2019-05-15T11:31:04  <the-t-in-rtf> https://github.com/GPII/universal/blob/fa470c92ae1079229367ed4c888916dbdbb364a7/testData/solutions/win32.json5#L4961
+2019-05-15T11:31:16  <the-t-in-rtf> like, are there circumstances in which path/value are/aren't used?
+2019-05-15T11:31:45  <the-t-in-rtf> OK, well, the test data is making this clear as well
+2019-05-15T11:32:04  <the-t-in-rtf> https://github.com/GPII/universal/blob/f0de96f0b520cd2e1782c205847e88b5d2df08ec/tests/platform/windows/windows-builtIn-testSpec.js#L730
+2019-05-15T11:32:14  <the-t-in-rtf> it's the same deep structure but with a string for the value.
+2019-05-15T11:39:54  <the-t-in-rtf> @Bosmon has advocated for transform tests, which would have caught this mismatch.
+2019-05-15T11:43:56  <the-t-in-rtf> i.e. if we'd gone from a boolean `true` for a common setting to one of the SPI settings we were discussing, it would not have been valid according to the old schema
+2019-05-15T11:57:17  *** jhung <jhung!Adium@nat/ocadu/x-jfgflxvrvomxxukt> has joined #fluid-work
+2019-05-15T12:26:52  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has quit IRC (Quit: Leaving.)
+2019-05-15T12:29:29  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has joined #fluid-work
+2019-05-15T12:52:27  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-05-15T12:57:48  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-05-15T12:59:55  <Bosmon> cindyli - did we decide to have a meeting some time about our auth solutions and data model?
+2019-05-15T13:00:56  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has quit IRC (Quit: Leaving.)
+2019-05-15T13:01:29  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-kqkmglkdllhofdij> has joined #fluid-work
+2019-05-15T13:02:38  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has joined #fluid-work
+2019-05-15T13:06:22  <cindyli> Bosmon: not yet. we'll talk about use APCP meeting today to talk about creating new keys. if there's time left, we can talk about auth for NOVA. otherwise, we can set another time for this topic
+2019-05-15T13:14:45  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-work
+2019-05-15T13:32:26  *** yanachkov__ <yanachkov__!~yanachkov@185.97.75.80> has quit IRC (Remote host closed the connection)
+2019-05-15T13:35:56  *** ussjoin <ussjoin!ussjoin@brighid.ussjoin.com> has quit IRC (Ping timeout: 258 seconds)
+2019-05-15T13:36:08  *** ussjoin <ussjoin!ussjoin@brighid.ussjoin.com> has joined #fluid-work
+2019-05-15T13:42:52  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-05-15T13:53:53  <cindyli> stegru: i'm running "npm test" with the latest windows repo master branch and hit this error: https://pastebin.com/PQ14AbEc does it look familiar to you?
+2019-05-15T13:54:27  <cindyli> tried twice and hit the same error
+2019-05-15T13:54:30  <stegru> no, cindyli
+2019-05-15T13:54:46  <cindyli> shall i run tests in V: drive?
+2019-05-15T13:54:50  <cindyli> or c:\vagrant?
+2019-05-15T13:55:05  <stegru> it shouldn't matter for this, but v: is usually best
+2019-05-15T13:55:23  <cindyli> ok, using v: actually
+2019-05-15T13:56:48  *** avtar <avtar!~avtar@ip-24-50-181-125.user.start.ca> has joined #fluid-work
+2019-05-15T13:57:47  <stegru> did you do a npm install first?
+2019-05-15T13:59:41  <cindyli> yes
+2019-05-15T14:00:05  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has quit IRC (Quit: Leaving.)
+2019-05-15T14:00:11  <cindyli> stegru: right before this error, there are 3 lines:
+2019-05-15T14:00:14  <cindyli> 06:58:27.657:  Exit code:5
+2019-05-15T14:00:14  <cindyli> 06:58:28.647:  Explorer did not respond to shutdown request
+2019-05-15T14:00:14  <cindyli> 06:58:28.759:  jq: Test concluded - Module "gpii.tests.windows.processHandling" Test name "Testing stopExplorer": 5/5 passed - PASS
+2019-05-15T14:00:30  <cindyli> is "Explorer did not respond to shutdown request" expected?
+2019-05-15T14:00:59  <stegru> yes, that is ok
+2019-05-15T14:01:20  <cindyli> ok
+2019-05-15T14:01:57  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has joined #fluid-work
+2019-05-15T14:01:58  <stegru> hmm, I think this area has been changed recently, perhaps the tests need to be updated
+2019-05-15T14:02:09  <stegru> are you able to ignore this for now?
+2019-05-15T14:02:32  <cindyli> yes, i've commented out that unit test
+2019-05-15T14:02:53  <cindyli> wonder why CI didn't complain about this
+2019-05-15T14:02:57  <stegru> i'll look at it soon, i'm in a call at the moment
+2019-05-15T14:03:05  <cindyli> thanks. no rush
+2019-05-15T14:03:27  <stegru> it probably relies on timing and other random things, like the wind direction
+2019-05-15T14:09:28  <the-t-in-rtf> anyway the wind blows, doesn't really matter to me
+2019-05-15T14:13:00  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has quit IRC (Quit: Leaving.)
+2019-05-15T14:32:50  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-05-15T14:36:15  *** avtar <avtar!~avtar@ip-24-50-181-125.user.start.ca> has quit IRC (Read error: Connection reset by peer)
+2019-05-15T14:38:23  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 245 seconds)
+2019-05-15T14:38:40  *** avtar <avtar!~avtar@ip-24-50-181-125.user.start.ca> has joined #fluid-work
+2019-05-15T14:44:57  *** avtar <avtar!~avtar@ip-24-50-181-125.user.start.ca> has quit IRC (Read error: Connection reset by peer)
+2019-05-15T14:46:55  *** avtar <avtar!~avtar@ip-24-50-181-125.user.start.ca> has joined #fluid-work
+2019-05-15T14:47:09  <cindyli> stegru: this unit test passes after i destroyed and rebuilt the windows VM. yay!
+2019-05-15T14:48:34  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:b887:91a1:fa53:68ec> has joined #fluid-work
+2019-05-15T14:50:22  *** michelled <michelled!~Adium@CPE0c473df21833-CM0c473df21830.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-05-15T14:50:31  <stegru> oh, that's good, cindyli !
+2019-05-15T14:56:28  *** cherylhjli <cherylhjli!~Adium@205.211.168.102> has joined #fluid-work
+2019-05-15T14:59:37  <the-t-in-rtf> Hi, gang.  Should we use Room 2 since the APCP meeting isn't happening?
+2019-05-15T15:01:21  <the-t-in-rtf> I opened the room
+2019-05-15T15:01:26  <the-t-in-rtf> https://global.gotomeeting.com/join/619028605
+2019-05-15T15:02:48  <the-t-in-rtf> @Bosmon, @jhernandez, etc, Cindy and I are in room 2
+2019-05-15T15:05:56  <Bosmon> the-t-in-rtf - sorry to be late
+2019-05-15T15:07:01  <the-t-in-rtf> @jhernandez are you still busy?
+2019-05-15T15:09:02  <jhernandez> the-t-in-rtf: sorry, joining now
+2019-05-15T15:09:23  <the-t-in-rtf> cool, we're just on intros
+2019-05-15T15:09:24  <the-t-in-rtf> just in time
+2019-05-15T15:11:58  <the-t-in-rtf> @jhernandez, we're switching to Skype
+2019-05-15T15:12:02  <jhernandez> oh
+2019-05-15T15:12:02  <jhernandez> okay
+2019-05-15T15:12:13  <jhernandez> gotomeeting is running slow here today
+2019-05-15T15:12:17  <jhernandez> veeery slow
+2019-05-15T15:19:30  <the-t-in-rtf> https://pad.gpii.net/p/data-model-migrations-for-gpii-schemas-zb154n6e
+2019-05-15T15:21:03  *** simonjb <simonjb!~simonjb@205.211.168.103> has joined #fluid-work
+2019-05-15T15:27:10  *** jhung_2 <jhung_2!jhung@nat/ocadu/x-bmvqeqqnahctatrf> has joined #fluid-work
+2019-05-15T15:59:56  <the-t-in-rtf> Hi, all, we are just wrapping up a previous meeting, and will switch over to the arch meeting shortly.
+2019-05-15T16:00:05  <the-t-in-rtf> it may be a minute or two
+2019-05-15T16:03:58  <cindyli> the-t-in-rtf: the follow up meeting is schedule to next Friday instead of this Friday in 2 days?
+2019-05-15T16:04:06  <the-t-in-rtf> sorry, I will fix that
+2019-05-15T16:04:11  <the-t-in-rtf> thanks for catching that!
+2019-05-15T16:04:50  <cindyli> cool. thanks
+2019-05-15T16:05:27  <the-t-in-rtf> is it me or is gotomeeting having problems?
+2019-05-15T16:09:21  *** kasparnet <kasparnet!~kasper@ip-5-186-123-193.cgn.fibianet.dk> has joined #fluid-work
+2019-05-15T16:09:23  *** kasparnet <kasparnet!~kasper@ip-5-186-123-193.cgn.fibianet.dk> has quit IRC (Read error: Connection reset by peer)
+2019-05-15T16:14:13  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-05-15T16:15:51  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-work
+2019-05-15T16:29:02  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-05-15T16:43:32  *** jhung_3 <jhung_3!~jhung@205.211.168.101> has joined #fluid-work
+2019-05-15T16:44:10  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-work
+2019-05-15T16:47:29  *** jhung_2 <jhung_2!jhung@nat/ocadu/x-bmvqeqqnahctatrf> has quit IRC (Ping timeout: 268 seconds)
+2019-05-15T16:50:33  *** jhung_2 <jhung_2!jhung@nat/ocadu/x-ygfmnqojyqamoolj> has joined #fluid-work
+2019-05-15T16:54:39  *** jhung_3 <jhung_3!~jhung@205.211.168.101> has quit IRC (Ping timeout: 244 seconds)
+2019-05-15T17:23:48  *** jhung <jhung!Adium@nat/ocadu/x-jfgflxvrvomxxukt> has quit IRC (Quit: Leaving.)
+2019-05-15T17:29:11  *** jhung <jhung!Adium@nat/ocadu/x-ivsrbrixculhzkug> has joined #fluid-work
+2019-05-15T17:49:08  *** jhung_2 <jhung_2!jhung@nat/ocadu/x-ygfmnqojyqamoolj> has quit IRC (Remote host closed the connection)
+2019-05-15T17:49:25  *** jhung_2 <jhung_2!jhung@nat/ocadu/x-pzhqsqhwgisvnbvl> has joined #fluid-work
+2019-05-15T17:53:31  *** jhung_2 <jhung_2!jhung@nat/ocadu/x-pzhqsqhwgisvnbvl> has quit IRC (Read error: Connection reset by peer)
+2019-05-15T17:54:02  <sgithens> Bosmon: expanders currently must be syncronous right?
+2019-05-15T18:04:22  <Bosmon> sgithens - the whole framework is synchronous
+2019-05-15T18:04:51  <Bosmon> The upcoming framework will allow asynchronous actions, but only at special points in the workflow
+2019-05-15T18:05:03  <Bosmon> We will still not have arbitrary asynchronous expanders, and perhaps never will
+2019-05-15T18:20:26  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-05-15T18:20:49  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-work
+2019-05-15T18:26:01  *** cherylhjli <cherylhjli!~Adium@205.211.168.102> has quit IRC (Read error: Connection reset by peer)
+2019-05-15T18:33:32  <gmoss> fluid-everyone: the Community Meeting is starting soon
+2019-05-15T18:37:28  *** simonjb <simonjb!~simonjb@205.211.168.103> has quit IRC (Ping timeout: 244 seconds)
+2019-05-15T18:38:54  *** simonjb <simonjb!~simonjb@205.211.168.103> has joined #fluid-work
+2019-05-15T18:40:19  *** suranamudit[m] <suranamudit[m]!suranamudi@gateway/shell/matrix.org/x-sjlbjdwmjfmxdomg> has left #fluid-work ("Kicked by @appservice-irc:matrix.org  : Idle kick: User has been idle for 30 days.")
+2019-05-15T18:46:31  *** jhung1 <jhung1!~Adium@205.211.168.102> has joined #fluid-work
+2019-05-15T18:48:34  *** jhung <jhung!Adium@nat/ocadu/x-ivsrbrixculhzkug> has quit IRC (Ping timeout: 255 seconds)
+2019-05-15T18:50:38  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-kqkmglkdllhofdij> has quit IRC (Quit: Connection closed for inactivity)
+2019-05-15T19:24:54  *** jhung1 <jhung1!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-05-15T19:25:50  *** jhung <jhung!~Adium@205.211.168.102> has joined #fluid-work
+2019-05-15T19:28:26  *** jhung <jhung!~Adium@205.211.168.102> has quit IRC (Client Quit)
+2019-05-15T19:41:07  <sgithens> Bosmon: So it can return a promise, and then that is the value that is assigned in to the model or options or whatever?
+2019-05-15T19:41:56  <sgithens> Would this work?
+2019-05-15T19:41:56  <sgithens> ```
+2019-05-15T19:41:57  <sgithens>     model: {
+2019-05-15T19:41:57  <sgithens>         messages: {},
+2019-05-15T19:41:57  <sgithens>         solutions: "@expand:gpii.devpmt.loadAllSolutions({that}.options.osList, {that}.solutionsDataSource)"
+2019-05-15T19:41:57  <sgithens>     },
+2019-05-15T19:41:57  <sgithens> ```
+2019-05-15T19:42:11  <sgithens> it seems like the dataSource is undefined at this point when I'm trying to run it
+2019-05-15T19:43:20  <sgithens> oh wait
+2019-05-15T19:43:23  <sgithens> it seems to be ok
+2019-05-15T19:46:52  <sgithens> ok
+2019-05-15T19:46:58  <sgithens> the wiring is working
+2019-05-15T19:47:10  <sgithens> but
+2019-05-15T19:47:27  <sgithens> the actual promise object is what is being assigned to the model value
+2019-05-15T19:47:57  <sgithens> so I still need to figure out how to make the expander handle it asynchronously, rather than just use teh returned result verbatim
+2019-05-15T19:50:23  <sgithens> I don't see anything in the expansion docs about having something other than just the raw return value be the value that is assigned to the option/model path
+2019-05-15T20:03:08  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-05-15T20:13:54  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-05-15T20:16:26  <Bosmon> sgithens - as we just answered your question - the framework is synchronous : P
+2019-05-15T20:16:34  <sgithens> oh!
+2019-05-15T20:16:40  <sgithens> sorry, I misread that
+2019-05-15T20:16:43  <Bosmon> There is simply no way you can have an expander which evaluates to an asynchronously available result
+2019-05-15T20:17:10  <sgithens> that's what I thought.  It is something you were hacking on iwth potII though maybe?
+2019-05-15T20:17:25  <Bosmon> Our standard pattern for this in the "old framework" is to use the ResourceLoader component at a higher level of containment, wait for it to do its stuff, and then have the stuff which depends on the I/O in a createOnEvent component
+2019-05-15T20:17:36  <Bosmon> sgithens - it is, as I mentioned above : P
+2019-05-15T20:18:10  <sgithens> upcoming == potentiaII
+2019-05-15T20:18:14  <Bosmon> That one
+2019-05-15T20:18:25  <Bosmon> There is only one active gigantic framework branch : P
+2019-05-15T20:19:10  <sgithens> sure, but there are many upcoming versions of the framework :)
+2019-05-15T20:22:43  <Bosmon> I was just going to say that I thought that it might never be possible to support async expanders - but actually in the upcoming framework branch, it would be pretty easy to support them within models
+2019-05-15T20:22:54  <Bosmon> The model initialisation logic is already fully broken out into workflows
+2019-05-15T20:23:01  <sgithens> excellent
+2019-05-15T20:24:47  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ec7:7b00:5861:de51:7a31:21b8> has quit IRC (Remote host closed the connection)
+2019-05-15T20:25:55  *** simonjb <simonjb!~simonjb@205.211.168.103> has quit IRC ()
+2019-05-15T22:18:18  *** cherylhjli <cherylhjli!~Adium@205.189.187.4> has joined #fluid-work
+2019-05-15T22:30:12  *** michelled <michelled!~Adium@CPE0c473df21833-CM0c473df21830.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-05-15T22:40:42  *** cherylhjli1 <cherylhjli1!~Adium@205.189.187.4> has joined #fluid-work
+2019-05-15T22:40:42  *** cherylhjli <cherylhjli!~Adium@205.189.187.4> has quit IRC (Read error: Connection reset by peer)
+2019-05-15T22:42:43  *** cherylhjli <cherylhjli!~Adium@205.189.187.4> has joined #fluid-work
+2019-05-15T22:42:44  *** cherylhjli1 <cherylhjli1!~Adium@205.189.187.4> has quit IRC (Read error: Connection reset by peer)
+2019-05-15T22:45:03  *** avtar <avtar!~avtar@ip-24-50-181-125.user.start.ca> has quit IRC (Quit: Leaving.)
+2019-05-15T22:53:34  *** cherylhjli1 <cherylhjli1!~Adium@205.189.187.4> has joined #fluid-work
+2019-05-15T22:53:34  *** cherylhjli <cherylhjli!~Adium@205.189.187.4> has quit IRC (Read error: Connection reset by peer)
+2019-05-15T23:05:30  *** cherylhjli1 <cherylhjli1!~Adium@205.189.187.4> has quit IRC (Ping timeout: 258 seconds)
+2019-05-15T23:06:13  *** cherylhjli <cherylhjli!~Adium@205.189.187.4> has joined #fluid-work
+2019-05-15T23:10:52  *** cherylhjli <cherylhjli!~Adium@205.189.187.4> has quit IRC (Ping timeout: 258 seconds)
+2019-05-15T23:20:45  *** cherylhjli <cherylhjli!~Adium@205.189.187.4> has joined #fluid-work
+2019-05-15T23:24:23  *** cherylhjli <cherylhjli!~Adium@205.189.187.4> has quit IRC (Read error: Connection reset by peer)

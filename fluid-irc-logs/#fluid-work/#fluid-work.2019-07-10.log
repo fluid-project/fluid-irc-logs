@@ -1,0 +1,226 @@
+2019-07-10T06:55:01  *** yanachkov__ <yanachkov__!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-07-10T07:02:29  *** the-t-in-rtf1 <the-t-in-rtf1!~Adium@2a02:a210:2142:3480:c94b:7e3b:6e11:2099> has quit IRC (Quit: Leaving.)
+2019-07-10T07:36:35  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has joined #fluid-work
+2019-07-10T08:10:59  *** jhernandez <jhernandez!~jhernande@91.183.80.185> has joined #fluid-work
+2019-07-10T08:57:57  *** jhernandez <jhernandez!~jhernande@91.183.80.185> has quit IRC (Quit: jhernandez)
+2019-07-10T09:25:44  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e5a:900:d9e0:6594:11c4:1e82> has joined #fluid-work
+2019-07-10T09:35:30  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has quit IRC (Quit: Leaving.)
+2019-07-10T09:35:49  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has joined #fluid-work
+2019-07-10T09:38:01  *** yanachkov__ <yanachkov__!~yanachkov@185.97.75.80> has quit IRC (Remote host closed the connection)
+2019-07-10T09:38:23  *** yanachkov__ <yanachkov__!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-07-10T12:03:30  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-lnfxyqfnwvvljnom> has joined #fluid-work
+2019-07-10T12:04:36  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has quit IRC (Quit: Leaving.)
+2019-07-10T12:17:48  <Justin_o> Bosmon: not sure if you saw my message in the channel yesterday. I saw you mention some stats on IE 11 adoption on a JIRA. I'm wondering what source you used for that, and also do we have any plans/options for cases where we may have to support legacy browsers for a specific project.
+2019-07-10T12:43:35  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:9ac:c3ad:95da:3611> has joined #fluid-work
+2019-07-10T12:51:47  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-07-10T13:20:34  *** cindyli <cindyli!Adium@nat/ocadu/x-kyvtcbbchfncwuuj> has joined #fluid-work
+2019-07-10T13:26:42  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-07-10T13:28:48  <cindyli> jhernandez: i issued a pull request that includes a change to defaultSettings.json5 - https://github.com/GPII/universal/pull/801/files#diff-8c77fd0e3722740d22305a89c939bfacR9 - because your change you made in this pull request (https://github.com/GPII/universal/pull/800) may not be correct. I wonder if you could test defaultSettings.json5 in the pull request #801 using a windows computer or windows VM that has MS Word installed?
+2019-07-10T13:33:52  <cindyli> Bosmon: i issued another pull request for GPII-3988: https://github.com/GPII/universal/pull/799. It adjusts the performProximityTriggered() to accept the "isEnvironmentalLogin" flag. The first pull request that has been merged for GPII-3988 only modified performLogin() and missed the proximity login. Can you review this second pull request when you have a chance?
+2019-07-10T13:33:53  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e5a:900:d9e0:6594:11c4:1e82> has quit IRC (Read error: Connection reset by peer)
+2019-07-10T13:33:57  <cindyli> thanks, guys
+2019-07-10T13:34:12  <Bosmon> cindyli - I saw the pull request and meant to ask you about it
+2019-07-10T13:34:24  <cindyli> great.
+2019-07-10T13:34:33  <Bosmon> I think, based on our conversations when the pull was first discussed, that this implementation is unnecessary
+2019-07-10T13:34:47  <Bosmon> Since I think it is impossible that a login could both be "environmental" and "proximity triggered"
+2019-07-10T13:35:21  <cindyli> the use case I thought about is: windows auto login -> user listener login -> windows auto login again
+2019-07-10T13:37:06  <cindyli> also, i feel, if we have 2 login APIs, it's better to change both to accommodate this feature, even though the use case above is not in real use at the moment.
+2019-07-10T13:37:44  <Bosmon> cindyli - I'm not sure I see how the use case works?
+2019-07-10T13:38:01  <Bosmon> Also, I don't think it's a matter of the use case being "not in real use", I think it is probably inherently contradictory
+2019-07-10T13:38:35  <Bosmon> And so my feeling is that at the moment we should not implement code paths that cater to scenarios that are not meaningful
+2019-07-10T13:38:57  <cindyli> ok. if so we can close this pull request
+2019-07-10T13:39:04  <Bosmon> Can you talk some more about your use case?
+2019-07-10T13:39:14  <Bosmon> The one you described as "windows auto login -> user listener login -> windows auto login again"?
+2019-07-10T13:39:37  <cindyli> in the case that NOVA computers can be used for both windows auto login and USB logins
+2019-07-10T13:39:51  <Bosmon> cindyli - they may well be, yes
+2019-07-10T13:39:59  <Bosmon> But only the windows auto logins will count as "environmental"
+2019-07-10T13:40:48  <Bosmon> cindyli - but how would that relate to the implementation in your pull request?
+2019-07-10T13:41:51  <cindyli> 1. a user logs into a NOVA computer: performLogin() is called to track this environmental login
+2019-07-10T13:42:36  <Bosmon> cindyli - ah, ok I think I know where this is going
+2019-07-10T13:42:37  <cindyli> 2. this person inserts a usb: performProximityTriggered() is called to logout 1 and login 2
+2019-07-10T13:42:53  <cindyli> 3. this person logs out of windows
+2019-07-10T13:44:10  <Bosmon> Actually no, I don't : P
+2019-07-10T13:44:15  <cindyli> no, 3 should be: someone logs in the same computer using a different user id, performProximityTriggered() is called to logout 2 and login 3
+2019-07-10T13:44:20  <Bosmon> Isn't the impl correct in this situation?
+2019-07-10T13:45:43  <Bosmon> Throughout all of the scenario, the only value stored in lastEnvironmentalLoginGpiiKey is the correct one, the one which was received from the very first login
+2019-07-10T13:46:03  <Bosmon> And I don't believe any of the subsequent steps disturb it
+2019-07-10T13:46:19  <cindyli> shouldn't we track the last environmental login? in this case should be the user who logs in at step 3?
+2019-07-10T13:46:40  <Bosmon> cindyli - but that step 3 is no environmental login
+2019-07-10T13:46:51  <Bosmon> The only environmental one is the one at step 1
+2019-07-10T13:47:01  <cindyli> that person at the step 3 also triggers the windows auto login
+2019-07-10T13:47:31  <Bosmon> cindyli - but you corrected your step 3
+2019-07-10T13:47:34  <cindyli> my concern is, whenever an environmental login is triggered via performProximityTriggered(), it will not be tracked
+2019-07-10T13:47:46  <Bosmon> cindyli - but it can never be triggered that way
+2019-07-10T13:48:02  <Bosmon> cindyli - or did you still mean in your step 3 that someone logged out of Windows?
+2019-07-10T13:48:21  <Bosmon> If they log out of Windows, they trash the entire local FlowManager, which gets a fresh environmental login in the next session
+2019-07-10T13:49:01  <cindyli> nah, step 3 would be someone uses the windows feature like "switch to another user" to login the windows
+2019-07-10T13:49:14  <cindyli> will this trash the entire local FlowManager too?
+2019-07-10T13:49:40  <Bosmon> cindyli - when stegru implements this, he will indeed schedule the Windows service to allocate a fresh FlowManager instance
+2019-07-10T13:49:54  <cindyli> ok. cool
+2019-07-10T13:50:47  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e5a:900:d9e0:6594:11c4:1e82> has joined #fluid-work
+2019-07-10T13:51:23  <jhernandez> cindyli: sorry, reading this now
+2019-07-10T13:51:25  <cindyli> however, Bosmon, with a fresh flow manager, the windows auto login could also happen by calling performProximityTriggered()
+2019-07-10T13:51:41  <Bosmon> cindyli - but how!!
+2019-07-10T13:51:43  <cindyli> jhernandez: please look at my very first message for you
+2019-07-10T13:51:57  <jhernandez> yes, I realized about that thing earlier in the morning
+2019-07-10T13:51:58  <Bosmon> cindyli - the windows auto login is only ever triggered by stegru 's windows service code
+2019-07-10T13:52:04  <Bosmon> And it will never call that method
+2019-07-10T13:52:05  *** michelled <michelled!~Adium@205.211.168.102> has joined #fluid-work
+2019-07-10T13:52:14  <jhernandez> and yeah, your fix is the good one
+2019-07-10T13:53:02  <cindyli> thanks, jhernandez, it would be safer if we can test it with a MS Word. i don't have such windows VM
+2019-07-10T13:53:07  <stegru> switch to another user would just mean each user has their own instance of gpii
+2019-07-10T13:53:15  *** clown <clown!clown@nat/ocadu/x-nnizaeobcmmyfoyu> has joined #fluid-work
+2019-07-10T13:53:29  <cindyli> Bosmon: who knows. have a look at stegru's pull request - https://github.com/GPII/universal/pull/798/files#diff-badd143eac3a550d1192d59693baf03aR160
+2019-07-10T13:54:05  <cindyli> stegru: looking at your code, it depends on the flag of "proximity"
+2019-07-10T13:54:27  <Bosmon> cindyli - yes, I guess in theory it is possible
+2019-07-10T13:54:36  <jhernandez> cindyli: yes, will do
+2019-07-10T13:54:41  <cindyli> thanks, jhernandez
+2019-07-10T13:54:45  <Bosmon> But to deploy a listener with proximity: true and environmental: true would be senseless
+2019-07-10T13:54:46  <jhernandez> thanks to you!
+2019-07-10T13:54:49  <stegru> that flag is set for the NFC proximity device
+2019-07-10T13:54:59  <stegru> yes, Bosmon
+2019-07-10T13:55:35  <cindyli> well, as said, calling performProximityTriggered() and performLogin() has the same result
+2019-07-10T13:55:50  <Bosmon> cindyli - what do you mean "has the same result"?
+2019-07-10T13:55:57  <cindyli> for the first windows login
+2019-07-10T13:56:43  <cindyli> anyway, if we don't change performProximityTriggered(), we need to keep in mind that only performLogin() can track environmental logins
+2019-07-10T13:56:55  <cindyli> if your guys have no problem with it, I'm totally fine
+2019-07-10T13:57:38  <Bosmon> cindyli - I think it is fine - I don't think we will need to "keep it in mind" since currently the alternative is inconceivable
+2019-07-10T13:58:01  <Bosmon> "proximity" logins can only be those which are mediated by a physical token which can be brought to and from the local device
+2019-07-10T13:58:19  <Bosmon> "environmental" logins are logins resulting from an inherent property of the local device itself which can never be taken away from it
+2019-07-10T13:58:32  <Bosmon> I can't see a reasonable way in which the two kinds could coincide
+2019-07-10T13:58:35  <cindyli> ok. great. let's close this pull request
+2019-07-10T13:59:12  <stegru> cindyli, we could add a check "(!proximity || !environmental)" if it would help you sleep better
+2019-07-10T14:00:20  <stegru> or
+2019-07-10T14:00:39  <stegru> if (proximity && environmental) { fluid.fail("cindy told us so"); }
+2019-07-10T14:00:47  <cindyli> haha
+2019-07-10T14:01:24  <stegru> or perhaps check for isEnvironmental in proximityTriggered?
+2019-07-10T14:02:18  <stegru> it would be fun to make a proximity auto-login listener, however
+2019-07-10T14:02:23  <cindyli> honestly, i would prefer to have these checks to stop the error earlier.
+2019-07-10T14:02:53  <cindyli> but it should be ok without them if the workflow that Bosmon described does get followed
+2019-07-10T14:04:04  <stegru> but then the checks would be in the same place that the bug is.. if I couldn't resist making a rogue listener, then nothing can stop me
+2019-07-10T14:13:16  <stegru> cindyli, i've updated the PR: https://github.com/GPII/universal/pull/798/commits/93fbf86c800b725b0778b4bab64bdc3fedd5ef5e
+2019-07-10T14:16:47  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-aohxqnaiwsqlmqif> has joined #fluid-work
+2019-07-10T14:25:02  *** cindyli <cindyli!Adium@nat/ocadu/x-kyvtcbbchfncwuuj> has quit IRC (Quit: Leaving.)
+2019-07-10T14:30:09  *** michelled <michelled!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-07-10T14:32:55  *** cindyli <cindyli!Adium@nat/ocadu/x-devgjjryggqyuvma> has joined #fluid-work
+2019-07-10T14:33:55  <cindyli> super. thanks, stegru, looks great
+2019-07-10T14:37:50  <jhernandez> cindyli: just tested the change in the defaultSettings file with office and worked as expected
+2019-07-10T14:38:07  <cindyli> great. thanks, jhernandez
+2019-07-10T14:38:50  <jhernandez> however, yanachkov__: is now having problems in making the QS to sync that up
+2019-07-10T14:38:56  <cindyli> can you leave a comment on the pull request so someone can review and merge it, jhernandez
+2019-07-10T14:39:18  <cindyli> ah ha. what's the problem
+2019-07-10T14:39:31  <cindyli> can i help?
+2019-07-10T14:40:59  <jhernandez> I guess that it could be transformed in a way that works for the QS
+2019-07-10T14:41:07  <jhernandez> but I'm not sure what code is involved in that
+2019-07-10T14:41:15  <jhernandez> yanachkov__: any hints?
+2019-07-10T14:41:19  *** michelled <michelled!~Adium@205.211.168.102> has joined #fluid-work
+2019-07-10T14:43:06  *** colinclark <colinclark!~colinclar@lan2.penham.iasl.com> has joined #fluid-work
+2019-07-10T14:43:38  <jhernandez> cindyli: so, apparently, it worked fine in the previous form - and yanachkov__ found a way to make it work
+2019-07-10T14:44:22  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-07-10T14:44:33  <cindyli> jhernandez: yanachkov__ found a way to make the previous form work, but not the current form?
+2019-07-10T14:44:46  <jhernandez> and now with your change, that totally makes sense, he's somehow puzzled why we need it to be in that form rather than having it in in the "long form"
+2019-07-10T14:45:09  <yanachkov__> Sorry, which is the new form?
+2019-07-10T14:45:19  <cindyli> the current form is more user readable while the long form is more for internal development
+2019-07-10T14:45:29  <jhernandez> https://paste.gnome.org/pxbove8vz
+2019-07-10T14:45:41  <cindyli> yanachkov__: the new form - https://github.com/GPII/universal/pull/801/files#diff-8c77fd0e3722740d22305a89c939bfacR9
+2019-07-10T14:45:51  <cindyli> thanks, jhernandez
+2019-07-10T14:46:35  <yanachkov__> this new path is working?
+2019-07-10T14:46:39  <jhernandez> yes, yanachkov__, let's say that you have more settings for word to be included in the reset to std profile
+2019-07-10T14:47:12  <yanachkov__> this changes the things
+2019-07-10T14:47:26  <jhernandez> this way you just toss them into the object next to word-ribbon
+2019-07-10T14:47:36  <jhernandez> it's more readable
+2019-07-10T14:47:44  <yanachkov__> This new form will be for the this build?
+2019-07-10T14:47:45  <jhernandez> but yeah, I guess it changes things on the gpii-app side
+2019-07-10T14:48:14  <jhernandez> yanachkov__: that's expected, yes
+2019-07-10T14:48:55  <yanachkov__> Will this be included in your GPII-4004?
+2019-07-10T14:52:50  <jhernandez> yup, unless we can't do much about it in time
+2019-07-10T14:54:46  <yanachkov__> not sure for this how much time I need to be sure that all things will work as expected with this new format :/
+2019-07-10T14:58:26  <cindyli> jhernandez: do you have a gpii-app branch for building the new installer?
+2019-07-10T14:58:48  <jhernandez> cindyli: gpii-app/GPII-4004
+2019-07-10T14:58:56  <jhernandez> I haven't updated it with last changes
+2019-07-10T14:59:23  <cindyli> got it. thanks, jhernandez.
+2019-07-10T14:59:24  <jhernandez> so you'll get what it's in the last installer, right
+2019-07-10T14:59:41  <cindyli> yes, wanna test GPII-3828 work
+2019-07-10T15:00:03  <cindyli> the one got reverted from the master
+2019-07-10T15:01:46  <jhernandez> yeah, and it was also reverted in the last installer
+2019-07-10T15:01:55  <jhernandez> oh ... JIRA review meeting
+2019-07-10T15:01:59  <jhernandez> :/
+2019-07-10T15:07:11  <jhernandez> Bosmon: you joining the JIRA review meeting?
+2019-07-10T15:07:20  <Bosmon> jhernandez - on my way, sorry
+2019-07-10T15:19:57  *** colinclark <colinclark!~colinclar@lan2.penham.iasl.com> has quit IRC (Quit: colinclark)
+2019-07-10T15:21:54  *** colinclark <colinclark!~colinclar@lan2.penham.iasl.com> has joined #fluid-work
+2019-07-10T15:28:17  *** jhung <jhung!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-07-10T15:29:39  *** simonjb <simonjb!~simonjb@205.211.168.102> has joined #fluid-work
+2019-07-10T15:31:11  *** michelled <michelled!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-07-10T15:43:31  *** michelled <michelled!~Adium@205.211.168.102> has joined #fluid-work
+2019-07-10T15:45:25  <colinclark> Justin_o: welcome back! it was nice to see you at standup today.
+2019-07-10T15:47:29  <Justin_o> colinclark:  :) thanks.  it's good to be back
+2019-07-10T16:15:40  *** avtar <avtar!uid113407@gateway/web/irccloud.com/x-bcmgmmhrsevtstal> has joined #fluid-work
+2019-07-10T16:44:29  *** michelled <michelled!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-07-10T16:52:20  *** michelled <michelled!~Adium@205.211.168.102> has joined #fluid-work
+2019-07-10T16:53:16  <alanharnum> Interesting general thing from the Readium engineering call: MS has shipped a bunch of improvements to Chrome accessibility on Windows, particularly for the Narrator screen reader: https://thewincentral.com/windows-10-19h1-version-1903-all-changes-new-features-so-far-categorized-changelog/#Version_1903_Accessibility_improvements
+2019-07-10T17:08:43  *** yanachkov__ <yanachkov__!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 268 seconds)
+2019-07-10T17:12:15  *** cindyli <cindyli!Adium@nat/ocadu/x-devgjjryggqyuvma> has quit IRC (Quit: Leaving.)
+2019-07-10T17:50:17  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-aohxqnaiwsqlmqif> has quit IRC (Quit: Leaving.)
+2019-07-10T17:53:26  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-07-10T17:54:39  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-kxomewnqlnqwapah> has joined #fluid-work
+2019-07-10T18:03:58  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-07-10T18:12:03  *** cindyli <cindyli!Adium@nat/ocadu/x-esrmmxoyssjcabwf> has joined #fluid-work
+2019-07-10T18:19:29  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-07-10T18:31:52  <gmoss> ping Justin_o
+2019-07-10T18:32:56  <Justin_o> gmoss: hello
+2019-07-10T18:33:16  <gmoss> Justin_o: i'm ready to pair up on the community meeting stuff in about 5 mins
+2019-07-10T18:34:32  <Justin_o> gmoss: okay sounds good
+2019-07-10T18:37:41  <gmoss> Justin_o: ready!
+2019-07-10T18:38:37  <Justin_o> yep
+2019-07-10T18:47:26  <sgithens> the-t-in-rtf: I'm putting together a new refreshed capture tool build, and lost track of where you were with the most up to date filled in version of teh solutions registry with schema's.  Did that go in to master along with the work (the might be reverted) or is it still in a branch somewhere?
+2019-07-10T18:47:58  <the-t-in-rtf> you were at the meeting, right?
+2019-07-10T18:48:03  <the-t-in-rtf> anyway.
+2019-07-10T18:48:15  <the-t-in-rtf> the question is not, is it in master yet, but will it be in master tomorrow?
+2019-07-10T18:48:27  <the-t-in-rtf> the schemas are part of the validation pull.
+2019-07-10T18:48:42  <the-t-in-rtf> it's in master right now, but will likely be moved off to the side.
+2019-07-10T18:49:12  <the-t-in-rtf> probably you and @Bosmon and I should just agree on how the schema work is to be parked, perhaps in a branch that you can pull from.
+2019-07-10T18:49:26  <sgithens> the-t-in-rtf: right, well, I never know ifthere are bunch of updates that you and JJ have been working on to add even more stuff
+2019-07-10T18:49:38  <the-t-in-rtf> but if you were to pin to a recent dev release and stay there, you'd probably be safe until we sort things out
+2019-07-10T18:49:53  <sgithens> I'll just stick with today's version of universal master, which is what is merged in to my branch anyways
+2019-07-10T18:49:53  <the-t-in-rtf> JJ has been working to add new stuff, and perhaps stegru
+2019-07-10T18:50:03  <sgithens> I won't merge and updates in to it for a while
+2019-07-10T18:50:18  <the-t-in-rtf> Yeah, probably Dr. Boz is the man to check with before you move forwards.
+2019-07-10T18:50:56  <the-t-in-rtf> No idea which of the recent onboarding efforts is in master, but I saw a few in recent closed pulls.
+2019-07-10T18:51:17  <the-t-in-rtf> you may just have to put a pin in it and let people know that you won't be able to support everything we support until we get through the traffic jam.
+2019-07-10T18:51:50  <sgithens> the-t-in-rtf: Yeah.. I'm just not going to merge any more updates
+2019-07-10T18:51:58  <sgithens> it's all in my current GPII-228 branch
+2019-07-10T18:52:07  <sgithens> I merged it up to master yesterday
+2019-07-10T18:59:26  *** michelled <michelled!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-07-10T19:00:13  *** michelled <michelled!Adium@nat/ocadu/x-ocrhvkejcmfyvuns> has joined #fluid-work
+2019-07-10T19:04:42  *** michelled <michelled!Adium@nat/ocadu/x-ocrhvkejcmfyvuns> has quit IRC (Ping timeout: 258 seconds)
+2019-07-10T19:30:58  *** michelled <michelled!~Adium@205.211.168.102> has joined #fluid-work
+2019-07-10T19:45:03  *** colinclark <colinclark!~colinclar@lan2.penham.iasl.com> has quit IRC (Ping timeout: 245 seconds)
+2019-07-10T19:46:12  *** colinclark <colinclark!~colinclar@72.139.204.185> has joined #fluid-work
+2019-07-10T19:47:33  *** cindyli <cindyli!Adium@nat/ocadu/x-esrmmxoyssjcabwf> has quit IRC (Quit: Leaving.)
+2019-07-10T19:57:38  *** colinclark_ <colinclark_!~colinclar@lan2.penham.iasl.com> has joined #fluid-work
+2019-07-10T20:00:33  *** colinclark <colinclark!~colinclar@72.139.204.185> has quit IRC (Ping timeout: 248 seconds)
+2019-07-10T20:00:34  *** colinclark_ is now known as colinclark
+2019-07-10T20:01:51  <Justin_o> jhernandez: do you know if i can share this link https://morphic.world
+2019-07-10T20:02:13  <Justin_o> i feel like i saw something in the list when i was reading through my e-mails that suggested it may not be ready, but that could also have been from a really long time ago
+2019-07-10T20:04:09  *** cindyli <cindyli!Adium@nat/ocadu/x-vmmmixchugiiqlvm> has joined #fluid-work
+2019-07-10T20:09:25  *** michelled <michelled!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-07-10T20:17:27  *** michelled <michelled!~Adium@205.211.168.102> has joined #fluid-work
+2019-07-10T20:29:22  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.105> has joined #fluid-work
+2019-07-10T20:30:00  *** colinclark <colinclark!~colinclar@lan2.penham.iasl.com> has quit IRC (Ping timeout: 272 seconds)
+2019-07-10T20:31:50  *** cindyli <cindyli!Adium@nat/ocadu/x-vmmmixchugiiqlvm> has quit IRC (Quit: Leaving.)
+2019-07-10T20:32:13  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-kxomewnqlnqwapah> has quit IRC (Ping timeout: 268 seconds)
+2019-07-10T20:34:46  *** colinclark <colinclark!~colinclar@72.139.205.226> has joined #fluid-work
+2019-07-10T20:53:19  *** clown <clown!clown@nat/ocadu/x-nnizaeobcmmyfoyu> has quit IRC (Quit: Leaving.)
+2019-07-10T20:53:21  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 248 seconds)
+2019-07-10T20:58:20  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-07-10T21:06:23  *** michelled <michelled!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-07-10T21:09:09  *** colinclark <colinclark!~colinclar@72.139.205.226> has quit IRC (Ping timeout: 244 seconds)
+2019-07-10T21:11:56  *** colinclark <colinclark!~colinclar@lan2.penham.iasl.com> has joined #fluid-work
+2019-07-10T21:13:28  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-07-10T21:19:24  *** simonjb <simonjb!~simonjb@205.211.168.102> has quit IRC ()
+2019-07-10T21:22:10  *** colinclark <colinclark!~colinclar@lan2.penham.iasl.com> has quit IRC (Quit: colinclark)
+2019-07-10T21:29:12  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e5a:900:d9e0:6594:11c4:1e82> has quit IRC (Quit: jhernandez)
+2019-07-10T22:02:24  *** jhung <jhung!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving)
+2019-07-10T22:43:15  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-lnfxyqfnwvvljnom> has quit IRC (Quit: Connection closed for inactivity)
+2019-07-10T23:03:54  *** Bosmon <Bosmon!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has quit IRC (Ping timeout: 258 seconds)

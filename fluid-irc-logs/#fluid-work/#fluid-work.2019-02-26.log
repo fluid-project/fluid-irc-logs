@@ -1,0 +1,195 @@
+2019-02-26T02:39:14  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-02-26T02:41:35  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Client Quit)
+2019-02-26T04:24:40  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-02-26T04:25:11  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-02-26T04:25:14  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Client Quit)
+2019-02-26T06:17:31  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:1cf1:5b26:3e59:2ac3> has quit IRC (Remote host closed the connection)
+2019-02-26T08:59:04  *** Danail_Dido <Danail_Dido!~Karadalie@109.120.246.31> has joined #fluid-work
+2019-02-26T11:49:33  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:dab:1de1:f99f:c451> has joined #fluid-work
+2019-02-26T12:30:28  *** scott_gonzalez <scott_gonzalez!gonzasi0@gateway/shell/jquery.com/x-abosiyparwltermg> has quit IRC (Ping timeout: 255 seconds)
+2019-02-26T12:31:53  *** scott_gonzalez <scott_gonzalez!gonzasi0@gateway/shell/jquery.com/x-uzlfyoozrdvashkp> has joined #fluid-work
+2019-02-26T13:11:32  *** Danail_Dido <Danail_Dido!~Karadalie@109.120.246.31> has quit IRC (Read error: Connection reset by peer)
+2019-02-26T13:11:57  *** Danail_Dido <Danail_Dido!~Karadalie@109.120.246.31> has joined #fluid-work
+2019-02-26T13:34:40  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-02-26T13:40:49  <cindyli> Bosmon: the failure at https://github.com/GPII/windows/pull/245#issuecomment-466459275 is because the transformer change from GPII-3653 filters out "configure-registry" and "configure-theme" settingsHandlers for applying windows high contrast. This is because the user "os_win7" has one high contrast preference defined - "http://registry\\
+2019-02-26T13:41:10  <cindyli> ah, the message was cut off
+2019-02-26T13:42:00  <cindyli> "os_win7" has this high contrast preference defined - "http://registry.gpii.net/common/highContrast/enabled"
+2019-02-26T13:42:56  <cindyli> "configure-registry" and "configure-theme" settingsHandlers are filtered out because:
+2019-02-26T13:43:42  <cindyli> 1. the "capabilitiesTransformations" of "configure-registry" handles "http://registry.gpii.net/common/highContrastTheme" (not /enabled)
+2019-02-26T13:43:58  <cindyli> 2. the "capabilitiesTransformations" of "configure-theme" has no settings defined
+2019-02-26T13:44:05  <cindyli> how shall we deal with this situation?
+2019-02-26T13:44:59  <cindyli> shall we add a flag such as "isAlways" to this kind of settings handlers to indicate they should always be included in the output?
+2019-02-26T14:16:27  <Bosmon> Hi there cindyli - thanks so much for finding the cause of the failure
+2019-02-26T14:23:15  <Bosmon> I see that the structure of these entries is actually a bit batty
+2019-02-26T14:24:51  <Bosmon> For example even the main configure-spi doesn't have any supportedSettings entry for the theme, even though it does actually read it
+2019-02-26T14:26:02  <cindyli> configure-spi has supported settings for both /enabled and /theme - https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L6067
+2019-02-26T14:26:31  <Bosmon> cindyli - no, all it has it that you can detect that it reads the common term
+2019-02-26T14:26:41  <Bosmon> It doesn't actually declare that it supports the setting with a schema - https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L6047
+2019-02-26T14:27:01  <Bosmon> Mysteriously the schema itself is attached to the configure-registry handler
+2019-02-26T14:27:11  <Bosmon> https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L6107
+2019-02-26T14:27:45  <Bosmon> So what I propose we do is i) move both of these supportedSettings into the same handler, just for consistency
+2019-02-26T14:28:03  <cindyli> i see. the transformer change doesn't look into "supportedSettings" block but only looking into "capabilitiesTransformations" block
+2019-02-26T14:28:23  <Bosmon> and ii) add a top-level "capabilities" entry to each one of these handlers indicating that each one must act if the user has either one of highContrastTheme or highContrast/enabled
+2019-02-26T14:28:46  <Bosmon> I guess there was always going to emerge to be a good reason for "capabilities", good old Kasparnet
+2019-02-26T14:28:53  <Bosmon> Actually I havent' seen Kasparnet around for a good long time ...
+2019-02-26T14:29:14  *** cherylhjli <cherylhjli!~Adium@205.211.168.105> has joined #fluid-work
+2019-02-26T14:35:42  <cindyli> Bosmon: with ii), do you mean the transform should always check "capabilities" instead of "capabilitiesTransformations" to find out supported settings?
+2019-02-26T14:36:17  <cindyli> if so, all GPII-3653 change should be wiped out
+2019-02-26T14:36:41  <Bosmon> cindyli - I assumed they already check capabilities
+2019-02-26T14:36:44  <Bosmon> Since that is what the block is for
+2019-02-26T14:37:23  <cindyli> Bosmon: the current "capabilities" is at the solution level, not settingsHandlers level. https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L6334
+2019-02-26T14:37:27  <Bosmon> The whole idea was always for the set of supported settings to be i) capabilities, IN ADDITION ii) any paths which could be inferred from capabilitiesTransformations
+2019-02-26T14:37:31  <Bosmon> cindyli - aha!
+2019-02-26T14:37:42  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-work
+2019-02-26T14:38:04  <Bosmon> cindyli - but I assume since GPII-3653 capabilities is now totally ignored?
+2019-02-26T14:38:09  <Bosmon> Or is it used at the matchMaker level?
+2019-02-26T14:38:30  <cindyli> ya, the code search shows "capabilities" is used at match maker
+2019-02-26T14:38:33  <Bosmon> ok
+2019-02-26T14:38:50  <Bosmon> cindyli - but I assume that capabilitiesTransformations is also used by the matchmaker?
+2019-02-26T14:39:52  <cindyli> no, not from the search, capabilitiesTransformations is only used by the transformer
+2019-02-26T14:40:16  <Bosmon> cindyli - and the transformer only runs after the matchMaker has made a choice?
+2019-02-26T14:40:23  <cindyli> nah, sorry i was wrong
+2019-02-26T14:40:30  <Bosmon> cindyli - I see that we have many handler-level "capabilities" in the registry - is this wrong?
+2019-02-26T14:40:31  <Bosmon> https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L6234
+2019-02-26T14:40:32  <cindyli> it's in matchmaker too
+2019-02-26T14:40:51  <cindyli> ah ha
+2019-02-26T14:41:11  <Bosmon> This "language" entry looks like it was written by someone with a similar idea to mine : P
+2019-02-26T14:41:38  <Bosmon> Although in this case all these entries are actually unnecessary
+2019-02-26T14:41:43  <Bosmon> Since they can be inferred from the transformation
+2019-02-26T14:42:35  <Bosmon> Here is another unnecessary, but handler-level, "capabilities" block: https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L7960
+2019-02-26T14:43:00  <cindyli> i don't see settinghandler level of "capabilities" is used in transformer
+2019-02-26T14:43:16  <Bosmon> cindyli - well that's very interesting
+2019-02-26T14:43:28  <Bosmon> And this will all feed in highly relevantly to the-t-in-rtf 's upcoming SR schema work
+2019-02-26T14:43:43  <Bosmon> It's just as well we started to understand now which of these entries might be relevant and what they might do
+2019-02-26T14:44:02  <Bosmon> But I think inevitably we have to move both capabilities and capabilitiesTransformations to the individual handlers
+2019-02-26T14:44:02  <cindyli> matchmaker does use "capabilities" but i cannot tell it's solution level or settings handler level without reading the code in detail
+2019-02-26T14:45:24  <Bosmon> cindyli - ok, well let's issue a really quick fix for now, and add stuff to the handler dispatcher to read settings handler level "capabilities" and then add these to high contrast
+2019-02-26T14:45:39  <Bosmon> Since we need to get this working v. soon - then we can circle back and fix the registry as a whole
+2019-02-26T14:46:26  <cindyli> ok
+2019-02-26T14:46:32  *** clown <clown!clown@nat/ocadu/x-gyhzfgitybdorkmb> has joined #fluid-work
+2019-02-26T14:46:41  <cindyli> in action...
+2019-02-26T14:46:53  <cindyli> reopen GPII-3653
+2019-02-26T14:47:00  <cindyli> ing...
+2019-02-26T14:47:06  <Bosmon> cindyli - you are amazing :)
+2019-02-26T14:47:38  <cindyli> as i always said - as always ;)
+2019-02-26T14:59:49  <colinclark> hahaha, cindyli
+2019-02-26T14:59:51  <colinclark> own it :)
+2019-02-26T15:00:27  <cindyli> :)
+2019-02-26T15:06:05  <cindyli> Bosmon: i think i will hold off on updating "supportedSettings" for each settings handler in highContrast because i noticed there's a match of setting names in this block with ones in "capabilitiesTransformations" block. see https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L6047 and line 6057
+2019-02-26T15:07:24  <cindyli> "supportedSettings" change is unnecessary for the fix anyway. it might be better to think it thoroughly when fixing the registry as a whole
+2019-02-26T15:07:43  <Bosmon> cindyli - yes, I don't think we need to do anything to supportedSettings
+2019-02-26T15:07:59  <Bosmon> Primarily those just communicate the schemas up to the PSP channel anyway, right?
+2019-02-26T15:11:53  <cindyli> Bosmon: PSP channel does, and the transformer also perform an initial filtering based on it - https://github.com/GPII/universal/blob/master/gpii/node_modules/transformer/src/js/Transformer.js#L98
+2019-02-26T15:13:27  <Bosmon> cindyli - yes, I see - but this looks like a very late filtering
+2019-02-26T15:13:52  <cindyli> but seems it does require a match of setting names in different blocks
+2019-02-26T15:18:13  <Bosmon> cindyli - agreed to leave these alone for now and just find a minimum path to get the acceptance tests running again that's consistent with the direction we want to go in
+2019-02-26T15:18:48  <cindyli> ok
+2019-02-26T15:30:03  *** michelled <michelled!~Adium@205.211.168.105> has joined #fluid-work
+2019-02-26T15:37:10  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-02-26T15:58:52  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-02-26T15:58:54  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-02-26T16:00:18  *** clown <clown!clown@nat/ocadu/x-gyhzfgitybdorkmb> has quit IRC (Quit: Leaving.)
+2019-02-26T16:03:01  *** clown <clown!~clown@205.211.168.102> has joined #fluid-work
+2019-02-26T16:21:25  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-02-26T16:34:36  <cindyli> jhernandez: what is the-t-in-rtf's branch for this commit - https://github.com/GPII/windows/pull/245/files#diff-b9cfc7f2cdf78a7f4b91a753d10865a2R20?
+2019-02-26T16:35:06  <cindyli> need to merge it to test my branch
+2019-02-26T16:35:44  <cindyli> Bosmon: do you know ^
+2019-02-26T16:36:07  *** clown <clown!~clown@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-02-26T16:36:41  <cindyli> nvm, found it - https://github.com/the-t-in-rtf/universal/tree/GPII-3741
+2019-02-26T16:36:50  *** clown <clown!clown@nat/ocadu/x-ltfdlpnjpxovlvjt> has joined #fluid-work
+2019-02-26T16:50:06  <jhernandez> cindyli: sorry, I wasn't paying attention to irc
+2019-02-26T16:51:40  <jhernandez> yes, my windows branch uses the-t-in-rtf's pr for GPII-3741
+2019-02-26T16:51:56  <cindyli> thanks, jhernandez
+2019-02-26T16:56:31  *** colinclark <colinclark!colinclark@nat/ocadu/x-rtvopnsrzohxxvom> has joined #fluid-work
+2019-02-26T17:05:39  *** michelled <michelled!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-02-26T17:09:50  *** michelled <michelled!~Adium@205.211.168.105> has joined #fluid-work
+2019-02-26T17:30:47  *** michelled <michelled!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-02-26T17:39:01  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-dxmkohyepnekzgpr> has joined #fluid-work
+2019-02-26T18:01:34  *** sepidehshahi_ <sepidehshahi_!~sepidehsh@205.211.168.104> has joined #fluid-work
+2019-02-26T18:03:11  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-dxmkohyepnekzgpr> has quit IRC (Ping timeout: 255 seconds)
+2019-02-26T18:03:11  *** sepidehshahi_ is now known as sepidehshahi
+2019-02-26T18:18:21  <cindyli> the-t-in-rtf: when is the overlap tomorrow?
+2019-02-26T18:18:41  <the-t-in-rtf> fair question, depends when you like to work
+2019-02-26T18:18:48  <the-t-in-rtf> I was assuming 9:00 your time?
+2019-02-26T18:19:01  <the-t-in-rtf> let me quickly check my schedule
+2019-02-26T18:19:34  <the-t-in-rtf> looks like 9:00-10:00 your time is best, and we probably don't need an hour
+2019-02-26T18:19:40  <the-t-in-rtf> 9:30-10:00 your time?
+2019-02-26T18:19:47  <cindyli> totally fine. thanks, the-t-in-rtf
+2019-02-26T18:20:08  <the-t-in-rtf> @bosmon, if you're available, could make it easier to confirm we're on track with the follow-up pull
+2019-02-26T18:20:13  <the-t-in-rtf> and I promise to keep it brief
+2019-02-26T18:20:17  <the-t-in-rtf> no guitar ballads
+2019-02-26T18:20:31  <colinclark> bummer
+2019-02-26T18:20:34  <colinclark> more guitar ballads
+2019-02-26T18:20:48  <colinclark> guitar ballads++
+2019-02-26T18:20:51  <the-t-in-rtf> Oh, it's a bait and switch, I'm just more into the Launchpad Arcade for meetings now.
+2019-02-26T18:21:39  <Bosmon> I'll be there
+2019-02-26T18:23:34  <the-t-in-rtf> OK, sending an invite
+2019-02-26T18:24:46  <cindyli> jhernandez, stegru: do you have an idea of this list of files for "com.microsoft.windows.cursors" - https://pastebin.com/ZGzibbNy
+2019-02-26T18:25:09  <cindyli> win32.json5 has a different set of files - https://pastebin.com/fRm4txgy
+2019-02-26T18:26:11  <cindyli> i'm puzzled why running acceptance test on windows gives the former list of files
+2019-02-26T18:33:08  <stegru> I don't know why they're different, cindyli
+2019-02-26T18:33:16  <stegru> does it matter?
+2019-02-26T18:33:51  <cindyli> running acceptance test on windows fails with this difference
+2019-02-26T18:34:42  <jhernandez> cindyli: that's with os_win7
+2019-02-26T18:34:43  <jhernandez> right?
+2019-02-26T18:34:45  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-02-26T18:34:48  <the-t-in-rtf> Sometimes we use canned snippets from the SR in our tests, I was just seeing if I could find it, but couldn't.
+2019-02-26T18:34:52  <cindyli> yes
+2019-02-26T18:34:52  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-02-26T18:35:46  <jhernandez> the second pastebin has the settings that os_win7 has for windows.cursors
+2019-02-26T18:35:56  <cindyli> exactly
+2019-02-26T18:36:20  <jhernandez> https://github.com/GPII/universal/blob/master/tests/data/preferences/os_win7.json5#L52-L66
+2019-02-26T18:37:07  <jhernandez> and the tests are failing for you because the test expect the files from the first pastebin?
+2019-02-26T18:37:27  <jhernandez> or the other way round?
+2019-02-26T18:37:46  <cindyli> no the test expects files from the latter pastie, which is the os_win7 preferences to be applied.
+2019-02-26T18:38:35  <cindyli> it seems the former list is the original ones retrieved from windows system
+2019-02-26T18:39:03  <jhernandez> yup
+2019-02-26T18:39:07  <cindyli> the test failure might be related to a few of "test case listener not responded" errors such as
+2019-02-26T18:39:08  <cindyli> Test case listener has not responded after 5000ms - at sequence pos 18 of 29 sequence element {
+2019-02-26T18:39:08  <cindyli>     "event": "{testCaseHolder}.events.onCheckConfigurationComplete",
+2019-02-26T18:39:44  *** michelled <michelled!Adium@nat/ocadu/x-pkkystidqcwxngtd> has joined #fluid-work
+2019-02-26T18:39:45  <cindyli> at least my fix with GPII-3653 will help to pass the current failure, although we will hit this one as the next
+2019-02-26T18:39:47  *** michelled <michelled!Adium@nat/ocadu/x-pkkystidqcwxngtd> has quit IRC (Client Quit)
+2019-02-26T18:40:16  <jhernandez> I guess that that's a built-in thing coming from integration testing framework
+2019-02-26T18:40:19  <jhernandez> ?
+2019-02-26T18:40:30  <cindyli> yes
+2019-02-26T18:41:06  <jhernandez> maybe the set payload didn't get its way through the settings handler?
+2019-02-26T18:41:12  <cindyli> it doesn't seem correct to hit "test case listener not responded" errors on windows
+2019-02-26T18:41:51  <jhernandez> unless the failure is expected
+2019-02-26T18:42:12  <jhernandez> and I don't think we have such thing
+2019-02-26T18:45:35  <cindyli> the files in the first pastie might be windows default files because they were reported by this line - https://github.com/GPII/windows/blob/master/gpii/node_modules/registrySettingsHandler/src/RegistrySettingsHandler.js#L707
+2019-02-26T18:46:38  *** michelled <michelled!Adium@nat/ocadu/x-nmuxqexjjjsbimjv> has joined #fluid-work
+2019-02-26T18:51:01  <jhernandez> yes, whatever is active in the system (I assume the defaults)
+2019-02-26T18:53:08  <cindyli> ya
+2019-02-26T18:57:52  *** clown <clown!clown@nat/ocadu/x-ltfdlpnjpxovlvjt> has quit IRC (Quit: Leaving.)
+2019-02-26T18:58:45  *** michelled <michelled!Adium@nat/ocadu/x-nmuxqexjjjsbimjv> has quit IRC (Quit: Leaving.)
+2019-02-26T18:58:58  *** clown <clown!~clown@205.211.168.102> has joined #fluid-work
+2019-02-26T19:02:02  *** michelled <michelled!~Adium@205.211.168.105> has joined #fluid-work
+2019-02-26T19:05:35  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-02-26T19:05:59  *** colinclark_ <colinclark_!~colinclar@205.211.168.103> has joined #fluid-work
+2019-02-26T19:07:07  *** colinclark <colinclark!colinclark@nat/ocadu/x-rtvopnsrzohxxvom> has quit IRC (Ping timeout: 246 seconds)
+2019-02-26T19:07:07  *** colinclark_ is now known as colinclark
+2019-02-26T19:07:39  <cindyli> Bosmon: the pull request for GPII-3653 is ready for review - https://github.com/GPII/universal/pull/746
+2019-02-26T19:09:43  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-02-26T19:20:05  *** cindyli1 <cindyli1!~Adium@198.52.177.167> has joined #fluid-work
+2019-02-26T19:21:02  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Ping timeout: 255 seconds)
+2019-02-26T19:50:32  *** cindyli1 <cindyli1!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-02-26T20:01:13  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-02-26T20:38:34  *** colinclark <colinclark!~colinclar@205.211.168.103> has quit IRC (Quit: colinclark)
+2019-02-26T20:38:51  *** colinclark <colinclark!~colinclar@205.211.168.103> has joined #fluid-work
+2019-02-26T20:40:41  *** clown <clown!~clown@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-02-26T20:48:18  *** michelled <michelled!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-02-26T20:52:53  *** michelled <michelled!Adium@nat/ocadu/x-qhxxztjbudzdlcqq> has joined #fluid-work
+2019-02-26T20:55:37  *** clown <clown!clown@nat/ocadu/x-whwzvpymgcqcwkch> has joined #fluid-work
+2019-02-26T21:01:35  <Bosmon> Amazing, cindyli - checking it out now
+2019-02-26T21:03:03  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has quit IRC (Quit: sepidehshahi)
+2019-02-26T21:08:15  *** michelled1 <michelled1!~Adium@205.211.168.105> has joined #fluid-work
+2019-02-26T21:09:12  *** michelled <michelled!Adium@nat/ocadu/x-qhxxztjbudzdlcqq> has quit IRC (Ping timeout: 245 seconds)
+2019-02-26T21:38:00  *** Danail_Dido <Danail_Dido!~Karadalie@109.120.246.31> has quit IRC (Ping timeout: 250 seconds)
+2019-02-26T21:49:08  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-02-26T22:08:47  *** cherylhjli <cherylhjli!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-02-26T22:09:59  *** clown <clown!clown@nat/ocadu/x-whwzvpymgcqcwkch> has quit IRC (Quit: Leaving.)
+2019-02-26T22:12:07  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-02-26T22:14:05  *** michelled1 <michelled1!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-02-26T22:35:31  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-02-26T22:35:32  *** danayo_ is now known as danayo

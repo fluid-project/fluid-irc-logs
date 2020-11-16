@@ -1,0 +1,135 @@
+2019-06-18T00:54:33  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e03:a00:fd0c:a91:2530:7bcc> has joined #fluid-work
+2019-06-18T00:58:57  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e03:a00:fd0c:a91:2530:7bcc> has quit IRC (Ping timeout: 258 seconds)
+2019-06-18T01:45:17  <sgithens> the-t-in-rtf: I did actually add the option for doing bulk updates.  Should have another spike of it ready to review sometime Wednesday ish
+2019-06-18T02:17:22  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-06-18T02:44:56  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-06-18T02:45:25  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-06-18T03:56:20  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-06-18T06:17:29  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-jxcrcfypbtkeuokz> has quit IRC (Quit: Connection closed for inactivity)
+2019-06-18T06:28:45  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-06-18T06:44:25  *** Danail_Dido <Danail_Dido!~Karadalie@109.120.246.31> has joined #fluid-work
+2019-06-18T07:15:57  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has joined #fluid-work
+2019-06-18T07:18:12  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has quit IRC (Client Quit)
+2019-06-18T08:16:53  <the-t-in-rtf> sounds good, @sgithens.
+2019-06-18T08:17:05  <the-t-in-rtf> @Bosmon, I am encountering a weird behaviour here: https://github.com/GPII/gpii-json-schema/blob/master/src/js/common/schemaValidatedComponent.js#L62
+2019-06-18T08:17:15  <the-t-in-rtf> whatever I add as a second argument becomes a literal zero.
+2019-06-18T08:17:30  <the-t-in-rtf> I wanted to add the global validator there
+2019-06-18T08:18:01  <the-t-in-rtf> I thought at first it was the wrong part of the lifecycle, but whether I put {that} or {gpii.schema.validator} as the second argument, it ends up being a literal zero
+2019-06-18T08:18:11  <the-t-in-rtf> I will test a few things and make a gist for you to try shortly
+2019-06-18T08:23:28  <Bosmon> the-t-in-rtf - workflows are not invokers
+2019-06-18T08:23:41  <Bosmon> The framework can't afford any indirection here, it is a highly performance critical corner
+2019-06-18T08:25:11  <Bosmon> You get funcName and that's it
+2019-06-18T08:29:54  <the-t-in-rtf> and that apparently?
+2019-06-18T08:29:59  <the-t-in-rtf> I guess that is hard coded
+2019-06-18T08:30:13  <the-t-in-rtf> what's crazy is that whatever I put in args, "{that}" is the only thing passed
+2019-06-18T08:30:19  <the-t-in-rtf> or maybe not crazy, just unexpected
+2019-06-18T08:34:16  <the-t-in-rtf> so, this means that schema-validated components will have their own little uncached setup and that each instance of the component won't benefit from the caching
+2019-06-18T08:34:35  <the-t-in-rtf> it's fine, it just means we should avoid using schema-validated components per request
+2019-06-18T08:35:19  <the-t-in-rtf> or anything similar
+2019-06-18T08:37:12  *** Danail_Dido <Danail_Dido!~Karadalie@109.120.246.31> has quit IRC (Quit: Leaving)
+2019-06-18T08:40:39  <the-t-in-rtf> I'll add a little note there about the args being for illustration purposes only.
+2019-06-18T08:40:56  <the-t-in-rtf> mainly as an aid to my flimsy memory
+2019-06-18T08:41:12  <the-t-in-rtf> anyway, thanks, I have what I need.
+2019-06-18T08:41:48  <Bosmon> the-t-in-rtf - best just not to write them at all, lest it encourage others to believe they are resolved .....
+2019-06-18T08:57:27  <the-t-in-rtf> the initial args block made it past the review, but yes, it only confused me later on
+2019-06-18T08:57:35  <the-t-in-rtf> if we purge it now only one person is confused
+2019-06-18T09:00:38  <the-t-in-rtf> and with luck even I'll forget the misinformation
+2019-06-18T09:32:22  <the-t-in-rtf> amazingly I managed to rewrite the middleware without any goofs on the first pass
+2019-06-18T09:32:37  <the-t-in-rtf> just tidying up the browser tests then I'll have something for you to look at, @Bosmon
+2019-06-18T09:33:11  <the-t-in-rtf> direct usage of the validation functions will change significantly, but as far as universal is concerned, all of the replacements are "drop in" as requested
+2019-06-18T09:33:48  <the-t-in-rtf> since only I am directly using the validation functions, we can probably do a dot 1 release for this.
+2019-06-18T09:49:38  <the-t-in-rtf> just the docs left, I'll put it in for you to review while you're still likely to have your morning tea to spit out in outrage
+2019-06-18T10:01:21  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e03:a00:b9ac:9842:2852:a156> has joined #fluid-work
+2019-06-18T10:01:41  <the-t-in-rtf> https://github.com/GPII/gpii-json-schema/pull/16
+2019-06-18T10:41:07  <Bosmon> the-t-in-rtf - if we do want to go back to hashing someday, it looks like this one might be the most promising - https://github.com/tjwebb/fnv-plus/blob/master/index.js#L1060
+2019-06-18T10:41:20  <Bosmon> It's only 30 lines of code and generates a 128-bit hash space
+2019-06-18T10:41:40  <Bosmon> Which puts all collisions firmly into the "meteor hitting your house" territory
+2019-06-18T10:42:53  <the-t-in-rtf> we're not going back, the pull already has hashing
+2019-06-18T10:43:02  <the-t-in-rtf> but I can improve the hashing function, certainly
+2019-06-18T10:43:05  <Bosmon> the-t-in-rtf - my review comment recommended that it be removed
+2019-06-18T10:43:13  <the-t-in-rtf> ah
+2019-06-18T10:43:16  <the-t-in-rtf> sorry, working on the docs
+2019-06-18T10:44:30  <Bosmon> Simplest for now if "the hash function" is simply JSON.stringify
+2019-06-18T10:50:56  <the-t-in-rtf> uh, or rather our version
+2019-06-18T10:51:03  <the-t-in-rtf> the one that preserves the order
+2019-06-18T10:51:05  <Bosmon> Yes, that one
+2019-06-18T10:52:13  <the-t-in-rtf> OK, let me finish proofreading the docs and I'll look at the feedback.
+2019-06-18T11:22:53  <the-t-in-rtf> OK, done.
+2019-06-18T11:23:31  <the-t-in-rtf> The test failure was a timing issue with the VM, the stringify function took an average of .5ms when the cutoff was .4ms
+2019-06-18T11:23:38  <the-t-in-rtf> I increased the cutoff to 1ms
+2019-06-18T11:43:39  <the-t-in-rtf> It's already past the tests on the latest build, just waiting for cleanup.
+2019-06-18T11:43:40  <the-t-in-rtf> ah, there it is.
+2019-06-18T11:46:06  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-mxmrduxhyyfrlwlr> has joined #fluid-work
+2019-06-18T12:33:11  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-06-18T12:43:09  *** cherylhjli <cherylhjli!~Adium@142.118.172.60> has joined #fluid-work
+2019-06-18T12:57:28  *** jhung <jhung!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-06-18T13:01:55  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-06-18T13:04:12  *** cindyli <cindyli!Adium@nat/ocadu/x-oasavxfojsmzyvxk> has joined #fluid-work
+2019-06-18T13:04:21  *** cindyli <cindyli!Adium@nat/ocadu/x-oasavxfojsmzyvxk> has quit IRC (Client Quit)
+2019-06-18T13:04:35  *** cindyli <cindyli!Adium@nat/ocadu/x-ogdcjpaexlimqsqg> has joined #fluid-work
+2019-06-18T13:16:33  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has joined #fluid-work
+2019-06-18T13:40:39  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has quit IRC (Quit: sepidehshahi)
+2019-06-18T13:42:11  *** cindyli <cindyli!Adium@nat/ocadu/x-ogdcjpaexlimqsqg> has quit IRC (Read error: Connection reset by peer)
+2019-06-18T13:53:15  *** avtar <avtar!~avtar@ip-24-50-161-55.user.start.ca> has joined #fluid-work
+2019-06-18T14:25:07  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-06-18T14:52:22  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-06-18T14:55:07  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-06-18T14:56:07  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-06-18T14:56:12  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Quit: sepidehshahi)
+2019-06-18T14:56:55  *** michelled <michelled!~Adium@135-23-84-147.cpe.pppoe.ca> has joined #fluid-work
+2019-06-18T15:02:26  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-06-18T15:05:49  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-06-18T15:26:00  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 258 seconds)
+2019-06-18T15:30:43  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-06-18T15:59:47  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-06-18T16:01:03  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-06-18T16:06:51  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-06-18T16:07:12  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-06-18T16:07:22  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Client Quit)
+2019-06-18T16:08:07  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-06-18T16:14:42  *** jhung is now known as jhung_away
+2019-06-18T16:18:22  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Quit: sepidehshahi)
+2019-06-18T16:19:55  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-06-18T16:21:31  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Client Quit)
+2019-06-18T16:24:46  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-06-18T16:38:00  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e03:a00:b9ac:9842:2852:a156> has quit IRC (Remote host closed the connection)
+2019-06-18T16:43:42  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-06-18T17:21:40  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-06-18T17:23:53  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-06-18T17:24:05  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-06-18T17:24:06  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Client Quit)
+2019-06-18T17:27:49  *** jhung_away is now known as jhung
+2019-06-18T17:37:11  *** cherylhjli <cherylhjli!~Adium@142.118.172.60> has quit IRC (Quit: Leaving.)
+2019-06-18T17:43:43  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-06-18T17:43:45  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-06-18T17:53:50  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-06-18T17:59:08  <jhung> fluid-everyone: design crit will be starting in about 3 minutes.
+2019-06-18T18:01:30  *** clown <clown!~clown@ckvlon1747w-lp130-02-64-229-47-214.dsl.bell.ca> has joined #fluid-work
+2019-06-18T18:02:02  *** cherylhjli <cherylhjli!~Adium@135-23-100-117.cpe.pppoe.ca> has joined #fluid-work
+2019-06-18T18:02:49  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-06-18T18:44:19  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-06-18T19:27:04  *** cherylhjli <cherylhjli!~Adium@135-23-100-117.cpe.pppoe.ca> has quit IRC (Quit: Leaving.)
+2019-06-18T19:29:16  *** cherylhjli <cherylhjli!~Adium@135-23-100-117.cpe.pppoe.ca> has joined #fluid-work
+2019-06-18T19:37:50  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-06-18T19:44:19  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-06-18T19:51:59  *** michelled <michelled!~Adium@135-23-84-147.cpe.pppoe.ca> has quit IRC (Quit: Leaving.)
+2019-06-18T19:52:19  *** michelled <michelled!~Adium@135-23-84-147.cpe.pppoe.ca> has joined #fluid-work
+2019-06-18T19:53:49  *** michelled <michelled!~Adium@135-23-84-147.cpe.pppoe.ca> has quit IRC (Client Quit)
+2019-06-18T20:13:23  *** cherylhjli <cherylhjli!~Adium@135-23-100-117.cpe.pppoe.ca> has quit IRC (Quit: Leaving.)
+2019-06-18T20:20:49  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-06-18T20:21:45  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-06-18T20:29:10  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-06-18T20:30:22  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-06-18T20:30:56  *** jhung <jhung!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving)
+2019-06-18T20:37:12  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-06-18T20:47:26  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-06-18T20:48:45  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-06-18T20:52:12  *** Bosmon <Bosmon!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has quit IRC (Ping timeout: 272 seconds)
+2019-06-18T20:52:36  *** avtar <avtar!~avtar@ip-24-50-161-55.user.start.ca> has quit IRC (Quit: Leaving.)
+2019-06-18T20:52:50  *** Bosmon <Bosmon!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has joined #fluid-work
+2019-06-18T21:06:09  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-06-18T21:06:13  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-06-18T21:09:38  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-06-18T21:57:07  *** clown <clown!~clown@ckvlon1747w-lp130-02-64-229-47-214.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2019-06-18T22:13:47  *** greatislander <greatislander!uid364905@gateway/web/irccloud.com/x-bwyovrcwswiftwyv> has quit IRC (Ping timeout: 248 seconds)
+2019-06-18T22:20:55  *** greatislander <greatislander!sid364905@gateway/web/irccloud.com/x-kncynhmmwmwaumcp> has joined #fluid-work

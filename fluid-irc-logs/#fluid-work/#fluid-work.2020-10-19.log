@@ -1,0 +1,89 @@
+2020-10-19T07:32:40  <batey96> Hi, please what is the status for "Refactor/automate infusion documentation"?Does the organisation still look forward for this work to be done or the interest on it is dropped?. thought of starting to work for it as of now
+2020-10-19T07:45:25  *** Rishab_ is now known as Rishab
+2020-10-19T12:51:21  <Uttara> cindyli: I have a co-design meeting at 10.30 today. I might be running a bit late for the tech meeting. Or is there any chance we can swap the Thursday's tech meeting with todays Design meeting? Let me know
+2020-10-19T12:55:11  <cindyli> thanks for letting me know, Uttara. as I rmb, Vera has classes on Thursday and cannot make to that meeting. Do you have Vera's skype ID? if you have, could you check with her about her availability on Thursday 11AM? thanks
+2020-10-19T12:57:05  <Uttara> cindyli: yes will ask her
+2020-10-19T12:57:16  <cindyli> btw, Uttara, what time will you be able to join today's meeting? maybe we can do technical discussions first. when you join we switch to design topics
+2020-10-19T13:10:07  <Uttara> cindyli: Vera can make it but David cannot. But she said its fine and we can move the design talks to Thursday.
+2020-10-19T13:10:34  <cindyli> great. thanks, Uttara. i will send an email about this switch
+2020-10-19T13:10:47  <Uttara> okay, cindyli: I will let Lisa know too
+2020-10-19T13:10:59  <cindyli> thanks, Uttara
+2020-10-19T14:45:41  <Justin_o> cindyli, clown: do either of you have any experience using sessions with kettle?
+2020-10-19T14:45:55  <Justin_o> Bosmon: ^
+2020-10-19T14:46:14  <clown> rings a bell, Justin_o
+2020-10-19T14:46:26  * clown searches memory
+2020-10-19T14:46:51  <cindyli> i don't think i have, Justin_o
+2020-10-19T14:48:48  <clown> I think I have seen code that uses sessions but only relied on that to be doing the correct thing
+2020-10-19T14:49:03  <clown> I don't think I have ever written code involving sessions
+2020-10-19T14:49:10  <clown> wrt to kettle
+2020-10-19T14:50:18  <Justin_o> clown: do you know where I might find an example. I only see stuff in the tests but it's a bit different setup. In particular I don't seem to be getting the cookie returned to my request.
+2020-10-19T14:51:31  <clown> Justin_o:  yes, somewhere in gpii.  let me check
+2020-10-19T14:53:47  <clown> Justin_o:  most recently, it had to do with the PSPChannel and BrowserChannel work:
+2020-10-19T14:53:47  <clown> https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/BrowserChannel.js#L27
+2020-10-19T14:54:39  <clown> there is a grade there called a "gpii.flowManager.sessionAware"
+2020-10-19T14:55:03  <Justin_o> greatislander: is this something we should be skipping in CLA we skip the Dependabot for example.https://github.com/fluid-project/fluidic-11ty/pull/38#issuecomment-712217843
+2020-10-19T14:55:32  <Justin_o> greatislander: if we're not expecting to get more commits from it, we can hold off till we do
+2020-10-19T14:55:48  <greatislander> Justin_o probably, assuming we move from Netlify to Azure Static sites which I think is the plan (cc: gtirloni)
+2020-10-19T14:57:07  <clown> Justin_o:  details of the session aware grade are here:  https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/SessionAware.js
+2020-10-19T14:57:07  <Justin_o> clown: thanks.. I think that one is using web socket connections.. not sure if the workflow is different between than and http requests.
+2020-10-19T14:57:39  <clown> good point Justin_o
+2020-10-19T14:59:35  <clown> still … that "session aware grade"  uses the session machinery in the lifecycle manager, and I think that's neutral with respect to web sockets vs http
+2020-10-19T14:59:38  <Justin_o> greatislander: thanks.. I guess we'll see what gtirloni says. it shouldn't be difficult to add if needed.
+2020-10-19T15:00:06  <Justin_o> clown: okay, I can poke around there thanks. Is the lifecycle manager also in universal or a different repo?
+2020-10-19T15:01:25  <clown> Justin_o:  this might be a good starting point: https://github.com/GPII/universal/blob/master/gpii/node_modules/lifecycleManager/src/LifecycleManagerSession.js#L40
+2020-10-19T15:02:02  <Justin_o> clown: thanks, I'll take a look at that
+2020-10-19T15:02:12  <clown> Justin_o:  hope it helps.
+2020-10-19T15:02:59  <Justin_o> clown: I hope so too :) but it looks like it might also help with some other things I might need to do later.. so useful at any rate
+2020-10-19T15:03:14  <clown> yay!
+2020-10-19T15:03:55  <Bosmon> Justin_o - yes, there are sessions tests
+2020-10-19T15:04:22  <Bosmon> It's nothing to do with flowManager.sessionAware which operates peculiar kinds of flow-managed specific tests
+2020-10-19T15:04:49  <Justin_o> Bosmon: I'm trying to setup sessions for the Storytelling tool in preparation for the user accounts.
+2020-10-19T15:05:09  <Justin_o> I've added the "kettle.server.sessionAware" grade to the "kettle.server" component
+2020-10-19T15:05:41  <Bosmon> Justin_o - sure
+2020-10-19T15:05:42  <Bosmon> https://github.com/fluid-project/kettle/blob/master/tests/shared/SessionTestDefs.js#L72
+2020-10-19T15:05:43  <Justin_o> currently I have a sample end point to play with and added the following grades to my request handler "kettle.request.http", "kettle.request.sessionAware"
+2020-10-19T15:06:20  <Justin_o> when I use cURL to GET the end point, it returns what I've fired in the request. However, I don't get the "kettle.sid" returned
+2020-10-19T15:06:26  <Justin_o> well no cookie at all from what I can tell
+2020-10-19T15:06:36  <Bosmon> Justin_o - did you set up a "cookieJar"?
+2020-10-19T15:06:39  <Justin_o> even when specifying a file for cURL to save the cookie to
+2020-10-19T15:07:17  <Justin_o> Bosmon: I have not.. I'm going to take a quick look to see if there is one already there..
+2020-10-19T15:07:27  <Justin_o> so a cookieJar is another required grade?
+2020-10-19T15:07:48  <Justin_o> searching for cookieJar didn't return anything in storytelling
+2020-10-19T15:08:57  <Justin_o> Bosmon: I only see cookieJar in relation to tests in kettle. Is it also needed for the server itself? I was assuming that kettleSession middleware would handle the cookie itself through express-session
+2020-10-19T15:09:24  <Bosmon> Justin_o - I think you're right
+2020-10-19T15:11:21  <Bosmon> Justin_o - so adding kettle.server.sessionAware to the server, and kettle.request.sessionAware to the request seems to be all that's required
+2020-10-19T15:12:47  <Justin_o> Bosmon: I also assume that the defaults supplied by those grades is sufficient... although I'll want to update the secret at some point.. but I take it that things should still work right now.
+2020-10-19T15:13:24  <Justin_o> Bosmon:  right now my handler is very basic it just does this.
+2020-10-19T15:13:32  <Justin_o> https://www.irccloud.com/pastebin/zs3DtHyK/
+2020-10-19T15:13:57  <Justin_o> When I make the cURL request this is the output in the terminal.
+2020-10-19T15:14:12  <Justin_o> https://www.irccloud.com/pastebin/vIpT2mZW/
+2020-10-19T15:17:01  <Bosmon> Justin_o - so here is the handler which, in this case, takes the session token from the URL and then sticks it in the session - https://github.com/fluid-project/kettle/blob/master/tests/shared/SessionTestDefs.js#L102
+2020-10-19T15:17:40  <Bosmon> Justin_o - so, do you do anything to actually touch the session?
+2020-10-19T15:17:57  <Bosmon> As I recall about the way these things work, unless you actually store any session state, the libraries often don't bother to allocate a session
+2020-10-19T15:19:24  <Justin_o> Bosmon: ah no.. okay, let me try to add something to the session object
+2020-10-19T15:21:22  <gtirloni> Justin_o greatislander: We haven't heard from MSFT yet so it's hard to say when we/if can migrate. It doesn't hurt to play with the app service within the free tier limits but I'd say things up a bit up in the air for now
+2020-10-19T15:21:58  <greatislander> thanks gtirloni
+2020-10-19T15:22:14  <Justin_o> gtirloni: thanks for the update.. I won't make any changes to cla-assistant for now
+2020-10-19T15:28:39  <gmoss> Justin_o: the Storytelling Tool does have a page-level cookieStore component set up, in case that's the same as the cookieJar that Bosmon is talking about
+2020-10-19T15:29:22  <Justin_o> gmoss: thanks... I need something on the server side in this case though.
+2020-10-19T15:29:27  <gmoss> gotcha
+2020-10-19T15:30:08  <gmoss> Justin_o: is the DB not appropraite?
+2020-10-19T15:30:53  <Justin_o> gmoss: will need that too :) the request needs to send the session id to the client so that it can send it back in subsequent requests and we can follow it around
+2020-10-19T15:32:43  <Justin_o> Bosmon: okay, adding something to the session did the trick. thanks for the help.
+2020-10-19T15:48:12  <greatislander> hi gtirloni, I have an ILDH website question for you— let me know when you are up for a chat this afternoon
+2020-10-19T15:48:29  <greatislander> (hosting configuration-related)
+2020-10-19T15:57:34  <gtirloni> greatislander: hi! any time
+2020-10-19T15:57:48  <greatislander> general zoom room?
+2020-10-19T15:57:53  <gtirloni> ok, joining
+2020-10-19T15:58:23  <greatislander> see you there
+2020-10-19T16:00:38  <gtirloni> is that the one we use for the daily?
+2020-10-19T16:00:48  <greatislander> oh sorry no it's the other one…
+2020-10-19T16:00:54  <greatislander> I'll go to the daily room :)
+2020-10-19T16:01:23  <gtirloni> sorry, i got a bit confused
+2020-10-19T16:01:23  <greatislander> gtirloni ^
+2020-10-19T16:01:28  <gtirloni> ok one sec
+2020-10-19T17:04:10  <Nikhil> Hello EveryOne ,I am 2nd year btech student  from india .I am interested in contributing to The FLOE project. Someone please guide me where should I start my contribution
+2020-10-19T17:07:00  <Nikhil> I am interested in web related projects so kindly guide me.
+2020-10-19T21:25:27  <batey96>  Hi, please what is the status for "Refactor/automate infusion documentation"?Does the organisation still look forward for this work to be done or the interest on it is dropped?. thought of starting to work for it as of now
+2020-10-19T22:20:42  <gmoss> Hi batey96! We had a volunteer who did a bit of work on it over the summer, but the work still needs to be completed. We'd be delighted to have your help on it, if you're willing, though we'd have to talk about how to plan the work and look at exactly what still needs to be done
+2020-10-19T22:22:25  <gmoss> batey96: here's the PR where the work was being done: https://github.com/fluid-project/infusion-docs/pull/187

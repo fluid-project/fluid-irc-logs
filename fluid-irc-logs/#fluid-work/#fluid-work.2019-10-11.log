@@ -1,0 +1,132 @@
+2019-10-11T02:00:45  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-10-11T02:08:38  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-10-11T02:49:20  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-10-11T02:50:01  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Client Quit)
+2019-10-11T04:16:03  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-10-11T04:29:44  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-10-11T04:30:44  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-10-11T04:34:41  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Client Quit)
+2019-10-11T05:27:38  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:c4e8:11d9:3e96:fd35> has joined #fluid-work
+2019-10-11T05:47:30  *** bryan__ <bryan__!sid334924@gateway/web/irccloud.com/x-fyzqlrgkfaxacfno> has joined #fluid-work
+2019-10-11T05:54:36  *** bryan_ <bryan_!sid334924@gateway/web/irccloud.com/x-vjfzpiamnlevbhfw> has quit IRC (Read error: Connection reset by peer)
+2019-10-11T05:54:40  *** bryan__ is now known as bryan_
+2019-10-11T07:18:49  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-10-11T08:08:58  <javjarfer[m]> Hi there! Good morning Bosmon !
+2019-10-11T08:21:53  <Bosmon> Morning javjarfer[m]!
+2019-10-11T08:23:04  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 265 seconds)
+2019-10-11T08:35:44  <javjarfer[m]> Bosmon: Hi! I wanted to talk you some changes I need to make to the XMLSettingsHandler because we need to support array-like settings
+2019-10-11T08:36:57  <javjarfer[m]> I have been taking a look to it, and my best guess, is that, those settings needs to be in separate configure blocks, with special options
+2019-10-11T08:37:08  <javjarfer[m]> how do you feel about that?
+2019-10-11T08:37:51  <javjarfer[m]> the problem basically is that you need to generate the XML entries for the array, not just "accessing" the values, so you need to have the XML tags to be used placed somewhere
+2019-10-11T08:46:55  <Bosmon> javjarfer[m] - can you give an example of such a setting?
+2019-10-11T08:47:04  <Bosmon> For what solution will this be implemented?
+2019-10-11T08:48:01  <javjarfer[m]> Bosmon:  "ApplicationSettings.Speech.ScreenReadingItems.$t" from Read&Write is a setting that accepts a XML array as input, specifying the elements that the screen reader should read
+2019-10-11T08:48:59  <Bosmon> javjarfer[m] - can't this be done by just including a schema structure in the settingsHandler "options"?
+2019-10-11T08:49:14  * javjarfer[m] sent a long message:  < https://matrix.org/_matrix/media/r0/download/matrix.org/xqZKgZSEFGUckxJrdDnAppJy >
+2019-10-11T08:52:13  <javjarfer[m]> Bosmon:  but that would mean that in the options block I need to specify data for a specific setting
+2019-10-11T08:52:23  <javjarfer[m]> or for all the array settings in the solution
+2019-10-11T08:53:23  <javjarfer[m]> the schema structure could be something like { "arraySettingId": setting, "xmlTags": [tags] }
+2019-10-11T08:57:02  <Bosmon> javjarfer[m] - it looks to me that this really needs to be done via transformations
+2019-10-11T08:57:06  <Bosmon> That is what the system was built fot
+2019-10-11T08:57:06  <Bosmon> for
+2019-10-11T09:00:12  <javjarfer[m]> Bosmon: so, I would need to expose the setting through a transform that receives an array of strings, and produce an XML array?
+2019-10-11T09:00:50  <Bosmon> javjarfer[m] - well, at least an XML array in the JSON-equivalent form accepted by the settingsHandler, yes
+2019-10-11T09:01:08  <Bosmon> We already have transforms a bit like this, but this one would be a touch more elaborate
+2019-10-11T09:01:49  <Bosmon> In fact many of these were generated precisely to deal with such recalcitrant XML data: https://docs.fluidproject.org/infusion/development/ModelTransformationAPI.html#fluidtransformsarraytosetmembership
+2019-10-11T09:01:57  <Bosmon> We puzzled over why KASPARNETT ever wrote this one : P
+2019-10-11T09:02:33  <Bosmon> Ah, actually this one is even more XML-y: https://docs.fluidproject.org/infusion/development/ModelTransformationAPI.html#creates-an-object-indexed-with-keys-from-array-entries-fluidtransformsindexarraybykey
+2019-10-11T09:02:57  * javjarfer[m] sent a long message:  < https://matrix.org/_matrix/media/r0/download/matrix.org/eyDxllAIlXzWOjHqLHJbRtDb >
+2019-10-11T09:03:18  <Bosmon> Your strange client : P
+2019-10-11T09:05:54  <javjarfer[m]> Bosmon: those transforms look really useful, I need to take a look to their impls, they will be a good guide for sure for this new one
+2019-10-11T09:06:18  <Bosmon> javjarfer[m] - cool
+2019-10-11T09:06:33  <Bosmon> You can channel the ghost of long-departed KASPARDNIETT
+2019-10-11T09:06:42  <Bosmon> KASPARD the FRIENDLY GHOST
+2019-10-11T09:10:39  <javjarfer[m]> Bosmon: xddd I would make a spiritual visit to him through Skype; which feels pretty appropriate, because Skype user experience is like going back to the past
+2019-10-11T09:55:13  <Bosmon> javjarfer[m] - not now they have updated it to an electron app : P
+2019-10-11T10:03:34  <javjarfer[m]> Bosmon: A new mask!!
+2019-10-11T10:04:31  <Bosmon> I only wish the user experience WAS like going back to the past
+2019-10-11T10:05:07  <Bosmon> I kept managing to use Skype 6 for years by means of creating a read-only zero byte file named "SkypeSetup.exe"
+2019-10-11T10:05:11  <javjarfer[m]> Also, sorry Bosmon I have submitted another pull regarding the Windows 10 magnifier, since a setting was recently added to the requirements for it, but it was down in my priorities and I didn't tackle it until today
+2019-10-11T10:05:22  <Bosmon> But they have eventually banned this client from the network
+2019-10-11T10:05:35  <Bosmon> Thanks, javjarfer[m]
+2019-10-11T10:05:38  <javjarfer[m]> I kept managing to use Skype 6 for years by means of creating a read-only zero byte file named "SkypeSetup.exe"
+2019-10-11T10:05:39  <javjarfer[m]> HAHA really?
+2019-10-11T10:05:50  <Bosmon> javjarfer[m] - this was a fully effective technique!
+2019-10-11T10:06:47  <javjarfer[m]> I believe you! You know you are doing it right when your users fill a binary with zeroes to stop you from updating your software
+2019-10-11T10:11:32  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea3:2a00:37f6:b4f8:45d4:8631> has joined #fluid-work
+2019-10-11T11:15:06  <javjarfer[m]> Bosmon: pull updated with your catch
+2019-10-11T11:46:14  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-qaehpomwpdnmfrln> has joined #fluid-work
+2019-10-11T11:46:54  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has joined #fluid-work
+2019-10-11T12:07:59  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-10-11T12:17:42  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-10-11T12:29:31  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-10-11T12:45:23  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-10-11T12:58:54  *** danielcho <danielcho!~Adium@205.211.168.105> has joined #fluid-work
+2019-10-11T13:41:55  *** cherylhjli <cherylhjli!~Adium@205.211.168.103> has joined #fluid-work
+2019-10-11T13:43:41  *** danielcho <danielcho!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-10-11T13:47:34  *** clown <clown!~clown@ckvlon1747w-140-01-65-94-141-240.dsl.bell.ca> has joined #fluid-work
+2019-10-11T13:53:19  *** clown <clown!~clown@ckvlon1747w-140-01-65-94-141-240.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2019-10-11T13:55:58  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-10-11T13:57:09  *** clown <clown!~clown@ckvlon1747w-140-01-65-94-141-240.dsl.bell.ca> has joined #fluid-work
+2019-10-11T14:16:07  <stegru> has anyone ever tried request.get() behind a corporate MITM https proxy (and succeeded, without disabling errors)?
+2019-10-11T15:01:17  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 246 seconds)
+2019-10-11T15:06:04  <cindyli> the-t-in-rtf: do you figure out how to save JSON structure into firestore datastore mode in JSON format?
+2019-10-11T15:07:20  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has quit IRC (Quit: Leaving.)
+2019-10-11T15:24:08  <the-t-in-rtf> No, I had that on my list for early next week.
+2019-10-11T15:39:47  <cindyli> ok. cool
+2019-10-11T16:06:03  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-10-11T16:16:02  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:c4e8:11d9:3e96:fd35> has quit IRC (Quit: Leaving.)
+2019-10-11T16:23:09  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-10-11T16:24:00  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Client Quit)
+2019-10-11T16:26:39  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:59dc:d89a:acdc:e167> has joined #fluid-work
+2019-10-11T16:31:40  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-10-11T16:35:07  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-sinkmwtkwotbhtch> has quit IRC (Quit: Connection closed for inactivity)
+2019-10-11T16:35:27  *** cherylhjli <cherylhjli!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-10-11T16:36:46  *** cherylhjli <cherylhjli!~Adium@205.211.168.103> has joined #fluid-work
+2019-10-11T16:45:10  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has joined #fluid-work
+2019-10-11T16:55:25  <the-t-in-rtf> thanks, @cindyli, I'll look at it first thing on Monday.
+2019-10-11T16:55:55  <cindyli> thanks, the-t-in-rtf
+2019-10-11T17:03:45  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-10-11T17:43:10  <gmoss> fluid-everyone: has anyone ever encountered an issue using the :empty pseudo-class in Microsoft Edge? I'm getting a repainting bug, it's rather curious and I'm trying to find out more.
+2019-10-11T17:47:20  *** jhung_2 <jhung_2!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-10-11T17:47:33  *** jhung_2 <jhung_2!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Client Quit)
+2019-10-11T17:48:00  *** jhung_2 <jhung_2!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-10-11T17:50:51  *** cherylhjli <cherylhjli!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-10-11T17:51:52  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-10-11T17:52:00  *** cherylhjli <cherylhjli!~Adium@205.211.168.103> has joined #fluid-work
+2019-10-11T17:56:42  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-10-11T18:09:09  *** danayo_ <danayo_!~danayo@204.239.251.32> has joined #fluid-work
+2019-10-11T18:12:00  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-rgtdyqcabqidphyu> has joined #fluid-work
+2019-10-11T18:18:19  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Quit: Leaving)
+2019-10-11T18:20:18  *** danayo_ <danayo_!~danayo@204.239.251.32> has quit IRC (Quit: danayo_)
+2019-10-11T18:39:31  *** jhung_2 <jhung_2!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving)
+2019-10-11T18:42:13  *** clown <clown!~clown@ckvlon1747w-140-01-65-94-141-240.dsl.bell.ca> has quit IRC (Ping timeout: 265 seconds)
+2019-10-11T18:54:10  *** danielcho <danielcho!~Adium@205.211.168.105> has joined #fluid-work
+2019-10-11T18:59:02  *** danielcho <danielcho!~Adium@205.211.168.105> has quit IRC (Ping timeout: 276 seconds)
+2019-10-11T18:59:11  *** simonjb <simonjb!~simonjb@205.211.168.103> has joined #fluid-work
+2019-10-11T19:00:02  *** cherylhjli <cherylhjli!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-10-11T19:01:14  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-jwlenczlfqpsoamo> has joined #fluid-work
+2019-10-11T19:04:12  *** danielcho <danielcho!~Adium@205.211.168.105> has joined #fluid-work
+2019-10-11T19:52:18  *** clown <clown!~clown@ckvlon1747w-140-01-65-94-141-240.dsl.bell.ca> has joined #fluid-work
+2019-10-11T19:57:09  *** simonjb <simonjb!~simonjb@205.211.168.103> has quit IRC ()
+2019-10-11T20:26:28  *** colinclark <colinclark!~colinclar@24.114.73.169> has joined #fluid-work
+2019-10-11T20:27:02  <colinclark> hey danielcho, congrats again today on your great demo and the successful co-design session
+2019-10-11T20:27:12  <colinclark> Rob from Beverley’s note was so positive—you clearly made a good impact on them
+2019-10-11T20:28:19  <danielcho> @colinclark Thanks Colin, next time if I get to participate another co-design session, I will make sure to prepare well for the demo :)
+2019-10-11T20:28:39  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving)
+2019-10-11T20:31:19  <colinclark> you were great, danielcho—demos of really new technologies are always tough
+2019-10-11T20:34:44  <danielcho> colinclark: for sure! thanks to you and everyone who went, it was a great opportunity :)
+2019-10-11T20:34:53  <colinclark> it was really cool
+2019-10-11T20:35:12  <colinclark> i sent a note to Susie about it and she said she’d love to join us sometime there, which would be great
+2019-10-11T20:36:26  <danielcho> Simon, Avtar and I added to the co-design doc to note ideas each group came up with during the co-design session
+2019-10-11T20:36:43  <danielcho> that's good to hear too
+2019-10-11T20:39:37  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-10-11T20:41:25  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:59dc:d89a:acdc:e167> has quit IRC (Quit: Leaving.)
+2019-10-11T20:54:09  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has quit IRC (Quit: Leaving.)
+2019-10-11T20:56:43  *** colinclark <colinclark!~colinclar@24.114.73.169> has quit IRC (Quit: colinclark)
+2019-10-11T21:04:46  *** danielcho <danielcho!~Adium@205.211.168.105> has left #fluid-work
+2019-10-11T21:34:38  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea3:2a00:37f6:b4f8:45d4:8631> has quit IRC (Quit: jhernandez)
+2019-10-11T21:39:15  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-jwlenczlfqpsoamo> has quit IRC (Quit: Leaving.)
+2019-10-11T21:39:15  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea3:2a00:37f6:b4f8:45d4:8631> has joined #fluid-work
+2019-10-11T21:55:54  *** clown <clown!~clown@ckvlon1747w-140-01-65-94-141-240.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2019-10-11T22:57:49  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea3:2a00:37f6:b4f8:45d4:8631> has quit IRC (Quit: jhernandez)

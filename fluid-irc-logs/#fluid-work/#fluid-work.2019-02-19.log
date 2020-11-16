@@ -1,0 +1,177 @@
+2019-02-19T08:59:49  <javjarfer[m]> Good morning Bosmon, the-t-in-rtf ! I was again working in the ZoomText pull, I remember we delayed several flags settings implementation because we didn't have a way to represent them yet. Should I continue without adding proper schema or transforms to that settings?
+2019-02-19T09:03:00  <javjarfer[m]> I thought  of the two possible approach being, represent the flag as an array of settings or use transforms to map the unique flag setting into multiple settings
+2019-02-19T09:19:44  <Bosmon> javjarfer[m] - I think we probably need a transform
+2019-02-19T10:00:03  <stegru> jhernandez - the secret installer works really well
+2019-02-19T10:01:50  <javjarfer[m]> Bosmon: yes, I think so, so, one possible approach could be, create settings that will receive individual values of that flags, and then having a transform that folds all that individual settings values into the real setting
+2019-02-19T10:02:48  <javjarfer[m]> that will be easy to map for anyone using the settings, because he would use the settings as any other normal ones, and leave us room to hide the real flag setting, with the attribute the-t-in-rtf and I were talking about yesterday
+2019-02-19T10:03:11  <javjarfer[m]> will follow with that and paste you a link of the result in the pull
+2019-02-19T10:18:51  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:4cd9:80b0:efb8:e624> has quit IRC (Read error: Connection timed out)
+2019-02-19T10:20:05  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:a5ca:9a6c:3f6f:313> has joined #fluid-work
+2019-02-19T10:29:13  <the-t-in-rtf> Sorry, JJ, had my nose to a different grindstone and just saw your message.
+2019-02-19T10:29:29  <javjarfer[m]> Unique issue with this approach is that, I can't be explicit in the schema definition of the real setting holding the flag values, at least in a JSON compatible way, because I will need to list all the possible outcomes
+2019-02-19T10:30:09  <the-t-in-rtf> yes, this is something we have discussed, representing the settings in a way that is more JSON-friendly and then transforming to how the application actually stores it
+2019-02-19T10:30:09  <javjarfer[m]> the-t-in-rtf: np, discussion still going, haven't done anything yet
+2019-02-19T10:30:16  <javjarfer[m]> was reading this https://github.com/json-schema-org/json-schema-spec/issues/518
+2019-02-19T10:30:27  <the-t-in-rtf> ooo
+2019-02-19T10:30:30  <the-t-in-rtf> neat!
+2019-02-19T10:31:43  <the-t-in-rtf> It's definitely interesting, but I wouldn't hold your breath, draft 8 is a long way out as far as I know
+2019-02-19T10:32:40  <the-t-in-rtf> and they're only talking about tackling that afterwards
+2019-02-19T10:33:29  <the-t-in-rtf> we will definitely need some way to represent bitwise values in a range of places
+2019-02-19T10:33:36  <the-t-in-rtf> JAWS is also lousy (in all senses) with those
+2019-02-19T10:34:10  <the-t-in-rtf> maybe we can schedule an overlap meeting with Steve Githens, @Bosmon and myself in the next week or so?
+2019-02-19T10:34:23  <javjarfer[m]> yes... it looks like there is no "standard" accepted answer, so we will need to figure it out one while they still deciding what to do
+2019-02-19T10:34:24  <the-t-in-rtf> to talk it through, make more notes, and discuss what to do when
+2019-02-19T10:34:35  <the-t-in-rtf> I think a super long enum is a good approach for now
+2019-02-19T10:34:47  <javjarfer[m]> yes, that would be great
+2019-02-19T10:34:48  <the-t-in-rtf> orr
+2019-02-19T10:34:59  <the-t-in-rtf> what I've done, which is to only support a subset of what's possible
+2019-02-19T10:35:11  <the-t-in-rtf> like "all on" or "all off" for those settings
+2019-02-19T10:35:21  <the-t-in-rtf> or just to say that we can't support those settings now
+2019-02-19T10:35:48  <javjarfer[m]> yes, that is one possibility but with a long "enum" comes a long "enumLabels" and I don't know how to specify the labels of that enum
+2019-02-19T10:35:49  <the-t-in-rtf> so, what's the bitmasked setting you're trying to onboard?
+2019-02-19T10:35:51  <Bosmon> Well, it's faulty that the place we write the schema is at the settings handler's end
+2019-02-19T10:36:13  <Bosmon> We had a long-standing work item to reform the SR so that we schematised all settings in the way we currently do for "common term"
+2019-02-19T10:36:15  <Bosmon> terms
+2019-02-19T10:36:26  <javjarfer[m]> and array of the settings that are triggered? and string with the names of the settings that are triggered split with a delimiter?
+2019-02-19T10:36:47  <the-t-in-rtf> I guess my question is, what's the setting and can we live without it for now?
+2019-02-19T10:36:52  <javjarfer[m]> <freenode_Bos "Well, it's faulty that the place"> yes, this is a good issue to talk about
+2019-02-19T10:37:12  <the-t-in-rtf> I  mean, I just flat out told Gregg that we couldn't support the JAWS bitmasked settings without more engineering effort
+2019-02-19T10:37:15  <the-t-in-rtf> and he accepted that
+2019-02-19T10:37:25  <the-t-in-rtf> we will definitely need to address the larger issue eventually
+2019-02-19T10:37:40  <the-t-in-rtf> the question is always whether this has to be addressed right now
+2019-02-19T10:38:01  <the-t-in-rtf> @Bosmon, do you know of any showstoppers that require us to tackle this now?
+2019-02-19T10:38:28  <javjarfer[m]> Right now, the settings from ZoomText that require this, are part of the Navigation settings
+2019-02-19T10:38:31  <Bosmon> the-t-in-rtf - no, none
+2019-02-19T10:38:43  <Bosmon> We can certainly just leave on the floor any settings we can't ontologise well
+2019-02-19T10:38:46  <javjarfer[m]> Tracking and Alignment, with I think are pretty common for AT
+2019-02-19T10:38:52  <the-t-in-rtf> yes, that has  been my strategy
+2019-02-19T10:38:53  <Bosmon> It's not like these are being rolled out to any pilots imminently
+2019-02-19T10:40:14  <javjarfer[m]> Okay, then I will do that, for any flag related setting I will write it informally in the PR
+2019-02-19T10:40:26  <javjarfer[m]> do we have an issue for this? I could write one and link the PR with it
+2019-02-19T10:58:30  <jhernandez> sgithens: I assume you already figured it out, if not - 1) Yes, GPII_CLOUD_URL is the only thing you need to change 2) AppData/Roaming/gpii/
+2019-02-19T10:58:42  <jhernandez> stegru: morning
+2019-02-19T10:58:59  <stegru> hi
+2019-02-19T10:59:19  <jhernandez> does your windoes service like that file? is it fine with those permissions?
+2019-02-19T11:00:27  <stegru> yes - I haven't tested it with the service, but it runs as "root" so I'd imagine it would work
+2019-02-19T11:00:47  <jhernandez> if so, I'll add a minimal UI and create a repo with that
+2019-02-19T11:01:43  <stegru> ok.. I can read it from an admin command line
+2019-02-19T11:02:18  <Bosmon> javjarfer[m] - I've written up https://issues.gpii.net/browse/GPII-3734
+2019-02-19T11:15:03  <jhernandez> stegru: okay, just wanted to double check, because with my vagrant user (who is in the admin group) can't read the file
+2019-02-19T11:16:53  <stegru> jhernandez, I think that's the same is being in the sudoers group - if you start an admin command line (or run notepad as administrator), you should be able to read it
+2019-02-19T11:36:36  <jhernandez> yeah, that was my guess but ... you know, it's windows :P
+2019-02-19T11:36:41  <jhernandez> thanks
+2019-02-19T11:37:44  <javjarfer[m]> Bosmon: thanks for the writing, I will link that issue
+2019-02-19T11:38:23  <jhernandez> btw, stegru, can you give https://github.com/GPII/windows/pull/244 a quick laser eye review? I can merge if you are happy with it
+2019-02-19T11:45:34  <stegru> looks ok jhernandez
+2019-02-19T11:50:02  <jhernandez> great, thanks!!!
+2019-02-19T12:03:38  <jhernandez> stegru: Bosmon here's the SICRET BLOWA https://github.com/javihernandez/morphic-credentials-installer
+2019-02-19T12:03:50  <Bosmon> Crikey!
+2019-02-19T12:04:12  <Bosmon> Interesting
+2019-02-19T12:04:16  <Bosmon> So you built it right into the .msi
+2019-02-19T12:04:31  <jhernandez> let me know if that fits our expectations or needs more love
+2019-02-19T12:04:48  <jhernandez> Bosmon: yup, that was the plan, right?
+2019-02-19T12:05:14  <stegru> copies a file, sets the permissions.. I don't believe anything else is needed
+2019-02-19T12:05:28  <Bosmon> jhernandez - right, but I guess .msi is powerful enough to do everything in itself without even needing a separate script
+2019-02-19T12:05:32  <Bosmon> Yup, this looks absolutely great
+2019-02-19T12:05:41  <Bosmon> Very good job
+2019-02-19T12:09:29  <jhernandez> yeah, I'm setting the permissions here https://github.com/javihernandez/morphic-credentials-installer/blob/master/MorphicCredentials.wxs#L72-L73
+2019-02-19T12:10:24  <stegru> jhernandez, the permission might be able to be tightened further to just allow local services - I'll confirm that later. for now, this is good enough
+2019-02-19T12:10:38  <jhernandez> I wasn't confident enough since there are people setting permissions with custom scripts, but I guess it's for very particular use cases
+2019-02-19T12:10:53  <jhernandez> stegru: yes, I thought about that
+2019-02-19T12:11:30  <jhernandez> let me know after you figure it out
+2019-02-19T12:24:36  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-02-19T12:30:20  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Quit: sepidehshahi)
+2019-02-19T13:12:54  *** alanharnum <alanharnum!~alanharnu@CPEa84e3f430953-CMa84e3f430950.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-02-19T13:14:54  *** Danail_Dido <Danail_Dido!~Karadalie@109.120.246.31> has quit IRC (Ping timeout: 246 seconds)
+2019-02-19T13:32:57  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-02-19T13:58:37  *** cindyli <cindyli!Adium@nat/ocadu/x-tggomufdgandyuhw> has joined #fluid-work
+2019-02-19T14:09:08  <Bosmon> Cheers jhernandez - can you attach your repo as a pull to this one? https://github.com/GPII/morphic-credentials-installer
+2019-02-19T14:15:58  <Bosmon> Hi there cindyli - thanks for the super-quick and great implementation for GPII-3726
+2019-02-19T14:16:01  <Bosmon> What are you looking at now?
+2019-02-19T14:16:55  <cindyli> will start on GPII-3721 soon, now looking at tyler's comments on https://issues.gpii.net/browse/GPII-3729 and thinking what suggestions i should give, Bosmon
+2019-02-19T14:19:35  <Bosmon> cindyli - I guess we need to try this out locally and produce a few heap snapshots
+2019-02-19T14:20:44  <Bosmon> It is relatively easy in the Chrome inspector these days, which I tried when I was investigating https://issues.gpii.net/browse/GPII-3630
+2019-02-19T14:21:31  <Bosmon> It's peculiar that there seems to be some kind of memory leak when not serving requests, the only route I can think for that is the contextManager's action every 20 seconds, and that doesn't even create any Infusion components ....
+2019-02-19T14:23:29  <Bosmon> It's unclear that this is really a "leak" though since this may well be memory that will be reclaimed when there is a GC run
+2019-02-19T14:24:40  <cindyli> that's possible too. this chart https://issues.gpii.net/secure/attachment/21702/flowmanager-memory-restart.png shows a drop on the memory usage which is likely from GC kick-in if tyler didn't do anything manually
+2019-02-19T14:25:10  <cindyli> i'm replying tyler on that JIRA, will include you in
+2019-02-19T14:25:15  <Bosmon> Thanks
+2019-02-19T14:25:34  <Bosmon> The figures involved are so small it's not clear that there really is a memory leak at all
+2019-02-19T14:25:53  <Bosmon> Although "preferences-memory-health" is a bit suspicious in that the leak appears to accumulate over days
+2019-02-19T14:26:01  <Bosmon> We should certainly perform some local experiments at some point
+2019-02-19T14:26:21  <cindyli> agree
+2019-02-19T14:27:04  <cindyli> Bosmon: the local experiments won't be able to last for days
+2019-02-19T14:28:08  <Bosmon> cindyli - if there is a real memory leak, it will be visible in the heap monitor after a single request : P
+2019-02-19T14:28:19  <cindyli> ok
+2019-02-19T14:28:35  <Bosmon> But just to make it show up better we can bombard it with a few hundred requests to the "health" endpoint
+2019-02-19T14:34:36  *** sepidehshahi <sepidehshahi!~sepidehsh@208.113.6.178> has joined #fluid-work
+2019-02-19T14:36:02  *** clown <clown!clown@nat/ocadu/x-gxkwjxqybhnlreok> has joined #fluid-work
+2019-02-19T14:40:44  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:a5ca:9a6c:3f6f:313> has quit IRC (Read error: Connection timed out)
+2019-02-19T14:41:41  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:844e:25bd:4bf3:16af> has joined #fluid-work
+2019-02-19T15:03:28  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-kxnwwemeyaybmfaf> has joined #fluid-work
+2019-02-19T15:12:54  *** colinclark <colinclark!~colinclar@192.0.159.124> has joined #fluid-work
+2019-02-19T15:17:57  *** sepidehshahi <sepidehshahi!~sepidehsh@208.113.6.178> has quit IRC (Quit: sepidehshahi)
+2019-02-19T15:22:15  *** michelled <michelled!Adium@nat/ocadu/x-hrakobmbkovealdt> has joined #fluid-work
+2019-02-19T15:22:43  *** cindyli <cindyli!Adium@nat/ocadu/x-tggomufdgandyuhw> has quit IRC (Quit: Leaving.)
+2019-02-19T15:22:49  <jhernandez> Bosmon: sure
+2019-02-19T15:25:23  *** cindyli <cindyli!~Adium@205.211.168.105> has joined #fluid-work
+2019-02-19T15:33:05  <clown> cindyli:  re the rtf account, see:  https://github.com/mrtyler/gpii-infra/blob/gpii-3590-docs/USER-TRAINING.md#gcp-setting-up-the-users-account
+2019-02-19T15:35:17  <cindyli> thanks.
+2019-02-19T15:39:07  <clown> wlcm
+2019-02-19T15:40:11  *** alanharnum <alanharnum!~alanharnu@CPEa84e3f430953-CMa84e3f430950.cpe.net.cable.rogers.com> has quit IRC ()
+2019-02-19T15:48:35  *** clown <clown!clown@nat/ocadu/x-gxkwjxqybhnlreok> has quit IRC (Quit: Leaving.)
+2019-02-19T15:49:47  *** clown <clown!~clown@205.211.168.102> has joined #fluid-work
+2019-02-19T15:58:30  *** michelled1 <michelled1!~Adium@205.211.168.104> has joined #fluid-work
+2019-02-19T16:00:38  *** clown is now known as clown_mtg
+2019-02-19T16:00:47  *** michelled <michelled!Adium@nat/ocadu/x-hrakobmbkovealdt> has quit IRC (Ping timeout: 255 seconds)
+2019-02-19T16:01:04  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.103> has joined #fluid-work
+2019-02-19T16:01:50  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-02-19T16:02:09  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-kxnwwemeyaybmfaf> has quit IRC (Ping timeout: 268 seconds)
+2019-02-19T16:02:36  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.105> has joined #fluid-work
+2019-02-19T16:20:36  *** clown_mtg <clown_mtg!~clown@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-02-19T16:21:24  *** clown <clown!clown@nat/ocadu/x-tjdgmumtxbxjxsfl> has joined #fluid-work
+2019-02-19T16:24:44  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-kpgemmyjsdvtktqc> has joined #fluid-work
+2019-02-19T16:26:02  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-kpgemmyjsdvtktqc> has quit IRC (Client Quit)
+2019-02-19T16:28:12  *** jhung is now known as jhung_away
+2019-02-19T16:28:20  *** alanharnum <alanharnum!~alanharnu@205.211.168.101> has joined #fluid-work
+2019-02-19T16:59:41  *** clown is now known as clown_mtg
+2019-02-19T17:11:23  *** michelled1 <michelled1!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-02-19T17:12:43  *** alanharnum2 <alanharnum2!alanharnum@nat/ocadu/x-rjnpxdrdjononbms> has joined #fluid-work
+2019-02-19T17:13:21  *** alanharnum <alanharnum!~alanharnu@205.211.168.101> has quit IRC (Quit: Leaving)
+2019-02-19T17:13:56  *** alanharnum2 is now known as alanharnum
+2019-02-19T17:18:42  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-02-19T17:18:57  *** michelled <michelled!Adium@nat/ocadu/x-iyirfjczkmimozpt> has joined #fluid-work
+2019-02-19T17:37:48  <sgithens> jhernandez: Thanks javi, I forgot to chagne the https to http for my cluster, but did need the log dirs.
+2019-02-19T17:38:06  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-rjnpxdrdjononbms> has quit IRC (Remote host closed the connection)
+2019-02-19T17:38:34  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-zkckdmqdgxelmokj> has joined #fluid-work
+2019-02-19T17:53:26  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-02-19T17:59:26  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:844e:25bd:4bf3:16af> has quit IRC (Remote host closed the connection)
+2019-02-19T18:08:58  *** jhung_away is now known as jhung
+2019-02-19T18:12:00  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-zkckdmqdgxelmokj> has quit IRC (Remote host closed the connection)
+2019-02-19T18:12:09  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-gseqosdullgslfip> has joined #fluid-work
+2019-02-19T19:00:32  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-02-19T19:02:04  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-02-19T19:21:41  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-gseqosdullgslfip> has quit IRC ()
+2019-02-19T19:22:45  *** colinclark <colinclark!~colinclar@192.0.159.124> has quit IRC (Quit: colinclark)
+2019-02-19T19:23:06  *** colinclark <colinclark!~colinclar@192.0.159.124> has joined #fluid-work
+2019-02-19T19:24:54  *** colinclark <colinclark!~colinclar@192.0.159.124> has quit IRC (Client Quit)
+2019-02-19T19:25:13  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-work
+2019-02-19T20:09:00  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-02-19T20:09:29  *** colinclark <colinclark!~colinclar@192.0.159.124> has joined #fluid-work
+2019-02-19T20:19:04  *** michelled <michelled!Adium@nat/ocadu/x-iyirfjczkmimozpt> has quit IRC (Quit: Leaving.)
+2019-02-19T21:34:04  *** cindyli <cindyli!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-02-19T21:41:07  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-work
+2019-02-19T21:50:01  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-02-19T21:58:16  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.105> has quit IRC (Quit: sepidehshahi)
+2019-02-19T22:02:12  *** clown_mtg <clown_mtg!clown@nat/ocadu/x-tjdgmumtxbxjxsfl> has quit IRC (Quit: Leaving.)
+2019-02-19T22:23:56  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-02-19T22:30:43  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-02-19T22:32:25  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-02-19T22:37:12  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-02-19T22:37:12  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Client Quit)
+2019-02-19T22:46:24  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:6892:80ab:39e:5960> has joined #fluid-work
+2019-02-19T22:59:14  *** colinclark <colinclark!~colinclar@192.0.159.124> has quit IRC (Quit: colinclark)
+2019-02-19T23:28:23  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:6892:80ab:39e:5960> has quit IRC (Remote host closed the connection)
+2019-02-19T23:29:07  *** jhernandez <jhernandez!~jhernande@61.154-200-80.adsl-dyn.isp.belgacom.be> has joined #fluid-work
+2019-02-19T23:44:25  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has joined #fluid-work
+2019-02-19T23:44:27  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has quit IRC (Client Quit)

@@ -1,0 +1,303 @@
+2019-07-23T00:05:37  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-07-23T00:09:58  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Ping timeout: 246 seconds)
+2019-07-23T00:43:39  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-07-23T00:47:44  *** lliskovoi_ <lliskovoi_!uid367571@gateway/web/irccloud.com/x-dvoxcisqsqdtzhkm> has quit IRC (Quit: Connection closed for inactivity)
+2019-07-23T01:12:57  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Ping timeout: 245 seconds)
+2019-07-23T01:42:43  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-07-23T01:42:49  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Client Quit)
+2019-07-23T02:40:12  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-07-23T03:14:15  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-07-23T03:15:51  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-07-23T03:17:29  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Client Quit)
+2019-07-23T04:59:35  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-07-23T05:17:14  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 268 seconds)
+2019-07-23T06:52:19  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-07-23T09:00:17  <the-t-in-rtf> So, I'm trying to run the PSPChannel Tests, which are the last failing tests in my updated validation pull.
+2019-07-23T09:00:30  <the-t-in-rtf> And I get the same failures now in both my pull and master.
+2019-07-23T09:00:58  <the-t-in-rtf> Here's one example:
+2019-07-23T09:00:59  <the-t-in-rtf> 10:59:24.370:  jq: FAIL: Module "gpii.config.development.local.mock.windows tests" Test name "PSP Channel - Basic user login/logout and client connect/disconnect tests" - Message: Unexpected failure in test case (see following log for more details): Assertion failure - check console for more details: Cannot look up name gpii.test.integration.actionHandlersAware.mockActionsHandlers.gpii.windows.rm to a function with registered
+2019-07-23T09:00:59  <the-t-in-rtf> tMap - got defaults undefined
+2019-07-23T09:01:12  <the-t-in-rtf> It should be gpii.test.integration.actionHandlersAware.mockActionsHandlers.rm
+2019-07-23T09:02:32  <the-t-in-rtf> https://github.com/GPII/universal/blob/397338314b1637f5d252e354f1640a5bcc5a0781/gpii/node_modules/testing/src/Mocks.js#L589
+2019-07-23T09:03:09  *** Bosmon2 is now known as Bosmon
+2019-07-23T09:03:13  <the-t-in-rtf> or?
+2019-07-23T09:03:25  <the-t-in-rtf> Anyway, I could use help understanding the mocks wiring, @Bosmon or anyone else.
+2019-07-23T09:03:35  <Bosmon> the-t-in-rtf - looks like this will have been affected by some recent work by javjarfer[m]
+2019-07-23T09:03:58  <Bosmon> Could well just be the result of a bad merge?
+2019-07-23T09:04:08  <the-t-in-rtf> well, right now I'm down to a very thin veneer of changes
+2019-07-23T09:04:17  <the-t-in-rtf> I don't see anything in that area
+2019-07-23T09:04:38  <the-t-in-rtf> I have been going through diffs of master for a while now
+2019-07-23T09:04:42  <the-t-in-rtf> against master
+2019-07-23T09:04:57  <the-t-in-rtf> I don't see any changes to configs, the mocks wiring, the failing test file itself.
+2019-07-23T09:05:23  <Bosmon> I mean, the relevant mock is defined here: https://github.com/GPII/universal/blob/9d1f8cfb7b14435b77bc2d9a9b9b06c5fa5d2c07/gpii/node_modules/testing/src/Mocks.js#L644
+2019-07-23T09:05:45  <the-t-in-rtf> sure, but the namespace for the failing test lacks the "windows" bit
+2019-07-23T09:06:19  <Bosmon> OK, in theory there is a portable "rm" mock here: https://github.com/GPII/universal/blob/9d1f8cfb7b14435b77bc2d9a9b9b06c5fa5d2c07/gpii/node_modules/testing/src/Mocks.js#L590
+2019-07-23T09:06:43  <the-t-in-rtf> yes, but why is it looking for the other name?
+2019-07-23T09:06:55  <Bosmon> Well there are two different implementations
+2019-07-23T09:07:13  <the-t-in-rtf> anyway, just to repeat, this can't be a bad merge
+2019-07-23T09:07:15  <the-t-in-rtf> MASTER fails for me
+2019-07-23T09:07:24  <Bosmon> Oh right
+2019-07-23T09:07:33  <Bosmon> What, right now, with no changes?
+2019-07-23T09:07:36  <the-t-in-rtf> yup
+2019-07-23T09:07:47  <Bosmon> OK, let me try locally
+2019-07-23T09:07:50  <the-t-in-rtf> node gpii/node_modules/flowManager/test/PSPChannelTests.js
+2019-07-23T09:09:36  <the-t-in-rtf> I am spinning up a vagrant vm to confirm whether it passes there
+2019-07-23T09:09:45  <the-t-in-rtf> I suspect not if I remember correctly from investigating late yesterday
+2019-07-23T09:09:49  <Bosmon> I can confirm the isolated tests fails
+2019-07-23T09:09:55  <the-t-in-rtf> whew, good
+2019-07-23T09:10:05  <the-t-in-rtf> not a weird thing with unices
+2019-07-23T09:10:21  <Bosmon> Setting a full test run now to see if that is the same
+2019-07-23T09:11:21  <Bosmon> None of the merges in the last week seem like an obvious candidate ...
+2019-07-23T09:11:26  <Bosmon> javjarfer[m], could you have a go yourself?
+2019-07-23T09:12:54  <Bosmon> the-t-in-rtf - I wonder if it is just that the mock registry doesn't get properly populated for that test, but is somehow dirty resulting from a previous test?
+2019-07-23T09:13:39  <the-t-in-rtf> npm test fails for me
+2019-07-23T09:13:44  <the-t-in-rtf> in the order that the tests are in in master
+2019-07-23T09:13:46  <Bosmon> Very very odd
+2019-07-23T09:16:29  <javjarfer[m]> Bosmon: here I am, reading this
+2019-07-23T09:18:09  <javjarfer[m]> This is really weird, so we have failing unit tests for universal locally?
+2019-07-23T09:18:10  <javjarfer[m]> but not in CI?
+2019-07-23T09:18:56  <javjarfer[m]> is this the case the-t-in-rtf ?
+2019-07-23T09:19:11  <the-t-in-rtf> Well, they fail in my pull in CI
+2019-07-23T09:19:13  <Bosmon> javjarfer[m] - I suspect they even fail in CI
+2019-07-23T09:19:14  <the-t-in-rtf> plainly
+2019-07-23T09:19:22  <Bosmon> The question is, how did this stuff get into master, and when : P
+2019-07-23T09:19:25  <the-t-in-rtf> yes
+2019-07-23T09:19:42  <the-t-in-rtf> I was thinking perhaps during the fog of war period where there were errors in provisioning VMs
+2019-07-23T09:21:34  <javjarfer[m]> Bosmon: but haven't we had clean runs in CI since them?
+2019-07-23T09:21:55  <the-t-in-rtf> let me dig up a recent success, just a minute
+2019-07-23T09:23:55  <the-t-in-rtf> https://ci.gpii.net/job/universal-tests/1869/
+2019-07-23T09:24:00  <the-t-in-rtf> last success was five days ago
+2019-07-23T09:24:24  <the-t-in-rtf> there's the pull: https://github.com/GPII/universal/pull/805
+2019-07-23T09:25:01  <Bosmon> the-t-in-rtf - but there has been no significant merge since then
+2019-07-23T09:25:19  <the-t-in-rtf> right, some rug may have been pulled out from under us
+2019-07-23T09:25:20  <Bosmon> This is the only change since that pull: https://github.com/GPII/universal/commit/47cf91779d038b165314c0fb84af1c522840ec22
+2019-07-23T09:25:42  <the-t-in-rtf> new VM, new unpinned dep from another project.
+2019-07-23T09:25:42  <Bosmon> HOW could a rug have been pulled out from under us ...
+2019-07-23T09:25:59  <the-t-in-rtf> that kind of rug
+2019-07-23T09:26:22  <Bosmon> It would be astonishing, but certainly something has happened
+2019-07-23T09:28:26  <the-t-in-rtf> I'm gonna kick off an other build of this pull: https://github.com/GPII/universal/pull/790
+2019-07-23T09:28:40  <the-t-in-rtf> it passed before Cindy's was evaluated, but hasn't been checked in six days.
+2019-07-23T09:28:49  <the-t-in-rtf> if it fails with no changes, that's another data point.
+2019-07-23T09:29:24  <the-t-in-rtf> did you cut a dev release of universal after Cindy's merge?
+2019-07-23T09:29:31  <the-t-in-rtf> we could look at the package-lock.json in the tar
+2019-07-23T09:29:39  <the-t-in-rtf> and compare with what we have now
+2019-07-23T09:30:21  <the-t-in-rtf> doesn't seem like it
+2019-07-23T09:30:27  <the-t-in-rtf> last dev release is from July 3rd.
+2019-07-23T09:31:11  <the-t-in-rtf> I guess even that would tell use somethiing
+2019-07-23T09:31:15  <the-t-in-rtf> s/use/us/
+2019-07-23T09:31:24  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 272 seconds)
+2019-07-23T09:34:46  <the-t-in-rtf> hmm, guess we don't save those in the tar files either.
+2019-07-23T09:35:42  <the-t-in-rtf> there are no dependency updates between the July 3rd release and current master.
+2019-07-23T09:41:43  <the-t-in-rtf> The fedora28 VM hasn't changed in ages
+2019-07-23T09:42:31  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e5a:900:d9e0:6594:11c4:1e82> has joined #fluid-work
+2019-07-23T09:44:26  <javjarfer[m]> the-t-in-rtf: I'm doing a clean update of everything to test in local too
+2019-07-23T09:45:06  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-07-23T09:55:37  <the-t-in-rtf> The tests in stegru's pull passed cI: https://ci.gpii.net/job/universal-tests/1879/
+2019-07-23T09:57:09  <the-t-in-rtf> I'm going to see what happens if I merge his work with master, whether the tests start failing and what changes
+2019-07-23T09:57:24  <the-t-in-rtf> sorry, merge upstream master with his work
+2019-07-23T09:57:55  <the-t-in-rtf> uuuugh.
+2019-07-23T09:58:02  <the-t-in-rtf> his branch fails on my machine.
+2019-07-23T09:58:11  <the-t-in-rtf> how the mess is it working in CI?
+2019-07-23T09:58:57  <the-t-in-rtf> the same psp channel tests fail even before I pulled in upstream master
+2019-07-23T09:59:29  <the-t-in-rtf> anyway, I'm going to take a break, any other ideas are greatly welcomed
+2019-07-23T10:06:20  <the-t-in-rtf> anyway, the fact that Steve's pull passes CI is just baffling, it can't be node or npm versions if mine fails and his doesn't.
+2019-07-23T10:06:44  <Bosmon> Perhaps we have some kind of semi-stable race condition in the mock registry
+2019-07-23T10:07:00  <Bosmon> Has anyone found a revision of master that actually works yet?
+2019-07-23T10:07:21  <Bosmon> Oh yes, and I have something very odd to report
+2019-07-23T10:07:28  <Bosmon> My complete run of all tests on current master actually passed
+2019-07-23T10:07:31  <Bosmon> Locally
+2019-07-23T10:07:44  <the-t-in-rtf> yes, I do think environment might be a factor, although it fails for me in vagrant as well
+2019-07-23T10:07:49  <the-t-in-rtf> what happens if you run in vagrant?
+2019-07-23T10:08:03  <the-t-in-rtf> I suspect you'll have the same failure, i.e. the tests pass with the windows mocks
+2019-07-23T10:08:14  <the-t-in-rtf> but not in fedora
+2019-07-23T10:11:21  <Bosmon> It's definitely "semi-stable" in some odd way, I just ran the isolated test 10 times and it failed each time
+2019-07-23T10:11:39  <Bosmon> At least this is the good way round, it would be insufferable if the test passed in isolation but failed in a full run
+2019-07-23T10:11:48  <the-t-in-rtf> yes
+2019-07-23T10:12:56  <jhernandez> which tests are failing when running isolated?
+2019-07-23T10:13:34  <Bosmon> jhernandez - node gpii/node_modules/flowManager/test/PSPChannelTests.js
+2019-07-23T10:13:37  <Bosmon> Fails for me every time
+2019-07-23T10:13:40  <Bosmon> And for the-t-in-rtf too
+2019-07-23T10:13:55  <Bosmon> And he can also sometimes get the failure in a full test run, but I can't so far
+2019-07-23T10:14:09  <jhernandez> ok
+2019-07-23T10:14:42  <jhernandez> running a full pass now - if they pass, will run those to see if I get the same
+2019-07-23T10:14:49  <jhernandez> just provisioned a fresh vm
+2019-07-23T10:19:57  <jhernandez> All tests concluded: 2501/2501
+2019-07-23T10:20:39  <Bosmon> jhernandez - yes, but they do!
+2019-07-23T10:20:48  <Bosmon> It's just that one of them fails by itself ....
+2019-07-23T10:25:09  <javjarfer[m]> Bosmon: oh great, then, it should be environmental true? so things needed are not loaded if the test is executed isolated
+2019-07-23T10:25:25  <Bosmon> javjarfer[m] - no, probably nothing so nice
+2019-07-23T10:25:34  <Bosmon> Given the-t-in-rtf can sometimes see it fail in the big run too
+2019-07-23T10:26:48  <jhernandez> hmmm
+2019-07-23T10:27:04  <javjarfer[m]> Bosmon: that's true
+2019-07-23T10:27:05  <javjarfer[m]> so... timing related issue?
+2019-07-23T10:27:50  <jhernandez> could it be that the recently added windows.rm mocks by javjarfer[m], that there is some config that is not loading them or using the right config/grade?
+2019-07-23T10:34:21  <jhernandez> ie, the PSP tests are not bringing in https://github.com/GPII/universal/pull/772/files#diff-69cd21adbc352c021c118e18b7ff3785R1798
+2019-07-23T10:53:45  <javjarfer[m]> jhernandez: yes, I can see that in the logs too, also, that was included to the high-contrast solution, which is exercised in those tests
+2019-07-23T10:54:54  <javjarfer[m]> I'm trying to compare to other tests that use the other mocking functions like "gpii.windows.updateLanguage", but I can't tell the difference aside that this tests appears to be launched with another context
+2019-07-23T10:55:51  <javjarfer[m]> because they are run through
+2019-07-23T10:55:52  <javjarfer[m]> "gpii.test.runCouchTestDefs"
+2019-07-23T10:56:17  <javjarfer[m]> maybe the error is related to that
+2019-07-23T11:17:42  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has joined #fluid-work
+2019-07-23T11:17:54  <the-t-in-rtf> 13:17:07.794:  jq: All tests concluded: 2606/2606 total passed in 2093318ms - PASS
+2019-07-23T11:18:01  <the-t-in-rtf> I have got to upgrade my laptop
+2019-07-23T11:18:16  <the-t-in-rtf> 35 minutes if it's hot in the house
+2019-07-23T11:21:53  <the-t-in-rtf> vs. 14 on CI.
+2019-07-23T11:24:33  <the-t-in-rtf> Anyway, that was just to confirm whether a full run passes on my machine with stegru's branch.
+2019-07-23T11:24:38  <the-t-in-rtf> it did (this time, perhaps)
+2019-07-23T11:24:59  <the-t-in-rtf> I am really open to ideas about what threads to pull on next.
+2019-07-23T11:29:58  <jhernandez> ok, no deviceReporter or actionHandler mocks are being populated when running the PSP tests
+2019-07-23T11:31:10  <jhernandez> which I think that it looks like we have several problems here
+2019-07-23T11:31:22  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-07-23T11:32:46  <the-t-in-rtf> Morning @cindyli
+2019-07-23T11:32:58  <the-t-in-rtf> We can get set up in a minute
+2019-07-23T11:33:05  <cindyli> ok
+2019-07-23T11:33:05  <the-t-in-rtf> @sgithens, are you joining?
+2019-07-23T11:33:14  <the-t-in-rtf> also, @Bosmon?
+2019-07-23T11:34:04  <the-t-in-rtf> @jhernandez, Cindy wanted to discuss this: https://issues.gpii.net/browse/GPII-4036
+2019-07-23T11:34:22  <the-t-in-rtf> Given that we're dealing with the PSP there as well, do you want to join us?
+2019-07-23T11:35:10  <jhernandez> sure, I can join if you want
+2019-07-23T11:37:56  <jhernandez> where are you meeting?
+2019-07-23T11:38:05  <javjarfer[m]> jhernandez: yes, that looks interesting
+2019-07-23T11:38:13  <javjarfer[m]> let me know if I can do something abou tit
+2019-07-23T11:38:33  <the-t-in-rtf> Skype, as soon as I hear signs of life from @Bosmon
+2019-07-23T11:38:37  <jhernandez> ok ok
+2019-07-23T11:38:40  <the-t-in-rtf> I can fire up the call shortly
+2019-07-23T11:39:14  <the-t-in-rtf> let's give it two more minutes, I think Cindy and I can review some side stuff while we wait
+2019-07-23T11:43:51  *** jhung <jhung!~jhung@205.211.168.104> has joined #fluid-work
+2019-07-23T11:49:49  <Bosmon> Hi
+2019-07-23T11:49:56  <Bosmon> I didn't see this meeting in my calendar
+2019-07-23T11:50:00  <Bosmon> I wonder where it came from ....
+2019-07-23T12:08:02  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-07-23T12:13:11  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has quit IRC (Quit: Leaving.)
+2019-07-23T12:51:24  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-07-23T13:02:29  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-07-23T13:18:22  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-work
+2019-07-23T13:20:59  *** avtar <avtar!~avtar@ip-45-3-7-238.user.start.ca> has joined #fluid-work
+2019-07-23T13:24:19  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-oyiohueletbfmnpk> has joined #fluid-work
+2019-07-23T13:30:27  *** clown <clown!clown@nat/ocadu/x-gpzonwmniqnfgwuk> has joined #fluid-work
+2019-07-23T13:40:29  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-sjoqbfdkskxhgmmw> has joined #fluid-work
+2019-07-23T14:00:38  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-07-23T14:02:41  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Client Quit)
+2019-07-23T14:18:02  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.103> has joined #fluid-work
+2019-07-23T14:20:20  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-sjoqbfdkskxhgmmw> has quit IRC (Ping timeout: 244 seconds)
+2019-07-23T14:20:50  *** jhung <jhung!~jhung@205.211.168.104> has quit IRC (Ping timeout: 248 seconds)
+2019-07-23T14:44:05  *** lliskovoi_ <lliskovoi_!uid367571@gateway/web/irccloud.com/x-ychexywxzjnvlegs> has joined #fluid-work
+2019-07-23T14:50:53  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-chvvivocwpsbbpta> has joined #fluid-work
+2019-07-23T15:00:27  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 245 seconds)
+2019-07-23T15:00:47  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-07-23T15:04:26  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-07-23T15:05:34  *** jhung <jhung!~jhung@205.211.168.104> has joined #fluid-work
+2019-07-23T15:06:55  <jhernandez> cindyli: do you want me to try fixing the PSP tests thing? the issue about the deviceReporter and actionHandlers mocks not being populated
+2019-07-23T15:07:00  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-work
+2019-07-23T15:07:16  <cindyli> jhernandez: what's that about?
+2019-07-23T15:07:33  <cindyli> is there a jira for it? do you already know how to fix it?
+2019-07-23T15:09:16  *** clown <clown!clown@nat/ocadu/x-gpzonwmniqnfgwuk> has quit IRC (Quit: Leaving.)
+2019-07-23T15:10:13  *** clown <clown!~clown@205.211.168.101> has joined #fluid-work
+2019-07-23T15:14:01  <jhernandez> what we talked earlier during the call with the-t-in-rtf and Bosmon
+2019-07-23T15:14:07  <jhernandez> about the failing PSP tests
+2019-07-23T15:14:20  <Bosmon> jhernandez - I'm just reworking this stuff now
+2019-07-23T15:14:25  <jhernandez> oh, okay okay
+2019-07-23T15:14:28  <jhernandez> Bosmon: good to know
+2019-07-23T15:14:32  <Bosmon> I think it is pretty clear that the mock device resporter stuff is completely hosed
+2019-07-23T15:14:52  <jhernandez> I wasn't sure if you were just going to rework the depopulate
+2019-07-23T15:15:00  <Bosmon> As far as I can understand the issue, we had two unrelated mock device reporters getting constructed, and it was just a race according to which one got its stuff registered
+2019-07-23T15:15:07  <Bosmon> No, I think it needs more reworking than that
+2019-07-23T15:15:30  <jhernandez> yes, and I guess that it also applies to the actionHandler reporter
+2019-07-23T15:15:35  <jhernandez> which basically works the same way
+2019-07-23T15:15:39  <jhernandez> ok ok
+2019-07-23T15:15:52  <Bosmon> jhernandez - well the actionHandler reporter has its own problems
+2019-07-23T15:16:03  <Bosmon> It is just massively overcomplicated and needs about half of it removed
+2019-07-23T15:16:51  <jhernandez> ok, even worse :(
+2019-07-23T15:19:57  <Justin_o> the-t-in-rtf: is there something wrong with the coverage reports in Infusion. I don't seem to be getting them any more.. I'm just seeing ones for fluid.js
+2019-07-23T15:51:20  <gmoss> Justin_o: if you have time this afternoon, can we get together to talk about a couple of issues?
+2019-07-23T15:52:29  <Justin_o> gmoss: sure, i should have time this afternoon.
+2019-07-23T15:52:36  <gmoss> Justin_o: great, thanks
+2019-07-23T16:14:17  *** clown <clown!~clown@205.211.168.101> has quit IRC (Quit: Leaving.)
+2019-07-23T16:14:36  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-07-23T16:19:04  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-07-23T16:21:26  *** michelled <michelled!Adium@nat/ocadu/x-ketxeobgefrjeszo> has joined #fluid-work
+2019-07-23T16:25:54  *** michelled <michelled!Adium@nat/ocadu/x-ketxeobgefrjeszo> has quit IRC (Client Quit)
+2019-07-23T16:37:58  *** colinclark <colinclark!colinclark@nat/ocadu/x-jkvuztacejbskiox> has joined #fluid-work
+2019-07-23T16:47:45  *** clown <clown!clown@nat/ocadu/x-uwiqlvklyxlauocd> has joined #fluid-work
+2019-07-23T16:56:00  <the-t-in-rtf> @Justin_o, not that I'm aware of, but there is a kind of jumping off point if you update nyc.js, where a key option name has to be updated.
+2019-07-23T16:56:25  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-07-23T16:57:43  <the-t-in-rtf> OK, it's just as I suspected.
+2019-07-23T16:58:17  <the-t-in-rtf> change this variable name from "temp-directory" to "temp-dir" and you're good to go:
+2019-07-23T16:58:18  <the-t-in-rtf> https://github.com/fluid-project/infusion/blob/master/.nycrc#L14
+2019-07-23T16:58:43  <the-t-in-rtf> they changed it to match the other "-dir" variable a while back
+2019-07-23T17:02:55  <the-t-in-rtf> A key symptom of this little pathology is if .nyc_output shows up
+2019-07-23T17:03:16  <the-t-in-rtf> that means nyc has stopped picking up the location of the coverage option, i.e. temp-dir
+2019-07-23T17:04:52  *** jhung <jhung!~jhung@205.211.168.104> has quit IRC (Ping timeout: 272 seconds)
+2019-07-23T17:05:22  *** jhung <jhung!~jhung@205.211.168.104> has joined #fluid-work
+2019-07-23T17:09:59  <Justin_o> yes, I've been seeing that.. I guess I'll just fix that along with another change I'm making.. thanks
+2019-07-23T17:11:23  *** simonjb <simonjb!~simonjb@205.211.168.102> has joined #fluid-work
+2019-07-23T17:15:19  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-07-23T17:20:19  *** kendraf <kendraf!Adium@nat/ocadu/x-qfiytftczfimhubd> has joined #fluid-work
+2019-07-23T17:25:13  *** crystalchan <crystalchan!Adium@nat/ocadu/x-falgzrlunvzikaer> has joined #fluid-work
+2019-07-23T17:35:44  *** colinclark_ <colinclark_!~colinclar@205.211.168.103> has joined #fluid-work
+2019-07-23T17:35:53  *** colinclark <colinclark!colinclark@nat/ocadu/x-jkvuztacejbskiox> has quit IRC (Read error: Connection reset by peer)
+2019-07-23T17:35:53  *** colinclark_ is now known as colinclark
+2019-07-23T17:36:04  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-07-23T17:36:16  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-tojlcttgnbtsgtss> has joined #fluid-work
+2019-07-23T17:36:27  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-tojlcttgnbtsgtss> has quit IRC (Client Quit)
+2019-07-23T17:38:53  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has joined #fluid-work
+2019-07-23T17:58:12  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-07-23T18:06:00  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-work
+2019-07-23T18:07:31  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Client Quit)
+2019-07-23T18:08:45  <gmoss> Justin_o: here's my latest branch: https://github.com/BlueSlug/sjrk-story-telling/tree/SJRK-237
+2019-07-23T18:09:15  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-bokevhagxbothibw> has joined #fluid-work
+2019-07-23T18:11:31  <gmoss> Bosmon: Justin_o and I are exploring a potential kettle bug that I discovered yesterday evening. I noticed it while I was running a large number of browser tests while hosting kettle directly on my machine (i.e. not via the docker-compose instantiated node alpine container). I then isolated it to a particular simple and known-stable test sequence and was able to reproduce it consistently by refreshing two tabs again and
+2019-07-23T18:11:31  <gmoss> again, after a second or two kettle crashes
+2019-07-23T18:12:04  <gmoss> I haven't yet explored whether this was an issue before my SJRK-237 work
+2019-07-23T18:20:49  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-07-23T18:39:43  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-work
+2019-07-23T18:40:07  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Client Quit)
+2019-07-23T18:43:54  *** jhung_2 <jhung_2!jhung@nat/ocadu/x-iulzibsmiethjqnt> has joined #fluid-work
+2019-07-23T18:44:29  *** jhung_3 <jhung_3!~jhung@205.211.168.104> has joined #fluid-work
+2019-07-23T18:45:21  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-work
+2019-07-23T18:48:09  *** jhung <jhung!~jhung@205.211.168.104> has quit IRC (Ping timeout: 268 seconds)
+2019-07-23T18:48:46  *** jhung_2 <jhung_2!jhung@nat/ocadu/x-iulzibsmiethjqnt> has quit IRC (Ping timeout: 268 seconds)
+2019-07-23T18:49:23  *** jhung_3 <jhung_3!~jhung@205.211.168.104> has quit IRC (Ping timeout: 268 seconds)
+2019-07-23T19:19:46  *** clown <clown!clown@nat/ocadu/x-uwiqlvklyxlauocd> has quit IRC (Ping timeout: 272 seconds)
+2019-07-23T19:31:09  *** clown <clown!clown@nat/ocadu/x-holyfbkuyevcukyx> has joined #fluid-work
+2019-07-23T19:34:20  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-07-23T19:43:27  <Justin_o> greatislander: could you please remind me what the URL for the platform coop GitHub org is
+2019-07-23T19:43:29  <Justin_o> ?
+2019-07-23T19:43:44  <greatislander> https://github.com/platform-coop-toolkit
+2019-07-23T19:45:22  <Justin_o> greatislander: thanks
+2019-07-23T19:46:41  <Bosmon> gmoss - well that's great - I'd love to hear the details :)
+2019-07-23T19:47:11  <Justin_o> greatislander: I've added a list of who maintains the CLA Assistant per GitHub org on this wiki page https://wiki.fluidproject.org/display/fluid/Fluid+Maintainers
+2019-07-23T19:47:51  <greatislander> Fantastic, thanks Justin_o!
+2019-07-23T19:48:06  <Justin_o> greatislander: no problem, were you able to get it setup okay?
+2019-07-23T19:48:37  <greatislander> I haven't yet but it's on my list for this week. I added the app to the GitHub org, but haven't put the CLA in place yet for the active repos— but it looks quite straightforward
+2019-07-23T19:48:42  <Justin_o> Bosmon: for this comment ( https://github.com/fluid-project/infusion/pull/950#discussion_r304958880 ) are you suggesting that the PR shouldn't be merged, or just saying there will be work letter to switch to the new dynamic relocalisation later?
+2019-07-23T19:48:55  <Bosmon> Justin_o - the latter
+2019-07-23T19:49:17  <Justin_o> greatislander: yep, I don't think you'll have any issues, but feel free to ping me if you do.
+2019-07-23T19:49:24  <greatislander> thanks, will do !
+2019-07-23T19:49:29  <Bosmon> I'm just noting that we are going to have a huge number of fresh merge conflicts : P
+2019-07-23T19:49:56  <Justin_o> sorry ;)
+2019-07-23T19:59:11  *** colinclark <colinclark!~colinclar@205.211.168.103> has quit IRC (Quit: colinclark)
+2019-07-23T20:02:17  *** crystalchan <crystalchan!Adium@nat/ocadu/x-falgzrlunvzikaer> has quit IRC (Quit: Leaving.)
+2019-07-23T20:05:55  *** colinclark <colinclark!~colinclar@205.211.168.103> has joined #fluid-work
+2019-07-23T20:06:29  *** kendraf <kendraf!Adium@nat/ocadu/x-qfiytftczfimhubd> has quit IRC (Quit: Leaving.)
+2019-07-23T20:08:52  <cindyli> Bosmon: just a heads up: the meeting tomorrow for NOVA cloud deployment planning is 10AM EST, which is one hour before the regular APCP meeting time. apparently, my brain was a mess at filling up the invite. ;) since everyone except you has accepted the invite, I'm not going to change it. hope you are ok with that time slot too. :)
+2019-07-23T20:13:46  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has quit IRC (Quit: sepidehshahi)
+2019-07-23T20:37:54  <clown> cindyli, is the meeting at 10am EDT or 10am EST  (above you say EST)?
+2019-07-23T20:38:29  <clown> the invite doesn't actually give a time zone.  the one I received just says 10am - 11am.
+2019-07-23T20:44:31  <clown> cindyli, I'll assume EDT.
+2019-07-23T20:45:52  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-07-23T20:56:14  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-07-23T20:56:47  <cindyli> clown: it's our current time EDT
+2019-07-23T20:57:55  <clown> thanks cindyli
+2019-07-23T20:59:12  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 272 seconds)
+2019-07-23T21:01:38  <cindyli> np. i'm always confused about timezones ;)
+2019-07-23T21:19:29  *** clown <clown!clown@nat/ocadu/x-holyfbkuyevcukyx> has quit IRC (Quit: Leaving.)
+2019-07-23T21:20:50  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-07-23T21:29:58  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-07-23T21:30:08  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-07-23T21:33:22  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-bokevhagxbothibw> has quit IRC (Ping timeout: 248 seconds)
+2019-07-23T21:34:18  *** simonjb <simonjb!~simonjb@205.211.168.102> has quit IRC ()
+2019-07-23T21:41:30  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e5a:900:d9e0:6594:11c4:1e82> has quit IRC (Quit: jhernandez)
+2019-07-23T22:01:27  *** avtar <avtar!~avtar@ip-45-3-7-238.user.start.ca> has quit IRC (Quit: Leaving.)
+2019-07-23T22:22:28  *** colinclark <colinclark!~colinclar@205.211.168.103> has quit IRC (Quit: colinclark)
+2019-07-23T22:40:06  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-oyiohueletbfmnpk> has quit IRC (Quit: Connection closed for inactivity)

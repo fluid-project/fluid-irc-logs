@@ -1,0 +1,33 @@
+2020-08-07T15:54:31  <gmoss> philip: I'm going to re-read the docs covering `modules` in the IoC Testing Framework to double-check if my experience is in line with what should be expected behaviour, but as I mentioned in the check-in just now, some of my test components in the Storytelling Tool have not been "reset" after moving to the next module. Maybe there's a nuance that I missed in the past and that you're getting caught up on now
+2020-08-07T15:56:10  <gmoss> philip: My solution in those cases was to create duplicate test components (yuck)
+2020-08-07T15:58:45  <philip> gmoss: It should be easy enough for me to check if that makes a difference. The concrete issue appears to be that a resourceLoader opening a JSON file for the test never finishes loading. At first I thought that might be because a different test in a different testCaseHolder loads the same file, but I've isolated that as the source of the problem
+2020-08-07T16:02:36  <gmoss> philip: to make sure I'm understanding this correctly, you have two test sequences (in different modules) that wait for the same event to ensure that a file is loaded before proceeding with the sequence, and that event is only firing the first time around?
+2020-08-07T16:02:36  <gmoss> I should mention that my solution involves duplicate everything, testCaseHolders included. Let me see if I can find a file where I had to do that, in case it's helpful
+2020-08-07T16:03:09  <gmoss> *in different modules = in different testCaseHolders
+2020-08-07T16:12:43  <gmoss> philip: I must have removed old instances of this issue, I can't find anything that uses the solution I mentioned :( I also can't find anything in the docs to support this notion that modules lead to separate "instances" of test components in the way I thought they did, years ago
+2020-08-07T16:15:51  <philip> gmoss: Hm, interesting. I think I'll still try and set it up so one of the interacting test sequences uses a different parent grade for its testCaseHolder. If it makes a difference, that could be worth writing up
+2020-08-07T16:22:07  <gmoss> philip: Hopefully that solves it for you! If it does, I agree that a write-up seems warranted and I'm willing to contribute
+2020-08-07T17:20:18  <dogeman> jhung_2 are you there?
+2020-08-07T17:24:42  <jhung_2> dogeman yep.
+2020-08-07T17:24:46  *** jhung_2 is now known as jhung
+2020-08-07T17:27:39  <dogeman> Could you explain what you meant by seeing thee copies of news when you build it in floe project?
+2020-08-07T17:27:49  <dogeman> I did a fresh build on local and I don't see any duplicates
+2020-08-07T17:31:27  <jhung> dogeman ok. let me try again and confirm.
+2020-08-07T17:33:36  <jhung> dogeman ok. I seemed to have a strange permission error on my Windows that wouldn't allow deletion of files in the dist directory. I managed to force the rebuild and it looks better.
+2020-08-07T17:34:43  <jhung> however, the news items are all in sub directories. The news items should all be separate html files and not nested in directories dogeman.
+2020-08-07T17:34:45  <dogeman> cool. I made the changes required. Now the posts are present in news/ directory itself and not in sub directories.
+2020-08-07T17:34:57  <dogeman> yeah I made those changes.
+2020-08-07T17:34:58  <jhung> ok cool dogeman . I'll take a cool.
+2020-08-07T17:35:02  <jhung> *look.
+2020-08-07T17:35:04  <jhung> lol
+2020-08-07T17:35:18  <dogeman> sure. great
+2020-08-07T18:30:09  <jhung> dogeman somewhat unrelated to the project, but one of the old news subdirectories Windows does not like. The directory itself has two periods and ends with a period. Windows refuses to delete this subdirectory properly. Hence I can't properly clean out my dist/ directory.
+2020-08-07T18:30:46  <jhung> I've since made a new clone of the project and working from that.
+2020-08-07T18:57:37  <jhung> dogeman I left a comment about news filenames on the PR. Basically I'm looking for a better way of naming the news files we create in the future, while maintaining the filenames of the News posts that have been published already.
+2020-08-07T19:13:09  <dogeman> looking into it
+2020-08-07T19:13:56  <dogeman> Thats really strange. Maybe I can edit the npm run eleventy script to do a clean install everytime .e. delete all directories in the dist folder and then recreate everything
+2020-08-07T19:14:48  <jhung> dogeman I don't even think it's something you could have predicted or be able to fix. It seems to be more of an OS issue.
+2020-08-07T19:15:04  <jhung> dogeman although an npm clean command would be nice! :)
+2020-08-07T19:15:39  <dogeman> sure will add that.
+2020-08-07T19:38:49  <gmoss> dogeman: I'm going to be reviewing all of the PRs/repos today, just working my way through fluidproject.org right now. It's looking much better!
+2020-08-07T19:38:49  <gmoss> I have noticed a few little markdown issues, like the "tab" character accidentally formatting some text as if it were in a code fence (some MD processors treat it the same as if it were ``` or ~~~)
