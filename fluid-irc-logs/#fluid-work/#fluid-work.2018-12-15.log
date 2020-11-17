@@ -1,0 +1,37 @@
+2018-12-15T01:01:54  *** jhernandez <jhernandez!~jhernande@198.133-200-80.adsl-dyn.isp.belgacom.be> has joined #fluid-work
+2018-12-15T01:03:23  *** colinclark <colinclark!~colinclar@c-76-101-154-19.hsd1.fl.comcast.net> has joined #fluid-work
+2018-12-15T01:04:36  *** colinclark <colinclark!~colinclar@c-76-101-154-19.hsd1.fl.comcast.net> has quit IRC (Client Quit)
+2018-12-15T01:15:35  *** avtar <avtar!~avtar@ip-45-3-11-149.user.start.ca> has quit IRC (Quit: Leaving.)
+2018-12-15T07:20:57  *** jhernandez <jhernandez!~jhernande@198.133-200-80.adsl-dyn.isp.belgacom.be> has quit IRC (Remote host closed the connection)
+2018-12-15T07:21:24  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3fc2:1300:b5ba:d9d9:af39:ba8c> has joined #fluid-work
+2018-12-15T07:25:51  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3fc2:1300:b5ba:d9d9:af39:ba8c> has quit IRC (Ping timeout: 252 seconds)
+2018-12-15T09:28:35  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:61cd:fcc7:9f3f:3916> has quit IRC (Quit: Leaving.)
+2018-12-15T09:33:07  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:691f:d3b9:c2fe:ac07> has joined #fluid-work
+2018-12-15T09:59:47  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:691f:d3b9:c2fe:ac07> has quit IRC (Quit: Leaving.)
+2018-12-15T10:08:06  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:3582:3493:33f9:a245> has joined #fluid-work
+2018-12-15T10:46:03  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:3582:3493:33f9:a245> has quit IRC (Ping timeout: 252 seconds)
+2018-12-15T10:58:45  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:3582:3493:33f9:a245> has joined #fluid-work
+2018-12-15T11:23:27  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:3582:3493:33f9:a245> has quit IRC (Ping timeout: 264 seconds)
+2018-12-15T11:44:50  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:3582:3493:33f9:a245> has joined #fluid-work
+2018-12-15T12:01:47  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3fc2:1300:d5ce:da09:6e3d:b86f> has joined #fluid-work
+2018-12-15T12:23:25  <Bosmon> the-t-in-rtf - so, I think one leak is in our defaults cache, which we can fix
+2018-12-15T12:23:37  <Bosmon> Another leak is within pouchDB itself, right in the core: https://github.com/pouchdb/pouchdb/blob/master/packages/node_modules/pouchdb-mapreduce/src/evalFunctionInVm.js#L42
+2018-12-15T12:23:48  <Bosmon> As far as I can tell, every map function sent into here will leak
+2018-12-15T12:24:34  <Bosmon> My suggestion is that we abandon the use of pouchDB immediately : P
+2018-12-15T12:53:55  <Bosmon> OK
+2018-12-15T12:54:12  <Bosmon> Looks like the main leak source isn't entirely unrelated to Windows
+2018-12-15T12:54:24  <Bosmon> In that I imagine what is happening is that under Windows, this branch never executes: https://github.com/GPII/gpii-pouchdb/blob/master/src/js/pouchdb-node.js#L145
+2018-12-15T12:54:38  <Bosmon> The component should destroy itself, but never does
+2018-12-15T12:55:20  <Bosmon> These "dbComponents" just pile up endlessly: https://github.com/GPII/gpii-pouchdb/blob/master/src/js/pouch-express.js#L154
+2018-12-15T12:56:35  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:3582:3493:33f9:a245> has quit IRC (Ping timeout: 250 seconds)
+2018-12-15T13:11:19  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:3582:3493:33f9:a245> has joined #fluid-work
+2018-12-15T13:23:43  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:3582:3493:33f9:a245> has quit IRC (Quit: Leaving.)
+2018-12-15T13:24:00  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:3582:3493:33f9:a245> has joined #fluid-work
+2018-12-15T14:33:27  <javjarfer[m]> > you must live a sad and lonely life, javjarfer
+2018-12-15T14:33:28  <javjarfer[m]> stegru OR peaceful and quiet
+2018-12-15T15:17:55  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3fc2:1300:d5ce:da09:6e3d:b86f> has quit IRC (Remote host closed the connection)
+2018-12-15T17:33:55  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-bgbnomjfwionudxp> has quit IRC (Quit: Connection closed for inactivity)
+2018-12-15T18:53:32  *** Bosmon <Bosmon!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has quit IRC (Ping timeout: 268 seconds)
+2018-12-15T19:08:31  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3fc2:1300:658e:638e:1818:edb4> has joined #fluid-work
+2018-12-15T19:09:18  *** Bosmon <Bosmon!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has joined #fluid-work
+2018-12-15T19:13:51  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3fc2:1300:658e:638e:1818:edb4> has quit IRC (Remote host closed the connection)

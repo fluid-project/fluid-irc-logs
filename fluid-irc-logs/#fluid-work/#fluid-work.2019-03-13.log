@@ -1,0 +1,267 @@
+2019-03-13T01:05:55  *** michelled <michelled!~Adium@192.0.151.7> has quit IRC (Quit: Leaving.)
+2019-03-13T01:50:49  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-13T03:08:12  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-03-13T07:45:51  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:f079:3c9a:9143:5f43> has quit IRC (Quit: Leaving.)
+2019-03-13T08:43:54  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has joined #fluid-work
+2019-03-13T10:43:10  *** kris_HA <kris_HA!~kris@212.5.154.113> has joined #fluid-work
+2019-03-13T11:16:03  *** kris_HA <kris_HA!~kris@212.5.154.113> has quit IRC (Ping timeout: 252 seconds)
+2019-03-13T11:19:00  *** kris_HA <kris_HA!~kris@212.5.154.113> has joined #fluid-work
+2019-03-13T11:24:05  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:34b2:9a16:7745:fc43> has joined #fluid-work
+2019-03-13T11:54:04  *** kris_HA <kris_HA!~kris@212.5.154.113> has quit IRC (Ping timeout: 246 seconds)
+2019-03-13T12:14:35  *** kris_HA <kris_HA!~kris@212.5.154.113> has joined #fluid-work
+2019-03-13T12:52:55  *** jhernand_ <jhernand_!~jhernande@2a02:a03f:3ee2:5d00:6498:1317:eb1b:9e19> has joined #fluid-work
+2019-03-13T12:55:57  <the-t-in-rtf> https://pastebin.com/XBq7E3dJ
+2019-03-13T12:56:16  <the-t-in-rtf> @Bosmon, there's the hanging run for the gpii-app user errors handler tests.
+2019-03-13T12:56:31  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:34b2:9a16:7745:fc43> has quit IRC (Ping timeout: 252 seconds)
+2019-03-13T12:57:28  *** colinclark <colinclark!~colinclar@205.211.168.102> has joined #fluid-work
+2019-03-13T12:57:46  <Bosmon> the-t-in-rtf - this probably a genuine error/mismatch
+2019-03-13T12:58:19  <Bosmon> The real failure occurs on line 872
+2019-03-13T12:58:34  <Bosmon> The system tries to log in with an "invalid" GPII key, but as a result of Cindy's recent improvements, this is no longer an error
+2019-03-13T12:58:48  <the-t-in-rtf> ah
+2019-03-13T12:58:52  <Bosmon> So I think in this case best resolved by simply removing the test
+2019-03-13T12:58:56  <the-t-in-rtf> will do
+2019-03-13T12:59:29  <the-t-in-rtf> so.
+2019-03-13T12:59:38  <the-t-in-rtf> just to confirm, that's the only test in that suite
+2019-03-13T12:59:43  <the-t-in-rtf> so, remove the whole file?
+2019-03-13T13:00:27  <the-t-in-rtf> or can we do something that results in a meaningful error along the same lines?
+2019-03-13T13:00:36  <the-t-in-rtf> like an invalid username/password?
+2019-03-13T13:00:52  <the-t-in-rtf> hmm.
+2019-03-13T13:01:05  *** cindyli <cindyli!Adium@nat/ocadu/x-umqrntjavwctlmls> has joined #fluid-work
+2019-03-13T13:01:08  <Bosmon> We should test the case where no connection can be made to the preferences server at all
+2019-03-13T13:01:19  <Bosmon> Which is one of the few ways left to provoke a user error
+2019-03-13T13:01:28  <Bosmon> This should be simple enough by just configuring it to listen on the wrong port
+2019-03-13T13:02:16  <the-t-in-rtf> so create a gpii.tests.dev.config.missingPrefsServer config or the like?
+2019-03-13T13:03:26  <Bosmon> the-t-in-rtf - that sounds right
+2019-03-13T13:03:48  <Bosmon> the-t-in-rtf - the relevant JIRA for cindyli's recent work is https://issues.gpii.net/browse/GPII-3721
+2019-03-13T13:04:29  <Bosmon> But we need not refer to it if we just cleanly turn this into a "can't contact prefs server" test
+2019-03-13T13:04:41  *** michelled <michelled!Adium@nat/ocadu/x-mqorguxosyyzltmg> has joined #fluid-work
+2019-03-13T13:06:51  <cindyli> Bosmon, the-t-in-rtf, starting flow manager config only will create an environment without a prefs server. a similar test case in the universal - https://github.com/GPII/universal/blob/master/tests/platform/cloud/CloudStatusTests.js#L29-L32
+2019-03-13T13:07:47  <the-t-in-rtf> thanks, cindy.
+2019-03-13T13:07:51  <cindyli> np
+2019-03-13T13:08:05  <the-t-in-rtf> but if it's all the same to you, I'd rather break the devil I know than start over with a new one
+2019-03-13T13:08:22  <the-t-in-rtf> I guess we can talk about it in the review, and I will look at the link to see
+2019-03-13T13:08:55  <Bosmon> Yes
+2019-03-13T13:08:56  <cindyli> sure. do whatever makes more sense to you
+2019-03-13T13:09:10  <Bosmon> You could just write a distribution in the test case to fiddle the port if you like
+2019-03-13T13:14:39  <the-t-in-rtf> I did so, but in a clearly named config.
+2019-03-13T13:14:46  <Bosmon> v.good
+2019-03-13T13:14:47  <the-t-in-rtf> and the tests now pass
+2019-03-13T13:14:53  <the-t-in-rtf> uncommenting and merging with upstream
+2019-03-13T13:18:39  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-yiojooojydetfhby> has joined #fluid-work
+2019-03-13T13:20:30  <the-t-in-rtf> OK, merged and CI is testing things.
+2019-03-13T13:20:39  <Bosmon> totally great
+2019-03-13T13:20:49  <the-t-in-rtf> Seems like someone isn't using my "lint or die" commit hook, I fixed a couple small errors
+2019-03-13T13:21:37  <the-t-in-rtf> but fingers crossed, hopefully we're nearly there
+2019-03-13T13:22:54  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:87a:3872:87e8:9bd6> has joined #fluid-work
+2019-03-13T13:24:40  *** cindyli <cindyli!Adium@nat/ocadu/x-umqrntjavwctlmls> has quit IRC (Quit: Leaving.)
+2019-03-13T13:26:18  *** jhernand_ <jhernand_!~jhernande@2a02:a03f:3ee2:5d00:6498:1317:eb1b:9e19> has quit IRC (Ping timeout: 258 seconds)
+2019-03-13T13:28:12  *** clown <clown!clown@nat/ocadu/x-trulrorzxnwhqrer> has joined #fluid-work
+2019-03-13T13:32:12  *** cindyli <cindyli!Adium@nat/ocadu/x-geosmdcddzzhoyxm> has joined #fluid-work
+2019-03-13T13:38:50  *** michelled1 <michelled1!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-13T13:40:24  *** michelled <michelled!Adium@nat/ocadu/x-mqorguxosyyzltmg> has quit IRC (Ping timeout: 250 seconds)
+2019-03-13T13:40:52  *** cindyli1 <cindyli1!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-13T13:42:43  *** clown <clown!clown@nat/ocadu/x-trulrorzxnwhqrer> has quit IRC (Ping timeout: 252 seconds)
+2019-03-13T13:43:25  *** cindyli <cindyli!Adium@nat/ocadu/x-geosmdcddzzhoyxm> has quit IRC (Ping timeout: 268 seconds)
+2019-03-13T13:46:21  *** michelled1 <michelled1!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-03-13T13:52:36  *** cindyli1 <cindyli1!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-03-13T13:52:58  *** jhernand_ <jhernand_!~jhernande@2a02:a03f:3ee2:5d00:9dc6:403d:ccd5:b2e3> has joined #fluid-work
+2019-03-13T13:56:17  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:87a:3872:87e8:9bd6> has quit IRC (Ping timeout: 252 seconds)
+2019-03-13T13:57:50  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has quit IRC (Quit: Leaving.)
+2019-03-13T14:01:30  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has joined #fluid-work
+2019-03-13T14:12:40  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has quit IRC (Quit: Leaving.)
+2019-03-13T14:13:42  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has joined #fluid-work
+2019-03-13T14:17:38  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has quit IRC (Client Quit)
+2019-03-13T14:22:57  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:6cac:1e1c:9b78:8657> has joined #fluid-work
+2019-03-13T14:26:29  *** jhernand_ <jhernand_!~jhernande@2a02:a03f:3ee2:5d00:9dc6:403d:ccd5:b2e3> has quit IRC (Ping timeout: 258 seconds)
+2019-03-13T14:30:26  *** cindyli <cindyli!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-13T14:33:35  *** cherylhjli <cherylhjli!~Adium@toroon0949w-lp130-03-65-93-19-9.dsl.bell.ca> has joined #fluid-work
+2019-03-13T14:47:36  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:e548:ac7c:430d:c58> has joined #fluid-work
+2019-03-13T14:52:57  *** jhernand_ <jhernand_!~jhernande@2a02:a03f:3ee2:5d00:9940:b9b2:79b0:4109> has joined #fluid-work
+2019-03-13T14:53:27  *** michelled <michelled!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-13T14:55:34  *** simonjb <simonjb!~simonjb@205.211.168.102> has joined #fluid-work
+2019-03-13T14:56:25  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:6cac:1e1c:9b78:8657> has quit IRC (Ping timeout: 252 seconds)
+2019-03-13T15:01:02  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:e548:ac7c:430d:c58> has quit IRC (Quit: Leaving.)
+2019-03-13T15:01:28  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:e548:ac7c:430d:c58> has joined #fluid-work
+2019-03-13T15:02:09  *** clown <clown!clown@nat/ocadu/x-vkrwcenaknqbpmue> has joined #fluid-work
+2019-03-13T15:04:07  *** simonjb <simonjb!~simonjb@205.211.168.102> has quit IRC (Ping timeout: 246 seconds)
+2019-03-13T15:12:41  *** simonjb <simonjb!~simonjb@205.211.168.102> has joined #fluid-work
+2019-03-13T15:12:58  <Bosmon> Hi there cindyli - we're just tracking down the last test case failure in gpii-app
+2019-03-13T15:13:10  <Bosmon> A frequent cause of failure (3 times in 5) is now this kind of thing - https://github.com/GPII/gpii-app/pull/100
+2019-03-13T15:13:29  <Bosmon> It seems somehow there is a strange route whereby a session could start without a valid "createTime" field
+2019-03-13T15:13:45  <Bosmon> Can you think of a way this could happen, or perhaps be caused by some recent work on the LifecycleManager?
+2019-03-13T15:16:30  *** cindyli <cindyli!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-03-13T15:19:07  *** simonjb <simonjb!~simonjb@205.211.168.102> has quit IRC (Ping timeout: 244 seconds)
+2019-03-13T15:22:58  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:78a5:d79b:4500:e551> has joined #fluid-work
+2019-03-13T15:26:07  *** jhernand_ <jhernand_!~jhernande@2a02:a03f:3ee2:5d00:9940:b9b2:79b0:4109> has quit IRC (Ping timeout: 252 seconds)
+2019-03-13T15:26:54  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-13T15:27:15  *** cindyli <cindyli!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-13T15:28:11  *** simonjb <simonjb!~simonjb@205.211.168.102> has joined #fluid-work
+2019-03-13T15:30:11  <the-t-in-rtf> wuh-oh
+2019-03-13T15:30:12  <the-t-in-rtf> https://github.com/GPII/universal/blob/4ca4ebfc25fe0eff25c93a663a34845a475ad023/gpii/node_modules/lifecycleManager/src/LifecycleManager.js#L1161
+2019-03-13T15:30:21  <the-t-in-rtf> There's a very clear way that it can become undefined
+2019-03-13T15:31:02  <the-t-in-rtf> so we're perhaps between users at the moment the attempt is made to read the value.
+2019-03-13T15:31:13  <the-t-in-rtf> as I believe we vaguely discussed earlier
+2019-03-13T15:31:57  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-13T15:37:32  *** clown <clown!clown@nat/ocadu/x-vkrwcenaknqbpmue> has quit IRC (Ping timeout: 245 seconds)
+2019-03-13T15:42:36  *** simonjb <simonjb!~simonjb@205.211.168.102> has quit IRC (Ping timeout: 250 seconds)
+2019-03-13T15:44:12  *** cindyli <cindyli!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-03-13T15:44:37  *** cindyli <cindyli!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-13T15:46:10  *** clown <clown!clown@nat/ocadu/x-okjfpptnufzfxrwx> has joined #fluid-work
+2019-03-13T15:47:44  *** simonjb <simonjb!~simonjb@205.211.168.102> has joined #fluid-work
+2019-03-13T15:52:51  <Bosmon> cindyli - ok, so we are understanding the problem a tad better
+2019-03-13T15:53:09  *** jhernand_ <jhernand_!~jhernande@61.154-200-80.adsl-dyn.isp.belgacom.be> has joined #fluid-work
+2019-03-13T15:53:33  <Bosmon> The system is in the middle of "gpii.lifecycleManager.processActionQueue", but actually the relevant session has already been "destroyed"
+2019-03-13T15:54:20  <Bosmon> It then processes {lifecycleManager}.events.onSessionSnapshotUpdate when there is actually no session
+2019-03-13T15:54:35  <Bosmon> I am thinking that this is another of the unwelcome side-effects in destroying the dynamic session component in the LifecycleManager
+2019-03-13T15:54:46  *** simonjb <simonjb!~simonjb@205.211.168.102> has quit IRC (Ping timeout: 268 seconds)
+2019-03-13T15:54:53  <Bosmon> In the old days there was a clear notion that it had been "destroyed" and therefore shouldn't be used to process further actions
+2019-03-13T15:55:21  <Bosmon> This was one of the reasons I was recommending you to actually destroy the session component in between sessions
+2019-03-13T15:56:11  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:78a5:d79b:4500:e551> has quit IRC (Ping timeout: 252 seconds)
+2019-03-13T16:00:55  <cindyli> Bosmon: i'm in a meeting right now. will catch up more later. what do you mean by "destroy the session component in between sessions"
+2019-03-13T16:02:26  <Bosmon> cindyli - to make the session a "createOnEvent" subcomponent of the LifecycleManager, rather than a static one
+2019-03-13T16:02:35  <Bosmon> Such that it actually got fully destroyed
+2019-03-13T16:02:43  <Bosmon> As far as I can see, the point of test case failure is here: https://github.com/GPII/gpii-app/blob/master/tests/PspTestDefs.js#L212
+2019-03-13T16:03:10  <Bosmon> I think what is happening is that the tests react to an onSettingUpdated message, and then fairly soon triggers a key-out
+2019-03-13T16:04:29  <Bosmon> Ah no, it is a change in preference set
+2019-03-13T16:04:45  <Bosmon> Which then triggers a change in settings, but the user keys out whilst the change in settings is still in progress
+2019-03-13T16:04:52  <Bosmon> I think this actually represents a real failure mode of the real system
+2019-03-13T16:10:43  *** cherylhjli <cherylhjli!~Adium@toroon0949w-lp130-03-65-93-19-9.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2019-03-13T16:15:24  *** michelled <michelled!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-03-13T16:16:05  *** cindyli1 <cindyli1!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-13T16:16:05  *** cindyli <cindyli!~Adium@205.211.168.103> has quit IRC (Read error: Connection reset by peer)
+2019-03-13T16:20:23  *** kris_HA <kris_HA!~kris@212.5.154.113> has quit IRC (Ping timeout: 252 seconds)
+2019-03-13T16:24:19  <Bosmon> cindyli1, the-t-in-rtf - I've written up https://issues.gpii.net/browse/GPII-3791 and will put in a quick hack fix so that we can unstick the gpii-app tests
+2019-03-13T16:24:57  <the-t-in-rtf> great
+2019-03-13T16:31:52  <cindyli1> Bosmon: meeting's over. thanks for the investigation. i see what you mean. in the jira you mentioned "we could perform checks via fluid.isDestroyed() rather than some ad hoc mechanism", do you think if it's ok to provide a lifecycle manager API isUserSessionDestroyed() to substitute fluid.isDestroyed() to deal with this case?
+2019-03-13T16:32:15  *** cindyli1 is now known as cindyli
+2019-03-13T16:32:24  <Bosmon> cindyli - this isn't an API issue, it is that the impl is broken
+2019-03-13T16:32:35  <Bosmon> Any mechanisms we provided for checking the session would be primarily for our own use
+2019-03-13T16:39:30  <cindyli> Bosmon: you are right, providing another API may not be enough. but i also doubt if having userSession onCreateEvent would solve the problem.  {gpii.lifecycleManager}.events.onSessionSnapshotUpdate.fire is called when the system is restored to original settings. this is a part of the keyout action. setting createTime to "undefined" is in the callback of restorePromise - https://github.com/GPII/universal/blob/4ca4ebfc25fe0eff25c93a663
+2019-03-13T16:39:30  <cindyli> a34845a475ad023/gpii/node_modules/lifecycleManager/src/LifecycleManager.js#L1157-L1162, which means the restoration should have been completed when createTime === undefined
+2019-03-13T16:40:05  <cindyli> i suspect the destroyed userSession was caused by the destroy of GPII when the test sequence completes
+2019-03-13T16:41:59  <cindyli> anyway, i can write a universal test in the sequence you described in JIRA to see if this issue is reproducible in your theroy
+2019-03-13T16:42:40  <Bosmon> cindyli - it wouldn't be enough, but it would help
+2019-03-13T16:51:17  *** michelled <michelled!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-13T16:55:54  *** simonjb <simonjb!~simonjb@205.211.168.102> has joined #fluid-work
+2019-03-13T16:56:51  *** michelled <michelled!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-03-13T16:57:13  *** michelled <michelled!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-13T16:57:43  *** michelled <michelled!~Adium@205.211.168.103> has quit IRC (Client Quit)
+2019-03-13T16:58:02  <javjarfer[m]> Hi there Bosmon , good afternoon, I have reached this issue while trying to apply a defaultDestop background to the default GPII-App settings
+2019-03-13T16:58:02  <javjarfer[m]> https://issues.gpii.net/browse/GPII-3792
+2019-03-13T16:58:28  <javjarfer[m]> I don't know if settings application order is something we have plan to support at all
+2019-03-13T17:00:12  *** simonjb <simonjb!~simonjb@205.211.168.102> has quit IRC (Ping timeout: 246 seconds)
+2019-03-13T17:00:23  <jhernand_> heads up: arch meeting time!
+2019-03-13T17:03:07  <Bosmon> javjarfer[m] - the intention is that this is supported by attaching multiple separate settingsHandler blocks to the same solution
+2019-03-13T17:03:18  <Bosmon> The system will guarantee to serialise the application of these
+2019-03-13T17:06:49  <javjarfer[m]> Bosmon: yes, I know, but in this case, the conflicting settings are represented in different solutions, as the conflicting part is a consequence of a setting, and not directly a setting we expose.
+2019-03-13T17:07:48  <javjarfer[m]> you suggest we should join this settings into a unified solution like "com.microsoft.windows.personalization"?
+2019-03-13T17:08:59  <Bosmon> javjarfer[m] - oh, that is very interesting
+2019-03-13T17:09:02  <Bosmon> Sorry I misunderstood
+2019-03-13T17:09:13  <Bosmon> Yes, we certainly need to apply "priority" annotations for solutions
+2019-03-13T17:09:32  <Bosmon> I think we had already filed this issue
+2019-03-13T17:18:40  <javjarfer[m]> Bosmon: then sorry for the issue duplication, I didn't found the other one
+2019-03-13T17:20:11  <cindyli> javjarfer[m], Bosmon: is it this one - https://issues.gpii.net/browse/GPII-3759
+2019-03-13T17:20:13  <Bosmon> javjarfer[m] - that's fine, there are thousands of JIRAs : P
+2019-03-13T17:20:20  <Bosmon> cindyli I linked it on the issue already
+2019-03-13T17:20:31  <cindyli> cool.
+2019-03-13T17:21:48  <javjarfer[m]> oh, great, thanks Bosmon , cindyli , let me know if I can help with something
+2019-03-13T17:24:04  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-03-13T17:24:05  *** danayo_ is now known as danayo
+2019-03-13T17:24:06  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-03-13T17:26:24  <sgithens> bryan_: I'm pretty free after lunch today to have a catch up / screenshare to go over things
+2019-03-13T17:26:55  <bryan_> Ok sounds good
+2019-03-13T17:37:39  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has joined #fluid-work
+2019-03-13T17:37:45  *** michelled <michelled!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-13T17:40:28  *** simonjb <simonjb!~simonjb@205.211.168.102> has joined #fluid-work
+2019-03-13T17:55:28  <cindyli> Bosmon: i reproduced the gpii-app test failure on my machine and looked into it. this is the log i captured with a bigger log buffer - https://pastebin.com/XbZVdSBm. at line 120, you can see the prefs update that was rejected is the turning off of magnification rather than changing the magnification to another value. this turning-off is a part of the keyout process and the failure is because the test sequence reaches the end and is k
+2019-03-13T17:55:28  <cindyli> illing GPII when the keyout is still in process
+2019-03-13T17:55:47  <cindyli> i added a little timeout at the end of the test sequence https://github.com/the-t-in-rtf/gpii-app/compare/GPII-3744...cindyli:GPII-3744#diff-9fcf07c8eddee015cbfaf4094980c016R217
+2019-03-13T17:56:10  <cindyli> to give a bit more time for the keyout to complete
+2019-03-13T17:56:14  <cindyli> this fixes the test failure
+2019-03-13T17:56:31  <the-t-in-rtf> yes, I think all of my "wait for child component" strategies were basically an overly complicated timeout
+2019-03-13T17:56:38  <cindyli> so i don't think making userSession a dynamic component will help with the fix at all
+2019-03-13T18:00:04  <cindyli> the-t-in-rtf: i agree. what's the best way to deal with this situation when GPII is tearing down.? do we expect any ongoing actions don't complaint and just quit silently?
+2019-03-13T18:01:16  <cindyli> i'm not sure that is a right response?
+2019-03-13T18:04:33  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-13T18:04:51  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-13T18:17:07  *** simonjb <simonjb!~simonjb@205.211.168.102> has quit IRC ()
+2019-03-13T18:20:02  *** simonjb <simonjb!~simonjb@205.211.168.102> has joined #fluid-work
+2019-03-13T18:23:28  *** clown <clown!clown@nat/ocadu/x-okjfpptnufzfxrwx> has quit IRC (Quit: Leaving.)
+2019-03-13T18:23:48  *** michelled <michelled!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-03-13T18:33:02  *** cindyli1 <cindyli1!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-13T18:33:02  *** cindyli <cindyli!~Adium@205.211.168.103> has quit IRC (Read error: Connection reset by peer)
+2019-03-13T18:33:14  *** clown <clown!~clown@205.211.168.102> has joined #fluid-work
+2019-03-13T18:34:27  *** clown1 <clown1!~clown@205.211.168.102> has joined #fluid-work
+2019-03-13T18:34:27  *** clown <clown!~clown@205.211.168.102> has quit IRC (Read error: Connection reset by peer)
+2019-03-13T18:36:58  *** colinclark <colinclark!~colinclar@205.211.168.102> has quit IRC (Quit: colinclark)
+2019-03-13T18:37:20  *** clown1 is now known as clown
+2019-03-13T18:37:43  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-03-13T18:38:31  *** michelled <michelled!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-13T18:40:53  *** simonjb <simonjb!~simonjb@205.211.168.102> has quit IRC (Ping timeout: 245 seconds)
+2019-03-13T18:41:15  *** colinclark <colinclark!~colinclar@205.211.168.102> has joined #fluid-work
+2019-03-13T18:43:56  *** michelled <michelled!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-03-13T18:48:20  *** cindyli1 <cindyli1!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-03-13T18:49:01  <the-t-in-rtf> IMO we should be able to finish all conversations in flight with at least an error response.
+2019-03-13T18:49:29  <the-t-in-rtf> tests kind of exercise things in a way the system itself usually doesn't, lots of activity and frequent shutdowns, so it's kind of an artificial situation
+2019-03-13T18:50:21  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has joined #fluid-work
+2019-03-13T18:50:35  <the-t-in-rtf> we can add checks to avoid dealing with destroyed material or performing actions after shutdown, but on reflection, if the problem is mainly seen in tests, the solution is really to ensure that we have hooks where we can wait for things to be safe
+2019-03-13T18:50:41  <the-t-in-rtf> i.e. that we can wait for activity to complete
+2019-03-13T18:50:49  *** cindyli <cindyli!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-13T18:51:01  <the-t-in-rtf> like waiting for noUser to key in rather than just waiting for the named user to key out.
+2019-03-13T18:51:28  <the-t-in-rtf> or waiting for other async activity to complete cleanly before finishing the tests
+2019-03-13T18:51:55  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-03-13T18:53:58  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-03-13T18:54:49  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has quit IRC (Client Quit)
+2019-03-13T19:10:56  *** cindyli <cindyli!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-03-13T19:20:54  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 246 seconds)
+2019-03-13T19:34:44  *** cindyli <cindyli!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-13T19:41:11  *** michelled <michelled!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-13T19:42:50  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has joined #fluid-work
+2019-03-13T19:45:24  *** simonjb <simonjb!~simonjb@205.211.168.102> has joined #fluid-work
+2019-03-13T19:46:31  *** colinclark <colinclark!~colinclar@205.211.168.102> has quit IRC (Quit: colinclark)
+2019-03-13T19:48:14  *** colinclark <colinclark!~colinclar@205.211.168.102> has joined #fluid-work
+2019-03-13T19:48:49  *** michelled <michelled!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-03-13T19:51:49  *** simonjb <simonjb!~simonjb@205.211.168.102> has quit IRC (Ping timeout: 246 seconds)
+2019-03-13T19:57:37  *** michelled <michelled!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-13T20:02:43  *** michelled <michelled!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-03-13T20:02:47  *** clown <clown!~clown@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-03-13T20:02:59  *** colinclark <colinclark!~colinclar@205.211.168.102> has quit IRC (Quit: colinclark)
+2019-03-13T20:05:49  *** simonjb <simonjb!~simonjb@205.211.168.102> has joined #fluid-work
+2019-03-13T20:06:10  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-13T20:14:40  *** clown <clown!clown@nat/ocadu/x-waavlkhpdoamznxu> has joined #fluid-work
+2019-03-13T20:19:44  <gmoss> sgithens: if you want to get in touch with Sean (today's presenter) at all, I can let him know
+2019-03-13T20:19:51  <gmoss> thanks for joining today :)
+2019-03-13T20:22:18  *** michelled <michelled!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-13T20:30:19  *** colinclark <colinclark!~colinclar@205.211.168.102> has joined #fluid-work
+2019-03-13T20:36:23  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-03-13T20:36:23  *** danayo_ is now known as danayo
+2019-03-13T20:38:29  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-13T20:40:45  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Client Quit)
+2019-03-13T20:40:46  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-03-13T20:42:45  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has joined #fluid-work
+2019-03-13T20:45:07  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has quit IRC (Client Quit)
+2019-03-13T20:45:59  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has joined #fluid-work
+2019-03-13T20:47:45  *** cindyli <cindyli!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-03-13T20:48:20  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has quit IRC (Client Quit)
+2019-03-13T20:49:12  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has joined #fluid-work
+2019-03-13T20:51:34  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has quit IRC (Client Quit)
+2019-03-13T20:57:43  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has joined #fluid-work
+2019-03-13T21:01:06  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-03-13T21:02:05  *** simonjb <simonjb!~simonjb@205.211.168.102> has quit IRC ()
+2019-03-13T21:02:23  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-yiojooojydetfhby> has quit IRC (Quit: sepidehshahi)
+2019-03-13T21:02:23  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has quit IRC (Client Quit)
+2019-03-13T21:03:31  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has joined #fluid-work
+2019-03-13T21:04:07  *** michelled <michelled!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-03-13T21:12:26  *** clown <clown!clown@nat/ocadu/x-waavlkhpdoamznxu> has quit IRC (Quit: Leaving.)
+2019-03-13T21:14:47  *** colinclark <colinclark!~colinclar@205.211.168.102> has quit IRC (Quit: colinclark)
+2019-03-13T21:18:31  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 268 seconds)
+2019-03-13T21:26:58  <sgithens> gmoss: Thanks for hosting!
+2019-03-13T21:27:15  <sgithens> I don't think I have any follow-ups yet, but will let you know if I do for sure
+2019-03-13T22:04:37  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has left #fluid-work
+2019-03-13T22:36:25  *** michelled <michelled!~Adium@192.0.151.7> has joined #fluid-work
+2019-03-13T22:37:21  *** jhernand_ <jhernand_!~jhernande@61.154-200-80.adsl-dyn.isp.belgacom.be> has quit IRC (Remote host closed the connection)
+2019-03-13T22:37:46  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:5034:be13:d80c:2df4> has joined #fluid-work
+2019-03-13T22:39:32  *** michelled <michelled!~Adium@192.0.151.7> has quit IRC (Client Quit)
+2019-03-13T22:42:05  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:5034:be13:d80c:2df4> has quit IRC (Ping timeout: 252 seconds)
+2019-03-13T22:48:09  *** michelled <michelled!~Adium@192.0.151.7> has joined #fluid-work
+2019-03-13T22:49:43  *** michelled <michelled!~Adium@192.0.151.7> has quit IRC (Client Quit)

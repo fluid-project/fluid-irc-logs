@@ -1,0 +1,96 @@
+2020-07-27T14:30:38  <gmoss> dogeman, jhung: are you both ready for our chat?
+2020-07-27T14:31:25  <jhung> yep. Be right there gmoss, dogeman
+2020-07-27T14:32:37  <dogeman> gmoss where we meeting?
+2020-07-27T14:32:53  <jhung> dogeman https://ocadu.zoom.us/j/727986784
+2020-07-27T15:25:27  <Bosmon> Hi there Justin_o - I've updated my FLUID-6145 branch with both my own changes and your fixes to the Orator for Edge 44, and oddly it seems that the tests are now hanging in CI on MacOS - https://github.com/fluid-project/infusion/pull/972
+2020-07-27T15:25:43  <Bosmon> gtirloni and I were looking at this on Friday and initially it looked like it was some provisioning problems in GitHub CI
+2020-07-27T15:26:02  <Bosmon> But it seems that based on the latest run that there might be a genuine problem on MacOS too
+2020-07-27T15:26:25  <Bosmon> Would you be able to take a look, I think I remember you are a MacOS desktop guy?
+2020-07-27T15:26:50  <Bosmon> As a clue, one possibly relevant change I made was to adjust the implementation of fluid.invokeLater in the browser to apply a timeout of 0 rather than 1
+2020-07-27T15:26:58  <Bosmon> Which may have exposed some kind of latent race condition on MacOS
+2020-07-27T16:16:53  <Justin_o> Bosmon: sure, I can take a look at that.
+2020-07-27T16:17:08  <Justin_o> Bosmon: which test in particular was stalling?
+2020-07-27T16:18:27  <Justin_o> Bosmon: also what should we do about the jQuery 3.1.1 dependency... should we try to bump it up to get rid of the security issue or will we be dropping it entirely in the near future
+2020-07-27T16:55:35  *** jhung_2 is now known as jhung_phone
+2020-07-27T17:10:13  <Bosmon> Justin_o - The CI output seems to show that TextToSpeechTests.js don't execute
+2020-07-27T17:10:30  <Bosmon> Justin_o - we should bump it up, we're not getting rid of jQuery in less than 6 months or so
+2020-07-27T17:11:03  <Bosmon> And in any case, I think we'll retain it as an "integration option" for people who like that kind of thing
+2020-07-27T17:15:19  <Justin_o> Bosmon: okay... probably something we should try to get to in the near future. It's probably affecting some of the lighthouse reports that are being used for wecount site. cindyli, Teddy___.
+2020-07-27T17:15:44  <Justin_o> I looked at that briefly before, but ran into an issue that I didn't have the time to address then.
+2020-07-27T17:16:18  <Bosmon> Justin_o - well, we can't do much about the WeCount scores until we've completely rewritten the prefs framework
+2020-07-27T17:16:24  <Bosmon> Well, I imagine there are *some* things we can do about it
+2020-07-27T17:16:35  <Bosmon> I notice there's a lot of jank on the WeCount site as it starts up
+2020-07-27T17:16:49  <Bosmon> It seems to be a recurrence of that issue that it likes to apply some preferences even if there aren't any
+2020-07-27T17:18:29  <Justin_o> Bosmon: well in this case it's around best practice scores which are taking a hit for including packages with know vulnerabilities
+2020-07-27T17:18:50  <Justin_o> Bosmon: yes, we need to address jank for UIO in general.
+2020-07-27T17:19:06  <Justin_o> Bosmon: so I'm reproducing the TTS test error in Firefox on macOS
+2020-07-27T17:19:11  <Justin_o> I'll try to look into a bit more
+2020-07-27T17:19:33  <Justin_o> the error is
+2020-07-27T17:19:37  <Justin_o> https://www.irccloud.com/pastebin/Xw1qMnFY/
+2020-07-27T17:53:10  *** jhung_phone is now known as jhung
+2020-07-27T18:16:27  <Bosmon> Justin_o - that's extremely peculiar
+2020-07-27T18:17:06  <Bosmon> Can you see the function sitting there in the global namespace?
+2020-07-27T18:17:21  <Bosmon> hmm
+2020-07-27T18:17:24  <Bosmon> It actually is undefined
+2020-07-27T18:17:40  <Bosmon> Makes no sense
+2020-07-27T18:17:46  <Bosmon> How can this test pass on any other platform?
+2020-07-27T18:18:35  <Bosmon> There must be some other kind of failure which prevents this point from ever being reached on Windows and Linux??
+2020-07-27T18:19:51  <Bosmon> OK, nope, it hangs on windows too!
+2020-07-27T18:20:12  <Bosmon> OK - so we actually have a CI failure
+2020-07-27T18:20:26  <Bosmon> Is it possible the cause that we don't actually have working sound support in our Windows CI?
+2020-07-27T18:20:29  <Bosmon> So it just skips these tests?
+2020-07-27T18:38:14  <Justin_o> Bosmon: sorry, was in a meeting
+2020-07-27T18:38:32  <Justin_o> Bosmon: yes, that's possible that the tests get skipped if there is no "sound card"
+2020-07-27T18:38:41  <Bosmon> OK, that's pretty interesting
+2020-07-27T18:38:50  <Bosmon> I wonder if there is some way we can convince the Windows CI that it has one?
+2020-07-27T18:38:56  <Bosmon> I know this was an issue with the GPII
+2020-07-27T18:39:20  <Justin_o> Bosmon: I'm not sure, I don't know if we have any controller over the runner in that regard
+2020-07-27T18:39:29  <Justin_o> maybe if we ran the test in a docker container inside the runner
+2020-07-27T18:39:41  <Bosmon> OK, well it's pretty interesting
+2020-07-27T18:39:52  <Bosmon> I guess we should remain aware that the MacOS runner is just very much more realistic in that regard
+2020-07-27T18:39:53  <Justin_o> well actually that probably won't work either, I think they would probably share that part of the hardware with the host
+2020-07-27T18:39:59  <Bosmon> And that it will pick up TTS failures that no other runner will do
+2020-07-27T18:40:27  <Justin_o> Bosmon: I wonder what's actually causing this problem though, have you managed to figure that part out?
+2020-07-27T18:41:44  <Justin_o> Bosmon: I guess it's probably my bug because this is a new test that was just added
+2020-07-27T18:44:12  <Bosmon> Justin_o - I expect it is quite likely a bad merge that simply axed this function completely from my branch
+2020-07-27T18:44:18  <Bosmon> Since I assume it is still in master
+2020-07-27T18:44:34  <Justin_o> let me check master
+2020-07-27T18:45:23  <Justin_o> Bosmon: https://github.com/fluid-project/infusion/blob/7608e636a065611b3914209b0f1362ef4b81c071/tests/component-tests/textToSpeech/js/TextToSpeechTests.js#L284-L289
+2020-07-27T18:46:00  <Justin_o> Bosmon: I remember that I had to write this little function because we can't pass in an undefined reference through IoC
+2020-07-27T18:46:27  <Justin_o> or well more accurately what it says in that comment
+2020-07-27T18:47:33  <Bosmon> Justin_o - yes, it's reasonable enough
+2020-07-27T18:47:37  <Bosmon> I guess git destroyed it somehow
+2020-07-27T18:48:29  <Justin_o> Bosmon: did you happen to factor it out.. it had been there already in master.. I wonder if you replaced the need for it in the existing tests
+2020-07-27T18:48:35  <Justin_o> maybe we don't need this case anymore either
+2020-07-27T18:49:33  <Justin_o> Bosmon: yes, looks like you were able to use jqUnit.assertUndefined directly and pass in the IoC reference stil
+2020-07-27T18:49:36  <Justin_o> still
+2020-07-27T18:50:31  <Bosmon> Justin_o - what do you mean?
+2020-07-27T18:50:44  <Bosmon> I'm pretty sure that this function is a requirement of the FLUID-6148 era branches
+2020-07-27T18:50:48  <Justin_o> Bosmon: in your branch you changed the other test to look like this https://github.com/amb26/infusion/blob/FLUID-6145/tests/component-tests/textToSpeech/js/TextToSpeechTests.js#L128-L131
+2020-07-27T18:51:10  <Bosmon> Oh really
+2020-07-27T18:51:11  <Bosmon> ok
+2020-07-27T18:51:23  <Bosmon> So we must have picked up a change from master that refreshed this bit of the test sequence
+2020-07-27T18:52:02  <Justin_o> Bosmon: yes, there is a whole new test environment setup to test the error case https://github.com/amb26/infusion/blob/FLUID-6145/tests/component-tests/textToSpeech/js/TextToSpeechTests.js#L221-L254
+2020-07-27T18:52:23  <Justin_o> and you can see the last item in that sequence was referencing the bit that got refactored out for the stat and stop tests
+2020-07-27T18:57:17  <Bosmon> Oh right ok
+2020-07-27T18:57:23  <Bosmon> So it's just a standard 3-way merge failure
+2020-07-27T19:04:11  <Justin_o> Bosmon: yep, should be a simple fix. In theory :)
+2020-07-27T19:05:27  <Justin_o> Bosmon: after that's fixed, can you cut a new dev release with it. I'd like to use the latest code for updating story telling with.
+2020-07-27T20:00:42  <gmoss> Justin_o: do you mind if I close SJRK-331? It's superseded by your work on FLUID-6533/6535, and I'd filed in the ST project only in case it turned out not to be an issue with Infusion proper\
+2020-07-27T20:00:59  <gmoss> I'll add a note explaining where the work is ongoing, of course
+2020-07-27T20:01:14  <gmoss> https://issues.fluidproject.org/browse/SJRK-331
+2020-07-27T20:01:57  <Justin_o> gmoss: sure
+2020-07-27T20:02:25  <Justin_o> you might also want to add the note about not our testing decisions
+2020-07-27T20:03:35  <gmoss> Justin_o: I'm not sure what you mean
+2020-07-27T20:04:03  <Justin_o> gmoss:  I think we said we weren't going to test in Edge 44 for storytelling, at least for the time being, or something like that
+2020-07-27T20:04:39  <gmoss> Justin_o: right, I added a phrase about how we're planning not to support edge 44 and earlier, so the issue won't be solved. Testing isn't specifically mentioned, but I can add that if you like
+2020-07-27T20:04:51  <gmoss> *won't = may not be
+2020-07-27T20:04:53  <Justin_o> gmoss: nope that's good
+2020-07-27T20:05:02  <gmoss> Justin_o: okay, I'll leave it as-is then
+2020-07-27T20:05:07  <Justin_o> thanks
+2020-07-27T20:05:10  <gmoss> thank you :)
+2020-07-27T20:46:38  <gmoss> Justin_o: I've run into some issues while testing the docker-compose build of your SJRK-370 branch. Still looking into it, but the tests are 404ing on the request for markdown-it.js. Did you see anything like that while testing?
+2020-07-27T20:47:13  <gmoss> Maybe it's something simple like a deps change, though perhaps the Docker build instructions need to be updated after gtirloni's containerization work
+2020-07-27T22:35:26  <gmoss> Justin_o: not a Docker problem, fortunately!
+2020-07-27T22:35:27  <gmoss> Justin_o: It seems like markdown-it is not being installed upon running `npm install -prod`(which is how the deps are installed via the Dockerfile), still looking into why that is. I don't think it's relevant but I'll mention it just in case: `fluid-grunt-lint-all` brings in `markdown-it 10.0.0` via `grunt-markdownlint` (dev dependency) and `fluid-handlebars` brings in `markdown-it 11.0.0`
+2020-07-27T22:35:56  <gmoss> going to leave it for today

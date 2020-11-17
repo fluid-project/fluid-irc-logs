@@ -1,0 +1,257 @@
+2019-02-06T00:37:32  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-02-06T02:15:57  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-work
+2019-02-06T02:17:12  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Client Quit)
+2019-02-06T02:48:24  <sgithens> the-t-in-rtf: You did additional work recently so that webdriver tests are added to the code coverage report right?
+2019-02-06T03:26:09  *** sepidehshahi <sepidehshahi!~sepidehsh@24.114.90.111> has joined #fluid-work
+2019-02-06T03:46:27  *** sepidehshahi <sepidehshahi!~sepidehsh@24.114.90.111> has quit IRC (Ping timeout: 240 seconds)
+2019-02-06T07:06:53  <the-t-in-rtf> @sgithens, I made it possible to do it, but it doesn't happen on its own.
+2019-02-06T07:09:31  <the-t-in-rtf> https://github.com/GPII/gpii-testem/blob/master/tests/js/callback-tests.js#L80
+2019-02-06T07:09:46  <the-t-in-rtf> you have to call a client-side function to get the results, that test is a good example of what you need.
+2019-02-06T07:09:56  <the-t-in-rtf> and  you need both webdriver and testem
+2019-02-06T07:10:17  <the-t-in-rtf> just for that static function
+2019-02-06T07:10:37  <the-t-in-rtf> you could also write your own just to pass back the results from the browser to node via webdriver's IPC bridge
+2019-02-06T07:11:39  <the-t-in-rtf> i.e. wait until the rest of the tests are complete and add a sequence step to pull out the contents of window._coverage_
+2019-02-06T07:12:12  <the-t-in-rtf> my approach hooks into the QUnit "after tests" callback mechanism.
+2019-02-06T09:23:52  <the-t-in-rtf> Whew.  Anyone who missed the superbowl, here's all you need:  https://www.youtube.com/watch?v=_YISTzpLXCY
+2019-02-06T09:24:12  <the-t-in-rtf> The MS Adaptive Controller is still my favourite product of 2018.
+2019-02-06T09:24:31  <the-t-in-rtf> they actually paid for an add for it during the superbowl, which is just so classy.
+2019-02-06T09:24:37  <the-t-in-rtf> s/add/ad/
+2019-02-06T09:31:52  *** kris_HA <kris_HA!~kris@83-148-84-242.ip.btc-net.bg> has joined #fluid-work
+2019-02-06T09:40:36  *** kris_HA <kris_HA!~kris@83-148-84-242.ip.btc-net.bg> has quit IRC (Ping timeout: 246 seconds)
+2019-02-06T10:38:47  <the-t-in-rtf> @Bosmon, still working on the universal test stability.  The penultimate run passed, the last failed with an NPE (Jenkins error, not the build itself)
+2019-02-06T10:38:52  <the-t-in-rtf> Waiting on the latest
+2019-02-06T10:39:06  <Bosmon> the-t-in-rtf - incredible progress!
+2019-02-06T10:39:10  <the-t-in-rtf> I suspect there may still be issues, but at least we'll have better insight with the error reporting I added
+2019-02-06T10:39:11  <Bosmon> Your "little present" shipped today :)
+2019-02-06T10:39:14  <the-t-in-rtf> ;ha
+2019-02-06T10:39:17  <the-t-in-rtf> great
+2019-02-06T10:39:25  <the-t-in-rtf> I promise not to mix it with coke.
+2019-02-06T10:39:39  <the-t-in-rtf> I'll have to dust off the crystal glasses
+2019-02-06T10:41:02  <the-t-in-rtf> I hope we can merge soon, merging with upstream master is shall we say a little awkward
+2019-02-06T10:41:16  <the-t-in-rtf> I had to tamp down a couple of promise producer invoker tests
+2019-02-06T10:41:30  <the-t-in-rtf> thankfully I still remember the routine
+2019-02-06T10:42:34  <the-t-in-rtf> we should talk carefully about the sequence, I'm a bit worried about Joseph's pull, for example: https://github.com/GPII/universal/pull/718
+2019-02-06T10:42:54  <the-t-in-rtf> whichever order we do it in, there's going to be an adjustment
+2019-02-06T10:43:07  <the-t-in-rtf> maybe he and I can review and pair on the merge or somethiing
+2019-02-06T10:54:42  *** kris_HA <kris_HA!~kris@83-148-84-242.ip.btc-net.bg> has joined #fluid-work
+2019-02-06T11:05:32  <Bosmon> the-t-in-rtf - yes, we certainly need to get your pull in sooner rather than later
+2019-02-06T11:05:44  <Bosmon> Given the risk of divergence will grow
+2019-02-06T11:16:00  <the-t-in-rtf> So, here's one of the most recent test failures:
+2019-02-06T11:16:01  <the-t-in-rtf> 10:48:34.080:  jq: FAIL: Module "gpii.tests.acceptance.userLogon.config tests" Test name "Testing standard error handling: invalid
+2019-02-06T11:16:01  <the-t-in-rtf>  user URLs" - Message: Received error when logging in non-existing GPII key
+2019-02-06T11:16:01  <the-t-in-rtf> 10:48:34.080:  jq: Expected: {
+2019-02-06T11:16:01  <the-t-in-rtf>     "isError": true,
+2019-02-06T11:16:01  <the-t-in-rtf>     "statusCode": 404,
+2019-02-06T11:16:01  <the-t-in-rtf>     "message": "Error when retrieving preferences: GPII key \"bogusToken\" does not exist while executing HTTP GET on url http://l
+2019-02-06T11:16:01  <the-t-in-rtf> ocalhost:8081/preferences/%gpiiKey?merge=%merge"
+2019-02-06T11:16:03  <the-t-in-rtf> }
+2019-02-06T11:16:03  <the-t-in-rtf> 10:48:34.081:  jq: Actual: {
+2019-02-06T11:16:04  <the-t-in-rtf>     "isError": true,
+2019-02-06T11:16:04  <the-t-in-rtf>     "message": "Error when retrieving preferences: GPII key \"bogusToken\" does not exist while executing HTTP GET on url http://l
+2019-02-06T11:16:05  <the-t-in-rtf> ocalhost:8081/preferences/bogusToken?merge=%merge",
+2019-02-06T11:16:05  <the-t-in-rtf>     "statusCode": 404
+2019-02-06T11:19:01  <the-t-in-rtf> I'm tracking it back to a line of code, but what's bizarre to me is that one but not both of the usernames are resolved.
+2019-02-06T11:28:39  <the-t-in-rtf> I suspect friendly fire, the expected value changed in the most recent merge to master
+2019-02-06T11:28:48  <the-t-in-rtf> probably my stale copy clobbered it during the merge
+2019-02-06T11:43:56  *** kris_HA <kris_HA!~kris@83-148-84-242.ip.btc-net.bg> has quit IRC (Ping timeout: 240 seconds)
+2019-02-06T12:03:07  <the-t-in-rtf> so, yes, you did change the expected value in the most recent merge
+2019-02-06T12:03:20  <the-t-in-rtf> but what's bizarre is that the tests pass for me locally even with the old value
+2019-02-06T12:03:32  <the-t-in-rtf> testing now in Vagrant
+2019-02-06T12:23:42  *** kris_HA <kris_HA!~kris@83-148-84-242.ip.btc-net.bg> has joined #fluid-work
+2019-02-06T12:32:49  <the-t-in-rtf> pretty sure the reuse of the docker container is to blame
+2019-02-06T12:33:05  <the-t-in-rtf> i.e. deleting and recreating the DB doesn't always work.
+2019-02-06T12:33:11  <the-t-in-rtf> I see errors like:
+2019-02-06T12:33:30  <the-t-in-rtf> }: promise has received disposition "reject" with payload {"error":"file_exists","reason":"The database could not be created, the file already exists."}
+2019-02-06T12:33:30  <the-t-in-rtf>  when "resolve" was expected
+2019-02-06T12:33:32  <the-t-in-rtf> @Bosmon
+2019-02-06T12:33:46  <the-t-in-rtf> I am verifying by configuring the harness to recreate the Docker container on each run
+2019-02-06T12:34:14  <the-t-in-rtf> if that is stable over say 5 runs we need to discuss the speed tradeoff and/or discuss improving the harness to better clear itself out
+2019-02-06T12:38:47  <the-t-in-rtf> but I seriously doubt it will erase the five minutes we got back by plugging the memory leaks
+2019-02-06T12:39:22  <the-t-in-rtf> it may be enough to merge it with the removeContainer option enabled and plan out improvements to the couch harness independently
+2019-02-06T12:48:02  <Bosmon> the-t-in-rtf - the difference in the above will stem from a different version of kettle, you may have clobbered that in your package.json
+2019-02-06T12:48:12  <the-t-in-rtf> ah, very interesting
+2019-02-06T12:48:13  <Bosmon> I wonder what is going wrong with recreating the database
+2019-02-06T12:48:18  <the-t-in-rtf> I still think there are some timing problems
+2019-02-06T12:48:31  <the-t-in-rtf> there may need to be an additional check or a pause when reusing a db
+2019-02-06T12:48:44  <Bosmon> the-t-in-rtf - sounds reasonable
+2019-02-06T12:49:00  <Bosmon> I guess it's an untypical enough activity that there may be race conditions in Couch's endpoint
+2019-02-06T12:49:23  <the-t-in-rtf> right, it says "done" when it probably has queued up the deletion internally
+2019-02-06T12:49:31  *** michelled <michelled!~Adium@192.0.151.7> has joined #fluid-work
+2019-02-06T12:50:04  <the-t-in-rtf> and the files are still there when it tries to create a db with the same name
+2019-02-06T12:52:32  <Bosmon> the-t-in-rtf - it's also possible that we are stuffing it up ourselves with our lack of "asynchronous destruction"
+2019-02-06T12:52:37  <Bosmon> What does the site which destroys the database look like?
+2019-02-06T12:54:02  <the-t-in-rtf> https://github.com/the-t-in-rtf/gpii-couchdb-test-harness/blob/GPII-3531/src/js/harness.js#L113
+2019-02-06T12:55:05  <Bosmon> Seems reasonable enough...
+2019-02-06T12:55:31  <Bosmon> You should rename all these utilities from "Promise" to "Task"
+2019-02-06T12:55:34  <Bosmon> Since that is what they return
+2019-02-06T12:55:51  <the-t-in-rtf> well
+2019-02-06T12:56:06  <the-t-in-rtf> is that what you call things you pass to fluid.promise.sequence in general?
+2019-02-06T12:56:11  <Bosmon> No
+2019-02-06T12:56:22  <Bosmon> fluid.promise sequence accepts any mixture of i) resolved values, ii) promises, iii) tasks
+2019-02-06T12:56:33  <Bosmon> At increasing levels of indirection
+2019-02-06T12:57:07  <the-t-in-rtf> ah, OK, I see your point, needed to read up how you were using "task" in context
+2019-02-06T12:57:26  <Bosmon> It is a standard "term of art", as Edwards might say : P
+2019-02-06T12:57:27  <Bosmon> https://github.com/cujojs/when/blob/master/docs/api.md#whensequence
+2019-02-06T12:57:30  <the-t-in-rtf> For anyone who is similarly ignorant: https://docs.fluidproject.org/infusion/development/PromisesAPI.html#fluidpromisesequencesources-options
+2019-02-06T12:57:39  <Bosmon> "Task" is the name given to "function returning a promise"
+2019-02-06T12:58:17  <the-t-in-rtf> I'm not sure their page really makes it clear except by example, I think your explanation is the one people should read... ;)
+2019-02-06T13:01:47  <the-t-in-rtf> OK, the tasks are at least queue up in the right order
+2019-02-06T13:01:49  <the-t-in-rtf> 12:45:51.597:  Requesting metadata for database: http://localhost:25984/gpii
+2019-02-06T13:01:49  <the-t-in-rtf> 12:45:51.600:  Queueing up deletion of existing database: http://localhost:25984/gpii
+2019-02-06T13:01:49  <the-t-in-rtf> 12:45:51.600:  Queueing up creation of database: http://localhost:25984/gpii
+2019-02-06T13:01:49  <the-t-in-rtf> 12:45:51.600:  Queueing up data loading of database: http://localhost:25984/gpii
+2019-02-06T13:01:51  <the-t-in-rtf> queued
+2019-02-06T13:02:13  <the-t-in-rtf> so the third step fails because the second hasn't actually completed
+2019-02-06T13:02:37  <the-t-in-rtf> going to look through the Couch docs during our meetings
+2019-02-06T13:09:47  <the-t-in-rtf> it claims that by the time you get a 200 response to the db delete the deed should have been done
+2019-02-06T13:09:56  <the-t-in-rtf> but obviously that's not exactly the case
+2019-02-06T13:10:17  <the-t-in-rtf> rather than inspecting active tasks I am adding a crude pause to see if waiting at that step helps reliably
+2019-02-06T13:10:41  <the-t-in-rtf> this is what I mean by active tasks
+2019-02-06T13:10:42  <the-t-in-rtf> https://docs.couchdb.org/en/stable/api/server/common.html#active-tasks
+2019-02-06T13:10:49  <the-t-in-rtf> not any other usage of the common word
+2019-02-06T13:12:50  <the-t-in-rtf> eventually a link for each word is the only way we'll understand each other
+2019-02-06T13:13:11  <Bosmon> Or simply holding one's hands in the air at the correct angle
+2019-02-06T13:13:13  <Bosmon> At Tanagra
+2019-02-06T13:13:44  <the-t-in-rtf> yes, that was a wonderful one, but so impractical
+2019-02-06T13:13:59  <the-t-in-rtf> I mean, what metaphor do you use to ask where the toilet is
+2019-02-06T13:14:02  <Bosmon> So Couch reports that the "task" for deleting the database is still active?
+2019-02-06T13:14:08  <the-t-in-rtf> dunno
+2019-02-06T13:14:12  <the-t-in-rtf> figured that way lay madness
+2019-02-06T13:14:16  <the-t-in-rtf> trying a timeout first
+2019-02-06T13:14:45  <the-t-in-rtf> I mean, the tasks are normal stuff, so you can't just assume that having any running is bad, you'd have to learn what the deletion task looks like, which might be tough to spot in the wild
+2019-02-06T13:15:08  <the-t-in-rtf> we're only seeing it in one of hundreds of very tightly spaced runs
+2019-02-06T13:15:31  <the-t-in-rtf> I can try rebooting little Derek a few hundred thousand times, or just try a timeout
+2019-02-06T13:15:52  <the-t-in-rtf> by "it" I mean the problem
+2019-02-06T13:15:58  <the-t-in-rtf> not even sure the deletion shows up as a task
+2019-02-06T13:16:31  <the-t-in-rtf> we might reboot Derek 500,000 times and all we have are all olive martinis, with no clear picture of how deletion is managed internally
+2019-02-06T13:16:43  <the-t-in-rtf> it might also be a "job"
+2019-02-06T13:17:07  <the-t-in-rtf> hmm, seems unlikely: https://docs.couchdb.org/en/stable/api/server/common.html#scheduler-jobs
+2019-02-06T13:17:27  <Bosmon> Yes
+2019-02-06T13:17:40  <Bosmon> You may just have to throw a little "ensure Derek dead" task into the mix ....
+2019-02-06T13:17:59  <the-t-in-rtf> I suspect that they might report him dead if we asked by normal means
+2019-02-06T13:18:37  <the-t-in-rtf> OK, one pass down, rock solid
+2019-02-06T13:18:45  <the-t-in-rtf> first passing run in a few hours at least in vagrant
+2019-02-06T13:24:23  *** sepidehshahi <sepidehshahi!~sepidehsh@142.177.149.70> has joined #fluid-work
+2019-02-06T13:27:44  <the-t-in-rtf> yup, two in a row
+2019-02-06T13:28:18  <the-t-in-rtf> A 250ms pause add about 70 seconds to the overall run time.
+2019-02-06T13:30:36  <the-t-in-rtf> OK, party people
+2019-02-06T13:31:08  <the-t-in-rtf> Sandra is still stuck in another meeting, but I'm in the room for the Windows meeting
+2019-02-06T13:33:57  <the-t-in-rtf> @stegru, you around?
+2019-02-06T13:34:06  <stegru> yes?
+2019-02-06T13:34:08  <stegru> oh
+2019-02-06T13:34:14  <the-t-in-rtf> indeed
+2019-02-06T13:34:59  <the-t-in-rtf> @jhernandez?
+2019-02-06T13:36:13  *** sepidehshahi <sepidehshahi!~sepidehsh@142.177.149.70> has left #fluid-work
+2019-02-06T13:41:55  *** colinclark <colinclark!~colinclar@192.0.159.124> has joined #fluid-work
+2019-02-06T13:46:13  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-02-06T13:53:29  <the-t-in-rtf> Trying with 125ms for a couple of passes
+2019-02-06T13:53:43  <the-t-in-rtf> will keep rule of halving it down until I hit the floor and then adjust slightly upwards
+2019-02-06T14:02:38  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-02-06T14:13:10  <Bosmon> cindyli - in our Windows Onboarding meeting just now we were dimly remembering that there might have been some work starting on the "Access Requester" at some point
+2019-02-06T14:13:13  <Bosmon> Do you remember anything about that?
+2019-02-06T14:15:00  <cindyli> Bosmon: the "Access Requester" work starting in universal?
+2019-02-06T14:15:34  <cindyli> or windows repo? or both?
+2019-02-06T14:15:50  <Bosmon> cindyli - no idea
+2019-02-06T14:15:55  <Bosmon> I just remember there was something about it :)
+2019-02-06T14:16:00  <Bosmon> Do you know if work was ever started?
+2019-02-06T14:19:22  <cindyli> i don't think so. the work related to access requester we talked most recently, which was about 2 years ago, was the workflow we suggested to the UX team regarding how to request client credential from GPII apps - https://wiki.gpii.net/w/Workflows_to_Request_and_Manage_Client_Credentials#Option_3:_Request_Client_Credential_within_GPII_App_while_Login_at_GPII_website, but this work has never been high priority enough to even get UX to
+2019-02-06T14:19:23  <cindyli>  start on it
+2019-02-06T14:45:50  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-ufvodlcrptrqytlg> has joined #fluid-work
+2019-02-06T14:50:18  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-sydhqnhrvcjlzwby> has joined #fluid-work
+2019-02-06T14:54:41  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-sydhqnhrvcjlzwby> has quit IRC (Remote host closed the connection)
+2019-02-06T14:54:51  *** alanharnum2 <alanharnum2!alanharnum@nat/ocadu/x-qxlkgjsjjwqhlxnp> has joined #fluid-work
+2019-02-06T14:59:47  *** alanharnum2 <alanharnum2!alanharnum@nat/ocadu/x-qxlkgjsjjwqhlxnp> has quit IRC (Remote host closed the connection)
+2019-02-06T15:00:16  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-omjqsixsetixybhh> has joined #fluid-work
+2019-02-06T15:01:13  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.104> has joined #fluid-work
+2019-02-06T15:03:38  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-ufvodlcrptrqytlg> has quit IRC (Ping timeout: 246 seconds)
+2019-02-06T15:08:40  *** colinclark <colinclark!~colinclar@192.0.159.124> has quit IRC (Quit: colinclark)
+2019-02-06T15:09:25  *** avtar <avtar!~avtar@ip-24-50-182-59.user.start.ca> has joined #fluid-work
+2019-02-06T15:11:21  *** kris_HA <kris_HA!~kris@83-148-84-242.ip.btc-net.bg> has quit IRC (Ping timeout: 252 seconds)
+2019-02-06T15:18:11  <stegru> the-t-in-rtf, you don't need me for the deployment meeting on the hour? (I have nothing to say on the matter)
+2019-02-06T15:18:50  <the-t-in-rtf> it's more getting devops input, so no, I don't think so
+2019-02-06T15:18:55  <jhernandez> stegru: you can leave in peace for your siesta
+2019-02-06T15:19:00  <jhernandez> :P
+2019-02-06T15:19:04  <stegru> great
+2019-02-06T15:19:27  <stegru> oh shut up, brussels :P
+2019-02-06T15:20:11  <the-t-in-rtf> vape me a kipper, I'll be back for our dinner meeting
+2019-02-06T15:20:24  <stegru> haha
+2019-02-06T15:31:07  *** michelled <michelled!~Adium@192.0.151.7> has quit IRC (Quit: Leaving.)
+2019-02-06T15:31:52  *** clown <clown!clown@nat/ocadu/x-glhdlmighkpgwlqo> has joined #fluid-work
+2019-02-06T15:56:12  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-02-06T15:57:13  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-02-06T16:00:11  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-02-06T16:01:28  <jhernandez> the-t-in-rtf: "vape me a kipper" ?
+2019-02-06T16:01:54  <the-t-in-rtf> Red Dwarf reference
+2019-02-06T16:02:01  <the-t-in-rtf> but since Steve doesn't smoke I tweaked it
+2019-02-06T16:02:28  <jhernandez> okay okay
+2019-02-06T16:02:36  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-omjqsixsetixybhh> has quit IRC (Remote host closed the connection)
+2019-02-06T16:02:45  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-gkaiciylfqrsjxhx> has joined #fluid-work
+2019-02-06T16:05:10  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has joined #fluid-work
+2019-02-06T16:05:40  <the-t-in-rtf> The pad for our discussion in Room 2: https://pad.gpii.net/p/20190206-deployment-process-discussion-xn164nlr
+2019-02-06T16:08:24  *** colinclark <colinclark!~colinclar@205.211.168.104> has joined #fluid-work
+2019-02-06T16:09:25  <the-t-in-rtf> Here's the ticket we're discussing: https://issues.gpii.net/browse/GPII-3661
+2019-02-06T16:11:55  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-02-06T16:25:32  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-gkaiciylfqrsjxhx> has quit IRC (Remote host closed the connection)
+2019-02-06T16:25:50  *** simonjb <simonjb!simonjb@nat/ocadu/x-apzsanzprgyarrpq> has joined #fluid-work
+2019-02-06T16:26:26  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-exvgnxvefvhwmwom> has joined #fluid-work
+2019-02-06T16:28:14  *** amatas <amatas!~amatas@62.174.188.220.static.user.ono.com> has joined #fluid-work
+2019-02-06T16:30:30  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-exvgnxvefvhwmwom> has quit IRC (Remote host closed the connection)
+2019-02-06T16:30:38  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-ejhbefgrttpclapb> has joined #fluid-work
+2019-02-06T16:30:43  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-ejhbefgrttpclapb> has quit IRC (Remote host closed the connection)
+2019-02-06T16:31:12  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-gppsfncqbeftqmhw> has joined #fluid-work
+2019-02-06T16:39:07  <jhernandez> the-t-in-rtf: ping me anytime if you have questions in relation to how we are "releasing" morphic these days
+2019-02-06T16:41:34  <the-t-in-rtf> cool, I may hit you up when I start sketching the workflow
+2019-02-06T16:41:37  <the-t-in-rtf> as we have good overlap
+2019-02-06T16:47:52  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-gppsfncqbeftqmhw> has quit IRC (Remote host closed the connection)
+2019-02-06T16:48:01  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-rdxpnhzvhqwfydps> has joined #fluid-work
+2019-02-06T17:00:32  <the-t-in-rtf> @jhernandez, are we still in room 2 for the meeting?
+2019-02-06T17:00:46  <jhernandez> yup
+2019-02-06T17:00:46  <the-t-in-rtf> nm, my invite is up to date
+2019-02-06T17:01:05  <jhernandez> already there
+2019-02-06T17:10:45  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-rdxpnhzvhqwfydps> has quit IRC (Remote host closed the connection)
+2019-02-06T17:11:34  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-zcafsbavyarbrzkj> has joined #fluid-work
+2019-02-06T17:12:18  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-zcafsbavyarbrzkj> has quit IRC (Remote host closed the connection)
+2019-02-06T17:12:27  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-wtpvhjaqidldjsaq> has joined #fluid-work
+2019-02-06T17:16:53  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-wtpvhjaqidldjsaq> has quit IRC (Client Quit)
+2019-02-06T17:17:08  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-02-06T17:45:57  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-02-06T18:00:14  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has joined #fluid-work
+2019-02-06T18:00:20  *** cherylhjli <cherylhjli!~Adium@205.211.168.104> has quit IRC (Client Quit)
+2019-02-06T18:01:48  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-02-06T18:05:55  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:9477:5086:754b:997d> has quit IRC (Quit: Leaving.)
+2019-02-06T18:07:24  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:604d:de82:c762:86a6> has joined #fluid-work
+2019-02-06T18:41:18  <gmoss> ping the-t-in-rtf
+2019-02-06T18:44:17  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-02-06T18:48:36  <gmoss> or ping anyone familiar with gpii-binder :)
+2019-02-06T18:55:31  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-02-06T19:21:48  *** jhung is now known as jhung_away
+2019-02-06T19:32:34  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-02-06T19:33:15  *** michelled <michelled!~Adium@192.0.151.7> has joined #fluid-work
+2019-02-06T19:33:23  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 245 seconds)
+2019-02-06T19:49:15  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-02-06T19:52:33  *** jhung_away <jhung_away!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-02-06T20:08:35  *** cherylhjli <cherylhjli!~Adium@142.122.106.129> has joined #fluid-work
+2019-02-06T20:13:39  * clown getting kicked out of the building because the university is closing due to inclement weather.  Cya
+2019-02-06T20:13:45  *** clown <clown!clown@nat/ocadu/x-glhdlmighkpgwlqo> has quit IRC (Quit: Leaving.)
+2019-02-06T20:16:57  *** simonjb <simonjb!simonjb@nat/ocadu/x-apzsanzprgyarrpq> has quit IRC (Quit: Leaving)
+2019-02-06T20:19:52  *** colinclark <colinclark!~colinclar@205.211.168.104> has quit IRC (Quit: colinclark)
+2019-02-06T20:24:58  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-02-06T20:37:52  *** avtar <avtar!~avtar@ip-24-50-182-59.user.start.ca> has quit IRC (Quit: Leaving.)
+2019-02-06T20:43:22  <the-t-in-rtf> sorry, @gmoss, happy to help but our timing is not great
+2019-02-06T20:43:40  <the-t-in-rtf> I have good overlap on Friday and can probably manage an early chat tomorrow
+2019-02-06T20:43:50  <gmoss> no worries the-t-in-rtf. I've sent you an email with the details if you have time to look at it
+2019-02-06T20:43:59  <the-t-in-rtf> cool, will look at it on the morrow
+2019-02-06T20:44:01  <the-t-in-rtf> have a great evening
+2019-02-06T20:44:05  <gmoss> awesome, thanks! you too the-t-in-rtf
+2019-02-06T20:48:28  *** cherylhjli <cherylhjli!~Adium@142.122.106.129> has quit IRC (Quit: Leaving.)
+2019-02-06T21:04:12  *** colinclark <colinclark!~colinclar@192.0.159.124> has joined #fluid-work
+2019-02-06T21:28:43  *** cherylhjli <cherylhjli!~Adium@142.122.106.129> has joined #fluid-work
+2019-02-06T21:59:27  *** clown <clown!~clown@ckvlon1747w-lp130-03-64-231-43-240.dsl.bell.ca> has joined #fluid-work
+2019-02-06T22:07:01  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-02-06T22:08:54  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-02-06T22:16:07  *** amatas <amatas!~amatas@62.174.188.220.static.user.ono.com> has quit IRC (Quit: amatas)
+2019-02-06T22:19:55  *** michelled <michelled!~Adium@192.0.151.7> has quit IRC (Quit: Leaving.)
+2019-02-06T22:40:05  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-02-06T22:40:08  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-02-06T23:27:13  *** clown <clown!~clown@ckvlon1747w-lp130-03-64-231-43-240.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2019-02-06T23:33:35  *** cherylhjli <cherylhjli!~Adium@142.122.106.129> has left #fluid-work

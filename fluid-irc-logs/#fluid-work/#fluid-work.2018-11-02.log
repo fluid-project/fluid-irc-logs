@@ -1,0 +1,285 @@
+2018-11-02T02:36:31  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2018-11-02T02:39:44  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has left #fluid-work
+2018-11-02T02:48:19  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has joined #fluid-work
+2018-11-02T02:50:41  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has quit IRC (Client Quit)
+2018-11-02T05:48:17  *** danayo <danayo!~danayo@S01069050ca694f23.vc.shawcable.net> has joined #fluid-work
+2018-11-02T06:02:12  *** danayo <danayo!~danayo@S01069050ca694f23.vc.shawcable.net> has quit IRC (Quit: danayo)
+2018-11-02T08:43:43  *** georgitodorov <georgitodorov!~georgitod@37.157.190.158> has joined #fluid-work
+2018-11-02T09:10:26  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has joined #fluid-work
+2018-11-02T09:13:27  <the-t-in-rtf> @dandimitrov, just confirming with @bosmon the order in which to merge, I suspect I'll merge your small pull shortly.
+2018-11-02T09:15:16  <dandimitrov> the-t-in-rtf: Great, glad to hear that
+2018-11-02T09:16:12  <dandimitrov> It’s a local PR for our fork, so probably we’ll have to do the merge
+2018-11-02T09:16:29  <dandimitrov> I’ll wait for your signal ;)
+2018-11-02T10:53:07  <Bosmon> Sure
+2018-11-02T10:53:12  <Bosmon> I see some new review in the branch
+2018-11-02T10:53:46  <Bosmon> But as far as I see, the only logical order is to merge it into #62, right?
+2018-11-02T11:54:01  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2018-11-02T12:08:42  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:606e:975e:54e6:d504> has joined #fluid-work
+2018-11-02T12:08:59  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:606e:975e:54e6:d504> has quit IRC (Remote host closed the connection)
+2018-11-02T12:09:25  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:606e:975e:54e6:d504> has joined #fluid-work
+2018-11-02T12:10:13  *** jhernand_ <jhernand_!~jhernande@91.178.78.52> has joined #fluid-work
+2018-11-02T12:14:01  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:606e:975e:54e6:d504> has quit IRC (Ping timeout: 260 seconds)
+2018-11-02T12:21:18  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:c5fd:5425:89a3:2a04> has joined #fluid-work
+2018-11-02T12:26:05  <dandimitrov> Bosmon: yep, this will be achieved when we merge this local PR
+2018-11-02T12:41:22  *** clown <clown!~clown@ckvlon1747w-lp130-05-69-157-45-121.dsl.bell.ca> has joined #fluid-work
+2018-11-02T12:46:32  *** jhung <jhung!~Adium@dhcp-108-168-100-210.cable.user.start.ca> has joined #fluid-work
+2018-11-02T12:54:18  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2018-11-02T12:54:34  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:c5fd:5425:89a3:2a04> has quit IRC (Remote host closed the connection)
+2018-11-02T12:55:08  *** alanharnum <alanharnum!~alanharnu@CPEa84e3f430953-CMa84e3f430950.cpe.net.cable.rogers.com> has joined #fluid-work
+2018-11-02T13:00:20  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has quit IRC (Quit: dandimitrov)
+2018-11-02T13:18:14  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-ccyrbcekrfhnidkc> has joined #fluid-work
+2018-11-02T13:55:04  <Bosmon> cindyli, the-t-in-rtf - we have had 3 failures from the PouchManager in a row on https://github.com/GPII/universal/pull/705
+2018-11-02T13:55:14  <Bosmon> The situation is starting to become a little difficult : P
+2018-11-02T13:55:29  <the-t-in-rtf> very timely
+2018-11-02T13:55:38  <the-t-in-rtf> just putting in the pull for the replacement
+2018-11-02T13:56:01  <the-t-in-rtf> there are real speed tradeoffs, but it completely avoids the use of express-pouchdb
+2018-11-02T13:56:40  <the-t-in-rtf> it's 21 seconds for a full run in gpii-pouchdb vs the previous 4 seconds
+2018-11-02T13:57:10  <cindyli> whoa
+2018-11-02T13:57:11  <the-t-in-rtf> but it's actually running Couch and there's no shell games trying to provision a pouch instance for use with express-pouchdb and then clean it up.
+2018-11-02T13:57:19  <the-t-in-rtf> it was much slower before our previous discussion
+2018-11-02T14:03:50  <the-t-in-rtf> I am thinking through a slightly more performant approach at the moment.
+2018-11-02T14:04:11  <cindyli> the-t-in-rtf: does every test in a test sequence performs the whole process: start couchdb docker container -> load data -> test -> clean up couchdb -> stop couchdb docker container? or the start/stop couchdb container only happens once for all tests in a test sequence?
+2018-11-02T14:04:16  <the-t-in-rtf> no
+2018-11-02T14:04:25  <the-t-in-rtf> only once per environment
+2018-11-02T14:04:29  <cindyli> ok
+2018-11-02T14:04:30  <the-t-in-rtf> it doesn't use that constructfixtures pattern
+2018-11-02T14:04:48  <the-t-in-rtf> I am now thinking about how to make it start the docker container only if it's not already running
+2018-11-02T14:04:57  <the-t-in-rtf> and to make it reuse the container between environments
+2018-11-02T14:05:07  <cindyli> that would be cool
+2018-11-02T14:05:31  <the-t-in-rtf> that and combining the provisioning steps per db are the best I can think of at the moment to speed it up.
+2018-11-02T14:05:48  <cindyli> does couchdb docker containr uses a port that can be provided as an option?
+2018-11-02T14:05:53  <the-t-in-rtf> yes
+2018-11-02T14:05:56  <cindyli> cool
+2018-11-02T14:06:07  <the-t-in-rtf> basically, because we're using docker run, it's just part of the command
+2018-11-02T14:06:15  <cindyli> ok
+2018-11-02T14:06:18  <the-t-in-rtf> that's one thing we'd have to discuss, you only get one port per container
+2018-11-02T14:06:37  <the-t-in-rtf> I might also be able to let us indicate that a dataset is to be loaded once on provisioning and left alone
+2018-11-02T14:07:03  <the-t-in-rtf> for example, if we're using the same user data for a whole range of tests, but not actually adding or removing users
+2018-11-02T14:07:48  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has joined #fluid-work
+2018-11-02T14:08:26  <cindyli> like read only data?
+2018-11-02T14:08:34  <the-t-in-rtf> right
+2018-11-02T14:08:52  <cindyli> what's the benefit of doing this? to save the time for reloading
+2018-11-02T14:08:55  <the-t-in-rtf> yes
+2018-11-02T14:09:35  *** michelled <michelled!~Adium@205.211.168.102> has joined #fluid-work
+2018-11-02T14:09:55  <cindyli> so this read only data set is loaded into its own separate database and stays there for read only tests
+2018-11-02T14:10:08  <the-t-in-rtf> right, you'd flag which dbs must always be provisioned, for example
+2018-11-02T14:10:19  <cindyli> ok, then the test writer needs to be very clear about which database to point to
+2018-11-02T14:10:54  <the-t-in-rtf> yes, you could also handle it by namespacing your dbs carefully, so that each suite uses a different db
+2018-11-02T14:11:39  <cindyli> ok. worthwhile if it helps to reduce the performance overhead
+2018-11-02T14:12:16  <the-t-in-rtf> well, looks like most of the time is data provisioning
+2018-11-02T14:12:29  <the-t-in-rtf> 14:53:05.013:  Starting container.
+2018-11-02T14:12:29  <the-t-in-rtf> 14:53:05.655:  Loading data.
+2018-11-02T14:12:29  <the-t-in-rtf> 14:53:08.446:  Harness ready.
+2018-11-02T14:14:31  <the-t-in-rtf> that .6 seconds is the time between issuing the docker run and when CouchDB is actually responding
+2018-11-02T14:15:06  <the-t-in-rtf> and then 2.8s to provision each db and load its data using the bulk docs API
+2018-11-02T14:15:22  <the-t-in-rtf> 2.8s to provision all dbs and load their data, I mean
+2018-11-02T14:17:31  <the-t-in-rtf> 14:53:08.574:  Removing container.
+2018-11-02T14:17:31  <the-t-in-rtf> 14:53:09.495:  Verifying that container has been removed.
+2018-11-02T14:17:55  <the-t-in-rtf> There's also about a second for teardown when the testEnvironment has run all tests in all caseHolders
+2018-11-02T14:19:09  <the-t-in-rtf> so ~3.5 seconds per environment and three environments that use the harness pretty much exactly explains the time difference
+2018-11-02T14:19:15  <the-t-in-rtf> 4 + 10.5, basically
+2018-11-02T14:20:37  <the-t-in-rtf> with "does the container exist" detection and rules about age (perhaps), we could cut that down to say 5 seconds extra for all tests in gpii-pouchdb
+2018-11-02T14:20:51  <the-t-in-rtf> really the question is how many buildups and teardowns do we have in uinversal
+2018-11-02T14:20:56  <the-t-in-rtf> universal
+2018-11-02T14:21:16  <the-t-in-rtf> if it's a high number, it's worth refactoring for speed vs. cleaner separation between runs
+2018-11-02T14:21:49  <the-t-in-rtf> if it's a low number, we're adding a few seconds  to a very long run as opposed to 10 seconds to 4 second run
+2018-11-02T14:22:33  *** jhernand_ <jhernand_!~jhernande@91.178.78.52> has quit IRC (Remote host closed the connection)
+2018-11-02T14:25:28  <the-t-in-rtf> I'll summarise the above in the PR comments so we can more easily discuss on Tuesday
+2018-11-02T14:29:03  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2018-11-02T14:30:29  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2018-11-02T14:32:49  <Bosmon> OK, it's an official emergency
+2018-11-02T14:32:53  <Bosmon> #705 has failed 4 times in a row
+2018-11-02T14:41:08  <the-t-in-rtf> OK, I'm looking at his branch to see if he's still reusing a shared temp dir.
+2018-11-02T14:46:10  <the-t-in-rtf> seems to have the fix, looking at the logs now
+2018-11-02T14:46:19  <the-t-in-rtf> still suspect a timing bug
+2018-11-02T14:47:20  <the-t-in-rtf> OK, loading the full logs.
+2018-11-02T14:47:27  <the-t-in-rtf> be right back, I have time to bake a souffle
+2018-11-02T14:51:59  <the-t-in-rtf> Anyway, still waiting
+2018-11-02T14:52:21  <the-t-in-rtf> anyone who has the full logs loaded, I want to confirm that a unique dir is correctly reported for each pouchmanager run
+2018-11-02T14:52:41  <the-t-in-rtf> and also just see the error and the timing of surrounding messages
+2018-11-02T14:53:59  <the-t-in-rtf> OK.
+2018-11-02T14:54:16  <the-t-in-rtf> I think the problem is that we only guard against corruption and reuse between test environments
+2018-11-02T14:54:48  <the-t-in-rtf> i.e. each test suite uses the constructFixtures pattern and constructs a new pouch harness, but uses the environment's ID as it's unique bit
+2018-11-02T14:55:08  <the-t-in-rtf> the baseDir name should be based on the ID of the harness instead
+2018-11-02T14:55:32  <the-t-in-rtf> 14:22:37.488:  express baseDir: '/tmp/pouchManagerTests-71rqeh92-339424'...
+2018-11-02T14:55:32  <the-t-in-rtf> ...14:22:43.596:  express baseDir: '/tmp/pouchManagerTests-71rqeh92-339424'...
+2018-11-02T14:55:45  <the-t-in-rtf> that's two tests in a single caseholder
+2018-11-02T14:55:51  <the-t-in-rtf> obviously they are using the same dir.
+2018-11-02T14:56:17  <the-t-in-rtf> ah, sorry, it's the pouch manager's ID
+2018-11-02T14:56:23  <the-t-in-rtf> but it should be the harness ID
+2018-11-02T14:57:00  <the-t-in-rtf> So, @stegru or @bosmon
+2018-11-02T14:57:01  <the-t-in-rtf> https://github.com/stegru/universal/blob/GPII-3469/gpii/node_modules/pouchManager/src/pouchManager.js#L50
+2018-11-02T14:57:17  <the-t-in-rtf> That's what needs to have an expander that uses the ID of the harness
+2018-11-02T14:58:00  <the-t-in-rtf> it's fine if you add the ID of the harness in addition to the ID of the pouch manager, but the ID of the pouch manager alone is not unique enough to guard against between-test corruption.
+2018-11-02T14:58:01  <Bosmon> the-t-in-rtf - no idea - didn't cindyli write this?
+2018-11-02T14:58:08  <the-t-in-rtf> probably
+2018-11-02T14:58:20  <the-t-in-rtf> but as long as you know how to write an expander you should be able to fix it.
+2018-11-02T14:58:33  <Bosmon> I believe some other knowledge is required
+2018-11-02T14:58:33  <the-t-in-rtf> I mean at least enough to move forwards for now
+2018-11-02T14:58:38  <the-t-in-rtf> uh
+2018-11-02T14:58:54  <the-t-in-rtf> It's pretty clearly between test corruption again, just another variation
+2018-11-02T14:59:02  <the-t-in-rtf> what evidence do you have to suggest otherwise?
+2018-11-02T14:59:09  <Bosmon> I have no evidence you're not right
+2018-11-02T14:59:20  <Bosmon> I just assert that more knowledge than "how to write an expander" is required to fix this
+2018-11-02T15:00:03  <Bosmon> Could you write out how this should read?
+2018-11-02T15:00:09  <the-t-in-rtf> yes, that's fair
+2018-11-02T15:01:15  <the-t-in-rtf> just a minute, I'll write it as a snippet that can be dumped into the tests
+2018-11-02T15:02:25  <the-t-in-rtf> hmm, or I guess just in the pouchManager is easier
+2018-11-02T15:03:11  *** georgitodorov <georgitodorov!~georgitod@37.157.190.158> has quit IRC (Quit: Leaving)
+2018-11-02T15:03:52  <the-t-in-rtf> just taking a bit to understand what else pouchmanager does with its base dir
+2018-11-02T15:04:07  <the-t-in-rtf> i.e. if we stuff things in a directory it doesn't know about, what happens, etc
+2018-11-02T15:04:26  <stegru> just fix it, tony! ;)
+2018-11-02T15:05:07  <the-t-in-rtf> from long experience I am at least checking the polarity of the neutron flow first
+2018-11-02T15:05:18  <the-t-in-rtf> but it won't be long
+2018-11-02T15:05:42  <the-t-in-rtf> I'm in fact just gonna prepare it as a pull so I can at least verify that my fix doesn't break the tests on its own
+2018-11-02T15:05:50  <the-t-in-rtf> whether or not I see the other behaviour
+2018-11-02T15:05:59  <cindyli> the-t-in-rtf: pouchManagerTests overrides the "baseDir". it probably should be fixed here - https://github.com/stegru/universal/blob/GPII-3469/gpii/node_modules/pouchManager/test/pouchManagerTests.js#L254-L262
+2018-11-02T15:06:03  <cindyli> as you pointed out last time
+2018-11-02T15:06:10  <the-t-in-rtf> yep.
+2018-11-02T15:07:25  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:dcb9:2bc4:fc20:1a28> has joined #fluid-work
+2018-11-02T15:09:39  <the-t-in-rtf> OK, looks like the harness needs to learn to make its own content dir, let me fix that
+2018-11-02T15:11:23  <the-t-in-rtf> oh, no, it's meant to be persistent
+2018-11-02T15:11:27  <the-t-in-rtf> more reading
+2018-11-02T15:11:29  <the-t-in-rtf> just a bit
+2018-11-02T15:13:22  <the-t-in-rtf> so, @cindyli, maybe you can explain this part: https://github.com/stegru/universal/blob/GPII-3469/gpii/node_modules/pouchManager/src/pouchManager.js#L53
+2018-11-02T15:14:12  <stegru> after it's destroyed, recreate the pouch harness
+2018-11-02T15:14:17  <cindyli> checking
+2018-11-02T15:14:20  <the-t-in-rtf> right, but you have two kinds of resets
+2018-11-02T15:14:24  <stegru> (Sorry)
+2018-11-02T15:14:28  <the-t-in-rtf> one that clears the data based on the member, and one that doesn't
+2018-11-02T15:14:48  <the-t-in-rtf> so my suspicion is that the harder reset has a timing problem and might need to wait a smidge longer
+2018-11-02T15:14:54  <the-t-in-rtf> or wait for a different event
+2018-11-02T15:15:05  <the-t-in-rtf> I will need a bit to track back and confirm.
+2018-11-02T15:16:24  <cindyli> it might be related to this - https://github.com/stegru/universal/blob/GPII-3469/gpii/node_modules/pouchManager/src/pouchManager.js#L23-L25
+2018-11-02T15:16:50  <the-t-in-rtf> actually, I'm wondering if we have another option:
+2018-11-02T15:16:50  <the-t-in-rtf> Error removing temporary directory: Rimraf failed to complete within 1000 milliseconds...
+2018-11-02T15:16:50  <the-t-in-rtf> 14:22:43.574:  express pouchdb instance '71rqeh92-339602' initalizing...
+2018-11-02T15:17:01  <the-t-in-rtf> I mentioned this when the problems were happening last time
+2018-11-02T15:17:14  <the-t-in-rtf> what happens if you ramp that up to 10000 ms?
+2018-11-02T15:17:51  <cindyli> i think "Rimraf failed" because the temp dir doesn't exist
+2018-11-02T15:17:59  <the-t-in-rtf> uh
+2018-11-02T15:18:17  <cindyli> checking the log… sort of rmb seeing it somewhere
+2018-11-02T15:18:42  <the-t-in-rtf> I don't think so
+2018-11-02T15:18:42  <the-t-in-rtf> https://github.com/GPII/gpii-pouchdb/blob/master/src/js/timelyRimraf.js#L46
+2018-11-02T15:18:51  <the-t-in-rtf> iif it failed hard like that, it should have rejected the promise
+2018-11-02T15:19:09  <the-t-in-rtf> wasn't drawing that out for effect, just held the key too long
+2018-11-02T15:19:42  <cindyli> from the log - "{\"error\":\"OpenError\",\"reason\":\"IO error: /tmp/pouchManagerTests-1ci15n09-339463/gpii-mrview-ac9eefd3422f906a613ecb54cb900916/LOCK: No such file or directory\"}\n"
+2018-11-02T15:19:42  <cindyli> 
+2018-11-02T15:20:29  <the-t-in-rtf> oh, that old chestnut.
+2018-11-02T15:21:19  <the-t-in-rtf> sorry, I was hoping there'd be a quicker fix
+2018-11-02T15:21:36  <the-t-in-rtf> reading and thinking further
+2018-11-02T15:21:50  <the-t-in-rtf> just wondering if recreating the pouchmanager for each test is an option
+2018-11-02T15:22:08  <the-t-in-rtf> it would be slower, but you'd have a unique temp dir for each run again.
+2018-11-02T15:22:36  <the-t-in-rtf> I mean for each set of test sequence steps, not each step
+2018-11-02T15:22:52  <the-t-in-rtf> i.e. wrap it in that kind of constructFixtures pattern
+2018-11-02T15:23:16  <the-t-in-rtf> nope
+2018-11-02T15:23:20  <the-t-in-rtf> it's already set up that way
+2018-11-02T15:23:31  <the-t-in-rtf> obviously it's failing within a single set of sequences then
+2018-11-02T15:26:51  <the-t-in-rtf> my guess in reading that is that the cleanup fails to completely remove view content from a previous run
+2018-11-02T15:27:07  <the-t-in-rtf> so it has part of the structure for the view, but not everything it needs
+2018-11-02T15:27:20  <the-t-in-rtf> like a directory that's supposed to represent an index but is empty or corrupt
+2018-11-02T15:27:39  <the-t-in-rtf> a more aggressive cleanup could work
+2018-11-02T15:28:22  <the-t-in-rtf> if the persistent harness moved its directory out of the way and then tried to tidy up the new location, it could be fine.
+2018-11-02T15:29:11  <the-t-in-rtf> even if we end up with mouse droppings on failed cleanups, the directory wouldn't be corrupt after the reset.
+2018-11-02T15:29:49  <Justin_o> Bosmon: if i have a set of promises, is there a way to be notified once they've all been rejected or resolved.
+2018-11-02T15:29:59  <the-t-in-rtf> fluid.promise.sequence, friend
+2018-11-02T15:30:19  <the-t-in-rtf> var sequence = fluid.promise.sequence(arrayOfPromises);
+2018-11-02T15:30:29  <the-t-in-rtf> sequence.then(succesHandler, fluid.fail)
+2018-11-02T15:30:44  <the-t-in-rtf> just pretend I didn't miss the second "s" on success
+2018-11-02T15:31:00  <Bosmon> the-t-in-rtf - perhaps he doesn't want them sequenced
+2018-11-02T15:31:13  <Bosmon> But let's see : P
+2018-11-02T15:31:21  <the-t-in-rtf> well, I was just going to say...
+2018-11-02T15:31:23  <Justin_o> Bosmon: yes, that's correct they don't need to be sequenced
+2018-11-02T15:31:35  <the-t-in-rtf> if you want them all to run at once, all you need is to stash the promises in the array
+2018-11-02T15:31:44  <the-t-in-rtf> if you want them to run in sequence there's a different pattern
+2018-11-02T15:32:23  <Bosmon> Justin_o - but the way you are talking suggests that you might not mind them being sequenced
+2018-11-02T15:32:26  <the-t-in-rtf> but that will definitely do the part you were asking about, giving you something that only completes when a set of promises are all completed or when one has rejected.
+2018-11-02T15:32:30  <Bosmon> Can you talk about your use case in a bit more detail?
+2018-11-02T15:32:34  <the-t-in-rtf> yes, that's good.
+2018-11-02T15:32:48  <the-t-in-rtf> the "all been rejected" part would be good to hear more about
+2018-11-02T15:36:20  <the-t-in-rtf> Just writing up the gpii-pouchdb improvement to improve the persistent harness cleanup
+2018-11-02T15:39:59  <the-t-in-rtf> https://issues.gpii.net/browse/GPII-3497
+2018-11-02T15:40:04  <Justin_o> Bosmon, the-t-in-rtf: yes, best to talk about it in more detail. So this is for Syllabification. Which i have working in the demo but want to write tests for. However, I realize now that I have no way of knowing when the syllabification application is finished. The reason for this is two fold. 1) there is a parser that walks through the DOM and fires an event every time it finds a text node 2) this event is listened to and
+2018-11-02T15:40:04  <Justin_o> will create an instance of a hyphenator for the language of the text node and apply the hyphenation which is used to show the separation of syllables. The hyphenator needs pattern js files loaded for each language so we do this lazily and return a promise that is resolve/rejected when the pattern is loaded. The basic usage is to store promises in a structure keyed off of the language code. The promise returns the
+2018-11-02T15:40:04  <Justin_o> hyphenator to use for the language
+2018-11-02T15:40:34  <Justin_o> we may also have cases where there is no pattern for the language so a rejected promise is stored and the hyphenation for that text node is skipped.
+2018-11-02T15:40:45  <Justin_o> I hope that makes sense
+2018-11-02T15:41:31  <Justin_o> for 1) i can address that in the parse by firing an event after it has finished walking through the DOM. 2) i'm not sure about, and also note that I don't care if the promise was resolved or rejected, only that it completed.
+2018-11-02T15:41:57  <Justin_o> actually what i really want to know is that we've attempted to syllabify all the parsed nodes
+2018-11-02T15:42:13  <Justin_o> so that i can fire an event afterSyllabification event
+2018-11-02T15:42:18  <Justin_o> or something like that
+2018-11-02T15:43:51  <Bosmon> Justin_o - sounds like having no pattern for the language should resolve rather than reject - or at least should be wrapped in a further promise producer which resolves to empty
+2018-11-02T15:44:09  <Bosmon> That would make it easier to use a standard promise calculus which interprets rejection as aborting the whole chain
+2018-11-02T15:45:40  <Justin_o> Bosmon: what would resolving to empty mean, undefined or something like fluid.identity?
+2018-11-02T15:46:12  <the-t-in-rtf> tests running for the quick "rename then delete" fix
+2018-11-02T15:46:20  <the-t-in-rtf> if it passes I will cut a dev release for use with the pull
+2018-11-02T15:46:51  <Bosmon> Justin_o - it could just resolve to undefined, obviously the consumer of the pattern will be clear that it is not a pattern
+2018-11-02T15:47:04  <Bosmon> Thanks, the-t-in-rtf
+2018-11-02T15:47:21  <Bosmon> the-t-in-rtf - you no longer rate the "expander withing pouchManager.js" approach?
+2018-11-02T15:47:24  <Bosmon> within
+2018-11-02T15:47:30  <the-t-in-rtf> no, it can't work
+2018-11-02T15:47:36  <the-t-in-rtf> I was thinking of the non-persistent grade
+2018-11-02T15:47:40  <Justin_o> Bosmon: yep, okay.. it's actually usually an instance of a hyphenator that has been configured with a pattern, but i think that should be fine regardless
+2018-11-02T15:48:04  <the-t-in-rtf> part of the reason I invite @cindyli to next week's meeting is that that grade is much less familiar for me
+2018-11-02T15:48:13  <the-t-in-rtf> this has I hope been a good prep for that conversation
+2018-11-02T15:48:15  <Justin_o> Bosmon: so once that's done.. what do you think about knowing when syllabification has actually been completed?
+2018-11-02T15:48:33  <Bosmon> Justin_o - once that has been done, sequence will be fine
+2018-11-02T15:48:59  <Bosmon> Since if the things are all already promises, you will have launched them all already
+2018-11-02T15:51:29  <Justin_o> Bosmon: is it possible to adjust that over time, that is, if another element is injected into the content and we want to fire the afterSyllabification event again
+2018-11-02T15:51:45  <Justin_o> the new element may or may not be of an already sourced language
+2018-11-02T15:52:08  <the-t-in-rtf> @stegru, you should be able to update your pull to use 1.0.13-dev.20181102T155124Z.9120d82
+2018-11-02T15:52:12  <the-t-in-rtf> of gpii-pouchdb
+2018-11-02T15:53:02  <Bosmon> Justin_o - sounds like a fairly complex case - it might benefit from being modellised somehow
+2018-11-02T15:53:25  <the-t-in-rtf> it uses a kind of fake witness protection where it renames the dir before blowing it away
+2018-11-02T15:53:35  <the-t-in-rtf> it will hopefully get us past this problem.
+2018-11-02T15:53:42  <Bosmon> That is, having a model which contains both a hash of languages to true which records when they have been loaded, and then a running count of unloaded languages
+2018-11-02T15:53:45  <the-t-in-rtf> until we can have the longer discussion about getting rid of it.
+2018-11-02T15:53:51  <the-t-in-rtf> it being express-pouchdb
+2018-11-02T15:53:58  <Bosmon> Your afterSyllabification event can then fire when the running count of unloaded languages hits 0
+2018-11-02T15:54:01  <the-t-in-rtf> or perhaps fixing it or replacing it
+2018-11-02T15:54:12  <Bosmon> the-t-in-rtf - thanks so much
+2018-11-02T15:54:18  <Bosmon> I hope it works for @stegru
+2018-11-02T15:54:32  <Bosmon> He's updated it already!
+2018-11-02T15:55:00  <the-t-in-rtf> ha.
+2018-11-02T15:55:06  <Justin_o> Bosmon: interesting... i'll look into that
+2018-11-02T15:55:07  <the-t-in-rtf> nice to have a loyal fanbase
+2018-11-02T15:55:16  <Justin_o> i'm just about done for the day, but will leave a note about that for myself
+2018-11-02T15:55:51  <Bosmon> Justin_o - my feeling is always that once some logic involving asynchrony and multiple coordination starts getting hairy, the safe way out is to modelise something : P
+2018-11-02T15:56:17  <stegru> *drum roll*
+2018-11-02T15:56:19  <Bosmon> In the future our supercharged synthesis of the core framework and the model system will make expressing such tangles all come for free :)
+2018-11-02T15:59:15  <Justin_o> Bosmon: any chance that'll be ready over the weekend ;)
+2018-11-02T16:00:14  <Bosmon> A weekend of 2027, perhaps : P
+2018-11-02T16:02:27  <Justin_o> haha
+2018-11-02T16:02:35  <Justin_o> looking forward to it
+2018-11-02T16:03:20  <Justin_o> Bosmon, the-t-in-rtf: thanks for the help
+2018-11-02T16:06:49  *** michelled <michelled!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2018-11-02T16:07:54  *** michelled <michelled!Adium@nat/ocadu/x-jzncyjecvczmyjsh> has joined #fluid-work
+2018-11-02T16:11:12  <clown> https://www.youtube.com/watch?v=izQB2-Kmiic
+2018-11-02T16:15:19  *** michelled <michelled!Adium@nat/ocadu/x-jzncyjecvczmyjsh> has quit IRC (Quit: Leaving.)
+2018-11-02T16:22:49  *** clown <clown!~clown@ckvlon1747w-lp130-05-69-157-45-121.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2018-11-02T16:35:00  *** alanharnum <alanharnum!~alanharnu@CPEa84e3f430953-CMa84e3f430950.cpe.net.cable.rogers.com> has quit IRC (Remote host closed the connection)
+2018-11-02T17:08:46  *** michelled <michelled!~Adium@205.211.168.102> has joined #fluid-work
+2018-11-02T17:33:53  *** sepidehshahi_ <sepidehshahi_!~sepidehsh@205.211.168.103> has joined #fluid-work
+2018-11-02T17:36:54  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-ccyrbcekrfhnidkc> has quit IRC (Ping timeout: 252 seconds)
+2018-11-02T17:36:54  *** sepidehshahi_ is now known as sepidehshahi
+2018-11-02T17:45:07  <Bosmon> So awesome, the-t-in-rtf - stegru - seems to have done the trick!
+2018-11-02T17:51:05  <the-t-in-rtf> that's great
+2018-11-02T17:51:19  <the-t-in-rtf> not sure I had a lot of ideas left after that one, especially this late on a Friday
+2018-11-02T18:28:19  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:b92c:9f34:2a62:67ee> has joined #fluid-work
+2018-11-02T18:33:12  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:b92c:9f34:2a62:67ee> has quit IRC (Ping timeout: 252 seconds)
+2018-11-02T18:43:16  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:b92c:9f34:2a62:67ee> has joined #fluid-work
+2018-11-02T19:21:41  <michelled> alanharnum: do you have a few minutes to chat? I'm hoping your memory is better than mine (it almost certainly it)
+2018-11-02T19:21:42  <michelled> is
+2018-11-02T19:28:06  <alanharnum> michelled: sure, one sec
+2018-11-02T19:29:07  <michelled> thx, call when you're ready
+2018-11-02T19:52:13  *** cindyli1 <cindyli1!~Adium@198.52.177.167> has joined #fluid-work
+2018-11-02T19:54:07  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Ping timeout: 240 seconds)
+2018-11-02T20:04:18  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:dcb9:2bc4:fc20:1a28> has quit IRC (Remote host closed the connection)
+2018-11-02T20:07:29  *** jhung <jhung!~Adium@dhcp-108-168-100-210.cable.user.start.ca> has quit IRC (Quit: Leaving.)
+2018-11-02T20:31:23  *** cindyli1 <cindyli1!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2018-11-02T20:33:03  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2018-11-02T20:42:56  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.103> has quit IRC (Quit: sepidehshahi)
+2018-11-02T21:02:52  *** michelled <michelled!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2018-11-02T22:38:41  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has quit IRC (Quit: colinclark)
+2018-11-02T23:47:51  *** the-t-in-rtf1 <the-t-in-rtf1!~Adium@2a02:a210:2142:3480:c1ae:e91c:38c9:eae1> has joined #fluid-work
+2018-11-02T23:49:48  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:3870:a9e7:708d:5367> has quit IRC (Ping timeout: 252 seconds)

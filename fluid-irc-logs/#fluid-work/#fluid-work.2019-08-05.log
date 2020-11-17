@@ -1,0 +1,97 @@
+2019-08-05T05:43:55  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:ed7b:48a4:8ca6:d598> has joined #fluid-work
+2019-08-05T06:04:40  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:ed7b:48a4:8ca6:d598> has quit IRC (Ping timeout: 276 seconds)
+2019-08-05T06:55:43  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-08-05T07:49:01  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has joined #fluid-work
+2019-08-05T08:39:46  *** stegru <stegru!~ste@cpc120296-warr7-2-0-cust79.1-1.cable.virginm.net> has joined #fluid-work
+2019-08-05T09:11:33  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has quit IRC (Quit: Leaving.)
+2019-08-05T09:16:17  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has joined #fluid-work
+2019-08-05T09:35:48  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has quit IRC (Quit: Leaving.)
+2019-08-05T09:44:22  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has joined #fluid-work
+2019-08-05T10:06:33  *** Danail_Dido <Danail_Dido!~Karadalie@109.120.246.31> has joined #fluid-work
+2019-08-05T10:09:26  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3efc:f800:d376:38c:8f16:2324> has joined #fluid-work
+2019-08-05T10:26:29  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.123.218.234> has quit IRC (Quit: Leaving.)
+2019-08-05T11:16:21  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Read error: Connection reset by peer)
+2019-08-05T11:16:35  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-08-05T11:36:07  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3efc:f800:d376:38c:8f16:2324> has quit IRC (Quit: jhernandez)
+2019-08-05T12:00:29  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3efc:f800:d376:38c:8f16:2324> has joined #fluid-work
+2019-08-05T12:01:56  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:e177:96c4:be20:276> has joined #fluid-work
+2019-08-05T12:04:31  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:e177:96c4:be20:276> has quit IRC (Client Quit)
+2019-08-05T12:05:54  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:e177:96c4:be20:276> has joined #fluid-work
+2019-08-05T13:23:43  <javjarfer[m]> Hi there Bosmon , I followed up today a little bit with the research on the flowmanager memory consumption
+2019-08-05T13:23:44  <javjarfer[m]> A first pass of the memory profiler with the system under load showed this numbers
+2019-08-05T13:23:45  * javjarfer[m] uploaded an image: image.png (40KB) < https://matrix.org/_matrix/media/v1/download/matrix.org/EJnngrRElLkAJtYddEPjhqVP >
+2019-08-05T13:23:50  <javjarfer[m]> Up to 64% of the memory used in that snapshot in particular where strings
+2019-08-05T13:24:29  <Bosmon> javjarfer[m] - well, pretty interesting
+2019-08-05T13:24:37  <Bosmon> Now we just need to find out what strings, and from where :)
+2019-08-05T13:25:00  <Bosmon> I'm wondering whether some Infusion debug tracing has been left enabled by accident
+2019-08-05T13:28:19  <javjarfer[m]> Bosmon: Yes, I was trying to find out
+2019-08-05T13:45:07  *** Danail_Dido <Danail_Dido!~Karadalie@109.120.246.31> has quit IRC (Read error: Connection reset by peer)
+2019-08-05T14:05:41  <javjarfer[m]> Bosmon: it looks like a lot of the JSON that are parsed here https://github.com/fluid-project/kettle/blob/master/lib/dataSource-core.js#L134
+2019-08-05T14:05:49  <javjarfer[m]> are never freed
+2019-08-05T14:06:49  <javjarfer[m]> this is a big part of the stack calls
+2019-08-05T14:06:52  * javjarfer[m] uploaded an image: image.png (161KB) < https://matrix.org/_matrix/media/v1/download/matrix.org/spdFAnikFCMWARoEqyYTuzuo >
+2019-08-05T14:42:21  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3efc:f800:d376:38c:8f16:2324> has quit IRC (Quit: jhernandez)
+2019-08-05T14:50:24  <Bosmon> javjarfer[m] - yes, I did suspect a solutions registry leak was involved
+2019-08-05T14:50:35  <Bosmon> But still, the size of the leak seems vast compared with the size of the registry
+2019-08-05T14:51:02  <Bosmon> Which is only 750K
+2019-08-05T14:51:20  <Bosmon> In order to make up to the 220MB you show in your chart, we'd have to have leaked hundreds of copies of it : P
+2019-08-05T15:07:07  <javjarfer[m]> Bosmon: yes, but for example the following I can see multiple creations of the same string when doing the profiling
+2019-08-05T15:07:21  <javjarfer[m]> like this one
+2019-08-05T15:07:29  <javjarfer[m]> "Some words consist of only one character but the pronunciation is different depending on whether the character"
+2019-08-05T15:07:32  <javjarfer[m]> it's a fragment of the SR that appears to be allocated more than 90 times for a much inferior number of queries, like 5-6 queries
+2019-08-05T15:07:36  *** jhernandez <jhernandez!~jhernande@109.131.41.90> has joined #fluid-work
+2019-08-05T15:11:30  <Bosmon> javjarfer[m] - pretty interesting
+2019-08-05T15:11:32  <stegru> that string appears 4 times in the SR, so it's actually being allocated 4 or 5 times per query
+2019-08-05T15:11:51  <Bosmon> aha
+2019-08-05T15:15:39  <javjarfer[m]> stegru, Bosmon so... we have individual allocations for each part of the SR instead of a unified allocation per query?
+2019-08-05T15:15:53  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 245 seconds)
+2019-08-05T15:18:28  <stegru> well, something like Object.assign will cause an extra allocation - but you'd expect the original to be lost later on
+2019-08-05T15:19:05  <javjarfer[m]> stegru: I see, are you seeing taking a look to the heap analyzer?
+2019-08-05T15:19:14  <stegru> no
+2019-08-05T15:19:45  <stegru> i'm not looking at anything, just throwing out clues :)
+2019-08-05T15:24:14  <javjarfer[m]> stegru: nice
+2019-08-05T17:05:20  <javjarfer[m]> Bosmon: me and stegru have been researching about the memory consumption issue and we have new data
+2019-08-05T17:13:41  <javjarfer[m]> Turns out that the size of a solution registry once it's parsed is 5413264 bytes, plus other components so, the memory used per request is almost 6MB, taking into account that the normal throughput is below 5 req/s in my machine, and 10 req/s in the cloud, the queue for the test of 100 users doing random consults in times between 5 to 10 seconds normally queries the system with 12-15 req/s
+2019-08-05T17:14:19  <javjarfer[m]> that makes the queue grow fast, and in less than a min the queue have reached 200 req, and taking into account the size of each request, that means that the system memory have grew up to 1.2GB exhausting the container memory or the VM memory in local
+2019-08-05T17:15:46  <Bosmon> javjarfer[m] - ok, great discovery
+2019-08-05T17:16:00  <javjarfer[m]> good news are that modifying the node parameter "--max-old-space-size=" doesn't look to have a negative impact in the number of requests / s that we can accept, being roughly the same
+2019-08-05T17:16:13  <Bosmon> Should be a fairly quick fix to slash the solutions registry in memory after we have finished using it
+2019-08-05T17:16:21  <Bosmon> DELETE DELETE DELETE
+2019-08-05T17:16:51  <javjarfer[m]> and we can avoid container crashes in the cloud, or memory exhausting in VMs, also, node looks to do a nice job doing this memory management
+2019-08-05T17:17:13  <javjarfer[m]> Bosmon: maybe isn't even necessary to do that, if we tune node RTS
+2019-08-05T17:17:46  <javjarfer[m]> I talked with stegru doing tests of that kind, manually calling the GC or deleting resources by hand
+2019-08-05T17:18:51  <javjarfer[m]> I kept it running in local with the memory limitation a while, and node was containing and I was having timeouts as errors
+2019-08-05T17:19:01  <javjarfer[m]> no 503 tho, or memory exhaustion
+2019-08-05T17:19:54  <javjarfer[m]> so, next phase of the research could be to try to do that memory control by hand, and secondly try to do it through RTS parameters modifications
+2019-08-05T17:21:09  <javjarfer[m]> so, once this is contained, maybe the next thing to try to improve for scalability is trying to see how to increase the amount of requests per second that we are able to process
+2019-08-05T17:22:24  <javjarfer[m]> after reducing the size of each element in the queue of course, since 6mb per element is a very large memory footprint, that will prevent us for having any moderately high queue of requests
+2019-08-05T17:22:45  <javjarfer[m]> I will put all this information in the issue https://issues.gpii.net/browse/GPII-4056
+2019-08-05T17:23:30  <stegru> you do waffle
+2019-08-05T17:25:14  <Bosmon> Yes, you should speak Warringtonian English : P
+2019-08-05T17:25:48  <Bosmon> javjarfer[m] - but, in fact, we should refactor the system so that it only keeps one copy of the SR in memory at a time
+2019-08-05T17:25:54  <Bosmon> There's absolutely no point being so inefficient
+2019-08-05T17:26:01  <stegru> "the GC needs tweaking" is my version
+2019-08-05T17:26:07  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-wzfimhtizgwnvpmn> has quit IRC (Quit: Connection closed for inactivity)
+2019-08-05T17:26:39  <Bosmon> We'll get massively better throughput if we don't thrash the GC so much, even if we can tweak it
+2019-08-05T17:27:35  <stegru> yes, we gave it an extreme setting and it worked, but throughput was apalling
+2019-08-05T17:28:45  <stegru> the main contributor was a "buffer += nextChar()" type of thing in the json5 parser
+2019-08-05T17:28:57  <javjarfer[m]> stegru: thanks I always do my best xD
+2019-08-05T17:29:06  <javjarfer[m]> <Bosmon "Yes, you should speak Warrington"> haha would like to try
+2019-08-05T17:30:17  <stegru> if you use more than two sillables they'll accuse you of being educated
+2019-08-05T17:30:38  <stegru> need to spell poorly, too
+2019-08-05T17:32:02  <javjarfer[m]> > the main contributor was a "buffer += nextChar()" type of thing in the json5 parser
+2019-08-05T17:32:02  <javjarfer[m]> yes, this thing appears to be really inefficient for long chains, up to certain point, it looks like it just constructs strings from the previous one + one new char
+2019-08-05T17:32:03  <javjarfer[m]> > if you use more than two sillables they'll accuse you of being educated
+2019-08-05T17:32:04  <javjarfer[m]> then it's just like in my hometown
+2019-08-05T18:07:31  <Bosmon> javjarfer[m] - these statements are deceptive in modern JSVMs
+2019-08-05T18:07:41  <Bosmon> They are quite capable of making the proper optimisation so there is no point tinkering with them
+2019-08-05T18:07:50  <Bosmon> We just need to stop it rereading the SR on every request
+2019-08-05T18:37:11  <javjarfer[m]> Bosmon, but the upper memory limit is something we should do anyway, because not doing it can cause memory exhaustion in the cloud and a container restart
+2019-08-05T19:07:29  <Bosmon> javjarfer[m] - sure
+2019-08-05T19:35:50  <javjarfer[m]> Bosmon, great
+2019-08-05T21:10:32  *** jhernandez <jhernandez!~jhernande@109.131.41.90> has quit IRC (Quit: jhernandez)
+2019-08-05T22:01:04  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3efc:f800:d376:38c:8f16:2324> has joined #fluid-work
+2019-08-05T22:05:43  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3efc:f800:d376:38c:8f16:2324> has quit IRC (Client Quit)
+2019-08-05T22:53:44  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-yfgooqcxciiqewpr> has joined #fluid-work
+2019-08-05T23:31:01  *** stegru <stegru!~ste@cpc120296-warr7-2-0-cust79.1-1.cable.virginm.net> has quit IRC (Remote host closed the connection)
+2019-08-05T23:54:08  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work

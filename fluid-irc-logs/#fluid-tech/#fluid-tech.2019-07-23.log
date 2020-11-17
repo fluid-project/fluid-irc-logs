@@ -1,0 +1,92 @@
+2019-07-23T01:42:43  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-tech
+2019-07-23T01:42:49  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Client Quit)
+2019-07-23T09:03:09  *** Bosmon2 is now known as Bosmon
+2019-07-23T09:42:33  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e5a:900:d9e0:6594:11c4:1e82> has joined #fluid-tech
+2019-07-23T11:17:42  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has joined #fluid-tech
+2019-07-23T11:31:22  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-tech
+2019-07-23T12:08:02  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-tech
+2019-07-23T12:13:11  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has quit IRC (Quit: Leaving.)
+2019-07-23T12:51:24  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-07-23T13:02:29  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-tech
+2019-07-23T13:18:22  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-tech
+2019-07-23T13:20:59  *** avtar <avtar!~avtar@ip-45-3-7-238.user.start.ca> has joined #fluid-tech
+2019-07-23T13:24:19  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-oyiohueletbfmnpk> has joined #fluid-tech
+2019-07-23T13:30:28  *** clown <clown!clown@nat/ocadu/x-gpzonwmniqnfgwuk> has joined #fluid-tech
+2019-07-23T13:40:29  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-sjoqbfdkskxhgmmw> has joined #fluid-tech
+2019-07-23T14:18:02  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.103> has joined #fluid-tech
+2019-07-23T14:20:20  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-sjoqbfdkskxhgmmw> has quit IRC (Ping timeout: 244 seconds)
+2019-07-23T14:50:53  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-chvvivocwpsbbpta> has joined #fluid-tech
+2019-07-23T15:04:26  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-07-23T15:07:00  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-tech
+2019-07-23T15:09:16  *** clown <clown!clown@nat/ocadu/x-gpzonwmniqnfgwuk> has quit IRC (Quit: Leaving.)
+2019-07-23T15:10:13  *** clown <clown!~clown@205.211.168.101> has joined #fluid-tech
+2019-07-23T15:17:24  <Bosmon> Justin_o - let's carry on in here
+2019-07-23T15:19:22  <Justin_o> Bosmon: sounds good..
+2019-07-23T15:21:52  <Justin_o> Bosmon: I'll try to explain the change, and hopefully that will help things a bit. In the test HTML file we have the following language codes  that get parsed: en-US, en-gb, en, en-CA, and es.
+2019-07-23T15:22:15  <Bosmon> Justin_o - ok, so why is it even possible for a hyphenator for the same language to start to construct twice?
+2019-07-23T15:22:18  <Justin_o> the variation in capitalization is to also test that we handle both things like en-GB and en-gb
+2019-07-23T15:23:15  <Bosmon> Justin_o - it seems that it would always firstly run into this branch "Use an existing hyphenator if available"
+2019-07-23T15:23:38  <Justin_o> Bosmon: yes, that was the intention, but there was an issue with the createHyphenator that circumvented that. https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/SyllabificationEnactor.js#L213-L240
+2019-07-23T15:24:20  <Justin_o> Bosmon: specifically this check https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/SyllabificationEnactor.js#L218-L222
+2019-07-23T15:24:34  <Justin_o> which relies on https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/SyllabificationEnactor.js#L216
+2019-07-23T15:25:17  <Justin_o> When a pattern is loaded it exposes the hyphenator at that global path.
+2019-07-23T15:26:12  <Bosmon> Ah ok, so the top-level component is maintining
+2019-07-23T15:26:42  <Bosmon> maintaining a cache just per language, whereas the creator is trashing its own cache which actually needs to be stored per-pattern
+2019-07-23T15:26:45  <Justin_o> the issue here is that we can have a case where the same pattern file, in this case en-US and en which both load the en-us.js file, is requested by different language codes. If both requests happen before the pattern is actually loaded, that if statement will fail and we'll try to load it again.
+2019-07-23T15:27:48  <Justin_o> Bosmon: well the Ajax call does have the cache turned on https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/SyllabificationEnactor.js#L195
+2019-07-23T15:28:31  <Justin_o> but I guess it's still not at the right time, that is, it is still happening too early. I was seeing 3 instances of en-us.js loading in the network tab of the console.
+2019-07-23T15:30:04  <Bosmon> OK, so Hypher is maintaining this per-language cache by itself....
+2019-07-23T15:31:08  <Bosmon> My bet is still on the fault being on this line - https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/SyllabificationEnactor.js#L166 - but I still need to get my head around why maintaining a per-src cache seems to work
+2019-07-23T15:33:06  <Justin_o> well no, I have to do that.. hypher only handles one language at a time
+2019-07-23T15:33:54  <Justin_o> Bosmon: it's funny, I thought that was going to be the issue too
+2019-07-23T15:34:04  <Bosmon> Justin_o - But elements have to get into the global Hypher.languages.xxx somehow
+2019-07-23T15:34:08  <Bosmon> You don't put them there yourself
+2019-07-23T15:34:39  <Justin_o> the pattern file puts them there, but have to inject the pattern file
+2019-07-23T15:41:14  <Bosmon> Justin_o - ok, it is starting to dawn on me a bit more... I was thrown off by the structure of getHyphenator for a while but I see now it has an early return
+2019-07-23T15:41:37  <Bosmon> I think it would be better to refactor this so that there is only one site in codebase where we assign to that.hyphenators
+2019-07-23T15:43:59  <Bosmon> Then after that you can hoist up the logic which is attempting to cache by "pattern" as well as by "lang" up into this reorganised function, since this logic is clearly reusable across different hyphenation engines
+2019-07-23T15:44:44  <Bosmon> Although perhaps even the notion of "patterns" isn't even particularly reusable across engines
+2019-07-23T15:45:15  <Bosmon> But it's interesting that the only hard dependency on Hypher is in createHyphenator and it would be nice to be able to exploit that a bit
+2019-07-23T15:45:39  <Justin_o> well the basic patterns seem to be similar but how they are used and incorporated can be quite different
+2019-07-23T15:46:05  <Bosmon> Rather than sticking an extra bit of "back channel" state onto the component that is only read and written in that one function
+2019-07-23T15:47:45  <Justin_o> Bosmon:  so are you suggesting a more tight hypher component wrapper that manages the pattern and lang caches? or do you mean just a function that does this?
+2019-07-23T15:48:03  <Bosmon> I'll try to summarise my recommendations on the pull : P
+2019-07-23T15:48:08  <Justin_o> thanks :)
+2019-07-23T16:14:17  *** clown <clown!~clown@205.211.168.101> has quit IRC (Quit: Leaving.)
+2019-07-23T16:14:36  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-07-23T16:19:04  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-07-23T16:20:44  <Bosmon> Justin_o - I'm just wondering now whether fluid.prefs.enactor.syllabification.waitForHyphenators is even necessary at all
+2019-07-23T16:20:54  <Bosmon> It seems much cleaner to just stick the event escalation logic inside fluid.prefs.enactor.syllabification.syllabify
+2019-07-23T16:21:14  <Bosmon> And then we don't need to keep squinting at this promise sequence wondering whose handlers are going to fire first ....
+2019-07-23T16:21:26  *** michelled <michelled!Adium@nat/ocadu/x-ketxeobgefrjeszo> has joined #fluid-tech
+2019-07-23T16:25:54  *** michelled <michelled!Adium@nat/ocadu/x-ketxeobgefrjeszo> has quit IRC (Client Quit)
+2019-07-23T16:37:58  *** colinclark <colinclark!colinclark@nat/ocadu/x-jkvuztacejbskiox> has joined #fluid-tech
+2019-07-23T16:47:45  *** clown <clown!clown@nat/ocadu/x-uwiqlvklyxlauocd> has joined #fluid-tech
+2019-07-23T17:11:23  *** simonjb <simonjb!~simonjb@205.211.168.102> has joined #fluid-tech
+2019-07-23T17:15:19  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-07-23T17:35:44  *** colinclark_ <colinclark_!~colinclar@205.211.168.103> has joined #fluid-tech
+2019-07-23T17:35:53  *** colinclark <colinclark!colinclark@nat/ocadu/x-jkvuztacejbskiox> has quit IRC (Read error: Connection reset by peer)
+2019-07-23T17:35:53  *** colinclark_ is now known as colinclark
+2019-07-23T17:36:16  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-tojlcttgnbtsgtss> has joined #fluid-tech
+2019-07-23T17:36:27  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-tojlcttgnbtsgtss> has quit IRC (Client Quit)
+2019-07-23T18:06:00  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-tech
+2019-07-23T18:07:31  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Client Quit)
+2019-07-23T18:09:15  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-bokevhagxbothibw> has joined #fluid-tech
+2019-07-23T18:39:43  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-tech
+2019-07-23T18:40:07  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Client Quit)
+2019-07-23T18:45:21  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-tech
+2019-07-23T19:19:46  *** clown <clown!clown@nat/ocadu/x-uwiqlvklyxlauocd> has quit IRC (Ping timeout: 272 seconds)
+2019-07-23T19:31:09  *** clown <clown!clown@nat/ocadu/x-holyfbkuyevcukyx> has joined #fluid-tech
+2019-07-23T19:59:11  *** colinclark <colinclark!~colinclar@205.211.168.103> has quit IRC (Quit: colinclark)
+2019-07-23T20:05:55  *** colinclark <colinclark!~colinclar@205.211.168.103> has joined #fluid-tech
+2019-07-23T20:45:52  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-07-23T20:56:14  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-tech
+2019-07-23T21:19:29  *** clown <clown!clown@nat/ocadu/x-holyfbkuyevcukyx> has quit IRC (Quit: Leaving.)
+2019-07-23T21:20:50  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-07-23T21:29:58  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-07-23T21:33:22  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-bokevhagxbothibw> has quit IRC (Ping timeout: 248 seconds)
+2019-07-23T21:34:18  *** simonjb <simonjb!~simonjb@205.211.168.102> has quit IRC ()
+2019-07-23T21:41:30  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e5a:900:d9e0:6594:11c4:1e82> has quit IRC (Quit: jhernandez)
+2019-07-23T22:01:27  *** avtar <avtar!~avtar@ip-45-3-7-238.user.start.ca> has quit IRC (Quit: Leaving.)
+2019-07-23T22:22:28  *** colinclark <colinclark!~colinclar@205.211.168.103> has quit IRC (Quit: colinclark)
+2019-07-23T22:40:06  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-oyiohueletbfmnpk> has quit IRC (Quit: Connection closed for inactivity)

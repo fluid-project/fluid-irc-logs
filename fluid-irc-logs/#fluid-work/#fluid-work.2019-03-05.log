@@ -1,0 +1,175 @@
+2019-03-05T00:52:53  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-03-05T00:52:53  *** danayo_ is now known as danayo
+2019-03-05T01:07:49  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:e178:7b5c:b512:b53a> has joined #fluid-work
+2019-03-05T02:06:55  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-work
+2019-03-05T02:07:39  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Client Quit)
+2019-03-05T03:34:20  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-03-05T06:45:50  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:e178:7b5c:b512:b53a> has quit IRC (Remote host closed the connection)
+2019-03-05T09:41:32  <the-t-in-rtf> @Bosmon or anyone with enough history.  I know we don't use any platforms but win32.json in practise, but I'd like to drag along as much of the cross-platform stuff as I can in my work on the SR.
+2019-03-05T09:41:49  <the-t-in-rtf> I see that we have the same keys in use across multiple platforms.
+2019-03-05T09:41:55  <the-t-in-rtf> (example to come shortly)
+2019-03-05T09:43:59  <the-t-in-rtf> https://github.com/GPII/universal/blob/master/testData/solutions/linux.json5#L1295
+2019-03-05T09:44:04  <the-t-in-rtf> https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L9619
+2019-03-05T09:44:31  <the-t-in-rtf> So, long term I will work to remove the redundancy there.
+2019-03-05T09:44:43  <the-t-in-rtf> My question is a bit different.
+2019-03-05T09:45:14  <the-t-in-rtf> I am assuming that whatever the schemas are across all files, any test settings payload in testData/preferences should match ALL of the schemas for that setting
+2019-03-05T09:45:30  <the-t-in-rtf> i.e. that it should be valid data for all  platforms
+2019-03-05T09:46:23  <the-t-in-rtf> Right now we would only be catching cruft from older work, but if we put those checks in place before we expand to other platforms, it will protect us in creating portable settings.
+2019-03-05T09:46:27  <the-t-in-rtf> @Bosmon ^^^
+2019-03-05T10:13:14  <the-t-in-rtf> OK, I'm just gonna keep commenting here, apparently we no longer support telegu, which is used in one of our test preferences.  I'm going to remove it, as that's the only setting under test in that file:
+2019-03-05T10:13:14  <the-t-in-rtf> https://github.com/GPII/universal/blob/master/testData/preferences/telugu.json5
+2019-03-05T10:23:51  <the-t-in-rtf> Oh, neat, I found a bug in AJV in testing with our data.
+2019-03-05T10:24:01  <the-t-in-rtf> multiples of 0.1 don't work, researching now.
+2019-03-05T10:26:30  <the-t-in-rtf> https://github.com/epoberezkin/ajv#advanced-options
+2019-03-05T10:26:41  <the-t-in-rtf> apparently it only works for integers unless you configure it
+2019-03-05T10:27:03  <the-t-in-rtf> I'll need to update gpii-json-schema to support some sane precision by default.
+2019-03-05T10:27:25  <the-t-in-rtf> @Bosmon or anyone else, do we have any settings that need to be expressed using less than a tenth?
+2019-03-05T10:27:40  <the-t-in-rtf> or perhaps a hundredth?
+2019-03-05T10:28:15  <the-t-in-rtf> I guess I can make it fairly deep and see what the performance impact is.
+2019-03-05T10:29:07  <the-t-in-rtf> this is the kind of thing that's really awesome to find out with test data and less awesome to find out with real data, glad I'm validating our old payloads even if we choose to throw lots of them out.
+2019-03-05T11:05:58  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:4a5:4496:aec2:c575> has joined #fluid-work
+2019-03-05T12:49:32  <jhernandez> Bosmon: hey there
+2019-03-05T12:49:39  <Bosmon> Hi there javjarfer[m]
+2019-03-05T12:49:41  <Bosmon> er jhernandez
+2019-03-05T12:49:50  <jhernandez> look what I repoerted yesterday https://issues.gpii.net/browse/GPII-3769
+2019-03-05T12:50:11  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-03-05T12:50:40  <jhernandez> funny one
+2019-03-05T12:52:23  <Bosmon> jhernandez - terrible
+2019-03-05T12:52:28  <Bosmon> I guess stegru has seen this one before
+2019-03-05T12:52:30  * jhernandez nods
+2019-03-05T12:52:32  <Bosmon> I think it is something to do with asynchrony
+2019-03-05T12:52:53  <jhernandez> yes, applying a similar fix to what we did on gpii-app did the problem to go away
+2019-03-05T12:53:04  <Bosmon> But I wonder why this is USB drive specific
+2019-03-05T12:53:50  <jhernandez> I'm not sure why, since gpii-app is triggering keyouts via function calls to the lifecycleManager
+2019-03-05T12:54:32  <jhernandez> but in this case, the keyout is being triggered from gpii.userListeners
+2019-03-05T12:54:45  <Bosmon> Perhaps this has happened directly because of that - given when we used to use HTTP endpoints the notification would be asynchronous
+2019-03-05T12:55:00  <Bosmon> Perhaps it is objecting that some existing Windows API call is on its stack
+2019-03-05T12:55:06  <Bosmon> Although that doesn't quite make a lot of sense
+2019-03-05T12:55:40  <stegru> yes, this is the same error that we got with the reset desktop icon
+2019-03-05T12:57:00  <stegru> and yes, I suspect it's to do with the current stack - considering the usb key-out is invoked as a result of some windows api callback
+2019-03-05T12:57:07  <jhernandez> stegru: right, I wrapped https://github.com/GPII/universal/blob/master/gpii/node_modules/userListeners/src/listeners.js#L169 into a setTimeout(f, 0) function and the problem goes away
+2019-03-05T12:59:45  <stegru> I remember being suspicious of the process reporter - but a quick look didn't uncover anything
+2019-03-05T13:01:33  <stegru> ah yes, the stack dump confirms this
+2019-03-05T13:19:29  <the-t-in-rtf> https://github.com/GPII/universal/blob/master/testData/preferences/explodeLaunchHandlerStart.json5#L8
+2019-03-05T13:19:45  <the-t-in-rtf> That no longer corresponds to an allowed value, currently only "get" and "set" are allowed.
+2019-03-05T13:19:56  <the-t-in-rtf> just seeing if there are other "explodeOn" values that are meaningful.
+2019-03-05T13:20:36  <the-t-in-rtf> found it: https://github.com/GPII/universal/blob/master/gpii/node_modules/settingsHandlers/src/ExplodingSettingsHandler.js#L66
+2019-03-05T13:29:31  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-03-05T13:59:20  *** cindyli <cindyli!Adium@nat/ocadu/x-smkjjusklkajgtgs> has joined #fluid-work
+2019-03-05T14:02:24  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:24fc:8e6e:f7f6:3993> has joined #fluid-work
+2019-03-05T14:34:44  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-work
+2019-03-05T14:36:01  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has joined #fluid-work
+2019-03-05T14:59:41  *** clown <clown!clown@nat/ocadu/x-nurbvojirwksbvkp> has joined #fluid-work
+2019-03-05T15:00:29  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-mfbhtkpmibejwpaw> has joined #fluid-work
+2019-03-05T15:07:11  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:24fc:8e6e:f7f6:3993> has quit IRC (Quit: Leaving)
+2019-03-05T15:27:03  *** avtar <avtar!~avtar@205.211.168.105> has joined #fluid-work
+2019-03-05T15:37:17  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-03-05T15:43:49  *** lliskovoi <lliskovoi!lliskovoi@nat/ocadu/x-uqumxpznhxmbpjuo> has joined #fluid-work
+2019-03-05T15:46:00  *** clown <clown!clown@nat/ocadu/x-nurbvojirwksbvkp> has quit IRC (Quit: Leaving.)
+2019-03-05T15:51:13  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-05T15:51:17  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-05T15:53:00  *** clown <clown!~clown@205.211.168.101> has joined #fluid-work
+2019-03-05T15:54:51  *** colinclark <colinclark!~colinclar@192.0.159.124> has joined #fluid-work
+2019-03-05T15:55:00  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-oazpwbeyrazqpeam> has joined #fluid-work
+2019-03-05T16:00:33  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-oazpwbeyrazqpeam> has quit IRC (Remote host closed the connection)
+2019-03-05T16:01:11  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-ezownfwmdjknqknj> has joined #fluid-work
+2019-03-05T16:01:24  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.105> has joined #fluid-work
+2019-03-05T16:03:21  *** cindyli1 <cindyli1!~Adium@205.211.168.105> has joined #fluid-work
+2019-03-05T16:03:40  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-mfbhtkpmibejwpaw> has quit IRC (Ping timeout: 250 seconds)
+2019-03-05T16:05:07  *** cindyli <cindyli!Adium@nat/ocadu/x-smkjjusklkajgtgs> has quit IRC (Ping timeout: 240 seconds)
+2019-03-05T16:23:09  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-03-05T16:23:09  *** danayo_ is now known as danayo
+2019-03-05T16:32:13  *** cindyli1 <cindyli1!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-03-05T16:38:49  *** clown1 <clown1!~clown@205.211.168.101> has joined #fluid-work
+2019-03-05T16:38:49  *** clown <clown!~clown@205.211.168.101> has quit IRC (Read error: Connection reset by peer)
+2019-03-05T16:38:53  *** clown1 <clown1!~clown@205.211.168.101> has quit IRC (Client Quit)
+2019-03-05T16:39:26  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-03-05T16:41:45  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-ezownfwmdjknqknj> has quit IRC (Remote host closed the connection)
+2019-03-05T16:41:55  *** alanharnum2 <alanharnum2!alanharnum@nat/ocadu/x-qecveyqmsenbsznf> has joined #fluid-work
+2019-03-05T16:47:43  *** clown <clown!clown@nat/ocadu/x-lpjqtgxkucqdbcbw> has joined #fluid-work
+2019-03-05T16:48:11  *** jhung is now known as jhung_away
+2019-03-05T16:59:52  *** cindyli <cindyli!Adium@nat/ocadu/x-vyjqaogklyhaonnc> has joined #fluid-work
+2019-03-05T17:01:04  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-05T17:05:09  <colinclark> simonjb, avtar, michelled: Sorry to have bailed quick there—just got the call for my next meeting
+2019-03-05T17:05:50  <simonjb> colinclark: np! we were done C2LC :)
+2019-03-05T17:05:59  <colinclark> :)
+2019-03-05T17:06:03  *** avtar1 <avtar1!~avtar@205.211.168.105> has joined #fluid-work
+2019-03-05T17:06:21  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-03-05T17:09:21  *** avtar <avtar!~avtar@205.211.168.105> has quit IRC (Ping timeout: 252 seconds)
+2019-03-05T17:18:25  *** jhung_away <jhung_away!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-03-05T17:24:01  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has quit IRC (Quit: Leaving.)
+2019-03-05T17:27:27  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-03-05T17:27:27  *** danayo_ is now known as danayo
+2019-03-05T17:27:30  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-03-05T17:31:57  *** cindyli <cindyli!Adium@nat/ocadu/x-vyjqaogklyhaonnc> has quit IRC (Quit: Leaving.)
+2019-03-05T17:33:26  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-03-05T17:46:20  *** lliskovoi <lliskovoi!lliskovoi@nat/ocadu/x-uqumxpznhxmbpjuo> has quit IRC (Quit: lliskovoi)
+2019-03-05T17:52:10  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has joined #fluid-work
+2019-03-05T17:54:16  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-05T17:54:16  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-05T17:55:27  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-ggjvcwvkcoilulvd> has joined #fluid-work
+2019-03-05T18:01:19  *** cherylhjli <cherylhjli!~Adium@205.211.168.105> has joined #fluid-work
+2019-03-05T18:17:50  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:4a5:4496:aec2:c575> has quit IRC (Remote host closed the connection)
+2019-03-05T18:17:59  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:4a5:4496:aec2:c575> has joined #fluid-work
+2019-03-05T18:18:37  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:4a5:4496:aec2:c575> has quit IRC (Remote host closed the connection)
+2019-03-05T18:18:46  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:4a5:4496:aec2:c575> has joined #fluid-work
+2019-03-05T18:18:57  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:4a5:4496:aec2:c575> has quit IRC (Remote host closed the connection)
+2019-03-05T18:19:16  *** avtar1 is now known as avtar
+2019-03-05T18:24:58  *** lliskovoi <lliskovoi!lliskovoi@nat/ocadu/x-jmrezymmuahekcdi> has joined #fluid-work
+2019-03-05T18:39:42  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-03-05T18:40:55  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-03-05T18:43:01  <colinclark> alanharnum2: how does one become t-shaped?
+2019-03-05T18:43:11  <colinclark> Does it require a lot of exercise and weight lifting?
+2019-03-05T18:44:04  <alanharnum2> colinclark: http://inter.scoutnet.org/semaphore/semaphore.html
+2019-03-05T18:44:12  <colinclark> hahaha
+2019-03-05T18:46:01  <colinclark> Was the four slide structure mandated as part of the activity you were doing?
+2019-03-05T18:46:03  <alanharnum2> colinclark: please enjoy this picture of me Andrew McAllister took that looks I'm freestyle rapping: https://twitter.com/andrewmcdotca/status/1101567881421164546
+2019-03-05T18:46:06  <colinclark> in the pitch decks?
+2019-03-05T18:46:18  <colinclark> hahaha, great alanharnum2
+2019-03-05T18:46:21  <alanharnum2> we stuck pretty close to the pitch deck outline, other groups did different things
+2019-03-05T18:46:25  <colinclark> lookin’ fly
+2019-03-05T18:46:45  <alanharnum2> THE OPPORTUNITY is my MC name
+2019-03-05T18:47:04  <colinclark> hahaha
+2019-03-05T18:47:05  <colinclark> perfect
+2019-03-05T18:49:47  *** clown <clown!clown@nat/ocadu/x-lpjqtgxkucqdbcbw> has quit IRC (Ping timeout: 240 seconds)
+2019-03-05T18:50:11  *** clown <clown!~clown@205.211.168.101> has joined #fluid-work
+2019-03-05T18:50:22  *** clown <clown!~clown@205.211.168.101> has quit IRC (Client Quit)
+2019-03-05T18:51:19  *** cindyli <cindyli!Adium@nat/ocadu/x-rbjlmrddgwpocwxu> has joined #fluid-work
+2019-03-05T18:53:56  *** clown <clown!~clown@205.211.168.101> has joined #fluid-work
+2019-03-05T18:53:59  <sgithens> Bosmon: There is a method or way to look up a component by it's Id right? like 6zi0leod-125.  I can't remember if it's a function call, or if you just address into a big hash to look it up
+2019-03-05T18:59:48  *** alanharnum2 <alanharnum2!alanharnum@nat/ocadu/x-qecveyqmsenbsznf> has quit IRC (Remote host closed the connection)
+2019-03-05T19:00:17  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-qvyjoiarxcjiqgff> has joined #fluid-work
+2019-03-05T19:05:32  *** sepidehshahi_ <sepidehshahi_!~sepidehsh@205.211.168.105> has joined #fluid-work
+2019-03-05T19:05:37  *** cindyli1 <cindyli1!~Adium@205.211.168.105> has joined #fluid-work
+2019-03-05T19:06:26  *** sepidehshahi_ <sepidehshahi_!~sepidehsh@205.211.168.105> has quit IRC (Client Quit)
+2019-03-05T19:06:27  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-ggjvcwvkcoilulvd> has quit IRC (Ping timeout: 240 seconds)
+2019-03-05T19:07:36  *** cindyli <cindyli!Adium@nat/ocadu/x-rbjlmrddgwpocwxu> has quit IRC (Ping timeout: 252 seconds)
+2019-03-05T19:08:03  *** cherylhjli <cherylhjli!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-03-05T19:10:01  *** cherylhjli <cherylhjli!~Adium@205.211.168.105> has joined #fluid-work
+2019-03-05T19:13:25  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.105> has joined #fluid-work
+2019-03-05T19:59:44  *** simonjb <simonjb!simonjb@nat/ocadu/x-cjosvdqehqyjptcd> has joined #fluid-work
+2019-03-05T20:00:46  *** simonjb <simonjb!simonjb@nat/ocadu/x-cjosvdqehqyjptcd> has quit IRC (Client Quit)
+2019-03-05T20:01:24  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-qvyjoiarxcjiqgff> has quit IRC (Remote host closed the connection)
+2019-03-05T20:01:33  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-gvzlvvikefbvxwrb> has joined #fluid-work
+2019-03-05T20:02:11  *** clown <clown!~clown@205.211.168.101> has quit IRC (Quit: Leaving.)
+2019-03-05T20:02:45  *** avtar <avtar!~avtar@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-03-05T20:04:27  *** avtar <avtar!~avtar@205.211.168.105> has joined #fluid-work
+2019-03-05T20:15:52  *** clown <clown!clown@nat/ocadu/x-yiijdpsjfgnlycla> has joined #fluid-work
+2019-03-05T20:39:54  *** avtar <avtar!~avtar@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-03-05T20:42:16  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.105> has quit IRC (Quit: sepidehshahi)
+2019-03-05T20:44:03  *** avtar <avtar!~avtar@205.211.168.105> has joined #fluid-work
+2019-03-05T20:57:29  *** cindyli1 <cindyli1!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-03-05T20:59:10  *** cindyli <cindyli!~Adium@205.211.168.105> has joined #fluid-work
+2019-03-05T21:23:41  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-pitoyagfstrwugkh> has joined #fluid-work
+2019-03-05T21:28:18  *** cindyli <cindyli!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-03-05T21:53:27  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-03-05T21:56:17  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-pitoyagfstrwugkh> has quit IRC (Quit: sepidehshahi)
+2019-03-05T22:07:31  *** clown <clown!clown@nat/ocadu/x-yiijdpsjfgnlycla> has quit IRC (Quit: Leaving.)
+2019-03-05T22:08:13  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has quit IRC (Quit: Leaving.)
+2019-03-05T22:28:08  *** avtar <avtar!~avtar@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-03-05T22:32:25  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-gvzlvvikefbvxwrb> has quit IRC ()
+2019-03-05T22:38:44  *** cherylhjli <cherylhjli!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-03-05T22:53:38  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-03-05T23:42:07  *** lliskovoi_ <lliskovoi_!~lliskovoi@205.211.168.104> has joined #fluid-work
+2019-03-05T23:42:24  *** lliskovoi_ <lliskovoi_!~lliskovoi@205.211.168.104> has quit IRC (Client Quit)
+2019-03-05T23:45:07  *** lliskovoi <lliskovoi!lliskovoi@nat/ocadu/x-jmrezymmuahekcdi> has quit IRC (Ping timeout: 240 seconds)

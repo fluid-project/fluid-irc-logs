@@ -1,0 +1,375 @@
+2019-03-15T01:03:10  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-15T04:57:28  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-15T05:15:57  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-03-15T05:32:28  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:248e:6b1e:6ec8:fe4b> has quit IRC (Remote host closed the connection)
+2019-03-15T05:33:00  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:248e:6b1e:6ec8:fe4b> has joined #fluid-work
+2019-03-15T05:37:33  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:248e:6b1e:6ec8:fe4b> has quit IRC (Ping timeout: 252 seconds)
+2019-03-15T06:47:01  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-03-15T07:36:58  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 246 seconds)
+2019-03-15T08:42:03  <the-t-in-rtf> @bosmon, the updated gpii-app pull is in CI now.
+2019-03-15T08:42:09  <the-t-in-rtf> https://ci.gpii.net/job/gpii-app-tests/597/
+2019-03-15T08:51:24  *** kris_HA <kris_HA!~kris@212.5.154.113> has joined #fluid-work
+2019-03-15T09:39:37  *** kris_HA <kris_HA!~kris@212.5.154.113> has quit IRC (Ping timeout: 245 seconds)
+2019-03-15T09:46:36  <the-t-in-rtf> Looks like another variation on the theme:
+2019-03-15T09:47:17  <the-t-in-rtf> gnoring call to invoker notifyPSPWindow of component {
+2019-03-15T09:47:17  <the-t-in-rtf> ...                "func": undefi .... [output suppressed at 1024 chars - for more output, increase fluid.logObjectRenderChars] which has been destroyed
+2019-03-15T10:40:44  <stegru> well, Bosmon, I'm sure I felt guilty while writing those appzoom tests - they call live apis that affect hardware state, so I'm not exactly gobsmacked that it's developed a problem
+2019-03-15T10:41:11  <Bosmon> the-t-in-rtf those ones are red herrings
+2019-03-15T10:41:23  <Bosmon> It can be quite hard to tell the genuine failures from the herrings in the logs
+2019-03-15T10:41:39  <Bosmon> I've been fooled a few times by the gpii.app.timer ones which look so exactly like real failures : P
+2019-03-15T10:41:43  <the-t-in-rtf> OK, I will defer to your experience, I assume you've already retriggered?
+2019-03-15T10:43:01  <Bosmon> the-t-in-rtf yes it's been going for nearly an hour : P
+2019-03-15T10:43:38  <the-t-in-rtf> yes, I was a bit saddened by that
+2019-03-15T10:43:44  <the-t-in-rtf> 30 to provision the danged thing
+2019-03-15T10:43:49  <the-t-in-rtf> and another 30 to run the tests.
+2019-03-15T10:45:02  <the-t-in-rtf> OK, I will fix this, but for the edification of "whomever did this":
+2019-03-15T10:45:02  <the-t-in-rtf> 11:41:09.066:  Validation error in solution file 'win32.json5' -> solution 'com.microsoft.windows.desktopBackground':
+2019-03-15T10:45:03  <the-t-in-rtf> 11:41:09.066:    - settingsHandlers.configureWallpaperStyle.supportedSettings.WallpaperStyle.schema.enum: All items in the array must be unique.
+2019-03-15T10:45:03  <the-t-in-rtf> 11:41:09.066:  jq: FAIL: Module "Sanity checks for Solutions Registry data." Test name "Sanity-checking solution 'com.microsoft.windows.desktopBackground' in file 'win32.json5'." - Message: Solution 'com.microsoft.windows.desktopBackground' in file 'win32.json5' should have a valid schema.
+2019-03-15T10:45:15  <the-t-in-rtf> all items in an enum must be unique.
+2019-03-15T10:45:21  <Bosmon> the-t-in-rtf - certainly javjarfer[m]'s bag : P
+2019-03-15T10:45:28  <the-t-in-rtf> we may need to discuss how to present the same option with different labels
+2019-03-15T10:46:02  <the-t-in-rtf> in a single list, I mean
+2019-03-15T10:47:10  <the-t-in-rtf> whew, this is not that complicated
+2019-03-15T10:47:20  <the-t-in-rtf> seems like a goof in copying and pasting and/or merging
+2019-03-15T10:47:27  <the-t-in-rtf> 0 and "None" each appeared twice
+2019-03-15T10:49:10  <Bosmon> the-t-in-rtf - cool
+2019-03-15T10:52:30  <Bosmon> Do you happen to have a version of gpii-testem that avoids the version of handlebars with the advisory?
+2019-03-15T10:52:43  <the-t-in-rtf> which advisory?
+2019-03-15T10:52:52  <the-t-in-rtf> I mean, we can't upgrade beyond 10.12.0 at the moment
+2019-03-15T10:53:02  <the-t-in-rtf> I need to put in a pull to add compatibility for newer versions.
+2019-03-15T10:53:17  <the-t-in-rtf> sorry, thinking of n yc
+2019-03-15T10:53:20  <the-t-in-rtf> 2.12.0
+2019-03-15T10:53:20  <Bosmon> https://nodesecurity.io/advisories/755
+2019-03-15T10:53:50  <the-t-in-rtf> I get a DNS failure resolving that
+2019-03-15T10:53:59  <the-t-in-rtf> be a dear and let me know the version.
+2019-03-15T10:54:08  <Bosmon> Hilarious isn't it
+2019-03-15T10:54:12  <the-t-in-rtf> while I go rummage through my network settings
+2019-03-15T10:54:22  <Bosmon> No, I get a failure too
+2019-03-15T10:54:31  <the-t-in-rtf> Oh, whew.
+2019-03-15T10:54:31  <Bosmon> I'm just pasting the URL from npm audit : P
+2019-03-15T10:54:37  <the-t-in-rtf> ah.
+2019-03-15T10:55:11  <Bosmon>   High            Prototype Pollution
+2019-03-15T10:55:11  <Bosmon>   Package         handlebars
+2019-03-15T10:55:11  <Bosmon>   Dependency of   gpii-testem
+2019-03-15T10:55:11  <Bosmon>   Path            gpii-testem > istanbul > handlebars
+2019-03-15T10:55:11  <Bosmon>   More info       https://nodesecurity.io/advisories/755
+2019-03-15T10:55:11  <the-t-in-rtf> here's one that does resolve: https://issues.gpii.net/browse/GPII-3457
+2019-03-15T10:55:26  <Bosmon> We have gpii-testem@2.1.6
+2019-03-15T10:55:42  <the-t-in-rtf> Yes, I have to make a small pull to update gpii-testem to work with anything newer
+2019-03-15T10:55:51  <Bosmon> Which has istanbul@0.4.5
+2019-03-15T10:56:01  <the-t-in-rtf> hmm
+2019-03-15T10:56:09  <Bosmon> stegru - got the app zoom test failure a 3rd time now
+2019-03-15T10:56:11  <the-t-in-rtf> we might be able to avoid that independently
+2019-03-15T10:56:22  <the-t-in-rtf> hopefully the instrumentation I use works the same way.
+2019-03-15T10:56:26  <the-t-in-rtf> or perhaps that's just cruft
+2019-03-15T10:56:55  <the-t-in-rtf> I thought I was depending on a child library rather than istanbul these days
+2019-03-15T10:57:28  <the-t-in-rtf> are you already putting a ticket in, or shall I?
+2019-03-15T10:58:34  <the-t-in-rtf> Anyway, I'm assuming you were asking because you hadn't
+2019-03-15T10:58:37  <the-t-in-rtf> and I created one
+2019-03-15T10:58:38  <the-t-in-rtf> https://issues.gpii.net/browse/GPII-3803
+2019-03-15T11:05:59  *** kris_HA <kris_HA!~kris@212.5.154.113> has joined #fluid-work
+2019-03-15T11:43:07  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:4ad:523d:897a:9eaa> has joined #fluid-work
+2019-03-15T11:53:45  <jhernandez> Bosmon: hey, thanks for the heads up!
+2019-03-15T12:27:09  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has joined #fluid-work
+2019-03-15T12:53:55  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-03-15T12:56:36  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-03-15T13:12:16  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-03-15T13:28:32  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.101> has joined #fluid-work
+2019-03-15T13:29:41  *** clown <clown!clown@nat/ocadu/x-favffehfuyorrcsp> has joined #fluid-work
+2019-03-15T13:30:44  *** alanharn_ <alanharn_!~alanharnu@2607:fea8:12a0:b9b:55ea:844b:5207:ee8b> has joined #fluid-work
+2019-03-15T13:37:52  *** avtar <avtar!~avtar@ip-45-3-14-105.user.start.ca> has joined #fluid-work
+2019-03-15T13:38:02  <the-t-in-rtf> @bosmon, https://github.com/GPII/gpii-testem/pull/17
+2019-03-15T13:38:28  <the-t-in-rtf> If you want to try it out downstream, I've created 2.1.9-dev.20190315T132916Z.4b2ccbc.GPII-3803
+2019-03-15T13:38:51  <the-t-in-rtf> Turned out to be so simple, istanbul was indeed leftover from earlier work and not used at all in that package.
+2019-03-15T13:43:28  <Bosmon> the-t-in-rtf - merged
+2019-03-15T13:43:31  <Bosmon> the-t-in-rtf - wot no CI? : P
+2019-03-15T13:43:38  <the-t-in-rtf> yes, I'll get to it.
+2019-03-15T13:43:58  <the-t-in-rtf> Trying to save the world in another way now, validation endpoints.
+2019-03-15T13:54:59  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has quit IRC (Quit: Leaving.)
+2019-03-15T13:58:47  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-03-15T14:05:14  <the-t-in-rtf> just scrolling back to our conversation about making gpii-json-schema pre-potentia-ii compatiable
+2019-03-15T14:14:35  <the-t-in-rtf> that's headbreaky enough for a single Friday afternoon
+2019-03-15T14:23:50  *** jhung is now known as jhung_away
+2019-03-15T14:26:47  *** simonjb <simonjb!~simonjb@205.211.168.104> has joined #fluid-work
+2019-03-15T14:29:05  *** colinclark <colinclark!~colinclar@192.0.159.124> has joined #fluid-work
+2019-03-15T14:34:13  *** colinclark <colinclark!~colinclar@192.0.159.124> has quit IRC (Quit: colinclark)
+2019-03-15T14:35:31  *** colinclark <colinclark!~colinclar@192.0.159.124> has joined #fluid-work
+2019-03-15T14:44:23  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-work
+2019-03-15T14:46:33  <Bosmon> the-t-in-rtf - any thoughts about the "isCouchReady" implicated startup failure which we have had twice in CI now?
+2019-03-15T14:46:35  <Bosmon> https://github.com/GPII/gpii-app/pull/100#issuecomment-473260390
+2019-03-15T14:47:00  <Bosmon> and https://github.com/GPII/gpii-app/pull/100#issuecomment-472936661
+2019-03-15T14:48:22  <the-t-in-rtf> yes, reading now
+2019-03-15T14:48:37  <Bosmon> stegru - what's at the top of your stack at the moment?
+2019-03-15T14:49:02  <the-t-in-rtf> maybe gate the qss to create on a specific event?
+2019-03-15T14:49:11  <the-t-in-rtf> and trigger that even between the couch startup and the check?
+2019-03-15T14:49:31  <the-t-in-rtf> just in the dev config.
+2019-03-15T14:49:47  <the-t-in-rtf> for whatever tests use the same pattern.
+2019-03-15T14:49:52  <stegru> metrics for the user interface, Bosmon
+2019-03-15T14:50:00  <Bosmon> ok cool
+2019-03-15T14:50:48  <stegru> is there something you'd like me to do, Bosmon?
+2019-03-15T14:53:59  <Bosmon> Well, in due course we should see about getting these tests running again.... once we have a slightly quieter spot
+2019-03-15T14:54:05  *** jhung_away <jhung_away!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-03-15T14:54:15  <Bosmon> Right now I'm nervous about merging anything significant into universal in case it destabilises things further
+2019-03-15T14:54:29  <Bosmon> On a current guess, the gpii-app tests in the-t-in-rtf 's branch are passing perhaps 30% of the time
+2019-03-15T14:55:21  <the-t-in-rtf> @Bosmon, another option would be to add a promise to the test instance of the qss that is resolved when the event is hit, and use a task.
+2019-03-15T14:55:37  <the-t-in-rtf> that way the timing is no longer lock step
+2019-03-15T14:55:44  <Bosmon> the-t-in-rtf - that sounds like it would work - but we should try to understand in detail what the timing requirements are here
+2019-03-15T14:55:56  <the-t-in-rtf> were you responding to my first suggestion, or the second?
+2019-03-15T14:55:56  <Bosmon> It may be that the sequence has just arrived the way it is through sheer accident
+2019-03-15T14:56:08  <Bosmon> The 2nd
+2019-03-15T14:56:14  <Bosmon> But I'm sure either suggestion could be made to work : P
+2019-03-15T15:01:05  <the-t-in-rtf> https://github.com/the-t-in-rtf/gpii-app/blob/bd559581d0e284b3328407d67bfbcda3c1a4e80d/src/main/app.js#L348
+2019-03-15T15:01:24  <the-t-in-rtf> To me it gets down to somehow making one side or the other truly aware of the other's readiness
+2019-03-15T15:01:36  <the-t-in-rtf> the PSP itself waits for those prerequisites
+2019-03-15T15:02:08  <the-t-in-rtf> but I think Couch is folded into another boiled event with that, and so they're not aware of each other (link in a moment)
+2019-03-15T15:03:53  <the-t-in-rtf> https://github.com/the-t-in-rtf/gpii-app/blob/bd559581d0e284b3328407d67bfbcda3c1a4e80d/src/main/app.js#L348
+2019-03-15T15:04:25  <the-t-in-rtf> So that's the starting gun for everyone.
+2019-03-15T15:06:41  <the-t-in-rtf> https://github.com/the-t-in-rtf/gpii-app/blob/7dfb9a893e8170f562ee48db4a60ae64978f8c8b/tests/IntegrationTests.js#L144
+2019-03-15T15:06:56  <the-t-in-rtf> and there's the finish line, which is just open wide with no ordering between
+2019-03-15T15:07:05  <the-t-in-rtf> I would propose creating a new promise chained event for startup
+2019-03-15T15:07:21  <the-t-in-rtf> and making each of them occur in order
+2019-03-15T15:07:47  <the-t-in-rtf> or at least ensuring that Couch is initialised first.
+2019-03-15T15:07:50  <the-t-in-rtf> @Bosmon ^^^
+2019-03-15T15:08:38  <Bosmon> the-t-in-rtf - sounds like a solid plan
+2019-03-15T15:08:46  <the-t-in-rtf> we would indeed have to pin down the sequence as in low level prereqs like couch, component prereqs like the onPSPPrerequisitesReady, etc
+2019-03-15T15:09:17  <the-t-in-rtf> and I suspect there will be some small ugliness with wiring up promises to events
+2019-03-15T15:09:37  <the-t-in-rtf> but we can live with ugly tests that are well labelled and which pass
+2019-03-15T15:09:45  <Bosmon> to be sure
+2019-03-15T15:10:05  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-03-15T15:10:42  <the-t-in-rtf> OK, unless you have a clearer pattern in mind, I will reuse my combinedStartup pattern somewhat from my work on the couch harness
+2019-03-15T15:10:57  <the-t-in-rtf> i.e. have an invoker that triggers the chained event and which itself returns a promise
+2019-03-15T15:11:06  <the-t-in-rtf> and then trigger than from a test sequence step using the "task" construct
+2019-03-15T15:11:39  <Bosmon> boiled events always were a rather "poor man's chained events"
+2019-03-15T15:11:49  <Bosmon> It's a shame that the former is a framework feature and the latter still isnt'
+2019-03-15T15:14:19  <Bosmon> the-t-in-rtf - this failure is probably also a subcase of this general problem: https://github.com/GPII/gpii-app/pull/100#issuecomment-473301669
+2019-03-15T15:14:53  <Bosmon> Which is just slung into the beginning of the overall test sequence here: https://github.com/the-t-in-rtf/gpii-app/blob/7dfb9a893e8170f562ee48db4a60ae64978f8c8b/tests/QssTestDefs.js#L1647
+2019-03-15T15:15:13  <the-t-in-rtf> yes, we'll have to decide how to mix in checks like that.
+2019-03-15T15:15:53  <the-t-in-rtf> for example, requiring them to register a check like that at the end of the combined startup and then wait for the combined startup
+2019-03-15T15:16:02  <Bosmon> Certainly not by randomly throwing further passive fixtures into already troubled waters : P
+2019-03-15T15:19:46  <Bosmon> And another custard pie for us
+2019-03-15T15:20:35  <Bosmon> It's the same one again
+2019-03-15T15:20:36  <the-t-in-rtf> I actually think this might be easier than I imagined
+2019-03-15T15:20:38  <Bosmon> "isCouchReady" on the stack
+2019-03-15T15:20:47  <the-t-in-rtf> as the couch harness already has a promise-producing startup
+2019-03-15T15:21:00  <the-t-in-rtf> it's really everything else that needs to be gated behind that.
+2019-03-15T15:22:12  <jhernandez> kris_HA: hey there
+2019-03-15T15:22:25  <jhernandez> quick last minute request from Gregg
+2019-03-15T15:23:23  <jhernandez> how difficult would removing the "Record video blablabla with mic" button be?
+2019-03-15T15:24:19  *** avtar <avtar!~avtar@ip-45-3-14-105.user.start.ca> has quit IRC (Quit: Leaving.)
+2019-03-15T15:25:12  *** kris_HA <kris_HA!~kris@212.5.154.113> has quit IRC (Ping timeout: 250 seconds)
+2019-03-15T15:25:46  *** avtar <avtar!~avtar@ip-45-3-14-105.user.start.ca> has joined #fluid-work
+2019-03-15T15:27:10  *** avtar1 <avtar1!~avtar@ip-45-3-14-105.user.start.ca> has joined #fluid-work
+2019-03-15T15:27:10  *** avtar <avtar!~avtar@ip-45-3-14-105.user.start.ca> has quit IRC (Read error: Connection reset by peer)
+2019-03-15T15:27:35  *** kris_HA <kris_HA!~kris@212.5.154.113> has joined #fluid-work
+2019-03-15T15:29:10  *** avtar <avtar!~avtar@ip-45-3-14-105.user.start.ca> has joined #fluid-work
+2019-03-15T15:29:10  *** avtar1 <avtar1!~avtar@ip-45-3-14-105.user.start.ca> has quit IRC (Read error: Connection reset by peer)
+2019-03-15T15:30:38  <the-t-in-rtf> ugh.
+2019-03-15T15:30:42  <the-t-in-rtf> the production tests are just killing me
+2019-03-15T15:31:04  <the-t-in-rtf> they start Couch automatically
+2019-03-15T15:31:17  <the-t-in-rtf> we'll never pin down our timing issues unless we break this habit
+2019-03-15T15:40:27  <the-t-in-rtf> If someone wants a config that starts couch automatically, that thing should live in configs/ rather than tests/configs
+2019-03-15T15:40:53  <the-t-in-rtf> I could also create a manualTesting config or two depending
+2019-03-15T15:41:15  <the-t-in-rtf> but none of this double-edged setup where the knife handle might also be a blade
+2019-03-15T15:41:19  <the-t-in-rtf> too many missing fingers
+2019-03-15T15:42:57  <colinclark> ouch
+2019-03-15T15:47:19  <stegru> ouchDB
+2019-03-15T15:47:25  <the-t-in-rtf> that actually exists
+2019-03-15T15:47:38  <the-t-in-rtf> https://pythonhosted.org/ouchdb/
+2019-03-15T15:47:44  <stegru> yes, I've used quite a few painful databases
+2019-03-15T15:47:46  <the-t-in-rtf> it's suitably cringe-worthy
+2019-03-15T15:47:50  <jhernandez> I wish a stegruDB exists
+2019-03-15T15:47:55  <jhernandez> :P
+2019-03-15T15:47:58  <the-t-in-rtf> the CouchDB API backed by an SQL database
+2019-03-15T15:48:17  <stegru> oh that's interesting
+2019-03-15T15:55:07  *** alanharn_ <alanharn_!~alanharnu@2607:fea8:12a0:b9b:55ea:844b:5207:ee8b> has quit IRC ()
+2019-03-15T15:56:45  *** avtar <avtar!~avtar@ip-45-3-14-105.user.start.ca> has quit IRC (Quit: Leaving.)
+2019-03-15T16:00:56  <the-t-in-rtf> yes, interesting in the same way that this is interesting
+2019-03-15T16:00:56  <the-t-in-rtf> https://www.amazon.co.uk/ARAMITH-Crazy-Joke-Wobbly-POOL/dp/B00BG75222
+2019-03-15T16:01:07  <the-t-in-rtf> funny to think about, but you'd kill anyone who made you use the thing for real
+2019-03-15T16:01:24  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-03-15T16:03:48  *** jhung is now known as jhung_away
+2019-03-15T16:06:45  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-15T16:08:36  <the-t-in-rtf> OK, one test suite working with the new promise-chain world
+2019-03-15T16:08:44  <the-t-in-rtf> I'll have to work my way outwards from that.
+2019-03-15T16:09:17  *** michelled <michelled!Adium@nat/ocadu/x-micdzrduggrwbomi> has joined #fluid-work
+2019-03-15T16:09:40  <the-t-in-rtf> @jhernandez and @Bosmon (or really anyone), one problem I have is running electron with --inspect-brk, it doesn't pick up on the "external" environment variable from my shell
+2019-03-15T16:10:19  <the-t-in-rtf> I'm using node node_modules/electron/cli.js --inspect-brk
+2019-03-15T16:10:38  <clown> the-t-in-rtf:  I just noticed your comment about losing fingers vis-a-vis production tests.  Are you mucking around with the same code I am in GPII-3333?  Aside:  I'm still trying to reattach my hands; fingers be damned.
+2019-03-15T16:10:51  <the-t-in-rtf> no, I think I'm pretty far afield
+2019-03-15T16:11:01  <the-t-in-rtf> I'm working on gpii-app
+2019-03-15T16:11:19  <the-t-in-rtf> it has many of the same "features" to its tests that universal used to
+2019-03-15T16:11:36  <Bosmon> the-t-in-rtf - which one of its tests starts Couch automatically?
+2019-03-15T16:11:47  <the-t-in-rtf> all of them did until I fixed it
+2019-03-15T16:11:50  <Bosmon> I've no idea about the env var issue and will be interested to hear what anyone has to contribute
+2019-03-15T16:11:50  <the-t-in-rtf> I think that's part of the insanity
+2019-03-15T16:12:16  <Bosmon> the-t-in-rtf - I see, I was interested in why I received a distinct set of problems to the ones in CI
+2019-03-15T16:12:24  <Bosmon> But in my local testing I used the "external couch" env var
+2019-03-15T16:12:33  <the-t-in-rtf> yes, as does CI
+2019-03-15T16:12:37  <the-t-in-rtf> it's part of the command
+2019-03-15T16:12:40  <Bosmon> Oh yes
+2019-03-15T16:12:41  <clown> so the similarity to GPII-3333 is just because couch is involved and the configuration is in the tests/config folder?
+2019-03-15T16:12:46  <the-t-in-rtf> yes
+2019-03-15T16:12:51  <the-t-in-rtf> we have the same stuff in gpii-app
+2019-03-15T16:13:04  <the-t-in-rtf> only they have test configs stored in configs and production in tests/configs
+2019-03-15T16:13:14  <the-t-in-rtf> we can talk about clearing that up once we have things working
+2019-03-15T16:18:48  *** colinclark <colinclark!~colinclar@192.0.159.124> has quit IRC (Quit: colinclark)
+2019-03-15T16:25:35  <the-t-in-rtf> going through in order, no failures so far
+2019-03-15T16:25:46  <the-t-in-rtf> once I have the whole suite running I'll commit
+2019-03-15T16:26:01  <the-t-in-rtf> I suspect we might need one more pass through folding initial listeners into the combined startup
+2019-03-15T16:26:14  <the-t-in-rtf> but we now have a sane pattern for handling that
+2019-03-15T16:43:46  <the-t-in-rtf> OK, everything passes with the new combined startup except the shortcuts manager
+2019-03-15T16:43:57  <the-t-in-rtf> I tested them separately, testing everything together now and then committing
+2019-03-15T16:47:04  <the-t-in-rtf> they all pass together, committing and letting it go through CI
+2019-03-15T16:50:19  *** jhung_away is now known as jhung
+2019-03-15T16:51:46  *** colinclark <colinclark!~colinclar@205.211.168.105> has joined #fluid-work
+2019-03-15T16:54:42  <the-t-in-rtf> @Bosmon or @cindyli or anyone else familiar with the shortcuts manager, I could use help making sense of these failures: https://pastebin.com/EQMWxGVL
+2019-03-15T16:55:51  <the-t-in-rtf> sigh, my pull is in line for CI, which means 1-1.5 hours before we see
+2019-03-15T16:55:59  *** colinclark <colinclark!~colinclar@205.211.168.105> has quit IRC (Client Quit)
+2019-03-15T16:56:04  <the-t-in-rtf> I enjoy working with you all, but I'm not sticking around in real time to wait for that
+2019-03-15T16:56:12  <the-t-in-rtf> I'll comment on chat as I have new info
+2019-03-15T16:56:29  <Bosmon> the-t-in-rtf - I don't think there will be anyone familiar with that code other than the original Astea team
+2019-03-15T16:56:53  *** michelled1 <michelled1!~Adium@205.211.168.104> has joined #fluid-work
+2019-03-15T16:58:17  <the-t-in-rtf> OK, let's proceed on the assumption that the timing errors should be visible with the volume of tests we have that do work at the moment.
+2019-03-15T16:58:21  <Bosmon> But from the looks of it, this event is actually meant to be missing
+2019-03-15T16:58:29  <Bosmon> Since I see no reference to it anywhere in the codebase outside the test defs
+2019-03-15T16:58:30  <the-t-in-rtf> yes, that's why I asked for help
+2019-03-15T16:58:30  <the-t-in-rtf> it'
+2019-03-15T16:58:38  <the-t-in-rtf> it's error tests mixed with other stuff
+2019-03-15T16:58:41  <the-t-in-rtf> the logs are a bit muddy
+2019-03-15T16:59:03  <the-t-in-rtf> its
+2019-03-15T16:59:07  <the-t-in-rtf> sheesh, long week
+2019-03-15T16:59:15  *** kris_HA <kris_HA!~kris@212.5.154.113> has quit IRC (Ping timeout: 244 seconds)
+2019-03-15T16:59:21  *** michelled <michelled!Adium@nat/ocadu/x-micdzrduggrwbomi> has quit IRC (Ping timeout: 268 seconds)
+2019-03-15T16:59:48  <Bosmon> It looks like none of these are genuine errors
+2019-03-15T17:00:06  <the-t-in-rtf> the end game behaviour was the "heat death" pattern
+2019-03-15T17:00:18  <Bosmon> The first genuine failure is this one:
+2019-03-15T17:00:20  <Bosmon> 09:49:46.664:  jq: Expected: Shift+CmdOrCtrl+Alt+Super+M
+2019-03-15T17:00:20  <Bosmon> 09:49:46.664:  jq: Actual: undefined
+2019-03-15T17:00:34  <Bosmon> 09:49:46.664:  jq: FAIL: Module "gpii.tests.dev.config tests" Test name "Shortcuts Manager integration tests" - Message: The initial GPII app shortcut is the same as the default one specified in the GPII connector - at sequence position 5 of 5
+2019-03-15T17:00:37  <Bosmon> On line 984
+2019-03-15T17:01:05  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-maxqkzrfocynwaha> has quit IRC (Remote host closed the connection)
+2019-03-15T17:01:14  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-myoepvhcexwgpovv> has joined #fluid-work
+2019-03-15T17:01:15  <the-t-in-rtf> OK, I will add that to my notes.
+2019-03-15T17:01:57  <jhernandez> the-t-in-rtf: sorry, reading this now - how're you running electron? via npm? via command prompt? powershell?
+2019-03-15T17:02:21  <the-t-in-rtf> some Spanish guy living in Belgium sent me a command I copied and pasted
+2019-03-15T17:02:26  <the-t-in-rtf> just  a sec
+2019-03-15T17:02:27  <jhernandez> hahaha
+2019-03-15T17:02:46  <the-t-in-rtf> npm run test:pspNoCoverage
+2019-03-15T17:03:03  <the-t-in-rtf> but that's the runs that work
+2019-03-15T17:03:09  <the-t-in-rtf> the other is far above, just a moment
+2019-03-15T17:03:23  <the-t-in-rtf> node node_modules/electron/cli.js --inspect-brk
+2019-03-15T17:03:36  <the-t-in-rtf> and it fails because it tries to start docker from within the VM
+2019-03-15T17:03:48  <the-t-in-rtf> I don't need to debug at the moment
+2019-03-15T17:04:06  <the-t-in-rtf> and thankfully I could find what I needed before that failure would blow things up
+2019-03-15T17:04:21  <the-t-in-rtf> but I'd rather have the ability to debug this in the future
+2019-03-15T17:04:51  <the-t-in-rtf> both of those in powershell
+2019-03-15T17:05:02  <the-t-in-rtf> where I've also set the variable using a command like:
+2019-03-15T17:05:16  <the-t-in-rtf> set GPII_TEST_COUCH_USE_EXTERNAL=TRUE
+2019-03-15T17:05:22  <jhernandez> ok
+2019-03-15T17:05:25  <jhernandez> two things
+2019-03-15T17:05:35  <jhernandez> 1st, you can directly call the electron binary
+2019-03-15T17:05:49  <the-t-in-rtf> hmm, the VM complains that it's not in the path
+2019-03-15T17:05:49  <jhernandez> node_modules/.bin/electron
+2019-03-15T17:05:52  <jhernandez> anf
+2019-03-15T17:05:52  <the-t-in-rtf> ah
+2019-03-15T17:05:52  *** colinclark <colinclark!~colinclar@205.211.168.105> has joined #fluid-work
+2019-03-15T17:05:58  <jhernandez> and
+2019-03-15T17:06:24  <jhernandez> in powershell, if you want to set an env variable you should use: $env:GPII_TEST_COUCH_USE_EXTERNAL="true"
+2019-03-15T17:06:37  <the-t-in-rtf> thanks, that's helpful for the future
+2019-03-15T17:06:42  <the-t-in-rtf> saving that to my notes
+2019-03-15T17:06:59  <jhernandez> cool
+2019-03-15T17:07:02  <jhernandez> happy to help
+2019-03-15T17:07:04  <jhernandez> :)
+2019-03-15T17:10:58  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Ping timeout: 246 seconds)
+2019-03-15T17:10:58  *** danayo_ is now known as danayo
+2019-03-15T17:26:40  <bryan_> sgithens: I updated the branch in the GPII-3677 ticket. A lot more settings come back but a lot more sections also come back with 0 settings found as well
+2019-03-15T17:28:24  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-myoepvhcexwgpovv> has quit IRC (Remote host closed the connection)
+2019-03-15T17:28:36  <sgithens> bryan_: Cool, most of your changes for this are probably in the gpii-windows repo right?  I'm almost done merging in all the master branches in to the 228 line, but I'd advise against pulling them in until you're at a good stopping point... well, they aren't quite done yet anyways. :)
+2019-03-15T17:28:53  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-pscntyyumqrjjwfm> has joined #fluid-work
+2019-03-15T17:29:02  <sgithens> they should be ready for monday
+2019-03-15T17:30:12  <bryan_> This change was all in universal...I put some breakpoints in windows to help me debug but didn't make any changes there
+2019-03-15T17:30:59  <bryan_> I may have to dig into windows to further debug any additional missing settings
+2019-03-15T17:32:10  <sgithens> bryan_: Cool, will take a look here shortly. You may also want to take a look at the ticket I linked to GPII-3677, as I think it may be somewhat related
+2019-03-15T17:36:40  <bryan_> That is GPII-3119?
+2019-03-15T17:41:27  <sgithens> bryan_: yup
+2019-03-15T17:43:41  <bryan_> Excellent I'll take a look...was any progress made on it last year?
+2019-03-15T17:44:18  <sgithens> Bosmon cindyli the-t-in-rtf : Going through some of Cindy's review comments, I was wondering as a project, is there a specific set of documented restful conventions that we adhere to (or at least shoot to adhere to). There's never really been strong consensus it seems on thing like whether a PUT should *only* update things, or potentially create them if they don't exist (to like streamline things). etc
+2019-03-15T17:44:29  <sgithens> bryan_: I think should enough to do the research to write that ticket
+2019-03-15T17:44:40  <sgithens> s/should/just/
+2019-03-15T17:45:18  <the-t-in-rtf> @sgithens, it's a good question, even big projects like CouchDB allow PUT-to-create.
+2019-03-15T17:46:16  <sgithens> I think the issues was that when the lifecycle handler applies settingns and gets them, there is soem sort of hack for those extra SPI paths, which is what we are running in to I believe when other parts of the system try to use the settingshandler get/set api
+2019-03-15T17:46:39  <sgithens> the-t-in-rtf: I certainly enjoy the idempotent convenience of it
+2019-03-15T17:46:50  <cindyli> sgithens: there's already PUT /preferences/:gpiiKey that will create the gpiiKey if it doesn't exist - https://github.com/GPII/universal/blob/master/documentation/PreferencesServer.md#put-preferencesgpiikeymergemergeviewview
+2019-03-15T17:47:16  *** avtar <avtar!avtar@nat/ocadu/x-srhdnmtmnvkgabvc> has joined #fluid-work
+2019-03-15T17:47:21  <sgithens> and that was the specific question, but I did wonder if there is any set of actual bullet points on a wiki or something that we like to adhere to as general restful rules
+2019-03-15T17:47:31  <the-t-in-rtf> yes, I guess my other answer is, you should only allow PUT to create if you want to let people choose the keys
+2019-03-15T17:47:38  <the-t-in-rtf> I mean, they could choose anything
+2019-03-15T17:47:49  <the-t-in-rtf> I'd argue we don't want the pattern for that reason
+2019-03-15T17:48:11  <sgithens> the-t-in-rtf: in my case it's an internal endpoint
+2019-03-15T17:48:18  <the-t-in-rtf> internal in what sense?
+2019-03-15T17:48:20  <sgithens> so ideally you've checked it out
+2019-03-15T17:48:44  <the-t-in-rtf> Anyway, if you mean "never makes it to the cloud", I'm with you.
+2019-03-15T17:48:44  <sgithens> well, the webapp using it has hopefully applied some sort of basic validation to teh payload, or is the one issueing it in the first place
+2019-03-15T17:48:57  <sgithens> based on someone clicking a button, or using the PPT
+2019-03-15T17:49:24  <cindyli> sgithens: i think creating or not is a tech decision based on the requirement
+2019-03-15T17:49:37  <sgithens> cindyli: right on
+2019-03-15T17:50:00  <cindyli> if there's no requirement to allow users to create a prefs safe id picked by themself, we should prevent the creation
+2019-03-15T17:50:08  <cindyli> which i think is the case
+2019-03-15T17:50:20  <the-t-in-rtf> totally with you @cindyli
+2019-03-15T17:50:20  <sgithens> anywayyyys... we sometimes piont to rules for linting and other practices, and it seems like there really isn't any general purpose restful uri set of rules :)
+2019-03-15T17:50:31  <cindyli> prefs safe ids should be completely for internal use from my understanding
+2019-03-15T17:50:50  <cindyli> ya, agree
+2019-03-15T17:58:54  *** colinclark <colinclark!~colinclar@205.211.168.105> has quit IRC (Quit: colinclark)
+2019-03-15T17:59:33  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-03-15T17:59:58  <Bosmon> sgithens - there are no such bullet points on a wiki
+2019-03-15T18:00:26  *** michelled1 <michelled1!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-03-15T18:00:31  <Bosmon> But as you have heard, we are in favour of using PUT to create : P
+2019-03-15T18:00:49  <Bosmon> It only makes sense if you already hold the persistent key you are interested in
+2019-03-15T18:02:30  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-pscntyyumqrjjwfm> has quit IRC (Remote host closed the connection)
+2019-03-15T18:02:39  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-gtooaotkygnimwqp> has joined #fluid-work
+2019-03-15T18:06:30  <sgithens> I've only been loosely following the race condition stuff, but should I not worry too much if running the tests on a fresh gpii-app vm are stopping half way through.  Is that part of what's been worked on right now?
+2019-03-15T18:11:07  *** michelled <michelled!~Adium@205.211.168.104> has joined #fluid-work
+2019-03-15T18:15:18  <sgithens> actually a ctrl-c on where it was stuff allowed it to finish
+2019-03-15T18:15:31  <sgithens> and at least all the last set of tests passed
+2019-03-15T18:34:55  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-03-15T18:35:07  *** colinclark <colinclark!~colinclar@205.211.168.105> has joined #fluid-work
+2019-03-15T18:37:17  <Bosmon> sgithens - trunk currently is expected to usually pass without problems
+2019-03-15T18:37:38  <Bosmon> We've got more races in the upcoming branch which merges up with Couch
+2019-03-15T18:38:13  <sgithens> cool cheers
+2019-03-15T18:46:53  <colinclark> michelled, jhung sorry to keep you waiting, shall we talk for a few minutes?
+2019-03-15T18:47:01  <michelled> sounds good
+2019-03-15T18:47:12  <michelled> maybe I'll shift to a room, one sec
+2019-03-15T18:48:14  <colinclark> My room is open
+2019-03-15T18:48:18  <michelled> ok, jhung colinclark, where shall we meet?
+2019-03-15T18:48:55  <colinclark> my room, michelled
+2019-03-15T18:58:26  *** michelled1 <michelled1!~Adium@205.211.168.104> has joined #fluid-work
+2019-03-15T18:58:26  *** michelled <michelled!~Adium@205.211.168.104> has quit IRC (Read error: Connection reset by peer)
+2019-03-15T19:34:59  <the-t-in-rtf> @Bosmon, the "startup as promise" work passed CI for the first run in ages.
+2019-03-15T19:35:05  <the-t-in-rtf> running it again now.
+2019-03-15T19:35:28  <the-t-in-rtf> well, promise chain, you know what I mean
+2019-03-15T19:36:14  <Bosmon> the-t-in-rtf - what a great relief
+2019-03-15T19:36:34  <colinclark> the-t-in-rtf crushing it
+2019-03-15T19:45:54  *** michelled1 <michelled1!~Adium@205.211.168.104> has quit IRC (Quit: Leaving.)
+2019-03-15T19:46:45  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-03-15T19:52:45  *** simonjb <simonjb!~simonjb@205.211.168.104> has quit IRC ()
+2019-03-15T20:08:34  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-03-15T20:10:41  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-03-15T20:29:17  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.101> has quit IRC (Quit: sepidehshahi)
+2019-03-15T20:37:06  <sgithens> javjarfer[m]: You're doing all the work on the LearningTools stuff right?
+2019-03-15T20:37:46  <sgithens> I was curious if you have an RtF license for office, or are just using a demo copy or something else.
+2019-03-15T20:42:19  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-03-15T20:52:33  *** clown <clown!clown@nat/ocadu/x-favffehfuyorrcsp> has quit IRC (Quit: Leaving.)
+2019-03-15T21:11:11  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-03-15T21:11:24  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Client Quit)
+2019-03-15T21:25:59  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 252 seconds)
+2019-03-15T21:30:39  *** colinclark <colinclark!~colinclar@205.211.168.105> has quit IRC (Quit: colinclark)
+2019-03-15T22:11:15  *** avtar1 <avtar1!~avtar@205.211.168.105> has joined #fluid-work
+2019-03-15T22:13:27  *** avtar <avtar!avtar@nat/ocadu/x-srhdnmtmnvkgabvc> has quit IRC (Ping timeout: 240 seconds)
+2019-03-15T22:17:52  *** avtar1 <avtar1!~avtar@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-03-15T22:25:31  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-gtooaotkygnimwqp> has quit IRC (Remote host closed the connection)
+2019-03-15T22:25:47  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-rvblsjfqfbzsbhac> has joined #fluid-work
+2019-03-15T22:25:48  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-rvblsjfqfbzsbhac> has quit IRC (Client Quit)
+2019-03-15T22:34:53  *** colinclark <colinclark!~colinclar@38.99.190.245> has joined #fluid-work
+2019-03-15T22:39:16  *** colinclark <colinclark!~colinclar@38.99.190.245> has quit IRC (Ping timeout: 246 seconds)
+2019-03-15T23:35:29  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:4ad:523d:897a:9eaa> has quit IRC (Remote host closed the connection)

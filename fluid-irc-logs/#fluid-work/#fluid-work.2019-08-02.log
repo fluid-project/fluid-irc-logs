@@ -1,0 +1,305 @@
+2019-08-02T01:08:12  *** cherylhjli <cherylhjli!~Adium@lnsm2-toronto47-142-116-104-176.internet.virginmobile.ca> has joined #fluid-work
+2019-08-02T01:08:12  *** cherylhjli <cherylhjli!~Adium@lnsm2-toronto47-142-116-104-176.internet.virginmobile.ca> has quit IRC (Client Quit)
+2019-08-02T06:37:52  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-klfrxvdhpopztxje> has quit IRC (Quit: Connection closed for inactivity)
+2019-08-02T10:07:36  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:1d0e:a857:7089:e350> has joined #fluid-work
+2019-08-02T10:29:25  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-08-02T10:35:31  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e5a:900:d9e0:6594:11c4:1e82> has joined #fluid-work
+2019-08-02T11:33:20  <Justin_o> jhernandez: hello, I was looking at another UIO+ issue yesterday and wasn't about to reproduce it. https://issues.gpii.net/browse/GPII-3977 Were you the one who initially encountered it, or did you file it for someone else?
+2019-08-02T11:39:20  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-08-02T11:46:23  <Bosmon> Justin_o - luckily the merge update wasn't quite as awful as I expected : P
+2019-08-02T11:46:28  <Bosmon> https://github.com/fluid-project/infusion/pull/824/commits/785d0e89ec2f9c64bb9a5636180a4c618afc70f7#diff-624acab009b9fbb4b680a3b5b26cd93cR57
+2019-08-02T11:46:35  <Bosmon> I only needed to make two small changes
+2019-08-02T11:46:50  <Bosmon> In the upcoming branch, "local" and "defaultLocale" have moved into the "resourceOptions" area of ResourceLoader
+2019-08-02T11:47:07  <Bosmon> And then one needs to access "parsed" in the final loaded resource rather than "resourceText" to get at the JSON representation
+2019-08-02T11:47:59  <Bosmon> I'll add all the points like these to my matching in-progress docs pull
+2019-08-02T11:49:02  <Justin_o> Bosmon: thanks.. seems like a slight variation on the previous concept
+2019-08-02T11:49:30  <Justin_o> Bosmon: also, how did you highlight that line in your PR?
+2019-08-02T11:51:59  <jhernandez> Justin_o: hey
+2019-08-02T11:52:17  <jhernandez> yeah, it's someone else's report - I'm just the JIRA whisperer :P
+2019-08-02T11:52:40  <Bosmon> Justin_o - I just clicked on it
+2019-08-02T11:52:55  <Justin_o> Bosmon: when I do that, it tries to make a comment.
+2019-08-02T11:53:12  <jhernandez> I'll try reproducing it later - will comment in the JIRA with the result
+2019-08-02T11:53:21  <Justin_o> jhernandez: :) thanks.. do you know who the original reporter is.. I can't seem to reproduce the issue.
+2019-08-02T11:53:27  <Justin_o> jhernandez: thanks
+2019-08-02T11:53:31  <Bosmon> Justin_o - yes, given ResourceLoader is going to become a far more commonly used grade in the new framework, we need to get all of its grade-specific options out of top-level so they don't conflict with the user's own options
+2019-08-02T11:53:44  <Bosmon> Justin_o - you need to click in that funny small white area just to the left of the number : P
+2019-08-02T11:54:35  <Justin_o> Bosmon: thanks.. I've been wanting to reference lines in a PR for a while
+2019-08-02T11:54:50  <Bosmon> Justin_o and as for the "resourceText" business, this was really a fault in the old implementation - resourceText was really meant to simply represent the text returned via I/O, but we got a bit lazy and usually parsed it in place
+2019-08-02T11:55:13  <Bosmon> Now the new implementation is a lot more "dataSource-like" with a proper transforming promise chain, we need to be more careful about keeping the various versions of the resource at separate paths
+2019-08-02T11:55:38  <Justin_o> Bosmon: regarding resource loader options this is something that gmoss ran into when trying to make the language switch dynamically https://github.com/fluid-project/infusion/pull/824/commits/785d0e89ec2f9c64bb9a5636180a4c618afc70f7#diff-624acab009b9fbb4b680a3b5b26cd93cR59
+2019-08-02T11:56:31  <Bosmon> Justin_o oh, that's interesting
+2019-08-02T11:56:37  <Justin_o> Bosmon: I like the transforming promise chain.. so will this use a datasource to back it.. I guess I'm not sure why you wouldn't just do this with a datasource
+2019-08-02T11:56:38  <Bosmon> I had been wondering where that comment came from :)
+2019-08-02T11:56:52  <Bosmon> It looks like gmoss simply lifted these definitions from my branch?
+2019-08-02T11:57:32  <Bosmon> Justin_o - the main reason we don't use a DataSource is that doubling the number of components in memory will make the already poor performance of the framework catastrophically bad
+2019-08-02T11:58:01  <Justin_o> Bosmon: not sure, maybe he talked to you about it.. he was working on that at the end of last year I believe. If I remember correctly he needed to update the locale, and had to mutate the options.
+2019-08-02T11:58:01  <Bosmon> Once we can implement the so-called "Infusion compiler" we will indeed switch to unifying ResourceLoader and DataSources further
+2019-08-02T11:58:17  <Bosmon> Justin_o - in fact, you already can use a DataSource to back a ResourceLoader entry now:
+2019-08-02T11:59:23  <Bosmon> https://github.com/fluid-project/infusion/pull/824/files#diff-807a118fad9bcbce4fe23ab9270ba828R432
+2019-08-02T11:59:36  <Bosmon> Here's an example of new-style "resources" entry loading a message bundle from a DataSource
+2019-08-02T11:59:47  <Bosmon> Although in this case you lose the benefits of automatic locale computation
+2019-08-02T12:00:12  <Bosmon> So I think there are always going to be a few bumps in completely unifying DataSources and ResourceLoader entries - but we have already gone part of the way to doing this
+2019-08-02T12:00:37  <Bosmon> A further difference is that the I/O represented by a ResourceLoader entry is just done once, for the lifetime of the component, whereas a DataSource is expected to be operated repeatedly
+2019-08-02T12:02:26  <Bosmon> Instead of a full "DataSource" there is currently a lightweight pseudocomponent "ResourceFetcher" attached to the component, which hosts the promise chain
+2019-08-02T12:05:24  <Justin_o> the automatic locale computation is what determines "en-us" vs "en" for example?
+2019-08-02T12:06:02  <Justin_o> and when you say the ResourceLoader entry is just done once, do you mean it can't refetch if the locale is changed?
+2019-08-02T12:10:19  <Bosmon> Justin_o - yes well, that is a technical exception although in a sense not a moral exception
+2019-08-02T12:10:34  <Bosmon> It will refetch, but morally it is fetching "the same resource" just in a different localisation
+2019-08-02T12:11:38  <Bosmon> Under one of the models of adaptation we are thinking of, this might correspond to actually destroying the component and recreating it with the new locale configured - and this "refetch" is just an optimised version of that
+2019-08-02T12:12:01  <Justin_o> and it doesn't matter that it may be at a different URL path e.g. /lang/en/myResource.json vs /lang/fr/myResource.json or have a different file name?
+2019-08-02T12:12:04  <Bosmon> But morally, a DataSource gives you "a different" resource every time you call its "get" method, especially if you supply it with a different directModel argument
+2019-08-02T12:12:48  <Bosmon> Justin_o - One would say that morally it doesn't matter, no
+2019-08-02T12:13:10  <Justin_o> Bosmon: because for a datasource the resource it's fetching may be at the same path but be different information?
+2019-08-02T12:13:24  <Bosmon> But of course it will always be somewhat difficult describing an inherently stateful process such as I/O in some kind of "relatively stateless" way
+2019-08-02T12:13:48  <Justin_o> Bosmon: so this distinction between resourceLoader and dataSource is more about the transformation and usage of the data as opposed to the retrieval?
+2019-08-02T12:13:51  <Bosmon> Justin_o - if the directModel is different, yes
+2019-08-02T12:14:11  <Bosmon> Justin_o - in practice a lot more of this distinction will go away once we "abolish events and invokers" : P
+2019-08-02T12:14:21  <Bosmon> The whole problem with DataSource.get is that it appears to be a method
+2019-08-02T12:14:37  <Bosmon> And once you have called it, the "place where it goes" doesn't have a name
+2019-08-02T12:14:52  <Bosmon> It's just a bunch of data, or a promise, "hanging in the air" in someone's argument list
+2019-08-02T12:15:39  <Bosmon> In practice we are likely to reform both DataSource and ResourceLoader yet again once the framework goes around a further crank of the handle, into something that is rather more obviously "halfway" between them
+2019-08-02T12:16:25  <Bosmon> In the new model, each invocation of a DataSource will effectively create a fresh component, and so the "one vs many pieces of I/O per component" distinction between it and ResourceLoader will close up
+2019-08-02T12:16:53  <Bosmon> And then the current "ResourceLoader" syntax will then just become a sugar for encoding one of the new-style DataSource attached as a genuine subcomponent to the owning component
+2019-08-02T12:17:28  <Bosmon> This stuff is, say, about 5 years out : P
+2019-08-02T12:17:55  <Bosmon> In the meantime we will have the job of rewriting the Preferences Framework into something that is actually usable, on top of the upcoming framework
+2019-08-02T12:18:21  <Bosmon> And doing stuff like abolishing "PrefsEditorLoader", "Builder", "AuxBuilder" etc. and all these current wheels within wheels which endlessly punish us
+2019-08-02T12:20:15  <Justin_o> exciting
+2019-08-02T12:20:42  <Bosmon> We should have a talk soon about which aspects of the prefs framework are the very hardest to work with day to day
+2019-08-02T12:20:54  <Bosmon> To see if there is something a bit cheaper we can do in the meantime to ease the most painful pressure points
+2019-08-02T12:22:01  <Bosmon> I get the feeling that the most awful thing is having to configure literal resource paths into all the components for each little loaded thing, like a TOC template or a resource bundle, but it would be nice to do a proper writeup of what the current problems are, to see
+2019-08-02T12:22:33  <Justin_o> so speaking of the prefs framework, there are a couple things in the short term that are needed, and I'm wondering if this fits into the timeline you have for the new framework stuff. 1) we had a discussion at a recent design crit to talk about adding more preferences to the UI Options component. What we determined is that we really want to make it easier for an integrator to just use the prefs framework to pick and choose
+2019-08-02T12:22:33  <Justin_o> what preferences are available in their instance ( https://idrc.cachefly.net/wiki.fluidproject.org/videos/IDRC_Design_Crit_UIO_Features_Part1_2019-07-16.mp4 )
+2019-08-02T12:22:59  <Justin_o> 2) UIO+ will need a feature where the user can select which preferences are displayed, and possibly also the order in which they are presented
+2019-08-02T12:23:20  <Bosmon> Oh, this is really great - that whole meeting got recorded!
+2019-08-02T12:23:25  <Bosmon> I was really sorry I couldn't get to it
+2019-08-02T12:24:03  <Bosmon> I'll watch through this
+2019-08-02T12:24:23  <Justin_o> Bosmon: no worries, we try to record the design crits and community meetings just for that case... it's hard with meetings, time zones and etc for everyone to participate, but at least we can go back and watch.. it's also good for reference later too
+2019-08-02T12:25:38  <Justin_o> it also ends with a discussion about variable fonts, which I didn't know about at the time, and still don't know a ton about, but it allows for basically a Prefs Framework experience for adapting a font itself.
+2019-08-02T12:25:46  <Bosmon> Justin_o - wow
+2019-08-02T12:26:02  <Justin_o> Bosmon: the font needs to have the transformations built into it though
+2019-08-02T12:26:43  <Justin_o> Bosmon: here's a JIRA I filed about it, with some links to more info and demos https://issues.fluidproject.org/browse/FLUID-6384
+2019-08-02T12:26:58  <Bosmon> Justin_o - in practice, I think the existing aux schema and primary schema aren't a huge distance from what we want - at least they represent *a* kind of declarative specification for what is in a prefs editor even if it isn't the most usable one
+2019-08-02T12:27:00  <Justin_o> if you just want to play around with some changes you can look at this https://v-fonts.com
+2019-08-02T12:27:12  <Bosmon> So creating a visual tool which will help people spit these out is a very sensible next step
+2019-08-02T12:27:25  <Justin_o> Bosmon: that would cool
+2019-08-02T12:27:39  <Bosmon> And perhaps give us breathing space to fix the stuff underneath without needing to disturb current users too much
+2019-08-02T12:27:49  <Justin_o> Bosmon:  I was mentioning that the schemas were sort of first solution to the problem, but maybe they weren't usable enough.
+2019-08-02T12:28:51  <Justin_o> regarding pain points, and I think this also affects the usability of the schemas is that we weren't able to dynamically generate the placeholders for the panels.. I think we might be able to do that now with the new view components we've added that can render their own containers and templates, but it still not be the most ideal solution
+2019-08-02T12:29:17  <Bosmon> Justin_o - even if we can't, we can even build a backend for the visual tool that generates the placeholders
+2019-08-02T12:29:20  <Justin_o> another issue, as you say, is having to specify all of the resource paths. I also think there are issues with the iframe related to that too
+2019-08-02T12:29:22  <Bosmon> even -> at least
+2019-08-02T12:30:12  <Justin_o> I wasn't sure which "even" you were replacing there for a minute ;)
+2019-08-02T12:30:25  <Bosmon> Justin_o - yes, the new ResourceLoader architecture will help a lot in allowing us to express these paths symbolically
+2019-08-02T12:31:05  <Justin_o>  Bosmon that's true.. although I'm wondering if the UIO+ requirement for the user to define what is show could be used as the visual tool and then it could export the config... not sure.. just thinking aloud.
+2019-08-02T12:31:17  <Justin_o> at any rate, they are both likely a lot of work
+2019-08-02T12:31:47  <Justin_o> Bosmon: also colinclark mentioned that you have some new things to talk about an update to the renderer.. if I'm getting that correct
+2019-08-02T12:34:33  <Bosmon> Justin_o - yes, here's my current work in progress showing the new "module-relative" syntax https://github.com/amb26/new-renderer-demo/blob/FLUID-5047/demo/DemoPage.html#L10
+2019-08-02T12:35:06  <Bosmon> There are now self-contained things named "renderer modules" which allow the impl, markup and resources for a "new renderer component" to be a self-container node module, and/or npm module
+2019-08-02T12:35:42  <Bosmon> Currently the URL rewriting logic is only implemented on the server-side but soon this stuff will go into the client config as well, and then it will be the end of needing to embed literal URLs to stuff all over the place
+2019-08-02T12:36:23  <Bosmon> The server can then just spit down a "care package" to the client consisting of a compiled bundle of all the templates and message bundles that the client's ResourceLoaders can fish into automatically
+2019-08-02T12:36:37  <Bosmon> Although of course CSS will remain an annoyance since the browser really needs URLs to those
+2019-08-02T12:37:21  <Bosmon> But I think it won't be too much work based on our existing framework builders to just spit out built versions of those too
+2019-08-02T12:37:38  <Justin_o> Bosmon: for CSS I wonder if there is a workable scheme with @import, but not sure that will be performant
+2019-08-02T12:38:19  <Justin_o> Bosmon: you mean our distribution builds?
+2019-08-02T12:38:25  <Bosmon> Justin_o - yes, those
+2019-08-02T12:39:10  <Justin_o> Bosmon: funny was having another conversation about those related to https://issues.fluidproject.org/browse/FLUID-6359
+2019-08-02T12:39:20  <Justin_o> talking about compiling the CSS
+2019-08-02T12:40:27  <Bosmon> Justin_o - right, this sounds right
+2019-08-02T12:40:37  <Justin_o> For some of this we just need to break things up better with the stylus modules. But we can potentially sort CSS from all over the place if we are using more UI widgets that have their own CSS
+2019-08-02T12:41:17  <Bosmon> Justin_o - if we are reforming our build process it might be a good opportunity to sort out our file layout as well, at least partially preparing for a "micro-modules" approach
+2019-08-02T12:41:31  <Bosmon> We should really split up the framework and the components into self-contained modules with small package.json entries
+2019-08-02T12:41:40  <Bosmon> And move the tests for each component next to the component, etc.
+2019-08-02T12:42:11  <Justin_o> the issue usually with the CSS concatenation come from 1) relative URLs which is why we currently retain the src structure in the assets directory even though only a few items are available. 2) declarations leaking out of scope..
+2019-08-02T12:42:32  *** cherylhjli <cherylhjli!~Adium@lnsm2-toronto47-142-116-104-176.internet.virginmobile.ca> has joined #fluid-work
+2019-08-02T12:42:33  <Bosmon> Oh yes, relative URLs within CSS
+2019-08-02T12:42:35  <Bosmon> What an annoyance
+2019-08-02T12:43:02  <Justin_o> Bosmon: they really are
+2019-08-02T12:43:13  <Justin_o> Bosmon: also, like your directory restructuring, is there a JIRA for that already
+2019-08-02T12:43:27  <Justin_o> and I think we'd want the test framework portions to be their own module too
+2019-08-02T12:43:58  <Bosmon> Justin_o - yes
+2019-08-02T12:44:04  <Bosmon> Justin_o - not other than the endlessly running https://issues.fluidproject.org/browse/FLUID-5579
+2019-08-02T12:44:15  <Justin_o> Bosmon: lastly, any chance we could use this as an opportunity to move off of qunit.. I'm just asking because I know we've had to fight against that a bunch and can't ever upgrade it.
+2019-08-02T12:44:34  <Bosmon> Justin_o well we will probably have to pick one fight at a time : P
+2019-08-02T12:44:39  <Bosmon> What annoyances have you had with qunit recently?
+2019-08-02T12:45:55  <Bosmon> I know there are the standard race conditions at startup, and its inability to really know when tests have finished arriving, but I'm not sure we have any evidence that either of those issues are any better in the current qunit
+2019-08-02T12:46:47  <Justin_o> Bosmon: mostly things like that recently.. my latest failing tests in all-tests is related to the iframe https://issues.fluidproject.org/browse/FLUID-6385
+2019-08-02T12:46:54  <Justin_o> but that's really a bug in Edge I believe
+2019-08-02T12:46:55  <Bosmon> We could certainly go and gather some evidence for this, but we have so many other things to take care of : P
+2019-08-02T12:47:07  <Bosmon> It'll be a huge effort just to do the directory reorganisation and nothing else
+2019-08-02T12:47:43  <Justin_o> haha yah.. true.. and I'd have to probably change the  grunt-modulefiles and/or fluid-publish to handle the directory changes too
+2019-08-02T12:48:01  *** cindyli <cindyli!~Adium@198.52.178.28> has joined #fluid-work
+2019-08-02T12:48:15  <Bosmon> There's no particular reason we couldn't upgrade to current qunit since I don't think we are doing anything fundamentally incompatible with the current one, but we'd have to rewrite 100,000 lines of test files and it's not even clear that it would fix any of the problems we're most interested in : P
+2019-08-02T12:49:32  <Bosmon> Justin_o - so, as for grunt-modulefiles, here is my current format for packaging "renderer modules": https://github.com/amb26/new-renderer-demo/blob/FLUID-5047/textfieldControl/package.json
+2019-08-02T12:50:01  <Bosmon> Which I think contains much of the same information as in our current little JSON files but in a format more suitable for shoving into NPM etc.
+2019-08-02T12:50:26  <Justin_o> Bosmon: if/when we finally make the switch to a different test engine, we may want to re-evaluate which test framework is most suitable for our work.. I've only dabled in others so don't really have a good feel for it at the moment.
+2019-08-02T12:51:40  <Justin_o> Bosmon: is it valid to place custom properties into a package.json file? will it pass parsing?
+2019-08-02T12:52:09  <Bosmon> Justin_o - yes, people do it all the time
+2019-08-02T12:52:11  <Bosmon> https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid
+2019-08-02T12:52:44  *** Kendraf <Kendraf!~Adium@76-10-137-86.dsl.teksavvy.com> has joined #fluid-work
+2019-08-02T12:54:19  <Justin_o> okay, that looks good.. so we can drop all of the dependency files.. although we probably still need a way to define our own 3rd party dependencies that are pulled in through NPM. Specially something like jQuery that want to include in some builds and leave out in others
+2019-08-02T12:54:22  <Justin_o> Bosmon: ^
+2019-08-02T12:55:01  <Bosmon> Justin_o - right, although I don't see why we wouldn't use package.json for that too
+2019-08-02T12:55:17  <Bosmon> If our packaging for it differs from the official ones, we could always publish them as npm modules scoped under @fluid
+2019-08-02T12:57:22  <Justin_o> I guess that would work, but it would be a bit of pain for maintenance.. and would make it harder for someone else developing with our code to change that version for themselves
+2019-08-02T12:59:26  <Bosmon> Justin_o - I guess we'd need to look at whether we really needed to do anything different to jQuery's existing packaging of themselves as an npm module
+2019-08-02T12:59:30  <Bosmon> Hopefully we wouldn't
+2019-08-02T13:09:25  <Justin_o> yes, true we can explore how these things work when we start in on the task
+2019-08-02T13:10:09  <Justin_o> Bosmon: would you prefer this directory change to happen after the potentia II work is merged or does it matter?
+2019-08-02T13:16:25  <Bosmon> Justin_o - after, I think : )
+2019-08-02T13:16:32  <Bosmon> We only want to do this work once : P
+2019-08-02T13:16:47  <javjarfer[m]> Hi good morning cindyli !
+2019-08-02T13:17:07  <cindyli> hi there, javjarfer[m]
+2019-08-02T13:18:01  <javjarfer[m]> Hi! Just wanted to check with you if you were doing some work regarding Read & Write
+2019-08-02T13:18:30  <javjarfer[m]> I think some issue raised, but I have been unaware of it
+2019-08-02T13:19:27  <cindyli> javjarfer[m]: if you meant this issue - https://issues.gpii.net/browse/GPII-4036. yes, i'm working on it
+2019-08-02T13:20:50  <javjarfer[m]> cindyli: yes, exactly, thanks you, I just didn't knew which was the issue regarding R&W
+2019-08-02T13:21:36  <javjarfer[m]> if there is something on my side I can do, please let me know
+2019-08-02T13:22:01  <javjarfer[m]> (or in general, right now helping to have R&W working have been set as one of my top priorities)
+2019-08-02T13:22:10  <cindyli> sure. thanks, javjarfer[m]
+2019-08-02T13:23:06  <Justin_o> Bosmon: that makes sense. do you have an ETA for when the Potentia II work might be merged in?
+2019-08-02T13:23:20  <Bosmon> Justin_o - in theory it could be quite soon, e.g. in a few weeks
+2019-08-02T13:23:30  <Justin_o> Bosmon: wow, nice
+2019-08-02T13:23:32  <Bosmon> I think the main stumbling block will be checking that the GPII can upgrade to it cleanly
+2019-08-02T13:23:42  <Justin_o> ah okay
+2019-08-02T13:23:43  <javjarfer[m]> thanks you cindyli because you are solving my top priority!
+2019-08-02T13:23:49  <Bosmon> I checked universal and windows with it a few months back, but it will need a further round now
+2019-08-02T13:23:57  <Bosmon> And gpii-app has never been checked with it at all
+2019-08-02T13:24:08  <Bosmon> Also you could usefully test out things like the chrome extension with it, etc.
+2019-08-02T13:24:27  <Bosmon> the-t-in-rtf has been spending time making sure all his projects are ready to go, and kettle is good as well
+2019-08-02T13:25:12  <Bosmon> Then of course there are remaining bulky things like the SJRK which we should hold off testing until I've been through gmoss race condition, which may well end up requiring a bit of refactoring anyway
+2019-08-02T13:27:06  <Justin_o> okay, I should block of some time to test it out with UIO+ maybe next week.
+2019-08-02T13:28:06  <Bosmon> Justin_o - here's a dev release I just rolled based on my current version which is up to date with current master - 3.0.0-dev.20190802T110634Z.785d0e89e.FLUID-6148
+2019-08-02T13:28:17  <Justin_o> Bosmon: cool thanks
+2019-08-02T13:28:38  <Bosmon> My docs pull is fairly up to date but still needs additions for API changes
+2019-08-02T13:28:56  <Bosmon> https://github.com/fluid-project/infusion-docs/pull/136/files
+2019-08-02T13:29:37  <Bosmon> I mean, additions specifically in the APIChangesFrom2_0To3_0.md file
+2019-08-02T13:30:12  <Bosmon> The new features themselves should be fairly well documented, mostly in ResourceLoader.md and IoCAPI.md
+2019-08-02T13:31:36  <Bosmon> Any review or questions of course would be highly welcome :)
+2019-08-02T13:32:40  <Justin_o> for sure, I'll pass any along.
+2019-08-02T13:33:37  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 246 seconds)
+2019-08-02T13:38:29  <Bosmon> Cheers!
+2019-08-02T13:41:31  *** clown <clown!clown@nat/ocadu/x-aqwiyndhjwfdqfkp> has joined #fluid-work
+2019-08-02T13:48:30  *** jhung <jhung!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-08-02T14:12:18  *** michelled <michelled!~Adium@205.211.168.105> has joined #fluid-work
+2019-08-02T14:35:00  *** michelled <michelled!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-08-02T14:39:39  *** colinclark <colinclark!~colinclar@lan2.penham.iasl.com> has joined #fluid-work
+2019-08-02T15:08:38  *** alanharnum <alanharnum!uid363993@gateway/web/irccloud.com/x-guqzguaeiqasmaap> has joined #fluid-work
+2019-08-02T15:13:40  *** colinclark_ <colinclark_!~colinclar@24.114.54.186> has joined #fluid-work
+2019-08-02T15:13:49  <alanharnum> gmoss: looking now at the issues with Staging storytelling described in your email - opened a small PR for something I saw in your branch: https://github.com/BlueSlug/sjrk-story-telling/pull/26
+2019-08-02T15:15:27  *** colinclark <colinclark!~colinclar@lan2.penham.iasl.com> has quit IRC (Ping timeout: 245 seconds)
+2019-08-02T15:15:27  *** colinclark_ is now known as colinclark
+2019-08-02T15:34:21  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has joined #fluid-work
+2019-08-02T15:40:42  <gmoss> alanharnum: merged :) thanks!
+2019-08-02T15:40:56  <alanharnum> gmoss cindyli: should we chat quickly?
+2019-08-02T15:41:01  <gmoss> alanharnum cindyli: what time would work best for you to meet?
+2019-08-02T15:41:01  <cindyli> sure
+2019-08-02T15:41:05  <cindyli> anytime
+2019-08-02T15:41:09  <gmoss> now is good for me
+2019-08-02T15:41:11  <alanharnum> cindyli gmoss: my room is open
+2019-08-02T15:41:15  <gmoss> brt
+2019-08-02T15:56:57  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has quit IRC (Quit: Leaving.)
+2019-08-02T16:06:41  <jhernandez> Justin_o: sorry, seeing your last message now - the original reporter is Anna Szopa
+2019-08-02T16:08:37  <gmoss> alanharnum cindyli: https://github.com/fluid-project/sjrk-story-telling/pull/34
+2019-08-02T16:10:02  <gmoss> alanharnum cindyli: should we file a new Jira to address our "ideal" config file setup, or should we just leave 237 open, leave a relevant comment and make a third PR against that when the time comes?
+2019-08-02T16:11:01  <cindyli> gmoss: i lean towards opening a new one.
+2019-08-02T16:12:12  *** avtar <avtar!~avtar@CPE703acbb3f064-CMbc4dfb4acf70.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-08-02T16:14:09  <cindyli> i feel 237 covers too many points and this small issue is an improvement derived from that big refactoring. it might be easier to track it in a separate jira
+2019-08-02T16:14:57  <gmoss> cindyli: I concur :)
+2019-08-02T16:18:06  *** clown <clown!clown@nat/ocadu/x-aqwiyndhjwfdqfkp> has quit IRC (Ping timeout: 272 seconds)
+2019-08-02T16:32:50  *** clown <clown!clown@nat/ocadu/x-ouyqruahnxdowcci> has joined #fluid-work
+2019-08-02T16:43:32  *** colinclark <colinclark!~colinclar@24.114.54.186> has quit IRC (Read error: No route to host)
+2019-08-02T16:47:08  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-08-02T16:47:32  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Client Quit)
+2019-08-02T16:51:06  *** cherylhjli <cherylhjli!~Adium@lnsm2-toronto47-142-116-104-176.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-08-02T16:52:07  *** colinclark <colinclark!~colinclar@lan2.penham.iasl.com> has joined #fluid-work
+2019-08-02T16:54:50  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-08-02T17:25:13  *** Kendraf <Kendraf!~Adium@76-10-137-86.dsl.teksavvy.com> has quit IRC (Quit: Leaving.)
+2019-08-02T17:26:37  <colinclark> avtar: Are Sepi and the OTs away today, do you know?
+2019-08-02T17:26:57  <jhernandez> Justin_o: yes, I can definitely reproduce the issue
+2019-08-02T17:27:04  <jhernandez> I can show it to you if you want
+2019-08-02T17:27:39  <jhernandez> it looks like it happens when the site is performing updates in the background
+2019-08-02T17:28:05  <jhernandez> e.g. finishing loading the content, reloading ads, etc
+2019-08-02T17:28:55  <avtar> colinclark: i'm not sure tbh
+2019-08-02T17:29:08  <colinclark> ok, thanks
+2019-08-02T17:29:20  <colinclark> I’m thinking about the titles for our blog posts
+2019-08-02T17:29:30  <colinclark> and I feel a bit funny about how they’re phrased
+2019-08-02T17:29:36  <avtar> ah sepi is away today
+2019-08-02T17:29:39  <colinclark> a bit too deficit-oriented
+2019-08-02T17:29:58  <jhernandez> cindyli: hey there
+2019-08-02T17:30:06  <colinclark> I wonder if we should instead title them based on who we co-designed with?
+2019-08-02T17:30:21  <colinclark> So it seems to me a big part of what’s interesting about each sessions is how these were at camps :)
+2019-08-02T17:30:50  <jhernandez> I'm a bit confused about we achieved by merging this https://github.com/GPII/universal/pull/803
+2019-08-02T17:30:55  <colinclark> So maybe “Co-Designing at Playful Strides” and “Co-Designing at Camp Karma” for example?
+2019-08-02T17:31:53  <avtar> yup that makes sense
+2019-08-02T17:32:24  <cindyli> what makes you confused, jhernandez
+2019-08-02T17:33:13  <jhernandez> so, "get the PSP Channel to report the default schema settings as what are defined in the reset to default file"
+2019-08-02T17:34:16  <jhernandez> so, I'm sitting on the debugger at this point https://github.com/GPII/gpii-app/blob/master/src/main/common/ws.js#L83
+2019-08-02T17:34:39  <jhernandez> and I am not receiving the defaults defined in the reset to default file
+2019-08-02T17:34:55  <cindyli> which payload are you looking at?
+2019-08-02T17:35:30  <jhernandez> well, I was hoping to see them coming at some point, but none of them have the default values
+2019-08-02T17:36:16  <colinclark> avtar: I could probably just edit the site, but I guess it’s probabably better to see what Sepi and team think?
+2019-08-02T17:36:45  <cindyli> jhernandez: using the test case as an example, here's where a default value is set: https://github.com/GPII/universal/pull/803/files#diff-8e17c4293a7ea33716039b13684a31bdR896
+2019-08-02T17:36:46  *** cherylhjli <cherylhjli!~Adium@lnsm2-toronto47-142-116-104-176.internet.virginmobile.ca> has joined #fluid-work
+2019-08-02T17:37:09  <avtar> we should check with them on tuesday regardless
+2019-08-02T17:37:44  <avtar> but probably no harm in changing them now :)
+2019-08-02T17:39:12  <avtar> it's the title property https://raw.githubusercontent.com/codelearncreate/c2lc-website/master/content/blog/co-design-session-1/index.md in each of the blog markdown files
+2019-08-02T17:39:53  <colinclark> ok cool
+2019-08-02T17:39:57  <colinclark> i’ll take a look
+2019-08-02T18:02:39  *** cherylhjli <cherylhjli!~Adium@lnsm2-toronto47-142-116-104-176.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-08-02T18:03:29  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:1d0e:a857:7089:e350> has quit IRC (Quit: Leaving.)
+2019-08-02T18:24:28  *** colinclark_ <colinclark_!~colinclar@24.114.71.234> has joined #fluid-work
+2019-08-02T18:25:35  *** cherylhjli <cherylhjli!~Adium@135-23-100-117.cpe.pppoe.ca> has joined #fluid-work
+2019-08-02T18:26:02  *** colinclark <colinclark!~colinclar@lan2.penham.iasl.com> has quit IRC (Ping timeout: 272 seconds)
+2019-08-02T18:26:02  *** colinclark_ is now known as colinclark
+2019-08-02T18:30:03  *** colinclark_ <colinclark_!~colinclar@lan2.penham.iasl.com> has joined #fluid-work
+2019-08-02T18:32:31  *** colinclark <colinclark!~colinclar@24.114.71.234> has quit IRC (Ping timeout: 268 seconds)
+2019-08-02T18:32:31  *** colinclark_ is now known as colinclark
+2019-08-02T18:34:04  *** the-t-in-rtf <the-t-in-rtf!~Adium@ip-213-127-92-10.ip.prioritytelecom.net> has joined #fluid-work
+2019-08-02T18:35:59  *** the-t-in-rtf <the-t-in-rtf!~Adium@ip-213-127-92-10.ip.prioritytelecom.net> has quit IRC (Client Quit)
+2019-08-02T18:46:36  *** Kendraf <Kendraf!~Adium@76-10-137-86.dsl.teksavvy.com> has joined #fluid-work
+2019-08-02T19:13:07  *** clown <clown!clown@nat/ocadu/x-ouyqruahnxdowcci> has quit IRC (Ping timeout: 248 seconds)
+2019-08-02T19:14:01  *** clown <clown!clown@nat/ocadu/x-ywhgpchahfwkezrm> has joined #fluid-work
+2019-08-02T19:55:19  *** Kendraf <Kendraf!~Adium@76-10-137-86.dsl.teksavvy.com> has quit IRC (Quit: Leaving.)
+2019-08-02T20:05:33  *** cherylhjli <cherylhjli!~Adium@135-23-100-117.cpe.pppoe.ca> has quit IRC (Quit: Leaving.)
+2019-08-02T20:08:23  *** cherylhjli <cherylhjli!~Adium@135-23-100-117.cpe.pppoe.ca> has joined #fluid-work
+2019-08-02T20:11:34  <cindyli> alanharnum, gmoss, SJRK staging site is still down
+2019-08-02T20:12:43  <alanharnum> cindyli: I believe this PR from gmoss needs to be merged in order to fix the issue: https://github.com/fluid-project/sjrk-story-telling/pull/34
+2019-08-02T20:13:12  <cindyli> right. merging…
+2019-08-02T20:16:19  <alanharnum> cindyli gmoss: Staging is back: http://staging-stories.floeproject.org/
+2019-08-02T20:16:24  <gmoss> cindyli: sorry, yes I made the PR but didn't tag you in it. thanks alanharnum!
+2019-08-02T20:16:34  <gmoss> and thanks cindyli :)
+2019-08-02T20:16:50  <cindyli> YAY! thanks gmoss and alanharnum
+2019-08-02T20:17:26  <gmoss> odd, UIO seems broken still. I'm going to double-check my fix
+2019-08-02T20:18:06  <alanharnum> gmoss: it looks OK to me (can open it, apply changes, etc)
+2019-08-02T20:18:23  <alanharnum> unless you are talking about mobile, etc
+2019-08-02T20:18:27  *** jhung <jhung!~jhung@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving)
+2019-08-02T20:18:29  <gmoss> alanharnum: nope, Chrome on my home machine
+2019-08-02T20:18:34  <gmoss> Firefox seems fine, oddly enough
+2019-08-02T20:18:55  <gmoss> maybe something has cached (i've tried ctrl+f5)
+2019-08-02T20:19:09  <gmoss> anyway I'll look into it just to be sure, there's an issue of some variety :)
+2019-08-02T20:20:58  <alanharnum> gmoss: I'm actually seeing some failures and restarts of the app in container since it was launched
+2019-08-02T20:21:21  <alanharnum> With this error: "FATAL ERROR: Uncaught exception: Assertion failure - check console for more details: Error marking thread to request 2sqnrt1t-3387 which has already been destroyed"
+2019-08-02T20:21:26  <alanharnum> I don't know if that looks at all familiar
+2019-08-02T20:21:36  <gmoss> hmm that's the kettle issue i was investigating with Justin_o and simonjb
+2019-08-02T20:21:46  <gmoss> i hadn't yet filed a Jira due to the SJRK-237 work
+2019-08-02T20:22:03  <gmoss> and I was still trying to gather more info on repro
+2019-08-02T20:22:27  <gmoss> *i say kettle, it could be a problem in my codew
+2019-08-02T20:22:28  <gmoss> *code
+2019-08-02T20:22:43  <gmoss> i had trouble finding another site hosted from Kettle that I could attempt to break
+2019-08-02T20:24:14  <gmoss> simonjb and I were trying to find ways to automate the reproduction, but the proven way is to open the site in Firefox on Windows, same page in two different tabs, switch back and forth between them and reload the pages as quickly as possible
+2019-08-02T20:25:11  <alanharnum> gmoss: sounds like a job for https://github.com/JoeDog/siege perhaps
+2019-08-02T20:25:53  <alanharnum> though please do not run Siege against our infrastructure without advance planning with me :)
+2019-08-02T20:26:38  <gmoss> alanharnum: I'll look into it! we'd been using Apache ab, but it wasn't enough. ab, like curl or Postman, would only be querying one URL at a time even if it was concurrent, whereas my page load was an HTML page loaded into a browser that then loads many scripts
+2019-08-02T20:27:05  <gmoss> alanharnum: haha of course, I'll be sure to let you know before I deploy the LOIC
+2019-08-02T20:27:09  <gmoss> ;)
+2019-08-02T20:27:29  <alanharnum> gmoss: yeah, I'm not sure if Siege will load (FE) Javascript dependencies, if that's a necessary trigger.
+2019-08-02T20:27:41  <gmoss> it seemed to be
+2019-08-02T20:28:12  <gmoss> the infusion file in particular seemed to be a trigger, so it may be related to the size of the payload
+2019-08-02T20:30:38  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e5a:900:d9e0:6594:11c4:1e82> has quit IRC (Quit: jhernandez)
+2019-08-02T20:31:21  *** cindyli <cindyli!~Adium@198.52.178.28> has quit IRC (Quit: Leaving.)
+2019-08-02T20:43:01  *** cherylhjli <cherylhjli!~Adium@135-23-100-117.cpe.pppoe.ca> has quit IRC (Quit: Leaving.)
+2019-08-02T21:02:38  *** clown <clown!clown@nat/ocadu/x-ywhgpchahfwkezrm> has quit IRC (Quit: Leaving.)
+2019-08-02T21:03:09  *** clown <clown!clown@nat/ocadu/x-rxtrxgzjzurkpyyp> has joined #fluid-work
+2019-08-02T21:03:24  *** clown <clown!clown@nat/ocadu/x-rxtrxgzjzurkpyyp> has left #fluid-work
+2019-08-02T21:32:57  *** colinclark <colinclark!~colinclar@lan2.penham.iasl.com> has quit IRC (Quit: colinclark)
+2019-08-02T22:00:52  *** avtar <avtar!~avtar@CPE703acbb3f064-CMbc4dfb4acf70.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)

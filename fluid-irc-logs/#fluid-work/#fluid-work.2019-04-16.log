@@ -1,0 +1,111 @@
+2019-04-16T01:34:20  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-work
+2019-04-16T01:42:41  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Ping timeout: 252 seconds)
+2019-04-16T01:43:51  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-work
+2019-04-16T01:51:22  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-04-16T03:28:32  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-04-16T03:30:43  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Client Quit)
+2019-04-16T03:31:13  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-04-16T03:31:13  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Client Quit)
+2019-04-16T09:45:56  *** javjarfer <javjarfer!~Javier@201.red-81-37-1.dynamicip.rima-tde.net> has joined #fluid-work
+2019-04-16T09:46:15  <javjarfer> Hi Bosmon! Good morning
+2019-04-16T10:30:23  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:20a5:f82e:5d4f:217f> has joined #fluid-work
+2019-04-16T11:17:08  <Bosmon> Hi there javjarfer!
+2019-04-16T11:29:44  <javjarfer> Hi there Bosmon! So, I was going to ask you about the same issue you have just commented, jhernandez is guiding me to right direction
+2019-04-16T11:31:29  <Bosmon> javjarfer - the committing the binary files?
+2019-04-16T11:33:31  <javjarfer> Bosmon, oh, no, the other one, the brightness mock tests
+2019-04-16T11:34:11  <javjarfer> also, yes, I'm going to remove the binary, that pull was done yesterday in a rush and didn't verify all the files inside the .vs directory
+2019-04-16T11:34:20  <Bosmon> javjarfer - cool, no worries
+2019-04-16T11:49:10  *** javjarfer[m] <javjarfer[m]!javjarferm@gateway/shell/matrix.org/x-swhyyplcoemoojez> has joined #fluid-work
+2019-04-16T12:00:46  *** greatislander <greatislander!~greatisla@24.138.74.254> has joined #fluid-work
+2019-04-16T12:19:38  <javjarfer> Bosmon, sorry, do you see something faulty in my use of fluid.defaults here? https://github.com/GPII/universal/blob/7fef6eaaf021b295c479632bfe0addc3a3809904/gpii/node_modules/testing/src/Mocks.js#L547
+2019-04-16T12:19:39  *** suranamudit[m] <suranamudit[m]!suranamudi@gateway/shell/matrix.org/x-ahqlappoxqovuvxw> has joined #fluid-work
+2019-04-16T12:25:00  <Bosmon> javjarfer - looks fine to me
+2019-04-16T12:26:10  <javjarfer> Bosmon, still don't know from where the fail reflected in CI comes, I have added a payload to the "windows-dynamicDeviceReporter-testSpec.js" with no success
+2019-04-16T12:27:16  <Bosmon> javjarfer - you can't reproduce the failure locally?
+2019-04-16T12:30:55  <javjarfer> Bosmon, yes, I can, what I can't do is make it work xD
+2019-04-16T12:31:00  <Bosmon> javjarfer - ok well that's a start
+2019-04-16T12:31:12  <Bosmon> Have you checked what happens at the time the defaults are registered at this line? https://github.com/GPII/universal/blob/7fef6eaaf021b295c479632bfe0addc3a3809904/gpii/node_modules/testing/src/Mocks.js#L499
+2019-04-16T12:33:04  <javjarfer> Bosmon, haven't done that
+2019-04-16T12:33:38  <Bosmon> Is it possible that the tests are executing against a mock device registry for the wrong platform?
+2019-04-16T12:38:40  <javjarfer> Bosmon, what I can see, is that, that line is only executed once, and when it's "key" holds "gpii.deviceReporter.registryKeyExists" and "mock" just holds the mockFunc "registryKeyExists"
+2019-04-16T12:46:22  <Bosmon> javjarfer - that's what you'd expect on the first test at least
+2019-04-16T12:46:38  <Bosmon> I see you have properly added the wmi mock registration in your test definition here - https://github.com/GPII/universal/blob/7fef6eaaf021b295c479632bfe0addc3a3809904/tests/platform/windows/windows-dynamicDeviceReporter-testSpec.js#L213
+2019-04-16T12:46:44  <Bosmon> What happens if you comment out all the tests but this one?
+2019-04-16T12:50:29  <jhernandez> Bosmon: I think I spotted what was going on with javjarfer's deviceReporter problem
+2019-04-16T12:51:13  <jhernandez> the dynamic device reporter, when called, goes over the solutions in the solutions registry and checks every isInstalled block
+2019-04-16T12:52:18  <Bosmon> jhernandez - ok, I see - and so unless we have mounted at least one mock reporter of each type, it explodes?
+2019-04-16T12:52:30  <jhernandez> so, when the first testDef is called, there's no mock for wmiSettingSupported and that's why we can't resolve that mock, because it's not there
+2019-04-16T12:52:32  <jhernandez> yes
+2019-04-16T12:52:40  <Bosmon> OK, this is a fault of just the same kind we had in the settingsHandlers mocks
+2019-04-16T12:52:50  <Bosmon> That we were coding against a universe so small that there was just one of everything : P
+2019-04-16T12:52:57  <jhernandez> blame on me, I implemented that
+2019-04-16T12:53:03  <Bosmon> Really, I thought it was me ....
+2019-04-16T12:53:25  <jhernandez> Bosmon: I think it does the same with settings handler, which could be you
+2019-04-16T12:53:29  <jhernandez> :P
+2019-04-16T12:53:37  <Bosmon> Yeah ok
+2019-04-16T12:53:50  <Bosmon> So let's just fix the bug in the logic here and move on : P
+2019-04-16T12:54:03  <jhernandez> yes, I implemented the dynamic device reporter thing in the same way settings handler mocks worked
+2019-04-16T12:57:42  *** kris_HA <kris_HA!~kris@185.97.75.80> has joined #fluid-work
+2019-04-16T13:04:55  <javjarfer> jhernandez, Bosmon, great, thanks for the help, I would have taken me much longer to find that
+2019-04-16T13:07:04  *** avtar <avtar!~avtar@ip-24-50-171-248.user.start.ca> has joined #fluid-work
+2019-04-16T13:25:17  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-04-16T13:30:58  *** clown <clown!clown@nat/ocadu/x-fmckapiiauwhsqaz> has joined #fluid-work
+2019-04-16T14:05:50  *** suranamudit[m] <suranamudit[m]!suranamudi@gateway/shell/matrix.org/x-ahqlappoxqovuvxw> has quit IRC (Remote host closed the connection)
+2019-04-16T14:05:50  *** javjarfer[m] <javjarfer[m]!javjarferm@gateway/shell/matrix.org/x-swhyyplcoemoojez> has quit IRC (Write error: Connection reset by peer)
+2019-04-16T14:24:55  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-revfkvxkvertqwui> has joined #fluid-work
+2019-04-16T14:32:25  *** javjarfer[m] <javjarfer[m]!javjarferm@gateway/shell/matrix.org/x-olbxjuldrruvfxci> has joined #fluid-work
+2019-04-16T14:52:03  *** suranamudit[m] <suranamudit[m]!suranamudi@gateway/shell/matrix.org/x-yandpwbvzwgwzlbz> has joined #fluid-work
+2019-04-16T15:07:22  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-04-16T15:07:27  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-04-16T15:17:24  *** kris_HA <kris_HA!~kris@185.97.75.80> has quit IRC (Ping timeout: 268 seconds)
+2019-04-16T15:52:57  *** greatislander <greatislander!~greatisla@24.138.74.254> has quit IRC (Quit: greatislander)
+2019-04-16T15:57:39  *** jhung is now known as jhung_away
+2019-04-16T16:53:10  *** jhung_away is now known as jhung
+2019-04-16T17:08:48  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-revfkvxkvertqwui> has quit IRC (Quit: Leaving.)
+2019-04-16T17:10:14  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-xcjrojyjoyxfuwca> has joined #fluid-work
+2019-04-16T17:10:49  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-xcjrojyjoyxfuwca> has quit IRC (Client Quit)
+2019-04-16T17:32:36  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-04-16T17:36:50  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-04-16T17:41:48  *** greatislander <greatislander!~greatisla@24.138.74.254> has joined #fluid-work
+2019-04-16T17:48:14  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-wrocyldthprqhnsz> has joined #fluid-work
+2019-04-16T17:48:25  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-wrocyldthprqhnsz> has quit IRC (Client Quit)
+2019-04-16T17:49:26  <jhung> fluid-everyone: The design crit will be starting in just over 10 minutes. Today we will be talking about sign to text / audio.
+2019-04-16T17:50:49  *** clown <clown!clown@nat/ocadu/x-fmckapiiauwhsqaz> has quit IRC (Quit: Leaving.)
+2019-04-16T17:53:14  *** clown <clown!~clown@205.211.168.101> has joined #fluid-work
+2019-04-16T18:04:25  *** cherylhjli <cherylhjli!~Adium@205.211.168.101> has joined #fluid-work
+2019-04-16T18:08:58  *** cherylhjli <cherylhjli!~Adium@205.211.168.101> has quit IRC (Client Quit)
+2019-04-16T18:16:55  *** cherylhjli <cherylhjli!~Adium@205.211.168.101> has joined #fluid-work
+2019-04-16T18:34:35  *** avtar <avtar!~avtar@ip-24-50-171-248.user.start.ca> has quit IRC (Quit: Leaving.)
+2019-04-16T18:40:41  *** cherylhjli <cherylhjli!~Adium@205.211.168.101> has quit IRC (Quit: Leaving.)
+2019-04-16T18:46:58  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-04-16T19:04:35  <sgithens> Bosmon: Is it possible to use the dom locator with dynamic values? Like if I don't know ahead of time when declaring a component, so I can't actually add a value for it in `selectors`
+2019-04-16T19:06:35  *** cherylhjli <cherylhjli!~Adium@205.211.168.101> has joined #fluid-work
+2019-04-16T19:06:37  *** cherylhjli <cherylhjli!~Adium@205.211.168.101> has quit IRC (Client Quit)
+2019-04-16T19:07:18  *** clown <clown!~clown@205.211.168.101> has quit IRC (Quit: Leaving.)
+2019-04-16T19:08:15  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-04-16T19:14:49  *** avtar <avtar!~avtar@ip-24-50-171-248.user.start.ca> has joined #fluid-work
+2019-04-16T19:20:17  *** cherylhjli <cherylhjli!~Adium@205.211.168.101> has joined #fluid-work
+2019-04-16T19:20:26  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-04-16T19:20:27  *** danayo_ is now known as danayo
+2019-04-16T19:22:18  *** cherylhjli <cherylhjli!~Adium@205.211.168.101> has quit IRC (Client Quit)
+2019-04-16T19:22:40  *** cherylhjli <cherylhjli!~Adium@205.211.168.101> has joined #fluid-work
+2019-04-16T19:29:44  *** clown <clown!clown@nat/ocadu/x-ygmooydqrbllszpw> has joined #fluid-work
+2019-04-16T19:39:07  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-04-16T19:51:51  <Bosmon> sgithens - the DOM binder is determined by the options it consumes, which are immutable
+2019-04-16T19:52:02  <Bosmon> What is your use case for a dynamic value?
+2019-04-16T19:59:47  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:20a5:f82e:5d4f:217f> has quit IRC (Remote host closed the connection)
+2019-04-16T20:27:13  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:b0fa:5258:e973:283b> has joined #fluid-work
+2019-04-16T20:37:32  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-04-16T20:47:19  *** clown <clown!clown@nat/ocadu/x-ygmooydqrbllszpw> has quit IRC (Ping timeout: 268 seconds)
+2019-04-16T21:00:53  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 268 seconds)
+2019-04-16T21:00:58  *** clown <clown!clown@nat/ocadu/x-msxzsibhzaiuozln> has joined #fluid-work
+2019-04-16T21:02:50  *** clown <clown!clown@nat/ocadu/x-msxzsibhzaiuozln> has quit IRC (Client Quit)
+2019-04-16T21:15:19  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-04-16T21:49:50  *** cherylhjli <cherylhjli!~Adium@205.211.168.101> has left #fluid-work
+2019-04-16T21:51:46  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-04-16T21:51:46  *** danayo_ is now known as danayo
+2019-04-16T21:51:47  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-04-16T22:01:24  *** javjarfer <javjarfer!~Javier@201.red-81-37-1.dynamicip.rima-tde.net> has quit IRC (Read error: Connection reset by peer)
+2019-04-16T22:09:08  *** avtar <avtar!~avtar@ip-24-50-171-248.user.start.ca> has quit IRC (Quit: Leaving.)
+2019-04-16T22:41:11  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-work
+2019-04-16T22:50:52  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Quit: colinclark)

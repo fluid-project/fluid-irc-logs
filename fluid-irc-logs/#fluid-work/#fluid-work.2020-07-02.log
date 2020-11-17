@@ -1,0 +1,194 @@
+2020-07-02T13:51:35  <gtirloni> Bosmon Justin_o sbates: I've pushed a PR for kettle to run on Linux, Windows and macOS as well. There was a minor issue on Windows which had me add a .gitattributes file that fixed the issue with eslint complaining about CRLF endings though. https://github.com/fluid-project/kettle/pull/62
+2020-07-02T13:52:22  <Bosmon> gtirloni - thanks, although I think we had decided that eslint probably should complain about CRLF endings?
+2020-07-02T13:52:59  <Bosmon> That is - there should be none in the repo
+2020-07-02T13:58:53  <gtirloni> yep, it'll complain but on Windows if we let git do the autocrlf thingie, it'll convert the LF's to CRLF's automatically... it's just at checkout time. There's none of that when running on Linux or macOS.. so CRLF's will certainly get caught
+2020-07-02T14:00:51  <gtirloni> hmm or won't they.. now i'm confused. let me read on gitattributes a bit more
+2020-07-02T14:03:32  <Bosmon> gtirloni - I think, remembering early conversations with Justin_o and the like, that our community standard was not to let git do the autocrlf thing
+2020-07-02T14:03:45  <Bosmon> And to insist that all files as they sit in repos have UNIX line endings
+2020-07-02T14:04:12  <Bosmon> I believe this involves setting the git config flag of "core.autocrlf=input"
+2020-07-02T14:04:18  <gtirloni> yeah, makes sense. I need to change the "* text eol=lf" to "* text=false" to disable autocrlf.. I'll modify that. That should ensure git inside GH Actions is not being smarter than we want it
+2020-07-02T14:07:06  <gtirloni> (or anywhere else)
+2020-07-02T14:09:26  <the-t-in_> @gmoss and others I've heard from about the use of gpii-X libraries, I have created a ticket to cover migrating some of the packages used within the Fluid community to the fluidproject organisation.
+2020-07-02T14:09:27  <the-t-in_> https://issues.fluidproject.org/browse/FLUID-6524
+2020-07-02T14:09:44  <the-t-in_> Please comment there if my list is missing things that are needed for the work you do.
+2020-07-02T14:10:12  <the-t-in_> by gpii-X I mean helper libraries like gpii-binder, gpii-testem, and many others, a longer list is on the ticket.
+2020-07-02T14:10:57  <gtirloni> Bosmon Justin_o sbates: I'm just pondering now if I should just run the git command that sets core.autocrlf=input inside CI and forget about .gitattributes.. it seems gitattributes will mess with people's configurations (e.g. I'm telling it to disable autocrlf entirely.. whilst someone might have it set to autocrlf=yeah! eol=lf and expect it to work
+2020-07-02T14:11:53  <Bosmon> gtirloni - yes, I think that seems reasonable (to just run the command), if that is what .gitattributes does
+2020-07-02T14:12:03  <gtirloni> ok
+2020-07-02T14:17:18  <colinclark> gtirloni: yeah, I ran into this kind of thing recently myself
+2020-07-02T14:17:33  <colinclark> Getting set up with a new project that used the Fluid eslint standards on Windows
+2020-07-02T14:17:41  <colinclark> it seems we should document this better
+2020-07-02T14:18:16  <colinclark> but our linting rules unequivocally require Windows users to set Git up to always use Unix line endings
+2020-07-02T14:21:17  <colinclark> the-t-in_: It’ll be so great to carry these libraries forward as part of Fluid
+2020-07-02T14:21:20  <colinclark> thanks for looking into othis
+2020-07-02T14:21:54  <colinclark> Defniitely I use your linting tools, webdriver, and binder
+2020-07-02T14:22:03  <colinclark> but your whole list seems reasonable to migrate
+2020-07-02T14:23:24  <the-t-in_> Yeah, I was just checking all of their usage graphs on npm ton confirm
+2020-07-02T14:23:27  <the-t-in_> to
+2020-07-02T14:23:29  <sbates> gtirloni, Bosmon, Justin_o: there has been some discussion regarding making line ending conversion an option to the GitHub Actions checkout step: https://github.community/t/git-config-core-autocrlf-should-default-to-false/16140 and https://github.com/actions/checkout/issues/135
+2020-07-02T14:23:42  <the-t-in_> The ones I left off only lead to my projects
+2020-07-02T14:23:55  *** the-t-in_ is now known as the-t-in-rtf
+2020-07-02T14:25:16  <sbates> but at the moment I believe that we would need to either set .gitattributes in the repo, or config the CI git instance prior to checking out the code
+2020-07-02T14:26:13  <gtirloni> sbates: I'm proposing we configure it in CI only to be less intrusive to other peoples' local configurations.. waiting on the PR to build now: https://github.com/fluid-project/kettle/pull/62/checks?check_run_id=830982005
+2020-07-02T14:26:50  <sbates> gtirloni: that seems like a reasonable solution to me
+2020-07-02T15:40:25  <dogeman> colinclark if we remove the news sectrion completely from the fluid project, wer wouldn't be left with much.
+2020-07-02T15:40:32  <dogeman> It would be just 4 html pages in total
+2020-07-02T15:40:42  <dogeman> and that would beat the purpose of shifting to a static site generator
+2020-07-02T15:46:10  <dogeman> Moreover, the boilerplate code for fluidic sites using 11ty is almost ready. Will show a demo of it on coming Monday.
+2020-07-02T15:52:09  <Uttara> cindyli: Hi, we are still having the tech meeting right?
+2020-07-02T15:52:47  <colinclark> dogeman: Well, let’s think about it for a second...
+2020-07-02T15:53:11  <colinclark> Put yourself in the position of a visitor to the site, who wants to learn more about Fluid
+2020-07-02T15:53:29  <colinclark> and what does a site filled with very very old news articles suggest to you?
+2020-07-02T15:57:07  <cindyli> yes, Uttara. it'll likely be a quick update
+2020-07-02T16:03:36  <dogeman> That's correct. But if we have just a few html pages, using an ssg would be overkill.
+2020-07-02T16:04:01  <dogeman> colinclark
+2020-07-02T16:05:39  <colinclark> I’m not sure what to say, dogeman
+2020-07-02T16:06:01  <colinclark> You didn’t really answer my question—it was an actual question, not rhetorical
+2020-07-02T16:06:27  <colinclark> and I just can’t see why it’s worth your time to port over news stories that are largely over a decade old
+2020-07-02T16:06:35  <colinclark> just for quantity’s sake
+2020-07-02T16:11:24  <dogeman> Yeah, that's totally fine. If the news articles aren't useful anymore( as one of them is a job posting from years ago) , there's no point in keeping them there. When I first looked at fluidproject.org when I was drafting my proposal , I didn't even look at the news articles because all the information I needed to know about fluid project was available on the homepage and about page itself.
+2020-07-02T16:11:54  <dogeman> It makes sense to remove the articles which are not useful anymore.
+2020-07-02T16:12:14  <dogeman> But there are a few articles like blog posts for older gsoc projects written there which can be continued.
+2020-07-02T16:13:13  <dogeman> sorry, just checked that the gsoc blog posts are on floeproject news section and not on fluid
+2020-07-02T16:13:27  <colinclark> ah right
+2020-07-02T16:13:40  <colinclark> I mean, I’m flexible
+2020-07-02T16:13:56  <colinclark> but I think a much simpler Fluid Project site isn’t a bad thing
+2020-07-02T16:14:04  <colinclark> and the next step is that we’re going to rewrite the site
+2020-07-02T16:14:27  <colinclark> possibly redesign it, but at very least, to rewrite the content and change the structure of it to better reflect what we’re doing these days
+2020-07-02T16:14:49  <dogeman> Just check the news section again. There is no blog post which I find necessary or required in 2020. Most of the blogs are several years old and need not be present anymore on the website
+2020-07-02T16:14:57  <colinclark> yeah
+2020-07-02T16:15:05  <colinclark> I think that’s probably true, for better or worse
+2020-07-02T16:15:17  <dogeman> That seems interesting. By rewriting do you mean design changes or content addition/updation?
+2020-07-02T16:15:29  <colinclark> well, I’d love to redesign the site
+2020-07-02T16:15:43  <colinclark> I’m not sure if we’ll have the resources or not, but hopefully jhung might have some cycles at some point
+2020-07-02T16:15:53  <colinclark> But basically rewriting all the content
+2020-07-02T16:16:01  <colinclark> and changing the information architecture
+2020-07-02T16:16:32  <dogeman> 11ty provides a few starter template designs, but it makes more sense to chose one from hugo or jekyll who have a wider library  of templates and then convert it to something that 11ty can support too.
+2020-07-02T16:16:33  <colinclark> I’d like it to better reflect us as a community of practice around inclusive co-design and user-continued design
+2020-07-02T16:17:18  <dogeman> I talked to jhung about  this and he said that he has something in mind for new content for the site and has been working with few design guys too if I remember correctly.
+2020-07-02T16:19:03  <gmoss> gtirloni: thanks for merging my 362 PR :)
+2020-07-02T16:19:03  <gmoss> the-t-in-rtf: thanks for filing FLUID-6524! Everything used by the Storytelling Tool is included on your list, including gpii-handlebars (there's a question about whether that is used).
+2020-07-02T16:21:40  <sbates> colinclark, dogeman: sorry to jump into the middle of your conversation. I was thinking about old news and one of the positive qualities they have is to give a sense of the history of the project and I think that can be valuable
+2020-07-02T16:22:00  <colinclark> even when there’s nothing new? :)
+2020-07-02T16:22:45  <colinclark> and would a kind of “highlghts” or “timelines” page capture some of this in a similar way:
+2020-07-02T16:22:47  <colinclark> ?
+2020-07-02T16:23:35  <sbates> the risk of having nothing new is that it looks like there's no current work and there is overhead in constantly adding news
+2020-07-02T16:24:18  <colinclark> yeah
+2020-07-02T16:24:20  <sbates> I think an alternate like a timelines page would definitely be an option
+2020-07-02T16:24:31  <colinclark> the latter is always challenging—keeping a news site up to date
+2020-07-02T16:24:37  <sbates> agreed
+2020-07-02T16:24:51  <colinclark> Given the re-framing of the Fluid site, I think we could have lots of news stories to add on a regular basis
+2020-07-02T16:25:12  <Justin_o> sbates, colinclark: something that I sometimes find confusing is to understand where some things should be. i.e IDRC site vs Fluid vs etc..
+2020-07-02T16:25:16  <colinclark> documenting our co-design activities on various projects, things related to UIO and recent work on Infusion, etc.
+2020-07-02T16:25:22  <colinclark> it’s just a question of keeping on it, which is a lot of work
+2020-07-02T16:25:43  <Justin_o> the reframing might help with the confusion I mentioned above
+2020-07-02T16:25:50  <colinclark> yes
+2020-07-02T16:26:21  <colinclark> it will help a lot
+2020-07-02T16:30:01  <colinclark> The short version is that I see Fluid as focusing on “open practices,” broadly speaking
+2020-07-02T16:30:15  <colinclark> Fluid is a part of the IDRC’s work
+2020-07-02T16:30:45  <colinclark> so there will naturally be overlap
+2020-07-02T16:31:18  <colinclark> but often what we put on the Fluid site will be a) from a broader community perspective and b) more focused on certain technologies and design approaches
+2020-07-02T16:31:27  <colinclark> the details :)
+2020-07-02T16:43:00  <gmoss> gtirloni: it looks like the DB container may still having issues on the Storytelling Tool staging site: https://staging-stories.floeproject.org/stories
+2020-07-02T16:43:54  <gtirloni> gmoss: thanks, I'll take a look. I think I'll change our monitoring from pinging / to /stories, what do you think?
+2020-07-02T16:44:24  <dogeman> colinclark: So what should be the next step to update fluid website?
+2020-07-02T16:44:51  <gmoss> gtirloni: sure, /stories is already the smoketest URL so that seems pretty reasonable to me. It's interesting that it worked just fine after build but isn't now
+2020-07-02T16:45:49  <colinclark> dogeman: Why not start by choosing which news articles on the Fluid site are more ephemeral vs. historical (i.e. to sbates’ point)?
+2020-07-02T16:46:05  <colinclark> remove the ones that aren’t really needed
+2020-07-02T16:46:10  <gtirloni> gmoss: thanks, changed. i'll check the error now
+2020-07-02T16:46:18  <gmoss> gtirloni: thank you!
+2020-07-02T16:46:21  <colinclark> and keep the ones that reflect major milestones or achievements
+2020-07-02T16:46:38  <colinclark> where you find broken links in the latter, link to the Wayback Machine
+2020-07-02T16:46:59  <colinclark> or, if that’s not possible, remove the link
+2020-07-02T16:47:06  <colinclark> Does that seem reasonable, dogeman?
+2020-07-02T16:57:04  <gtirloni> gmoss: it's back. for some reason the docker volume that holds the couchdb data was gone O_o .. I've never seen this happen. I've restored it from backup now
+2020-07-02T16:58:08  <gmoss> gtirloni: I wonder what's going on... is the volume persistent between builds?
+2020-07-02T16:58:21  <gmoss> *is it meant to be
+2020-07-02T16:58:22  <gtirloni> gmoss: yep
+2020-07-02T16:58:26  <gmoss> strange
+2020-07-02T16:58:28  <gtirloni> very
+2020-07-02T16:59:27  <gmoss> gtirloni: the weirdest part to me is that it must have been there when the deploy happened yesterday: https://github.com/fluid-project/sjrk-story-telling/runs/826336771?check_suite_focus=true#step:5:13
+2020-07-02T16:59:34  <gmoss> that line would have shown the error otherwise
+2020-07-02T16:59:40  <gtirloni> yeah
+2020-07-02T16:59:51  <gmoss> so it seems like something caused it to go down
+2020-07-02T16:59:51  <gtirloni> I'll have a thorough look at this server
+2020-07-02T17:00:22  <gmoss> gtirloni: much appreciated :) if there's anything you need from me, just let me know!
+2020-07-02T17:00:27  <gtirloni> thanks!
+2020-07-02T17:17:40  <Justin_o> gmoss: let me know if you need any help with the testing
+2020-07-02T17:21:46  <gmoss> Justin_o: Much appreciated :) I was just poking around in the browser tests and updating the testing grid before I begin in earnest. If you'd like to do the tests for MacOS, that would save me a little bit of time. The other four environments might be trickier for you :P
+2020-07-02T17:22:12  <gmoss> Justin_o: let me know if you have any questions about how the grid works
+2020-07-02T17:27:55  <Justin_o> gmoss: sure, can you send me a link to the testing grid
+2020-07-02T17:28:09  <gmoss> Justin_o: https://wiki.fluidproject.org/display/fluid/Storytelling+Tool+Minimal+Testing+Grid
+2020-07-02T17:28:31  <gmoss> we're just doing the minimal grid today, the full grid is going to be done less often since it takes days
+2020-07-02T17:29:09  <Justin_o> I have a different version of macOS, is it okay if I just update the grid to reflect that
+2020-07-02T17:29:46  <Justin_o> gmoss: ^
+2020-07-02T17:30:45  <Justin_o> gmoss: and is this the site we're testing against https://staging-stories.floeproject.org
+2020-07-02T17:31:22  <the-t-in-rtf> Thanks for clarifying about gpii-handlebars, @gmoss.
+2020-07-02T17:31:37  <the-t-in-rtf> I'll plan to move it as well.
+2020-07-02T17:32:18  <gmoss> Justin_o: that's fine, yes. and that is the correct URL
+2020-07-02T17:32:18  <gmoss> the-t-in-rtf: excellent :)
+2020-07-02T17:32:56  <gmoss> Justin_o: for test stories, I like to indicate what test number and what environment it is, so something like "mac test 6" or similar
+2020-07-02T17:33:02  <gmoss> in the story title, that is
+2020-07-02T17:34:11  <Justin_o> okay
+2020-07-02T17:34:48  <gmoss> https://www.irccloud.com/pastebin/p4V78Hc9/
+2020-07-02T17:34:55  <gmoss> whoops those were meant to be messages
+2020-07-02T17:34:56  <gmoss> Justin_o:
+2020-07-02T17:35:13  <Justin_o> gmoss: haha I was wondering what happened there
+2020-07-02T17:35:46  <Justin_o> gmoss: I think I'm good for now, but will ping you if necessary
+2020-07-02T17:37:56  <gmoss> Justin_o: sounds good :)
+2020-07-02T17:42:18  <dogeman> colinclark yeah that makes sense.
+2020-07-02T17:42:30  <colinclark> cool
+2020-07-02T17:42:46  <dogeman> It's not a lot of work. Will add commits within an hour.
+2020-07-02T17:42:51  <colinclark> thanks!
+2020-07-02T17:43:03  <dogeman> np
+2020-07-02T17:43:47  <colinclark> gmoss, Justin_o, cindyli: Once the latest Storytelling release is out, I think we should have a conversation about our general approach and to reflect a bit on our long-term technical roadmap
+2020-07-02T17:44:09  <colinclark> Can we schedule a meeting to have a brainstorming session after the release is done?
+2020-07-02T17:44:21  <colinclark> That was a funny sentence…
+2020-07-02T17:44:32  <colinclark> Schedule a meeting to brainstorm together, I mean
+2020-07-02T17:46:08  <gmoss> colinclark: haha it's an interesting combination of words :) yes I think that would be valuable to have that conversation. I'm available all week next week except the usual times and on the 8th at 11:00. cindyli and Justin_o?
+2020-07-02T17:50:42  <cindyli> gmoss, my availability is almost same as yours except i won't be available every Monday and Thursday 3:30-4:30PM
+2020-07-02T17:56:41  <Justin_o> gmoss, colinclark, cindyli: I should be able to make time next week as well, except Friday.
+2020-07-02T17:57:07  <colinclark> Tuesday’s pretty good for me
+2020-07-02T18:00:47  <Justin_o> gmoss: could you explain what this issue is "Race condition in Page grade event tests" I'm not sure if I'm hitting it.
+2020-07-02T18:01:03  <Justin_o> The Story Page Tests are stalling for me
+2020-07-02T18:01:18  *** christopher is now known as Guest9739
+2020-07-02T18:01:37  <gmoss> Justin_o: I've noticed the same
+2020-07-02T18:01:50  <gmoss> I have a couple screenshots and was going to file a Jira after getting through the other tests
+2020-07-02T18:02:24  <gmoss> Justin_o: the stalling is the "race condition", my description may have jumped to conclusions :)
+2020-07-02T18:03:04  <gmoss> depending on the browser/device they will stall more or less reliably. in Edge 44 it's ~90% of the time, while in Firefox for me it's ~30% and Chrome almost never
+2020-07-02T18:03:46  <gmoss> colinclark: do you intend for michelled and danayo to join us in the conversation as well?
+2020-07-02T18:03:49  <Justin_o> gmoss: okay, thanks, I'll mark it with the same number
+2020-07-02T18:04:21  <colinclark> gmoss: I’d definitely like danayo to be there, yes
+2020-07-02T18:08:08  <gmoss> colinclark: In that case, I propose we just use the regular ST check-in time (12:30), or whenever Tuesday's Lightning Talk has wrapped up
+2020-07-02T18:23:25  <Justin_o> colinclark, gmoss, cindyli: that should work for me
+2020-07-02T18:23:37  <Justin_o> gmoss: how are the stories sorted in the browser stories list?
+2020-07-02T18:25:06  <colinclark> tuesday 1230 is good for me too
+2020-07-02T18:27:26  <gmoss> Justin_o: they're sorted by their internal db ID. Sorry I have to take care of something here at home, afk for a little bit
+2020-07-02T18:27:42  *** Bosmon2 is now known as Bosmon
+2020-07-02T18:34:06  <cindyli> tuesday 1230 is good for me too
+2020-07-02T18:34:15  <gmoss> Justin_o: back, sorry about that
+2020-07-02T18:38:58  <Justin_o> gmoss: no problem. I'm asking because one of my stories appeared far down the list. See macOS Test 8
+2020-07-02T18:39:03  <Justin_o> https://staging-stories.floeproject.org/storyBrowse.html
+2020-07-02T18:40:49  <Justin_o> gmoss: also what video formats are supported?
+2020-07-02T18:44:29  <gmoss> Justin_o: I don't think we have any "officially" supported formats. strictly speaking, whatever the browser you're viewing the story with supports. The upload element currently allows "video/*", though there are issues with .mov in MacOS, I believe
+2020-07-02T18:44:46  <gmoss> I'll have to refresh my memory to be sure
+2020-07-02T18:45:09  <Justin_o> gmoss: I was trying to upload an mp4 video but the the file open dialog won't let me select them
+2020-07-02T18:45:28  <gmoss> Justin_o: that sounds familiar. I feel like there may be a Jira for that already
+2020-07-02T18:46:17  <gmoss> Justin_o: https://issues.fluidproject.org/browse/SJRK-222 and https://issues.fluidproject.org/browse/SJRK-354
+2020-07-02T18:46:58  <Justin_o> gmoss: thanks
+2020-07-02T18:57:04  <Uttara> cindyli and Teddy___ is it possible to met at 3 instead?
+2020-07-02T18:58:03  <cindyli> fine with me, Uttara
+2020-07-02T18:58:41  <Teddy___> Sure lets do it
+2020-07-02T18:59:01  <Uttara> okay will be right there
+2020-07-02T19:34:15  <Justin_o> gmoss: for Test 17 when it says "state is not remembered on page reload", does that mean all state or just which screen of the workflow it is on?
+2020-07-02T19:34:56  <gmoss> Justin_o: just the screen, i.e. forward/back history. This line was added before autosave was a thing, so it's a little confusing now. I'll rephrase it to clarify :)
+2020-07-02T20:04:41  <gmoss> Justin_o: I saw that you filed FLUID-6525, it's a duplicate of SJRK-186 but I think we should keep yours, since as you say it's likely an issue with the prefs framework and not the Storytelling Tool
+2020-07-02T20:05:06  <gmoss> I can put my details into the FLUID one once I'm done my testing
+2020-07-02T20:05:14  <Justin_o> gmoss: we can link them together for now.. it's probably worth having an SJRK related issue in case anyone looks there for it
+2020-07-02T20:05:30  <gmoss> Justin_o: fair enough. I've added a link, I'll just leave both alone then :)
+2020-07-02T20:05:40  <Justin_o> gmoss: cool thanks
+2020-07-02T20:06:46  <Justin_o> gmoss: so I'm noticing that the uploaded media disappears when the page is refreshed.. I didn't see a jira about this but checking in case I missed it
+2020-07-02T20:07:26  <gmoss> Justin_o: this is related to how we rolled out autosave. SJRK-289 pull request will solve that, once it's ready
+2020-07-02T20:07:55  <gmoss> right now it only saves text content, but we had to do some server-side refactoring to get files to persist
+2020-07-02T20:08:54  <Justin_o> gmoss: okay, I left a note pointing at that JIRA in the test grid
+2020-07-02T20:09:05  <gmoss> Justin_o: great, thanks :)

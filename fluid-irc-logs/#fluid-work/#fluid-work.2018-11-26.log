@@ -1,0 +1,356 @@
+2018-11-26T00:00:05  *** javjarfer[m] <javjarfer[m]!javjarferm@gateway/shell/matrix.org/x-jxhopyuybtopvzfs> has quit IRC (Remote host closed the connection)
+2018-11-26T00:00:35  *** suranamudit[m] <suranamudit[m]!suranamudi@gateway/shell/matrix.org/x-txcpiddwejxsafks> has quit IRC (Remote host closed the connection)
+2018-11-26T00:08:19  *** javjarfer[m] <javjarfer[m]!javjarferm@gateway/shell/matrix.org/x-xfpqkcsnffobcaco> has joined #fluid-work
+2018-11-26T00:22:40  *** suranamudit[m] <suranamudit[m]!suranamudi@gateway/shell/matrix.org/x-srdsvmjhkjpsxewg> has joined #fluid-work
+2018-11-26T00:35:48  *** stegru <stegru!~ste@cpc120296-warr7-2-0-cust79.1-1.cable.virginm.net> has quit IRC (Ping timeout: 252 seconds)
+2018-11-26T08:22:40  *** georgitodorov <georgitodorov!~georgitod@37.157.190.158> has joined #fluid-work
+2018-11-26T08:42:33  <javjarfer[m]> Hi there Bosmon ! Good morning
+2018-11-26T09:01:38  *** stegru <stegru!~ste@cpc120296-warr7-2-0-cust79.1-1.cable.virginm.net> has joined #fluid-work
+2018-11-26T09:09:51  <javjarfer[m]> Hi the-t-in-rtf , I'm around if you want to chat about this encoding https://github.com/GPII/universal/pull/636#discussion-diff-235718677R6547
+2018-11-26T09:10:04  <the-t-in-rtf> Sure.
+2018-11-26T09:10:16  <javjarfer[m]> Basically the setting has a special value which is "4294967295"
+2018-11-26T09:10:32  <the-t-in-rtf> so is that represented as a string when it's stored?
+2018-11-26T09:10:33  <javjarfer[m]> that special value triggers another behavior, and I wanted to document the existence of that value
+2018-11-26T09:10:37  <the-t-in-rtf> is the value always an integer?
+2018-11-26T09:10:43  <javjarfer[m]> it's a number
+2018-11-26T09:10:52  <javjarfer[m]> yes, always integer
+2018-11-26T09:11:14  <the-t-in-rtf> so, why is that value special, and what do other values mean?
+2018-11-26T09:11:20  <the-t-in-rtf> Is it a bitmask or something?
+2018-11-26T09:11:30  <the-t-in-rtf> where all the bits being set equals that number?
+2018-11-26T09:11:51  <the-t-in-rtf> I'm gonna use backticks for non string values to be clear
+2018-11-26T09:12:16  <the-t-in-rtf> so, for example, is `0` "everything off" and `4294967295` "everything on"?
+2018-11-26T09:14:34  <javjarfer[m]> https://github.com/JavierJF/universal/blob/GPII-3145/testData/solutions/win32.json5#L6539
+2018-11-26T09:14:49  <the-t-in-rtf> So, just refreshed my memory, that number is two to the 32nd
+2018-11-26T09:14:56  <javjarfer[m]> It basically changes de numbers of lines that are scrolled
+2018-11-26T09:15:25  <the-t-in-rtf> OK, so it's "3 to 25"
+2018-11-26T09:15:28  <the-t-in-rtf> or this special number
+2018-11-26T09:15:34  <javjarfer[m]> 1 means 1, 2 means 2, but 4294967295 means, 'page scroll'
+2018-11-26T09:15:40  <the-t-in-rtf> yes, I get that now
+2018-11-26T09:15:46  <the-t-in-rtf> so, you need "oneOf" then
+2018-11-26T09:15:49  <the-t-in-rtf> with two schemas
+2018-11-26T09:15:53  <the-t-in-rtf> subschemas
+2018-11-26T09:15:58  <the-t-in-rtf> one for 3-25 as integer
+2018-11-26T09:16:18  <the-t-in-rtf> the other for the literal value, as an enum with one entry and an enumLabel of "page scroll"
+2018-11-26T09:16:24  <the-t-in-rtf> give me a second and I'll type that up as a pastie
+2018-11-26T09:16:35  <javjarfer[m]> yes, we changed the max value to 25 because stegru pointed out that was absurd that someone would like to scroll 4294967294 lines
+2018-11-26T09:16:46  <the-t-in-rtf> uhh.
+2018-11-26T09:16:49  <javjarfer[m]> <freenode_the "give me a second and I'll type t"> thanks you
+2018-11-26T09:16:57  <the-t-in-rtf> you don't get to decide what's absurd necessarily
+2018-11-26T09:17:01  <the-t-in-rtf> life is like that
+2018-11-26T09:17:17  <the-t-in-rtf> so, what can people set it to in the existing tools that control this?
+2018-11-26T09:17:36  <the-t-in-rtf> that would be a smart way to make the call
+2018-11-26T09:18:11  <the-t-in-rtf> i.e. if Windows itself lets you set it from 3 to 100, or to "page scroll", we should do the same
+2018-11-26T09:18:28  <the-t-in-rtf> since they're expecting people to be using settings in the range they allow people to use.
+2018-11-26T09:18:36  <stegru> 1-100
+2018-11-26T09:18:44  <the-t-in-rtf> so why 3-25?
+2018-11-26T09:19:07  <the-t-in-rtf> I mean, you're deciding that no one should be able to do 1-2 or 26-100, it doesn't seem appropriate
+2018-11-26T09:19:19  <the-t-in-rtf> Anyway, I'll write it up with 1-100 and the special case, just a second
+2018-11-26T09:19:21  <stegru> just a number i made up before I knew about the range in windows
+2018-11-26T09:19:29  <the-t-in-rtf> no making stuff up
+2018-11-26T09:19:33  <the-t-in-rtf> fake settings!
+2018-11-26T09:19:49  <the-t-in-rtf> Anyway, it's fine, but I do feel pretty strongly that we need to preserve the range of behaviours and let people choose.
+2018-11-26T09:19:55  <javjarfer[m]> well, if you mean the UI that changes the control, in Microsoft is a scroll bar, that goes 1-100 as stegru has just pointed out
+2018-11-26T09:20:13  <javjarfer[m]> I also think that 100 is a pretty high scrolling number
+2018-11-26T09:20:21  <the-t-in-rtf> yes, but it doesn't really matter what you think
+2018-11-26T09:20:33  <the-t-in-rtf> if someone could change it to 100 and had a reason to, that's their business
+2018-11-26T09:20:34  <stegru> by the way, 4294967295 is in fact 0xFFFFFFFF.. which is (uint)-1
+2018-11-26T09:21:23  <the-t-in-rtf> yes, my point was that it was so suspiciously close to a power of 2, which is why I asked the bitmask setting
+2018-11-26T09:21:29  <the-t-in-rtf> glad it's not that, as those will be awful to unpack.
+2018-11-26T09:21:37  <the-t-in-rtf> not complicated, just wordy
+2018-11-26T09:22:27  <javjarfer[m]> I can change it if you like, but I would like to know the user base of people using more than 10, just for fun xD
+2018-11-26T09:22:33  <the-t-in-rtf> uh
+2018-11-26T09:22:40  <the-t-in-rtf> the basis is, they can control it over a range
+2018-11-26T09:22:51  <the-t-in-rtf> you don't get to decide that volumes over 25 or under 3 aren't valid
+2018-11-26T09:22:58  <the-t-in-rtf> the user should be able to choose
+2018-11-26T09:23:22  <javjarfer[m]> yes, their decision looks like was made simply based of number limits
+2018-11-26T09:25:41  <the-t-in-rtf> so, just be clear, how do they store that 1-100
+2018-11-26T09:25:43  <the-t-in-rtf> 0-99?
+2018-11-26T09:25:46  <the-t-in-rtf> or 1-100?
+2018-11-26T09:26:57  <javjarfer[m]> I don't really mind, we took that number on chance, which range would you like to have there?
+2018-11-26T09:27:06  <the-t-in-rtf> 1-100
+2018-11-26T09:27:22  <the-t-in-rtf> i.e. we don't limit the range of motion on a control ourselves
+2018-11-26T09:28:02  <the-t-in-rtf> So, we'll need to run this by @sgithens as well
+2018-11-26T09:28:11  <the-t-in-rtf> as this kind of complex setup is harder to represent in a UI
+2018-11-26T09:28:15  <the-t-in-rtf> but here comes the example.
+2018-11-26T09:30:31  <the-t-in-rtf> holy cow is pastiebin's new captcha awful
+2018-11-26T09:30:33  <the-t-in-rtf> https://www.pastiebin.com/5bfbbd2859c08
+2018-11-26T09:30:48  <the-t-in-rtf> took me like five attempts to prove I'm human with their terrible, small, grainy photos.
+2018-11-26T09:30:58  <the-t-in-rtf> I bet a computer could have done better.
+2018-11-26T09:31:06  <the-t-in-rtf> Anyway that's what I mean
+2018-11-26T09:31:15  <the-t-in-rtf> with oneOf, it's layered onto the enclosing definition
+2018-11-26T09:31:31  <the-t-in-rtf> so you can set the minimum and the fact that it's an integer, and then just say "one of" for the constraints that vary
+2018-11-26T09:32:06  <the-t-in-rtf> i.e. either of the options still has to be an integer greater than one
+2018-11-26T09:32:18  <the-t-in-rtf> but we should talk it through with @sgithens
+2018-11-26T09:32:32  <the-t-in-rtf> as it may be better to have a bit of redundancy between the one of options
+2018-11-26T09:33:25  <the-t-in-rtf> now that I know it's an integer, BTW, you should use that type rather than "divisibleBy": 1
+2018-11-26T09:33:44  <the-t-in-rtf> that's technically valid, but almost always a "bad smell", a sign that your schema could be tighter
+2018-11-26T09:34:04  <the-t-in-rtf> sorry, it's technically valid if  you update it to use "multipleOf"... ;)
+2018-11-26T09:35:32  <stegru> is the schema schema documented anywhere?
+2018-11-26T09:35:39  <the-t-in-rtf> absolutely
+2018-11-26T09:35:54  <the-t-in-rtf> the actual language is documented twice, links coming as soon as I dig them up
+2018-11-26T09:36:00  <javjarfer[m]> Ok! Great, thanks you!
+2018-11-26T09:36:12  <the-t-in-rtf> (once as our GSS variant, the other time in the underlying JSON Schema language)
+2018-11-26T09:36:36  <the-t-in-rtf> https://github.com/the-t-in-rtf/gpii-json-schema/blob/GPII-3083/docs/gss.md
+2018-11-26T09:36:48  <the-t-in-rtf> OK, that links to the parent standard, so it should be enough.
+2018-11-26T09:37:29  <the-t-in-rtf> I wouldn'
+2018-11-26T09:37:35  <the-t-in-rtf> wouldn't imagine that you'd need the GSS bits
+2018-11-26T09:37:51  <the-t-in-rtf> the underlying language minus the complex $ref constructs should be enough
+2018-11-26T09:38:06  <the-t-in-rtf> http://json-schema.org
+2018-11-26T09:38:28  <the-t-in-rtf> And within that, you really want to look at this: https://datatracker.ietf.org/doc/draft-handrews-json-schema-validation/
+2018-11-26T09:38:56  <the-t-in-rtf> there is a guide that's much better written, but it's so far out of date that I can't recommend it at the moment.
+2018-11-26T09:39:25  <the-t-in-rtf> ugh, sorry, let me see if I can find a working link to the latest draft
+2018-11-26T09:39:38  <the-t-in-rtf> they're struggling to get updates out before the IETF times them out
+2018-11-26T09:40:04  <the-t-in-rtf> OK, you can still click through to the latest draft, it's just not got a nicer wrapper: https://www.ietf.org/archive/id/draft-handrews-json-schema-validation-01.txt
+2018-11-26T09:44:10  <the-t-in-rtf> so, in modern JSON schema things like oneOf and allOf are just sub-schemas, same language
+2018-11-26T09:44:34  <the-t-in-rtf> enum is literal values
+2018-11-26T09:44:53  <stegru> ok
+2018-11-26T09:45:16  <the-t-in-rtf> the only other special case to mention is type: "array", which I see a lot of people messing up.
+2018-11-26T09:45:40  <the-t-in-rtf> with that you need to move the description of the member into an "items" element, which is, again, a sub-schema
+2018-11-26T09:45:53  <the-t-in-rtf> happy to help review or rework practical examples
+2018-11-26T10:19:27  <javjarfer[m]> Okay, that's a lot of info, I will go with your suggested Schema for this particular example
+2018-11-26T10:19:31  <javjarfer[m]> thanks
+2018-11-26T10:24:06  <javjarfer[m]> Sorry the-t-in-rtf , I saw that in your example you used "minimun" and "maximum" but we tend to use "min" and "max" in the SR, should I change them for "min" and "max"?
+2018-11-26T10:24:33  <the-t-in-rtf> just a moment
+2018-11-26T10:25:04  <the-t-in-rtf> http://json-schema.org/latest/json-schema-validation.html#rfc.section.6.2.4
+2018-11-26T10:25:05  <javjarfer[m]> of course
+2018-11-26T10:25:16  <the-t-in-rtf> we use a much older convention in our legacy data
+2018-11-26T10:25:28  <the-t-in-rtf> I have corrected it wherever I've found it, but perhaps our pulls haven't been merged with each other
+2018-11-26T10:25:43  <the-t-in-rtf> "minimum" and "maximum" are now correct, the others are no longer valid.
+2018-11-26T10:26:02  <javjarfer[m]> okay, great, will follow with the new ones
+2018-11-26T10:26:04  <javjarfer[m]> thanks you
+2018-11-26T10:26:17  <the-t-in-rtf> you should use what's valid, just a moment and I will give you an easy way to test your work most of the time
+2018-11-26T10:26:30  <the-t-in-rtf> http://json-schema-validator.herokuapp.com
+2018-11-26T10:26:54  <the-t-in-rtf> most of the time you are only really validating your use of the underlying language
+2018-11-26T10:27:07  <the-t-in-rtf> the only thing you can't test there is anything with enumLabels
+2018-11-26T10:27:37  <the-t-in-rtf> I may whip up something comparable for GSS until we have validation built into the tests for universal
+2018-11-26T10:28:25  <the-t-in-rtf> hmm, that's also pretty old, but at least it's after the min/max purge
+2018-11-26T10:30:38  <javjarfer[m]> okay, that is really good to know
+2018-11-26T10:31:30  <javjarfer[m]> with the new schema specification as I understand the intended behavior is that a user should select a value from the range 1-100 or 4294967295, or the input would be wrong
+2018-11-26T10:33:51  <javjarfer[m]> User interface should be the one using the correct label from enumLabels in order to show a simple alternative to the user
+2018-11-26T10:34:57  <javjarfer[m]> if this is like this, I will be changing the current transforms, to simply map the input value from the user without any kind of transformation, sounds that good stegru , the-t-in-rtf ?
+2018-11-26T10:35:13  <the-t-in-rtf> nooo
+2018-11-26T10:35:19  <the-t-in-rtf> transforms don't use the schema language
+2018-11-26T10:35:27  <the-t-in-rtf> they are totally totally separate
+2018-11-26T10:35:39  <the-t-in-rtf> ll this talk about schemas is describing what you'll put in supported settings
+2018-11-26T10:36:18  <javjarfer[m]> <freenode_the "transforms don't use the schema "> I know I know
+2018-11-26T10:36:20  <the-t-in-rtf> so, the supported settings describes one end of the transform to/from a "generic preference"
+2018-11-26T10:36:39  <the-t-in-rtf> just wanted to be clear that transforms can and do still use "min" and "max"
+2018-11-26T10:36:50  <the-t-in-rtf> I made that mistake myself in an earlier pull.
+2018-11-26T10:37:10  <javjarfer[m]> oh, of course, yes, I see, it's easy to not see the change of context
+2018-11-26T10:39:17  * javjarfer[m] sent a long message:  < https://matrix.org/_matrix/media/v1/download/matrix.org/gtZdbNIefwqnkJBEbxGGNmCR >
+2018-11-26T10:39:57  <javjarfer[m]> With the new schema specification, we should remove that behavior
+2018-11-26T10:45:03  <the-t-in-rtf> So, @javjarfer[m]: https://github.com/GPII/universal/blob/c1819e3efe02e7b32a71316c2ce58c27fa397381/tests/JournalIntegrationTests.js#L97
+2018-11-26T10:45:15  <the-t-in-rtf> Does that bit require running in Windows in order to work?
+2018-11-26T10:45:49  <the-t-in-rtf> my universal tests are failing in CI and locally now that I've merged with master, on the brightness section of the journal integration tests
+2018-11-26T10:49:40  <the-t-in-rtf> Seems like your pull wouldn't have been merged if CI didn't work
+2018-11-26T10:49:47  <the-t-in-rtf> so maybe I'm missing or munged a related change
+2018-11-26T10:50:22  <javjarfer[m]> it shouldn't require Windows, tests were passing in universal when that pull got merged
+2018-11-26T10:53:08  <the-t-in-rtf> yeah, checking my merge
+2018-11-26T10:56:26  <the-t-in-rtf> yup, the brightness setting got clobbered
+2018-11-26T10:56:31  <the-t-in-rtf> it didn't exist post merge
+2018-11-26T10:56:32  <the-t-in-rtf> whoops
+2018-11-26T11:38:10  <javjarfer[m]> the-t-in-rtf: haha yes, that use to happen...
+2018-11-26T12:04:24  <javjarfer[m]> Hi there Bosmon !
+2018-11-26T12:07:39  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-bhotzdwmrpejbxgu> has joined #fluid-work
+2018-11-26T13:05:50  *** georgit <georgit!~georgitod@37.157.190.158> has joined #fluid-work
+2018-11-26T13:07:42  *** georgitodorov <georgitodorov!~georgitod@37.157.190.158> has quit IRC (Ping timeout: 264 seconds)
+2018-11-26T13:09:58  <the-t-in-rtf> @javjarfer[m] and @stegru, would it be helpful to you to have a standalone GSS validator like this one for JSON Schema?  http://json-schema-validator.herokuapp.com
+2018-11-26T13:10:21  <the-t-in-rtf> I was thinking of making one quickly unless it would be better to just push for a new test that checks the schemas in the SR.
+2018-11-26T13:10:55  <stegru> looks ok to me
+2018-11-26T13:12:12  <the-t-in-rtf> I mean, while you're learning, which do you feel would be more useful?
+2018-11-26T13:12:31  <the-t-in-rtf> Do you like plugging in simple examples to learn, or are you more the TDD type where a failing test is fine?
+2018-11-26T13:13:00  <the-t-in-rtf> Or do you like having the option to use both?
+2018-11-26T13:13:24  <the-t-in-rtf> Really, I'll do it unless you both say you don't really find tools like that validator useful, it's probably an hour's effort.
+2018-11-26T13:16:08  <stegru> don't do anything special for me
+2018-11-26T13:16:25  <stegru> but, don't let me stop you doing something you like
+2018-11-26T13:16:50  <the-t-in-rtf> I was thinking of doing it and having the option to load a few common GSS schemas
+2018-11-26T13:17:05  <the-t-in-rtf> it would be useful in future discussions to be able to pull up stuff and sketch stuff
+2018-11-26T13:17:15  <javjarfer[m]> <freenode_the "Really, I'll do it unless you bo"> From my  perspective validators are always useful, looks like a great tool to have
+2018-11-26T13:17:51  <the-t-in-rtf> Even though I could of course use the debugger and other stuff, I found that link useful in learning the language.
+2018-11-26T13:17:55  <the-t-in-rtf> (the JSON Schema language)
+2018-11-26T13:18:10  <the-t-in-rtf> sad that it's so far out of date, that's one reason I thought of making a new one
+2018-11-26T13:18:42  *** georgitodorov <georgitodorov!~georgitod@37.157.190.158> has joined #fluid-work
+2018-11-26T13:19:39  *** georgit <georgit!~georgitod@37.157.190.158> has quit IRC (Ping timeout: 268 seconds)
+2018-11-26T13:29:33  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:9c1d:e80:1fe4:d874> has joined #fluid-work
+2018-11-26T13:45:16  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:850:59a2:4d90:ce5e> has joined #fluid-work
+2018-11-26T13:46:09  *** jhung <jhung!~Adium@dhcp-108-168-100-210.cable.user.start.ca> has joined #fluid-work
+2018-11-26T13:47:52  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2018-11-26T13:50:42  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2018-11-26T13:51:47  *** jhung1 <jhung1!~Adium@dhcp-108-168-100-210.cable.user.start.ca> has joined #fluid-work
+2018-11-26T13:51:47  *** jhung <jhung!~Adium@dhcp-108-168-100-210.cable.user.start.ca> has quit IRC (Read error: Connection reset by peer)
+2018-11-26T14:04:44  *** georgitodorov <georgitodorov!~georgitod@37.157.190.158> has quit IRC (Read error: Connection reset by peer)
+2018-11-26T14:24:54  *** avtar <avtar!~avtar@ip-24-50-168-207.user.start.ca> has joined #fluid-work
+2018-11-26T14:40:36  *** jhung1 is now known as jhung
+2018-11-26T14:45:14  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-mznbegcghaefdkys> has joined #fluid-work
+2018-11-26T14:56:04  *** clown <clown!clown@nat/ocadu/x-psytzlxmjovpfcxb> has joined #fluid-work
+2018-11-26T14:59:30  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has joined #fluid-work
+2018-11-26T15:07:09  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has joined #fluid-work
+2018-11-26T15:07:47  <dandimitrov> jhernandez, stegru: I ran the latest gpii-app master code that includes Electron 3 and on closer inspection I’ve noticed that the slowness is still present, e.g.he language menu is shown about half a second before its button in the QSS is colored. :/
+2018-11-26T15:07:57  <dandimitrov> Have you experienced anything similar?
+2018-11-26T15:09:13  <stegru> :(
+2018-11-26T15:12:11  <stegru> ok dandimitrov, so it goes like this:
+2018-11-26T15:12:14  <stegru> 1: click button
+2018-11-26T15:12:20  <stegru> 2: popup shows
+2018-11-26T15:12:23  <stegru> 3: delay
+2018-11-26T15:12:29  <stegru> 4: button changes colour
+2018-11-26T15:12:49  <stegru> that's what I get, although the delay isn't bad for me
+2018-11-26T15:13:30  <jhernandez> yes
+2018-11-26T15:14:02  <jhernandez> same here, it's true that the delay isn't that bad for me either
+2018-11-26T15:14:38  <stegru> what's it like on the vaio, jhernandez ?
+2018-11-26T15:17:22  <dandimitrov> stegru: yes, that’s the behaviour we’ve observed
+2018-11-26T15:18:40  <jhernandez> hmm, can't tell at this moment - I've checked in my parallels vm and with our vagrant box
+2018-11-26T15:19:21  <dandimitrov> jhernandez, stegru: the delay isn’t that much but it is noticable compared to the previous versions…
+2018-11-26T15:19:26  <jhernandez> on my parallels vm, the delay is shorter
+2018-11-26T15:19:30  <stegru> it's ok, javi - i just thought you had it available
+2018-11-26T15:20:19  <jhernandez> nearly noticeable
+2018-11-26T15:21:22  <jhernandez> stegru: the vaio's been off for a few weeks, I'll get to it in the afternoon
+2018-11-26T15:22:04  <stegru> don't worry about it, mine is on a shelf in front of me, gathering dust :)
+2018-11-26T15:22:10  <jhernandez> but yeah, the delay is almost negligible
+2018-11-26T15:22:26  <jhernandez> on my parallels vm, while on the vagrant box is more noticeable
+2018-11-26T15:22:36  <jhernandez> dandimitrov: what atre you using?
+2018-11-26T15:22:38  <dandimitrov> jhernandez: It probably depends on the speed of the machine
+2018-11-26T15:22:57  <jhernandez> a native win or a vm one?
+2018-11-26T15:22:58  <dandimitrov> I’m using virtual box
+2018-11-26T15:24:13  <jhernandez> could this be a rendering thing that depends on the graphic card?
+2018-11-26T15:24:22  <jhernandez> graphic card/driver/capabilities/etc
+2018-11-26T15:24:44  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:9c1d:e80:1fe4:d874> has quit IRC ()
+2018-11-26T15:25:03  <stegru> I was wrong with the code i suspected caused the slowdown - when i put it back in, the delay didn't change
+2018-11-26T15:25:58  <jhernandez> stegru: which one it was?
+2018-11-26T15:26:07  <jhernandez> can't remember well
+2018-11-26T15:26:15  <stegru> https://github.com/GPII/universal/blob/ae47710cc2e550a28787862bfa7fe75587ecd56c/gpii/node_modules/eventLog/src/eventLog.js#L297
+2018-11-26T15:26:29  <jhernandez> oh tight
+2018-11-26T15:26:29  <dandimitrov> I believe that code made a difference for electorn 1.8.8 but even there there’s some delay
+2018-11-26T15:26:32  <stegru> logFilePath is null, so that line no longer gets called
+2018-11-26T15:26:33  <jhernandez> *right
+2018-11-26T15:26:42  <jhernandez> the eventLog one
+2018-11-26T15:29:26  <stegru> yes, dandimitrov.. with those tests, I disabled the metrics. I just did it again, and the delay has gone - now I just need to find the slow peice of code
+2018-11-26T15:30:36  <stegru> now that i've seen it go fast, the delay is more visible
+2018-11-26T15:55:31  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has quit IRC (Quit: colinclark)
+2018-11-26T15:57:47  <jhernandez> stegru: okay, maybe I'm not bringing anything new
+2018-11-26T15:57:50  <jhernandez> but
+2018-11-26T15:58:09  <jhernandez> I can get rid of such delay after disabling the windowsMetrics
+2018-11-26T15:58:13  <stegru> yes
+2018-11-26T15:58:15  <jhernandez> completely
+2018-11-26T15:58:45  <stegru> there's the slow line: https://github.com/GPII/windows/blob/master/gpii/node_modules/processReporter/processesBridge.js#L51
+2018-11-26T15:58:52  <stegru> it calls .net code
+2018-11-26T16:06:56  <dandimitrov> cindyli: We’ve been having trouble doing a save the preference set - using the “Save” button triggers an “Your settings were not saved” error
+2018-11-26T16:07:05  <dandimitrov> We’ve been using the configuration file: "%gpii-universal/gpii/configs/gpii.config.untrusted.production.dynamicDR.all.local.json5"
+2018-11-26T16:07:52  <dandimitrov> And here are full logs: https://pastebin.com/8BSm8f6i
+2018-11-26T16:07:52  <dandimitrov> There’s an error message at the end - “...
+2018-11-26T16:07:54  <dandimitrov>     "message": "Cannot update:  GPII key \"snapset_1a\" is a snapset while executing HTTP PUT on url http://localhost:8084/preferences/%gpiiKeymerge=%merge while executing HTTP PUT on url http://localhost:8084/%gpiiKey/settings"
+2018-11-26T16:07:55  <dandimitrov> ...
+2018-11-26T16:07:55  <dandimitrov> “
+2018-11-26T16:08:03  <cindyli> dandimitrov: can i use the gpii-app master branch to reproduce the problem?
+2018-11-26T16:08:39  <cindyli> ok, snapset_1a is a snapset which should be read-only
+2018-11-26T16:09:06  <dandimitrov> Please use the `morphic-1.0.1` branch
+2018-11-26T16:09:14  <dandimitrov> cindyli^
+2018-11-26T16:09:20  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has left #fluid-work
+2018-11-26T16:09:41  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has joined #fluid-work
+2018-11-26T16:10:24  <cindyli> dandimitrov: this is expected behavior. all preferences data from testData/preferences in the universal repo are read-only snapsets. saving changes for those keys will return the error you are getting
+2018-11-26T16:10:28  <cindyli> can you try with a user key
+2018-11-26T16:11:16  <cindyli> jhernandez: how do you create user keys for a local dev environment?
+2018-11-26T16:11:59  <jhernandez> cindyli: hey
+2018-11-26T16:12:27  <jhernandez> at this moment I use the empty user from the testData/prefs folder
+2018-11-26T16:14:08  <jhernandez> cp empty.json5 $(uuidgen).json5
+2018-11-26T16:14:21  <jhernandez> then I run the convertPrefs scripts
+2018-11-26T16:14:27  <jhernandez> to generate the data
+2018-11-26T16:14:39  <jhernandez> and then I do a reset pouch
+2018-11-26T16:14:47  <jhernandez> and then I do a "reset pouch"
+2018-11-26T16:16:24  <stegru> dandimitrov, I've re-opened the slowness jira, GPII-3471. I know where the problem is now, and I'll sort it out later
+2018-11-26T16:16:50  <cindyli> thanks, jhernandez.
+2018-11-26T16:17:05  <cindyli> dandimitrov: the manual process of creating a user key from jhernandez ^
+2018-11-26T16:17:06  <dandimitrov> stegru: Great, thanks
+2018-11-26T16:17:46  <cindyli> the trick, running convertPrefs script will create 2 files: gpiiKeys.json and prefsSafe.json
+2018-11-26T16:18:11  <cindyli> better check the key type before loading converted data into pouchdb
+2018-11-26T16:18:20  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-jljhzunaqdkmejcm> has joined #fluid-work
+2018-11-26T16:18:51  <cindyli> what you should see is in prefsSafe.json, the value of "prefsSafeType" of the prefs safe you load should be "user" rather than "snapset"
+2018-11-26T16:31:00  *** byoung <byoung!~bryan@cpe-104-34-67-45.socal.res.rr.com> has joined #fluid-work
+2018-11-26T16:31:23  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-jljhzunaqdkmejcm> has quit IRC (Remote host closed the connection)
+2018-11-26T16:31:52  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-ftgqxhbtjhjoiaxy> has joined #fluid-work
+2018-11-26T16:56:08  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-ftgqxhbtjhjoiaxy> has quit IRC (Remote host closed the connection)
+2018-11-26T16:56:16  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-jfpwlgzcpwapgcfs> has joined #fluid-work
+2018-11-26T16:56:42  *** colinclark <colinclark!~colinclar@205.211.168.103> has joined #fluid-work
+2018-11-26T17:04:58  <dandimitrov> Hey, stegru, me again
+2018-11-26T17:05:08  <stegru> hi :*
+2018-11-26T17:05:29  <dandimitrov> I’ve been trying to install your branch gpii-3544 but somethings fails...
+2018-11-26T17:05:48  <dandimitrov> what version of node should I be using :?
+2018-11-26T17:05:49  <stegru> ok
+2018-11-26T17:06:14  <stegru> I think i was using 8.. i should be using 10
+2018-11-26T17:07:02  <dandimitrov> hmm, I’m still using Electron 1.8.8 that goes with node 6.10 … :/
+2018-11-26T17:07:24  <stegru> what was the error?
+2018-11-26T17:10:49  <jhernandez> dandimitrov: stegru reprovision your vm
+2018-11-26T17:10:52  <jhernandez> :)
+2018-11-26T17:11:01  <stegru> bog off
+2018-11-26T17:11:26  <stegru> actually, I do have v10 installed.. but i use 8 because I'm too lazy to npm install ;)
+2018-11-26T17:12:37  <dandimitrov> stegru: Here’s the error - https://pastebin.com/dKwG0Zq1
+2018-11-26T17:13:22  <stegru> oh yes, that's probably version related
+2018-11-26T17:13:53  <stegru> upgrade electron.. it's free :)
+2018-11-26T17:14:00  <dandimitrov> We haven’t yet introduced Electron 3 because of the problem we discussed…
+2018-11-26T17:14:09  <stegru> the slowness?
+2018-11-26T17:14:36  <dandimitrov> the one we talked an hour ago :?
+2018-11-26T17:15:49  <stegru> what?
+2018-11-26T17:22:30  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has quit IRC (Quit: dandimitrov)
+2018-11-26T17:34:37  <Bosmon> simonjb - hoping that https://github.com/fluid-project/kettle/pull/49 is still on your radar, no huge hurry
+2018-11-26T18:06:12  <javjarfer[m]> Hi there Bosmon ! Are you around?
+2018-11-26T18:24:39  *** jhung <jhung!~Adium@dhcp-108-168-100-210.cable.user.start.ca> has quit IRC (Quit: Leaving.)
+2018-11-26T18:28:22  <jhernandez> javjarfer[m]: can I help you?
+2018-11-26T18:48:37  *** jhung <jhung!~Adium@dhcp-108-168-100-210.cable.user.start.ca> has joined #fluid-work
+2018-11-26T18:58:39  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-jfpwlgzcpwapgcfs> has quit IRC (Remote host closed the connection)
+2018-11-26T18:59:08  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-zzquxpfowjfdwmer> has joined #fluid-work
+2018-11-26T19:03:01  <javjarfer[m]> hey there jhernandez
+2018-11-26T19:03:05  <javjarfer[m]> are you still here?
+2018-11-26T19:09:56  <jhernandez> javjarfer[m]: I'll be around for a few more minutes
+2018-11-26T19:15:26  <javjarfer[m]> oh, well, I will paste the issue then, I proposed Bosmon a solution for using the "fluid.transform.firstValue" here https://github.com/JavierJF/universal/blob/GPII-2809/testData/solutions/win32.json5#L3960
+2018-11-26T19:16:00  <javjarfer[m]> using the trick of introducing a new setting with the default value, instead of a new transform that falls back to a default value in case of not finding the required one
+2018-11-26T19:16:58  <javjarfer[m]> issue is that, that solution only works for settings handlers that accepts empty payloads and do "nothing" with them, if not, errors will occur, and the "fallback" transform that I introduced sounds more feasible
+2018-11-26T19:17:26  <javjarfer[m]> I wanted to discuss if that would be the better approach, or we should find another way to encode it in the SR using this transform
+2018-11-26T19:30:48  <stegru> javjarfer[m], in the SolidColor function just do something like: if (value) { ... }
+2018-11-26T19:31:37  <stegru> and, in my opinion, "no value" should mean "don't set".. not "set to default"
+2018-11-26T19:35:11  <jhernandez> honestly, I'm a bit lost here
+2018-11-26T19:35:33  <jhernandez> don't know the motivation (background) of such thing
+2018-11-26T19:40:45  <jhernandez> "accepting empty payloads and do nothing with them" is somehow confusing to me
+2018-11-26T19:44:05  <javjarfer[m]> stegru: do you remember the reason why I introduced the transform? I think I was related to the fact of the conditional payload format that was removed because we now make use of a pure SR solution
+2018-11-26T19:44:09  <javjarfer[m]> was related to that?
+2018-11-26T19:44:45  <javjarfer[m]> <freenode_jhe ""accepting empty payloads and do"> yeah, it's confusion jhernandez , is basically a hack for being able to use the transform "firstValue"
+2018-11-26T19:45:08  <stegru> jhernandez, think of the "coalesce" function
+2018-11-26T19:45:18  <javjarfer[m]> you need to add a setting with the default value in the SR, and use it as a path for the transform
+2018-11-26T19:45:23  <javjarfer[m]> so that setting is "empty"
+2018-11-26T19:46:29  <stegru> the SR right now looks like: SolidColor(desktopBackgroundColor.SolidColor || DefaultColorConfig) - is that what you want?
+2018-11-26T19:47:57  <javjarfer[m]> well, is that what we want? I think the necessity of having that was when we have the conditional payload, so if you selected "BackgroundType": SolidColor
+2018-11-26T19:48:09  <javjarfer[m]> you couldn't leave "empty" the solid color
+2018-11-26T19:48:37  <stegru> so what?
+2018-11-26T19:48:54  <javjarfer[m]> So if it was no value, I "fallback" to the default one
+2018-11-26T19:49:00  <javjarfer[m]> but know, that's not possible
+2018-11-26T19:49:07  <javjarfer[m]> you select the setting individually
+2018-11-26T19:49:12  <javjarfer[m]> we can remove the whole thing
+2018-11-26T19:49:13  <stegru> so "background type: solid color" can just mean "no picture"
+2018-11-26T19:49:45  <stegru> and the colour will be whatever colour the OS has set
+2018-11-26T19:50:14  * javjarfer[m] sent a long message:  < https://matrix.org/_matrix/media/v1/download/matrix.org/SzVzhCMFRwzRnztdUCXabOKe >
+2018-11-26T19:50:28  <javjarfer[m]> the whole point was not leaving Input empty
+2018-11-26T19:50:48  <javjarfer[m]> but now we just have a setting in a solution called desktopBackgroundColor
+2018-11-26T19:51:10  <javjarfer[m]> which is clear that if you select that solution, you want a solid color background and you need to put the value of the setting
+2018-11-26T19:51:28  <javjarfer[m]> so, there is no need to the "fallback" to get a default
+2018-11-26T19:52:47  <javjarfer[m]> <freenode_ste "and the colour will be whatever "> this is the current behavior
+2018-11-26T19:52:58  <stegru> and if deskdopBackgroundColor is empty, then use the current setting in the OS
+2018-11-26T19:53:19  <stegru> what's wrong with that?
+2018-11-26T20:07:56  <javjarfer[m]> There's absolutely no issue with that, my point is that, there is no need of the fallback now that it's a individual setting, it was only necessary due to the conditional format we no longer have
+2018-11-26T20:19:35  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-zzquxpfowjfdwmer> has quit IRC (Remote host closed the connection)
+2018-11-26T20:19:44  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-umzxwqjuxdedvwar> has joined #fluid-work
+2018-11-26T20:21:55  <javjarfer[m]> stegru
+2018-11-26T20:24:19  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:850:59a2:4d90:ce5e> has quit IRC (Remote host closed the connection)
+2018-11-26T20:44:22  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2018-11-26T20:59:51  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2018-11-26T21:10:50  <Bosmon> javjarfer[m] - yes, you are correct, there is no purpose to encoding a default value inside the SR entry
+2018-11-26T21:10:59  <Bosmon> If there is no input value, the matchmaker will not even choose your solution at all
+2018-11-26T21:26:03  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:ecf4:a2e8:1363:6e5d> has joined #fluid-work
+2018-11-26T21:35:35  *** jhung <jhung!~Adium@dhcp-108-168-100-210.cable.user.start.ca> has quit IRC (Quit: Leaving.)
+2018-11-26T21:37:53  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:ecf4:a2e8:1363:6e5d> has quit IRC (Remote host closed the connection)
+2018-11-26T22:02:56  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2018-11-26T22:06:44  *** clown <clown!clown@nat/ocadu/x-psytzlxmjovpfcxb> has quit IRC (Quit: Leaving.)
+2018-11-26T22:07:46  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-mznbegcghaefdkys> has quit IRC (Quit: sepidehshahi)
+2018-11-26T22:19:47  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2018-11-26T22:47:09  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-bhotzdwmrpejbxgu> has quit IRC (Quit: Connection closed for inactivity)
+2018-11-26T23:01:45  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-umzxwqjuxdedvwar> has quit IRC ()
+2018-11-26T23:16:41  *** avtar <avtar!~avtar@ip-24-50-168-207.user.start.ca> has quit IRC (Quit: Leaving.)
+2018-11-26T23:31:20  *** stegru <stegru!~ste@cpc120296-warr7-2-0-cust79.1-1.cable.virginm.net> has quit IRC (Ping timeout: 272 seconds)
+2018-11-26T23:32:37  *** colinclark <colinclark!~colinclar@205.211.168.103> has quit IRC (Quit: colinclark)

@@ -1,0 +1,350 @@
+2018-12-13T00:52:04  *** danayo <danayo!~danayo@S01069050ca694f23.vc.shawcable.net> has quit IRC (Quit: danayo)
+2018-12-13T00:52:04  *** danayo_ is now known as danayo
+2018-12-13T01:06:08  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3fc2:1300:4ccb:b36a:d7e0:4c92> has quit IRC (Remote host closed the connection)
+2018-12-13T02:35:41  *** danayo_ <danayo_!~danayo@S01069050ca694f23.vc.shawcable.net> has joined #fluid-work
+2018-12-13T03:22:02  *** danayo <danayo!~danayo@S01069050ca694f23.vc.shawcable.net> has quit IRC (Quit: danayo)
+2018-12-13T03:22:02  *** danayo_ is now known as danayo
+2018-12-13T05:13:29  *** danayo <danayo!~danayo@S01069050ca694f23.vc.shawcable.net> has quit IRC (Quit: danayo)
+2018-12-13T07:33:40  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3fc2:1300:38f0:a3d4:133c:b36a> has joined #fluid-work
+2018-12-13T07:51:34  *** dandimitrov <dandimitrov!~danailbd@87.121.114.143> has joined #fluid-work
+2018-12-13T07:51:42  *** dandimitrov <dandimitrov!~danailbd@87.121.114.143> has quit IRC (Client Quit)
+2018-12-13T08:16:34  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3fc2:1300:38f0:a3d4:133c:b36a> has quit IRC (Remote host closed the connection)
+2018-12-13T09:08:33  *** georgit <georgit!~georgi.to@37.157.190.158> has joined #fluid-work
+2018-12-13T10:53:58  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3fc2:1300:d1ab:3aa8:c4c:934> has joined #fluid-work
+2018-12-13T11:05:33  <Bosmon> the-t-in-rtf - do you think it is now timely to start building something that will validate solutions registry entries against a schema, and furthermore their own schemas against the JSON schema schema?
+2018-12-13T11:06:20  <the-t-in-rtf> yes, but we need to talk through how to coordinate that with breaking it up into sub-parts
+2018-12-13T11:06:41  <the-t-in-rtf> I can see doing it for everything in one pass and waiting until we have a lull in onboarding to do the splitting
+2018-12-13T11:07:28  <the-t-in-rtf> We also need to talk about some rudimentary "coverage" concept, i.e. making sure that people are testing good and bad data with their schemas, and deeply enough.
+2018-12-13T11:07:48  <Bosmon> I think even something basic would help a lot in situations like our current review of javjarfer[m] 's work
+2018-12-13T11:07:57  <the-t-in-rtf> yes, the "min" stuff would have been helped.
+2018-12-13T11:08:24  <the-t-in-rtf> For now I think we should have only a crude contract for the transform blocks and other bits, and a very tight one for supported settings.
+2018-12-13T11:08:37  <the-t-in-rtf> that would add the most value for work like JJ's, IMO
+2018-12-13T11:08:41  <Bosmon> Yes
+2018-12-13T11:09:29  <the-t-in-rtf> I had previously been thinking about a large pull, but a small pull that adds a test of the registry's integrity seems small enough to manage
+2018-12-13T11:09:38  <the-t-in-rtf> i.e. save the reuse and decomposition for later
+2018-12-13T11:09:45  <Bosmon> Well, the transform bit could at least send them into fluid.model.transformWithRules with an empty input to see if they explode
+2018-12-13T11:10:16  <the-t-in-rtf> that's easy enough to include
+2018-12-13T11:10:30  <the-t-in-rtf> is there already a clean "validate the registry" ticket?
+2018-12-13T11:11:05  <Bosmon> There's this: https://issues.gpii.net/browse/GPII-2839
+2018-12-13T11:11:53  <Bosmon> and this: https://issues.gpii.net/browse/GPII-1049
+2018-12-13T11:16:25  <the-t-in-rtf> I've already started leaving notes on GPII-2839, I can link the other one.
+2018-12-13T11:22:02  <javjarfer[m]> yes, I also think that would be really helpful, and in the near future of onboarding even more helpful
+2018-12-13T12:52:45  <the-t-in-rtf> So, I'm sketching out everything but the schema at the moment for solutions validation.
+2018-12-13T12:52:58  <the-t-in-rtf> just confirming, should every settings handler have a "liveness" setting?
+2018-12-13T12:54:20  <the-t-in-rtf> there are around 5 that lack that
+2018-12-13T12:54:24  <the-t-in-rtf> including the narrator
+2018-12-13T12:55:12  <the-t-in-rtf> (by everything but the schema I mean I have a GSS definition for everything but the schema within each supported setting)
+2018-12-13T13:29:00  <the-t-in-rtf> already got the basics working and fixing the hundreds of validation errors to exercise it
+2018-12-13T13:29:09  <the-t-in-rtf> I'll work on better error reporting etc tomorrow
+2018-12-13T13:29:22  <the-t-in-rtf> could still use a comment on the liveness aspect.
+2018-12-13T13:29:25  <the-t-in-rtf> @Bosmon?
+2018-12-13T13:29:58  <Bosmon> the-t-in-rtf - yes, each should have a liveness setting
+2018-12-13T13:30:10  <the-t-in-rtf> MUST have a liveness setting?
+2018-12-13T13:30:10  <Bosmon> Otherwise tools such as the PSP would not know what kind of lifecycle to apply to them
+2018-12-13T13:30:13  <Bosmon> MUST
+2018-12-13T13:30:16  <the-t-in-rtf> great
+2018-12-13T13:30:21  <the-t-in-rtf> I'll put the teeth back into that bit
+2018-12-13T13:53:10  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2018-12-13T14:27:27  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2018-12-13T14:28:43  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:a09c:fa0c:33de:bf7b> has joined #fluid-work
+2018-12-13T14:31:28  *** clown <clown!clown@nat/ocadu/x-qeqgqqnwxaxclvzw> has joined #fluid-work
+2018-12-13T14:58:00  *** avtar <avtar!~avtar@ip-24-50-172-179.user.start.ca> has joined #fluid-work
+2018-12-13T15:06:34  *** michelled <michelled!Adium@nat/ocadu/x-kvofhhrxjrjgzfxm> has joined #fluid-work
+2018-12-13T15:16:20  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-xkqdynpiexllljwq> has joined #fluid-work
+2018-12-13T15:27:12  *** colinclark <colinclark!~colinclar@c-76-101-154-19.hsd1.fl.comcast.net> has joined #fluid-work
+2018-12-13T15:53:14  *** georgit <georgit!~georgi.to@37.157.190.158> has quit IRC (Read error: Connection reset by peer)
+2018-12-13T16:04:18  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2018-12-13T16:12:28  *** danayo <danayo!~danayo@S01069050ca694f23.vc.shawcable.net> has joined #fluid-work
+2018-12-13T16:15:20  *** danayo_ <danayo_!~danayo@S01069050ca694f23.vc.shawcable.net> has joined #fluid-work
+2018-12-13T16:35:00  *** colinclark_ <colinclark_!~colinclar@72.143.234.94> has joined #fluid-work
+2018-12-13T16:35:55  *** colinclark <colinclark!~colinclar@c-76-101-154-19.hsd1.fl.comcast.net> has quit IRC (Ping timeout: 250 seconds)
+2018-12-13T16:35:56  *** colinclark_ is now known as colinclark
+2018-12-13T16:46:18  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:a09c:fa0c:33de:bf7b> has quit IRC ()
+2018-12-13T16:46:37  *** simonjb <simonjb!simonjb@nat/ocadu/x-lmbrgheocfbmabpt> has joined #fluid-work
+2018-12-13T16:53:05  *** colinclark <colinclark!~colinclar@72.143.234.94> has quit IRC (Quit: colinclark)
+2018-12-13T16:54:25  <bryan_> What is the best practice for asserting that a specific fluid.fail() error was thrown. try/catch seems to reach the catch block, but the test still fails with the fluid.fail() message
+2018-12-13T16:57:52  *** colinclark <colinclark!~colinclar@72.143.234.94> has joined #fluid-work
+2018-12-13T16:57:59  <jhernandez> bryan_: hey
+2018-12-13T16:58:22  <jhernandez> I think that here's what you're looking for https://docs.fluidproject.org/infusion/development/jqUnit.html#jqunitexpectframeworkdiagnosticmessage-toinvoke-errortexts
+2018-12-13T16:59:29  <bryan_> Aha...let me try that. Thanks!
+2018-12-13T17:00:14  *** colinclark <colinclark!~colinclar@72.143.234.94> has quit IRC (Client Quit)
+2018-12-13T17:01:38  *** colinclark <colinclark!~colinclar@72.143.234.94> has joined #fluid-work
+2018-12-13T17:02:35  <bryan_> Looks like that worked!
+2018-12-13T17:05:17  *** michelled <michelled!Adium@nat/ocadu/x-kvofhhrxjrjgzfxm> has quit IRC (Quit: Leaving.)
+2018-12-13T17:30:50  *** michelled <michelled!Adium@nat/ocadu/x-almphmjdlxkawtic> has joined #fluid-work
+2018-12-13T17:37:50  <jhernandez> bryan_: :)
+2018-12-13T17:42:46  *** Jess_ <Jess_!~Admin@209.226.201.236> has joined #fluid-work
+2018-12-13T17:43:00  *** Jess_ <Jess_!~Admin@209.226.201.236> has quit IRC (Client Quit)
+2018-12-13T17:44:56  <jhernandez> Bosmon: hey there
+2018-12-13T17:45:09  <Bosmon> VVERNNANDDEZZ
+2018-12-13T17:45:16  <jhernandez> I saw that today you've merged several stegru's win prs
+2018-12-13T17:45:27  <Bosmon> Yes, I did
+2018-12-13T17:45:32  <jhernandez> I was wondering what are your thoughts on https://github.com/GPII/windows/pull/222
+2018-12-13T17:45:34  <Bosmon> I merged them!
+2018-12-13T17:45:55  <Bosmon> I haven't looked at that one yet, I'm a bit afraid of it
+2018-12-13T17:46:05  <jhernandez> yeah, that's why I was asking
+2018-12-13T17:46:30  <jhernandez> shall we wait until Astea can take a look at the gpii-app side too?
+2018-12-13T17:48:41  <Bosmon> jhernandez - you mean, to test out if it works? Is there electron-specific code for it too?
+2018-12-13T17:49:02  <jhernandez> I've already tested it and it works
+2018-12-13T17:49:16  <jhernandez> c'mon stegru made it!
+2018-12-13T17:49:19  <jhernandez> :P
+2018-12-13T17:50:42  <jhernandez> there is the native call for the trayButton and the js side that uses it to provide a gpii.app.trayButton component
+2018-12-13T17:50:58  <jhernandez> *native code
+2018-12-13T17:54:50  <Bosmon> ok
+2018-12-13T17:54:56  <Bosmon> Well, I'll certainly review it soon
+2018-12-13T17:55:23  <jhernandez> Bosmon: ok ok
+2018-12-13T17:55:31  <jhernandez> was just curious
+2018-12-13T17:55:47  <Bosmon> I had just, historically, been afraid of it : P
+2018-12-13T17:55:55  <jhernandez> haha
+2018-12-13T17:55:55  <Bosmon> Given it does something that is presumably impossible
+2018-12-13T17:56:01  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-fhcuwvyqsteisdsx> has joined #fluid-work
+2018-12-13T17:56:31  <jhernandez> yeah, I couldn't believe either
+2018-12-13T17:57:01  <jhernandez> but it worked nicely!
+2018-12-13T17:58:57  *** michelled <michelled!Adium@nat/ocadu/x-almphmjdlxkawtic> has quit IRC (Quit: Leaving.)
+2018-12-13T17:59:43  <stegru> same here
+2018-12-13T18:15:59  *** danayo <danayo!~danayo@S01069050ca694f23.vc.shawcable.net> has quit IRC (Quit: danayo)
+2018-12-13T18:15:59  *** danayo_ is now known as danayo
+2018-12-13T18:16:11  *** danayo <danayo!~danayo@S01069050ca694f23.vc.shawcable.net> has quit IRC (Quit: danayo)
+2018-12-13T18:22:03  *** michelled <michelled!Adium@nat/ocadu/x-segvorxthlzxtgyv> has joined #fluid-work
+2018-12-13T18:46:25  <alanharnum> https://www.w3.org/TR/coga-gap-analysis/ - 2.3.6.1 has a mention of the GPII, and some interesting discussion of preferences and personalization (in the context of the document's focus on cognitive and learning disabilities)
+2018-12-13T18:47:46  *** danayo <danayo!~danayo@S01069050ca694f23.vc.shawcable.net> has joined #fluid-work
+2018-12-13T18:48:02  *** danayo_ <danayo_!~danayo@S01069050ca694f23.vc.shawcable.net> has joined #fluid-work
+2018-12-13T18:58:47  *** colinclark <colinclark!~colinclar@72.143.234.94> has quit IRC (Quit: colinclark)
+2018-12-13T19:02:51  *** colinclark <colinclark!~colinclar@72.143.234.94> has joined #fluid-work
+2018-12-13T19:14:53  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-fhcuwvyqsteisdsx> has quit IRC (Remote host closed the connection)
+2018-12-13T19:15:22  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-rscimsigoyfqkljr> has joined #fluid-work
+2018-12-13T19:16:20  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-rscimsigoyfqkljr> has quit IRC (Remote host closed the connection)
+2018-12-13T19:16:35  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-qhpvckqvlzzzwvmj> has joined #fluid-work
+2018-12-13T19:24:34  <bryan_> Is there a list of supported settings for wmiSettingsHandler? The current test uses brightness as the test case but it returns unsupported.
+2018-12-13T19:55:35  *** colinclark <colinclark!~colinclar@72.143.234.94> has quit IRC (Quit: colinclark)
+2018-12-13T20:04:31  *** colinclark <colinclark!~colinclar@c-76-101-154-19.hsd1.fl.comcast.net> has joined #fluid-work
+2018-12-13T20:14:00  *** michelled <michelled!Adium@nat/ocadu/x-segvorxthlzxtgyv> has quit IRC (Quit: Leaving.)
+2018-12-13T20:18:59  *** colinclark <colinclark!~colinclar@c-76-101-154-19.hsd1.fl.comcast.net> has quit IRC (Quit: colinclark)
+2018-12-13T20:21:19  *** michelled <michelled!Adium@nat/ocadu/x-gfeeqgclvejittqo> has joined #fluid-work
+2018-12-13T20:42:20  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-qhpvckqvlzzzwvmj> has quit IRC (Remote host closed the connection)
+2018-12-13T20:42:48  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-ddqclvixvraicrjr> has joined #fluid-work
+2018-12-13T20:46:11  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-ddqclvixvraicrjr> has quit IRC (Remote host closed the connection)
+2018-12-13T20:46:20  *** alanharnum2 <alanharnum2!alanharnum@nat/ocadu/x-usecrhzvbrfeqwsi> has joined #fluid-work
+2018-12-13T21:04:09  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3fc2:1300:d1ab:3aa8:c4c:934> has quit IRC (Remote host closed the connection)
+2018-12-13T21:10:36  *** alanharnum2 is now known as alanharnum
+2018-12-13T21:15:09  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2018-12-13T21:24:31  <Bosmon> Hi there bryan_
+2018-12-13T21:24:52  <Bosmon> The issue with the WMI settings handler is that many of its settings will not function inside a VM since they require access to the physical hardware
+2018-12-13T21:25:18  <Bosmon> javjarfer[m] - can you speak to which settings are likely to be functional inside a VM?
+2018-12-13T21:26:31  <Bosmon> It does look like brightness is the only setting which is currently listed in our solutions registry:
+2018-12-13T21:26:32  <Bosmon> https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L7136
+2018-12-13T21:27:01  <Bosmon> However, i) it may still be possible to test the code paths inside the settings handler even though this one is unsupported in a VM, ii) we should be able to set some other things via WMI which themselves might be testable
+2018-12-13T21:27:20  <Bosmon> stegru - any ideas for anything that might be moderately safe to frob with via WMI in a test ase?
+2018-12-13T21:27:21  <Bosmon> case
+2018-12-13T21:27:46  <stegru> probably
+2018-12-13T21:27:58  <bryan_> I have a PR up for GPII-3554 and I got test coverage up to 91.25%
+2018-12-13T21:28:09  <Bosmon> Hey bryan_, that's great
+2018-12-13T21:28:20  <bryan_> That last if statement needs a non null setting value
+2018-12-13T21:28:43  <stegru> the command `wmic os get buildnumber` is safe - not sure how it fits into the settings handler
+2018-12-13T21:29:29  <Bosmon> bryan_ - it's looking good
+2018-12-13T21:29:32  <Bosmon> Which is the last if statement?
+2018-12-13T21:29:47  <stegru> guess work: namespace: root, get: "select buildnumber from os" - set: oh..
+2018-12-13T21:29:50  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-usecrhzvbrfeqwsi> has quit IRC (Remote host closed the connection)
+2018-12-13T21:30:02  <bryan_> It is the one in the ticket GPII-3554 screenshot
+2018-12-13T21:30:18  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-lgvrrgqykvwndlcd> has joined #fluid-work
+2018-12-13T21:30:43  <Bosmon> bryan_ - oh right, I see
+2018-12-13T21:30:49  <bryan_> https://issues.gpii.net/browse/GPII-3554
+2018-12-13T21:30:50  <Bosmon> You want to find something that isn't supported
+2018-12-13T21:30:52  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3fc2:1300:65a7:3ae2:4a2d:bb31> has joined #fluid-work
+2018-12-13T21:31:08  <Bosmon> Were you saying above the problem with brightness was that it was supported, or unsupported?
+2018-12-13T21:31:35  <bryan_> It needs to be supported, so a non null value comes back, and then we can set it
+2018-12-13T21:31:55  <Bosmon> ok
+2018-12-13T21:32:12  <Bosmon> So we need something settable via WMI, which isn't going to do a huge amount of damage :)
+2018-12-13T21:32:18  <Bosmon> Sounds like a top job for stegru : P
+2018-12-13T21:33:22  <Bosmon> To be honest, looking at the c# code, we're going to imminently find a problem with this error handling branch
+2018-12-13T21:34:04  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-lgvrrgqykvwndlcd> has quit IRC (Remote host closed the connection)
+2018-12-13T21:34:13  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-furbowaoxlaaujlf> has joined #fluid-work
+2018-12-13T21:34:20  <Bosmon> I would have to say, for a start, we should judge it faulty, since there's no earthly reason for it to swallow exceptions which don't have a particular string in them : P
+2018-12-13T21:35:10  <Bosmon> Oh I see, it swallows exceptions which *do* have the string
+2018-12-13T21:37:35  <Bosmon> To be honest, as I see it, the most reasonable way of improving the coverage is simply to remove the try... catch block completely :)
+2018-12-13T21:37:58  <Bosmon> Ah wait
+2018-12-13T21:38:04  <Bosmon> I guess the issue is making the test case run in the VM?
+2018-12-13T21:38:35  <Bosmon> Ah sorry excuse me rambling on endlessly, it's a bit late
+2018-12-13T21:38:51  <Bosmon> I understand now, this branch *always* executes in the VM since the only setting we have is unsupported
+2018-12-13T21:39:21  <bryan_> Yeah I only saw brightness settings in that test file
+2018-12-13T21:40:55  <stegru> I don't know where to begin with wmi
+2018-12-13T21:41:17  <Bosmon> Stegru has been replaced by some kind of replicant
+2018-12-13T21:47:43  <Bosmon> bryan_ - one straightforward route might be to trigger this branch in the native code: https://github.com/GPII/windows/blob/master/gpii/node_modules/wmiSettingsHandler/dotNetSrc/updateWMISetting.cs#L111
+2018-12-13T21:48:14  <Bosmon> You can try specifying a className of "CustomWMIWrapper" and then some random junk for methodName
+2018-12-13T21:49:07  <Bosmon> To be honest it looks like this if statement is written the wrong way round in the native code
+2018-12-13T21:49:12  <Bosmon> How terribly honest I'm being this evening
+2018-12-13T21:49:30  <bryan_> That will let me get and set a setting?
+2018-12-13T21:52:10  <Bosmon> I guess not
+2018-12-13T21:54:06  <Bosmon> Actually, are we looking at the right branch?
+2018-12-13T21:54:15  <Bosmon> Doesn't your test here exercise this "if" branch? https://github.com/GPII/windows/blob/2fdffa3e8860f4bdccbf3bf3bb9826d45f1b5275/gpii/node_modules/wmiSettingsHandler/test/testWmiSettingsHandler.js#L306
+2018-12-13T21:54:37  <Bosmon> It seems like any old bad get query should exercise line 272 of the impl
+2018-12-13T21:55:01  <bryan_> No that test is fine
+2018-12-13T21:55:21  <bryan_> I need a good query to test the other brancj
+2018-12-13T21:55:46  <bryan_> I dont have a test for that because I need a non null value for oldValue
+2018-12-13T21:55:59  <Bosmon> Oh sorry I understand now
+2018-12-13T21:56:04  <Bosmon> It's the big branch which is uncovered
+2018-12-13T21:56:08  <Bosmon> The one on line 228
+2018-12-13T21:56:41  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3fc2:1300:65a7:3ae2:4a2d:bb31> has quit IRC (Remote host closed the connection)
+2018-12-13T21:56:42  <bryan_> Exactly
+2018-12-13T21:56:44  <Bosmon> OK
+2018-12-13T21:56:50  <Bosmon> In that case I think stegru's suggestion is good
+2018-12-13T21:57:06  <Bosmon> That query will enable you to issue a "get" query which returns some old junk value
+2018-12-13T21:57:34  <Bosmon> Enter that as the "get" half of the entry, and keep the "set" half as it is
+2018-12-13T21:58:14  <bryan_> I see let me try that
+2018-12-13T21:59:33  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-xkqdynpiexllljwq> has quit IRC (Quit: sepidehshahi)
+2018-12-13T21:59:35  <stegru> ok i might have something
+2018-12-13T21:59:51  <bryan_> Namespace root, not root\\WMI?
+2018-12-13T22:00:39  <stegru> between line 41/42 of updateWMISetting.csx, add: { "test", (args) => 1 }
+2018-12-13T22:01:10  <stegru> then the classname can be CustomWMIWrapper, method: "test", anything for the params
+2018-12-13T22:02:32  <stegru> it doesn't invoke a real wmi, but it does invoke some of the c# code
+2018-12-13T22:05:01  <gmoss> alanharnum: can I pick your brain about infusion?
+2018-12-13T22:05:16  <alanharnum> gmoss: yessssssss
+2018-12-13T22:05:25  <Bosmon> Can I eavesdrop on this picking? : P
+2018-12-13T22:05:45  <gmoss> sure Bosmon! we can talk about it in the channel
+2018-12-13T22:06:56  <gmoss> i'm just talking with Alan and then I"ll try to lay it out more clearly in here
+2018-12-13T22:08:05  *** clown <clown!clown@nat/ocadu/x-qeqgqqnwxaxclvzw> has quit IRC (Quit: Leaving.)
+2018-12-13T22:16:00  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-furbowaoxlaaujlf> has quit IRC (Remote host closed the connection)
+2018-12-13T22:16:29  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-bvonxnkprsdngtch> has joined #fluid-work
+2018-12-13T22:16:45  <bryan_> stegru: I'm getting invalid classname. The namespace is root or root\\WMI? (Both fail) And the classname is CustomWMIWrapper
+2018-12-13T22:19:14  <stegru> ahh, bryan_ - it looks like a bug
+2018-12-13T22:19:27  *** colinclark <colinclark!~colinclar@c-76-101-154-19.hsd1.fl.comcast.net> has joined #fluid-work
+2018-12-13T22:22:08  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-bvonxnkprsdngtch> has quit IRC (Remote host closed the connection)
+2018-12-13T22:22:17  *** alanharnum2 <alanharnum2!alanharnum@nat/ocadu/x-sbpvrtticwnduynw> has joined #fluid-work
+2018-12-13T22:25:21  <gmoss> Bosmon: sorry we just ended up having a conversation and a bit of rubber-duck debugging on Alan's part :D here's the gist of it: I wanted to use options distribution to attach listeners far down in the component tree, but i found that it was only applying in one instance. I set up two independent distOpts to attach to each of my sub-subcomponents, but it still would only work in one or the other but not both. We eventually
+2018-12-13T22:25:21  <gmoss> realized that it was my use of namespace that was causing a collision. in the first instance, they both had identical namespaces as they were defined on the same line. in the second, I forgot that, even for two separate components, if they're listening to the same event they must have different namespaces or they will collide, and as we know there can be only one. So the solution seems to have been to remove the namespace
+2018-12-13T22:25:21  <gmoss> from my original case in order to get some nice, dry code. that said it's lacking a namespace so it would fail review according to the Lazer Eye Checklist
+2018-12-13T22:25:37  <gmoss> many thanks as always to alanharnum2 for his assistance
+2018-12-13T22:25:38  <stegru> bryan_, replace the Invoke method with this: https://pastebin.com/3HrgibJL  :)
+2018-12-13T22:25:54  *** alanharnum2 is now known as alanharnum
+2018-12-13T22:26:06  <gmoss> so I'm reading the docs now to see if it mentions the restriction relating to namespaces across multiple components
+2018-12-13T22:26:57  <gmoss> I see there is a TODO here: https://docs.fluidproject.org/infusion/development/IoCSS.html#distributeoptions-format
+2018-12-13T22:27:22  <alanharnum> gmoss: it's probably worth having some clarifying language (if it's not there) about the scope of the namespacing on listeners - is it within the entire framework, within subcomponents within a component tree, etc
+2018-12-13T22:27:33  <alanharnum> i don't think i know the answer to that one myself
+2018-12-13T22:27:51  <Bosmon> gmoss, alanharnum - actually this issue is known to be awkward and is written up at https://issues.fluidproject.org/browse/FLUID-5948
+2018-12-13T22:27:52  <gmoss> alanharnum: indeed, this isn't the first time I've tripped myself up with this same behaviour
+2018-12-13T22:28:06  *** danayo <danayo!~danayo@S01069050ca694f23.vc.shawcable.net> has quit IRC (Quit: danayo)
+2018-12-13T22:28:06  *** danayo_ is now known as danayo
+2018-12-13T22:28:11  <Bosmon> It would be great if you could comment on there with some further details about your situation and what you ended up doing
+2018-12-13T22:29:09  <gmoss> Bosmon: sure, I'll read the Jira and then try to form a more succinct summary of my issue
+2018-12-13T22:29:11  <alanharnum> distributeOptions: the solution to, and source of, all complex Infusion problems
+2018-12-13T22:29:27  <gmoss> hah
+2018-12-13T22:29:31  <Bosmon> alanharnum - well, it's more the event namespacing model that is the problem here
+2018-12-13T22:29:44  <Bosmon> Which hasn't really moved on much since 2008
+2018-12-13T22:30:02  <gmoss> "the cause of, and solution to...", classic homer
+2018-12-13T22:30:26  <alanharnum> I think if the Lazer Eye says all listeners should be namespaced, it should contain a note about handling this when using distributeOptions perhaps
+2018-12-13T22:30:26  <gmoss> Bosmon: what do you think the behaviour should be in my case?
+2018-12-13T22:30:33  <gmoss> alanharnum: agreed!
+2018-12-13T22:31:05  <Bosmon> The only function of distributeOptions is to bring this latent problem into the open
+2018-12-13T22:31:32  <Bosmon> alanharnum - that, as well as directing anyone who ends up having to violate the recommendation to leave a reference to this JIRA number at the site ....
+2018-12-13T22:32:26  <Bosmon> gmoss - I fear there is no clear alternative to the behaviour, but I think radically the only practical way out will be to abolish events and listeners entirely
+2018-12-13T22:32:32  <gmoss> :O
+2018-12-13T22:32:39  <Bosmon> That's why it will be helpful to have some fine details of the context you encountered the problem
+2018-12-13T22:32:54  <gmoss> i will do my best
+2018-12-13T22:33:00  <Bosmon> That will be great, thanks
+2018-12-13T22:33:57  <alanharnum> gmoss: which Lazer Eye document mentions namespacing listeners? I don't see a mention at https://wiki.fluidproject.org/display/fluid/Laser+Eye+Checklist
+2018-12-13T22:34:45  <gmoss> alanharnum: hmmm that's a very good question...
+2018-12-13T22:34:49  <gmoss> could have sworn it was in thre
+2018-12-13T22:34:50  <gmoss> *there
+2018-12-13T22:35:15  <gmoss> maybe it was a piece of review feedback that i internalized
+2018-12-13T22:35:34  <alanharnum> to be honest, i had myself thought that using explicit namespaces was the exception rather than the rule - when you specifically needed to make sure only one listener would respond to an event
+2018-12-13T22:35:51  <gmoss> i'd been using it as a measure for readability
+2018-12-13T22:35:56  <Bosmon> Well, gmoss is right, our recommendation is to namespace whenever possible
+2018-12-13T22:36:08  <gmoss> perhaps it should be on the list
+2018-12-13T22:36:09  <Bosmon> It's not necessarily because of readability, but because of reusability
+2018-12-13T22:36:30  <Bosmon> If someone hasn't namespaced their listener, it can never be overridden by a further user
+2018-12-13T22:36:52  <Bosmon> And also, it can't be used as an anchor for prioritising other listeners with respect to it
+2018-12-13T22:36:59  <Bosmon> Using the before: and after: directives
+2018-12-13T22:37:17  <alanharnum> yeah, and now I have to walk back what I just said, because I realize most of my listener usage is always namespaced when I'm writing the short form, like "onCreate.doSomething"
+2018-12-13T22:37:22  <Bosmon> So really namespaces are at the heart of our reusability story, and as you see here, there remain some holes in them
+2018-12-13T22:37:52  <alanharnum> but I've usually not used namespaces when I'm broadcasting down through distributeOptions, which I think is of course to avoid the issue gmoss saw
+2018-12-13T22:39:15  <Bosmon> I'm still not quite following gmoss summary so I await the writeup
+2018-12-13T22:39:45  <Bosmon> The way he is describing it it just sounds like a bug, but presumably it is this same issue
+2018-12-13T22:40:18  <Bosmon> Since I can't think of a way that this namespace collapse would result in only one of two components being able to subscribe to something
+2018-12-13T22:40:42  <alanharnum> it was a situation of broadcasting a listener down to 2+ components, but having it namespaced, so only one component at a time would respond to the event
+2018-12-13T22:41:24  <alanharnum> which matches my own understanding of how listener namespaces are supposed to work
+2018-12-13T22:41:24  <Bosmon> alanharnum - but as described, that should work fine
+2018-12-13T22:41:37  <Bosmon> Could you sketch out a bit of what you wrote?
+2018-12-13T22:42:20  <alanharnum> Bosmon: yeah, sorry - I am being unclear - the desired behaviour was "multiple components respond to the same event" not "only one component responds to the event"
+2018-12-13T22:42:33  <Bosmon> alanharnum - sure, that should be fine
+2018-12-13T22:42:38  <alanharnum> OK - it may be a bug then
+2018-12-13T22:42:44  <Bosmon> Please do show sketch
+2018-12-13T22:43:02  <Bosmon> Perhaps the issue is that all the multiple components share the same event firer
+2018-12-13T22:43:10  <Bosmon> Which has been injected down to them somehow
+2018-12-13T22:43:59  <Bosmon> But that can't be right
+2018-12-13T22:44:04  <alanharnum> gmoss should be able to provide a replication case from his code, though a simple replication case would definitely help isolate this from everything else going on
+2018-12-13T22:44:11  <Bosmon> Otherwise there would be no meaning to "only one component responding"
+2018-12-13T22:47:05  <gmoss> alanharnum Bosmon should I try to put together a more generic example or would it be sufficient to refer to my code as I attempted to use it?
+2018-12-13T22:47:24  <Bosmon> bryan_ - looks like the current issue with your pull is that it failed linting
+2018-12-13T22:47:33  <Bosmon> Do run "grunt lint" from the project root to catch any issues
+2018-12-13T22:47:57  <Bosmon> gmoss - it's ok to just sketch the parts of the code relevant to the problem in the report
+2018-12-13T22:47:58  <gmoss> (side note: the Jira links to some botbot archives, perhaps those should be updated somehow?)
+2018-12-13T22:48:07  <Bosmon> It doesn't need to be a complete working sample, although one of those would of course be great
+2018-12-13T22:48:19  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-sbpvrtticwnduynw> has quit IRC ()
+2018-12-13T22:54:49  <gmoss> Bosmon: still reading, i've had a long day and am having trouble grokking the wording. i'll get there eventually :)
+2018-12-13T23:03:57  <gmoss> Bosmon: done, please let me know if you'd like me to clarify anything or make any adjustments
+2018-12-13T23:04:35  <bryan_> Bosmon: on my way to the dentist but I'll check it later
+2018-12-13T23:06:13  <Bosmon> gmoss - oh wow, ok, I understand now
+2018-12-13T23:06:22  <Bosmon> You want each of the listeners to inject upwards a listener TO THEMSELVES
+2018-12-13T23:12:22  <Bosmon> Pretty wacky, but yes this is indeed an incarnation of the same problem
+2018-12-13T23:13:07  <Bosmon> Again I would think that the best way around this would be to start eliminating events and listeners and try to express as much as possible of this through models
+2018-12-13T23:13:24  <Bosmon> But our existing relay system might at this stage land you in some other problems
+2018-12-13T23:13:41  <Bosmon> I wonder what the lifecycle of one of these "context change" events is
+2018-12-13T23:13:46  <Bosmon> What happens next, after all the videos are stopped?
+2018-12-13T23:22:36  <gmoss> Bosmon: the context changes in this case would be things like switching to another 'page' of the same interface, i.e. there are parts of the dom/form that are hidden and shown as the user progresses through them, and i want videos to stop playing when they are no longer visible. another case would be a change in the language
+2018-12-13T23:22:53  <gmoss> the language case would actually redraw that part of the dom, though, so it's not actually necessary in that case
+2018-12-13T23:23:52  <Bosmon> gmoss - sounds like it might be a good case for a model relay indeed
+2018-12-13T23:23:54  <gmoss> now that I know namespace was my issue all along, I may be able to simplify this code further and distribute into a much deeper component
+2018-12-13T23:24:01  <Bosmon> Some kind of shared "isContextVisible" boolean flag
+2018-12-13T23:24:06  *** simonjb <simonjb!simonjb@nat/ocadu/x-lmbrgheocfbmabpt> has quit IRC (Quit: Leaving)
+2018-12-13T23:25:04  <gmoss> Bosmon: in this case, i would be raising/lowering this flag in tandem with changes in the DOM. would it not be safer and/or more reliable to simply check what's happening in the DOM?
+2018-12-13T23:25:41  <Bosmon> gmoss - the issue isn't that namespaces need to be unique "more or less universally across all components" but that all the listeners you were registering were on the *same* component, that is, the {page}.events.onContextChangeRequested
+2018-12-13T23:26:05  <Bosmon> gmoss - we tend not to "use the DOM as our model" for a few design reasons
+2018-12-13T23:26:24  <Bosmon> If there is something of relevance in the DOM going on, it would be best to hoist it out into the model realm
+2018-12-13T23:27:16  <gmoss> Bosmon: I thought I'd captured that part with the "to a particular event" bit right before "more or less universally", but perhaps I've misunderstood.
+2018-12-13T23:27:16  <gmoss> and okay, I'll keep that in mind!
+2018-12-13T23:27:52  <Bosmon> gmoss - also modelising this would let you be a bit less heavy-handed about stopping "everything"
+2018-12-13T23:28:21  <Bosmon> I imagine if the context changes from one page to another, there's no particular reason to send redundant "stop" messages to all the videos which were already stopped on all the unaffected pages
+2018-12-13T23:28:27  <gmoss> indeed
+2018-12-13T23:28:37  <gmoss> that's a good point
+2018-12-13T23:29:12  <Bosmon> So I think my general feeling is confirmed, that although this is a framework design fault, all the cases we run into it tend to be instances of a particular kind of underlying design flaw in the app itself which is best addressed through other means
+2018-12-13T23:30:10  <Bosmon> events and listeners in general are actually quite flawed things in themselves, even though it might sound like a pretty crazed thing to claim
+2018-12-13T23:30:48  <Bosmon> The thing about "arbitrary events" is that they represent these funny kinds of "unanchored instants in time" which are hard to associate with some kind of "integral model"
+2018-12-13T23:31:07  <Bosmon> Telling someone that something is "an event" doesn't really tell them very much about the semantics of it
+2018-12-13T23:31:53  <Bosmon> And it's this kind of undigested remnant from the OO era, as conceived by Alan Kay
+2018-12-13T23:32:00  <Bosmon> http://wiki.c2.com/?AlanKayOnMessaging
+2018-12-13T23:32:21  <Bosmon> "The big idea is "messaging" - that is what the kernal of Smalltalk/Squeak is all about"
+2018-12-13T23:32:29  <Bosmon> Unfortunately it is the big idea that is wrong : P
+2018-12-13T23:32:48  <gmoss> Bosmon: I have a lot of bad habits from OOP that I still need to break, clearly! I was just speaking with Simon about this
+2018-12-13T23:33:06  <gmoss> they drilled it into us pretty hard in school hah...
+2018-12-13T23:33:11  <Bosmon> gmoss - yes, I'm sorry that the framework isn't currently a huge help in breaking
+2018-12-13T23:33:14  <Bosmon> these habits
+2018-12-13T23:33:22  <gmoss> well, in a way, it is :)
+2018-12-13T23:33:32  <Bosmon> Yeah sure, by implementing them in a broken way : P
+2018-12-13T23:33:36  <Bosmon> hahahahaha
+2018-12-13T23:33:38  <gmoss> haha
+2018-12-13T23:33:56  <Bosmon> But yes, our model system is sort of moderately usable now, and should be used whenever possible
+2018-12-13T23:34:15  <Bosmon> If you find yourself writing an awful lot of traditional events and listeners, you should think of it as a bit of a smell
+2018-12-13T23:34:41  *** michelled <michelled!Adium@nat/ocadu/x-gfeeqgclvejittqo> has quit IRC (Quit: Leaving.)
+2018-12-13T23:35:10  <Bosmon> http://wiki.c2.com/?TheComputerRevolutionHasntHappenedYet
+2018-12-13T23:35:19  <gmoss> Bosmon: noted! I'll try to keep my nose tuned to that
+2018-12-13T23:35:21  <Bosmon> It's so painful that our rhetoric is essentially identical to this
+2018-12-13T23:35:32  <Bosmon> Along with all the appeal to literacy and printing presses etc.
+2018-12-13T23:36:03  <Bosmon> It's no wonder that the field never got anywhere, with all this gigantic noise jamming up one available radio station
+2018-12-13T23:36:31  <Bosmon> Look at that 2000 ACM abstract
+2018-12-13T23:36:49  <Bosmon> No rhetoric could be more perfect
+2018-12-13T23:37:50  <Bosmon> "The commercial computer is now about 50 years old and is still imitating the paper culture that came before it"
+2018-12-13T23:38:05  <Bosmon> To the extent that this is true, the inescapable conclusion is that people like Alan Kay themselves must be responsible
+2018-12-13T23:38:26  <Bosmon> But in fact, it's barely true - computers never became even a shred as usable and democratic as anything that paper culture produced
+2018-12-13T23:38:32  <gmoss> haha
+2018-12-13T23:38:47  <gmoss> not yet, anyway
+2018-12-13T23:38:52  <Bosmon> NOT YET, NO
+2018-12-13T23:39:43  <Bosmon> But another piece of the hubris of technological culture is that it should genuinely expect to do in 50 years what took the previous culture 1500 years
+2018-12-13T23:42:58  <Bosmon> https://www.kingjamesbibleonline.org/1-Kings-19-4/
+2018-12-13T23:44:07  <gmoss> I think we shouldn't expect computers to do any of the things that printed materials have achieved historically. they've already been achieved, after all
+2018-12-13T23:44:26  <Bosmon> Right
+2018-12-13T23:44:28  <gmoss> *do = achieve, affect change, change the world in a similar fashion
+2018-12-13T23:44:53  <Bosmon> The achievements of our revolution will be different, and everything will have a different character
+2018-12-13T23:45:17  <Bosmon> But still, we have a right to expect an actual democratisation, rather than a fake one
+2018-12-13T23:46:00  <Bosmon> He's right that the revolution hasn't happened yet, but is wrong in expecting its character to be too similar to the previous one
+2018-12-13T23:46:09  <Bosmon> That's the thing about revolutions, they are genuinely revolutionary :)
+2018-12-13T23:50:08  <gmoss> indeed!

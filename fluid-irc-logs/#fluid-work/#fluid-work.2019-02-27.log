@@ -1,0 +1,348 @@
+2019-02-27T00:28:36  *** colinclark <colinclark!~colinclar@205.211.168.103> has quit IRC (Quit: colinclark)
+2019-02-27T01:35:07  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-work
+2019-02-27T01:35:25  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Client Quit)
+2019-02-27T03:16:34  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-02-27T06:03:13  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:dab:1de1:f99f:c451> has quit IRC (Remote host closed the connection)
+2019-02-27T08:06:16  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:81ad:a6f5:6e9d:ba4f> has quit IRC (Quit: Leaving.)
+2019-02-27T08:22:00  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:d4b0:cbd:bf13:f22a> has joined #fluid-work
+2019-02-27T08:26:51  *** Danail_Dido <Danail_Dido!~Karadalie@109.120.246.31> has joined #fluid-work
+2019-02-27T08:35:39  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has joined #fluid-work
+2019-02-27T09:12:11  <the-t-in-rtf> Once people show up to toil in the windows acceptance mines, I left a comment on the ticket with my theory about the current failure.
+2019-02-27T09:12:14  <the-t-in-rtf> https://issues.gpii.net/browse/GPII-3757?focusedCommentId=37320&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-37320
+2019-02-27T09:45:59  <Bosmon> THanks, the-t-in-rtf
+2019-02-27T09:46:20  <Bosmon> My feeling is that the focus on the hang wait messages is in the wrong area, since the failure is quite consistent
+2019-02-27T09:46:45  <Bosmon> And the fact that this just affects the "Hand" cursor is probably significant, since I remember querying a recent pull of javjarfer[m] on just this point
+2019-02-27T09:47:00  <the-t-in-rtf> but is it actually a failure?  I mean, if you perform the steps on a dev instance, is the outcome correct?
+2019-02-27T09:47:21  <javjarfer[m]> Bosmon,  the-t-in-rtf thanks for the updates, I will be working into it withing minutes
+2019-02-27T09:47:35  <javjarfer[m]> yes I remember your query about that Bosmon
+2019-02-27T09:49:20  <Bosmon> Which pull actually was that, javjarfer[m] - what was it doing?
+2019-02-27T09:52:19  <javjarfer[m]> yes, I was looking into it, it was right here https://github.com/GPII/universal/pull/636/files#diff-cb7e20a6c5ff97630ea4518024a845b2R5517
+2019-02-27T09:52:48  <javjarfer[m]> I was the onboarding of the new theme that is used in Windows 10 cursors
+2019-02-27T09:54:40  *** the-t-in-rtf1 <the-t-in-rtf1!~Adium@212.78.169.180> has joined #fluid-work
+2019-02-27T09:54:54  <javjarfer[m]> So, output is correct, thing is that I didn't changed the value in the os_win7 because tests passed and I didn't realize, but the actual values are correct
+2019-02-27T09:55:12  <Bosmon> javjarfer[m] - can you explain more? : P
+2019-02-27T09:55:47  <jhernandez> hey
+2019-02-27T09:55:50  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has quit IRC (Ping timeout: 255 seconds)
+2019-02-27T09:55:54  <jhernandez> joining the conversation
+2019-02-27T09:56:45  <jhernandez> I've been taking a look at this and I'm wondering whether the fact that we removed the login/logout endpoints matters :P
+2019-02-27T09:57:41  <jhernandez> look at these two components https://github.com/GPII/universal/blob/master/gpii/node_modules/testing/src/TestUtils.js#L222-L236
+2019-02-27T09:57:55  <jhernandez> it's trying to key-in via http
+2019-02-27T09:58:06  <jhernandez> which is not supported anymore
+2019-02-27T09:58:15  <Bosmon> jhernandez - we only removed them from production configs
+2019-02-27T09:58:20  <jhernandez> hmmmm
+2019-02-27T09:58:21  <jhernandez> okay
+2019-02-27T10:01:03  <the-t-in-rtf1> The login and logout requests are clearly completing in the CI output, I would hope that would fail obviously and spectacularly if the endpoints were gone.
+2019-02-27T10:01:15  *** the-t-in-rtf1 is now known as the-t-in-rtf
+2019-02-27T10:02:39  <jhernandez> yeah, true
+2019-02-27T10:04:20  <javjarfer[m]> Bosmon: was taking a more close look to it
+2019-02-27T10:07:53  <javjarfer[m]> Okay, so it looks like we are not changing the system values, because 'actual' are the default system values for those settings. Once you change the values from the Windows 10 "Settings" app, the values fall in the range of values we have.
+2019-02-27T10:08:23  * javjarfer[m] uploaded an image: image.png (98KB) < https://matrix.org/_matrix/media/v1/download/matrix.org/DiyrJynrrSzIvZFgmfcQneLu >
+2019-02-27T10:08:37  <javjarfer[m]> that's from a fresh machine which values have been never changed
+2019-02-27T10:41:19  <Bosmon> javjarfer[m] - interesting, ok
+2019-02-27T10:41:57  <Bosmon> So perhaps we have a further fault in the solutions registry entry and the action is being culled out as we had with the previouos situation with the high contrast theme
+2019-02-27T10:45:12  <Bosmon> It looks like each of these settings do read "http://registry\\.gpii\\.net/common/cursorSize"
+2019-02-27T10:45:13  <javjarfer[m]> Bosmon: yes, looks like something similar to that
+2019-02-27T10:46:20  <Bosmon> perhaps something has stopped the "updateCursors" action happening
+2019-02-27T10:51:02  <Bosmon> os_common contains                     "http://registry.gpii.net/common/cursorSize": 0.9,  whicyou would think would be enough to fully activate the setting
+2019-02-27T11:13:54  <javjarfer[m]> Bosmon: yes, at least, it was enough previously
+2019-02-27T11:30:13  <Bosmon> But, I still don't understand why "Hand" was ever different
+2019-02-27T12:56:17  <javjarfer[m]> Sorry Bosmon , do you mean different in the values we have now in the SR? Or different in the output we are observing?
+2019-02-27T12:57:44  <javjarfer[m]> I mean, all the values are changed, not just the "Hand" one, the other one has different values, "Hand" one, has no value. I agree that it's a weird way to build "themes", but it's the way it's done in Windows right now...
+2019-02-27T13:01:52  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has quit IRC (Quit: Leaving.)
+2019-02-27T13:02:16  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has joined #fluid-work
+2019-02-27T13:24:55  <Bosmon> javjarfer[m] - I mean, why is it special to have empty string as its value
+2019-02-27T13:31:36  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has joined #fluid-work
+2019-02-27T13:35:10  <javjarfer[m]> Bosmon: I have no idea, that's an implementation detail from Windows cursor theme
+2019-02-27T13:38:08  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-02-27T13:43:03  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-02-27T13:50:30  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:89da:a52:e81f:c762> has joined #fluid-work
+2019-02-27T14:08:06  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-02-27T14:08:31  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has joined #fluid-work
+2019-02-27T14:14:36  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-02-27T14:16:42  <stegru> cindyli Bosmon: the "secret-based authentication" is this - core sends "something" to the service, the service sends "something+secret" to the cloud, and returns the response back to core - right?
+2019-02-27T14:18:17  <cindyli> i thought the response will be returned back to the service
+2019-02-27T14:19:38  <cindyli> the workflow in my mind:
+2019-02-27T14:20:07  <stegru> yes.. that's what i meant.. then service returns it to core
+2019-02-27T14:20:14  <cindyli> exactly
+2019-02-27T14:24:53  <stegru> so cindyli, you just need from me a function or grade that performs this request?
+2019-02-27T14:25:09  <Bosmon> stegru - no, not any more
+2019-02-27T14:25:38  <stegru> for what?
+2019-02-27T14:27:57  <Bosmon> Sorry, I am confused
+2019-02-27T14:30:17  <the-t-in-rtf> @cindyli and @Bosmon, I will need just a minute for a key build to finish on my machine before I can head to a room for our meeting.
+2019-02-27T14:30:55  <stegru> I'm looking at Part B in https://pad.gpii.net/p/breaking-down-morphic-keyless-signup-5v1a4nw5 - I just consolidated my responsibility in a sentence
+2019-02-27T14:31:04  <cindyli> stegru: is "the function or grade" for the communication between LFM and service?
+2019-02-27T14:31:36  <stegru> yes
+2019-02-27T14:34:09  <stegru> my understanding is: you just want the access token that was returned from the cloud, right. you then use it when logging in with the username
+2019-02-27T14:34:26  <stegru> in order to grant the access token, the secret is required
+2019-02-27T14:34:30  <cindyli> that makes sense. the input is "username" and output is "acess_token"
+2019-02-27T14:34:38  <stegru> yes! ok
+2019-02-27T14:34:40  *** avtar <avtar!~avtar@ip-24-50-176-30.user.start.ca> has joined #fluid-work
+2019-02-27T14:35:07  <stegru> ahh ok
+2019-02-27T14:35:36  <cindyli> stegru: would you take care of the expiration of the access token? to re-request before returning to LFM if the previous one for that username has expired?
+2019-02-27T14:35:51  <cindyli> we probably can re-use the code in the universal for this part
+2019-02-27T14:35:57  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has quit IRC (Quit: Leaving.)
+2019-02-27T14:37:02  <stegru> is the access token per user login, or per instance, or what?
+2019-02-27T14:37:38  <stegru> sorry if it's documented already, if so let me know
+2019-02-27T14:37:57  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has joined #fluid-work
+2019-02-27T14:38:35  <the-t-in-rtf> @bosmon and @cindyli, I'm in my Vidyo room.
+2019-02-27T14:38:49  <Bosmon> coming
+2019-02-27T14:39:03  <stegru> I have enough information for now
+2019-02-27T14:39:45  <cindyli> stegru: seems you don't need to keep track of the expiration. the grade from you should replace this one - https://github.com/GPII/universal/blob/master/gpii/node_modules/flowManager/src/SettingsDataSource.js#L123
+2019-02-27T14:40:04  <cindyli> every time your grade returns a new access token
+2019-02-27T14:40:24  <stegru> great, thanks
+2019-02-27T14:40:59  <stegru> I've released you for tony
+2019-02-27T14:41:01  <Bosmon> cindyli, stegru - ok, I think I seem to remember that we had decided to go on with the "access requester" route?
+2019-02-27T14:41:16  <Bosmon> If it's too much trouble we can just have the service return the secret to the client directly
+2019-02-27T14:41:52  <stegru> i'll let you know by the evening
+2019-02-27T14:47:44  *** michelled <michelled!~Adium@205.211.168.102> has joined #fluid-work
+2019-02-27T14:50:53  *** Danail_Dido <Danail_Dido!~Karadalie@109.120.246.31> has quit IRC (Ping timeout: 244 seconds)
+2019-02-27T14:58:58  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-work
+2019-02-27T15:08:07  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has quit IRC (Quit: Leaving.)
+2019-02-27T15:09:11  <cindyli> the-t-in-rtf: reading your summary of your meeting - https://github.com/GPII/universal/pull/745#issuecomment-467894846, did we agree to move the "local" configs to gpii/tests? as they are shared by tests and "all.local" configs, it might make more sense to move them to gpii/configs/shared
+2019-02-27T15:09:39  <cindyli> configs in tests/configs folder are solely used by tests under tests/ folder
+2019-02-27T15:09:52  <cindyli> Bosmon: ^
+2019-02-27T15:09:54  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has joined #fluid-work
+2019-02-27T15:19:23  *** clown <clown!clown@nat/ocadu/x-zebsstqyixpjcits> has joined #fluid-work
+2019-02-27T15:26:30  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:89da:a52:e81f:c762> has quit IRC ()
+2019-02-27T15:32:54  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has quit IRC (Quit: Leaving.)
+2019-02-27T15:47:55  <gmoss> clown: do you have any time today to discuss aria attributes? I have a question about part of the storytelling tool, I expect it will take 15~30 mins. I'll also try to rope lliskovoi into this chat, but I have yet to ask her
+2019-02-27T15:48:37  <clown> gmoss:  there is no community meeting, correct?  How about around 2:30 pm then?
+2019-02-27T15:48:50  <gmoss> clown: that's correct. Sure that works for me. thanks!
+2019-02-27T15:48:59  <clown> don't thank me yet…
+2019-02-27T15:49:02  <clown> ;-)
+2019-02-27T15:49:02  <gmoss> :)
+2019-02-27T15:49:40  * gmoss half-expects a lesson of "your ARIA usage is bad and you should feel bad" :P
+2019-02-27T16:01:01  *** the-t-in-rtf <the-t-in-rtf!~Adium@ip-213-127-48-85.ip.prioritytelecom.net> has joined #fluid-work
+2019-02-27T16:09:52  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-02-27T16:13:22  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-02-27T16:24:16  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-02-27T16:24:16  *** danayo_ is now known as danayo
+2019-02-27T16:29:25  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-02-27T16:32:31  <jhernandez> Bosmon: cindyli hey, I've been doing some ahead testing of universal/master in gpii-app and looks like the Quikstrip control that deals with highContrast is not working anymore
+2019-02-27T16:33:04  <jhernandez> keying-in with a user that has highContrast theme works though
+2019-02-27T16:34:12  <Bosmon> Thanks for that testing, jhernandez
+2019-02-27T16:34:27  <jhernandez> not sure if related to GPII-3757
+2019-02-27T16:37:32  <cindyli> :(
+2019-02-27T16:37:57  <jhernandez> you can test it by using my gpii-app/pull/93
+2019-02-27T16:38:14  <jhernandez> this is, https://github.com/GPII/gpii-app/pull/93
+2019-02-27T16:41:20  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-rdeutrhflgujetjj> has joined #fluid-work
+2019-02-27T16:53:47  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-02-27T16:59:18  *** michelled <michelled!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-02-27T17:01:12  <jhernandez> arch meeting time!
+2019-02-27T17:01:32  *** michelled <michelled!Adium@nat/ocadu/x-vcppznejlvocldag> has joined #fluid-work
+2019-02-27T17:07:21  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-02-27T17:20:48  <Bosmon> Hi there cindyli - looks like we both made updatres to GPII-3757 at the same moment : P
+2019-02-27T17:21:34  <Bosmon> cindyli - I think my comment shows that there appears to be some bug in core - the settingsHandler makes the correct return, but somehow the lifecycleManager ignores it
+2019-02-27T17:22:20  <cindyli> what!!!
+2019-02-27T17:22:59  <cindyli> looking into that…
+2019-02-27T17:25:56  <Bosmon> cindyli - it's hard to explain, since I don't think this part of the code has been adjusted for a while
+2019-02-27T17:26:14  <cindyli> exactly
+2019-02-27T17:26:19  <Bosmon> My first thought was that perhaps there was some faulty "falsy" check for newValue, but that would be insane since there are so many examples of newValue which are 0 etc.
+2019-02-27T17:28:43  <Bosmon> Would you believe that simply logging in os_win7 now generates 70,000 lines of logs : P
+2019-02-27T17:34:34  <Bosmon> The 2nd test for os_common produces just the same output - we have the correct lifecycleInstructions and the correct settingsHandler return
+2019-02-27T17:34:40  <Bosmon> but somehow the session gets updated incorrectly
+2019-02-27T17:36:18  <Bosmon> OK, the good news is that this is the first invocation of registry handler SET for the whole session
+2019-02-27T17:36:23  <Bosmon> So this should make this a touch easier to debug.....
+2019-02-27T17:40:16  <cindyli> running os_win7 test in universal to compare
+2019-02-27T17:42:48  <Bosmon> Ah, I may have misunderstood this as usual
+2019-02-27T17:42:53  <Bosmon> What gets logged is the ORIGINAL settings
+2019-02-27T17:43:34  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-02-27T17:45:36  <cindyli> in universal, this lifecycle manager log is
+2019-02-27T17:45:38  <cindyli> "Arrow": {
+2019-02-27T17:45:38  <cindyli>     "type": "DELETE"
+2019-02-27T17:45:38  <cindyli> },
+2019-02-27T17:45:38  <cindyli> ...
+2019-02-27T17:45:49  <Bosmon> !!!
+2019-02-27T17:45:54  <cindyli> because mac doesn't have these settings
+2019-02-27T17:46:13  <cindyli> so the original is recorded as "delete them"
+2019-02-27T17:47:35  *** michelled <michelled!Adium@nat/ocadu/x-vcppznejlvocldag> has quit IRC (Quit: Leaving.)
+2019-02-27T17:47:44  <Bosmon> OK, I've just checked in the real registry that the cursors are updated there
+2019-02-27T17:47:50  <Bosmon> "Hand" is indeed set to ""
+2019-02-27T17:47:51  *** avtar <avtar!~avtar@ip-24-50-176-30.user.start.ca> has quit IRC (Quit: Leaving.)
+2019-02-27T17:49:21  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-02-27T17:49:22  *** danayo_ is now known as danayo
+2019-02-27T17:49:47  <Bosmon> You know, I think I have an idea what is happening
+2019-02-27T17:50:02  <Bosmon> It's the fact that since we are reading the JSON from the database, the keys may have become disordered
+2019-02-27T17:50:12  <Bosmon> And that we are now applying the high contrast theme AFTER we apply the cursors
+2019-02-27T17:50:26  <Bosmon> As we experienced before, this causes all the cursors to get reset
+2019-02-27T17:50:32  <Bosmon> This was one of our most ancient issues on Windows
+2019-02-27T17:50:36  <cindyli> really???!!!
+2019-02-27T17:50:53  <cindyli> what a great discovery
+2019-02-27T17:51:08  <Bosmon> It's hardly a great discovery, we encountered this in 2013 : P
+2019-02-27T17:51:17  <Bosmon> I'm just a little amazed that we never ran into it again
+2019-02-27T17:51:44  <Bosmon> I seem to remember stegru doing some magic with this, but I think all that it achieved was to properly serialise the effect of apply highContrast wrt to the system
+2019-02-27T17:51:47  <cindyli> and you still remember. unbelievable Bosmon
+2019-02-27T17:51:55  <Bosmon> I don't think that we ever did anything to resolve the inherent conflict between the two settings
+2019-02-27T17:52:31  <Bosmon> It may be that, totally by accident, we always applied high contrast first, and then the cursors
+2019-02-27T17:52:37  <cindyli> it may not be a good idea to separate out the test for cursors and highContrast, which just hides the problem without solving it
+2019-02-27T17:52:55  <stegru> setting the high-contrast theme overrides the cursors - the cursors are part of the high-contrast theme
+2019-02-27T17:53:05  <cindyli> i see
+2019-02-27T17:54:02  <Bosmon> Because there is this "weak ordering" of keys in JSON, whatever we had set up either in the prefs documents or the SR would have determined the order we apply these settings
+2019-02-27T17:54:15  <cindyli> one thing to try this out is to comment out highContrast from os_win7 prefs to see if cursors test passes
+2019-02-27T17:54:31  <Bosmon> cindyli - good idea
+2019-02-27T17:54:40  <Bosmon> But then we somehow have to run a "rebuild" of the prefsSafes, right?
+2019-02-27T17:54:56  <Bosmon> I assume the rebuild works fine with universal as a nested dependency
+2019-02-27T17:55:00  <cindyli> the test run should take care of that, isn't it
+2019-02-27T17:55:06  <Bosmon> Does it?
+2019-02-27T17:55:09  <cindyli> oh, right
+2019-02-27T17:55:11  <Bosmon> I never saw that they do
+2019-02-27T17:55:21  <cindyli> i just directly go into couchdb and modify the prefs safe
+2019-02-27T17:55:26  <Bosmon> I always had to run "npm install" in order to rebuild the docs that Couch does
+2019-02-27T17:55:27  <Bosmon> hah!
+2019-02-27T17:55:31  <cindyli> http://localhost:25984/_utils
+2019-02-27T17:59:21  <Bosmon> I've ended up jamming my VM since there is a breakpoint in the middle of the acceptance tests, which now fills the entire screen with an unresponsive onscreen keyboard : P
+2019-02-27T18:00:23  <Bosmon> "vagrant halt" it is......
+2019-02-27T18:00:54  <Bosmon> But cindyli, the docs are reprovisioned whenever the tests start
+2019-02-27T18:01:50  <cindyli> cool. that explains why highContrast still applies after setting highContrastOn to false
+2019-02-27T18:01:57  <Bosmon> urgh this VM is totally hosed
+2019-02-27T18:02:14  <Bosmon> I guess there's no easy way to run "reset to standard" without having the Morphic app
+2019-02-27T18:02:35  <Bosmon> It's got so many settings screwed up through being axed halway through an acceptance test run that it is unusable
+2019-02-27T18:03:11  <Bosmon> We really need a command line "reset to standard" utility
+2019-02-27T18:03:53  *** michelled <michelled!Adium@nat/ocadu/x-jhlaomlzlmsrkgrv> has joined #fluid-work
+2019-02-27T18:05:10  *** Danail_Dido <Danail_Dido!~Karadalie@109.120.246.31> has joined #fluid-work
+2019-02-27T18:10:19  *** Danail_Dido <Danail_Dido!~Karadalie@109.120.246.31> has quit IRC (Quit: Leaving)
+2019-02-27T18:12:55  *** simonjb <simonjb!simonjb@nat/ocadu/x-qldlldhqojmhmmcu> has joined #fluid-work
+2019-02-27T18:18:46  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-rdeutrhflgujetjj> has quit IRC (Remote host closed the connection)
+2019-02-27T18:19:36  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-qrbccxvblixeyxqu> has joined #fluid-work
+2019-02-27T18:25:20  <cindyli> Bosmon: good news: cursor test passes once applying highContrast is removed
+2019-02-27T18:28:14  <cindyli> jhernandez: how can i reproduce the issue with gpii-app applying high contrast?
+2019-02-27T18:28:24  <cindyli> which gpii-app, windows branches i should use?
+2019-02-27T18:28:43  <cindyli> shall i re-provision gpii-app VM to get couchdb installed?
+2019-02-27T18:28:46  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-02-27T18:29:27  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has joined #fluid-work
+2019-02-27T18:33:48  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has quit IRC (Ping timeout: 250 seconds)
+2019-02-27T18:39:36  <Bosmon> cindyli - well that's great news :)
+2019-02-27T18:39:47  <Bosmon> Unfortunately it has some awkward implications for our system : P
+2019-02-27T18:40:00  <Bosmon> We are going to have to construct some kind of internal "settings application priority map"
+2019-02-27T18:41:08  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has joined #fluid-work
+2019-02-27T18:42:50  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-qrbccxvblixeyxqu> has quit IRC (Remote host closed the connection)
+2019-02-27T18:42:59  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-tiqvtpfojageaaae> has joined #fluid-work
+2019-02-27T18:45:29  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-02-27T18:46:59  *** jhung is now known as jhung_away
+2019-02-27T18:47:12  <cindyli> Bosmon: for now, shall we move cursors, or highContrast, into a separate test?
+2019-02-27T18:47:28  <Bosmon> cindyli - sure, a good idea
+2019-02-27T18:47:33  <Bosmon> Let's put high contrast into its own test
+2019-02-27T18:47:46  <Bosmon> It might make it easier to pursue whatever issue jhernandez has : P
+2019-02-27T18:48:02  <cindyli> do you want me to work on it?
+2019-02-27T18:51:09  *** avtar <avtar!avtar@nat/ocadu/x-tziwkrmiouhbhboj> has joined #fluid-work
+2019-02-27T18:51:48  <Bosmon> cindyli - separating out the tests?
+2019-02-27T18:54:42  <cindyli> ya
+2019-02-27T18:55:13  <Bosmon> cindyli - that would be great
+2019-02-27T18:55:17  <cindyli> ok
+2019-02-27T18:55:18  <Bosmon> I guess it will be strangely historic
+2019-02-27T18:55:28  <Bosmon> We've had os_common and os_win7 since the very beginning of the project
+2019-02-27T18:55:31  <Bosmon> As the name suggests : P
+2019-02-27T18:56:04  <Bosmon> Thanks, cindyli
+2019-02-27T18:56:21  <cindyli> what should names for highContrast be? os_win7_highContrast? os_common_highContrast? Bosmon
+2019-02-27T18:56:43  <cindyli> os_win10_highContrast ;)
+2019-02-27T18:57:06  <Bosmon> hahaha
+2019-02-27T18:57:45  <Bosmon> Yes, those are fine
+2019-02-27T18:57:52  <Bosmon> I'll just write up a JIRA that you can label them with
+2019-02-27T18:58:03  <Bosmon> Explaining that they are temporary waiting for some core work
+2019-02-27T18:58:11  <Bosmon> I mean, you know, it might end up being quicker just to fix the issue
+2019-02-27T18:58:26  <cindyli> yes, the temp fix can use 3757
+2019-02-27T18:58:30  <Bosmon> It's a lot of upheaval to create a new prefs set and rewrite the acceptance/integration tests
+2019-02-27T18:58:40  <cindyli> shall os_win7 be renamed to os_win?
+2019-02-27T18:58:49  <Bosmon> cindyli - sounds better, yes
+2019-02-27T18:58:52  <cindyli> ok
+2019-02-27T19:03:58  <Bosmon> I guess there's a funny question about how/where we will do the sort
+2019-02-27T19:04:05  <Bosmon> For example we could do it in the matchMaker here: https://github.com/GPII/universal/blob/master/gpii/node_modules/matchMakerFramework/src/MatchMakerUtilities.js#L382
+2019-02-27T19:04:33  <Bosmon> Since the earlier years of JS, all the modern VMs do actually guarantee that the insertion order of JSON keys will remain stable
+2019-02-27T19:04:39  <Bosmon> Although it still feels a bit slimy to rely on it
+2019-02-27T19:05:33  <Bosmon> Alternatively we could do it in the LifecycleManager but then we would have to hit (at least) two sites - e.g. https://github.com/GPII/universal/blob/master/gpii/node_modules/lifecycleManager/src/LifecycleManager.js#L1233
+2019-02-27T19:09:19  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-02-27T19:10:50  <cindyli> i feel the sort should be done as early as possible in the workflow when there are less information to be processed
+2019-02-27T19:12:13  *** jhung_away is now known as jhung
+2019-02-27T19:12:21  <cindyli> looking at the size of "inferredConfiguration" and "lifecycleInstructions" in the log, i'd rather deal with "inferredConfiguration"
+2019-02-27T19:12:59  *** colinclark <colinclark!~colinclar@205.211.168.102> has joined #fluid-work
+2019-02-27T19:13:37  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has joined #fluid-work
+2019-02-27T19:13:53  *** avtar <avtar!avtar@nat/ocadu/x-tziwkrmiouhbhboj> has quit IRC (Quit: Leaving.)
+2019-02-27T19:14:29  <cindyli> but i agree it may not be reliable to reply on JS maintaining the sorted order throughout
+2019-02-27T19:18:25  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has quit IRC (Client Quit)
+2019-02-27T19:19:19  *** avtar <avtar!avtar@nat/ocadu/x-wgluivlguawuxote> has joined #fluid-work
+2019-02-27T19:20:00  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has joined #fluid-work
+2019-02-27T19:25:29  <jhernandez> cindyli: sorry, I was afk
+2019-02-27T19:26:08  <jhernandez> you can use my GPII-3744 branch of gpii-app
+2019-02-27T19:26:49  <jhernandez> this is, https://github.com/GPII/gpii-app/pull/93
+2019-02-27T19:27:18  <jhernandez> which points to my windows/GPII-3744, which uses current universal/master
+2019-02-27T19:30:36  <cindyli> great. thanks, jhernandez
+2019-02-27T19:31:15  <cindyli> will work on it after separating out tests for GPII-3757
+2019-02-27T19:41:45  *** jhung is now known as jhung_away
+2019-02-27T20:08:33  <Bosmon> cindyli - well we'll only ever be doing a shallow sort, the size of the data isn't so important, compared to how much of a mess we make of the code and/or run the risk of some out-of-band processing disrupt the order
+2019-02-27T20:08:56  <Bosmon> Given the matchmaker often runs on a different machine to the lifecycleManager, there's a small risk that the order might be disrupted
+2019-02-27T20:09:18  <Bosmon> But there's still something we don't completely understand, since os_common and os_win7 have the cursors and highContrast preferences in opposite orders
+2019-02-27T20:10:26  <cindyli> that's true
+2019-02-27T20:11:04  <Bosmon> Ah!
+2019-02-27T20:11:20  <Bosmon> Perhaps it is pouch that consistently sorted them one way, and couch consistently sorts them the other
+2019-02-27T20:11:50  <Bosmon> Because I can confirm from my test run that in WIndows/Couch, it is always high contrast that gets applied first
+2019-02-27T20:11:59  *** jhung_away <jhung_away!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-02-27T20:13:22  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-02-27T20:44:40  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-02-27T20:54:23  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-02-27T21:03:07  <Bosmon> Cheers, cindyli
+2019-02-27T21:03:09  <Bosmon> I see it : P
+2019-02-27T21:03:14  <cindyli> cheers!
+2019-02-27T21:03:27  <cindyli> tested on windows. all passed. double check pls
+2019-02-27T21:04:57  <Bosmon> CHeers, starting to test now - in the meantime, could you please add explanatory comments + JIRA links to both the os_xxxx_highContrast.json5 , thanks!
+2019-02-27T21:07:58  <cindyli> sure
+2019-02-27T21:19:18  <Bosmon> cindyli - mixed news
+2019-02-27T21:19:30  <Bosmon> The tests run and pass, but unfortunately they leave the state of the system corrupted :(
+2019-02-27T21:19:40  <Bosmon> The magnifier and onscreen keyboard are left open
+2019-02-27T21:20:04  <Bosmon> Interestingly, the tests seems to believe that they expect this
+2019-02-27T21:20:19  <Bosmon> Since they end with the following:
+2019-02-27T21:20:20  <Bosmon> 13:17:51.345:  settleStructure received response {
+2019-02-27T21:20:21  <Bosmon>     "com.microsoft.windows.magnifier": [
+2019-02-27T21:20:21  <Bosmon>         {
+2019-02-27T21:20:21  <Bosmon>             "settings": {
+2019-02-27T21:20:21  <Bosmon>                 "running": true
+2019-02-27T21:20:21  <Bosmon>             }
+2019-02-27T21:20:21  <Bosmon>         }
+2019-02-27T21:20:22  <Bosmon>     ],
+2019-02-27T21:20:22  <Bosmon>     "com.microsoft.windows.onscreenKeyboard": [
+2019-02-27T21:20:23  <Bosmon>         {
+2019-02-27T21:20:23  <Bosmon>             "settings": {
+2019-02-27T21:20:24  <Bosmon>                 "running": true
+2019-02-27T21:20:24  <Bosmon>             }
+2019-02-27T21:20:25  <Bosmon>         }
+2019-02-27T21:20:25  <Bosmon>     ]
+2019-02-27T21:21:04  <Bosmon> It seems that we have a test called this: "13:17:51.377:  jq: Test concluded - Module "gpii.tests.acceptance.windows.builtIn.config tests" Test name "Testing os_common_highContrast - magnifier and keyboard both running on startup": 6/6 passed - PASS"
+2019-02-27T21:24:37  <cindyli> ah, i see. this one with the initial settings should not be the last one in the test defs
+2019-02-27T21:26:52  <Bosmon> cindyli - perhaps not, but that shouldn't really matter, no? : P
+2019-02-27T21:26:58  <Bosmon> I'm trying to see how these "initial settings" get cleaned up
+2019-02-27T21:27:46  <cindyli> i suspect they are cleaned up by the next initial settings
+2019-02-27T21:27:53  <Bosmon> Terrible
+2019-02-27T21:28:08  <Bosmon> I'll write up a further JIRA : P
+2019-02-27T21:28:38  <cindyli> browser test fails on CI. fixing it..
+2019-02-27T21:31:32  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-02-27T21:34:18  <cindyli> switching the test defs does fix the initial settings thing
+2019-02-27T21:47:21  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-02-27T21:48:08  <Bosmon> cindyli - yes, great
+2019-02-27T21:48:13  <Bosmon> I now have a clean pass on the Windows acceptance tests
+2019-02-27T21:48:17  <Bosmon> Trying a full run now
+2019-02-27T21:51:17  <cindyli> cool
+2019-02-27T21:52:27  *** michelled <michelled!Adium@nat/ocadu/x-jhlaomlzlmsrkgrv> has quit IRC (Quit: Leaving.)
+2019-02-27T22:02:17  *** michelled <michelled!Adium@nat/ocadu/x-dmauzrvbnuwomlkc> has joined #fluid-work
+2019-02-27T22:03:07  <Bosmon> ok cindyli - WE HAVE A PAZZ!
+2019-02-27T22:07:03  <cindyli> YAY!
+2019-02-27T22:08:07  <cindyli> now i can head offline :)
+2019-02-27T22:08:08  *** clown <clown!clown@nat/ocadu/x-zebsstqyixpjcits> has quit IRC (Quit: Leaving.)
+2019-02-27T22:08:16  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-02-27T22:20:16  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-02-27T22:34:24  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Quit: sepidehshahi)
+2019-02-27T22:39:55  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-02-27T22:46:39  *** jhernand_ <jhernand_!~jhernande@2a02:a03f:3ee2:5d00:a17a:4e81:8577:47b> has joined #fluid-work
+2019-02-27T22:50:18  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:d4b0:cbd:bf13:f22a> has quit IRC (Ping timeout: 258 seconds)
+2019-02-27T22:56:33  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-tiqvtpfojageaaae> has quit IRC ()
+2019-02-27T22:56:58  *** michelled1 <michelled1!~Adium@205.211.168.102> has joined #fluid-work
+2019-02-27T22:57:51  *** avtar1 <avtar1!~avtar@205.211.168.105> has joined #fluid-work
+2019-02-27T22:59:30  *** michelled <michelled!Adium@nat/ocadu/x-dmauzrvbnuwomlkc> has quit IRC (Ping timeout: 257 seconds)
+2019-02-27T23:00:10  *** avtar <avtar!avtar@nat/ocadu/x-wgluivlguawuxote> has quit IRC (Ping timeout: 244 seconds)
+2019-02-27T23:04:35  *** avtar1 <avtar1!~avtar@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-02-27T23:05:54  *** avtar <avtar!~avtar@205.211.168.105> has joined #fluid-work
+2019-02-27T23:08:01  *** avtar <avtar!~avtar@205.211.168.105> has quit IRC (Client Quit)
+2019-02-27T23:08:23  *** avtar <avtar!~avtar@205.211.168.105> has joined #fluid-work
+2019-02-27T23:13:36  *** simonjb <simonjb!simonjb@nat/ocadu/x-qldlldhqojmhmmcu> has quit IRC (Quit: Leaving)
+2019-02-27T23:35:45  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.103> has joined #fluid-work
+2019-02-27T23:35:49  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.103> has left #fluid-work
+2019-02-27T23:47:50  *** avtar <avtar!~avtar@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-02-27T23:48:05  *** avtar <avtar!avtar@nat/ocadu/x-rceozykwhujkdyra> has joined #fluid-work

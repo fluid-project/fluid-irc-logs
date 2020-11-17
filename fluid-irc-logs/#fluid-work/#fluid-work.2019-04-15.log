@@ -1,0 +1,153 @@
+2019-04-15T04:29:46  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-04-15T04:35:55  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 264 seconds)
+2019-04-15T06:04:28  *** kris_HA <kris_HA!~kris@185.97.75.80> has joined #fluid-work
+2019-04-15T08:11:15  *** javjarfer <javjarfer!~Javier@201.red-81-37-1.dynamicip.rima-tde.net> has joined #fluid-work
+2019-04-15T08:12:00  <javjarfer> hi there, good morning stegru
+2019-04-15T09:06:34  <stegru> hi javjarfer
+2019-04-15T09:37:23  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:cce0:9e64:d388:2db1> has joined #fluid-work
+2019-04-15T10:29:49  <javjarfer> hi stegru sorry, needed to leave for 30 min
+2019-04-15T10:29:59  <stegru> it's ok
+2019-04-15T10:30:57  <javjarfer> Just wanted to talk with you about the new settings, the volume and brightness
+2019-04-15T10:31:43  <javjarfer> so, I just made a couple of little changes to the "brightness" solution, in the "isInstalled" block
+2019-04-15T10:31:49  <stegru> ok
+2019-04-15T10:32:00  <javjarfer> so device reporter informs when the solution isn't available in the system
+2019-04-15T10:32:07  <javjarfer> I think it's the best approach
+2019-04-15T10:32:26  <stegru> yes, I also think so
+2019-04-15T10:32:31  <javjarfer> Gregg asked me if we can inform the user when the feature is not available due to system limitations, and I think that's the best change for that
+2019-04-15T10:32:43  <javjarfer> okay, then I will create a small issue with the patch
+2019-04-15T10:33:51  <stegru> I'm not sure how that can be done
+2019-04-15T10:33:59  <stegru> informing the user
+2019-04-15T10:36:02  <javjarfer> I think that should be done from UI consuming device reporter output and modifying QSS behavior
+2019-04-15T10:38:42  <jhernandez> javjarfer: stegru are there any UI specs for these controls?
+2019-04-15T10:38:56  <jhernandez> (brightness and volume)
+2019-04-15T10:39:28  <javjarfer> ``` If we can then we can just dim out that control or show a message that “This monitor’s brightness cannot be controlled from this computer. ```
+2019-04-15T10:40:06  <javjarfer> that's the only information about it I have, it's from I mail I shared with Gregg about the feature on Friday
+2019-04-15T10:41:33  <javjarfer> also stegru, I have been started writing the volumeup, I think the easiest approach is forgetting about API for audio devices (or audio streams whatever), and going for "keybd_event"
+2019-04-15T10:46:29  <javjarfer> sorry jhernandez , I didn't completed my answer, they are supposed to work like current "scaling" menu of QSS
+2019-04-15T10:47:00  <stegru> keybd_event to sent the volume key presses?
+2019-04-15T10:47:20  <javjarfer> stegru, yes
+2019-04-15T10:47:27  <javjarfer> what do you think about it?
+2019-04-15T10:48:28  <stegru> well, it's a shit idea unless you don't care about what the current volume is
+2019-04-15T10:48:47  <javjarfer> stegru, the specs says nothing about the current volume
+2019-04-15T10:48:57  <javjarfer> just volume up, volume down, and mute
+2019-04-15T10:49:19  <stegru> shouldn't there be some feedback if the volume is all the way up and the button is pressed?
+2019-04-15T10:49:36  <javjarfer> stegru, windows doesn't do that
+2019-04-15T10:50:02  <javjarfer> well, I think if we use that, windows will be responsible of the feedback displaying the current volume
+2019-04-15T10:51:23  <javjarfer> but you gave me some thoughts stegru, Gregg has been talking of volume as a setting... this would make it a command in our terminology
+2019-04-15T10:51:36  <stegru> yes
+2019-04-15T10:51:55  <javjarfer> even if the spec of the current use matches this, I don't know if it will be required to be a setting in the future
+2019-04-15T10:52:16  <stegru> but I think they'll want the up/down button to flash red when it's at the end of the scale
+2019-04-15T10:52:40  <javjarfer> okay, that detail changes everything
+2019-04-15T10:52:56  <javjarfer> going for the audio API then, thanks stegru
+2019-04-15T10:53:13  <stegru> https://issues.gpii.net/browse/GPII-249
+2019-04-15T10:55:48  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:f834:ec1d:c993:b319> has joined #fluid-work
+2019-04-15T10:59:50  <javjarfer> stegru, thanks for the link, EndpointVolume API was my first choice
+2019-04-15T11:33:16  <javjarfer> stegru, since this API is not native to the .Net Framework and should be accessed using CoCreateInstance(https://docs.microsoft.com/es-es/windows/desktop/CoreAudio/header-files-and-system-components)
+2019-04-15T11:33:27  <javjarfer> I think we should go full native with it
+2019-04-15T11:48:10  <stegru> in a separate executable?
+2019-04-15T11:53:09  <javjarfer> that would be the faster approach yes, but maybe I can manage to move it to C#... but since it should be ready within beginning this week...
+2019-04-15T11:55:06  <javjarfer> stegru, have you moved something not native to .NET Framework to C# before?
+2019-04-15T11:55:21  *** kris_HA <kris_HA!~kris@185.97.75.80> has quit IRC (Ping timeout: 250 seconds)
+2019-04-15T11:55:33  <javjarfer> I think we did... or we tried, I can't remember quite well
+2019-04-15T11:57:29  *** kris_HA <kris_HA!~kris@185.97.75.80> has joined #fluid-work
+2019-04-15T12:07:30  *** greatislander <greatislander!~greatisla@24.138.74.254> has joined #fluid-work
+2019-04-15T12:08:46  <stegru> yes.. sort of
+2019-04-15T12:09:12  <stegru> jhernandez, if he wants this in by next week maybe it would be ok to just have the key press?
+2019-04-15T12:09:18  <stegru> sorry, i mean javjarfer
+2019-04-15T12:10:22  <stegru> or I think using WM_APPCOMMAND (not sure on the details of this)
+2019-04-15T12:11:24  <javjarfer> stegru, yes, that was another possible approach, I left the messages/keys implementation in favor of this, I think I can even have the executable approach ready for today
+2019-04-15T12:11:38  <javjarfer> but... I wont for sure have the C# version so soon
+2019-04-15T12:12:30  <javjarfer> I can check the specs in a mail with Gregg asking for the current requirements, if a setting is not required yet, the keypress/messages should be enough
+2019-04-15T13:12:31  *** Bosmon <Bosmon!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has joined #fluid-work
+2019-04-15T13:22:15  <javjarfer> what do you thin stegru ? I already have the binary working
+2019-04-15T13:23:04  <stegru> do whatever pleases you the most, javjarfer.. and what you think will best match Gregg's expectations
+2019-04-15T13:23:23  <stegru> binary for what, anyway?
+2019-04-15T13:28:33  <javjarfer> getting/setting system volume
+2019-04-15T13:45:55  <javjarfer> stegru, sorry, didn't mentioned you
+2019-04-15T13:46:09  <stegru> ok
+2019-04-15T13:51:44  <stegru> ah javjarfer.. I wonder if implementing this would be quicker than implementing the child-process handling:
+2019-04-15T13:51:45  <stegru> https://stackoverflow.com/questions/4640106/get-the-current-system-volume-in-windows-7/21056089#21056089
+2019-04-15T13:52:05  <stegru> I think this has the com crap you need
+2019-04-15T13:52:51  <stegru> why must a simple thing be so difficult
+2019-04-15T13:53:02  <javjarfer> hahaha yes stegru , exactly
+2019-04-15T13:53:15  <javjarfer> that needs the COM stuff...
+2019-04-15T13:53:32  <javjarfer> didn't expected it really, but you know, they always surprise
+2019-04-15T13:53:51  <javjarfer> so it looks like after Vista the access to this stuff was moved to COM interfaces
+2019-04-15T13:54:15  <javjarfer> I was really surprised to see that wasn't added to .Net to accessing the stuff from C#
+2019-04-15T13:54:17  <javjarfer> but....
+2019-04-15T13:54:35  <stegru> yeh, same here
+2019-04-15T13:57:57  <stegru> ah, I think "MCI" was the thing that was used in windows 3.11, when I last did this
+2019-04-15T13:58:30  <stegru> oh no, that's for playing media
+2019-04-15T14:00:54  <stegru> https://docs.microsoft.com/en-us/windows/desktop/multimedia/audio-mixers
+2019-04-15T14:01:23  <stegru> doesn't look simple
+2019-04-15T14:12:36  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-138-229.internet.virginmobile.ca> has joined #fluid-work
+2019-04-15T14:15:03  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-138-229.internet.virginmobile.ca> has quit IRC (Client Quit)
+2019-04-15T14:15:46  *** clown <clown!clown@nat/ocadu/x-yqzsgvwunmwwptac> has joined #fluid-work
+2019-04-15T14:19:00  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-138-229.internet.virginmobile.ca> has joined #fluid-work
+2019-04-15T14:54:33  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-04-15T15:06:40  <javjarfer> stegru, mm yes, it doesn't I can take a look tho, after packing this
+2019-04-15T15:07:00  <stegru> I wouldn't waste your time, unless everything fails
+2019-04-15T15:08:08  <javjarfer> stegru, it's already working so... then I will put it in the issue just for doc, or in case we want to take a look in the future
+2019-04-15T15:08:20  <stegru> yeh
+2019-04-15T15:11:39  *** kris_HA <kris_HA!~kris@185.97.75.80> has quit IRC (Ping timeout: 252 seconds)
+2019-04-15T15:14:28  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-04-15T15:15:43  *** kris_HA <kris_HA!~kris@185.97.75.80> has joined #fluid-work
+2019-04-15T15:19:04  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-04-15T15:19:19  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-04-15T15:30:14  *** colinclark <colinclark!colinclark@nat/ocadu/x-meyboxdelrrwbloj> has joined #fluid-work
+2019-04-15T15:40:33  <colinclark> greatislander: So I’ll send a note to Rylan and we’ll see when he’s free to talk
+2019-04-15T15:40:44  <colinclark> What’s your schedule looking like for today and tomorrow?
+2019-04-15T15:41:35  <greatislander> colinclark this afternoon is not great; I have a number of appointments basically every two hours starting at 1 Eastern. Tomorrow I have nothing scheduled so that would probably be better
+2019-04-15T15:41:45  <greatislander> easier to find a time!
+2019-04-15T15:41:48  <colinclark> yeah
+2019-04-15T15:41:51  <colinclark> tomorrow’s actually terrible for me
+2019-04-15T15:41:54  <colinclark> but we’ll make it work
+2019-04-15T15:42:13  <colinclark> worst case, i’ll defer to you to meet with Rylan and you can fill me in
+2019-04-15T15:42:15  <greatislander> Okay. I could do between 2pm-2pm Eastern today
+2019-04-15T15:42:20  <greatislander> in a pinch!
+2019-04-15T15:42:24  <colinclark> hahaha
+2019-04-15T15:42:25  <greatislander> sorry, 2pm-3pm
+2019-04-15T15:42:28  <greatislander> lol
+2019-04-15T15:42:34  <colinclark> that was a pretty short window :)
+2019-04-15T15:42:39  <colinclark> ok, let’s see what Rylan says
+2019-04-15T15:44:27  *** kris_HA <kris_HA!~kris@185.97.75.80> has quit IRC (Ping timeout: 240 seconds)
+2019-04-15T15:45:29  <greatislander> sounds good colinclark. Email will be the best way to get hold of me in the interim as I have it on my phone so I can check while away from keyboard
+2019-04-15T15:45:36  <colinclark> ok, no problem
+2019-04-15T15:59:57  *** greatislander <greatislander!~greatisla@24.138.74.254> has quit IRC (Quit: greatislander)
+2019-04-15T17:01:57  *** simonjb <simonjb!~simonjb@205.211.168.104> has joined #fluid-work
+2019-04-15T17:46:18  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-04-15T17:46:51  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-04-15T17:46:51  *** danayo_ is now known as danayo
+2019-04-15T17:47:16  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-04-15T17:51:21  *** greatislander <greatislander!~greatisla@142.177.222.161> has joined #fluid-work
+2019-04-15T18:11:07  *** clown <clown!clown@nat/ocadu/x-yqzsgvwunmwwptac> has quit IRC (Ping timeout: 252 seconds)
+2019-04-15T18:13:48  *** clown <clown!clown@nat/ocadu/x-vivpmhherplgvfih> has joined #fluid-work
+2019-04-15T18:17:34  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-04-15T18:44:08  *** greatislander <greatislander!~greatisla@142.177.222.161> has quit IRC (Quit: greatislander)
+2019-04-15T18:54:16  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 246 seconds)
+2019-04-15T18:55:45  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-04-15T19:06:18  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:f834:ec1d:c993:b319> has quit IRC ()
+2019-04-15T19:22:32  *** greatislander <greatislander!~greatisla@142.169.78.101> has joined #fluid-work
+2019-04-15T19:26:16  *** greatislander <greatislander!~greatisla@142.169.78.101> has quit IRC (Remote host closed the connection)
+2019-04-15T19:33:43  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-138-229.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-04-15T19:43:29  *** clown <clown!clown@nat/ocadu/x-vivpmhherplgvfih> has quit IRC (Ping timeout: 246 seconds)
+2019-04-15T19:56:19  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 264 seconds)
+2019-04-15T20:02:54  *** clown <clown!clown@nat/ocadu/x-vxeayfiybajwrado> has joined #fluid-work
+2019-04-15T20:15:59  *** cherylhjli <cherylhjli!~Adium@toroon0949w-lp140-04-65-94-100-154.dsl.bell.ca> has joined #fluid-work
+2019-04-15T20:19:18  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:cce0:9e64:d388:2db1> has quit IRC (Remote host closed the connection)
+2019-04-15T21:02:41  *** cherylhjli <cherylhjli!~Adium@toroon0949w-lp140-04-65-94-100-154.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2019-04-15T21:05:04  *** cherylhjli <cherylhjli!~Adium@toroon0949w-lp140-04-65-94-100-154.dsl.bell.ca> has joined #fluid-work
+2019-04-15T21:07:17  *** cherylhjli <cherylhjli!~Adium@toroon0949w-lp140-04-65-94-100-154.dsl.bell.ca> has quit IRC (Client Quit)
+2019-04-15T21:07:18  *** clown <clown!clown@nat/ocadu/x-vxeayfiybajwrado> has quit IRC (Quit: Leaving.)
+2019-04-15T21:08:44  *** cherylhjli <cherylhjli!~Adium@toroon0949w-lp140-04-65-94-100-154.dsl.bell.ca> has joined #fluid-work
+2019-04-15T21:10:38  *** simonjb <simonjb!~simonjb@205.211.168.104> has quit IRC ()
+2019-04-15T21:13:03  *** greatislander <greatislander!~greatisla@24.138.74.254> has joined #fluid-work
+2019-04-15T21:16:55  *** greatislander <greatislander!~greatisla@24.138.74.254> has quit IRC (Client Quit)
+2019-04-15T21:28:54  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:e9f2:7473:1c41:8d76> has joined #fluid-work
+2019-04-15T22:19:24  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:e9f2:7473:1c41:8d76> has quit IRC (Remote host closed the connection)
+2019-04-15T22:22:06  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-04-15T22:24:18  *** colinclark <colinclark!colinclark@nat/ocadu/x-meyboxdelrrwbloj> has quit IRC (Quit: colinclark)
+2019-04-15T22:29:28  *** cherylhjli <cherylhjli!~Adium@toroon0949w-lp140-04-65-94-100-154.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2019-04-15T22:29:55  *** cherylhjli <cherylhjli!~Adium@toroon0949w-lp140-04-65-94-100-154.dsl.bell.ca> has joined #fluid-work
+2019-04-15T22:30:14  *** cherylhjli <cherylhjli!~Adium@toroon0949w-lp140-04-65-94-100-154.dsl.bell.ca> has quit IRC (Client Quit)
+2019-04-15T22:43:08  *** javjarfer <javjarfer!~Javier@201.red-81-37-1.dynamicip.rima-tde.net> has quit IRC (Quit: Leaving)

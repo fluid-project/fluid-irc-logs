@@ -1,0 +1,94 @@
+2020-07-22T11:13:35  <Bosmon> Justin_o - Just starting to rewrite the ToC tests now : P
+2020-07-22T11:13:46  <Bosmon> Lots of interesting code that "has been broken for all time"... https://github.com/fluid-project/infusion/blob/master/tests/component-tests/tableOfContents/js/TableOfContentsTests.js#L282
+2020-07-22T11:14:54  <Bosmon> Looks like the person to blame for the original version of this line is one "Harris Wong" : P
+2020-07-22T12:13:05  <Justin_o> Bosmon: that's from a long time ago
+2020-07-22T12:13:13  <Bosmon> It certainly is
+2020-07-22T12:13:31  <Justin_o> I'm a bit surprised we never caught that, but I guess we haven't really looked into the code and tests for a long time too
+2020-07-22T12:13:47  <Bosmon> Yes... one of the dangers of writing a test which expects something to be absent : P
+2020-07-22T12:14:11  <Justin_o> Bosmon: true... it's a good lesson to learn to make sure your tests fail when they are supposed to I guess.
+2020-07-22T12:15:01  <Justin_o> Bosmon: I'm trying to update storytelling to your latest branch. gmoss found that the orator isn't working in Edge 44. I'm noticing that too and it seems to have something to do with promises. It looks like the orator demo from master is also not working in Edge 44.
+2020-07-22T12:15:27  <Bosmon> Justin_o - and it worked in Edge 44 before?
+2020-07-22T12:15:38  <Bosmon> Or did the update to Edge 44 happen simultaneously to the branch update
+2020-07-22T12:15:45  <Justin_o> it used to work in Edge yes.. not sure which one though.
+2020-07-22T12:16:03  <Justin_o> Edge 44 is pretty old at this point.. I think it's the last pre-chromium version
+2020-07-22T12:16:11  <Justin_o> so I'm not actually sure we support it in Infusion at this point
+2020-07-22T12:16:21  <Bosmon> Oh odd
+2020-07-22T12:16:23  <Justin_o> but I guess story telling still is
+2020-07-22T12:16:46  <Justin_o> Also it does work in new version of Edge
+2020-07-22T12:17:08  <Justin_o> Do you happen to have Edge 44 installed on your computer?
+2020-07-22T12:17:38  <Justin_o> I'm trying to test in a VM, but debugging in Edge 44 is kind of a pain for typical IE/Edge reasons
+2020-07-22T12:18:42  <Justin_o> Bosmon: in the demo, which you can try from the build site https://build.fluidproject.org/infusion/demos/orator/
+2020-07-22T12:19:08  <Justin_o> the issue is that you click the play button and nothing happens. you click again and you get the error with the promise
+2020-07-22T12:19:25  <Justin_o> in the storytelling tool you get the unhanded promise rejection error right away on the first click
+2020-07-22T12:19:45  <Bosmon> And what is the payload of the rejection?
+2020-07-22T12:19:46  <Justin_o> that's with the latest infusion dev release in the storytelling tool
+2020-07-22T12:20:26  <Justin_o> Bosmon: it's the SpeechSynthesisEvent object
+2020-07-22T12:21:29  <Justin_o> it looks like it's coming from the Utterance component https://github.com/fluid-project/infusion/blob/master/src/components/textToSpeech/js/TextToSpeech.js#L374-L459
+2020-07-22T12:21:43  <Justin_o> through this createOnEvent https://github.com/fluid-project/infusion/blob/master/src/components/textToSpeech/js/TextToSpeech.js#L100
+2020-07-22T12:22:01  <Justin_o> which is fired from https://github.com/fluid-project/infusion/blob/master/src/components/textToSpeech/js/TextToSpeech.js#L318
+2020-07-22T12:22:52  <Justin_o> I recall there is some "trickery" there to pass in a promise so that we know when the utterance is finished.
+2020-07-22T12:23:01  <Justin_o> so maybe something is getting severed or incorrectly terminated there
+2020-07-22T12:23:42  <Bosmon> I was just about to say, "Yes, but we will only get an unhandled rejection warning from somebody else's promises" but then I suddenly remembered that we had implemented this too :)
+2020-07-22T12:26:12  <Bosmon> So, it does indeed appear that noone seems to listen for rejections of the promise
+2020-07-22T12:26:31  <Bosmon> So I guess the first step is to try to discover what the nature of the error is, and whether it is important ...
+2020-07-22T12:27:32  <Bosmon> One thing you can now try is forwarding the "cancel" method of the component onto the newly implemented "cancel" method on the promise, just in case what is happening is that some unimportant error is firing after the utterance is meant to be cancelled
+2020-07-22T12:28:11  <Bosmon> But I guess the most important initial thing to find out is why the promise rejects in the first place - presumably as a result of somebody firing onError on the component
+2020-07-22T12:28:47  <Justin_o> it could be an issue with the synthesizer.. those thing change from time to time and that could be related to why things have stopped working too
+2020-07-22T12:30:13  <Justin_o> so the onError event is fired straight from the speechSynthesis
+2020-07-22T12:30:39  <Justin_o> triggered by it's onerror.. I'll try to add an event handler that comes before the promise rejection though
+2020-07-22T13:41:41  <gmoss> Justin_o Bosmon: thanks for looking into this! I have been continuing to test in Edge 44 since Microsoft hadn't immediately pushed out the update to Chromium-based Edge when it was released, it was an opt-in update for quite some time. It looks like that may have ended: https://mobilesyrup.com/2020/06/03/new-microsoft-edge-windows-update/
+2020-07-22T13:42:15  <gmoss> I won't have noticed since I run Windows 10 Pro, where the update process is more manually triggered
+2020-07-22T14:29:42  <jhung> gmoss, dogeman - where are we meeting?
+2020-07-22T14:30:01  <gmoss> jhung: looks like standup is free, I'll find the link for dogeman
+2020-07-22T14:30:03  <Justin_o> gmoss: that’s interesting. Thanks for the update. We should consider if we want to keep supporting it. We’ll likely see less infusion support for it
+2020-07-22T14:32:18  <dogeman> can you share the link gmoss
+2020-07-22T14:32:43  <gmoss> dogeman: I sent it to you in a PM, but you can join us here: https://ocadu.zoom.us/j/727986784
+2020-07-22T14:40:07  <philip> Uttara: I finally got to read the We Count Data Monitoring notes (was head-down in programming all day yesterday). It's interesting stuff. Is there an upcoming meeting that makes sense for me to sit in on?
+2020-07-22T14:49:36  <Uttara> philip: not yet, but we can set up one  if you have anything to add!
+2020-07-22T14:50:09  <Uttara> philip: perhaps you can join the next tech checkin which is tomorrow at 3.30?
+2020-07-22T14:53:33  <philip> Uttara: I don't have much to add right now. I took some notes that are mainly questions seeking to detail the discussed ideas somewhat. If it's appropriate I can add those to the google doc? I can definitely join tech checkin tomorrow
+2020-07-22T14:54:10  <Uttara> philip: ofcourse! please feel to add or comment on anything in the doc :)
+2020-07-22T14:54:34  <philip> Uttara: I am guessing the questions might not have answers yet, but could be helpful in deciding how to move forward
+2020-07-22T15:19:22  <Teddy___> @Uttara: You 14px for mobile right? https://github.com/inclusive-design/wecount.inclusivedesign.ca/pull/334#issuecomment-662071178
+2020-07-22T15:23:09  *** cindyli1 is now known as cindyli
+2020-07-22T15:34:39  <Uttara> teddy__ yes please. I amm trying to figure out how to reply to the comments directly on github
+2020-07-22T16:29:05  <Uttara> Cindyli and Teddy__ did I address all the comments?
+2020-07-22T16:38:36  <cindyli> yes, Uttara, you've addressed all comments. thanks
+2020-07-22T16:40:25  <gmoss> dogeman: have you synced your Fluid site work with remote recently? There are a few review items that are marked "fixed" but are still present
+2020-07-22T16:43:41  <dogeman> I am not sure which changes you are referring to. Could you give an example
+2020-07-22T16:44:47  <gmoss> dogeman: sure, this is one example: https://github.com/fluid-project/fluidproject.org/pull/56#discussion_r457717426
+2020-07-22T16:46:36  <dogeman> This is referring to the broken link to fluid project site, right?
+2020-07-22T16:47:15  <gmoss> dogeman: yep! in this case, anyway :)
+2020-07-22T16:48:15  <dogeman> that was a typo. I am sorry for that.
+2020-07-22T16:48:30  <dogeman> I added an extra bracket by mistake. i was supposed just to replace http with https
+2020-07-22T16:48:41  <dogeman> Are there any other changes that were not fixed?
+2020-07-22T16:49:01  <gmoss> dogeman: not to worry, as long as it gets sorted out :) yes, there are still a few other issues which are marked as "fixed" but need to be addressed
+2020-07-22T16:49:50  <dogeman> for example?
+2020-07-22T16:50:21  <gmoss> dogeman: I pointed out several issues in my big comment as well as each of the smaller review items below it: https://github.com/fluid-project/fluidproject.org/pull/56#pullrequestreview-451979375
+2020-07-22T16:50:33  <dogeman> I fixed the above two broken link in separate commits.
+2020-07-22T16:51:11  <dogeman> oops. I didn't see this comment before. I just fixed all the items in the review comments.
+2020-07-22T16:51:17  <dogeman> I'll go through it now and fix these two.
+2020-07-22T16:52:15  <gmoss> dogeman: excellent, thanks!
+2020-07-22T16:52:34  <gmoss> dogeman: can you please double-check all the ones you marked as "fixed" as well?
+2020-07-22T16:53:14  <gmoss> I'm going to sign off for the day in about 8 minutes, so please don't rush to get it done by then. I will resume my review on Monday
+2020-07-22T16:56:05  <dogeman> sure. Not a problem. See you on monday
+2020-07-22T17:27:19  <Teddy___> cindyli, Uttara, lliskovoi____,  There are some design "discrepancies" I found that I feel would make the website look better and should be considered before 2.2.0 release. They make sense to if they were added to the Improve visual appearance PR that I am working on. Are you guys free to hop on a zoom call and discuss these items?
+2020-07-22T17:29:54  <Teddy___> oh sorry I guess it's wellness Wednesday
+2020-07-22T17:30:39  <Teddy___> I'll mention these items in the PR
+2020-07-22T20:52:29  <Justin_o> Bosmon2: hello.. I'm looking into that issue I mentioned to you earlier today about the Orator failing in Edge
+2020-07-22T20:52:57  <Justin_o> I'm still not exactly sure what's going on, it seems to be failing during speechsynthesis.. the speech synthesis is triggering the error event.
+2020-07-22T20:53:00  <Justin_o> but I'm not really sure why
+2020-07-22T20:53:58  <Justin_o> It could also be something related to the VM, but I am able to create to run the api directly by making calls to the browser api in the console
+2020-07-22T20:54:06  <Justin_o> so it would seem that the sythensizer is working
+2020-07-22T20:54:58  <Bosmon2> Justin_o - ok
+2020-07-22T20:55:03  <Bosmon2> Is there anything in the error payload?
+2020-07-22T20:55:40  <Bosmon2> I guess you could always try to gloss over the issue by writing a rejection handler which is a no-op
+2020-07-22T20:55:47  <Justin_o> the SpeechSynthesisEvent  object
+2020-07-22T20:55:54  <Justin_o> it is marked as type: "error"
+2020-07-22T20:55:55  <Bosmon2> But I guess it might be relevant what the error actually is
+2020-07-22T20:56:37  <Justin_o> Bosmon2: I did try the above but got an error where the promise was being resolved and rejected
+2020-07-22T20:56:50  <Justin_o> but I can try that again to make sure I didn't have some other change as well
+2020-07-22T20:58:38  <Justin_o> I can't quite tell from the SpeechSynthesisEvent but it might think there is no text to read. Or it could just not be reporting any info for the charLength and charIndex
+2020-07-22T21:10:40  <Justin_o> Bosmon2: it seems that the promise it is bound to is eventually used in this fireTransformEvent https://github.com/fluid-project/infusion/blob/master/src/components/orator/js/Orator.js#L520
+2020-07-22T21:43:30  <Justin_o> Bosmon2: I think I figured out why it's throwing the error. The issue is that we specify the lang. In the case of the demo the lang is set to "en-CA". I suppose, at least the instance of windows I have my VM, doesn't provide a synthesizer that supports that language and maybe doesn't fall back to just "en".
+2020-07-22T21:46:45  <Justin_o> Bosmon2: actually it might not support that attribute at all.. I'll have to look into it some more

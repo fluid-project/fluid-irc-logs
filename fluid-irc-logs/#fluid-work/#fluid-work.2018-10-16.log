@@ -1,0 +1,193 @@
+2018-10-16T06:39:53  *** georgitodorov <georgitodorov!~georgitod@37.157.190.158> has joined #fluid-work
+2018-10-16T07:37:58  *** kasper <kasper!~kasper@dhcp-5-186-120-225.cgn.ip.fibianet.dk> has joined #fluid-work
+2018-10-16T07:41:19  <georgitodorov> jhernandez: Hey, Javi! I have been investigating the failing ajc3 build and I have found out what had caused the issue
+2018-10-16T07:41:57  <georgitodorov> In this particular situation tests proved particularly useful
+2018-10-16T07:44:12  <georgitodorov> The build was failing because of a hanging test when keying in an invalid user. Previously, the onKeyInFail error was not sent by the Core to the GPII app and thus the GPII app had to trigger it manually
+2018-10-16T07:44:52  <georgitodorov> Now it appears that the error is indeed sent by the Core but the GPII app has not been updated accordingly
+2018-10-16T07:45:38  <georgitodorov> And as a result two error dialogs were showing up which caused the test to fail. I will fix it soon in our branch and you can then merge it into the ajc3 branch
+2018-10-16T07:45:49  <georgitodorov> I will also update the `gpii-windows` reference in our branch
+2018-10-16T08:28:33  <georgitodorov> jhernandez: I pushed the changes into our feature/QSS1.1 branch and the CI job has passed. So you can merge them into the ajc3 branch
+2018-10-16T08:31:03  *** kasper <kasper!~kasper@dhcp-5-186-120-225.cgn.ip.fibianet.dk> has quit IRC (Read error: Connection reset by peer)
+2018-10-16T08:38:43  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has joined #fluid-work
+2018-10-16T08:39:36  *** kasper <kasper!~kasper@dhcp-5-186-120-225.cgn.ip.fibianet.dk> has joined #fluid-work
+2018-10-16T09:19:38  *** kasper <kasper!~kasper@dhcp-5-186-120-225.cgn.ip.fibianet.dk> has quit IRC (Quit: kasper)
+2018-10-16T09:26:02  <jhernandez> georgitodorov: hey
+2018-10-16T09:26:11  <jhernandez> great, thanks for taking a look at it
+2018-10-16T09:26:13  <jhernandez> :)
+2018-10-16T09:27:45  <jhernandez> updating now
+2018-10-16T09:40:44  <georgitodorov> jhernandez: Sure, no problem. I will be adding some more tests shortly but they need not be merged into the ajc3 branch
+2018-10-16T09:42:52  <jhernandez> georgitodorov: great, thanks for the heads up
+2018-10-16T09:49:07  <georgitodorov> Hey, Bosmon. Quick question - in a new test I am trying to key in with the "empty" user that I created a few days ago. But the key in operation fails with a 401 error
+2018-10-16T09:50:05  <georgitodorov> However, when I manually start the app and key in with the user (i.e. outside of tests), everything is fine for this user - key in and key out
+2018-10-16T09:50:49  <georgitodorov> Any ideas what I am missing?
+2018-10-16T10:01:22  <jhernandez> georgitodorov: which universal config are you using for the test?
+2018-10-16T10:01:31  *** kasper <kasper!~kasper@0189602784.0.fullrate.ninja> has joined #fluid-work
+2018-10-16T10:01:54  <georgitodorov> jhernandez: gpii.config.untrusted.development.all.local.json5
+2018-10-16T10:03:24  <jhernandez> and when you start the app, you're using the samee "all.local" config, right?
+2018-10-16T10:04:38  *** kasper <kasper!~kasper@0189602784.0.fullrate.ninja> has quit IRC (Client Quit)
+2018-10-16T10:06:33  <jhernandez> or are you using the non "all.local" config and setting the GPII_CLOUD_URL env variable before running the gpii?
+2018-10-16T10:06:36  <jhernandez> georgitodorov: ^
+2018-10-16T10:07:10  <georgitodorov> jhernandez: no, we are using gpii.config.untrusted.development.dynamicDR.all.local for running the app
+2018-10-16T10:07:21  <jhernandez> ok ok
+2018-10-16T10:09:13  <jhernandez> I was asking just in case your couchdb wasn't populated with the empty user
+2018-10-16T11:14:09  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has quit IRC (Quit: dandimitrov)
+2018-10-16T11:26:05  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has joined #fluid-work
+2018-10-16T11:39:48  *** kasparnet <kasparnet!~kasper@0189602784.0.fullrate.ninja> has joined #fluid-work
+2018-10-16T11:39:49  *** kasparnet <kasparnet!~kasper@0189602784.0.fullrate.ninja> has quit IRC (Read error: Connection reset by peer)
+2018-10-16T12:10:02  <georgitodorov> stegru or anyone: In the last but one GPII app build there was the following test failure in CI:
+2018-10-16T12:10:19  <georgitodorov> 04:01:55.113:  jq: Test concluded - Module "Windows Display Settings Handler Tests" Test name "Testing setScreenDpi ": 3/6 passed - FAIL
+2018-10-16T12:10:27  <georgitodorov> Full log is here: https://ci.gpii.net/job/gpii-app-test/368/consoleText
+2018-10-16T12:10:45  <georgitodorov> When I triggered the build again, everything passed successfully
+2018-10-16T12:11:39  <georgitodorov> Can someone take a look at this? This is the first time I have seen these particular tests fail.
+2018-10-16T12:12:38  <stegru> let's not worry about it for now, georgitodorov.. it's probably due to something external to the code
+2018-10-16T12:13:23  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:78c2:67f9:e3a9:354c> has quit IRC (Read error: Connection reset by peer)
+2018-10-16T12:13:41  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:78c2:67f9:e3a9:354c> has joined #fluid-work
+2018-10-16T12:14:19  <stegru> if it happens again, let me know
+2018-10-16T12:18:55  <jhernandez> stegru: +1 - can't tell exactly the reasons for those failures, looks like it's random and external to the code as you said
+2018-10-16T12:20:37  <jhernandez> Bosmon: FYI, after applying the last changes from georgitodorov, we're getting the same (success) test results in our electron3 pr
+2018-10-16T12:21:38  <jhernandez> however, I'd like to build an installer and see if I'm getting the same slowness I experienced on Friday night
+2018-10-16T12:29:42  <georgitodorov> jhernandez: I am now testing your Electron 3.0.2 branch on my VM after some struggling to install everything
+2018-10-16T12:30:04  <georgitodorov> And it does seem that there is some slowness - especially when opening a QSS menu
+2018-10-16T12:30:28  <jhernandez> georgitodorov: great, thanks for giving it a try
+2018-10-16T12:30:49  <jhernandez> and yes, I experienced some general slowness, but not sure exactly what it's about
+2018-10-16T12:31:09  <georgitodorov> jhernandez: I will continue testing this
+2018-10-16T12:32:03  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has quit IRC (Quit: dandimitrov)
+2018-10-16T12:32:23  <jhernandez> I could reduce some of it after deleting this debug line https://github.com/GPII/gpii-app/pull/63/commits/bdf460d56d3faa3b64a5206e0562c5d90517b9e1#diff-bc658f47466ba31df21972f46d3f02d4R578
+2018-10-16T12:33:27  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-qtjmswawmzhjpfeu> has joined #fluid-work
+2018-10-16T12:34:14  <jhernandez> sounds weird, but I was getting a lot of output in the console and probably this was contributing to the slowness
+2018-10-16T12:35:13  <jhernandez> but yeah, opening a QSS menu takes longer than usually, not sure why
+2018-10-16T12:53:11  *** jhung <jhung!~Adium@dhcp-108-168-100-210.cable.user.start.ca> has joined #fluid-work
+2018-10-16T13:01:29  *** georgitodorov <georgitodorov!~georgitod@37.157.190.158> has quit IRC (Read error: Connection reset by peer)
+2018-10-16T13:05:10  *** cindyli <cindyli!Adium@nat/ocadu/x-kdjsvvwosueiirjw> has joined #fluid-work
+2018-10-16T13:06:24  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has joined #fluid-work
+2018-10-16T13:11:29  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has joined #fluid-work
+2018-10-16T13:13:40  <cindyli> Bosmon: I need your suggestion again. The reason that turning off highContrast defined in defaultSettings.json5 triggers an error is because windows repo expects the "settings" block looks like: https://github.com/GPII/windows/blob/master/gpii/node_modules/spiSettingsHandler/test/testHighContrast.json#L18-L21
+2018-10-16T13:13:57  <cindyli> the path the error complaints about missing is the one at line 20
+2018-10-16T13:14:40  <cindyli> however, even if I changed the defaultSettings.json5 to have the "settings" block defined with the path, the error still occurs.
+2018-10-16T13:15:02  <cindyli> this is because this line in the lifecycle manager will transform the settings block https://github.com/GPII/universal/blob/master/gpii/node_modules/lifecycleManager/src/LifecycleManager.js#L1008
+2018-10-16T13:15:28  <cindyli> back to - settings: {"highContrastOn": false}
+2018-10-16T13:16:35  <cindyli> the "path" gets removed again. it will be the transformed settings reaching windows code
+2018-10-16T13:17:07  <cindyli> my question is, which end should we fix? windows repo or lifecycle manager?
+2018-10-16T13:21:18  <Bosmon> cindyli - does this mean that the journal restore system will also fail in the case of restoring a snapshot containing such a SR element, such as high contrast?
+2018-10-16T13:21:44  <cindyli> i believe so, but haven't tried
+2018-10-16T13:21:57  <Bosmon> cindyli - seems plausible that it would fail
+2018-10-16T13:22:12  <Bosmon> IN which case this section of the LifecycleManager logic needs to be fixed in order to preserve the "path" information
+2018-10-16T13:22:43  <Bosmon> Although really the way all of this logic is structured is a little silly, and in the long run we should just fetch the SR entries again for this material
+2018-10-16T13:23:00  <Bosmon> But we can perform that fix once it is time for you to implement your "use preferences docs rather than snapshots" fix
+2018-10-16T13:23:25  <Bosmon> Since we will inevitably go through another round of matchmaking using the PrivateMatchmaker, we can use that opportunity to fetch the missing SR material
+2018-10-16T13:23:36  <Bosmon> But it seems quicker for now just to fix line 1008 to not trash the additional fields
+2018-10-16T13:25:01  <cindyli> ok. thanks
+2018-10-16T13:25:17  <Bosmon> cindyli - actually I remember now that sgithens had complained of this property of the SpiSettingsHandler
+2018-10-16T13:25:28  <Bosmon> And we had realised that the proper fix is to move "path" into the options block
+2018-10-16T13:26:28  <Bosmon> But given we have to produce an installer pretty soon I expect we don't have time to fix the settingsHandler, which we should do together with stegru
+2018-10-16T13:26:30  <cindyli> Bosmon: the options block of solution registry?
+2018-10-16T13:26:33  <cindyli> it's already there
+2018-10-16T13:26:52  <cindyli> ok, i will fix 1008 for now
+2018-10-16T13:27:00  <Bosmon> cindyli - I mean this path value: https://github.com/GPII/windows/blob/master/gpii/node_modules/spiSettingsHandler/test/testHighContrast.json#L20
+2018-10-16T13:27:09  <cindyli> hope it won't break other parts badly, such as the DELETE type
+2018-10-16T13:27:10  <Bosmon> Whilst it is setting-specific, it should really be encoded in the settingsHandler options
+2018-10-16T13:27:34  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-tqrzcnjaphhumxjz> has joined #fluid-work
+2018-10-16T13:29:03  <cindyli> Bosmon: i wonder if "path" can be extracted from here when windows processes it - https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L4785-L4790
+2018-10-16T13:29:31  <cindyli> meant at processing "highContrastOn" setting
+2018-10-16T13:29:40  <Bosmon> cindyli - might be too early
+2018-10-16T13:29:47  <Bosmon> Given you want the transform done, etc.
+2018-10-16T13:30:11  <Bosmon> I was thinking you could just stick the path in a "pocket" before gpii.lifecycleManager.transformSolutionSettings and then put it back afterwards
+2018-10-16T13:30:42  <cindyli> haha, monkey patching
+2018-10-16T13:31:36  <cindyli> and it may not be as that easy. before transformation, the block looks like:
+2018-10-16T13:31:44  <Bosmon> cindyli - one might call it monkey patching, another might call it "putback-based bidirectional programming" : P - https://www.cs.ox.ac.uk/projects/tlcbx/ssbx/Hu+Ko-lecture1.pdf
+2018-10-16T13:31:52  <cindyli> "settings": {
+2018-10-16T13:31:53  <cindyli> 	"HighContrastOn": {
+2018-10-16T13:31:53  <cindyli> 		"value": false,
+2018-10-16T13:31:53  <cindyli> 		"path": "pvParam.dwFlags.HCF_HIGHCONTRASTON"
+2018-10-16T13:31:53  <cindyli> }
+2018-10-16T13:32:09  <cindyli> after transformation:
+2018-10-16T13:32:26  <cindyli> settings: {
+2018-10-16T13:32:26  <cindyli>     HighContrastOn: false
+2018-10-16T13:32:26  <cindyli> }
+2018-10-16T13:32:29  <Bosmon> cindyli - yes, it might be easier to hide the putback actually in a modified version of gpii.settingsHandlers.changesToSettings
+2018-10-16T13:32:42  <Bosmon> Given it needs to happen within each settings block
+2018-10-16T13:34:02  <Bosmon> cindyli - well feel free to do "whatever you need" here by, e.g. writing a special function that just acts for SPI payloads with a big comment on it, if it looks like it is going to be too much of an informational mess
+2018-10-16T13:34:40  <cindyli> ok
+2018-10-16T13:39:28  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has joined #fluid-work
+2018-10-16T13:50:34  <jhung> fluid-everyone: the design crit will start is 10 minutes. Today we are doing a debrief on the DEEP 2018 conference from this past Friday and Saturday.
+2018-10-16T13:53:35  *** avtar <avtar!~avtar@ip-24-50-185-174.user.start.ca> has joined #fluid-work
+2018-10-16T13:57:19  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2018-10-16T14:06:18  *** sepidehshahi_ <sepidehshahi_!~sepidehsh@205.211.168.103> has joined #fluid-work
+2018-10-16T14:07:54  <jhung> Using this wiki page for design crit notes https://wiki.fluidproject.org/x/2gEYCg
+2018-10-16T14:08:14  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-tqrzcnjaphhumxjz> has quit IRC (Ping timeout: 268 seconds)
+2018-10-16T14:08:14  *** sepidehshahi_ is now known as sepidehshahi
+2018-10-16T14:23:38  <Bosmon> Hi there Justin_o - just a nudge about https://github.com/fluid-project/infusion/pull/939 :)
+2018-10-16T14:24:47  <Justin_o> Bosmon: thanks.. yes.. I'm actually looking at it now.. i just finished running the tests in vagrant, but will need to run them through my windows VM again. However, I'm in the design crit, so will be a bit slow but should get through it this morning (my time).
+2018-10-16T14:33:04  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has quit IRC (Quit: colinclark)
+2018-10-16T14:34:11  <Bosmon> Justin_o - awesome, just checking it hadn't dropped off the radar :)
+2018-10-16T14:37:29  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has quit IRC (Quit: dandimitrov)
+2018-10-16T14:45:37  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.103> has quit IRC (Quit: sepidehshahi)
+2018-10-16T14:57:46  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.103> has joined #fluid-work
+2018-10-16T15:03:38  *** danayo <danayo!~danayo@104.129.159.56> has joined #fluid-work
+2018-10-16T15:17:17  *** danayo <danayo!~danayo@104.129.159.56> has quit IRC (Quit: danayo)
+2018-10-16T15:48:06  <cindyli> Bosmon: can you take a look at my pull request - https://github.com/GPII/universal/pull/691
+2018-10-16T15:48:17  <cindyli> thanks
+2018-10-16T15:48:33  <Bosmon> cindyli - sure, looking now
+2018-10-16T15:48:55  <Bosmon> cindyli - and could you take a look at my one? https://github.com/GPII/universal/pull/687
+2018-10-16T15:49:11  <cindyli> sure
+2018-10-16T15:49:14  <Bosmon> It is quite little, mostly dependency update and a small tweak to the lifecycleManagerSession events to make it compatible with new Infusion
+2018-10-16T15:49:57  <cindyli> ok
+2018-10-16T15:51:29  *** cindyli1 <cindyli1!~Adium@205.211.168.105> has joined #fluid-work
+2018-10-16T15:52:49  <Bosmon> cindyli/cindyli1 - very good solution, I've just added one comment
+2018-10-16T15:53:15  <cindyli1> oh, right, forgot to comment
+2018-10-16T15:54:33  *** cindyli <cindyli!Adium@nat/ocadu/x-kdjsvvwosueiirjw> has quit IRC (Ping timeout: 252 seconds)
+2018-10-16T15:58:05  *** cindyli1 is now known as cindyli
+2018-10-16T16:06:42  <cindyli> Bosmon: you suggested to to take a shallow copy of element, is that only when element.path is defined?
+2018-10-16T16:06:47  <cindyli> or in general?
+2018-10-16T16:08:00  <Bosmon> cindyli - my suggestion was to apply keep fluid.censorKeys(element, "value")
+2018-10-16T16:08:10  <Bosmon> If there is no path, or nothing other than value, this will just be an empty object
+2018-10-16T16:08:32  <Bosmon> But in any case this makes the general point "Preserve anything other than value" which I imagine is the currently implies settingsHandler contract
+2018-10-16T16:13:01  <cindyli> Bosmon: but this function is to preserve the value and wipe out anything else.
+2018-10-16T16:13:53  <cindyli> of course, since now "path" needs to be preserved, i agree there might be other things that should be preserved too
+2018-10-16T16:14:30  <cindyli> but in any case, the value should certainly be preserved in this function
+2018-10-16T16:15:48  <cindyli> and other than "path", we are not clear what else should be preserve. but i believe "type" is the one that should be removed
+2018-10-16T16:15:54  *** colinclark <colinclark!~colinclar@205.211.168.101> has joined #fluid-work
+2018-10-16T16:20:27  <Bosmon> cindyli - I didn't realise that "type" could occur in here
+2018-10-16T16:21:15  <cindyli> Bosmon: it could because the function starts by checking element.type === "DELETE"
+2018-10-16T16:21:33  <Bosmon> cindyli - ah, how awkward
+2018-10-16T16:21:45  <Bosmon> OK well, just leave it the way it is then, plus comment : P
+2018-10-16T16:21:50  <cindyli> sure
+2018-10-16T16:21:50  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:78c2:67f9:e3a9:354c> has quit IRC (Read error: Connection reset by peer)
+2018-10-16T16:22:13  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:78c2:67f9:e3a9:354c> has joined #fluid-work
+2018-10-16T16:22:14  *** VictorA <VictorA!29be0321@gateway/web/freenode/ip.41.190.3.33> has joined #fluid-work
+2018-10-16T16:24:28  *** colinclark <colinclark!~colinclar@205.211.168.101> has quit IRC (Quit: colinclark)
+2018-10-16T16:24:43  *** colinclark <colinclark!colinclark@nat/ocadu/x-yptmsmvnmguqvbkh> has joined #fluid-work
+2018-10-16T16:42:26  <Justin_o> jhung: do you mind to take a look at this PR https://github.com/fluid-project/infusion/pull/938
+2018-10-16T16:46:30  <jhung> Justin_o: I could but it won't be soon or quick. If you need it sooner, you might want to ask someone else right now.
+2018-10-16T16:46:46  <Justin_o> what do you consider not soon?
+2018-10-16T16:46:55  <Justin_o> jhung: ^
+2018-10-16T16:47:08  <jhung> uhhh… I might have time thursday afternoon or Friday.
+2018-10-16T16:47:35  <Justin_o> jhung: that might be okay.. i'll see how far i get with some of my other things
+2018-10-16T16:48:18  <jhung> Justin_o: ok. I'll let you know if anything changes.
+2018-10-16T16:49:24  <Justin_o> jhung: thanks
+2018-10-16T16:49:47  *** VictorA <VictorA!29be0321@gateway/web/freenode/ip.41.190.3.33> has left #fluid-work
+2018-10-16T17:35:03  *** cindyli <cindyli!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2018-10-16T17:37:47  *** avtar <avtar!~avtar@ip-24-50-185-174.user.start.ca> has quit IRC (Quit: Leaving.)
+2018-10-16T18:29:48  *** avtar <avtar!~avtar@CPE703acbb3f064-CMbc4dfb4acf70.cpe.net.cable.rogers.com> has joined #fluid-work
+2018-10-16T18:30:11  *** cindyli <cindyli!~Adium@205.211.168.105> has joined #fluid-work
+2018-10-16T18:52:22  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:d8e9:3ea2:cf4a:8c74> has quit IRC (Quit: Leaving.)
+2018-10-16T19:04:25  <Justin_o> simonjb: would you have time to review this Infusion PR? https://github.com/fluid-project/infusion/pull/938
+2018-10-16T19:14:57  <simonjb> yes Justin_o, I will take a look
+2018-10-16T19:15:04  <Justin_o> simonjb: thanks
+2018-10-16T19:45:53  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has quit IRC (Quit: Leaving.)
+2018-10-16T19:58:00  *** dandimitrov <dandimitrov!~danailbd@87.121.114.143> has joined #fluid-work
+2018-10-16T20:15:38  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.103> has quit IRC (Quit: sepidehshahi)
+2018-10-16T20:22:25  *** cindyli <cindyli!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2018-10-16T20:27:22  *** jhung <jhung!~Adium@dhcp-108-168-100-210.cable.user.start.ca> has quit IRC (Quit: Leaving.)
+2018-10-16T20:32:01  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:18c7:1fdf:4888:4e63> has joined #fluid-work
+2018-10-16T20:35:55  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2018-10-16T20:46:20  *** avtar <avtar!~avtar@CPE703acbb3f064-CMbc4dfb4acf70.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2018-10-16T20:48:48  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:18c7:1fdf:4888:4e63> has quit IRC (Ping timeout: 252 seconds)
+2018-10-16T21:00:38  *** dandimitrov <dandimitrov!~danailbd@87.121.114.143> has quit IRC (Quit: dandimitrov)
+2018-10-16T21:26:17  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:18c7:1fdf:4888:4e63> has joined #fluid-work
+2018-10-16T21:48:08  *** colinclark <colinclark!colinclark@nat/ocadu/x-yptmsmvnmguqvbkh> has quit IRC (Ping timeout: 272 seconds)
+2018-10-16T22:52:16  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-qtjmswawmzhjpfeu> has quit IRC (Quit: Connection closed for inactivity)
+2018-10-16T23:22:21  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has joined #fluid-work
+2018-10-16T23:36:29  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has quit IRC (Quit: colinclark)
+2018-10-16T23:42:08  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has joined #fluid-work
+2018-10-16T23:54:37  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has quit IRC (Quit: colinclark)

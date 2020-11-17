@@ -1,0 +1,50 @@
+2020-08-05T16:28:00  <Justin_o> @gmoss: are we meeting for storytelling at 12:30 today?
+2020-08-05T16:29:02  <gmoss> Justin_o: yep, that's the plan!
+2020-08-05T16:29:22  <gmoss> whomever is available, anyway :) (cindyli danayo michelled?)
+2020-08-05T16:29:33  <danayo> yes
+2020-08-05T16:56:17  *** jhung is now known as jhung_mtg
+2020-08-05T18:16:06  *** jhung_2 is now known as jhung
+2020-08-05T19:26:14  <Justin_o> Bosmon: hello
+2020-08-05T19:27:03  <Justin_o> Bosmon: did you see this comment I left about upgrading jQuery https://issues.fluidproject.org/browse/FLUID-6538?focusedCommentId=41794&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-41794
+2020-08-05T19:27:49  <Justin_o> I could use some help understanding fluid.focus as it seems to be the source of errors related to an update
+2020-08-05T19:55:59  <Bosmon> Justin_o - I did see it, yes, and was meaning to reply to it : P
+2020-08-05T19:56:15  <Bosmon> Given we are planning to abolish jQuery it only seems more relevant that we understand this behaviour completely
+2020-08-05T19:56:42  <Bosmon> You say in the comment that simply invoking "triggerHandler" on the node is enough to make the tests pass
+2020-08-05T19:56:59  <Bosmon> Which implies that something about triggering the native action in addition must then cause them to fail ......................
+2020-08-05T19:57:27  <Bosmon> Are you saying that if you comment out line 166 of FluidDocument.js that everything starts to work?
+2020-08-05T19:58:58  <Bosmon> The comment on line 152 seems pretty clear about the intentions and purpose, but I wonder what has changed
+2020-08-05T19:59:11  <Bosmon> It says "In newer jQueries this defers to the real browser relay with numerous platform and timing-dependent effects." which is presumably still true
+2020-08-05T20:12:41  <Justin_o> Bosmon: I'm going to double check now, but yes, I believe that was the case about commenting out line 166.
+2020-08-05T20:13:23  <Justin_o> Bosmon: regarding timing-dependent effects. I'd assume they are all async now, but that they'd be more consistent across browsers. however, I'm not really sure.
+2020-08-05T20:21:10  <Justin_o> Bosmon: so yes, those tests pass when I comment out that line. However other tests are failing. Like the dead man's blur test.
+2020-08-05T20:21:25  <Justin_o> and tooltip tests
+2020-08-05T20:27:20  <Bosmon> Justin_o - well, that's pretty mysteriously already
+2020-08-05T20:28:42  <Bosmon> We need to understand how the tests can be caused to fail through that line acting
+2020-08-05T20:28:59  <Bosmon> Since it could only do whatever it does AFTER the triggerHandler has done its business and acted on
+2020-08-05T20:31:07  <Justin_o> Bosmon: yes, I was rather confused about that.. but wouldn't it potentially trigger the handler twice?
+2020-08-05T20:31:31  <Justin_o> or shouldn't fluid.focus always be triggering the handler twice.. once from the triggerHandler and once from the execution of the actual event?
+2020-08-05T20:32:59  <Bosmon> Justin_o - yes, the design of fluid.focus appears to anticipate that the handler might be triggered any number of times
+2020-08-05T20:33:12  <Bosmon> And so any tests based around it should be designed with that assumption in mind
+2020-08-05T20:33:26  <Bosmon> So we should try to get to grips with how these assumptions have now broken down
+2020-08-05T20:33:59  <Bosmon> philip and I are just talking about some WeCount stuf and it seems that there is a link with general conversations we're having about static publishing, perhaps particularly in the context of SJRK
+2020-08-05T20:34:07  <Bosmon> Would you be able to come along tomorrow and chat to us about them?
+2020-08-05T20:34:08  <Justin_o> Bosmon: yes, I was trying to read through the changes between 3.3.1 and 3.5.1 to see if they gave any clues.. there are a bunch of changes related to events though.
+2020-08-05T20:34:29  <Justin_o> Bosmon: sure, what time are you thinking?
+2020-08-05T20:34:40  <Bosmon> I think our tech checkin is at 3pm?
+2020-08-05T20:35:04  <Justin_o> Bosmon: sure I can join that
+2020-08-05T20:35:10  <Bosmon> awesome
+2020-08-05T20:38:23  <Justin_o> Bosmon: this seems to be a change in jQuery related to focus. https://github.com/jquery/jquery/blob/e1cffdef277fcf543833a20d28cbadcd000ebece/src/event.js#L782-L807
+2020-08-05T20:39:40  <Justin_o> I believe trigger would then call this https://github.com/jquery/jquery/blob/e1cffdef277fcf543833a20d28cbadcd000ebece/src/event.js#L542-L548
+2020-08-05T20:40:22  <Justin_o> which would call jQuery.event.add https://github.com/jquery/jquery/blob/e1cffdef277fcf543833a20d28cbadcd000ebece/dist/jquery.js#L5193
+2020-08-05T20:44:43  <Justin_o> Bosmon: so I added a breakpoint in the jQuery.event.add function, which fires before fluid.focus. However, just playing through those break points lets the test pass ;(
+2020-08-05T20:44:58  <Bosmon> Justin_o - well, that's what we often get : P
+2020-08-05T20:45:12  <Bosmon> I remember spending a lot of 2010 staring at printed logs of the sequence of focus actions
+2020-08-05T20:45:20  <Justin_o> I would have thought that it would have been before the timing issue though.. in this case
+2020-08-05T20:45:23  <Bosmon> And produced a huge email to the CollectionSpace mailing list about my findings : P
+2020-08-05T20:46:07  <Justin_o> 10 years later and the issues have returned ;(
+2020-08-05T20:46:20  <Justin_o> and we only have 5 months left in the year to figure it out
+2020-08-05T20:47:53  <Bosmon> Should only take a couple of hours : P
+2020-08-05T20:48:21  <Justin_o> a couple of hours seems doable ;)
+2020-08-05T20:50:13  <philip> Justin_o, Bosmon: The tech check-in is at 3:30pm tomorrow, fyi
+2020-08-05T20:52:16  <Bosmon> Oh that's right, it was earlier last time so Jutta could pop in ....
+2020-08-05T21:00:07  <Justin_o> philip: thanks

@@ -1,0 +1,172 @@
+2019-11-13T00:21:04  *** stegru <stegru!~ste@cpc120296-warr7-2-0-cust79.1-1.cable.virginm.net> has quit IRC (Ping timeout: 268 seconds)
+2019-11-13T00:23:39  *** stegru <stegru!~ste@cpc120296-warr7-2-0-cust79.1-1.cable.virginm.net> has joined #fluid-work
+2019-11-13T00:30:54  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Quit: sepidehshahi)
+2019-11-13T00:31:20  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-11-13T00:31:28  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has left #fluid-work
+2019-11-13T00:55:01  *** yzen <yzen!~yzen@2607:f2c0:e352:6b:c83f:ee74:2d0d:c99> has joined #fluid-work
+2019-11-13T02:08:42  *** yzen <yzen!~yzen@2607:f2c0:e352:6b:c83f:ee74:2d0d:c99> has quit IRC (Quit: My MacBook has gone to sleep. ZZZzzz…)
+2019-11-13T02:09:09  *** yzen <yzen!~yzen@2607:f2c0:e352:6b:c83f:ee74:2d0d:c99> has joined #fluid-work
+2019-11-13T02:13:38  *** yzen <yzen!~yzen@2607:f2c0:e352:6b:c83f:ee74:2d0d:c99> has quit IRC (Ping timeout: 245 seconds)
+2019-11-13T05:40:35  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:dc85:2167:ae28:8a60> has joined #fluid-work
+2019-11-13T08:17:36  <the-t-in-rtf> morning.
+2019-11-13T08:17:37  <the-t-in-rtf> after last week's problems, I wanted to ask anyone who's online to confirm when they get the note about the pad for today's architecture meeting.
+2019-11-13T08:18:33  <the-t-in-rtf> Looks like the mail server at least got it:
+2019-11-13T08:18:34  <the-t-in-rtf> https://lists.gpii.net/pipermail/architecture/2019-November/005027.html
+2019-11-13T09:12:08  <stegru> yes the-t-in-rtf
+2019-11-13T09:21:01  <the-t-in-rtf> good to hear
+2019-11-13T09:49:45  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e72:c800:afce:ea01:d362:3594> has joined #fluid-work
+2019-11-13T12:00:19  *** yanachkov__ <yanachkov__!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-11-13T12:08:22  <Justin_o> Bosmon: I didn't get a chance to finish looking at the upwards distribution issue yesterday. I have a bit of time this morning that I'll try to look at it more. I did write up a simple example to test upward distribution and it worked using the FLUID-6148 branch, so it's probably something specific to composite panels/sub panels.
+2019-11-13T12:08:50  <Bosmon> Justin_o - ok, that's fine
+2019-11-13T12:09:08  <Bosmon> We just need to make sure that nothing tries to evaluate the selectors before the distribution bites
+2019-11-13T12:09:11  <Bosmon> Which in theory should be easy
+2019-11-13T12:09:37  <Bosmon> Since I can't think of anything in the new framework which could, "container" is now an ordinary "member" with a standard definition like anything else
+2019-11-13T12:09:45  <Bosmon> Unlike the "special magic" it was in the old framework
+2019-11-13T12:09:47  <Justin_o> Bosmon: I actually tried to distribute to a new option, and that didn't even work. so not really sure what is causing the problem
+2019-11-13T12:10:10  <Bosmon> Justin_o - ok, possibly just a basic typo of some kind then
+2019-11-13T12:10:36  <Justin_o> Bosmon: here's the configuration
+2019-11-13T12:10:43  <Justin_o> https://www.irccloud.com/pastebin/OjHtB3M9/
+2019-11-13T12:10:50  <Justin_o> that's just the distribution part
+2019-11-13T12:11:15  <Bosmon> I should talk you through a few basic "jungle skills" in helping you debug/inspect such things anyway : P
+2019-11-13T12:11:41  <Bosmon> The first key is to find the "shadow" for the component which you expect to get hit by the distribution
+2019-11-13T12:11:52  <Bosmon> And you can find all of these indexed in fluid.globalInstantiator.idToShadow
+2019-11-13T12:12:12  <Bosmon> Then inside there is "mergeOptions" which contains an array called "mergeBlocks"
+2019-11-13T12:12:29  <Bosmon> If the distribution has hit, you should expect to find a record inside mergeBlocks which corresponds to it
+2019-11-13T12:12:39  <Bosmon> These details are the same in the old and the new framework, so these skills are transferrable : P
+2019-11-13T12:13:18  <Justin_o> thanks :)
+2019-11-13T12:14:37  <Bosmon> Justin_o - that's odd, you're saying that nothing at all ends up in the "testing" option of the compositePanel?
+2019-11-13T12:16:29  <Justin_o> this is the options for the parent composite panel after initialization
+2019-11-13T12:16:37  <Justin_o> https://www.irccloud.com/pastebin/4CxYjHEc/
+2019-11-13T12:16:51  <Bosmon> Very odd
+2019-11-13T12:16:56  <Bosmon> Well, check that in and I will take a look at it
+2019-11-13T12:17:34  <Justin_o> Bosmon: thanks, I'll do that
+2019-11-13T12:17:47  <Justin_o> Bosmon: I wonder if it's related to these invokers in the gradeNames https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Panels.js#L217
+2019-11-13T12:18:25  <Justin_o> which actually end up creating a options distribution to distribute the "fluid.prefs.subPanel" grade to the panels that are used as sub panels.
+2019-11-13T12:18:26  <Justin_o> https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Panels.js#L281-L283
+2019-11-13T12:18:59  <Justin_o> https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Panels.js#L324-L359
+2019-11-13T12:19:18  <Justin_o> it all looks so convoluted ;(
+2019-11-13T12:19:49  <Bosmon> Justin_o - not that, but THIS: https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Panels.js#L432
+2019-11-13T12:19:58  <Bosmon> I hadn't realised that all these subcomponents are createOnEvent
+2019-11-13T12:19:59  <Bosmon> ?
+2019-11-13T12:20:35  <Bosmon> In which case there is no way that the distribution can bite
+2019-11-13T12:20:45  <Justin_o> ah
+2019-11-13T12:21:00  <Bosmon> So these components don't actually exist at the point of onCreate?
+2019-11-13T12:21:03  <Justin_o> I don't think I even realized that was a thing, but makes sense
+2019-11-13T12:21:10  <Justin_o> I see
+2019-11-13T12:21:16  <Bosmon> No wonder we introspect for them into options.components
+2019-11-13T12:21:21  <Bosmon> This is all the most unholy mess
+2019-11-13T12:21:46  <Justin_o> I think we had to do that for the timing with the rendering
+2019-11-13T12:21:51  <Bosmon> Justin_o - I imagine we did
+2019-11-13T12:22:01  <Bosmon> Let me just go and take the compost out and think what is to do about this ...
+2019-11-13T12:22:38  <Justin_o> thanks
+2019-11-13T12:26:36  <Justin_o> Bosmon: well they already aren't renderOnInit... is that enough to not require createOnEvent?
+2019-11-13T12:26:56  <Justin_o> https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/Panels.js#L126
+2019-11-13T12:35:55  <Bosmon> OK, there was rather more compost than I expected
+2019-11-13T12:36:38  <Bosmon> Justin_o - well I don't think we can revise a decision at this point as fundamental as whether the subpanels are createOnEvent or not
+2019-11-13T12:36:46  <Bosmon> No doubt there are numerous deep and evil reasons for this
+2019-11-13T12:37:31  <Justin_o> Bosmon: yes, I was just imagining how much of this structure I'd have to unravel to get rid of the create on event and simplify the distributions and etc
+2019-11-13T12:37:42  <Bosmon> Justin_o - anyway, my compost walk has suggested the WAY OUT
+2019-11-13T12:38:11  <Bosmon> Which is suggested by this devilish function itself, "subPanelLifecycleBindings"
+2019-11-13T12:38:47  <Justin_o> Bosmon: okay, I'm curious
+2019-11-13T12:39:10  <Bosmon> So, there is already quite enough grade synthesis magic lying around here that a little more won't hurt us that much more : P
+2019-11-13T12:39:20  <Bosmon> This function synthesizes a whole grade definition that gets overlaid onto us
+2019-11-13T12:40:00  <Bosmon> So there is no reason that we can't then also synthesize an selectors: { expander: { thing}} definition as well, that just contains the body of the current surfaceSubpanelRendererSelectors
+2019-11-13T12:40:24  <Bosmon> Minus the "set" junk of course, but just turn that into a standard function that does the crazy introspection and then returns the required selector entries
+2019-11-13T12:42:47  <Justin_o> Bosmon: ah that seems reasonable.. so we have fewer locations doing the prefetch too, and just apply it onto with standard grade merging instead manually changing the options after the fact
+2019-11-13T12:43:10  <Bosmon> Yes, I think this solution compounds the existing design crimes as little as possible, and sort of "rolls with them" : P
+2019-11-13T12:44:39  <Justin_o> haha. yep.. seems the best case if we are going to get rid of all of this in upcoming framework changes anyways.
+2019-11-13T12:46:32  <Bosmon> All this rampant grade synthesis makes it extremely hard to get a design overview of what anything is doing
+2019-11-13T12:46:50  <Bosmon> I am hoping that lensed components are now powerful enough for us to be able to write all these definitions in directly
+2019-11-13T12:47:03  <Justin_o> that would be really helpful
+2019-11-13T12:47:06  <Bosmon> but in any case all the "createOnEvent" annotations will be axed anyway so it wouldn't matter
+2019-11-13T12:47:38  <Bosmon> I mean, it wouldn't matter that we couldn't read that in particular except through looking into the implementation of the function that we happened to know was responsible : P
+2019-11-13T12:50:11  <Justin_o> Bosmon: it's almost funny in a way, that if you look through the code, it appears I did as much as possible to obsfucate how things actually come together.
+2019-11-13T12:51:12  <Bosmon> Justin_o - well, you did your best, given the framework you had been given to work with : P
+2019-11-13T12:51:44  <Bosmon> I mean, did your best to express the design clearly, not did your best to obfuscate things : P
+2019-11-13T12:52:43  <Justin_o> lol thanks
+2019-11-13T12:57:11  <Justin_o> Bosmon: I'll be away for the rest of the day, but will dive back into this tomorrow. Thanks again for the help.
+2019-11-13T13:40:59  *** cindyli <cindyli!~Adium@198.52.178.16> has joined #fluid-work
+2019-11-13T13:57:55  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e72:c800:afce:ea01:d362:3594> has quit IRC (Read error: Connection reset by peer)
+2019-11-13T13:57:55  *** danielcho <danielcho!~Adium@hmtnon1497w-lp140-07-70-27-91-37.dsl.bell.ca> has joined #fluid-work
+2019-11-13T14:04:51  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-11-13T14:18:15  *** avtar <avtar!~avtar@ip-24-50-184-153.user.start.ca> has joined #fluid-work
+2019-11-13T14:22:46  *** avtar <avtar!~avtar@ip-24-50-184-153.user.start.ca> has quit IRC (Client Quit)
+2019-11-13T14:47:28  *** avtar <avtar!~avtar@ip-24-50-184-153.user.start.ca> has joined #fluid-work
+2019-11-13T15:02:14  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-11-13T15:07:27  *** clown <clown!clown@nat/ocadu/x-lpztyrhwogeoitit> has joined #fluid-work
+2019-11-13T15:10:26  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-frzdleajprmsmlqg> has joined #fluid-work
+2019-11-13T15:15:29  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-11-13T15:30:19  *** michelled <michelled!Adium@nat/ocadu/x-fhpxzejdlvohamkw> has joined #fluid-work
+2019-11-13T15:47:12  *** avtar <avtar!~avtar@ip-24-50-184-153.user.start.ca> has quit IRC (Quit: Quit)
+2019-11-13T15:53:48  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-11-13T15:54:20  *** michelled <michelled!Adium@nat/ocadu/x-fhpxzejdlvohamkw> has quit IRC (Quit: Leaving.)
+2019-11-13T15:57:45  *** michelled <michelled!~Adium@205.211.168.102> has joined #fluid-work
+2019-11-13T15:59:22  *** simonjb <simonjb!~simonjb@205.211.168.103> has joined #fluid-work
+2019-11-13T16:00:01  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-11-13T16:11:03  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-11-13T16:25:32  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-11-13T16:26:53  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-11-13T16:51:37  *** yanachkov__ <yanachkov__!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 240 seconds)
+2019-11-13T16:52:07  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has left #fluid-work
+2019-11-13T16:58:23  *** clown is now known as clown_mtg
+2019-11-13T17:04:04  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-11-13T17:09:25  *** michelled <michelled!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-11-13T17:13:34  *** michelled <michelled!~Adium@205.211.168.102> has joined #fluid-work
+2019-11-13T17:59:02  *** colinclark <colinclark!~colinclar@205.211.168.101> has joined #fluid-work
+2019-11-13T18:23:10  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-13T18:24:45  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-11-13T18:30:37  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-13T18:32:44  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-11-13T18:44:41  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e72:c800:afce:ea01:d362:3594> has joined #fluid-work
+2019-11-13T18:50:19  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-13T18:50:58  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-11-13T19:06:17  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e72:c800:afce:ea01:d362:3594> has quit IRC (Quit: jhernandez)
+2019-11-13T19:07:00  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-13T19:14:54  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-11-13T19:39:13  *** cindyli <cindyli!~Adium@198.52.178.16> has quit IRC (Quit: Leaving.)
+2019-11-13T20:00:39  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e72:c800:afce:ea01:d362:3594> has joined #fluid-work
+2019-11-13T20:16:16  *** cindyli <cindyli!~Adium@198.52.178.16> has joined #fluid-work
+2019-11-13T20:25:24  *** avtar <avtar!avtar@nat/ocadu/x-zgbavtxjnrgzjmgy> has joined #fluid-work
+2019-11-13T20:34:37  *** clown_mtg <clown_mtg!clown@nat/ocadu/x-lpztyrhwogeoitit> has quit IRC (Ping timeout: 240 seconds)
+2019-11-13T20:49:14  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-13T21:05:34  *** clown <clown!clown@nat/ocadu/x-otgbvqmaqkycuvih> has joined #fluid-work
+2019-11-13T21:08:02  *** cindyli <cindyli!~Adium@198.52.178.16> has quit IRC (Quit: Leaving.)
+2019-11-13T21:11:48  *** danielcho1 <danielcho1!~Adium@hmtnon1497w-130-02-65-95-64-90.dsl.bell.ca> has joined #fluid-work
+2019-11-13T21:12:19  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-11-13T21:13:37  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e72:c800:afce:ea01:d362:3594> has quit IRC (Quit: jhernandez)
+2019-11-13T21:15:22  *** danielcho <danielcho!~Adium@hmtnon1497w-lp140-07-70-27-91-37.dsl.bell.ca> has quit IRC (Ping timeout: 268 seconds)
+2019-11-13T21:17:42  *** cindyli <cindyli!~Adium@198.52.178.16> has joined #fluid-work
+2019-11-13T21:25:12  *** danielcho1 <danielcho1!~Adium@hmtnon1497w-130-02-65-95-64-90.dsl.bell.ca> has left #fluid-work
+2019-11-13T21:33:32  *** cindyli <cindyli!~Adium@198.52.178.16> has quit IRC (Quit: Leaving.)
+2019-11-13T21:34:18  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving)
+2019-11-13T21:38:17  <gmoss> Bosmon: (when you have a moment) I'm back on SJRK-255 and am thinking about how to handle this comment: https://github.com/fluid-project/sjrk-story-telling/pull/35#pullrequestreview-270689695
+2019-11-13T21:38:17  <gmoss> Is there a way to call a component's change applier and supply multiple values/changes in a single call? I.e. I want to turn the onShareRequested listener into one call rather than three, if possible.
+2019-11-13T21:39:15  <gmoss> I suppose I could have a single model value that represents "attempting to publish and waiting for the server to respond", like "publishingState"
+2019-11-13T21:39:20  <gmoss> and model relays
+2019-11-13T21:41:07  <Bosmon> gmoss - yes, that is one model
+2019-11-13T21:41:22  <Bosmon> The other would be to batch a lot of updates into a transaction as so: https://github.com/fluid-project/infusion/blob/master/src/framework/preferences/js/PrefsEditor.js#L433
+2019-11-13T21:41:28  <gmoss> Bosmon: I think what I'm attempting to do currently is not exactly what you suggested, but close to it
+2019-11-13T21:42:25  <gmoss> Bosmon: oh that's a good idea, I'd forgotten about the initiate function as I hadn't used it yet
+2019-11-13T21:42:44  <Bosmon> It seems esoteric but in practice one needs it more than one might think
+2019-11-13T21:42:59  <Bosmon> A lack of transactions is one of the greatest annoyances of primitive data synchronisation frameworks
+2019-11-13T21:43:27  <Bosmon> Our current API is a bit boneheaded in its 1990s object-y style, but it's better than a poke in the eye : P
+2019-11-13T21:46:04  <gmoss> Bosmon: haha indeed, and better than having to wrangle JS objects directly and manage state change manually
+2019-11-13T21:46:44  <gmoss> Thanks for the tips :)
+2019-11-13T21:46:47  <Bosmon> Well, it's arguable whether the endless wrinkles in the "old" framework really do make for a net improvement : P
+2019-11-13T21:47:00  <Bosmon> But we hope that with the coming update we might at least break even ....
+2019-11-13T21:48:39  <Bosmon> The great patience and steady dedication of the team is a fine asset :)
+2019-11-13T21:50:34  <gmoss> Bosmon: that team, of course, includes you too! usable documentation doesn't hurt either ;)
+2019-11-13T21:52:48  <Bosmon> Well, you can thank the-t-in-rtf and Justin_o for most of the work on that
+2019-11-13T21:53:25  <Bosmon> Interesting that even after all these years, anastasiac is still showing up with the greatest number of lines added ...
+2019-11-13T21:53:49  <Bosmon> Oh wait, it is simonjb!
+2019-11-13T21:53:56  <Bosmon> Just from way fewer commits
+2019-11-13T21:57:43  *** michelled <michelled!~Adium@205.211.168.102> has quit IRC (Quit: Leaving.)
+2019-11-13T22:01:18  *** clown <clown!clown@nat/ocadu/x-otgbvqmaqkycuvih> has quit IRC (Quit: Leaving.)
+2019-11-13T22:08:29  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.104> has joined #fluid-work
+2019-11-13T22:09:22  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-frzdleajprmsmlqg> has quit IRC (Read error: Connection reset by peer)
+2019-11-13T22:22:42  *** simonjb <simonjb!~simonjb@205.211.168.103> has quit IRC ()
+2019-11-13T22:25:14  *** avtar <avtar!avtar@nat/ocadu/x-zgbavtxjnrgzjmgy> has quit IRC (Quit: Quit)
+2019-11-13T22:31:49  *** Bosmon2 <Bosmon2!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has joined #fluid-work
+2019-11-13T22:32:27  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-13T22:32:57  *** Bosmon <Bosmon!~a@82-71-9-15.dsl.in-addr.zen.co.uk> has quit IRC (Ping timeout: 240 seconds)
+2019-11-13T23:24:12  *** colinclark <colinclark!~colinclar@205.211.168.101> has quit IRC (Quit: colinclark)

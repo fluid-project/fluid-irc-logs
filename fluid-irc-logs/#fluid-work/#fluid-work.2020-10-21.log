@@ -1,0 +1,208 @@
+2020-10-21T05:41:02  <batey96> Okay gmoss thanks for feedback
+2020-10-21T11:39:32  <Bosmon2> Hey there gmoss, Justin_o
+2020-10-21T11:39:39  <Bosmon2> Just checking out your report on SJRK-400
+2020-10-21T11:39:41  *** Bosmon2 is now known as Bosmon
+2020-10-21T11:40:19  <Justin_o> Bosmon: hello
+2020-10-21T11:40:24  <Bosmon> So I don't see that onDestroy could be involved in your problem, since the "removeSelectedBlocks" operation is being triggered from an onClickHandler
+2020-10-21T11:40:39  <Bosmon> By which time any destruction that may have been in progress would definitely have completed
+2020-10-21T11:44:47  <Justin_o> Bosmon: my question about onDestroy was to try to remove the call on line 295 from this function. Instead to use an onDestroy listener to call the resetUploadState on the component being destroyed after the call on line 296 https://github.com/BlueSlug/sjrk-story-telling/blob/52e198dceae3e2aaa6a6e0334770cf9f25bdc6d5/src/ui/ui-storyEditor.js#L295-L296
+2020-10-21T11:45:45  <Justin_o> in that way the removeSelectedBlock component does not need to be concerned with managed component having a uploader
+2020-10-21T11:45:58  <Bosmon> Justin_o - but the problem is that the subcomponent is already gone before this function already executes
+2020-10-21T11:46:11  <Bosmon> I haven't yet looked into what might have destroyed it ...
+2020-10-21T11:52:32  <Bosmon> Justin_o - OK, I understand your point now
+2020-10-21T11:52:46  <Bosmon> I think the suggestion to move this action into onDestroy is sensible and will lead to a better factoring anyway
+2020-10-21T11:58:10  <Justin_o> Bosmon: I wonder if it is too late because it's a subcomponent.. and that's why the model relays are failing. The call to reset is actually in the singleFileUploader subcomponent so if it happens on it's onDestory listener, but we've called destroy on it's parent, is it too late to relay the subcomponent's model changes up to the parent?
+2020-10-21T12:02:29  <Justin_o> b
+2020-10-21T12:02:40  <Justin_o> Bosmon: I think our current discussion may correspond more closely to https://issues.fluidproject.org/browse/SJRK-401
+2020-10-21T12:05:09  <Bosmon> Justin_o - it should still be fine
+2020-10-21T12:05:47  <Bosmon> The IoC framework is careful to queue up all destructions and only do them as a batch once the transaction is concluding
+2020-10-21T12:05:58  <Bosmon> Although looking at this impl it may be that it calls destructions in the wrong order
+2020-10-21T12:07:45  <Justin_o> Bosmon: you mean the IoC framework calls the destruction in the wrong order, or the storytelling code does?
+2020-10-21T12:08:14  <Bosmon> Justin_o - I mean the IoC framework
+2020-10-21T12:08:43  <Bosmon> Given the use case you are surfacing here, it should really call "onDestroy" for ALL components in the tree first
+2020-10-21T12:08:43  <Justin_o> Bosmon: okay.. thanks..
+2020-10-21T12:08:49  <Bosmon> And only then begin to actually tear stuff down
+2020-10-21T12:09:00  <Bosmon> This implementation is a remnant of the days when we had "per-component thinking"
+2020-10-21T12:09:52  <Justin_o> Bosmon: in the current model, we call onDestory on the parent.. does it then walk down the component tree to call destroy on the subcomponents?
+2020-10-21T12:10:08  <Bosmon> If you can check in an impl of the storyTelling tool that shows the situation once you try to do this in onDestroy, we can triage it and use it to file a framework issue and think of the quickest workaround
+2020-10-21T12:10:53  <Bosmon> Justin_o - actually, I'm reading the code more carefully now and it looks like it does indeed call onDestroy across the tree first
+2020-10-21T12:11:32  <Bosmon> But unfortunately it does interleave this partially with tearing stuff down involving events and invokers
+2020-10-21T12:12:36  <Bosmon> So it is sort of "half-transactional" - there's a wave of onDestroy plus some teardown, and then a separate wave of afterDestroy plus some further teardown
+2020-10-21T12:13:13  <Bosmon> Looks like "phase I" teardown nulls out all events so they are no longer functional, whereas "phase II" is what unregisters all listeners including relays etc.
+2020-10-21T12:13:48  <Justin_o> what about modelListeners.. does that get nulled out in the first wave?
+2020-10-21T12:15:21  <Bosmon> Justin_o - they shouldn't be, but there is already the intention that the component tree should be "nulled" - i.e. to be incapable of having side-effects at the point that phase I begins
+2020-10-21T12:16:37  <Bosmon> But it should obviously remain capable of cleanup actions such as removing its own resources from the DOM so there might well be the need for some refinement here
+2020-10-21T12:17:03  <Bosmon> Could you just quickly talk through what the expected effect of the cleanup of resetting the uploadState to "ready" should be?
+2020-10-21T12:20:33  <Justin_o> Bosmon: somewhere up the component tree we are keeping track of how many uploads have returned an error or are currently in flight. This is needed to disable publishing and show notification. We also have the ability to remove a block which may contain something that is or was uploading. So we need to be able to clean up our counter if we remove a block that is either currently uploading or has reported an upload
+2020-10-21T12:20:33  <Justin_o> error.
+2020-10-21T12:20:57  <Justin_o> by clean up the counter I just mean to essentially decrement the counts as needed.
+2020-10-21T12:21:21  <Bosmon> Justin_o - right, that seems pretty reasonable
+2020-10-21T12:21:37  <Justin_o> by the way, I think the error with the relay is coming from DataBinding.js line 1147. transRec is undefined
+2020-10-21T12:21:42  <Justin_o> I'll push something up in a minute
+2020-10-21T12:21:53  <Bosmon> From what I can see, I'm expecting we'll consider there probably is a framework bug in this area
+2020-10-21T12:22:47  <Bosmon> It's a shame since I was hoping eventually to abolish the use of events like onCreate and onDestroy
+2020-10-21T12:23:29  <Bosmon> But we'd need some entirely new kind of model relay primitive to let us do this
+2020-10-21T12:23:41  <Justin_o> Bosmon: here are my changes to provoke the error https://github.com/jobara/sjrk-story-telling/commit/9fff6390de6ee98b8351b197945a20773e870425
+2020-10-21T12:23:53  <Justin_o> you can pull it down from this branch https://github.com/jobara/sjrk-story-telling/tree/SJRK-289-onDestroy
+2020-10-21T12:24:43  <Justin_o> You can run the ui-storyEditor-tests.html browser tests
+2020-10-21T12:28:48  <Bosmon> Justin_o - sure, this highlights a clear framework bug since there isn't even any user code on the stack : P
+2020-10-21T12:29:16  <Bosmon> Writing it up now ...
+2020-10-21T12:29:31  <Justin_o> Bosmon: thanks :)
+2020-10-21T12:35:59  <Bosmon> Justin_o - can you point me to where the state tracking is done to count up the the number of uploads in flight?
+2020-10-21T12:36:33  <Bosmon> nm I think I found it
+2020-10-21T12:41:44  <Justin_o> Bosmon:  you found it faster than me.. sorry I took so long
+2020-10-21T12:44:40  <Bosmon> Justin_o - https://issues.fluidproject.org/browse/FLUID-6558
+2020-10-21T12:47:21  <Justin_o> Bosmon: thanks for looking into this and writing up the JIRA
+2020-10-21T13:04:46  <Justin_o> greatislander, Bosmon: do you have access to the wecount website's netlify account?
+2020-10-21T13:07:36  <greatislander> I do
+2020-10-21T13:07:43  <greatislander> So does cindyli, I think
+2020-10-21T13:08:25  <greatislander> Justin_o it looks like Bosmon is in there too
+2020-10-21T13:08:27  <Justin_o> greatislander, cindyli: thanks.. I updated the branch in the https://github.com/inclusive-design/wecount.inclusivedesign.ca from master to main.. but I realized now that you'll probably need to update the netlify config to deploy from main
+2020-10-21T13:08:33  <greatislander> I'll invite you, you should have access
+2020-10-21T13:08:34  <Justin_o> instead of master
+2020-10-21T13:08:37  <Justin_o> greatislander: thanks
+2020-10-21T13:08:39  <greatislander> and I'll take care of that change!
+2020-10-21T13:08:47  <Justin_o> greatislander: excellent, thanks for the help with that
+2020-10-21T13:08:52  <cindyli> thanks, Justin_o and greatislander
+2020-10-21T13:09:32  <greatislander> Justin_o cindyli the production branch is updated
+2020-10-21T13:09:45  <cindyli> cool. thanks
+2020-10-21T13:09:50  <greatislander> Justin_o let me know if you get the invite
+2020-10-21T13:10:44  <Justin_o> cindyli: I also submitted a PR to update the docs to reference the "main" branch instead of "master". I submitted the PR against the "main" branch, not sure if it should have been against "dev" but figured you may want to get the change in everywhere and not wait for the dev changes to be merged to main. https://github.com/inclusive-design/wecount.inclusivedesign.ca/pull/424
+2020-10-21T13:11:50  <Justin_o> greatislander: got the invite and looks like I have access now. thanks :)
+2020-10-21T13:11:57  <cindyli> ok. thanks, Justin_o. will have a look soon
+2020-10-21T13:12:03  <Justin_o> cindyli: thanks
+2020-10-21T13:12:15  <cindyli> thank YOU!
+2020-10-21T13:16:10  <greatislander> Justin_o I've created a `main` branch in fluidic-11ty and updated the open PR to be against that branch, so I think all that needs to be done is change the branch setting (which I don't have access to)
+2020-10-21T13:18:39  <Justin_o> greatislander: done
+2020-10-21T13:18:45  <Justin_o> thanks for creating the new branch
+2020-10-21T13:23:51  <Justin_o> gtirloni: I'm updating https://github.com/inclusive-design/website-cities and noticed that the CD workflow points specifically at the master branch. I can submit a PR to update that to main, but what order should I do the changes in? Should I swap the default branch to main and submit a pr against that, and then remove the master branch?
+2020-10-21T13:30:12  <Bosmon> Personally I never saw why we switched away from "trunk" and continued to speak about trunk 7 or 8 years into the git era : P
+2020-10-21T13:30:56  <Justin_o> Bosmon: I like trunk too, and makes sense with branches
+2020-10-21T13:43:49  <Justin_o> cindyli: when you have some time I wonder if we can chat a bit about the automated PR stuff you are looking at.
+2020-10-21T13:45:01  <cindyli> that would be great, Justin_o
+2020-10-21T13:47:54  <Justin_o> cindyli I don't know how much I can help but there might be some cross over with that work and something we might need for moving to matrix/element later. When would  be a good time for you?
+2020-10-21T13:49:00  <cindyli> Justin_o: i need to go to a workshop 10:30-12. anytime before and after works for me
+2020-10-21T13:51:00  <Justin_o> cindyli: we can chat now unless you need to prep for the workshop or get other things done first
+2020-10-21T13:51:20  <cindyli> nah, we can chat now. which room, Justin_o
+2020-10-21T13:51:53  <Justin_o> cindyli: want to use standup
+2020-10-21T13:51:59  <cindyli> sure
+2020-10-21T14:10:15  <Bosmon> Hi Justin_o - is the "JIRA death" call scheduled for some time?
+2020-10-21T14:10:42  <Bosmon> cindyli - I'm also interested in the difficulties in constructing a remote branch
+2020-10-21T14:11:17  <cindyli> Bosmon: Justin_o and i are in the standup room talking about it. can you join?
+2020-10-21T14:39:00  <gtirloni> Justin_o:  I'll take a look at the cities website after you change it to main, no worries. there are few things I need to do on the server side.. I can submit a PR
+2020-10-21T14:43:55  <Justin_o> gtirloni: okay.. so I can delete the master branch?
+2020-10-21T14:44:31  <gtirloni> Justin_o: yep
+2020-10-21T15:14:02  <Justin_o> gtirloni: I deleted the master branch and it looks like you already updated the CI tasks
+2020-10-21T15:16:32  <gtirloni> Justin_o: yeah, it seems to have worked. the deploy just finished -- https://github.com/inclusive-design/website-cities/actions/runs/320137855
+2020-10-21T15:17:41  <Justin_o> gtirloni: that's great
+2020-10-21T15:18:23  <greatislander> silly JIRA question: if I make a filter, can other people see it?
+2020-10-21T15:18:29  <greatislander> Justin_o ^
+2020-10-21T15:18:44  <greatislander> (for example: https://issues.fluidproject.org/issues/?filter=12613_
+2020-10-21T15:18:47  <greatislander> (for example: https://issues.fluidproject.org/issues/?filter=12613)
+2020-10-21T15:19:55  <Justin_o> greatislander: I see the second link for open ILDH issue.. although I don't think you should have needed to create a custom filter for it.
+2020-10-21T15:19:56  <michelled> greatislander: you need to change the perms on your filter
+2020-10-21T15:21:23  <michelled> Owned by https://issues.fluidproject.org/secure/ViewProfile.jspa?name=greatislander
+2020-10-21T15:21:23  <michelled> Who can view this filter
+2020-10-21T15:21:23  <michelled> only the editors
+2020-10-21T15:21:23  <michelled> Who can edit this filter
+2020-10-21T15:21:24  <michelled> only the owner
+2020-10-21T15:21:41  <michelled> if you click on the 'details' near the title of the filter, you can change who can see it
+2020-10-21T15:21:46  <greatislander> Thanks michelled
+2020-10-21T15:21:55  <michelled> np
+2020-10-21T15:22:37  <greatislander> Justin_o I know I don't _need_ to but I'm trying to get an overview of all of the open JIRAs related to ILDH, Design Guide, Floeproject.org, Fluidproject.org… and I'm finding it easier to track by saving them
+2020-10-21T16:13:34  <gmoss> Bosmon Justin_: I've just caught up on your discussion this morning. Thanks for making the branch with the bug conditions and for filing FLUID-6558. I eagerly anticipate an "onDestroy" type model relay specification :)
+2020-10-21T16:14:27  <Bosmon> gmoss - well, in the meantime you eagerly anticipate a fix for the bug : P
+2020-10-21T16:17:34  * gtirloni anticipates coffee
+2020-10-21T16:23:03  <gmoss> Bosmon: we have a workaround, for the time being :)
+2020-10-21T16:33:08  <Justin_o> greatislander: I just mean I think there should be a filter or a way to view all open issue already built into JIRA
+2020-10-21T16:34:36  <greatislander> Justin_o yes—I think what I'm running into is that if I have a project or component selected and then I select the "Open Issues" filter in the sidebar it switches to all open issues. So I've saved filters for open issues in specific components to my list so I can quickly retrieve them.
+2020-10-21T16:35:00  <greatislander> it's also possible that I am just not using JIRA properly. I find it very complex.
+2020-10-21T16:35:51  <greatislander> actually, that issue is specific to if I have a component selected. to reproduce:
+2020-10-21T16:36:05  <greatislander> 1. Go to https://issues.fluidproject.org/projects/FLOE
+2020-10-21T16:36:19  <greatislander> 2. Click "Components" in the left sidebar
+2020-10-21T16:36:30  <greatislander> 3. Click FLOE Website (for example)
+2020-10-21T16:36:38  <greatislander> 4. Try to filter by only open issues
+2020-10-21T16:36:42  <greatislander> ^ Justin_o
+2020-10-21T17:00:30  <Bosmon> gmoss - what's the workaround?
+2020-10-21T17:41:42  <gmoss> Bosmon: the `removeSelectedBlocks` function is currently checking  whether a block editor component has a `singleFileUploader` before attempting to call its `resetUploadState`invoker. Justin_o's theory was that if it doesn't have the component available at that point, then we can't reset its state anyway
+2020-10-21T17:42:13  <gmoss> I'm not super happy with the solution, but it seems to work for now, and I'm going to be adding a comment alongside it to point to SJRK-400, SJRK-401 and FLUID-6558
+2020-10-21T17:45:32  <gmoss> Justin_o: I found this page with basic recommendations on how to avoid user enumeration attacks on registration (and other cases): https://www.hacksplaining.com/prevention/user-enumeration
+2020-10-21T17:45:59  <Bosmon> gmoss - right - is there a chance it will lead to an incorrect count if an in-progress upload gets destroyed individually?
+2020-10-21T17:46:13  <Bosmon> Is there a route to destroying an upload component separately from the destruction of the entire app?
+2020-10-21T17:49:36  <gmoss> Bosmon: there is likely a chance it could lead to an incorrect count, but because I wasn't able to trace the source of this issue back far enough I can't be sure.
+2020-10-21T17:49:36  <gmoss> I'm not sure I understand your second question. Are you asking if I have defined code to tear down upload components other than just the call to `.destroy()` when its associated block editor UI is removed? Or are you asking whether such code exists at all? In the former case, no; in the latter case, please see the former :)
+2020-10-21T17:50:24  <gmoss> ("block editor UI" is the view component that has the uploader)
+2020-10-21T18:24:02  <Justin_o> greatislander: sorry, was in meetings and missed your message. JIRA can be complex and I think there might be issues if you try to view multiple filters at the same time in the same session. Anyways, whatever works best for your workflow. If you're just sharing a filter with others, using the search and/or built in features is usually enough, and you can also drop those into the wiki to create a table if needed.
+2020-10-21T19:18:02  <cindyli> Justin_o, greatislander, i need to add linting for js, md and json files in a repo. is "fluid-grunt-lint-all" the latest linting tool - https://www.npmjs.com/package/fluid-grunt-lint-all?
+2020-10-21T19:20:53  <Justin_o> cindyli: it is, but we haven't yet released the updates from our recent work on it
+2020-10-21T19:21:09  <Justin_o> particularly if you need to be able to lint modern js syntax like async/await
+2020-10-21T19:21:40  <cindyli> ok, i do need to lint that, Justin_o
+2020-10-21T19:21:52  <cindyli> Justin_o: when will the latest be released?
+2020-10-21T19:23:00  <Justin_o> cindyli: not sure exactly, I think we're waiting for Bosmon to okay/merge a few related PRs.
+2020-10-21T19:23:19  <cindyli> ok. thanks, Justin_o
+2020-10-21T19:23:29  <Justin_o> cindyli: you could pull from my branch for now, but you'd want to update to a real release before merging
+2020-10-21T19:23:56  <Justin_o> cindyli: https://github.com/jobara/fluid-grunt-lint-all/tree/issue-14
+2020-10-21T19:24:00  <cindyli> great. thanks
+2020-10-21T20:02:18  <Bosmon> Justin_o - sorry I haven't been keeping up
+2020-10-21T20:02:26  <Bosmon> I guess the lint configuration one is at the top?
+2020-10-21T20:02:41  <Justin_o> Bosmon: yes, I believe so.
+2020-10-21T20:02:41  <Bosmon> The last time we checked in it didn't seem clear whether we were waiting for the CSS stuff or not
+2020-10-21T20:03:34  <Justin_o> Bosmon: we have a new repo with the style lint config and a release for it has been cut https://github.com/fluid-project/stylelint-config-fluid
+2020-10-21T20:03:42  <Justin_o> it's also added to our npm org
+2020-10-21T20:04:18  <Justin_o> the related PR for fluid-grunt-lint-all will also need to be merged before a 2.x release
+2020-10-21T20:05:11  <Justin_o> Bosmon: while you're here.. this is off topic but wanted to make sure you're aware.. https://issues.fluidproject.org/browse/FLUID-6559 I'm going to pause my master to main updates and fix this issue now so that it won't mess up our dev releases.
+2020-10-21T20:07:04  <Bosmon> Justin_o - sure
+2020-10-21T20:07:17  <Bosmon> Is there some way which fluid-publish can sense which is the main branch?
+2020-10-21T20:07:52  <Justin_o> Bosmon: trying to figure that out.. this seems the most reliable https://davidwalsh.name/get-default-branch-name
+2020-10-21T20:08:12  <Justin_o> however we'd have to know the name of the remote repo..
+2020-10-21T20:08:29  <Bosmon> Justin_o - a fascinating chain of things
+2020-10-21T20:08:39  <Bosmon> Which we would have to add another thing to the head of : P
+2020-10-21T20:08:40  <Justin_o> we recommend using "upstream" but that isn't reliable
+2020-10-21T20:08:50  <Bosmon> I thought we recommended "origin" : P
+2020-10-21T20:08:54  <Bosmon> Another annoying conventional choice
+2020-10-21T20:09:06  <Justin_o> origin usually points at your own fork, and upstream points at the projects repo
+2020-10-21T20:09:49  <Justin_o> origin is more stable as it's the default remote name for your clone, but we usually recommend cloning your forked repo
+2020-10-21T20:09:50  <Bosmon> Justin_o - couldn't we just target that command at the local repository?
+2020-10-21T20:10:12  <Justin_o> I don't think that would tell you what the default branch is for the project though
+2020-10-21T20:10:27  <Justin_o> or maybe I'm misunderstanding
+2020-10-21T20:12:43  <Bosmon> Justin_o - couldn't one assume that the owner of the local repository had chosen the same default branch name as the remote one?
+2020-10-21T20:14:42  <Justin_o> Bosmon: I suppose in this case with all the changes, things might be messed up locally.. but also I'm not yet sure how to find it locally
+2020-10-21T20:14:46  <Justin_o> I'm still looking around
+2020-10-21T20:15:44  <Bosmon> I guess we could try both upstream and origin
+2020-10-21T20:15:56  <Bosmon> As in this answer: https://stackoverflow.com/a/61357104
+2020-10-21T20:17:01  <Justin_o> Bosmon: that's maybe the best we can do, and provide an option to override that
+2020-10-21T20:21:17  <Justin_o> Bosmon: actually turns out fluid-publish already needs to know the remote name https://github.com/fluid-project/fluid-publish/blob/main/package.json#L58
+2020-10-21T20:22:37  <Bosmon> Justin_o - that's odd, I wonder how it works : P
+2020-10-21T20:22:42  <Bosmon> Given I don't call it that
+2020-10-21T20:22:57  <Justin_o> Bosmon: do you override it?
+2020-10-21T20:23:06  <Justin_o> you should be able to pass it in as an option
+2020-10-21T20:23:49  <Bosmon> I've never customised this option
+2020-10-21T20:23:55  <Bosmon> And none of my repos have "upstream" set
+2020-10-21T20:24:42  <Justin_o> Bosmon: ah I understand why now.. that's only for publishing a stable release, and we don't tend to use fluid-publish for that.
+2020-10-21T20:24:49  <Bosmon> Yes, I just saw this
+2020-10-21T20:25:51  <Justin_o> Bosmon: I do wish to update this to use a more mainstream publishing like np or something else at some point and just have a tool like this to create the dev release numbers and pipe it into another tool to do the auto publishing for us
+2020-10-21T20:26:09  <Justin_o> anyways, I don't think we have time for that now
+2020-10-21T20:26:16  <Bosmon> Justin_o - is that possible?
+2020-10-21T20:26:37  <Justin_o> I don't know.. I'd have to see
+2020-10-21T20:26:50  <Bosmon> I don't think it is
+2020-10-21T20:27:01  <Justin_o> some of those tools allow you to supply pre-release versions so we'd just have our code generate those I think
+2020-10-21T20:27:03  <Bosmon> One of its bullet points says "Ensures you are publishing from your release branch (main and master by default)"
+2020-10-21T20:27:29  <Justin_o> Bosmon: yah maybe not np then.. I was looking at another one too a while back, but can't remember what it was now.. let me do a quick look
+2020-10-21T20:27:30  <Bosmon> Ah, it has a flag that allows publishing from any branch
+2020-10-21T20:27:41  <Bosmon> "anyBranch - Allow publishing from any branch (false by default)."
+2020-10-21T20:27:56  <Bosmon> But it seems like we'd probably have to have a wrapper so complex that we may as well have our own tool : P
+2020-10-21T20:28:03  <Bosmon> fluid-publish is pretty slick by now
+2020-10-21T20:28:59  <Justin_o> Bosmon: might have been one of these https://www.npmjs.com/package/semantic-release
+2020-10-21T20:29:04  <Justin_o> https://www.npmjs.com/package/release-it
+2020-10-21T20:31:18  <Justin_o> Bosmon: I think this might work https://github.com/release-it/release-it/blob/HEAD/docs/pre-releases.md
+2020-10-21T20:32:12  <Justin_o> assuming the preRelease flag can take any value. although I guess it would append the .0 at the end which is kind of annoying
+2020-10-21T20:39:05  <Bosmon> Justin_o - I guess the very cheapest way of resolving this JIRA is simply to update the conditional on line 237
+2020-10-21T20:39:16  <Bosmon> if (branch !== "master" && branch !== "main" || .....
+2020-10-21T20:39:43  <Justin_o> Bosmon: yes, I guess that's true and probably sufficient for our needs
+2020-10-21T20:40:32  <Bosmon> Never shirk a 20 second fix that resolves all of your visible needs : P
+2020-10-21T20:44:29  <Justin_o> :) it's very good advice
+2020-10-21T20:49:08  <Justin_o> Bosmon: could you please review this PR https://github.com/fluid-project/fluid-publish/pull/18
+2020-10-21T20:50:26  <Bosmon> Justin_o - done!
+2020-10-21T20:50:58  <Justin_o> Bosmon: thanks :)
+2020-10-21T20:51:05  <Justin_o> I'll tag and publish an npm release for that now
+2020-10-21T20:58:27  <Justin_o> Bosmon: latest version of fluid-publish has been published

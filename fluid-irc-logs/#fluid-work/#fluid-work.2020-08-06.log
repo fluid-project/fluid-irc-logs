@@ -1,0 +1,67 @@
+2020-08-06T13:49:32  <gtirloni> does anyone know if "airmedia" is still something we use in the conference room after we migrated to zoom?
+2020-08-06T14:14:14  <Justin_o> gtirloni: I'm not sure.. it might depend on if it bridges creation to the physical displays. I don't think we used the wireless aspects much before. The last I checked you couldn't really connect to the devices locally in the room without using the zoom client on the device.
+2020-08-06T14:14:32  <Justin_o> creation = crestron
+2020-08-06T14:15:36  <gtirloni> ah, I see. I'm asking because we have a website (http://airmedia.inclusivedesign.ca) that has downloads for airmedia clients and I'm not sure if that's used at all anymore
+2020-08-06T14:16:33  <Justin_o> gtirloni: Is it easy to resurrect if we take it down now and need it again later?
+2020-08-06T14:16:51  <clown> gtirloni:  it might be good to ask Bert
+2020-08-06T14:16:52  <Justin_o> Bert would probably be the best person to ask about that, but I'm not sure if he's reachable at the moment
+2020-08-06T14:17:06  * clown great minds…
+2020-08-06T14:17:14  <Justin_o> clown: you beat me to it again
+2020-08-06T14:17:36  <clown> Justin_o:  :-)
+2020-08-06T14:18:53  <gtirloni> no worries, I can shoot him an email and whenever he replies we'll know.. there's no rush
+2020-08-06T14:18:56  <gtirloni> thanks :)
+2020-08-06T14:19:12  <clown> welcome, gtirloni
+2020-08-06T15:02:51  <Justin_o> Bosmon: I left some logs I captured related to the fluid.focus issue for upgrading jQuery on the issue https://issues.fluidproject.org/browse/FLUID-6538
+2020-08-06T15:03:47  <Justin_o> It's maybe not the best comparison for the logs between 3.3.1 and 3.5.1 because of the changes between the versions. However, one thing that I'm noticing that is different is that each underlying focus is triggered twice in a row in 3.5.1
+2020-08-06T15:03:54  <Bosmon> Justin_o - thanks, very helpful
+2020-08-06T15:03:58  <Justin_o> assuming I got the logs correct
+2020-08-06T15:06:06  <Bosmon> Justin_o - so which is the first failing test, is it "Selects first item when container is focussed by default" ?
+2020-08-06T15:06:40  <Justin_o> Bosmon: yes, it fails on the fourth assertion of that test
+2020-08-06T15:06:49  <Justin_o> "A selected element should have the selected class."
+2020-08-06T15:07:12  <Justin_o> I guess I forgot to log which element actually has focus from that test :(
+2020-08-06T15:07:39  <Bosmon> Justin_o - yes, it would also be helpful to log the point in the test at which it actually tries to make the assertion
+2020-08-06T15:08:06  <Bosmon> I'm guessing that the new status is that the browser is still working its way through the asynchronous sequence of focus changing actions
+2020-08-06T15:10:24  <Justin_o> Bosmon: so the assertion is testing menuItem0. It is testing if the "selected" class has been added to it; which is returning false.
+2020-08-06T15:10:35  <Bosmon> Justin_o - right
+2020-08-06T15:10:44  <Bosmon> But I imagine that the class *will* be added to it very shortly ...
+2020-08-06T15:11:05  <Justin_o> Bosmon: I'm going to rerun this and update the log in the JIRA. It looks like the assertion is being logged last, which is a bit strange.
+2020-08-06T15:11:22  <Justin_o> I guess I should also log where that class is set.
+2020-08-06T15:11:44  <Bosmon> If we're being modernistic about this, it may turn out that the appropriate fix might be something like having fluid.focus return a promise
+2020-08-06T15:13:34  <Bosmon> It will mean rewriting a fair number of tests, but we probably don't have an alternative given this pretty significant change in behaviour
+2020-08-06T15:14:42  <Bosmon> I guess the alternative is to move over to our focus tests being "fakes" that no longer make any attempt to correlate with the browser's actual focus state
+2020-08-06T15:15:01  <Bosmon> And so, indeed, just fire "triggerHandler" as per one of our attempts
+2020-08-06T15:15:35  <Bosmon> There's a small upside to this in that it becomes easier for devs to run the tests locally without the browser having to really hog the global focus : P
+2020-08-06T15:15:49  <Bosmon> On the other hand it seems to distastefully degrade the accuracy of our tests
+2020-08-06T15:16:02  <Justin_o> Bosmon: ah that's a really good point about focus being required for the tests
+2020-08-06T15:16:23  <Justin_o> I typically just use vagrant with testem because of that
+2020-08-06T15:17:07  <Justin_o> Bosmon: I was wondering about the accuracy of the test if we are manually triggering the focus handlers in addition to calling focus anyways
+2020-08-06T15:17:17  <Justin_o> as is done in fluid-focus
+2020-08-06T15:18:24  <Justin_o> In that I suppose it's still possible for there to be a real issue with receiving the event via the focus but would be glossed over by the fact that we manually triggered the handler
+2020-08-06T15:18:46  <Justin_o> or maybe I'm missing something with the fluid.focus workflwo
+2020-08-06T15:20:44  <Bosmon> Justin_o - well, if we moved over to this new model we could axe all the focus handlers
+2020-08-06T15:20:58  <Bosmon> The advantage of this model I think is that it sets us up a bit better for a jQuery-less world
+2020-08-06T15:21:08  <Justin_o> Bosmon: the promise based model?
+2020-08-06T15:21:31  <Bosmon> The contract of fluid.focus becomes - "Trigger a 'real' focus action, by whatever means is appropriate, and resolve the promise once you have verified that the focus change has been fully actioned"
+2020-08-06T15:21:54  <Justin_o> Bosmon: well that does seem better
+2020-08-06T15:22:16  <Bosmon> It means that all tests that attempt to manipulate focus have to become asynchronous, but I guess it was largely a result of some kind of uncomprehended sleaze that we managed to get away with not making them asynchronous anyway
+2020-08-06T15:22:38  <Justin_o> Bosmon: is there any reason not to just listen to the actual focus event? is it because of prioritization?
+2020-08-06T15:22:49  <Bosmon> Given as I understand it, the focus change pipeline has been asynchronous in the real browsers for many years
+2020-08-06T15:23:26  <Justin_o> Bosmon: yes, sounds like that's the case. At least judging by commit logs in our code and jquery
+2020-08-06T15:23:52  <Bosmon> So we were triggering "a thing" synchronously, which the tests as well as some parts of the impl were listening to, but which didn't actually correspond to the focus being changed in the browser
+2020-08-06T15:24:05  <gtirloni> Justin_o: I think this should be in the fluidproject org in GitHub, any objections? https://github.com/inclusive-design/website-rsf  --- https://rsf.fluidproject.org
+2020-08-06T15:25:04  <Bosmon> Justin_o - "is there any reason not to just listen to the actual focus event? is it because of prioritization?" - well, I imagine fluid.focus would indeed listen to the actual focus event, yes, but it would need to make sure that it didn't resolve before all other handlers to the focus event had fired
+2020-08-06T15:25:09  <Justin_o> gtirloni: I'm often confused about what is put which org. so no real objections from me. maybe Bosmon has some thoughts, that's  related to his past work I think.
+2020-08-06T15:25:24  <Bosmon> In a very simple impl we might just hack this by kicking off the notification from a fluid.invokeLater()
+2020-08-06T15:26:21  <Justin_o> Bosmon: from what I understand, jQuery events just fire in whatever order they were added. So it would be possible for fluid-focus to fire after some other focus event.
+2020-08-06T15:26:25  <Justin_o> focus handler
+2020-08-06T15:28:49  <Bosmon> Justin_o - seems dubious - I can't see how we could expect to always guarantee we were the last handler
+2020-08-06T15:31:49  <Justin_o> Bosmon: yes, we can't really guarantee order with jQuery events
+2020-08-06T15:52:38  <Justin_o> Bosmon: I've updated the the 3.5.1 related logs on the JIRA. I added console logs for the test related to the assertion and the blur and focus handlers that add and remove the "selected" class. The assertion does run last, but just before that, the blur handler is triggered and removes the class
+2020-08-06T15:53:29  <Bosmon> Justin_o - I wonder what triggers the blur handler ...
+2020-08-06T15:54:01  <Justin_o> Bosmon: also related to the static publishing. Is there something in particular you wanted to talk about related that. Just want to make sure I have something to add, and if gmoss could help too.
+2020-08-06T15:54:28  <Bosmon> Justin_o - I guess I just wanted to hear about how the pipeline works currently, and what your dreams are for it
+2020-08-06T15:54:52  <Justin_o> Bosmon: okay cool.. I certainly have dreams :)
+2020-08-06T15:56:43  <Justin_o> Bosmon: the current setup of storytelling is dynamic, and gmoss would be better to talk about that aspect. I can talk about some ideas that I had for making the published stories more static. And may be similar to the setup that wecount uses for publishing its site statically.
+2020-08-06T16:04:14  <gmoss> Bosmon Justin_o: indeed, the site is currently dynamic, stories are written to CouchDB at publish time and retrieved and rendered into the View page on every load. Using an SSG to store the stories is an intriguing option, one we've tossed around here and there over the last three years. I'll want to read through the thread on the mailing list before opining any further :P
+2020-08-06T20:22:14  <Justin_o> Bosmon: related to GitHub Actions, it might make sense to have them run on a schedule https://docs.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events
+2020-08-06T20:22:21  <Justin_o> at least for those that pull in the open data

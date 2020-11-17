@@ -1,0 +1,534 @@
+2019-03-26T00:18:22  *** colinclark <colinclark!~colinclar@192.0.159.124> has joined #fluid-work
+2019-03-26T02:11:09  *** colinclark <colinclark!~colinclar@192.0.159.124> has quit IRC (Quit: colinclark)
+2019-03-26T02:11:32  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-work
+2019-03-26T02:22:07  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-03-26T03:56:31  *** clown <clown!~clown@ckvlon1747w-140-01-65-94-140-209.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2019-03-26T03:59:54  *** clown <clown!~clown@ckvlon1747w-140-01-65-94-140-209.dsl.bell.ca> has joined #fluid-work
+2019-03-26T04:05:28  *** clown <clown!~clown@ckvlon1747w-140-01-65-94-140-209.dsl.bell.ca> has quit IRC (Ping timeout: 245 seconds)
+2019-03-26T06:05:12  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-03-26T07:11:13  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:5407:1cf:e78b:7500> has quit IRC (Remote host closed the connection)
+2019-03-26T07:57:55  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 255 seconds)
+2019-03-26T08:32:03  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-03-26T10:28:48  <javjarfer[m]> Hi good morning Bosmon
+2019-03-26T10:29:27  <javjarfer[m]> Do you have time for a issue that I'm having since yesterday? It may be related with https://issues.gpii.net/browse/GPII-3784
+2019-03-26T10:35:50  <Bosmon> javjarfer[m] - sorry, rather busy with the CRITICAL PRODUCTION ISSUE this morning : P
+2019-03-26T10:36:14  <Bosmon> What do you think of cindyli's fix?
+2019-03-26T10:36:35  <Bosmon> I have to say I still didn't fully understand why the tail path segment should be a top level filter in its own right
+2019-03-26T10:36:44  <Bosmon> Which is one of the various reasons I left the fix on the table for now
+2019-03-26T10:49:12  <javjarfer[m]> Bosmon: of course, that sounds more urgent xd. I can try the fix in my branch to see if that solves this issue
+2019-03-26T10:49:33  <javjarfer[m]> Bosmon: I can take a look to that too, I haven't looked the fix into that detail
+2019-03-26T11:08:02  *** Danail_Dido <Danail_Dido!~Karadalie@109.120.246.31> has joined #fluid-work
+2019-03-26T11:21:29  <Bosmon> Hi there stegru, sgithens, I'll have to punt on the meeting in 10 mins since I am busy debugging the auto-key-in problem
+2019-03-26T11:21:50  <stegru> fine with me, Bosmon
+2019-03-26T11:22:33  <Bosmon> My findings so far - strongly suspect that the problem is actually nothing to do with autokeyin at all, but some kind of standing race condition that has always been there in the gpii-app code
+2019-03-26T11:22:51  <Bosmon> So there is not really any way we can push the autologin to be "late enough" by just delaying longer
+2019-03-26T11:22:53  <stegru> ok
+2019-03-26T11:23:23  <Bosmon> So far what I observe is that everything on the main process model is correct, but somehow the model on the renderer side has got out of step and believes noone is logged on
+2019-03-26T11:23:43  <Bosmon> So this seems like some kind of cross-process race mediated presumably by some kind of IPC blunder
+2019-03-26T11:23:56  <Bosmon> Right now I can't think this could happen except through IPC messages being delivered out of order, which is presumably impossible
+2019-03-26T11:29:17  <sgithens> Be there in like 5 mins
+2019-03-26T11:34:33  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-03-26T11:35:06  <sgithens> Actually, I don't see where we are meeting on the calendar entry
+2019-03-26T11:35:13  <cindyli> Bosmon, sgithens, stegru, ready to meet? skype?
+2019-03-26T11:35:25  <sgithens> for sure
+2019-03-26T11:35:27  <Bosmon> cindyli - I'll have to bail today
+2019-03-26T11:35:31  <cindyli> javi is not online
+2019-03-26T11:35:33  <Bosmon> I'm busy debugging the autokeyin issue
+2019-03-26T11:35:45  <sgithens> should we move to tomorrow or thursday?
+2019-03-26T11:35:46  <cindyli> ok. shall we move it to tomorrow morning?
+2019-03-26T11:35:57  <Bosmon> Could do
+2019-03-26T11:36:00  <Bosmon> I might still be busy tomorrow : P
+2019-03-26T11:36:13  <cindyli> thursday?
+2019-03-26T11:36:20  <Bosmon> Well who knows : P
+2019-03-26T11:36:26  <sgithens> ...
+2019-03-26T11:36:36  <sgithens> let's tentatively try for thursday?
+2019-03-26T11:37:00  <sgithens> once the race condition is worked out, this is to actually talk about the NOVA keying in and out right?
+2019-03-26T11:37:20  <sgithens> so I'm assuming it sort of next-ish in priority once thats worked out?
+2019-03-26T11:37:50  <cindyli> let's try thursday then.
+2019-03-26T11:37:57  <sgithens> that sounds great
+2019-03-26T11:38:16  <sgithens> cindyli, thanks for all your review so far.  I'll use this time to go work on your comments :)
+2019-03-26T11:39:52  <cindyli> thank, sgithens. i haven't finished reviewing this huge pull request. you did lots of work!!!
+2019-03-26T11:41:01  <cindyli> heading to office. see you later
+2019-03-26T11:42:37  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-03-26T12:02:56  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:b9ca:6447:2032:cabd> has joined #fluid-work
+2019-03-26T12:05:16  <jhernandez> Bosmon: morning
+2019-03-26T12:05:35  <jhernandez> I see that you're with "THE THING"
+2019-03-26T12:05:37  <Bosmon> jhernandez - ENSIGUEZ RODRIGUEZ!
+2019-03-26T12:05:44  <Bosmon> Yes
+2019-03-26T12:05:48  <Bosmon> We are in room ..... TWO
+2019-03-26T12:05:51  <jhernandez> ohh
+2019-03-26T12:05:57  <jhernandez> heading there
+2019-03-26T12:07:35  <jhernandez> sorry, this morning had to do some workpaper in the commune
+2019-03-26T12:08:55  <jhernandez> and just got home
+2019-03-26T12:18:23  <jhernandez> Bosmon: shall we mention that last resort shorcut?
+2019-03-26T12:18:41  <Bosmon> jhernandez - I wasn't aware of a last resort shortcut
+2019-03-26T12:18:42  <jhernandez> a setTimeout in the right spot
+2019-03-26T12:18:48  <Bosmon> jhernandez - it doesn't work
+2019-03-26T12:18:58  <jhernandez> it does for me
+2019-03-26T12:19:02  <Danail_Dido> It will work, if its long enough :-)
+2019-03-26T12:19:11  <Bosmon> I see
+2019-03-26T12:19:16  <Bosmon> Where do you put it, and how long does it need to be
+2019-03-26T12:19:31  <jhernandez> 3.5 seconds was my best guess
+2019-03-26T12:19:33  <Danail_Dido> I managed to brake it for me too, just put a bushit .bat file that copies some files on boot.
+2019-03-26T12:19:50  <jhernandez> which isn't terrible if you're logging into windows
+2019-03-26T12:19:53  <Danail_Dido> 3~5 seconds if the Windows its not too broken, way longer if it is.
+2019-03-26T12:20:09  <Danail_Dido> My vote is for 5s.
+2019-03-26T12:20:45  <jhernandez> https://github.com/GPII/windows/pull/155/files#diff-740552bcf8bd9d31886138b241b1ffb6R53
+2019-03-26T12:20:51  <Bosmon> Fine ....
+2019-03-26T12:21:12  <jhernandez> if you wrap that with a setTImeout, it works all the time here
+2019-03-26T12:22:00  <jhernandez> not sure if there's a better place for it
+2019-03-26T12:22:03  <jhernandez> stegru: ?
+2019-03-26T12:23:27  <stegru> yes?
+2019-03-26T12:23:49  <jhernandez> if we decide to use the setTimeout bullet
+2019-03-26T12:24:13  <jhernandez> where would you say is the best place for it?
+2019-03-26T12:24:19  <stegru> that place
+2019-03-26T12:24:23  <jhernandez> I added it in the link above
+2019-03-26T12:24:24  <jhernandez> ok ok
+2019-03-26T12:24:26  <jhernandez> thanks
+2019-03-26T12:24:57  <stegru> ok i have a pie to eat
+2019-03-26T12:25:20  <jhernandez> Bosmon: and btw, yesterday I added a onQssReady event, I got it propagated up in the app and added as one of the onPSPPrerequisitesReady
+2019-03-26T12:25:50  <Bosmon> jhernandez - thanks
+2019-03-26T12:25:58  <Bosmon> Unfortunately it all appears to be a sea of red herrings
+2019-03-26T12:26:11  <jhernandez> but that event is being fired way too late and make things not to start up correctly
+2019-03-26T12:26:14  <Bosmon> As you said yesterday, this is a race condition that has probably been with us right since the beginning
+2019-03-26T12:26:19  <jhernandez> yup
+2019-03-26T12:26:28  <jhernandez> :(
+2019-03-26T12:27:48  <Danail_Dido> @stegru, what kind of pie? Shoot me a picture!
+2019-03-26T12:28:03  <Danail_Dido> I still haven't eat today (and its almost 3pm) :-(
+2019-03-26T12:28:16  <jhernandez> stegru: eat it up!
+2019-03-26T12:28:18  *** michelled <michelled!~Adium@192.0.151.7> has joined #fluid-work
+2019-03-26T12:31:05  <Danail_Dido> Good job @Bosmon you almost made Gregg to understand why its working that way :-D
+2019-03-26T12:31:17  <stegru> sorry, too late - it's gone
+2019-03-26T12:31:35  <Danail_Dido> @stegru, Oh, I'm dissapointed... and hungry!
+2019-03-26T12:31:44  <stegru> https://www.waterfields-bakers.co.uk/category/our-products/savouries/item/potato-and-meatpie
+2019-03-26T12:31:56  <stegru> exactly like that
+2019-03-26T12:32:19  <Danail_Dido> @stegru, mmm this looks tasty!
+2019-03-26T12:32:26  <javjarfer[m]> oh comen on, stegru , haven't eat yet too
+2019-03-26T12:32:55  <stegru> you all need to get a good wife, who brings them home for you :D
+2019-03-26T12:33:02  <Danail_Dido> @javjarfer[m], me too, me too!
+2019-03-26T12:33:11  <Danail_Dido> Hehehe, @stegru you just killed us!
+2019-03-26T12:34:08  <Danail_Dido> @Bosmon, can we use the keyout for now?
+2019-03-26T12:34:48  <jhernandez> "stegru: you all need to get a good wife, who brings them home for you :D"
+2019-03-26T12:35:18  <Bosmon> Danail_Dido - use the kyout for what?
+2019-03-26T12:35:20  <jhernandez> there's also uber food
+2019-03-26T12:35:42  <stegru> true, and it's probably cheaper - but I don't think we have that around here
+2019-03-26T12:35:47  <Danail_Dido> Yeah, @stegru is making fun of all of us what don't have a good wife (or wife at all) ;-)
+2019-03-26T12:37:32  <Danail_Dido> @Bosmon, I'm not sure if its OK for the app itself to look into a files in the Windows's system folders.
+2019-03-26T12:37:55  <Bosmon> Danail_Dido - well sure
+2019-03-26T12:38:03  <Bosmon> But I don't feel we have any more time to fix the issue better
+2019-03-26T12:38:52  <Danail_Dido> Sure, sure :-). And my question was if we can just use the keyout call in the reset instead.
+2019-03-26T12:38:59  <Bosmon> But it is not in the system folder, it's in the user's area
+2019-03-26T12:39:22  <Danail_Dido> They are using the same call, just different data, "reset" for the one "keyout" for the other.
+2019-03-26T12:39:41  <Bosmon> Danail_Dido - not sure what the question is there
+2019-03-26T12:40:25  <Danail_Dido> Do you think if will work (and its appropriate) to send the "keyout" call on the reset button?
+2019-03-26T12:40:45  <Bosmon> Danail_Dido - not really, since we want the user to stay keyed in
+2019-03-26T12:41:09  <Danail_Dido> Ohhh, yeah, yeah!
+2019-03-26T12:41:36  <javjarfer[m]> stegru: I didn't wanted but I'm finally using justeat because of you (like uber foods here)
+2019-03-26T12:42:04  <stegru> haha why me?
+2019-03-26T12:42:18  <javjarfer[m]> because I want pie now
+2019-03-26T12:44:44  <stegru> damn, uber can't feed me: https://i.imgur.com/ZWHThTQ.png
+2019-03-26T12:45:07  <Danail_Dido> I want pie as well, but there is no way to even order one... there is no place that sells pies in my city (or even county) :-(
+2019-03-26T12:45:30  <javjarfer[m]> stegru: so close...
+2019-03-26T12:45:36  <jhernandez> stegru: https://i.imgur.com/b0DFaUQ.jpg
+2019-03-26T12:45:38  <stegru> so what do you eat, Danail_Dido?
+2019-03-26T12:45:49  <javjarfer[m]> I'm not being able to find pies in justeat btw, so thanks again stegru
+2019-03-26T12:47:47  <Danail_Dido> @stegru, I guess I will go grab a hotdog or something (there is a hotdog place just below my building).
+2019-03-26T12:48:20  <Danail_Dido> And for the pies they are not popular in my country, so I need to force my mom (or my sister) to bake me one ;-)
+2019-03-26T12:48:29  <stegru> use my account, javjarfer[m]: https://i.imgur.com/BA8bmF8.png
+2019-03-26T12:48:35  <Danail_Dido> Well, or maybe @stegru 's amazing wife can bake me one too :-P
+2019-03-26T12:48:50  <stegru> heh
+2019-03-26T12:48:57  <javjarfer[m]> stegru: really?
+2019-03-26T12:49:40  <javjarfer[m]> okay, found it, no just eat tho, need to call... going back to 1995
+2019-03-26T12:50:15  <stegru> ugh, i want to eat - not talk
+2019-03-26T12:50:54  <Danail_Dido> Well @stegru, that's good for you, we are forced to talk because we all are in the call except for you :-P
+2019-03-26T13:05:14  *** cindyli <cindyli!Adium@nat/ocadu/x-dbuaqltadbxxzrxx> has joined #fluid-work
+2019-03-26T13:05:25  *** Danail_Dido <Danail_Dido!~Karadalie@109.120.246.31> has quit IRC (Read error: Connection reset by peer)
+2019-03-26T13:08:26  <jhernandez> Bosmon: btw - I'm seeing that after applying the setTimeout, now I can see the "wait" spinning morphic when auto-keying-in, which is a "good sign"
+2019-03-26T13:08:55  <jhernandez> without the timeout I never get the wait dialog
+2019-03-26T13:09:22  <Bosmon> jhernandez - well that's something : P
+2019-03-26T13:09:42  <Bosmon> cindyli - I wonder if you could move this to the top of your queue? https://issues.gpii.net/browse/GPII-3828
+2019-03-26T13:09:48  <Bosmon> It arose in our meeting just now with Gregg
+2019-03-26T13:09:57  <jhernandez> that confirms that, yes, it's too early for gpii-app to notice about core messages
+2019-03-26T13:10:18  <cindyli> ok
+2019-03-26T13:10:36  <Bosmon> kris_HA and Danail_Dido will implement a hack for now which reads the reset to standard file directly
+2019-03-26T13:10:40  <jhernandez> and I guess that this also affects the reset to STD functionality too
+2019-03-26T13:11:29  <jhernandez> the system resets to std, but the renderer process isn't noticing such model update
+2019-03-26T13:12:42  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-03-26T13:13:06  <Bosmon> jhernandez - so my thinking is that the main QSS renderer process just takes much longer to actually be ready than we know
+2019-03-26T13:13:22  <Bosmon> And this is also suggested by that weird state we sometimes see it in when its button images haven't loaded
+2019-03-26T13:13:47  <jhernandez> nice guess, yes
+2019-03-26T13:14:05  <jhernandez> I've seen that thing too, yes
+2019-03-26T13:15:11  <jhernandez> so, FYI, my test last night was to wait for gpii.app.qss's onDialogReady event
+2019-03-26T13:15:54  <jhernandez> https://github.com/GPII/gpii-app/blob/master/src/main/dialogs/basic/dialog.js#L76
+2019-03-26T13:16:03  <Bosmon> Yes, I think even this will be too early
+2019-03-26T13:16:12  <jhernandez> in fact it's too late
+2019-03-26T13:16:17  <Bosmon> ?!
+2019-03-26T13:16:20  <jhernandez> xDDD
+2019-03-26T13:16:21  <Bosmon> What do you mean, too late
+2019-03-26T13:17:00  <jhernandez> I propagated such event all the way up through the app's main component
+2019-03-26T13:17:54  <jhernandez> and added to the bottom  here, https://github.com/GPII/gpii-app/blob/master/src/main/app.js#L353
+2019-03-26T13:18:05  <Bosmon> Yes
+2019-03-26T13:18:07  <jhernandez> and I end up with the tray not showing
+2019-03-26T13:18:24  <jhernandez> *ended up
+2019-03-26T13:18:32  <Bosmon> Well, how did you propagate it
+2019-03-26T13:19:01  <Bosmon> Anyway yes, you can't delaly THIS event on that
+2019-03-26T13:19:10  <jhernandez> I created an onQssReeady event that was being fired when onDialogReady is fired
+2019-03-26T13:19:20  <Bosmon> because this is the event that times the creation of all the dialogs
+2019-03-26T13:19:26  <jhernandez> exactly
+2019-03-26T13:19:27  <Bosmon> You could delay my new "indicative" event on this
+2019-03-26T13:19:32  <Bosmon> But as I say, I think even this will be too early
+2019-03-26T13:20:29  <jhernandez> hmm, I didn't tested as part of your indicative event
+2019-03-26T13:20:47  <jhernandez> *didn't test it
+2019-03-26T13:20:59  <Bosmon> Oh no, you're right
+2019-03-26T13:21:05  <Bosmon> They have already implemented what we want
+2019-03-26T13:21:06  <Bosmon> This is a help
+2019-03-26T13:21:25  <Bosmon> I was going to say, "the only surefire way to wait to be ready is to lob an IPC event back from the renderer process when it is done"
+2019-03-26T13:21:30  <Bosmon> But this is exactly what they have done
+2019-03-26T13:22:06  <Bosmon> What's hilarious is that this event is currently only used to make test cases run reliably :)
+2019-03-26T13:22:16  <jhernandez> ha!
+2019-03-26T13:22:35  <simonjb> maybe somthing is needed that is both "indicative" and "meaningful"?
+2019-03-26T13:22:37  <Bosmon> OK, so this suggests a good line of improvement for the "indicative fix"
+2019-03-26T13:23:05  <Bosmon> simonjb - if only they had such profound thinking available in the Commons today :)
+2019-03-26T13:23:20  *** clown <clown!~clown@ckvlon1747w-140-01-65-94-140-209.dsl.bell.ca> has joined #fluid-work
+2019-03-26T13:24:31  *** clown <clown!~clown@ckvlon1747w-140-01-65-94-140-209.dsl.bell.ca> has quit IRC (Client Quit)
+2019-03-26T13:25:11  *** clown <clown!~clown@ckvlon1747w-140-01-65-94-140-209.dsl.bell.ca> has joined #fluid-work
+2019-03-26T13:27:10  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has joined #fluid-work
+2019-03-26T13:45:06  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-work
+2019-03-26T13:46:39  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has joined #fluid-work
+2019-03-26T13:48:23  <Bosmon> jhernandez - this is looking more plausible now
+2019-03-26T13:48:44  <Bosmon> The time between overall startup and attempting to key in the user to the QSS is a full 20 seconds
+2019-03-26T14:05:29  <jhernandez> wow, 20 secs
+2019-03-26T14:05:49  <jhernandez> Bosmon: btw, this is how I propagated the event https://pastebin.com/RzQAbsf0
+2019-03-26T14:06:31  <Bosmon> jhernandez - cheers, yes
+2019-03-26T14:06:34  <jhernandez> ok ok
+2019-03-26T14:06:36  <jhernandez> hmm
+2019-03-26T14:06:38  <Bosmon> So my improved fix has half-worked
+2019-03-26T14:06:50  <Bosmon> Now I am in the state where the Save button is correct but the state of the button isn't
+2019-03-26T14:06:57  <jhernandez> haha
+2019-03-26T14:06:59  <jhernandez> almost there!
+2019-03-26T14:07:01  <Bosmon> So we need to do the same thing all over again for settings messages
+2019-03-26T14:07:22  <cindyli> Bosmon: regarding https://issues.gpii.net/browse/GPII-3828, if resetAtStart flag is false meaning the reset to standard is not performed at the system start, do you think PSP channel should still send back default values from the reset to standard file?
+2019-03-26T14:07:39  <Bosmon> cindyli - yes, it should
+2019-03-26T14:07:58  <Bosmon> They are still the defaults that will be enacted at any time where there actually *is* a reset to standard
+2019-03-26T14:08:12  <cindyli> ok, all empty payloads should be replaced by these default values, right?
+2019-03-26T14:08:38  <cindyli> which usually happens when noUser keys back in
+2019-03-26T14:08:43  <Bosmon> cindyli - oh, I see...
+2019-03-26T14:09:01  <Bosmon> cindyli - ok, so remind me on what basis we send an empty payload after reset to standard?
+2019-03-26T14:09:12  <Bosmon> That is ..... why? : P
+2019-03-26T14:09:35  <cindyli> when reset completes and noUser keys back in, empty payload is sent back
+2019-03-26T14:18:39  <cindyli> i feel the default settings should only be sent back when these settings do get applied. it includes these cases:
+2019-03-26T14:19:31  <cindyli> 1. if resetAtStart === true, default settings are applied at the system start, when noUsers keys in, defaults are sent to gpii-app
+2019-03-26T14:20:15  <cindyli> 2. when a reset request completes and defaults are applied, noUsers keys in and defaults are sent to gpii-app
+2019-03-26T14:21:04  <cindyli> in other cases, for example, resetAtStart === false, default settings are NOT applied at the system start, the defaults probably should not be sent out
+2019-03-26T14:22:03  <cindyli> Bosmon: would love to hear your thoughts
+2019-03-26T14:22:44  <Bosmon> cindyli yes, this sounds correct
+2019-03-26T14:22:59  <Bosmon> But WHY do we send an empty payload when the reset completes and noUser keys back in?
+2019-03-26T14:23:58  <cindyli> i believe it's 'cuz the session for noUser is initialized
+2019-03-26T14:24:26  <cindyli> which triggers the model relay from lifecycle manager session component to psp channel component
+2019-03-26T14:25:27  <jhernandez> and because we decided that gpii-app should use gpii-app's defaults rather that whatever was applied at core level after receiving an empty payload? just speculating ... leaving with dogz for a walk :)
+2019-03-26T14:25:33  <cindyli> i will have to figure out how to send back the defaults without messing up session.model for noUser
+2019-03-26T14:25:54  <Bosmon> cindyli - you can just write all the material in sessionToPSP
+2019-03-26T14:26:08  <Bosmon> It's effectively a relay rule which relays out of nothing into something
+2019-03-26T14:26:57  <cindyli> the problem is at the system start, if defaults are not applied, we should still send back the empty payload, right
+2019-03-26T14:27:00  <cindyli> ?
+2019-03-26T14:27:56  <cindyli> in sessionToPSP, i have no way to determine if defaults are applied or not without info from lifecycle manager
+2019-03-26T14:56:45  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-03-26T15:00:08  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-kyewjbkkiamtgwzp> has joined #fluid-work
+2019-03-26T15:02:32  <Bosmon> cindyli - but you can get info from lifecycleManager
+2019-03-26T15:02:41  <Bosmon> jhernandez - ok, I have updated my INDICATIVE FIX
+2019-03-26T15:02:47  <Bosmon> Which has been tested by logging in TEN TIMES!
+2019-03-26T15:03:14  <cindyli> congrats!!
+2019-03-26T15:05:03  <cindyli> Bosmon: reset to defaults is performed by restoreSession that doesn't have a model relay with psp channel. you must have some ideas of how to get info from lifecycleManager when defaults are applied
+2019-03-26T15:09:32  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-03-26T15:10:13  <cindyli> Bosmon: i think i probably should establish a one way model relay from restoreSession to pspChannel, rather than a round trip. trying...
+2019-03-26T15:15:56  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-26T15:22:06  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-26T15:30:12  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-kyewjbkkiamtgwzp> has quit IRC (Remote host closed the connection)
+2019-03-26T15:30:40  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-dzcenntqoktfbklc> has joined #fluid-work
+2019-03-26T15:32:22  *** cindyli1 <cindyli1!~Adium@205.211.168.105> has joined #fluid-work
+2019-03-26T15:33:04  *** cindyli <cindyli!Adium@nat/ocadu/x-dbuaqltadbxxzrxx> has quit IRC (Ping timeout: 250 seconds)
+2019-03-26T15:38:50  <javjarfer[m]> Bosmon: I can confirm that the issue in this new pulls wasn't related with the transformations fix
+2019-03-26T15:39:00  *** simonjb <simonjb!~simonjb@205.211.168.101> has joined #fluid-work
+2019-03-26T15:42:16  <javjarfer[m]> it's a really looks like a really weird behavior, pulls are almost ready, but they will be stalled until that behavior could be traced, I moved to something else until we can talk about it, thanks you!
+2019-03-26T15:43:28  *** simonjb <simonjb!~simonjb@205.211.168.101> has quit IRC (Ping timeout: 250 seconds)
+2019-03-26T15:46:16  *** simonjb <simonjb!~simonjb@205.211.168.101> has joined #fluid-work
+2019-03-26T15:50:53  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-03-26T16:00:36  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-work
+2019-03-26T16:00:55  *** simonjb <simonjb!~simonjb@205.211.168.101> has quit IRC (Ping timeout: 246 seconds)
+2019-03-26T16:02:44  *** jhung is now known as jhung_away
+2019-03-26T16:03:14  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-dzcenntqoktfbklc> has quit IRC (Remote host closed the connection)
+2019-03-26T16:03:23  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-xmtgiwtkraftivao> has joined #fluid-work
+2019-03-26T16:03:57  <jhernandez> Bosmon: DIEZ VECES!!!!!!
+2019-03-26T16:04:00  *** simonjb <simonjb!~simonjb@205.211.168.101> has joined #fluid-work
+2019-03-26T16:04:00  <jhernandez> :)
+2019-03-26T16:04:09  <jhernandez> ok, pulling it now
+2019-03-26T16:10:34  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-03-26T16:11:08  <jhernandez> Bosmon: this now looks way better
+2019-03-26T16:11:20  <jhernandez> a lot
+2019-03-26T16:11:27  <Bosmon> Cool
+2019-03-26T16:11:30  <Bosmon> In terms of "a lot"
+2019-03-26T16:11:33  <Bosmon> Have you seen it fail yet?
+2019-03-26T16:12:22  <jhernandez> not yet
+2019-03-26T16:12:44  <jhernandez> but I'll keep trying a bit more before calling it "a fix"!!
+2019-03-26T16:16:23  <jhernandez> interesting that I'm not seeing the morphic spinner when auto-keying-in now - which I think it's okay as long as the qss has the right values
+2019-03-26T16:16:32  <Bosmon> I see the spinner sometimes
+2019-03-26T16:16:38  <jhernandez> okay
+2019-03-26T16:16:56  <Bosmon> But why does Gregg talk about it being "blue" when it is green?
+2019-03-26T16:17:01  <jhernandez> there might be things in the renderer side that aren't yet there
+2019-03-26T16:17:17  <jhernandez> but I guess it's fine
+2019-03-26T16:17:28  <jhernandez> it is green, maybe he's color blind ?
+2019-03-26T16:17:37  <jhernandez> :P
+2019-03-26T16:24:43  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-03-26T16:24:58  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has joined #fluid-work
+2019-03-26T16:29:12  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has quit IRC (Ping timeout: 245 seconds)
+2019-03-26T16:32:59  *** jhung_away <jhung_away!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-03-26T16:40:46  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-26T16:52:49  <jhernandez> heh, sometimes I'm still getting the greyed-out save button
+2019-03-26T16:52:54  <jhernandez> Bosmon: ^
+2019-03-26T16:53:20  <jhernandez> but other than that, the qss is always showing the current settings
+2019-03-26T16:55:06  *** cindyli1 is now known as cindyli
+2019-03-26T16:55:58  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 250 seconds)
+2019-03-26T16:56:22  *** avtar <avtar!avtar@nat/ocadu/x-gevgkruhwulpvond> has joined #fluid-work
+2019-03-26T16:56:54  <jhernandez> surprisingly, now I can't get the "save" button to become non-grey
+2019-03-26T16:59:00  <Bosmon> jhernandez - that's odd
+2019-03-26T16:59:30  <Bosmon> And sad
+2019-03-26T16:59:46  <Bosmon> That was the bit I fixed first......
+2019-03-26T17:02:06  <jhernandez> ok, let me clear up things and re-test
+2019-03-26T17:02:37  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-xmtgiwtkraftivao> has quit IRC (Remote host closed the connection)
+2019-03-26T17:03:06  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-tprmioctvzzymwhm> has joined #fluid-work
+2019-03-26T17:03:30  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-03-26T17:10:10  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-tprmioctvzzymwhm> has quit IRC (Remote host closed the connection)
+2019-03-26T17:10:20  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-kkxjjcnfwxpvvjpp> has joined #fluid-work
+2019-03-26T17:12:47  <jhernandez> looks like I'm on a roll now - 4 success in a row - then ... 3 greys ... 1 success ... 2 greys ... 1 success ...
+2019-03-26T17:13:00  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-xpfljfkrnnvslopu> has joined #fluid-work
+2019-03-26T17:13:32  <Bosmon> .....
+2019-03-26T17:13:58  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-kkxjjcnfwxpvvjpp> has quit IRC (Remote host closed the connection)
+2019-03-26T17:14:27  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-brqtmvfpskrkjkbz> has joined #fluid-work
+2019-03-26T17:15:34  <Bosmon> jhernandez - it doesn't seem possible : P
+2019-03-26T17:15:43  <Bosmon> And how about the green "dirty" markers on the settings buttons?
+2019-03-26T17:15:50  <jhernandez> they're there
+2019-03-26T17:15:50  <Bosmon> Are they going in step with the grey save button?
+2019-03-26T17:15:59  <Bosmon> ?!?!
+2019-03-26T17:16:02  <Bosmon> They are not in step?
+2019-03-26T17:16:45  <jhernandez> nope, seems that the save button is on his "thread" - the green indicators are there, but save remains green
+2019-03-26T17:16:50  <jhernandez> sorry, remains grey
+2019-03-26T17:17:42  <Bosmon> jhernandez - ok can you pop into the CHrome inspector and look at the tree for me
+2019-03-26T17:18:00  <jhernandez> sure
+2019-03-26T17:18:36  <jhernandez> the qss tree? do you want a skype call?
+2019-03-26T17:19:15  <Bosmon> Wait a sec
+2019-03-26T17:19:20  <Bosmon> Just tracing through this again....
+2019-03-26T17:19:52  <jhernandez> sure
+2019-03-26T17:22:33  *** cindyli <cindyli!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2019-03-26T17:23:34  <Bosmon> jhernandez - yes, sure
+2019-03-26T17:23:49  <Bosmon> So the state of this button should be governed by the state of the QSS model on the renderer side
+2019-03-26T17:28:07  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-brqtmvfpskrkjkbz> has quit IRC (Remote host closed the connection)
+2019-03-26T17:28:16  *** alanharnum2 <alanharnum2!alanharnum@nat/ocadu/x-pcqbzqgnvjbrvhmk> has joined #fluid-work
+2019-03-26T17:32:37  <Bosmon> I've updated my pull with a bit more logging
+2019-03-26T17:39:17  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-03-26T17:40:13  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-03-26T17:54:56  <jhernandez> oh, missed the update sorry
+2019-03-26T17:55:27  <jhernandez> let me put these logging lines and I'll send you the log
+2019-03-26T17:55:33  <jhung> Hello fluid-everyone. The design crit will be starting in 5 minutes. We will be discussing co-design activities today.
+2019-03-26T17:58:14  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.105> has joined #fluid-work
+2019-03-26T17:59:47  *** simonjb <simonjb!~simonjb@205.211.168.101> has quit IRC (Ping timeout: 246 seconds)
+2019-03-26T18:00:32  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-xpfljfkrnnvslopu> has quit IRC (Ping timeout: 250 seconds)
+2019-03-26T18:00:32  *** simonjb <simonjb!~simonjb@205.211.168.101> has joined #fluid-work
+2019-03-26T18:02:01  *** alanharnum2 <alanharnum2!alanharnum@nat/ocadu/x-pcqbzqgnvjbrvhmk> has quit IRC (Remote host closed the connection)
+2019-03-26T18:02:08  <jhernandez> Bosmon: https://pastebin.com/TiUmtdr6
+2019-03-26T18:02:13  *** cindyli <cindyli!Adium@nat/ocadu/x-njauabmseocqgvbu> has joined #fluid-work
+2019-03-26T18:02:29  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-jmkbodgdxodhdmks> has joined #fluid-work
+2019-03-26T18:02:48  <jhernandez> I got the greyed-out button and green indicator "on" according to my prefs
+2019-03-26T18:04:01  <jhernandez> https://snag.gy/cgDSfW.jpg
+2019-03-26T18:05:54  <jhernandez> FYI, I have to leave in 20 mins or so and won't be back until 22:30
+2019-03-26T18:07:01  <jhernandez> and I'll keep working after having dinner on creating an installer with whatever is ready - already pulled most of the pieces into a local branch
+2019-03-26T18:08:46  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-jmkbodgdxodhdmks> has quit IRC (Remote host closed the connection)
+2019-03-26T18:08:56  *** alanharnum2 <alanharnum2!alanharnum@nat/ocadu/x-taoqkuvugkirposg> has joined #fluid-work
+2019-03-26T18:12:49  *** colinclark <colinclark!~colinclar@205.211.168.103> has joined #fluid-work
+2019-03-26T18:15:05  <Bosmon> jhernandez - ok, I'll b e here
+2019-03-26T18:52:40  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 255 seconds)
+2019-03-26T19:02:18  <cindyli> Bosmon: when defining a model relay, is it possible to have it only respond to a model change with a certain "source" value. such as line 15 here - https://pastebin.com/ZyZzC9EJ
+2019-03-26T19:02:29  <cindyli> i faked up "includeSourceOnly"
+2019-03-26T19:03:10  <cindyli> you know what it means
+2019-03-26T19:05:06  <cindyli> or is there a way to pass "source" value of the model change to "singleTransform" function?
+2019-03-26T19:08:29  <cindyli> nvm. seems "includeSource" does do the trick. thanks
+2019-03-26T19:09:51  <cindyli> I think the mistake i made was having both "includeSource" and "excludeSource" inside "forward" object. only "excludeSource" takes effect as it was listed as the first one
+2019-03-26T19:10:25  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has quit IRC (Quit: sepidehshahi)
+2019-03-26T19:11:55  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has joined #fluid-work
+2019-03-26T19:12:19  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-03-26T19:17:30  *** colinclark <colinclark!~colinclar@205.211.168.103> has quit IRC (Quit: colinclark)
+2019-03-26T19:17:36  *** alanharnum2 <alanharnum2!alanharnum@nat/ocadu/x-taoqkuvugkirposg> has quit IRC ()
+2019-03-26T19:17:49  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-eifyivhfihkcwyer> has joined #fluid-work
+2019-03-26T19:20:06  *** colinclark <colinclark!~colinclar@205.211.168.103> has joined #fluid-work
+2019-03-26T19:30:54  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has quit IRC (Quit: sepidehshahi)
+2019-03-26T19:38:53  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has joined #fluid-work
+2019-03-26T20:04:03  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 268 seconds)
+2019-03-26T20:05:00  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-eifyivhfihkcwyer> has quit IRC (Remote host closed the connection)
+2019-03-26T20:05:28  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-adajotmisziasfwn> has joined #fluid-work
+2019-03-26T20:09:01  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-adajotmisziasfwn> has quit IRC (Remote host closed the connection)
+2019-03-26T20:09:10  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-bdalbuhlyqmjvhcs> has joined #fluid-work
+2019-03-26T20:10:43  *** michelled <michelled!~Adium@192.0.151.7> has quit IRC (Quit: Leaving.)
+2019-03-26T20:23:11  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-03-26T20:23:47  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-bdalbuhlyqmjvhcs> has quit IRC ()
+2019-03-26T20:37:44  *** cindyli <cindyli!Adium@nat/ocadu/x-njauabmseocqgvbu> has quit IRC (Ping timeout: 272 seconds)
+2019-03-26T20:39:23  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has quit IRC (Quit: sepidehshahi)
+2019-03-26T20:48:04  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has joined #fluid-work
+2019-03-26T20:57:43  <stegru> jhernandez, using the 21/03 installer and the vc++ redist setup is stalled "Waiting for another install to complete" - https://i.imgur.com/HCJAxFk.png
+2019-03-26T20:58:05  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.104> has quit IRC (Quit: sepidehshahi)
+2019-03-26T20:58:08  <stegru> I guess it's a deadlock because that other installer is ours
+2019-03-26T21:00:16  <Bosmon> stegru - I got the same
+2019-03-26T21:00:24  <stegru> I think it should be ran at the end of morphic installation
+2019-03-26T21:00:26  <Bosmon> Eventually one of them timed out and it eventually installed
+2019-03-26T21:00:31  <stegru> ah ok
+2019-03-26T21:00:45  <Bosmon> After about 10 minutes or so : P
+2019-03-26T21:04:16  *** clown <clown!~clown@ckvlon1747w-140-01-65-94-140-209.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2019-03-26T21:11:29  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:b9ca:6447:2032:cabd> has quit IRC (Remote host closed the connection)
+2019-03-26T21:18:42  <colinclark> gmoss: http://digitalcoleman.com/ https://www.du.edu/ahss/opensourcearts/
+2019-03-26T21:19:51  <gmoss> colinclark: awesome! thanks for sharing :)
+2019-03-26T21:19:56  <colinclark> gmoss do we have a brief description of what kinds of things happen at the community?
+2019-03-26T21:20:23  <gmoss> colinclark: there's a blurb at the top of the wiki page, here https://wiki.fluidproject.org/display/fluid/Community+workshops
+2019-03-26T21:20:52  <colinclark> Cool. Maybe I’ll send him the recording of the one I gave as an example
+2019-03-26T21:20:53  <gmoss> the format is flexible, as you know, and topics vary pretty widely, but I would suggest Chris could check out that page and see some previous topics
+2019-03-26T21:20:55  <gmoss> yeah
+2019-03-26T21:21:01  <colinclark> awesome
+2019-03-26T21:21:02  <gmoss> that would be the most relevant, I think
+2019-03-26T21:21:15  <gmoss> or the one you and Bosmon gave last year
+2019-03-26T21:21:49  <gmoss> https://wiki.fluidproject.org/display/fluid/Previous+Community+Workshop+Topics for previous years
+2019-03-26T21:36:26  *** cherylhjli1 <cherylhjli1!~Adium@205.211.168.105> has left #fluid-work
+2019-03-26T21:38:25  *** colinclark <colinclark!~colinclar@205.211.168.103> has quit IRC (Quit: colinclark)
+2019-03-26T21:47:15  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:4cef:bfae:50b3:4c59> has joined #fluid-work
+2019-03-26T22:00:24  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-03-26T22:00:25  *** danayo_ is now known as danayo
+2019-03-26T22:00:33  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-03-26T22:13:15  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has joined #fluid-work
+2019-03-26T22:13:22  <stegru> jhernandez, as you know, the vs runtime install is a turd.. however, there is already a merge module available for it in C:\Program Files (x86)\Common Files\Merge Modules
+2019-03-26T22:14:33  <stegru> but merge modules can't be bundled inside another merge module - however, I'm about to find out if we really need to install it, since we already install another version of the runtime in the main wix file
+2019-03-26T22:20:49  <jhernandez> thanks for reporting
+2019-03-26T22:20:55  <jhernandez> stegru: Bosmon
+2019-03-26T22:20:57  <jhernandez> hmmm
+2019-03-26T22:21:08  <stegru> handy tip for everyone: to double your download speed, don't click the download button twice
+2019-03-26T22:21:20  <jhernandez> but with that installer we're not installing t
+2019-03-26T22:21:56  <stegru> what installer?
+2019-03-26T22:21:59  <stegru> <stegru> jhernandez, using the 21/03 installer and the vc++ redist setup is stalled "Waiting for another install to complete" - https://i.imgur.com/HCJAxFk.png
+2019-03-26T22:21:59  <stegru> * sepidehshahi has quit (Quit: sepidehshahi)
+2019-03-26T22:21:59  <stegru> <stegru> I guess it's a deadlock because that other installer is ours
+2019-03-26T22:21:59  <stegru> <Bosmon> stegru - I got the same
+2019-03-26T22:22:10  <stegru> <jhernandez> I smell
+2019-03-26T22:22:28  <jhernandez> that's .... weird
+2019-03-26T22:22:37  <jhernandez> very
+2019-03-26T22:22:58  <stegru> perhaps when you ran it, you already had the runtime installed? I did it on a clean vm
+2019-03-26T22:23:10  <jhernandez> because I was said that, if you don't have that dep installed, the installer just complains about it and never gets installed
+2019-03-26T22:23:40  <stegru> oh
+2019-03-26T22:23:44  <jhernandez> Han reported that
+2019-03-26T22:23:55  <stegru> ah yes, I remember - sorry, i didn't give it much attention
+2019-03-26T22:24:27  <jhernandez> and to fix that, I'm already including that dep as part of our merge module, but I haven't delivered any installer that bundles the dep yet
+2019-03-26T22:24:52  <stegru> so where is my error coming from?
+2019-03-26T22:25:18  <jhernandez> not a clue
+2019-03-26T22:25:28  <jhernandez> honestly
+2019-03-26T22:25:47  <jhernandez> hmmm
+2019-03-26T22:26:00  <jhernandez> and that happens with the our vm?
+2019-03-26T22:26:11  <stegru> I don't know
+2019-03-26T22:26:37  <stegru> i'll let you know in a few minutes
+2019-03-26T22:26:40  <jhernandez> the clean vm is our vagrant box?
+2019-03-26T22:26:45  <jhernandez> ah
+2019-03-26T22:26:45  <jhernandez> ok ok
+2019-03-26T22:26:48  <stegru> no
+2019-03-26T22:27:13  <stegru> it has nothing installed, except virtual box guest additions
+2019-03-26T22:27:28  <stegru> but i'm making one now with nothing at all on it
+2019-03-26T22:28:11  <jhernandez> ok ok
+2019-03-26T22:28:21  <jhernandez> FYI, this is the sharex-module code
+2019-03-26T22:28:22  <jhernandez> https://github.com/javihernandez/morphic-sharex-installer
+2019-03-26T22:28:24  <stegru> Morphic-1.0.1-dev.20190321T003453Z.9b4cbba.GPII-3806.loginSolution
+2019-03-26T22:28:29  <stegru> yes, got it
+2019-03-26T22:29:14  <jhernandez> right, that Morphic installer version is not yet shipping the bits I added to automatically install the damned visual c++ redistributable
+2019-03-26T22:32:50  <stegru> ok well, what I'm going to do is 1) determine if we actually need this redist, and 2) see if including the ready-made merge module for it is enough
+2019-03-26T22:33:58  <jhernandez> nice, thanks
+2019-03-26T22:34:39  <jhernandez> AFAIK, the module is required by ShareX
+2019-03-26T22:35:21  <jhernandez> and it complains about not having that visual c++ lib and rejects to install (that's what Han reported)
+2019-03-26T22:35:51  <jhernandez> re 2) I searched the msm module of that redist and couldn't find one
+2019-03-26T22:36:13  <jhernandez> that's why I added in the merge module the bits to bundle and install such thing
+2019-03-26T22:36:25  *** simonjb <simonjb!~simonjb@205.211.168.101> has quit IRC ()
+2019-03-26T22:36:35  <stegru> ok - that does surprise me, considering shareX is .NET, but perhap's it has another dependency, I thought it was for ffmpeg or node
+2019-03-26T22:36:59  <jhernandez> my merge module downloads it here: https://github.com/javihernandez/morphic-sharex-installer/blob/master/getDependencies.ps1#L34
+2019-03-26T22:37:22  <jhernandez> and it installs it here: https://github.com/javihernandez/morphic-sharex-installer/blob/master/sharex.wxs#L39
+2019-03-26T22:37:51  <stegru> yep, but it looks like that installer can't be installed from our installer - because only 1 msi installer can be ran at a time
+2019-03-26T22:37:58  <jhernandez> and I had to add this horrible condition https://github.com/javihernandez/morphic-sharex-installer/blob/master/sharex.wxs#L11-L15
+2019-03-26T22:38:09  <jhernandez> it's not an msi, it's an exe file
+2019-03-26T22:38:50  <stegru> ok
+2019-03-26T22:39:55  <jhernandez> stegru: I have an installer here that has the bits to install the vcredist
+2019-03-26T22:40:07  <jhernandez> do you want it and give it a try too?
+2019-03-26T22:40:15  <stegru> yes ok
+2019-03-26T22:42:31  <jhernandez> ok, uploading it now to gdrive
+2019-03-26T22:46:21  *** avtar <avtar!avtar@nat/ocadu/x-gevgkruhwulpvond> has quit IRC (Quit: Leaving.)
+2019-03-26T22:49:52  <jhernandez> stegru: you should've received an email with the link
+2019-03-26T22:50:41  <jhernandez> Morphic-1.0.1-dev.20190325T014648Z.79d7e19.GPII-3806.loginSolution.msi
+2019-03-26T22:51:37  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has quit IRC (Quit: Leaving.)
+2019-03-26T22:56:30  <stegru> got
+2019-03-26T22:56:33  <stegru> it
+2019-03-26T23:01:04  <jhernandez> thank
+2019-03-26T23:01:05  <jhernandez> you
+2019-03-26T23:02:59  <stegru> I get the same thing, https://i.imgur.com/NXL0QzI.png
+2019-03-26T23:04:56  <jhernandez> with the new installer
+2019-03-26T23:04:58  <jhernandez> ?
+2019-03-26T23:05:51  <stegru> Morphic-1.0.1-dev.20190325T014648Z.79d7e19.GPII-3806.loginSolution.msi
+2019-03-26T23:05:56  <stegru> yes
+2019-03-26T23:06:15  <jhernandez> i'm completely puzzled
+2019-03-26T23:07:33  <jhernandez> can you install it manually and get the log?
+2019-03-26T23:09:08  <stegru> well, I could - but it will only log the morphic installer
+2019-03-26T23:10:27  <jhernandez> https://answers.microsoft.com/en-us/windows/forum/all/vcredistx64-waiting-for-another-install-to/d0c56369-673f-4fb8-94de-4c825c544c19
+2019-03-26T23:10:57  <jhernandez> but .... I don't have a clue why it's autoinstalling
+2019-03-26T23:12:09  <stegru> well, I've installed the runtime separately (from the deps directory) and it worked - installing gpii now..
+2019-03-26T23:15:44  <stegru> meanwhile, I've just installed windows and I can run sharex without installing any runtime
+2019-03-26T23:18:34  <jhernandez> well, it's not sharex
+2019-03-26T23:18:55  <jhernandez> it's a sharex thing what complains about it
+2019-03-26T23:19:06  <jhernandez> the Recorder Devices Setup.exe
+2019-03-26T23:20:12  <jhernandez> https://github.com/javihernandez/morphic-sharex-installer/blob/master/sharex.wxs#L29
+2019-03-26T23:21:01  <stegru> well, I ran it and it didn't complain for me.. it told me it was about to download the redistributable, then just did it
+2019-03-26T23:21:41  <jhernandez> hmm
+2019-03-26T23:26:19  <stegru> oh it's the recorder setup that's running the redist installer, not you jhernandez
+2019-03-26T23:26:28  <jhernandez> exactly
+2019-03-26T23:26:47  <stegru> well, that's shit
+2019-03-26T23:26:55  <jhernandez> but I thought it was failing all the time as Han reported
+2019-03-26T23:26:56  <jhernandez> :/
+2019-03-26T23:27:02  <stegru> where is this report?
+2019-03-26T23:27:03  <jhernandez> hmmm
+2019-03-26T23:27:25  <stegru> we could change the Return to asyncNoWait, or whatever it is
+2019-03-26T23:27:32  <jhernandez> the first one was here: https://docs.google.com/document/d/1RDutrsQlks4VZpVEuZCMUgJMsYyujfDr27cwO0Pn7mE/edit#
+2019-03-26T23:27:38  <jhernandez> reported as H1
+2019-03-26T23:28:40  <jhernandez> stegru: but we do need to wait until this is done because is a pre-requisite to auto-configure the microphone in sharex
+2019-03-26T23:29:03  <stegru> ok
+2019-03-26T23:29:25  <jhernandez> and then, Bern reported it too, but I didn't notice that he's getting the same as you
+2019-03-26T23:29:32  <jhernandez> (not the error as Han)
+2019-03-26T23:30:02  <jhernandez> here's Bern's report: https://docs.google.com/document/d/1sAt8T5nQMSORcesv0lFXutWVCjuF3pP8gLm7DAgELWM/edit#heading=h.ynlgr9wasrd
+2019-03-26T23:30:04  <jhernandez> B1
+2019-03-26T23:30:05  <stegru> well, i'll see if adding the runtime merge module to the main installer works
+2019-03-26T23:30:32  <jhernandez> did you find the msm?
+2019-03-26T23:30:53  <stegru> yeh it's in c:\program files (x86)\common\merge modules
+2019-03-26T23:30:58  <jhernandez> I couldn't find it
+2019-03-26T23:31:11  <jhernandez> let me search again
+2019-03-26T23:31:45  <jhernandez> nope, only VC140, not VC100
+2019-03-26T23:32:25  <jhernandez> and I've got the 2010 redist installed
+2019-03-26T23:32:26  <stegru> oh that's right
+2019-03-26T23:32:35  <jhernandez> at least, it's listed as installed on Windows
+2019-03-26T23:35:24  <jhernandez> so, as long as I can tell, my installation of the redist should avoid the other thing to try downloading it - which we know that fails :/
+2019-03-26T23:39:41  <jhernandez> here we go
+2019-03-26T23:39:50  <jhernandez> https://github.com/ShareX/ShareX/blob/master/ShareX.Setup/InnoSetup/Recorder-devices-setup.iss#L38
+2019-03-26T23:40:39  <stegru> haha why didn't I think of that? I was about to decompile the installer
+2019-03-26T23:40:57  <jhernandez> which points to https://github.com/ShareX/ShareX/blob/master/ShareX.Setup/InnoSetup/Scripts/products/vcredist2010.iss#L21
+2019-03-26T23:41:10  <jhernandez> and tries to install it - exactly the same way I do
+2019-03-26T23:41:11  <jhernandez> :P
+2019-03-26T23:41:22  <jhernandez> ok
+2019-03-26T23:42:20  <jhernandez> stegru: I also just find it, I wasn't expecting to see the source files at all :)
+2019-03-26T23:43:09  <stegru> so what was wrong with how you installed the runtime?
+2019-03-26T23:47:57  <jhernandez> it's nothing wrong, got installed in my case
+2019-03-26T23:49:04  <jhernandez> but looks like the recorder devices installer is not detecting it as installed and tries to install it automatically
+2019-03-26T23:49:17  <stegru> ok
+2019-03-26T23:51:48  <stegru> fuck it, i'm going bed.. tomorrow I'll get the merge modules from somewhere and use them.. then put the dlls from the recorder setup into the sharex module
+2019-03-26T23:52:07  <jhernandez> well, I think we can try building our own version of the recorder devices installer (and removing the vcredist-related thing)
+2019-03-26T23:52:13  <stegru> yeh
+2019-03-26T23:52:22  <jhernandez> yesh, go to bed
+2019-03-26T23:52:28  <jhernandez> I couldn't find an msm file
+2019-03-26T23:52:28  <stegru> good night :*
+2019-03-26T23:52:35  <jhernandez> but good luck with that
+2019-03-26T23:52:40  <jhernandez> :P
+2019-03-26T23:52:43  <jhernandez> and good night
+2019-03-26T23:52:46  <jhernandez> :*

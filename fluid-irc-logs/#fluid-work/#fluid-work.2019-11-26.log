@@ -1,0 +1,280 @@
+2019-11-26T00:24:51  *** cherylhjli <cherylhjli!~Adium@vlnsm2-toronto63-142-116-82-223.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-11-26T00:41:55  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-26T01:00:50  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:486:be04:1fe2:ec75> has quit IRC (Quit: Leaving.)
+2019-11-26T01:45:00  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-11-26T01:46:13  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Client Quit)
+2019-11-26T02:18:56  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-11-26T02:34:52  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-26T05:58:17  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:486:be04:1fe2:ec75> has joined #fluid-work
+2019-11-26T07:32:52  *** yanachkov__ <yanachkov__!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-11-26T09:33:27  *** yanachkov__ <yanachkov__!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 252 seconds)
+2019-11-26T10:43:30  *** yanachkov__ <yanachkov__!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-11-26T12:08:52  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-jhzuljrtxmkxnjfp> has joined #fluid-work
+2019-11-26T12:20:49  <Bosmon> Hi there Justin_o, I've issued a small https://issues.fluidproject.org/browse/FLUID-6435
+2019-11-26T12:20:57  <Bosmon> and https://github.com/fluid-project/infusion/pull/971
+2019-11-26T12:22:50  <Bosmon> I notice that our CI still doesn't perform a check under IE11, but then I further notice that we've had a domain protection issue on FullPreviewPrefsEditorTest for quite a while that I imagine we have no idea about .....
+2019-11-26T12:25:16  <Justin_o> Bosmon: thanks, for the fix, I'll take a look at the PR
+2019-11-26T12:27:01  <Justin_o> Bosmon: not sure why FullPreviewPrefsEditorTest has a domain protection.
+2019-11-26T12:27:18  <Bosmon> Justin_o - IE claims that the iframe is not readable
+2019-11-26T12:27:27  <Bosmon> It's probably only something that affects localhost
+2019-11-26T12:27:41  <Bosmon> But I dunno what to do about it, and I'm not sure whether it's worth investigating : P
+2019-11-26T12:27:51  <Justin_o> Bosmon: also I'm planning on looking into GitHub Actions for UIO+ and also consider moving Infusion over to it, if things work out. That would allow us to test on IE and macOS in CI.. although for UIO+ we'll only be testing Chrome, but for Infusion we could test more. Assuming that we can get the browser launchers to work
+2019-11-26T12:29:57  <Justin_o> Bosmon: I have another question related to FLUID-6420 and IE 11 incidentally... so I have gotten uiOptions down to this. https://github.com/jobara/infusion/blob/FLUID-6420/src/components/uiOptions/js/UIOptions.js
+2019-11-26T12:30:56  <Justin_o> Bosmon: with configuration in the uiOptions demo, it looks like https://github.com/jobara/infusion/blob/FLUID-6420/demos/uiOptions/index.html#L79-L99
+2019-11-26T12:32:15  <Bosmon> Justin_o - that's looking quite reasonable
+2019-11-26T12:32:20  <Justin_o> Bosmon: thanks.
+2019-11-26T12:32:50  <Bosmon> I guess another task together with our prefs framework rewrite is to implement a reasonable packaging system that will make all these URLs go away
+2019-11-26T12:32:58  <Justin_o> Bosmon: the issue I'm running into now is for the prefsFramework demo. The orator/self Voicing doesn't work in IE 11. So we have some context awareness to add in the speak preference. https://github.com/jobara/infusion/blob/FLUID-6420/demos/prefsFramework/js/prefsEditorDemo.js#L38-L50
+2019-11-26T12:32:59  <Bosmon> I've got the beginnings of the infrastructure for this in my "new renderer" work
+2019-11-26T12:33:19  <Justin_o> Bosmon: yes, please that would be wonderful
+2019-11-26T12:33:45  <Bosmon> Justin_o - also the new ResourceLoader is crucial for this since it will give us much more control over how URLs are referenced
+2019-11-26T12:33:46  <Justin_o> Bosmon: so my first attempt, which obviously won't work, looked like this. https://github.com/jobara/infusion/blob/FLUID-6420/demos/prefsFramework/js/prefsEditorDemo.js#L88-L106
+2019-11-26T12:34:35  <Bosmon> Justin_o - what's wrong with it?
+2019-11-26T12:36:02  <Bosmon> Justin_o - the idea is that we will just reference resources symbolically like this: https://github.com/amb26/new-renderer-demo/blob/FLUID-5047/demo/DemoPage.js#L5
+2019-11-26T12:36:11  <Bosmon> And then let the ResourceLoader/packager get on with figuring out where they are
+2019-11-26T12:36:33  <Justin_o> Bosmon: so I really just want to mix in the "fluid.prefs.speak" preference into the preferences array. So 1) I'd prefer not to know about the other preferences in the grade I'm adding in with contextAwareness 2) this doesn't work if the preferences have been specified during instantiation https://github.com/jobara/infusion/blob/FLUID-6420/demos/prefsFramework/index.html#L102-L113
+2019-11-26T12:36:46  <Bosmon> Justin_o - like this, in the impl: https://github.com/amb26/new-renderer-demo/blob/FLUID-5047/textfieldControl/js/TextfieldSlider.js#L25
+2019-11-26T12:37:27  <Bosmon> Justin_o - I think there isn't much option but to transform the array into a hash before you attempt to act on it
+2019-11-26T12:37:34  <Bosmon> Otherwise there's no clear way to add/remove stuff
+2019-11-26T12:38:39  <Bosmon> Every array has a natural dual representation as a namespaced hash with a cascade of "after:xxxx" annotations on every element but one : P
+2019-11-26T12:38:53  <Justin_o> Bosmon:  not sure how that would help in this case because it's at the level of options merging that is the problem
+2019-11-26T12:39:47  <Justin_o> I could make it a hash to start with, but it would be harder to work with for simple cases, for an integrator.
+2019-11-26T12:47:53  <Justin_o> Bosmon: are there any other options to handle this?
+2019-11-26T13:15:41  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:486:be04:1fe2:ec75> has quit IRC (Quit: Leaving.)
+2019-11-26T13:21:24  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:486:be04:1fe2:ec75> has joined #fluid-work
+2019-11-26T13:34:08  <Bosmon> Justin_o - well, the integrator still works with the array
+2019-11-26T13:34:24  <Bosmon> After all, the contextAwareness decision isn't at the level of the overall integrator, a developer would have to make that
+2019-11-26T13:35:03  <Justin_o> Bosmon: wouldn't we still lose the information because of the array during options merging?
+2019-11-26T13:35:54  <Bosmon> Justin_o - well, one option is to not do any options merging for the array at the integrator's level
+2019-11-26T13:36:12  <Bosmon> Another option is to attempt to merge it as if they had written the equivalent hash ....
+2019-11-26T13:36:36  <Justin_o> I'm not sure I'm following all those options
+2019-11-26T13:36:45  <Justin_o> are you suggesting a custom merge policy?
+2019-11-26T13:36:58  <Justin_o> but then how would someone remove preferences that they no longer want to include
+2019-11-26T13:37:11  <Bosmon> Justin_o - yes, I think otherwise we end up with chaos with the array
+2019-11-26T13:37:15  <Justin_o> in a derived grade, or override during instantiation
+2019-11-26T13:37:22  <Bosmon> Justin_o - probably a "replace" mergePolicy is the simplest option
+2019-11-26T13:37:30  <Bosmon> That the entire array just replaces whatever it overrides
+2019-11-26T13:37:38  <Justin_o> Bosmon: yes, that's probably what is happening already
+2019-11-26T13:37:39  <Justin_o> isn't it
+2019-11-26T13:37:47  <Bosmon> Justin_o - Not sure
+2019-11-26T13:38:00  <Bosmon> Hopefully : P
+2019-11-26T13:38:03  <Justin_o> haha :)
+2019-11-26T13:38:28  <Bosmon> Justin_o - btw, there's now a release of the top-level infusion branch for you to try to test out with UIO+ at some point: 3.0.0-dev.20191126T121754Z.6452de06f.FLUID-6145
+2019-11-26T13:38:40  <Bosmon> This incorporates all our fixes for immutable options together with a further fix for an issue discovered by the-t-in-rtf
+2019-11-26T13:39:00  <Justin_o> Bosmon:  the problem I'm having is that the context awareness grades aren't applied because I have specified them in options when instantiating the component. https://github.com/jobara/infusion/blob/FLUID-6420/demos/prefsFramework/index.html#L102-L113
+2019-11-26T13:39:16  <Justin_o> so these take precedence and do not allow the contextawareness set to be applied.
+2019-11-26T13:39:27  <Bosmon> Justin_o - I'm not clear what you mean by that
+2019-11-26T13:39:39  <Bosmon> The bit you highlighted there is the user's requested list of preferences
+2019-11-26T13:39:47  <Bosmon> How does that relate to the application of the contextAwareness grades?
+2019-11-26T13:39:58  <Justin_o> Bosmon: notice the gradeNames above that block
+2019-11-26T13:40:08  <Bosmon> I see it
+2019-11-26T13:40:30  <Justin_o> Bosmon: that corresponds to https://github.com/jobara/infusion/blob/FLUID-6420/demos/prefsFramework/js/prefsEditorDemo.js#L38-L50
+2019-11-26T13:40:42  <Justin_o> which attempts to add this grade https://github.com/jobara/infusion/blob/FLUID-6420/demos/prefsFramework/js/prefsEditorDemo.js#L87-L106
+2019-11-26T13:40:45  <Justin_o> when the check passes
+2019-11-26T13:41:06  <Bosmon> Justin_o - yes, this is what I mean by using the hash
+2019-11-26T13:41:23  <Bosmon> You've got no hope of influencing the system in a fine-grained way whilst the collection of preferences is represented in array form
+2019-11-26T13:41:44  <Bosmon> The first task of the "builder" should be to convert the array into a hash which can then be targetted by fine-grained distributions
+2019-11-26T13:43:51  <Justin_o> Bosmon: I guess I don't follow that, because if the builder is turning it into a hash, isn't it already too late? The issues seems to be at the level of options merging that the problem exists, because I'm not getting the options I'm expecting
+2019-11-26T13:44:36  <Bosmon> Justin_o - you are never going to get the options you're expecting whilst you're manipulating arrays
+2019-11-26T13:44:55  <Justin_o> Bosmon: so that would mean that preferences needs to be a hash to begin with?
+2019-11-26T13:44:57  <Bosmon> The integrator would rewrite "demo.prefsEditor.speak" so it targetted the hash, by simply inserting the one element it wants
+2019-11-26T13:45:09  <Bosmon> Justin_o - no, for convenience, the top-level driver would still consume an array
+2019-11-26T13:45:20  <Justin_o> Bosmon: so the contextawareness approach would by pass the initial array and target the hash?
+2019-11-26T13:45:26  <Bosmon> Justin_o - right
+2019-11-26T13:45:50  <Bosmon> Once it is in a hash, it is easy to insert and delete elements at will
+2019-11-26T13:46:01  <Bosmon> Or even to reorder them
+2019-11-26T13:47:55  <Justin_o> Bosmon: okay, I'll experiment with that using a expander to convert it to a hash. I was hoping to use the array position for the future ordering of preferences part that will come in future work. Also the indexing of schemas takes it in as an array, so I'll have to convert it back internally to use.
+2019-11-26T13:48:13  <Justin_o> speaking of which, I think there is something wrong with this https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/Fluid.js#L698-L716
+2019-11-26T13:48:21  <Justin_o>  or I'm misunderstanding something.
+2019-11-26T13:48:28  <Justin_o> it doesn't seem to work with toFilter being an array
+2019-11-26T13:48:56  <Justin_o> perhaps just the comment on line 700 is wrong
+2019-11-26T13:49:43  <Bosmon> Justin_o - you're right, the docs comment on line 700 is wrong
+2019-11-26T13:50:10  <Justin_o> should I just correct that in my current work?
+2019-11-26T13:50:26  *** cindyli <cindyli!Adium@nat/ocadu/x-ierkwjtxfnkquobv> has joined #fluid-work
+2019-11-26T13:51:04  <Bosmon> Justin_o - for a fix a small as this we can just do it in-place ...
+2019-11-26T13:51:41  <Bosmon> There, it's done : P
+2019-11-26T13:51:45  <Justin_o> Bosmon:  thanks
+2019-11-26T13:52:02  <Bosmon> I'll fix it in the docs repo too
+2019-11-26T13:52:27  <Justin_o> thanks
+2019-11-26T13:53:37  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has joined #fluid-work
+2019-11-26T13:53:47  *** danielcho <danielcho!~Adium@hmtnon1497w-130-02-65-95-64-90.dsl.bell.ca> has joined #fluid-work
+2019-11-26T13:56:14  <Justin_o> Bosmon: also, just merged FLUID-6435
+2019-11-26T13:56:20  <Bosmon> Justin_o - awesome, thanks
+2019-11-26T13:56:36  <Bosmon> Do you have any memories of our iframe domain problem?
+2019-11-26T13:56:38  <Bosmon> Does it sound familiar?
+2019-11-26T13:57:58  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-11-26T13:58:10  <Justin_o> Bosmon: hmm.. not really.. is this related to those tests?
+2019-11-26T13:58:24  <Bosmon> Justin_o - the IE11 tests
+2019-11-26T13:58:28  <Bosmon> I think that is our only failure left now
+2019-11-26T13:58:50  <Bosmon> In FullPreviewPrefsEditor-test.html
+2019-11-26T13:59:19  <Justin_o> Bosmon: there's also this problem https://issues.fluidproject.org/browse/FLUID-6385
+2019-11-26T14:00:28  <Bosmon> Justin_o - ok
+2019-11-26T14:00:39  <Bosmon> Perhaps the dev channel Edge of July has reached production by now? : P
+2019-11-26T14:00:48  <Justin_o> Bosmon: I think it comes out in January
+2019-11-26T14:01:14  <Justin_o> Bosmon: https://www.theverge.com/2019/11/4/20942038/microsoft-edge-chromium-release-date-new-logo-features
+2019-11-26T14:02:37  <Justin_o> Bosmon: they seem to be planning to push it out to older versions of windows too, if they follow what is in the dev channel. I'm thinking that might be a good time to drop support for IE 11
+2019-11-26T14:04:35  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2019-11-26T14:05:35  <Bosmon> Justin_o - that sounds good
+2019-11-26T14:06:02  <Bosmon> Jan 15th
+2019-11-26T14:06:24  <Bosmon> Well, we may as well make a "last ditch" release with IE11 support given it is basically working now
+2019-11-26T14:07:18  <Justin_o> Bosmon: sure, that's not a bad idea. Do you think we can get something out in the time range?
+2019-11-26T14:07:46  <Bosmon> I imagine so
+2019-11-26T14:08:22  <Justin_o> It's a nice time to do a release push.. right around the new year
+2019-11-26T14:09:33  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e72:c800:afce:ea01:d362:3594> has joined #fluid-work
+2019-11-26T14:09:42  <Justin_o> Bosmon: where are the tests being blocked?
+2019-11-26T14:09:51  <Bosmon> Justin_o - what do you mean?
+2019-11-26T14:10:06  <Justin_o> Bosmon: sorry, the iframe domain issue you mentioned
+2019-11-26T14:10:40  <Bosmon> FullPreviewPrefsEditor-test.html
+2019-11-26T14:13:03  <Justin_o> Bosmon: the tests seem to be running for me, or maybe I'm not seeing what isn't
+2019-11-26T14:15:02  <Bosmon> Justin_o - that's interesting
+2019-11-26T14:15:11  <Bosmon> Perhaps it's just some artefact of the IE11 configuration on my machine
+2019-11-26T14:15:21  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-11-26T14:15:27  <Bosmon> Great in that case, so we're IE11-clean?
+2019-11-26T14:17:48  *** avtar <avtar!~avtar@ip-45-3-9-198.user.start.ca> has joined #fluid-work
+2019-11-26T14:17:50  <Justin_o> Bosmon: are the self voicing enactor tests running in your IE 11?
+2019-11-26T14:21:21  <Bosmon> Justin_o - in so far as they are skipped successfully, yes?
+2019-11-26T14:25:21  <Bosmon> Justin_o - actually not ...
+2019-11-26T14:26:33  <Bosmon> Justin_o - also, I get a failure in the OratorTests - Test fluid.orator.selectionReader.parseRange - text node selected: Speech[] should be generated correctlyExpected:  [
+2019-11-26T14:27:03  <Bosmon> On test 69, lang is undefined rather than "en"
+2019-11-26T14:28:50  <Justin_o> Bosmon: I'm also seeing that Orator Test failure. The self voicing enactor tests just halt for me, but that could be my vm I guess, or is that what you are seeing too?
+2019-11-26T14:29:05  <Bosmon> Justin_o - the self voicing enactor tests halt, but it is actually because of an exception in the Orator
+2019-11-26T14:29:10  <Bosmon> The line is var controlContainer = selectionRange.startContainer.parentElement.offsetParent || selectionRange.startContainer.parentElement;
+2019-11-26T14:29:18  <Bosmon> Orator.js line 1160
+2019-11-26T14:29:30  <Bosmon> The failure is "Unable to get property 'offsetParent' of undefined or null reference"
+2019-11-26T14:29:39  <Justin_o> well on the bright side, at least both issues are related to the Orator
+2019-11-26T14:29:45  <Bosmon> Justin_o - yes
+2019-11-26T14:30:09  <Justin_o> too bad these issues are in IE 11.. makes it harder to debug :(
+2019-11-26T14:30:25  <Bosmon> Justin_o - true, but at least the debugger isn't as bad as the one in IE8 :)
+2019-11-26T14:30:38  <Justin_o> anyways, thanks for pointing me to the line of the failure. I'll write up a JIRA for these and take a look.
+2019-11-26T14:30:47  <Bosmon> And you always have the "No try-catch" checkbox to fall back on
+2019-11-26T14:31:03  <Bosmon> Justin_o - awesome
+2019-11-26T14:31:08  <Bosmon> Hopefully will be a relatively simple workaround
+2019-11-26T14:31:11  <Justin_o> I keep forgetting about that option
+2019-11-26T14:31:16  <Justin_o> I hope so
+2019-11-26T14:31:33  <Justin_o> there's just so many little things that don't work in IE 11 that every other browser supports ;(
+2019-11-26T14:31:56  <Bosmon> Justin_o - it looks like as simple as the Text node having a "parentNode" property rather than a "parentElement" property
+2019-11-26T14:32:31  <Bosmon> https://stackoverflow.com/questions/8685739/difference-between-dom-parentnode-and-parentelement
+2019-11-26T14:33:09  <Bosmon> Looks like IE11, as one might expect, is simply violating the spec, since in this case the parent is indeed an element
+2019-11-26T14:33:13  <Bosmon> It is an HTMLParagraphElement
+2019-11-26T14:33:26  *** clown <clown!clown@nat/ocadu/x-zkxfhpovuyezskuy> has joined #fluid-work
+2019-11-26T14:33:52  <Bosmon> I see that the offsetParent we want is actually in there
+2019-11-26T14:33:57  <Bosmon> So this should be fairly straightforward
+2019-11-26T14:34:45  <Bosmon> What's hilarious is this comment: "The original parentElement was a proprietary IE thing"
+2019-11-26T14:34:48  <Justin_o> Bosmon: cool thanks for the help with this.. it is a bit annoying because the Orator itself isn't actually supported in IE 11 because IE 11 doesn't support the  web speech API, but it is nice to at least have the tests running there where possible.
+2019-11-26T14:35:05  <Justin_o> Bosmon: so they go their own thing wrong
+2019-11-26T14:35:25  <Bosmon> Justin_o - yes, I guess they stripped out support for it before any of their competitors : P
+2019-11-26T14:35:33  <Bosmon> It looks like we should be safe to go for parentNode in every case
+2019-11-26T14:36:13  <Bosmon> Given that is the DOM standard method
+2019-11-26T14:37:34  <Bosmon> Justin_o - I see you have two further usages of parentElement inside Orator.js which we may as well normalist
+2019-11-26T14:37:36  <Bosmon> normalise
+2019-11-26T14:38:33  <Bosmon> The text "parentElement" appears within the reorderer, but this looks like a totally unrelated accident of me choosing the same name for a structure member
+2019-11-26T14:39:00  <Bosmon> Note that you also use "parentElement" in your Orator mocks which will need to be fixed up
+2019-11-26T14:40:10  <Justin_o> Bosmon: thanks tracking all those down
+2019-11-26T14:40:19  <Justin_o> I put both of the issues under the same JIRA https://issues.fluidproject.org/browse/FLUID-6436
+2019-11-26T14:40:26  <Bosmon> Justin_o - great
+2019-11-26T14:44:17  *** clown <clown!clown@nat/ocadu/x-zkxfhpovuyezskuy> has quit IRC (Ping timeout: 265 seconds)
+2019-11-26T14:49:09  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3e72:c800:afce:ea01:d362:3594> has quit IRC (Quit: jhernandez)
+2019-11-26T14:54:21  *** clown <clown!clown@nat/ocadu/x-gwepcufimbfijvnm> has joined #fluid-work
+2019-11-26T14:57:36  *** yanachkov__ <yanachkov__!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 252 seconds)
+2019-11-26T15:00:57  <the-t-in-rtf> @clown, staging now has our work to be validated.
+2019-11-26T15:01:08  <the-t-in-rtf> I plan to set up a VM in the morning to try it, but thought I'd give you the heads up.
+2019-11-26T15:02:42  <Justin_o> Bosmon: here's the PR for the Orator fixes https://github.com/fluid-project/infusion/pull/973
+2019-11-26T15:02:53  *** yanachkov__ <yanachkov__!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-11-26T15:03:24  <Bosmon> Justin_o - brilliant, will look now
+2019-11-26T15:03:47  <Justin_o> thanks
+2019-11-26T15:10:11  <clown> thanks @the-t-in-rtf.
+2019-11-26T15:10:35  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-opmejktebkpdfgiz> has joined #fluid-work
+2019-11-26T15:11:50  <clown> I spun up my dev cluster last Fri for my production tests pull, pointing it at the univesal docker image that contained your and my changes, and everything went well.
+2019-11-26T15:12:05  <clown> has the version number changed since Fri, @the-t-in-rtf?
+2019-11-26T15:12:08  * clown looks
+2019-11-26T15:16:02  <the-t-in-rtf> depends whether you picked up the container image hash last week
+2019-11-26T15:16:10  <the-t-in-rtf> what's in gpii-infra master is what's in staging
+2019-11-26T15:19:53  <clown> right, @the-t-in-rtf, and I just pulled from gpii-infra master, and see a bunch of changes.  But, the version is the same (the generated repository is different).
+2019-11-26T15:20:37  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Quit: sepidehshahi)
+2019-11-26T15:21:06  <the-t-in-rtf> yes, the generated stuff for staging is different than what you typically see when testing a container image on your own
+2019-11-26T15:23:05  <clown> Nonetheless, I'll merge all the latest master into my branch and see if anything goes wonky.
+2019-11-26T15:38:13  <Justin_o> Bosmon: not having success with the preferences array to hash strategy. I think because the expander is creating the hash, the contextawareness isn't able to merge it's record onto the hash
+2019-11-26T15:40:46  <Bosmon> Justin_o - thanks for the FLUID-6436 fix, amazingly we have a total pass on IE11 now
+2019-11-26T15:40:58  <Bosmon> Justin_o - should be fine, can you check in what you have so we can see?
+2019-11-26T15:46:29  <Justin_o> Bosmon: okay, it's up in my FLUID-6420 branch
+2019-11-26T15:46:38  <Justin_o> Bosmon:  you should test the prefsFramework demo
+2019-11-26T15:47:03  <Justin_o> at the moment if you are on a browser that supports self voicing, you'll notice that the last panel is empty
+2019-11-26T15:47:49  <Bosmon> Justin_o - can you point me at the relevant bit of the code?
+2019-11-26T15:49:38  <Justin_o> Bosmon: https://github.com/jobara/infusion/blob/FLUID-6420/src/framework/preferences/js/Builder.js#L38-L43
+2019-11-26T15:50:05  <Justin_o> https://github.com/jobara/infusion/blob/FLUID-6420/demos/prefsFramework/js/prefsEditorDemo.js#L38-L50
+2019-11-26T15:50:15  <Justin_o> https://github.com/jobara/infusion/blob/FLUID-6420/demos/prefsFramework/js/prefsEditorDemo.js#L87-L98
+2019-11-26T15:50:22  *** yanachkov__ <yanachkov__!~yanachkov@185.97.75.80> has quit IRC (Remote host closed the connection)
+2019-11-26T15:50:45  <Justin_o> Bosmon: or if you prefer the commit, https://github.com/jobara/infusion/commit/dd592ecf0f67af993c78f6b7ccaacdcc93514e23
+2019-11-26T15:51:53  <Bosmon> Justin_o - this looks reasonable as far as I can see
+2019-11-26T15:51:59  <Bosmon> DOes demo.prefsEditor.speak actually appear in the component's grade list?
+2019-11-26T15:52:47  <Bosmon> I think there's a problem in that you will be trying to get this material inside the component's defaults
+2019-11-26T15:53:17  <Bosmon> Which runs the risk of the same problem that we face because of our 2009-era policy on only allocating one mergeBlock per defaults
+2019-11-26T15:53:48  <Bosmon> I think to finesse this you will have to supply a custom mergePolicy on prefsPrioritized that does the merging by hand
+2019-11-26T15:54:14  <Bosmon> Although it's interesting that what you are seeing is that the expander wins, rather than demo.prefsEditor.speak ?
+2019-11-26T15:55:19  <Justin_o> Bosmon: yes, the grade name does appear, and if I try to assign the preference from the grade supplied through contextAwareness, to a new option, it also appears
+2019-11-26T15:56:00  <Justin_o> Bosmon: I wonder if what is happening is the preference is being supplied by the contextawareness supplied grade, but the expander is blowing it away
+2019-11-26T15:56:20  <Justin_o> Bosmon: I'm assuming expansion is happening after options merging
+2019-11-26T15:57:08  <Justin_o> Bosmon: I think there was a JIRA about not being able to override expanders or something like that
+2019-11-26T16:01:53  <Justin_o> well I can't find that JIRA so maybe I'm just imagining things
+2019-11-26T16:06:14  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-11-26T16:06:33  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-11-26T16:14:11  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-11-26T16:38:38  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 268 seconds)
+2019-11-26T17:14:21  *** colinclark <colinclark!~colinclar@24.114.88.147> has joined #fluid-work
+2019-11-26T17:28:13  *** colinclark <colinclark!~colinclar@24.114.88.147> has quit IRC (Quit: colinclark)
+2019-11-26T17:36:46  <sgithens> stegru : is your master sanity branch done and ready to go? I'm about to start a fresh test of something and wondering if I should use that rather than master, as master is still pointing to JJ's universal branch
+2019-11-26T17:37:21  <stegru> sgithens, I've changed nothing in that Branch except the universal reference
+2019-11-26T17:38:07  <stegru> oh, there's a change in a provisioning script, but that does nothing
+2019-11-26T17:38:14  <sgithens> the python path
+2019-11-26T17:38:41  <stegru> yeh, you don't need to worry about that
+2019-11-26T17:43:18  *** lliskovoi_ <lliskovoi_!uid367571@gateway/web/irccloud.com/x-vkkzknivlbweykoz> has quit IRC (Quit: Connection closed for inactivity)
+2019-11-26T17:43:59  <Bosmon> Justin_o - expansion always happens before merging
+2019-11-26T17:44:13  <Bosmon> But the problem, as I was mentioning before, was that all the component's defaults end up in a single mergeBlock
+2019-11-26T17:44:19  <Bosmon> So for them, merging happens first, then expansion
+2019-11-26T17:44:29  <Bosmon> We can't really do anything about this until we start to implement the "compiler"
+2019-11-26T17:44:38  <Justin_o> :( okay
+2019-11-26T17:44:52  <Justin_o> so I'll have to think of another solution for this issue I guess.
+2019-11-26T17:44:59  <Bosmon> The expander, given it is in a more base grade, should actually get blown away by the contextAwareness material rather than the other way round
+2019-11-26T17:45:10  <Bosmon> But we should look in detail in what is happening in the mergeBlocks
+2019-11-26T17:45:28  <Bosmon> Either way, we are going to have a problem, since there is only room for one of them in the same mergeBlock
+2019-11-26T17:45:44  <Bosmon> Either we will have to write a mergePolicy, or somehow move the contextAwareness stuff into an options distribution
+2019-11-26T17:45:57  <Bosmon> Since every options distribution, being part of the "more modern" framework, ends up with its own block
+2019-11-26T17:46:13  <Bosmon> But we should try to understand in detail what is happening at the moment to give us a clue
+2019-11-26T17:49:31  <Justin_o> Bosmon: so mergeBlock.0 has the option from the contextAwareness
+2019-11-26T17:51:11  <Justin_o> Bosmon: okay, actually the expander and the option from contextAwareness are both in mergeBlock.0
+2019-11-26T17:51:29  <Bosmon> Justin_o ..... how can they be ........
+2019-11-26T17:54:46  <Justin_o> they are both listed there in the source object
+2019-11-26T17:55:24  <Justin_o> Bosmon: my code has been pushed up to my FLUID-6420 branch so you can check it out and take a look. Perhaps I've made some mistake somewhere in the configuration to cause this mess
+2019-11-26T18:10:29  *** clown <clown!clown@nat/ocadu/x-gwepcufimbfijvnm> has quit IRC (Ping timeout: 276 seconds)
+2019-11-26T18:17:27  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-26T18:18:35  *** clown <clown!clown@nat/ocadu/x-yyygegeeefbvbfzy> has joined #fluid-work
+2019-11-26T18:55:29  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-11-26T18:57:09  <Bosmon> Justin_o - a bug! a bug!
+2019-11-26T18:57:52  <Justin_o> Bosmon: have you caught it?
+2019-11-26T18:58:07  <Bosmon> Well it's not hard to catch
+2019-11-26T18:58:10  <Bosmon> A blatant merging bug
+2019-11-26T19:02:13  <Justin_o> at least it wasn't too much work to track down.
+2019-11-26T19:35:10  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
+2019-11-26T19:46:13  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Quit: sepidehshahi)
+2019-11-26T19:53:39  *** cindyli <cindyli!Adium@nat/ocadu/x-ierkwjtxfnkquobv> has quit IRC (Quit: Leaving.)
+2019-11-26T19:58:33  *** cindyli <cindyli!Adium@nat/ocadu/x-rkgtzcgsmnedzlbi> has joined #fluid-work
+2019-11-26T20:03:07  *** colinclark <colinclark!~colinclar@2605:8d80:5a0:152b:7dc0:41b:86b5:5890> has joined #fluid-work
+2019-11-26T20:12:39  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-26T20:22:18  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-11-26T20:39:46  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-11-26T20:53:59  *** cindyli <cindyli!Adium@nat/ocadu/x-rkgtzcgsmnedzlbi> has quit IRC (Quit: Leaving.)
+2019-11-26T21:04:58  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-26T21:05:03  *** colinclark <colinclark!~colinclar@2605:8d80:5a0:152b:7dc0:41b:86b5:5890> has quit IRC (Quit: colinclark)
+2019-11-26T21:06:18  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-11-26T21:36:40  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has left #fluid-work
+2019-11-26T21:40:37  *** jhung <jhung!~jhung@CPE18e829ac96f5-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving)
+2019-11-26T22:02:37  *** clown <clown!clown@nat/ocadu/x-yyygegeeefbvbfzy> has quit IRC (Quit: Leaving.)
+2019-11-26T22:14:12  *** danielcho <danielcho!~Adium@hmtnon1497w-130-02-65-95-64-90.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2019-11-26T22:28:04  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has quit IRC (Quit: Leaving.)
+2019-11-26T22:37:48  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-11-26T22:38:25  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-opmejktebkpdfgiz> has quit IRC (Quit: Leaving.)
+2019-11-26T23:07:59  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-11-26T23:09:19  *** avtar <avtar!~avtar@ip-45-3-9-198.user.start.ca> has quit IRC (Quit: Quit)
+2019-11-26T23:46:34  *** colinclark <colinclark!~colinclar@24.114.86.134> has joined #fluid-work
+2019-11-26T23:58:52  *** cindyli <cindyli!~Adium@198.52.178.16> has joined #fluid-work
+2019-11-26T23:58:52  *** cindyli <cindyli!~Adium@198.52.178.16> has quit IRC (Client Quit)

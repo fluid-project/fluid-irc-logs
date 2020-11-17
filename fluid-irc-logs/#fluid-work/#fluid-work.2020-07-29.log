@@ -1,0 +1,72 @@
+2020-07-29T11:09:31  <the-t-in-rtf> @Justin_o, morning.
+2020-07-29T11:09:49  <the-t-in-rtf> My internet just came back, so I finally was able to cut a pull to fix the dependency issue with fluid-pouchdb
+2020-07-29T11:09:50  <the-t-in-rtf> https://github.com/fluid-project/fluid-pouchdb/pull/28
+2020-07-29T11:10:15  <the-t-in-rtf> I can self-merge, but if you can confirm the dev release addresses the issue, that'd be good.
+2020-07-29T11:10:58  <Justin_o> the-t-in-rtf: thanks, I'll take a look
+2020-07-29T11:12:22  <Justin_o> the-t-in-rtf: I didn't realize writing GH-27 would automatically create a link
+2020-07-29T11:12:28  <Justin_o> in GitHub
+2020-07-29T11:12:56  <the-t-in-rtf> Me neither.  I generally use #27
+2020-07-29T11:13:12  <the-t-in-rtf> but maybe you mean the commit message?
+2020-07-29T11:13:28  <Justin_o> In this comment https://github.com/fluid-project/fluid-pouchdb/pull/28#issuecomment-665600915
+2020-07-29T11:13:43  <the-t-in-rtf> yeah, I see what you means
+2020-07-29T11:13:45  <the-t-in-rtf> mean
+2020-07-29T11:13:53  <Justin_o> and also in the commit messsages
+2020-07-29T11:13:54  <the-t-in-rtf> seems like it does it for commit messages and comment text
+2020-07-29T11:13:56  <the-t-in-rtf> yes
+2020-07-29T11:13:57  <Justin_o> actually that's quite handy
+2020-07-29T11:15:21  <the-t-in-rtf> I was getting confused about how they avoid collisions between pulls and issues, but it seems like they share tokens between them.
+2020-07-29T11:15:40  <the-t-in-rtf> i.e. the pull was suddenly #28 as it was the next thing created after issue #27
+2020-07-29T11:15:54  <the-t-in-rtf> In that sense I like GH-27 better
+2020-07-29T11:16:12  <the-t-in-rtf> and the linking
+2020-07-29T11:26:13  <Justin_o> I read an argument once that this number system allows PRs and Issues to be used somewhat interchangeably at least as a point for starting a discussion about an issue. I'm not sure in practice how much a common numbering system actually matters for that though. And I'd guess you're right in that it's more to avoid collisions so that they can auto link the numbers.
+2020-07-29T11:44:13  <Justin_o> the-t-in-rtf: well I think the update works, although for some reason now other dependencies are also bringing rimraf into the top level.
+2020-07-29T11:45:06  <Justin_o> the-t-in-rtf: it's probably still safer this way, but I just don't understand NPM sometimes.
+2020-07-29T11:45:42  <the-t-in-rtf> what I hate is that it's a crapshoot whether something ends up at the top level.
+2020-07-29T11:46:02  <the-t-in-rtf> seemingly
+2020-07-29T11:46:49  <the-t-in-rtf> which leads to stuff like that eslint-plugin-markdown issue
+2020-07-29T11:46:59  <the-t-in-rtf> although that is as much grunt's fault as anything
+2020-07-29T11:47:33  <the-t-in-rtf> If CI works with it and it works in your package I think we should merge it and revisit if needed.
+2020-07-29T11:47:43  <Justin_o> the-t-in-rtf: sounds good to me
+2020-07-29T11:48:01  <Justin_o> what was the issue with grunt for the eslint-plugin-markdown issue?
+2020-07-29T11:49:29  <the-t-in-rtf> depending on where npm stuffs that plugin, you may see a warning when running grunt lint
+2020-07-29T11:49:53  <the-t-in-rtf> because even though that plugin is a dependency of fluid-grunt-lint-all, if it doesn't end up at the top-level of node_modules, you can't use it with Grunt
+2020-07-29T11:50:16  <the-t-in-rtf> and by warning I mean it doesn't throw and error, but just skips the checks altogether
+2020-07-29T11:50:23  <Justin_o> :(
+2020-07-29T11:50:27  <Justin_o> yah that's bad
+2020-07-29T11:50:48  <the-t-in-rtf> So grunt doesn't even break the world properly.
+2020-07-29T11:51:19  <Justin_o> I think there is a similar issue with trying to share plugins for eslint itself through sharable configs. They are thinking of creating a new configuration format to address that.
+2020-07-29T11:51:24  <the-t-in-rtf> I'd almost be happier if the run failed outright than to have it screw up the plugin loading and then consider an incomplete run a success.
+2020-07-29T11:53:40  <the-t-in-rtf> OK, merged and published
+2020-07-29T11:53:46  <the-t-in-rtf> 1.0.17 is out
+2020-07-29T11:53:55  <Justin_o> the-t-in-rtf: I agree, it's too easy to miss otherwise.
+2020-07-29T11:54:05  <Justin_o> thanks for the updated release :)
+2020-07-29T11:54:14  <the-t-in-rtf> like you could break your whole chain and be checking literally nothing
+2020-07-29T11:54:21  <Justin_o> the-t-in-rtf: also, here is the info about the changes to eslint config https://github.com/eslint/eslint/issues/13481
+2020-07-29T11:54:25  <the-t-in-rtf> ah, cool, thanks
+2020-07-29T11:55:35  <Justin_o> I assume they have a long way to go with this, but you can follow the links to the lengthy discussions that have been had on some other tickets.
+2020-07-29T12:58:22  <Justin_o> the-t-in-rtf: I got the coverage reporting working. I set the paths to the test files in the all-tests.html to be relative to the project root, and used fluid.testem.safeRollup to change the path when not using testem.
+2020-07-29T12:58:30  <the-t-in-rtf> aha!
+2020-07-29T12:58:44  <the-t-in-rtf> that makes much sense.
+2020-07-29T12:58:58  <the-t-in-rtf> I wrote that for people who wanted to test both ways.
+2020-07-29T13:12:34  <Justin_o> the-t-in-rtf: I had used a similar approach in uio-plus. I don't remember if I had the same issue then or just followed an example that I found from your repo.
+2020-07-29T13:13:21  <Justin_o> the-t-in-rtf: by the way, did you have any feedback on this PR? https://github.com/fluid-project/infusion/pull/1002
+2020-07-29T13:13:47  <Justin_o> In particular to this comment https://github.com/fluid-project/infusion/pull/1002#issuecomment-661992250
+2020-07-29T13:16:15  <the-t-in-rtf> In general I'm a fan, I used to host copies of coverage reports on my github pages so that we were discussing a particular state in time.
+2020-07-29T13:17:39  <Justin_o> the-t-in-rtf: thanks.. and the self hosting was a good workaround
+2020-07-29T13:19:02  <the-t-in-rtf> I guess although I've done a lot to make it possible to report on coverage, I'm not overly fussed about the different rules.
+2020-07-29T13:19:39  <the-t-in-rtf> I'll comment on the pull just for the record.
+2020-07-29T13:27:14  <Justin_o> the-t-in-rtf: thanks
+2020-07-29T15:24:59  <Justin_o> gmoss: hello, do you have a few minutes to chat about Storytelling tests?
+2020-07-29T15:27:40  <Justin_o> Bosmon: am I recalling correctly that kettle has a way to load configuration values from environment variables? And also how does it handle configurations that need to remain secret?
+2020-07-29T15:29:01  <gmoss> Justin_o: if it's quick we can chat before standup, but afterwards is fine too!
+2020-07-29T15:29:38  <Justin_o> okay.. lets meet there now and see how long it takes for people to join
+2020-07-29T16:33:15  <raunak> (cindyli)
+2020-07-29T16:33:36  <raunak> regarding the project of we count
+2020-07-29T16:39:24  <cindyli> hi raunak, thanks for your interest in we count project. do you have preferences about which part you'd like to work on. The 2 pull requests you issued for WeCount was on styling (css). Is that what you are interested in? or you are interested in other parts too?
+2020-07-29T17:00:11  <raunak> i added this feature to this we count project to improve the hovar of navbar https://usercontent.irccloud-cdn.com/file/E2F1TyRJ/feaut.PNG
+2020-07-29T17:02:20  <michelled> hey raunak, if you want to work on the wecount project, you need to co-ordinate with the team working on it. they can point you to ways that you can get involved
+2020-07-29T17:02:46  <michelled> there are designers working on the project who have put together a visual design for the site
+2020-07-29T17:02:57  <michelled> that is being implemented in phases by the project team
+2020-07-29T17:04:10  <michelled> you need to co-ordinate with the team so that you aren't overlapping work that others are doing
+2020-07-29T17:04:21  <michelled> and are moving the site towards the designs that have been created
+2020-07-29T17:05:24  <michelled> raunak: does that make sense?

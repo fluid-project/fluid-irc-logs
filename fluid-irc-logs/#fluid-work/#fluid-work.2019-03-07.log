@@ -1,0 +1,339 @@
+2019-03-07T04:14:23  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-03-07T04:26:32  *** scott_gonzalez <scott_gonzalez!gonzasi0@gateway/shell/jquery.com/x-uzlfyoozrdvashkp> has quit IRC (*.net *.split)
+2019-03-07T04:53:43  *** scott_gonzalez <scott_gonzalez!gonzasi0@gateway/shell/jquery.com/x-uzlfyoozrdvashkp> has joined #fluid-work
+2019-03-07T05:58:34  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-03-07T07:24:38  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 245 seconds)
+2019-03-07T09:28:50  *** kris_HA <kris_HA!~kris@212.5.154.113> has joined #fluid-work
+2019-03-07T11:07:15  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:a9f1:95f0:5837:2b93> has joined #fluid-work
+2019-03-07T12:37:54  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-03-07T12:38:09  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has left #fluid-work
+2019-03-07T13:22:03  <jhernandez> the-t-in-rtf: hey there
+2019-03-07T13:22:05  <jhernandez> quick question
+2019-03-07T13:23:02  <jhernandez> if I directly add %gpii-universal/gpii/configs/shared/gpii.config.couch.development.base.json5 into my config  (and by passing the GPII_TEST_COUCH_USE_EXTERNAL).... the db should be populated, right?
+2019-03-07T13:28:30  <Bosmon> Hey there jhernandez - the-t-in-rtf has gone out for his driving lesson
+2019-03-07T13:28:36  <Bosmon> I've just rolled a new gpii-windows release of 0.3.0-dev.20190307T132731Z.74c7d37
+2019-03-07T13:29:52  <Bosmon> Mostly this includes javjarfer[m] 's updates to the desktop background, and cindyli's work in core on autopopulate and endpoints
+2019-03-07T13:31:31  <jhernandez> Bosmon: ok, thanks for the FYI
+2019-03-07T13:31:40  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-03-07T13:32:01  <Bosmon> I guess we are going to just have to bite the bullet and try experimenting with updating the gpii-app test pull to various other configs at random and see what happens : P
+2019-03-07T13:32:08  <jhernandez> I'll update my GPII-3744 pr for gpii-app
+2019-03-07T13:32:14  <Bosmon> Since it seems our attempts at reasoning about what to do are taking a while
+2019-03-07T13:32:39  *** lliskovoi <lliskovoi!~lliskovoi@CPE84948cd08c93-CM84948cd08c90.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-03-07T13:33:05  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-03-07T13:33:06  <jhernandez> Bosmon: yes, I've been performing some tests here by updating configs, etc and can't figure out yet
+2019-03-07T13:34:13  <Bosmon> jhernandez - are you able to change the symptoms at least? : P
+2019-03-07T13:34:16  <jhernandez> updating gpii.tests.acceptance.windows.builtIn.config to use gpii.config.untrusted.development.local is fine - tests are still passing
+2019-03-07T13:34:18  <Bosmon> Or do you always get the same error
+2019-03-07T13:34:22  <jhernandez> (on gpii-windows)
+2019-03-07T13:35:17  <Bosmon> cindyli - can you suggest what config we should use here? - https://github.com/GPII/gpii-app/pull/93/files#r262021780
+2019-03-07T13:35:18  <jhernandez> but if I use that config in gpii-app, the gpii db doesn't get created
+2019-03-07T13:36:07  <cindyli> looking up
+2019-03-07T13:36:37  <jhernandez> I updated that config to be
+2019-03-07T13:36:40  <jhernandez> "mergeConfigs": [
+2019-03-07T13:36:40  <jhernandez>         "%gpii-universal/tests/platform/windows/configs/gpii.tests.acceptance.windows.builtIn.config.json",
+2019-03-07T13:36:40  <jhernandez>         "%gpii-universal/gpii/configs/shared/gpii.config.couch.development.base.json5"
+2019-03-07T13:36:42  <jhernandez>     ]
+2019-03-07T13:36:47  <cindyli> "%gpii-universal/gpii/configs/shared/gpii.config.untrusted.development.local.json5"
+2019-03-07T13:37:50  <jhernandez> and tests.acceptance.windows.builtIn.config is using gpii.config.untrusted.development.local
+2019-03-07T13:38:11  <jhernandez> which makes sense according to cindyli's advice
+2019-03-07T13:38:12  <cindyli> this grade has to be used together with "gpii.test.couchEnvironment" and "gpii.test.couchdb.caseHolder" to get CouchDB spin up
+2019-03-07T13:38:18  <jhernandez> aha
+2019-03-07T13:39:23  <Bosmon> cindyli - isn't there some built-in config which already does this?
+2019-03-07T13:39:34  <cindyli> i don't think so
+2019-03-07T13:39:40  <Bosmon> I'm wondering why the Windows acceptance tests run without explicitly adding couchEnvironment
+2019-03-07T13:40:03  <cindyli> because it uses manualTesting underlying, if you dig furthur
+2019-03-07T13:42:09  <cindyli> the config file chain will lead to this one - gpii/configs/shared/gpii.config.development.base.local.json5 that merges the config file "%gpii-universal/gpii/configs/shared/gpii.config.couch.development.base.json5", which is supposed to be used by manualTesting configs
+2019-03-07T13:43:33  <cindyli> Bosmon: windows has no problem with running test with manualTesting config because index-windows.js is the only test dealing with CouchDB
+2019-03-07T13:43:55  <cindyli> all windows unit tests don't seem to require CouchDB
+2019-03-07T13:44:33  <jhernandez> Bosmon: because gpii-windows runs tests/AcceptanceTests.js, which in the chain of requires at some point it hits https://github.com/GPII/universal/blob/master/gpii/node_modules/testing/src/Fixtures.js#L183-L199
+2019-03-07T13:45:12  <jhernandez> cindyli: does this make sense? can this be the source of our confusion?
+2019-03-07T13:45:40  <cindyli> we have different theories apparently ;)
+2019-03-07T13:46:15  <cindyli> i don't think index-windows.js uses CouchDB testing fixtures at all
+2019-03-07T13:48:08  <Bosmon> cindyli - but it needs a valid database in order to run at all
+2019-03-07T13:48:13  <Bosmon> Right?
+2019-03-07T13:48:23  <cindyli> yes
+2019-03-07T13:49:00  <cindyli> windows VM has CouchDB installed. "%gpii-universal/gpii/configs/shared/gpii.config.couch.development.base.json5" will load data but won't clean it up afterwards
+2019-03-07T13:49:03  <jhernandez> which is in fact being populated according to the fact that windows is passing CI
+2019-03-07T13:49:35  <jhernandez> cindyli: where is that reference coming from?
+2019-03-07T13:50:13  <jhernandez> from the windows repo point of view, I mean
+2019-03-07T13:51:11  <jhernandez> (and to the extent of running the acceptance tests)
+2019-03-07T13:51:16  <cindyli> windows repo points to index-windows.js sitting in the universal repo, so, the root is still in the universal
+2019-03-07T13:51:46  <cindyli> use the first test windows-builtIn-testSpec.js in the index-windows as an example, the config starts at https://github.com/GPII/universal/blob/master/tests/platform/windows/windows-builtIn-testSpec.js#L1753-L1754
+2019-03-07T13:52:29  <cindyli> if you dig into the config file at line 1753, eventually you will reach the point where "%gpii-universal/gpii/configs/shared/gpii.config.couch.development.base.json5" is merged in
+2019-03-07T13:53:38  <Bosmon> Right
+2019-03-07T13:54:02  <Bosmon> OK, so what jhernandez has written above should be correct?
+2019-03-07T13:55:18  <Bosmon> That is, about 20 minutes ago
+2019-03-07T13:55:25  <cindyli> checking..
+2019-03-07T13:56:28  <cindyli> jhernandez said: if I directly add %gpii-universal/gpii/configs/shared/gpii.config.couch.development.base.json5 into my config  (and by passing the GPII_TEST_COUCH_USE_EXTERNAL).... the db should be populated, right?
+2019-03-07T13:56:33  <cindyli> i think the answer is yes
+2019-03-07T13:57:14  <cindyli> 2 flaws with using this approach:
+2019-03-07T13:58:17  <cindyli> 1. this config doesn't clean up the database afterwards. so the next test won't have fresh data to start with
+2019-03-07T14:00:05  <cindyli> 2. if there are tests using gpii.tests.CouchDB approach running before the test using this config, when the first set of test completes, CouchDB will have test data from the first set. When the config from the 2nd set tries to load the data without cleaning up the previous data, there might be conflict at loading
+2019-03-07T14:02:42  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has joined #fluid-work
+2019-03-07T14:06:11  <Bosmon> cindyli - but don't all our integration/acceptance tests clean up the database afterwards?
+2019-03-07T14:06:52  <cindyli> yes for the ones that use couchdb testing fixtures
+2019-03-07T14:11:23  <jhernandez> cindyli: okay, thanks
+2019-03-07T14:11:44  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:cdcb:5d96:b349:6d87> has joined #fluid-work
+2019-03-07T14:11:55  <jhernandez> you said "i think the answer is yes" and, unless I'm doing something wrong, the db is not being populated
+2019-03-07T14:14:33  <cindyli> ah ha
+2019-03-07T14:15:18  <cindyli> jhernandez: can you send me the branch that i can give a try
+2019-03-07T14:18:17  <jhernandez> cindyli: sure, hold a second, on a call at this moment
+2019-03-07T14:25:31  *** simonjb <simonjb!~simonjb@205.211.168.103> has joined #fluid-work
+2019-03-07T14:25:40  <jhernandez> cindyli: https://github.com/javihernandez/gpii-app/tree/couch-population-tests
+2019-03-07T14:25:45  <cindyli> thanks
+2019-03-07T14:25:50  <jhernandez> in addition to that
+2019-03-07T14:26:14  <jhernandez> I updated the gpii.tests.acceptance.windows.builtIn.config to use gpii.config.untrusted.development.local
+2019-03-07T14:27:17  <jhernandez> so you have to do apply that change manually in gpii-universal after npm install
+2019-03-07T14:27:30  <jhernandez> cindyli: ^
+2019-03-07T14:28:06  <cindyli> ok
+2019-03-07T14:28:14  <jhernandez> if you are going to run it form the terminal, ensure that you set GPII_TEST_COUCH_USE_EXTERNAL
+2019-03-07T14:28:21  <cindyli> ok
+2019-03-07T14:28:46  <jhernandez> let me know if you have questions or even want a quick call
+2019-03-07T14:37:28  <cindyli> ok
+2019-03-07T14:39:16  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has joined #fluid-work
+2019-03-07T14:51:45  <cindyli> jhernandez: can i directly run "npm run test:psp", which sets GPII_TEST_COUCH_USE_EXTERNAL=TRUE?
+2019-03-07T14:51:54  <jhernandez> yes
+2019-03-07T14:52:01  <cindyli> ok. thanks
+2019-03-07T14:52:06  <jhernandez> I think it's there, right?
+2019-03-07T14:52:29  <jhernandez> it is, right
+2019-03-07T14:52:56  <jhernandez> I do run "npm run test:psp:noCoverage"
+2019-03-07T15:01:45  <jhernandez> cindyli: remember to manually remove the db before running the tests - just in case is already populated and leading to "false" results
+2019-03-07T15:02:17  <cindyli> ya, i checked before running tests, "gpii" database is not there on my VM
+2019-03-07T15:02:33  <the-t-in-rtf> So, rather than only have a "starting" couch config in gpii/configs/shared/gpii.config.couch.development.manualTesting.json5, would it be useful to have a standalone "starting and cleaning couch" config that you can merge with what you like downstream?
+2019-03-07T15:02:55  <the-t-in-rtf> and a standalone "starting couch" config that isn't named "manual testing"
+2019-03-07T15:03:11  <the-t-in-rtf> that might make things clearer and make this work easier.
+2019-03-07T15:03:57  <cindyli> Bosmon: ^
+2019-03-07T15:04:06  <cindyli> sounds a good idea to me
+2019-03-07T15:04:44  <the-t-in-rtf> If @Bosmon agrees, I am thankfully at a good point with my universal pull to switch and submit a small pull to rearrange things
+2019-03-07T15:05:18  <the-t-in-rtf> we could also keep them separate and you merge both, I like the cleanness of that
+2019-03-07T15:05:45  <cindyli> jhernandez: i hit this error at running "npm run test:psp:noCoverage"
+2019-03-07T15:05:46  <the-t-in-rtf> but I guess no one is gonna use them separately.
+2019-03-07T15:05:47  <cindyli> 06:57:09.447:  Test case listener has not responded after 5000ms - at sequence pos 2 of 11 sequence element {
+2019-03-07T15:05:47  <cindyli>     "event": "{that gpii.app}.events.onPSPReady",
+2019-03-07T15:05:47  <cindyli>     "listener": "fluid.identity"
+2019-03-07T15:05:47  <cindyli> } of fixture GPII application integration tests
+2019-03-07T15:06:07  <cindyli> did you hit this
+2019-03-07T15:08:06  <jhernandez> nope, I'm gettting a bit further in the tests
+2019-03-07T15:08:24  <jhernandez> the-t-in-rtf: +1 to your suggestion
+2019-03-07T15:08:47  <the-t-in-rtf> writing a ticket now, which should take longer than doing the work.
+2019-03-07T15:09:21  <jhernandez> cindyli: did you update node_modules/gpii-universal/tests/platform/windows/gpii.tests.acceptance.windows.builtIn.config.json ?
+2019-03-07T15:09:42  <jhernandez> to use the untrusted config?
+2019-03-07T15:10:21  <jhernandez> platform/windows/configs
+2019-03-07T15:14:02  <cindyli> right, forgot thata
+2019-03-07T15:14:05  <the-t-in-rtf> https://issues.gpii.net/browse/GPII-3779
+2019-03-07T15:15:40  <the-t-in-rtf> So, I'm thinking of calling one config "startNoReset" and the other "startClean"
+2019-03-07T15:15:43  <the-t-in-rtf> that clear enough?
+2019-03-07T15:15:59  <jhernandez> cindyli: I "think" that you are getting that problem because you are not using the untrusted config - but I might be wrong
+2019-03-07T15:16:52  <jhernandez> the-t-in-rtf: sounds good to me
+2019-03-07T15:18:58  <jhernandez> FYI, leaving for a walk with dogz - will be back in about 30 mins
+2019-03-07T15:19:04  <cindyli> jhernandez: better after switching to untrusted. hit this error now:
+2019-03-07T15:19:05  <cindyli>  Test case listener has not responded after 5000ms - at sequence pos 9 of 11 sequence element {
+2019-03-07T15:19:05  <cindyli>     "changeEvent": "{that}.app.tray.menu.applier.modelChanged",
+2019-03-07T15:19:05  <cindyli>     "path": "preferenceSetsMenuItems",
+2019-03-07T15:19:05  <cindyli>     "args": [
+2019-03-07T15:19:05  <cindyli>         "{that}.app.tray.menu.model.menuTemplate"
+2019-03-07T15:19:05  <cindyli>     ],
+2019-03-07T15:19:05  <cindyli>     "listener": "gpii.tests.app.testMenuSnapsetKeyedIn"
+2019-03-07T15:19:06  <cindyli> } of fixture GPII application integration tests
+2019-03-07T15:19:59  <jhernandez> yes
+2019-03-07T15:20:08  <jhernandez> that's what I'm hitting
+2019-03-07T15:21:37  <cindyli> ok
+2019-03-07T15:21:44  <jhernandez> and if you look up in the log, you'll see it complaining about credentials
+2019-03-07T15:21:49  <jhernandez> 05:00:07.470:  clientService: unauthorized client with oauth2ClientId - pilot-computer
+2019-03-07T15:21:49  <jhernandez> 05:00:07.473:  Resetting logon change model of lifecycleManager
+2019-03-07T15:21:49  <jhernandez> 05:00:07.475:  UserLogonRequest fails with the error: {
+2019-03-07T15:21:51  <jhernandez>     "message": "server_error while executing HTTP POST on url http://localhost:8084/access_token",
+2019-03-07T15:21:53  <jhernandez>     "isError": true,
+2019-03-07T15:21:55  <jhernandez>     "statusCode": 401
+2019-03-07T15:21:57  <jhernandez> }
+2019-03-07T15:22:09  <the-t-in-rtf> https://issues.gpii.net/browse/GPII-3779
+2019-03-07T15:22:11  <jhernandez> leaving now
+2019-03-07T15:22:15  <the-t-in-rtf> Pull is already in.
+2019-03-07T15:22:33  <the-t-in-rtf> Turned out to be even easier than I thought, basically the manual testing config had to AVOID the default cleanup.
+2019-03-07T15:23:01  <the-t-in-rtf> I will be taking care of my son soon, but will be on chat off and on.
+2019-03-07T15:23:16  <the-t-in-rtf> https://github.com/GPII/universal/pull/751
+2019-03-07T15:24:17  <the-t-in-rtf> https://github.com/the-t-in-rtf/universal/blob/GPII-3779/gpii/configs/shared/gpii.config.couch.development.startWithCleanData.json5
+2019-03-07T15:24:30  <the-t-in-rtf> the other is "startWithoutCleanData"
+2019-03-07T15:24:34  <the-t-in-rtf> best I could do on short notice.
+2019-03-07T15:28:21  *** lliskovoi <lliskovoi!~lliskovoi@CPE84948cd08c93-CM84948cd08c90.cpe.net.cable.rogers.com> has quit IRC (Quit: lliskovoi)
+2019-03-07T15:29:03  <cindyli> the-t-in-rtf: using "%gpii-universal/gpii/configs/shared/gpii.config.couch.development.base.json5" config with GPII_TEST_COUCH_USE_EXTERNAL=TRUE on windows should auto-provision "gpii" database, right?
+2019-03-07T15:29:22  <the-t-in-rtf> yes, but it won't start it
+2019-03-07T15:29:33  <the-t-in-rtf> the new config just inherits from that and starts it
+2019-03-07T15:29:39  <cindyli> ya, couchdb has been started before running tests
+2019-03-07T15:29:51  <the-t-in-rtf> great, then yes, you can use the other
+2019-03-07T15:29:59  <cindyli> but somehow "gpii" db is not provisioned
+2019-03-07T15:30:12  <the-t-in-rtf> yes, provisioning is part of the harness' startup
+2019-03-07T15:30:25  *** colinclark <colinclark!~colinclar@192-0-159-124.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-03-07T15:30:33  <the-t-in-rtf> it will avoid starting a new instance if one is up, but the provisioning only happens if you trigger the "combined startup" event
+2019-03-07T15:30:51  <cindyli> does it mean i should use the withCleanData version of config?
+2019-03-07T15:31:07  <cindyli> the one in your pull request
+2019-03-07T15:32:00  <cindyli> btw, i mean "gpii" db is not even created when using "%gpii-universal/gpii/configs/shared/gpii.config.couch.development.base.json5"
+2019-03-07T15:32:27  <cindyli> it's not that the "gpii" db already exists but is not re-provisioned
+2019-03-07T15:32:56  <cindyli> i expect "gpii.config.couch.development.base.json5" would create "gpii" and load data
+2019-03-07T15:33:51  <the-t-in-rtf> it will if you trigger the start in the harness
+2019-03-07T15:33:55  <the-t-in-rtf> the tests do that normally
+2019-03-07T15:33:58  <the-t-in-rtf> and the new config does that
+2019-03-07T15:34:16  <the-t-in-rtf> if you use the new config in combination with the external environment variable mentioned in the header, you can just provision it
+2019-03-07T15:34:25  <the-t-in-rtf> i.e. it will avoid checking and trying to start its own
+2019-03-07T15:35:46  <cindyli> ok
+2019-03-07T15:35:56  *** alanharnum <alanharnum!~alanharnu@2607:fea8:12a0:b9b:cdcb:5d96:b349:6d87> has quit IRC ()
+2019-03-07T15:37:18  <cindyli> when you say "start", does it mean "create gpii database"?
+2019-03-07T15:37:49  <the-t-in-rtf> just a moment
+2019-03-07T15:38:04  <cindyli> no rush
+2019-03-07T15:38:36  <the-t-in-rtf> https://github.com/the-t-in-rtf/gpii-couchdb-test-harness/blob/GPII-3531/src/js/harness.js#L397
+2019-03-07T15:38:39  <the-t-in-rtf> there's the full sequence
+2019-03-07T15:39:11  <the-t-in-rtf> it triggers db provisioning, which is its own sub-chain: https://github.com/the-t-in-rtf/gpii-couchdb-test-harness/blob/GPII-3531/src/js/harness.js#L388
+2019-03-07T15:39:21  <the-t-in-rtf> but only so it can clean up and then fire an event
+2019-03-07T15:39:41  <the-t-in-rtf> so you could also trigger just the cleanup in the harness if you wanted
+2019-03-07T15:39:57  <the-t-in-rtf> but triggering start covers more use cases
+2019-03-07T15:40:16  <the-t-in-rtf> i.e. use it without an environment to start a db, use it with to use an external
+2019-03-07T15:41:42  <cindyli> ok. does the current "gpii.config.couch.development.base.json5" perform the subtask of combinedDbSetup - https://github.com/the-t-in-rtf/gpii-couchdb-test-harness/blob/GPII-3531/src/js/harness.js#L388-L396?
+2019-03-07T15:41:52  <the-t-in-rtf> not by itself, now
+2019-03-07T15:41:53  <the-t-in-rtf> now
+2019-03-07T15:41:55  <the-t-in-rtf> no
+2019-03-07T15:42:19  <the-t-in-rtf> it creates a harness, but that harness is not told to do anything special when the config is started
+2019-03-07T15:42:30  <the-t-in-rtf> i.e. it's waiting for the case holder to start it
+2019-03-07T15:44:23  <the-t-in-rtf> and the tests only trigger the db setup by way of the combined startup
+2019-03-07T15:44:41  <cindyli> cool
+2019-03-07T15:50:44  *** lliskovoi <lliskovoi!~lliskovoi@CPE84948cd08c93-CM84948cd08c90.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-03-07T15:54:30  *** michelled <michelled!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-07T15:58:37  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-07T15:59:28  <cindyli> jhernandez: i learned a lot about couchdb config from the-t-in-rtf, which is super helpful. here comes the trick for gpii-app tests:
+2019-03-07T15:59:43  <cindyli> if you replace these 2 lines https://github.com/javihernandez/gpii-app/blob/couch-population-tests/tests/configs/gpii.tests.all.config.json5#L46-L47 with:
+2019-03-07T15:59:55  <cindyli>         "%gpii-universal/gpii/configs/shared/gpii.config.untrusted.development.local.json5",
+2019-03-07T15:59:55  <cindyli>         "%gpii-universal/gpii/configs/shared/gpii.config.couch.development.manualTesting.json5"
+2019-03-07T16:00:20  *** lliskovoi <lliskovoi!~lliskovoi@CPE84948cd08c93-CM84948cd08c90.cpe.net.cable.rogers.com> has quit IRC (Quit: lliskovoi)
+2019-03-07T16:00:31  <cindyli> "gpii" db will be created and loaded
+2019-03-07T16:00:43  <cindyli> but there are a couple of problems:
+2019-03-07T16:01:14  <cindyli> 1. the first time running tests will still hit "credential not found" error because the test doesn't wait for the database to be ready before starting running tests.
+2019-03-07T16:02:06  <cindyli> 2. although the 2nd run would pass most test, at the end, 3 same errors will be hit - FATAL ERROR: Uncaught exception: Object has been destroyed
+2019-03-07T16:04:32  <cindyli> this tells we probably should still use couch testing grades "gpii.test.couchEnvironment" and "gpii.test.couchdb.caseHolder" to get the sequence of "start couch -> run tests -> stop couch" in the right order
+2019-03-07T16:06:40  *** lliskovoi <lliskovoi!~lliskovoi@CPE84948cd08c93-CM84948cd08c90.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-03-07T16:11:06  <jhernandez> ohh, great news - good to know that I wasn't that lost
+2019-03-07T16:11:12  <jhernandez> thanks cindyli and the-t-in-rtf
+2019-03-07T16:11:43  *** colinclark <colinclark!~colinclar@205.211.168.104> has joined #fluid-work
+2019-03-07T16:11:43  <cindyli> :)
+2019-03-07T16:12:02  <jhernandez> okay, then, I assume that we should create a config that also brings these grades in universal
+2019-03-07T16:12:29  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-07T16:12:30  <jhernandez> or can we just add them from the gpii-app test config?
+2019-03-07T16:12:49  *** michelled <michelled!~Adium@205.211.168.103> has left #fluid-work
+2019-03-07T16:12:52  <cindyli> well, i think tests need to be refactored to include these grades. it would not be as simple as modifying the config file
+2019-03-07T16:13:07  <cindyli> the-t-in-rtf would know better ^
+2019-03-07T16:13:16  *** michelled <michelled!~Adium@205.211.168.103> has joined #fluid-work
+2019-03-07T16:15:18  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-03-07T16:15:18  *** danayo_ is now known as danayo
+2019-03-07T16:27:00  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-07T16:29:04  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-egeptgwmyjiccalp> has joined #fluid-work
+2019-03-07T16:30:24  *** lliskovoi <lliskovoi!~lliskovoi@CPE84948cd08c93-CM84948cd08c90.cpe.net.cable.rogers.com> has quit IRC (Quit: lliskovoi)
+2019-03-07T16:30:27  *** kris_HA <kris_HA!~kris@212.5.154.113> has quit IRC (Ping timeout: 240 seconds)
+2019-03-07T16:34:14  *** lliskovoi <lliskovoi!~lliskovoi@CPE84948cd08c93-CM84948cd08c90.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-03-07T16:37:45  *** gtirloni <gtirloni!gtirloni@wikimedia/GTirloni-WMF> has quit IRC ()
+2019-03-07T16:43:17  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-03-07T16:43:35  *** lliskovoi <lliskovoi!~lliskovoi@CPE84948cd08c93-CM84948cd08c90.cpe.net.cable.rogers.com> has quit IRC (Quit: lliskovoi)
+2019-03-07T16:48:10  <the-t-in-rtf> I designed the new file to be mixed in to your test config in gpii-app
+2019-03-07T16:48:29  <the-t-in-rtf> as long as you're not out in left field, i.e. extending one of the configs from universal, it should do what you need
+2019-03-07T16:48:48  <the-t-in-rtf> left field would be not extending a config from universal, rolling your own as it were
+2019-03-07T16:53:48  <jhernandez> the-t-in-rtf: nope, we are not doing such thing
+2019-03-07T17:00:19  <jhernandez> okay, then my gpii-app test config will include these, right?
+2019-03-07T17:00:22  <jhernandez> "mergeConfigs": [
+2019-03-07T17:00:22  <jhernandez>         "%gpii-universal/gpii/configs/shared/gpii.config.untrusted.development.local.json5",
+2019-03-07T17:00:22  <jhernandez>         "%gpii-universal/gpii/configs/shared/gpii.config.couch.development.base.json5",
+2019-03-07T17:00:24  <jhernandez>         "%gpii-universal/gpii/configs/shared/gpii.config.couch.development.startWithCleanData.json5"
+2019-03-07T17:00:26  <jhernandez>     ]
+2019-03-07T17:00:54  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-03-07T17:01:11  <jhernandez> the-t-in-rtf: cindyli ^
+2019-03-07T17:02:11  <jhernandez> oh, not development.base, this one is included by startWithCleanData
+2019-03-07T17:02:23  <cindyli> yes
+2019-03-07T17:03:08  <cindyli> i believe you will run into the same problems i had. but do give a try
+2019-03-07T17:03:25  <jhernandez> yes, I'll give it a try
+2019-03-07T17:03:30  <cindyli> thanks
+2019-03-07T17:04:10  <jhernandez> thanks to you all
+2019-03-07T17:09:02  <the-t-in-rtf> the untrusted one and the start with clean data should be enough as far as I know.
+2019-03-07T17:09:22  <the-t-in-rtf> if not, I have a good block of time tomorrow and will keep helping out, just comment on the pull with what you experience
+2019-03-07T17:09:31  <the-t-in-rtf> and I can check out your branch and test with the new configs
+2019-03-07T17:11:02  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has joined #fluid-work
+2019-03-07T17:26:44  <jhernandez> ok
+2019-03-07T17:27:05  <jhernandez> with that config now I get a failure the first time, but all subsequent tries pass
+2019-03-07T17:38:47  <the-t-in-rtf> that suggests to me that you do really need something that waits for provisioning
+2019-03-07T17:39:18  <the-t-in-rtf> at least for a first run.
+2019-03-07T17:40:38  <the-t-in-rtf> i.e. you're trying your tests on the first pass, and they fail, but the provisioning completes in parallel
+2019-03-07T17:41:12  <the-t-in-rtf> the second and subsequent passes probably hit the data from the previous run
+2019-03-07T17:41:24  <the-t-in-rtf> and depending on the length, you might have successes, then failures, then more successes in the same run
+2019-03-07T17:41:34  <the-t-in-rtf> as the data is removed and reprovisioned
+2019-03-07T17:42:16  <the-t-in-rtf> so that would argue for indeed using the "development" config and then adding sequence steps to start the harness and wait for it to finish starting up
+2019-03-07T17:42:43  <the-t-in-rtf> happy to work through it tomorrow morning, we can trade links and get specific @jhernandez
+2019-03-07T17:44:23  <jhernandez> yes, sounds like it's that
+2019-03-07T17:48:37  <jhernandez> the-t-in-rtf: last question before you go offline - is there any event triggering when the harness is done?
+2019-03-07T17:50:01  <jhernandez> sound like we should do that in gpii-app's start sequence here, right? https://github.com/GPII/gpii-app/blob/master/tests/IntegrationTests.js#L53-L65
+2019-03-07T17:51:24  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-03-07T17:58:46  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-uguovrjmeelwgqoo> has joined #fluid-work
+2019-03-07T18:09:51  <the-t-in-rtf> just a moment, I'll send you a link to the event
+2019-03-07T18:10:57  <the-t-in-rtf> https://github.com/GPII/universal/blob/master/gpii/node_modules/testing/src/Fixtures.js#L154
+2019-03-07T18:11:15  <the-t-in-rtf> So, I use the "task" syntax, as the startup also returns a promise
+2019-03-07T18:11:21  <the-t-in-rtf> just a moment and I'll find the event
+2019-03-07T18:11:53  <the-t-in-rtf> https://github.com/the-t-in-rtf/gpii-couchdb-test-harness/blob/GPII-3531/src/js/harness.js#L424
+2019-03-07T18:11:55  <the-t-in-rtf> That's the event
+2019-03-07T18:13:35  <the-t-in-rtf> @jhernandez ^^^
+2019-03-07T18:21:50  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has joined #fluid-work
+2019-03-07T18:22:21  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-03-07T18:24:22  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-egeptgwmyjiccalp> has quit IRC (Remote host closed the connection)
+2019-03-07T18:24:29  *** lliskovoi <lliskovoi!~lliskovoi@CPE84948cd08c93-CM84948cd08c90.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-03-07T18:24:51  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-uxwmulkyajfokjaw> has joined #fluid-work
+2019-03-07T18:29:58  <jhernandez> the-t-in-rtf: okay, thanks
+2019-03-07T18:36:39  *** lliskovoi <lliskovoi!~lliskovoi@CPE84948cd08c93-CM84948cd08c90.cpe.net.cable.rogers.com> has quit IRC (Quit: lliskovoi)
+2019-03-07T18:36:57  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-03-07T18:38:52  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-03-07T18:41:09  *** lliskovoi <lliskovoi!~lliskovoi@CPE84948cd08c93-CM84948cd08c90.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-03-07T18:47:06  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-uxwmulkyajfokjaw> has quit IRC (Remote host closed the connection)
+2019-03-07T18:47:16  *** alanharnum2 <alanharnum2!alanharnum@nat/ocadu/x-xsmjpklyjmzqhekm> has joined #fluid-work
+2019-03-07T18:50:57  *** lliskovoi <lliskovoi!~lliskovoi@CPE84948cd08c93-CM84948cd08c90.cpe.net.cable.rogers.com> has quit IRC (Quit: lliskovoi)
+2019-03-07T18:57:22  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-07T18:58:06  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-07T19:13:06  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-03-07T19:26:44  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-03-07T19:29:38  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-03-07T19:58:33  *** alanharnum2 <alanharnum2!alanharnum@nat/ocadu/x-xsmjpklyjmzqhekm> has quit IRC (Remote host closed the connection)
+2019-03-07T19:59:02  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-cavoxuxblbmxhwyc> has joined #fluid-work
+2019-03-07T20:27:08  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-03-07T20:27:47  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-cavoxuxblbmxhwyc> has quit IRC (Remote host closed the connection)
+2019-03-07T20:27:56  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-rkyxnhzyhwrrgatj> has joined #fluid-work
+2019-03-07T20:47:19  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-03-07T21:02:51  *** cherylhjli <cherylhjli!~Adium@135-23-100-117.cpe.pppoe.ca> has joined #fluid-work
+2019-03-07T21:21:37  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-07T21:26:46  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has quit IRC (Quit: Leaving.)
+2019-03-07T21:30:15  *** jhung <jhung!~Adium@CPE54a0505a5e09-CMa84e3f431590.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-03-07T21:32:54  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-03-07T21:36:16  *** michelled <michelled!~Adium@205.211.168.103> has quit IRC (Quit: Leaving.)
+2019-03-07T21:39:09  *** lliskovoi <lliskovoi!~lliskovoi@104.129.159.53> has joined #fluid-work
+2019-03-07T21:42:44  *** michelled <michelled!Adium@nat/ocadu/x-bugopfvkasjskbki> has joined #fluid-work
+2019-03-07T21:48:32  <gmoss> alanharnum: do you have a few minutes today to discuss reaching into the Storytelling Project db and fiddling with a story?
+2019-03-07T21:49:32  <alanharnum> gmoss: sure, am free now
+2019-03-07T21:52:08  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-uguovrjmeelwgqoo> has quit IRC (Ping timeout: 245 seconds)
+2019-03-07T22:00:21  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-rkyxnhzyhwrrgatj> has quit IRC (Remote host closed the connection)
+2019-03-07T22:00:35  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-irceksjqmhfhngsl> has joined #fluid-work
+2019-03-07T22:02:34  *** colinclark <colinclark!~colinclar@205.211.168.104> has quit IRC (Quit: colinclark)
+2019-03-07T22:07:38  *** michelled <michelled!Adium@nat/ocadu/x-bugopfvkasjskbki> has quit IRC (Quit: Leaving.)
+2019-03-07T22:09:38  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 245 seconds)
+2019-03-07T22:10:53  <gmoss> alanharnum: I've filed a Jira following our chat https://issues.fluidproject.org/browse/SJRK-235
+2019-03-07T22:13:26  <alanharnum> gmoss: looks good to me - we'd be SSH tunnelling to be very specific, but probably not needed to change.
+2019-03-07T22:14:46  <gmoss> alanharnum: change made :)
+2019-03-07T22:17:10  *** cherylhjli <cherylhjli!~Adium@135-23-100-117.cpe.pppoe.ca> has quit IRC (Quit: Leaving.)
+2019-03-07T22:18:39  *** cherylhjli <cherylhjli!~Adium@135-23-100-117.cpe.pppoe.ca> has joined #fluid-work
+2019-03-07T22:20:29  *** cherylhjli <cherylhjli!~Adium@135-23-100-117.cpe.pppoe.ca> has left #fluid-work
+2019-03-07T22:24:39  *** lliskovoi <lliskovoi!~lliskovoi@104.129.159.53> has quit IRC (Quit: lliskovoi)
+2019-03-07T22:32:02  *** simonjb <simonjb!~simonjb@205.211.168.103> has quit IRC ()
+2019-03-07T22:33:13  *** simonjb <simonjb!~simonjb@205.211.168.103> has joined #fluid-work
+2019-03-07T22:34:53  *** michelled <michelled!Adium@nat/ocadu/x-hssftaqdaikyjhxb> has joined #fluid-work
+2019-03-07T22:42:56  *** simonjb <simonjb!~simonjb@205.211.168.103> has quit IRC ()
+2019-03-07T22:45:55  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:a9f1:95f0:5837:2b93> has quit IRC (Remote host closed the connection)
+2019-03-07T22:46:27  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:a9f1:95f0:5837:2b93> has joined #fluid-work
+2019-03-07T22:48:05  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-irceksjqmhfhngsl> has quit IRC (Remote host closed the connection)
+2019-03-07T22:48:34  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-jzikhuvolgihndan> has joined #fluid-work
+2019-03-07T22:51:00  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:a9f1:95f0:5837:2b93> has quit IRC (Ping timeout: 258 seconds)
+2019-03-07T22:51:46  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-jzikhuvolgihndan> has quit IRC (Remote host closed the connection)
+2019-03-07T22:51:55  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-hsjpmgdamlhbrjon> has joined #fluid-work
+2019-03-07T22:55:21  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-03-07T22:55:23  *** danayo_ is now known as danayo
+2019-03-07T22:57:50  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-hsjpmgdamlhbrjon> has quit IRC ()
+2019-03-07T23:12:40  *** michelled <michelled!Adium@nat/ocadu/x-hssftaqdaikyjhxb> has quit IRC (Quit: Leaving.)
+2019-03-07T23:54:43  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:bc85:b758:ff6f:d25b> has joined #fluid-work

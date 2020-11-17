@@ -1,0 +1,82 @@
+2020-09-08T10:59:07  <gtirloni> the-t-in-rtf: sorry, I was away yesterday. I think there's an open issue about that with GitHub.. they admit there isn't a good way of viewing the contents (like you mentioned, only upload-archives and then download). Let me try to find it.
+2020-09-08T11:02:14  <gtirloni> ah, just support discussions.. there are a bunch like this: https://github.community/t/publishing-test-results/16215/9
+2020-09-08T12:14:22  <the-t-in-rtf> Thanks, @gtirloni
+2020-09-08T12:14:26  <Justin_o> Bosmon: do you remember where we left FLUID-6538. I left a comment trying to summarize what we talked about before I went on vacation, but I'm not clear on what the next step is supposed to be. https://issues.fluidproject.org/browse/FLUID-6538?focusedCommentId=41927&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-41927
+2020-09-08T12:14:39  <the-t-in-rtf> Part of my earlier confusion was because GitLab's docs were coming up higher ranked than the actual documentation.
+2020-09-08T12:14:51  <the-t-in-rtf> They support a similar structure but do allow non-archived artifacts.
+2020-09-08T12:14:54  <Bosmon> Justin_o - yes, my best memory is that it seemed like the best approach would be to upgrade fluid.focus so that it returns a promise
+2020-09-08T12:15:20  <the-t-in-rtf> I did see plugins that would make a comment on the ticket with the text summary, which is at least something.
+2020-09-08T12:15:44  <Bosmon> The other option is just to fall back and use only "fake focus" but that seems like a bit of a loss - also it means we'd end up depending more than we'd want on jQuery's event handling mechanism
+2020-09-08T12:16:05  <Bosmon> In theory, if we upgraded fluid.focus so that it had a consistent effect, one day we could think about removing the jQuery underpinnings for it
+2020-09-08T12:21:20  <Bosmon> This implies turning the test fixtures into asynchronous ones, but I wonder if we we could avoid some of the diff boggle by using some super-swanky new language feature - https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Asynchronous/Async_await
+2020-09-08T12:22:36  <Justin_o> well I do like async await, but you do have to make sure that any function calling await is itself async if I remember correctly
+2020-09-08T12:22:39  <Justin_o> Bosmon: ^
+2020-09-08T12:23:01  <Bosmon> Justin_o - we could make a new shim in jqUnit for this
+2020-09-08T12:24:11  <Bosmon> Justin_o - it appears that our own promises would qualify as a "foreign thenable" for await - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await#Thenable_objects - but there's probably no great reason to make the new fluid.focus return one of our promises rather than the native ones
+2020-09-08T12:25:14  <Justin_o> I didn't know it would work with other thenable objects.. that's cool.
+2020-09-08T12:25:48  <Justin_o> Bosmon: so you're thinking we make a new type of async test or modify the async test some how to support async/await?
+2020-09-08T12:26:24  <Bosmon> Justin_o - I guess given we control jqUnit we could hack the existing jqUnit.asyncTest
+2020-09-08T12:26:36  <Bosmon> As far as I understand, from its point of view all we need to do is detect a function returning a promise?
+2020-09-08T12:26:41  <Bosmon> Actually we don't really need to do anything do we
+2020-09-08T12:26:55  <Bosmon> Because jqUnit relies on manual global signalling
+2020-09-08T12:27:03  <Bosmon> It really doesn't care that the function is async at all
+2020-09-08T12:33:30  <Justin_o> Bosmon: do you mean because of jqUnit.start() ?
+2020-09-08T12:33:38  <Bosmon> Justin_o - because of that
+2020-09-08T12:35:05  <Justin_o> Bosmon: but wouldn't we still have to somehow wrap the jqUnit.asyncTest or the contents of it inside an async function for await to work
+2020-09-08T12:35:22  <Justin_o> I could be missing something, I haven't used async/await very often.
+2020-09-08T12:35:26  <Bosmon> Justin_o - but the await just occurs in the user's text fixture
+2020-09-08T12:35:32  <Bosmon> Well I've never used them at all : P
+2020-09-08T12:35:35  <Bosmon> text -> test : P
+2020-09-08T12:35:39  <Justin_o> :)
+2020-09-08T12:35:59  <Justin_o> Bosmon: from what I understand you can only use await inside a function that is async
+2020-09-08T12:37:09  <Bosmon> Justin_o - right
+2020-09-08T12:37:26  <Bosmon> So I assume, for example, all we'd need to do is to express this function as "async function"
+2020-09-08T12:37:27  <Bosmon> https://github.com/fluid-project/infusion/blob/master/tests/component-tests/reorderer/js/ImageReordererTests.js#L298
+2020-09-08T12:37:31  <Bosmon> And strew it full of "await" blocks
+2020-09-08T12:39:00  <Justin_o> I guess we'd have to use jqUnit.asyncTest.. the make the test function async function.. and add a jqUnit.start() at the end.. maybe that would work.. I guess I can try it out..
+2020-09-08T12:39:22  <Justin_o> we'd also have to be careful with the rest of to he uses of fluid.focus in code though to make sure they are okay to work asynchronously now
+2020-09-08T12:40:17  <Justin_o> I wonder how hard it would be to convert all of infusion to use async/await
+2020-09-08T12:41:04  <Justin_o> instead of using "then" that is.
+2020-09-08T12:41:11  <Bosmon> There probably wouldn't be much benefit elsewhere
+2020-09-08T12:41:23  <Bosmon> Since the point here is that we are trying to avoid making too much of a diff
+2020-09-08T12:41:36  <Bosmon> Whereas converting the other code would end up creating a diff where there had been none : P
+2020-09-08T12:41:54  <Justin_o> it was more of a theoretical question for the future :)
+2020-09-08T12:42:14  <Justin_o> but if we do make fluid.focus return a promise, we would have to handle that in all the cases of it's use
+2020-09-08T12:42:29  <Bosmon> Justin_o - right, but there are not too many
+2020-09-08T12:42:36  <Bosmon> The vast majority are in this test case : P
+2020-09-08T12:42:49  <Justin_o> by the way, the MDN docs mention this at the top "The await operator is used to wait for a Promise. It can only be used inside an async function." so yes, we do need the async to wrap any uses of await
+2020-09-08T12:43:14  <Bosmon> Justin_o - right, but my point was we don't need to adjust the jqUnit framework to make this possible
+2020-09-08T12:43:24  <Bosmon> Since the function containing the await is the user's own test fixture
+2020-09-08T12:43:40  <Justin_o> yes, seems like that might be the case, with the approach we talked about above.
+2020-09-08T12:44:01  <Justin_o> okay.. I'll add this conversation to the comments and will hopefully have a chance to look into this soon.
+2020-09-08T12:44:12  <Justin_o> Bosmon: thanks for talking it over again
+2020-09-08T12:44:38  <Bosmon> Justin_o - cheers for moving the issue forwards :)
+2020-09-08T13:04:11  *** clown is now known as clown_mtg
+2020-09-08T14:06:54  *** clown_mtg is now known as clown
+2020-09-08T16:26:57  *** clown is now known as clown_mtg
+2020-09-08T16:39:25  <Justin_o> Bosmon: I'm looking into FLUID-6538 and exploring having fluid.focus and fluid.blur return a native promise. This seems to be working for the tests that use fluid.focus directly. Although now I have to do cleanup to remove the focus styling. However, it's a bigger issue in the actual code. So far I'm just looking at the keyboard-a11y code. fluid.focus isn't used too much directly but those low level functions are
+2020-09-08T16:39:26  <Justin_o> used in several cases. Here's an example: https://github.com/fluid-project/infusion/blob/master/src/framework/core/js/jquery.keyboard-a11y.js#L303 fluid.focus is used sometimes in reifyIndex and reifyIndex is used in several other functions. In this case I'd have to make things all the way up return a promise, and there is a question of what this particular one should resolve with and also does this suggest that
+2020-09-08T16:39:26  <Justin_o> either this function should use async/await or if it should use a fluid promise instead, and if so should fluid.focus use a fluid promise.
+2020-09-08T16:39:40  <Justin_o> sorry, that was so long.. trying to get it out quickly while joining a meeting.
+2020-09-08T16:43:52  <Bosmon> Justin_o - i) I think for stuff that we expect to expose outside the framework, returning a native Promise is appropriate, and ii) I think we have to make a return of a promise all the way up the stack
+2020-09-08T16:44:08  <Bosmon> Given none of these functions attempt to wait for the resolution, there doesn't seem to be any value in involving async/await
+2020-09-08T16:45:43  <Justin_o> Bosmon: so in some of those cases the fluid.focus may not be called
+2020-09-08T16:45:57  <Justin_o> but the function itself would still need to be able to handle a case where it did call it and returned the promise
+2020-09-08T16:46:16  <Justin_o> so in those cases where fluid.focus wasn't called, what should be resolved in the promise
+2020-09-08T16:46:17  <Justin_o> ?
+2020-09-08T16:51:01  <Bosmon> Justin_o - if no asynchronous action occurs it should simply return a resolved promise
+2020-09-08T17:37:05  <Teddy___> Uttara: cindyli Since the button and the input fields are disabled during the post request is there still need for a progress bar/loading icon?
+2020-09-08T17:37:36  <Uttara> Teddy: No I dont think so
+2020-09-08T17:37:56  <Teddy___> I know we discussed including one at last weeks check in but now i'm wondering if its necessary
+2020-09-08T17:38:11  <Teddy___> Uttara: okay awesome
+2020-09-08T17:38:55  <Uttara> cindyli: I dont think its necessary, what do you think?
+2020-09-08T17:39:54  <cindyli> Uttara, Teddy___: i'm fine either way. Having the loading icon is more user friendly though. let's go with your call, Uttara
+2020-09-08T18:56:36  *** clown_mtg is now known as clown
+2020-09-08T21:26:55  <dogeman> Hello gmoss just looked at the final evaluation results. Thank you for the detailed feedback. I'd keep all the points in mind and try to incorporate those changes in me in future. I had a really great time working with IDI during the summer and I got to learn a lot.
+2020-09-08T21:27:23  <dogeman> Thanks a lot for giving me this opportunity gmoss jhung colinclark
+2020-09-08T21:28:34  <colinclark> thanks for all your help, dogeman
+2020-09-08T21:29:00  <colinclark> it was great to have you work with us this summer
+2020-09-08T21:29:15  <dogeman> :)
+2020-09-08T21:51:53  <gmoss> dogeman: It was a great experience, for sure! We're looking forward to using the starter kit in a couple of projects, so it's been very helpful already. I was trying to keep an eye out for an announcement from Google saying whether you'd been notified yet, but it looks like the answer is yes :) Congratulations again
+2020-09-08T21:52:17  <gmoss> and congratulations to you too, dmahajan980!
+2020-09-08T22:17:36  <dogeman> Congrats dmahajan980 . Best wishes

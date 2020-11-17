@@ -1,0 +1,209 @@
+2019-11-29T08:39:04  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:e909:5957:6f7c:a50d> has joined #fluid-work
+2019-11-29T08:39:11  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:e909:5957:6f7c:a50d> has quit IRC (Client Quit)
+2019-11-29T09:09:03  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:e909:5957:6f7c:a50d> has joined #fluid-work
+2019-11-29T10:21:38  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-11-29T10:26:42  *** kris <kris!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-11-29T10:47:57  *** kris <kris!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 250 seconds)
+2019-11-29T12:03:18  *** kris <kris!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-11-29T13:06:09  *** kris <kris!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 246 seconds)
+2019-11-29T13:14:48  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has joined #fluid-work
+2019-11-29T13:33:49  <Justin_o> Bosmon: I'm looking into the custom merge policy for FLUID-6420, but I'm not sure how to actually get it to work. We left off with the preference being provided as an array, which gets converted to an object by an expander to an option called prefsPrioritized (could be renamed). And we wanted to target context awareness supplied preferences against prefPrioritized.
+2019-11-29T13:34:21  <Justin_o> So I guess I'll need to run the expander inside of the merge policy, but not sure how to do that. Or am I way off track.
+2019-11-29T13:34:45  <javjarfer[m]> Hi cindyli ! Good afternoon
+2019-11-29T13:35:39  <Justin_o> Bosmon: I've also tried just using a merge policy to convert the preferences option into an object, although the conversion operation itself is working, the supplying from context awareness is still ignored, and what's worse is that it might as well have just started as an object because you can't remove any previously supplied preferences.
+2019-11-29T13:37:18  <Bosmon> Justin_o - yes - "all" you need to do is apply this merge policy to prefPrioritized
+2019-11-29T13:37:32  <Bosmon> The conversion from an array to the object is fine as it is
+2019-11-29T13:38:29  <Justin_o> Bosmon: any suggestions on how to right the merge policy, specifically for dealing with the expander
+2019-11-29T13:39:21  <Bosmon> Justin_o - the annoying part is that the framework doesn't give you any help with the process of actually collating the merged results at the end, so unfortunately you will probably have to do that with another expander
+2019-11-29T13:39:53  <Bosmon> I'm sorry this is such a mess, but it is one of the most awkward and oldest parts of the framework
+2019-11-29T13:41:01  <Bosmon> So I think what you will have to do is write a further expander, against something like prefsMerged: "@expand({that}.options.prefsPrioritized)" which then goes through each of the members of the "mergingArray", expands them one by one, and then composits them together
+2019-11-29T13:41:25  <Bosmon> At this point you can also deal with subtleties like people deleting preferences - e.g. if you discover a preference whose value has become "null" you can convert that into a "delete"
+2019-11-29T13:43:51  <Bosmon> From the point of view of the expander, the contents of prefsPrioritized can be treated like an array, since fluid.mergingArray really is just an array with a special marker prototype
+2019-11-29T13:44:35  <Justin_o> Bosmon: okay, thanks.. so the contents of the mergeingArray are unexpanded (from an IoC perspective)?
+2019-11-29T13:44:42  <Bosmon> As for the mergePolicy itself, you can just use the one that is already in the framework
+2019-11-29T13:44:44  <Justin_o> is there a method to expand them, that I can call?
+2019-11-29T13:45:02  <Bosmon> Justin_o - yes, the standard approach is to call fluid.expandImmediate(that, <stuff>) on each one of them
+2019-11-29T13:45:37  <Justin_o> Bosmon: so the merge policy to use is fluid.membersMergePolicy?
+2019-11-29T13:46:04  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has joined #fluid-work
+2019-11-29T13:46:22  <Justin_o> and would I also need to set the noExpand flag on the prefsPrioritized?
+2019-11-29T13:47:07  <Bosmon> Justin_o - right, although that one has been named fluid.deferringMergePolicy in the new framework, so you should just put in a compatibility shim that uses that name so you don't have to make a further fix for the new framework - https://github.com/amb26/infusion/blob/FLUID-6148/src/framework/core/js/Fluid.js#L2756
+2019-11-29T13:47:40  <Bosmon> You can just write fluid.deferringMergePolicy = fluid.membersMergePolicy
+2019-11-29T13:47:52  <Bosmon> Note that I just discovered a bug in it yesterday which you should backport : P
+2019-11-29T13:49:02  <Bosmon> Justin_o - yes, you will need to write an entry that looks like these ones: https://github.com/amb26/infusion/blob/FLUID-6148/src/framework/core/js/Fluid.js#L2805
+2019-11-29T13:49:28  <Justin_o> I think that is there already
+2019-11-29T13:49:36  <Justin_o> well, it's there for members
+2019-11-29T13:49:49  <Justin_o> but I'll write something like that for the prefPrioritized as well
+2019-11-29T13:54:02  <Justin_o> Bosmon: thanks for the help, I'm running out of time for my day today, so will probably pick this all up on Monday. If you have a chance, could you also look at my UIO+ to add CI PR. https://github.com/GPII/gpii-chrome-extension/pull/40
+2019-11-29T13:54:23  *** danielcho <danielcho!~Adium@hmtnon1497w-130-02-65-95-64-90.dsl.bell.ca> has joined #fluid-work
+2019-11-29T13:55:05  <Bosmon> Justin_o - sure, although it seems CI is broken for a while
+2019-11-29T13:55:19  <Bosmon> Is it still waharnum we talk to about that, or can anyone else help?
+2019-11-29T13:55:47  <Justin_o> Bosmon: ah this is a different CI, it makes use of GitHub Actions. So the CI will be built into GitHub
+2019-11-29T13:56:16  <Justin_o> or well run through their infrastructure and viewable through the GitHub repo
+2019-11-29T13:57:11  <Bosmon> !?
+2019-11-29T13:57:15  <Justin_o> Bosmon: here's what my testing of this looked like in my personal repo https://github.com/jobara/gpii-chrome-extension/actions
+2019-11-29T13:57:18  *** cindyli <cindyli!~Adium@198.52.178.16> has joined #fluid-work
+2019-11-29T13:57:20  <Bosmon> Justin_o - but it still has to actually execute in a VM somewhere right?
+2019-11-29T13:57:34  <Justin_o> although they don't yet let you clean up, so my repo will be a mess for a while
+2019-11-29T13:57:49  <Justin_o> Bosmon: they supply runners for Ubuntu, Windows and macOS
+2019-11-29T13:57:56  <Justin_o> or you could provide your own, or use a docker container
+2019-11-29T13:58:32  <Justin_o> Bosmon: https://github.com/features/actions
+2019-11-29T13:59:19  <Justin_o> Bosmon: here's more info on the environments they supply https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners
+2019-11-29T13:59:27  <Bosmon> Justin_o - how interesting
+2019-11-29T14:00:55  <Justin_o> We may want to look at switching infusion over to this too, but I figured we could try with UIO+ first. greatislander and simon have also setup GitHub Actions for other projects too.
+2019-11-29T14:02:23  <Bosmon> Justin_o - do you know if it can replicate our existing workflow, where CI runs automatically on every pull request?
+2019-11-29T14:02:25  <javjarfer[m]> Hi cindyli ! Good afternoon
+2019-11-29T14:02:26  <javjarfer[m]> (I saw you rejoined recently)
+2019-11-29T14:02:40  <Justin_o> Bosmon: there's a lot of things you can do with GitHub Actions including labelling stale PRs, which we may want to setup. I'd also like to explore publishing when tags are created, and possibly publishing dev releases on merge, although that may not be so necessary.
+2019-11-29T14:02:58  <Justin_o> Bosmon: yep, that's already includes in my PR
+2019-11-29T14:03:07  <Bosmon> Justin_o - that's awesome
+2019-11-29T14:06:34  <javjarfer[m]> Bosmon: hi!
+2019-11-29T14:08:11  <cindyli> hi javjarfer[m], good morning :)
+2019-11-29T14:08:25  <javjarfer[m]> hi cindyli ! Good morning!
+2019-11-29T14:08:45  <Bosmon> Can someone remind me of where the ops slack is, I would like to get in touch with Alfredo about the CI problems : P
+2019-11-29T14:09:08  <javjarfer[m]> I wanted to ask you if you know a reason why settings that have dots in their name could be filtered out, like "Setting\\.Subsetting"
+2019-11-29T14:09:45  <javjarfer[m]> Bosmon: Alfredo is out, I don't know when he will be available, maybe later today, and sergey isn't awake probably yet
+2019-11-29T14:09:51  <Bosmon> OK
+2019-11-29T14:09:55  <Bosmon> We are a bit dead in the water
+2019-11-29T14:10:05  <Bosmon> Since all CI is down for every project
+2019-11-29T14:10:12  <javjarfer[m]> Bosmon:  yes we are
+2019-11-29T14:10:14  <javjarfer[m]> xD
+2019-11-29T14:10:34  <Bosmon> javjarfer[m] - it is because settings names are . separated paths into JSON structures
+2019-11-29T14:10:43  <Bosmon> And so we have to escape "." wherever it occurs in a path segment
+2019-11-29T14:10:48  <Bosmon> Which is typically the application name itself
+2019-11-29T14:10:57  <javjarfer[m]> Bosmon: channel is #ops in slack
+2019-11-29T14:11:08  <Bosmon> javjarfer[m] - I know that, I just don't know where the slack is : P
+2019-11-29T14:11:19  <Bosmon> I always get lost getting there ....
+2019-11-29T14:11:35  <cindyli> Bosmon: your id appears on slack #ops channel but offline. i guess you just need to figure out the login to slack and LOG IN…
+2019-11-29T14:11:37  <javjarfer[m]> Bosmon:  I have the desktop app
+2019-11-29T14:11:47  <javjarfer[m]> no idea of how to procede in other way
+2019-11-29T14:11:55  <cindyli> search "slack" on your windows search box
+2019-11-29T14:12:10  <Bosmon> cindyli - shush
+2019-11-29T14:12:21  <Bosmon> I have not installed it, I just use the web client
+2019-11-29T14:12:45  <cindyli> i see. i have no idea about slack web client, sorry …
+2019-11-29T14:12:46  <Bosmon> But I always end up in this defunct thing called "GPII slack" whenever I go looking for it ....
+2019-11-29T14:13:02  <Bosmon> Just tell me what name it says for our slack in your client :)
+2019-11-29T14:13:27  <javjarfer[m]> Bosmon: I knew about the path segments but looks like I can't declare settings with names being "Something\\.SubSomething"
+2019-11-29T14:13:29  <cindyli> raisingthefloor.slack.com
+2019-11-29T14:13:36  <Bosmon> Thanks, cindyli
+2019-11-29T14:14:46  <Bosmon> javjarfer[m] - that's pretty peculiar - but if you genuinely want that, it should be possible to escape them as Something\\\\\\\\.SubSomething
+2019-11-29T14:14:53  <Bosmon> What app has settings that look like this?
+2019-11-29T14:15:14  <Bosmon> Recall that JavaScript already supplies one layer of escaping via \ for all characters
+2019-11-29T14:15:15  <javjarfer[m]> the new systemSettingsHandler access settings which contains other settings
+2019-11-29T14:15:26  <javjarfer[m]> so the base path Setting could be a setting
+2019-11-29T14:15:32  <javjarfer[m]> which holds settings inside of it
+2019-11-29T14:15:54  <javjarfer[m]> so "Setting.SubSetting"
+2019-11-29T14:16:01  <Bosmon> javjarfer[m] - if possible, you should try to get away without applying any escaping rules, and just demultiplex whatever you find inside the settings handler
+2019-11-29T14:16:19  <Bosmon> Otherwise you will just end up confusing yourself and everyone else with endless layers of \\\\\\\\\\\\\\\
+2019-11-29T14:17:39  <javjarfer[m]> Bosmon: yes, I understand that, but them we need another escaping sequence to define this multiplexing, I selected "." because is the one we already use
+2019-11-29T14:17:51  <javjarfer[m]> any other one that you want to propose or you may like more?
+2019-11-29T14:18:08  <Bosmon> javjarfer[m] - just use JSON structures without any escaping
+2019-11-29T14:18:47  <javjarfer[m]> but I need a selector to expose the inner setting for that setting
+2019-11-29T14:19:17  <Bosmon> javjarfer[m] - just use the native selector which JSON exposes
+2019-11-29T14:19:19  <Bosmon> i.e. its path
+2019-11-29T14:19:55  <Bosmon> You can take the programmer out of Haskell, but you can never take Haskell out of the programmer : P
+2019-11-29T14:20:39  *** jhung <jhung!~jhung@CPE0c473dc371c3-CM0c473dc371c0.cpe.net.fido.ca> has joined #fluid-work
+2019-11-29T14:22:29  <javjarfer[m]> Bosmon: haha okay I think I get it
+2019-11-29T14:23:11  <javjarfer[m]> but then I would need to specify that I pass objects to the settings handler in the schema specification of the setting in the SR...
+2019-11-29T14:23:30  <Bosmon> javjarfer[m] - exactly
+2019-11-29T14:23:34  <javjarfer[m]> Or I can define a nested setting with a nested schema?
+2019-11-29T14:23:34  <Bosmon> That is what JSON schema is for : P
+2019-11-29T14:24:01  <javjarfer[m]> Bosmon: will try that right now
+2019-11-29T14:24:04  <javjarfer[m]> thanks!
+2019-11-29T14:53:36  <javjarfer[m]> Bosmon: seems like Afredo already fixed CI
+2019-11-29T14:59:18  *** clown <clown!clown@nat/ocadu/x-ytdvkufaxgujyeky> has joined #fluid-work
+2019-11-29T15:01:08  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has joined #fluid-work
+2019-11-29T15:03:43  *** cherylhjli <cherylhjli!~Adium@vlnsm2-toronto63-142-116-82-223.internet.virginmobile.ca> has joined #fluid-work
+2019-11-29T15:08:36  <Bosmon> javjarfer[m] - fantastic
+2019-11-29T15:14:23  *** jhung is now known as jhung_afk
+2019-11-29T15:16:16  <javjarfer[m]> Bosmon: is this the kind of setting definition you propose for this?
+2019-11-29T15:16:16  <javjarfer[m]> https://pastebin.com/NHG5pRW7
+2019-11-29T15:32:15  <Bosmon> javjarfer[m] - yes although I believe you will need to supply a compound schema for the entire structure rather than at the leaves
+2019-11-29T15:32:21  <Bosmon> I'm sure the-t-in-rtf could help you adjust it
+2019-11-29T15:33:52  *** simonjb <simonjb!~simonjb@205.211.168.103> has joined #fluid-work
+2019-11-29T15:33:59  <javjarfer[m]> Bosmon: I understand, I think that this may complicate the access for other people trying to consume the settings
+2019-11-29T15:35:47  <javjarfer[m]> I don't know how sgithens  will consume such schema
+2019-11-29T15:36:19  <javjarfer[m]> what do you think about it the-t-in-rtf ?
+2019-11-29T15:38:18  *** avtar <avtar!~avtar@ip-45-3-11-144.user.start.ca> has joined #fluid-work
+2019-11-29T15:48:11  *** lliskovoi_ <lliskovoi_!uid367571@gateway/web/irccloud.com/x-exhppnvwvwobugzh> has joined #fluid-work
+2019-11-29T15:51:15  *** philip <philip!~philip@129.175.26.248> has joined #fluid-work
+2019-11-29T16:25:50  *** jhung_afk is now known as jhung
+2019-11-29T16:37:45  <the-t-in-rtf> I think @Bosmon asked the right question, i.e. whether Steve Githens can make sense of it.
+2019-11-29T16:37:59  <the-t-in-rtf> I have avoided similar usages of anyOf and allOf where I can for that reason.
+2019-11-29T16:42:00  <the-t-in-rtf> one option would be to require a description or other UI hint for each branch in an anyOf or oneOf and let people pick in two stages
+2019-11-29T16:44:57  *** philip <philip!~philip@129.175.26.248> has quit IRC ()
+2019-11-29T16:46:12  <javjarfer[m]> the-t-in-rtf: thanks, but I think that I tried to escape the names ahead of time, it turns out that settings names can have dots
+2019-11-29T16:46:29  <javjarfer[m]> so, there is no need for creating any different structure for it
+2019-11-29T16:48:37  *** kris_HA <kris_HA!~yanachkov@185.97.75.80> has quit IRC (Ping timeout: 240 seconds)
+2019-11-29T17:31:49  *** cindyli1 <cindyli1!~Adium@198.52.178.16> has joined #fluid-work
+2019-11-29T17:31:49  *** cindyli <cindyli!~Adium@198.52.178.16> has quit IRC (Read error: Connection reset by peer)
+2019-11-29T17:58:01  <the-t-in-rtf> that's good to hear
+2019-11-29T17:59:05  <javjarfer[m]> the-t-in-rtf indeed
+2019-11-29T18:56:31  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has quit IRC (Quit: Leaving.)
+2019-11-29T19:04:05  *** cherylhjli <cherylhjli!~Adium@vlnsm2-toronto63-142-116-82-223.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-11-29T19:22:38  *** avtar <avtar!~avtar@ip-45-3-11-144.user.start.ca> has quit IRC (Quit: Quit)
+2019-11-29T19:24:39  *** avtar <avtar!~avtar@ip-45-3-11-144.user.start.ca> has joined #fluid-work
+2019-11-29T19:55:49  <cindyli1> Bosmon: i have a problem using distributeOptions to override an option value. flowManager.options.defaultSettings has been changed to - https://github.com/cindyli/universal/blob/GPII-4250/gpii/node_modules/flowManager/src/FlowManager.js#L84
+2019-11-29T19:56:12  <cindyli1> in my integration test, i wanna override it with a given set of default settings: https://github.com/cindyli/universal/blob/GPII-4250/tests/shared/ResetDefaultSettingsTestDefs.js#L97-L102
+2019-11-29T19:56:49  <cindyli1> this overriding works before when flowManager.options.defaultSettings was set using "fluid.set". now it fails
+2019-11-29T19:57:22  <cindyli1> is it related to the change to an expander?
+2019-11-29T19:57:26  *** cindyli1 is now known as cindyli
+2019-11-29T20:01:34  <cindyli> is it a timing issue that distribution was executed before the expander? writing a test to experiment...
+2019-11-29T20:06:43  *** cherylhjli <cherylhjli!~Adium@vlnsm2-toronto63-142-116-82-223.internet.virginmobile.ca> has joined #fluid-work
+2019-11-29T20:08:56  *** cherylhjli <cherylhjli!~Adium@vlnsm2-toronto63-142-116-82-223.internet.virginmobile.ca> has quit IRC (Client Quit)
+2019-11-29T20:11:02  *** cherylhjli <cherylhjli!~Adium@vlnsm2-toronto63-142-116-82-223.internet.virginmobile.ca> has joined #fluid-work
+2019-11-29T20:11:15  <cindyli> Bosmon: the test shows if the expander points to a sync function, the overriding will succeed. however, in my case, the expander {defaultSettingsLoader}.get() reads from a file. although the file reading is using the sync read but still takes time, so the file content eventually wins over the distributed value :(
+2019-11-29T20:14:43  <cindyli> the overriding works before because it was a listener running {defaultSettingsLoader}.get(), which was disabled in the integration test - https://github.com/cindyli/universal/blob/GPII-4250/tests/configs/shared/gpii.tests.resetDefaultSettings.config.json5#L13
+2019-11-29T20:20:49  <Bosmon> cindyli - but you are trying to stop all this
+2019-11-29T20:21:48  <Bosmon> The defaultSettings element also needs to be a promise
+2019-11-29T20:22:00  <cindyli> i know :(
+2019-11-29T20:22:09  <Bosmon> The "still takes time" business is irrelevant, if it is sync it is sync, there is no "eventually wins"
+2019-11-29T20:22:52  <Bosmon> cindyli - as we know, there are serious faults in the framework that occur when you attempt to override options with expanders and vice versa
+2019-11-29T20:23:09  <Bosmon> As Justin_o saw yesterday, the definitions end up getting superimposed
+2019-11-29T20:23:27  <Bosmon> You need to stick to defining the member as an expander and then overriding stuff as literal options
+2019-11-29T20:23:36  <Bosmon> Sorry, the member as a promise
+2019-11-29T20:24:53  <cindyli> "defining the member as an expander"? i cannot define an option as an expander that returns a promise?
+2019-11-29T20:25:30  <cindyli> then distribute another promise to override this option value?
+2019-11-29T20:25:41  <Bosmon> cindyli - you never override the member itself
+2019-11-29T20:25:53  <Bosmon> The idea was to back it by means of a promise chain event, right?
+2019-11-29T20:26:01  <Bosmon> Although I guess in this case it will be a very short one
+2019-11-29T20:26:47  <Bosmon> This definition is fine:        defaultSnapshotsPromise: "@expand:fluid.promise()"
+2019-11-29T20:26:58  <Bosmon> YOu then just leave it like this and target the distributions at the machinery which generates the value
+2019-11-29T20:28:04  <Bosmon> I had thought that the application was more complex when we were talking before, and that there were many participants that might be in play at one time to contribute to the value
+2019-11-29T20:28:12  <Bosmon> But I guess in practice you only have one contributor at a time/
+2019-11-29T20:28:13  <Bosmon> ?
+2019-11-29T20:29:18  <cindyli> Bosmon: sounds like i cannot define this:
+2019-11-29T20:29:19  <cindyli> defaultSettings: "@expand:{defaultSettingsLoader}.get()"
+2019-11-29T20:29:27  <Bosmon> cindyli - I advise against it : P
+2019-11-29T20:29:33  <cindyli> {defaultSettingsLoader}.get() needs to go into the promise chain
+2019-11-29T20:29:38  <Bosmon> cindyli - right
+2019-11-29T20:29:46  <cindyli> this chain will output defaultSnapshotsPromise
+2019-11-29T20:29:51  <Bosmon> right
+2019-11-29T20:30:20  <Bosmon> Or rather, you will arrange for a listener to call promise.follow() targetting the defaultSnapshotPromise
+2019-11-29T20:30:21  <cindyli> so when I override the action of {defaultSettingsLoader}.get(), i need to override a specific namespaced step in the promise chain
+2019-11-29T20:30:55  <Bosmon> Right
+2019-11-29T20:31:13  <Bosmon> I imagine in practice there will be only one such step, perhaps named "impl" as with DataSources
+2019-11-29T20:31:17  <Bosmon> but perhaps there will be more
+2019-11-29T20:31:46  <cindyli> ok
+2019-11-29T20:32:34  <cindyli> i will think about the flow using promise.follow()
+2019-11-29T20:32:51  <Bosmon> But then at least you are no longer faffing around with synchronous I/O which is always a funny smell
+2019-11-29T20:33:52  <cindyli> totally agree. such as the tricky workaround of using a listener with fluid.set to execute {defaultSettingsLoader}.get()
+2019-11-29T20:34:04  <cindyli> the logic is much cleaner
+2019-11-29T20:35:05  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has left #fluid-work
+2019-11-29T21:03:15  *** cherylhjli <cherylhjli!~Adium@vlnsm2-toronto63-142-116-82-223.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-11-29T21:16:51  *** cindyli <cindyli!~Adium@198.52.178.16> has quit IRC (Quit: Leaving.)
+2019-11-29T21:23:58  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-11-29T21:23:59  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has quit IRC (Client Quit)
+2019-11-29T21:27:40  *** jhung <jhung!~jhung@CPE0c473dc371c3-CM0c473dc371c0.cpe.net.fido.ca> has quit IRC (Quit: Leaving)
+2019-11-29T22:01:53  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has joined #fluid-work
+2019-11-29T22:02:15  *** clown <clown!clown@nat/ocadu/x-ytdvkufaxgujyeky> has quit IRC (Quit: Leaving.)
+2019-11-29T22:13:40  *** danielcho <danielcho!~Adium@hmtnon1497w-130-02-65-95-64-90.dsl.bell.ca> has left #fluid-work
+2019-11-29T22:16:19  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has joined #fluid-work
+2019-11-29T22:24:56  *** avtar <avtar!~avtar@ip-45-3-11-144.user.start.ca> has quit IRC (Ping timeout: 265 seconds)
+2019-11-29T22:27:54  *** sepidehshahi <sepidehshahi!~sepidehsh@CPEe0553d68e035-CM64777d56f120.cpe.net.cable.rogers.com> has left #fluid-work
+2019-11-29T22:30:42  *** simonjb <simonjb!~simonjb@205.211.168.103> has quit IRC ()
+2019-11-29T22:37:57  *** michelled <michelled!~Adium@135-23-85-27.cpe.pppoe.ca> has quit IRC (Quit: Leaving.)
+2019-11-29T22:47:41  *** avtar <avtar!~avtar@ip-45-3-11-144.user.start.ca> has joined #fluid-work
+2019-11-29T23:14:20  *** colinclark <colinclark!~colinclar@192-0-158-138.cpe.teksavvy.com> has quit IRC (Quit: colinclark)
+2019-11-29T23:24:18  *** cherylhjli <cherylhjli!~Adium@2607:f2c0:e34e:143e:cdc0:43cc:7ed:5936> has joined #fluid-work
+2019-11-29T23:29:39  *** avtar <avtar!~avtar@ip-45-3-11-144.user.start.ca> has quit IRC (Quit: Quit)
+2019-11-29T23:34:57  *** cherylhjli <cherylhjli!~Adium@2607:f2c0:e34e:143e:cdc0:43cc:7ed:5936> has quit IRC (Quit: Leaving.)

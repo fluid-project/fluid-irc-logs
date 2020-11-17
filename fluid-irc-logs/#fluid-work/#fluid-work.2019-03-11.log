@@ -1,0 +1,320 @@
+2019-03-11T07:48:44  *** kris_HA <kris_HA!~kris@212.5.154.113> has joined #fluid-work
+2019-03-11T08:23:08  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:d80b:7f4:a562:5bb0> has quit IRC (Quit: Leaving.)
+2019-03-11T09:09:35  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has joined #fluid-work
+2019-03-11T09:36:49  <the-t-in-rtf> @Bosmon and @jhernandez, just getting set up to continue working on the SR validation.  More than happy to continue helping on the gpi-app stuff once there's someone around to pair with.
+2019-03-11T09:47:47  *** kris_HA <kris_HA!~kris@212.5.154.113> has quit IRC (Ping timeout: 246 seconds)
+2019-03-11T09:56:16  <jhernandez> the-t-in-rtf: hey!
+2019-03-11T09:56:41  <Bosmon> Hey there
+2019-03-11T09:56:49  <Bosmon> What kind of help do you need with gpii-app, the-t-in-rtf ?
+2019-03-11T09:57:07  <the-t-in-rtf> Well, when we last left things, I saw a new error in the branch that seemed unrelated.
+2019-03-11T09:57:18  <Bosmon> Ah, what does it say?
+2019-03-11T09:58:00  <the-t-in-rtf> Let me see if I  "teed" the output on a run, otherwise I have to start the VM
+2019-03-11T09:58:12  <the-t-in-rtf> nope, starting now.
+2019-03-11T09:58:21  <the-t-in-rtf> I'll run it and save the output somewhere you can see.
+2019-03-11T09:59:16  <Bosmon> the-t-in-rtf - do you want to make an "indicative pull" for your work so we have somewhere to comment?
+2019-03-11T09:59:22  <the-t-in-rtf> https://github.com/the-t-in-rtf/gpii-app/tree/GPII-3744
+2019-03-11T09:59:31  <the-t-in-rtf> I can do that, yes, just a moment.
+2019-03-11T10:01:31  <the-t-in-rtf> https://github.com/GPII/gpii-app/pull/100
+2019-03-11T10:02:09  <the-t-in-rtf> 💯
+2019-03-11T10:02:49  <Bosmon> Cheers the-t-in-rtf - giving it a run of my own now
+2019-03-11T10:02:59  <the-t-in-rtf> awesome
+2019-03-11T10:03:23  <the-t-in-rtf> I'll just quote enough of the error that you can confirm if it matches yours, depending.
+2019-03-11T10:03:34  <Bosmon> Note that we already had some startup timing failures in gpii-app's master even before the pouch purge
+2019-03-11T10:03:39  <Bosmon> So this new work is pretty timely
+2019-03-11T10:03:47  <the-t-in-rtf> onscreen I see a Morphic Error, "No Internet Connection"
+2019-03-11T10:04:00  <the-t-in-rtf> trying to understand if this is a VM thing or a real error
+2019-03-11T10:04:08  <the-t-in-rtf> perhaps trying to use cloud when we should be using local
+2019-03-11T10:04:12  <the-t-in-rtf> a side effect of changing configs
+2019-03-11T10:04:22  <jhernandez> the-t-in-rtf: it's coming from a test
+2019-03-11T10:04:40  <the-t-in-rtf> well, I assume it's meant to stop displaying that at some point?
+2019-03-11T10:04:45  <the-t-in-rtf> It never does in my case.
+2019-03-11T10:05:31  <jhernandez> I guess that one test is trying to communicate with the cloud-based flowmanager and it's not getting any response - i.e.: trying to key-in, retrieving a prefSet, etc
+2019-03-11T10:05:41  <the-t-in-rtf> I seem to have hit a terminal state, I'm just seeing repeated "updated environment"
+2019-03-11T10:05:51  <the-t-in-rtf> messages
+2019-03-11T10:07:13  <the-t-in-rtf> And I never get any test output, seems like it falls over on the first hurdle.
+2019-03-11T10:07:31  <Bosmon> the-t-in-rtf yes, I get the same
+2019-03-11T10:07:33  <Bosmon> Pretty peculiar
+2019-03-11T10:07:46  <Bosmon> Actually my output log is incomplete at the start
+2019-03-11T10:08:14  <Bosmon> Although I guess I haven't set my environment variable and stuff
+2019-03-11T10:11:07  <Bosmon> Oh it does it itself
+2019-03-11T10:11:10  <Bosmon> Yes, I do get some test output
+2019-03-11T10:11:29  <the-t-in-rtf> so maybe it's a firewall thing with the VM?
+2019-03-11T10:11:34  <Bosmon> the-t-in-rtf - no
+2019-03-11T10:11:38  <the-t-in-rtf> also, is the output successful?
+2019-03-11T10:11:48  <Bosmon> No, it is not
+2019-03-11T10:11:52  <the-t-in-rtf> dang
+2019-03-11T10:12:00  <the-t-in-rtf> I can't even get to the point where I see the failure.
+2019-03-11T10:12:09  <the-t-in-rtf> so I'm kind of blocked in testing further at the moment.
+2019-03-11T10:12:16  <Bosmon> It's gets as far as this: 03:10:55.393:  Test case listener has not responded after 5000ms - at sequence pos 8 of 10 sequence element {
+2019-03-11T10:12:16  <Bosmon>     "changeEvent": "{that}.app.tray.menu.applier.modelChanged",
+2019-03-11T10:12:16  <Bosmon>     "path": "preferenceSetsMenuItems",
+2019-03-11T10:12:16  <Bosmon>     "args": [
+2019-03-11T10:12:16  <Bosmon>         "{that}.app.tray.menu.model.menuTemplate"
+2019-03-11T10:12:17  <Bosmon>     ],
+2019-03-11T10:12:17  <Bosmon>     "listener": "gpii.tests.app.testMenuSnapsetKeyedIn"
+2019-03-11T10:12:18  <Bosmon> } of fixture GPII application integration tests
+2019-03-11T10:12:23  <Bosmon> Do you see this in your console output?
+2019-03-11T10:12:42  <the-t-in-rtf> ah yes, I do see that.
+2019-03-11T10:13:25  <Bosmon> I saw this message go by in the logs, which was suspicious:
+2019-03-11T10:13:26  <Bosmon> 03:10:50.376:  No provisioning required for database: http://localhost:25984/gpii
+2019-03-11T10:13:34  <Bosmon> It suggests that we still have the wrong config in the mix
+2019-03-11T10:16:34  <the-t-in-rtf> yes, we're picking up the couch config that persists.
+2019-03-11T10:18:14  <the-t-in-rtf> the base development grade should use the defaults, i.e. not persist
+2019-03-11T10:18:48  <the-t-in-rtf> so, what's the best way to test my work with my branch of universal?
+2019-03-11T10:18:54  <the-t-in-rtf> still git branches?
+2019-03-11T10:20:55  <the-t-in-rtf> I can also just add the relevant option to the config in gpii-app with a TODO and we can work our way from universal->gpii-app if it fixes the problem.
+2019-03-11T10:21:10  <the-t-in-rtf> I mean, it's JSON5, so we can do that.
+2019-03-11T10:23:04  <jhernandez> the-t-in-rtf: you can either manually put your universal branch there, add the option in the config as you just said or create an intermediate windows branch that points to your universal branch
+2019-03-11T10:23:21  <the-t-in-rtf> I think it's best to get a working set of options and then clean it up.
+2019-03-11T10:23:37  <the-t-in-rtf> just revisiting the sequence munging in gpii-app at the moment.
+2019-03-11T10:23:50  <the-t-in-rtf> I can see that the "all" grade also starts CouchDB, which it shouldn't.
+2019-03-11T10:35:38  <the-t-in-rtf> hmm, or maybe that's ok, since whole config won't be used to create anything until constructServer is called
+2019-03-11T10:49:08  *** kris_HA <kris_HA!~kris@212.5.154.113> has joined #fluid-work
+2019-03-11T10:51:35  <the-t-in-rtf> OK, tidied things up a little, this seems to be the heart of the problem: 03:46:10.196:  Resetting logon change model of lifecycleManager
+2019-03-11T10:51:35  <the-t-in-rtf> 03:46:10.198:  UserLogonRequest fails with the error: {
+2019-03-11T10:51:35  <the-t-in-rtf>     "errno": "ECONNREFUSED",
+2019-03-11T10:51:35  <the-t-in-rtf>     "code": "ECONNREFUSED",
+2019-03-11T10:51:35  <the-t-in-rtf>     "syscall": "connect",
+2019-03-11T10:51:36  <the-t-in-rtf>     "address": "127.0.0.1",
+2019-03-11T10:51:36  <the-t-in-rtf>     "port": 8084,
+2019-03-11T10:51:37  <the-t-in-rtf>     "isError": true
+2019-03-11T10:51:37  <the-t-in-rtf> }
+2019-03-11T10:55:48  <the-t-in-rtf> WOOT!
+2019-03-11T10:55:52  <the-t-in-rtf> 28/28 tests passed
+2019-03-11T10:56:23  <the-t-in-rtf> So, turns out this was a byproduct of using a base grade rather than local, I've brought in just the missing bits to set the port.
+2019-03-11T10:56:54  <the-t-in-rtf> I will broaden out what I have and commit once I get either to a working state, or once I get to a problem where I need help.
+2019-03-11T10:57:11  <the-t-in-rtf> I suspect we'll have to discuss how best to clean up some of the debris after, but I hope we're trending towards sanity.
+2019-03-11T10:59:48  <Bosmon> the-t-in-rtf - really great
+2019-03-11T11:00:41  <Bosmon> If I'm having to work on subprojects, I'm tending to just hack them in place and then copy the stuff back afterwards.....
+2019-03-11T11:03:11  <jhernandez> oh wow
+2019-03-11T11:03:38  <jhernandez> the-t-in-rtf: nicely done!
+2019-03-11T11:04:03  <jhernandez> are the rest of the IntegrationTests passing too?
+2019-03-11T11:06:34  <the-t-in-rtf> No, that's what I mean by "broaden out"
+2019-03-11T11:06:54  <the-t-in-rtf> uncomment tests and confirm the fix is working generally
+2019-03-11T11:07:15  <the-t-in-rtf> some of the options that make this work are in the IntegrationTestDefs at the moment, I also need to move those
+2019-03-11T11:07:32  <the-t-in-rtf> or not, depending, need to look at the sequence-munging in the rest of the project
+2019-03-11T11:08:58  <jhernandez> ok ok
+2019-03-11T11:09:05  <the-t-in-rtf> I'll let you know, don't worry
+2019-03-11T11:09:47  <the-t-in-rtf> I suspect fixing the second test will take most of the remaining time and the rest will just fall in line
+2019-03-11T11:10:06  <the-t-in-rtf> i.e. once I have a pattern that works more generally, it'll go very quickly.
+2019-03-11T11:37:37  <the-t-in-rtf> OK, I think I am getting a real failure in the "dev" tests
+2019-03-11T11:37:38  <the-t-in-rtf> 04:28:37.166:  An error occurred in an item of the lifecyclemanager's action queue(invoker: update, func: {that}.processUpdate), so clearing action queue. Error was {
+2019-03-11T11:37:38  <the-t-in-rtf>     "errno": -4058,
+2019-03-11T11:37:38  <the-t-in-rtf>     "syscall": "open",
+2019-03-11T11:37:38  <the-t-in-rtf>     "code": "ENOENT",
+2019-03-11T11:37:38  <the-t-in-rtf>     "path": "C:\\Users\\vagrant\\AppData\\Roaming\\Freedom Scientific\\MAGIC\\14.0\\Settings\\enu\\DEFAULT.MCF"
+2019-03-11T11:37:39  <the-t-in-rtf> }
+2019-03-11T11:38:06  <the-t-in-rtf> that directory doesn't exist
+2019-03-11T11:39:09  <the-t-in-rtf> looks like the failure is on set.
+2019-03-11T11:39:58  <the-t-in-rtf> @stegru, I was just looking through the rewritten INI stuff, and couldn't quite piece together how things are "modified in place" when (as in this case) the file and its containing directories don't exist.
+2019-03-11T11:40:31  <the-t-in-rtf> this kind of stuff came up often when testing with (optional) ini files that are in deep paths, like JAWS and MAGic.
+2019-03-11T11:40:44  <stegru> ah ok..
+2019-03-11T11:40:49  <the-t-in-rtf> Just asking around to see if something is smart enough to mkdirp the containing dirs and if so, what that is
+2019-03-11T11:41:15  <the-t-in-rtf> I can obviously create the dir for now, but wanted to ask
+2019-03-11T11:41:20  <the-t-in-rtf> as I'm sure it'll keep coming up
+2019-03-11T11:41:42  <stegru> there's no mkdirp
+2019-03-11T11:42:03  <the-t-in-rtf> can there be?
+2019-03-11T11:42:04  <stegru> in fact, I think it's up to the settings handler for the file io
+2019-03-11T11:42:11  <stegru> yes
+2019-03-11T11:42:23  <jhernandez> the-t-in-rtf, stegru: right, we should handle that
+2019-03-11T11:42:51  <jhernandez> the-t-in-rtf: but I assume you're getting that problem because Magic is being activated somehow
+2019-03-11T11:43:13  <the-t-in-rtf> just running the dev integration tests at the moment.
+2019-03-11T11:43:43  <the-t-in-rtf> looks like it might be picking those up from a generic preference
+2019-03-11T11:43:53  <stegru> I think this is the place to put mkdirp: https://github.com/GPII/universal/blob/master/gpii/node_modules/settingsHandlers/src/settingsHandlerUtilities.js#L439
+2019-03-11T11:43:54  <the-t-in-rtf> 04:28:37.117:  Error received when dispatching settingsHandler.set gpii.settingsHandlers.INISettingsHandler with payload {
+2019-03-11T11:43:54  <the-t-in-rtf>     "com.freedomscientific.magic": [
+2019-03-11T11:43:54  <the-t-in-rtf>         {
+2019-03-11T11:43:54  <the-t-in-rtf>             "settings": {
+2019-03-11T11:43:54  <the-t-in-rtf>                 "mag": {
+2019-03-11T11:43:54  <the-t-in-rtf>                     "size": 1.5,
+2019-03-11T11:43:55  <the-t-in-rtf>                     "startmagnified": 0
+2019-03-11T11:43:56  <the-t-in-rtf>                 },
+2019-03-11T11:43:56  <the-t-in-rtf>                 "scheme": {
+2019-03-11T11:43:57  <the-t-in-rtf>                     "Mouse_Scheme": "3D Blue with Oval"
+2019-03-11T11:43:57  <the-t-in-rtf>                 }
+2019-03-11T11:44:39  <jhernandez> but ... I guess it's because you're using the static deviceReporter
+2019-03-11T11:44:56  <the-t-in-rtf> https://github.com/GPII/universal/blob/master/testData/solutions/win32.json5#L4361
+2019-03-11T11:45:12  <jhernandez> yes, and that's terrible
+2019-03-11T11:45:24  <Bosmon> the-t-in-rtf - we don't expect to run the tests relating to MAGIC when it is not installed?
+2019-03-11T11:45:24  <the-t-in-rtf> probably it's another side effect of not directly using the "local" config
+2019-03-11T11:46:11  <Bosmon> Ah, I read up, looks like this is a problem of having the wrong device reporter...
+2019-03-11T11:46:20  <the-t-in-rtf> so, the device reporter is using installed solutions and includes MAGIc then.
+2019-03-11T11:46:24  <the-t-in-rtf> makes sense
+2019-03-11T11:46:33  <the-t-in-rtf> probably just more stuff to haul out of the local config
+2019-03-11T11:46:38  <jhernandez> I guess you need to use gpii.config.untrusted.development.dynamicDR.local.json5
+2019-03-11T11:46:42  <jhernandez> right?
+2019-03-11T11:46:48  <the-t-in-rtf> yes, I'm a bit worried about bringing in side effects using local
+2019-03-11T11:46:52  <the-t-in-rtf> but I guess I can try it.
+2019-03-11T11:47:05  <the-t-in-rtf> with the tests I know already work.
+2019-03-11T11:47:16  <jhernandez> there is also gpii.config.untrusted.development.dynamicDR.json5
+2019-03-11T11:47:31  <the-t-in-rtf> good call
+2019-03-11T11:47:32  <jhernandez> but that one is the base for the local
+2019-03-11T11:47:43  <jhernandez> just in case it helps ;)
+2019-03-11T11:48:16  <the-t-in-rtf> ugh, it's already using local
+2019-03-11T11:48:34  <the-t-in-rtf> interesting, but not the dynamicDR one
+2019-03-11T11:52:51  <jhernandez> I guess your problems with Magic being activated should now go away
+2019-03-11T12:02:29  <the-t-in-rtf> So, now that I'm onto the dev tests I have to move them away from their own use of "all.local"
+2019-03-11T12:08:42  <the-t-in-rtf> grr., the app.base config extends production
+2019-03-11T12:08:45  <the-t-in-rtf> (shakes head)
+2019-03-11T12:08:56  <the-t-in-rtf> it's all fine, things will be cleaner when I'm done
+2019-03-11T12:23:44  <the-t-in-rtf> OK, I'm getting errors now related to the cleanup work rearranging config files.  Hoping the newer dev release of windows is working.
+2019-03-11T12:25:43  <the-t-in-rtf> it'd need to include Javi's fix here: https://github.com/GPII/universal/commit/f96d845ce540c6726895cbfd0225fa93a3f578cc#diff-74496a94e6102d9b4c0ec5c9f18a30fa
+2019-03-11T12:26:07  <the-t-in-rtf> the timing is reasonable, trying 0.3.0-dev.20190307T132731Z.74c7d37 now
+2019-03-11T12:30:39  <the-t-in-rtf> whew, it does include the fix.
+2019-03-11T12:35:09  <the-t-in-rtf> OK, back to the basics working without the production crossover, moving on.
+2019-03-11T12:37:54  <the-t-in-rtf> integration dev tests work.
+2019-03-11T12:43:49  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-03-11T12:45:32  <Bosmon> the-t-in-rtf - brilliant!!
+2019-03-11T12:45:45  <the-t-in-rtf> well, there are probably a few bits I'll need help with
+2019-03-11T12:45:49  <the-t-in-rtf> just going down the list and making notes
+2019-03-11T12:46:00  <the-t-in-rtf> but that was the major one, fixing the config used by the majority of the rest of the tests
+2019-03-11T12:47:53  <the-t-in-rtf> The PSP tests have a failure, and this little gem is a sign of a real problem:
+2019-03-11T12:47:55  <the-t-in-rtf>     "item": {
+2019-03-11T12:47:55  <the-t-in-rtf>         "liveness": "manualRestart",
+2019-03-11T12:47:55  <the-t-in-rtf>         "memory": true,
+2019-03-11T12:47:55  <the-t-in-rtf>         "path": "http://registry\\.gpii\\.net/common/magnification",
+2019-03-11T12:47:55  <the-t-in-rtf>         "schema": {
+2019-03-11T12:47:56  <the-t-in-rtf>             "default": 1,
+2019-03-11T12:47:56  <the-t-in-rtf>             "description": "Level of magnification",
+2019-03-11T12:47:57  <the-t-in-rtf>             "divisibleBy": 1,
+2019-03-11T12:47:57  <the-t-in-rtf>             "max": 100,
+2019-03-11T12:47:58  <the-t-in-rtf>             "min": 0,
+2019-03-11T12:47:58  <the-t-in-rtf>             "minimum": 1,
+2019-03-11T12:47:59  <the-t-in-rtf>             "multipleOf": 0.1,
+2019-03-11T12:47:59  <the-t-in-rtf>             "title": "Magnification",
+2019-03-11T12:47:59  <the-t-in-rtf>             "type": "number"
+2019-03-11T12:47:59  <the-t-in-rtf>         },
+2019-03-11T12:48:10  <the-t-in-rtf> Note that it has two scales, and one of them uses invalid schema properties
+2019-03-11T12:48:24  <the-t-in-rtf> i.e. "max" and "min" are "dep" (recated)
+2019-03-11T12:49:29  <the-t-in-rtf> it may be that as we push through improved data we will have to adjust expected values in downstream projects, that's to be expected
+2019-03-11T12:49:44  <the-t-in-rtf> but in this case the expected value is not allowed by the newer definition I believe
+2019-03-11T12:49:52  <the-t-in-rtf> 05:41:58.673:  jq: Expected: {
+2019-03-11T12:49:52  <the-t-in-rtf>     "path": "http://registry\\.gpii\\.net/common/magnification",
+2019-03-11T12:49:52  <the-t-in-rtf>     "value": 1.4
+2019-03-11T12:49:52  <the-t-in-rtf> }
+2019-03-11T12:49:52  <the-t-in-rtf> 05:41:58.673:  jq: Actual: {
+2019-03-11T12:49:52  <the-t-in-rtf>     "path": "http://registry\\.gpii\\.net/common/magnification",
+2019-03-11T12:49:52  <the-t-in-rtf>     "value": 0.5
+2019-03-11T12:49:54  <the-t-in-rtf> }
+2019-03-11T12:50:31  <the-t-in-rtf> https://github.com/GPII/universal/blob/master/testData/ontologies/flat.json5#L313
+2019-03-11T12:50:36  <the-t-in-rtf> there it is in master
+2019-03-11T12:50:39  <the-t-in-rtf> there's no max
+2019-03-11T12:50:51  <the-t-in-rtf> and it still has the "tentths" precision
+2019-03-11T12:51:02  <the-t-in-rtf> I could use help figuring out where the old merged material is coming from.
+2019-03-11T12:51:50  <the-t-in-rtf> i.e. where are "max" and "min" coming from in the above.
+2019-03-11T12:52:32  <the-t-in-rtf> it's correct in node_modules/gpii-universal/testsData/ontologies within the repo
+2019-03-11T12:57:04  <the-t-in-rtf> if it's canned SR data it's a witch and I will burn it
+2019-03-11T12:59:03  <Bosmon> the-t-in-rtf - I expect it will be canned
+2019-03-11T12:59:21  <the-t-in-rtf> if it's canned they included bits of two animals in the same can
+2019-03-11T12:59:32  <the-t-in-rtf> I will dig into it once I confirm everything else is working
+2019-03-11T12:59:36  <the-t-in-rtf> thus far it's looking good.
+2019-03-11T12:59:39  <Bosmon> "This can smelled like tinned kobolds - eat it? (y/n)"
+2019-03-11T13:00:18  <the-t-in-rtf> I've been reading the screenplay for "Karaoke" lately, where a character litches sweaters constantly.
+2019-03-11T13:00:25  <the-t-in-rtf> I was trying to read "tinned kobolds" that way
+2019-03-11T13:00:36  *** michelled <michelled!~Adium@192.0.151.7> has joined #fluid-work
+2019-03-11T13:03:06  <the-t-in-rtf> I actually learned most of my early UNIX playing variants of that on a VT-100
+2019-03-11T13:03:48  <the-t-in-rtf> had a great keyboard, that's the only thing I miss.
+2019-03-11T13:03:55  <the-t-in-rtf> like a battleship it was, built for the ages
+2019-03-11T13:06:22  *** clown <clown!~clown@ckvlon1747w-140-01-65-94-140-209.dsl.bell.ca> has joined #fluid-work
+2019-03-11T13:20:56  <Bosmon> cindyli - I'm not sure about your latest comment on GPII-3784
+2019-03-11T13:21:08  <Bosmon> Can you describe a case where an application-specific term can be a top-level term?
+2019-03-11T13:22:23  <cindyli> it doesn't matter the top level term is an application-specific or a common term. as long as there's a term to be matched at the top level or the 2nd level, they need to be extracted into actualSettingsPaths array
+2019-03-11T13:23:51  <cindyli> my point is all keys on the preferences object need to be extracted. that's why "http://registry\\.gpii\\.net/applications/com.microsoft.windows.desktopBackgroundColor" and "SolidColor" are elements of the actualSettingsPaths array
+2019-03-11T13:33:29  <Bosmon> cindyli - seems odd
+2019-03-11T13:33:43  <Bosmon> How does "SolidColor" act as an actualSettingsPath?
+2019-03-11T13:37:51  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has joined #fluid-work
+2019-03-11T13:38:53  <cindyli> Bosmon: at extraction, keys are not verified if they are common terms or application specific terms. all keys are simply added into the actualSettingsPaths array, which I think is harmless because the result is that non-term-ones won't have a match on any inputPaths from "capabilitiesTransformations"
+2019-03-11T13:41:34  <cindyli> let me know if you feel this is problematic
+2019-03-11T13:42:44  <Bosmon> cindyli - I think it is awkward to throw them all into the same namespace
+2019-03-11T13:43:18  <Bosmon> Thanks so much for the patch - I am thinking we should hold off on installing it for now whilst we don't have gpii-app running in CI against the other projects
+2019-03-11T13:43:30  <Bosmon> Since any change in the core other than an SR entry runs the risk of destabilising the deployment
+2019-03-11T13:43:43  <Bosmon> Once the-t-in-rtf test running work is in, we should review this algorithm
+2019-03-11T13:43:54  <cindyli> cool. thanks for letting me know
+2019-03-11T13:44:46  <the-t-in-rtf> Working through the last three test failures there
+2019-03-11T13:45:01  <the-t-in-rtf> the expected value was an easy fix, just need to diagnose two seeming hangs in the integration tests
+2019-03-11T13:45:03  <the-t-in-rtf> close, I hope.
+2019-03-11T13:52:18  <the-t-in-rtf> some if it may have been running so many failed runs in a single VM, who knows, maybe a VM restart will just clear those up.
+2019-03-11T13:52:33  <the-t-in-rtf> I see your point about the initialSettings stuff a lot better in this package @Bosmon
+2019-03-11T14:08:31  <the-t-in-rtf> @Bosmon and/or @jhernandez, I have got everything but two test suites working.
+2019-03-11T14:08:44  <the-t-in-rtf> There are extensive comments in IntegrationTests.js
+2019-03-11T14:08:51  <Bosmon> super-cool
+2019-03-11T14:08:53  <the-t-in-rtf> I could use help unpacking the last ones
+2019-03-11T14:09:06  <the-t-in-rtf> especially the user error handler ones
+2019-03-11T14:09:16  <the-t-in-rtf> there's no test output and there are supposed to be errors
+2019-03-11T14:09:21  <jhernandez> awesome!!
+2019-03-11T14:09:28  <jhernandez> (not about the errors)
+2019-03-11T14:10:05  <the-t-in-rtf> the other one there's an error, which I put in a comment, but could use help making sense of.
+2019-03-11T14:10:06  <Bosmon> the-t-in-rtf - can you give a line link?
+2019-03-11T14:10:23  <the-t-in-rtf> probably it's best to pull the changes to my pull
+2019-03-11T14:10:41  <the-t-in-rtf> but I can paste that, as it does include the error
+2019-03-11T14:10:43  <the-t-in-rtf> just a sec
+2019-03-11T14:11:26  <the-t-in-rtf> https://github.com/the-t-in-rtf/gpii-app/blob/GPII-3744/tests/IntegrationTests.js#L206
+2019-03-11T14:14:09  <Bosmon> Ok, the "gpii.tests.dynamicSurveyConnector"
+2019-03-11T14:15:50  <Bosmon> the-t-in-rtf - have you got a bit of a stack trace for that failure?
+2019-03-11T14:25:08  <the-t-in-rtf> yes, I will send you the file shortly.
+2019-03-11T14:25:18  <the-t-in-rtf> I have been "tee"ing all the runs
+2019-03-11T14:28:06  <the-t-in-rtf> https://pastebin.com/R9RagEg4
+2019-03-11T14:34:02  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-03-11T14:35:29  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-03-11T14:46:20  *** kris_HA <kris_HA!~kris@212.5.154.113> has quit IRC (Ping timeout: 250 seconds)
+2019-03-11T14:48:52  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-phlcqskwvqxrccpa> has joined #fluid-work
+2019-03-11T15:01:36  *** colinclark <colinclark!~colinclar@205.211.168.101> has joined #fluid-work
+2019-03-11T15:02:03  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-hdyrjvhlhcvpiuwc> has joined #fluid-work
+2019-03-11T15:06:34  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-11T15:29:18  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-11T15:37:31  <Bosmon> the-t-in-rtf - it's possible there are two separate errors here
+2019-03-11T15:38:14  <Bosmon> I'm assuming that the "malformed triggers" failure is actually part of the expected test sequence
+2019-03-11T15:38:27  <Bosmon> cindyli - can you think of a route where we could get this kind of failure in the LifecycleManager?
+2019-03-11T15:38:29  <Bosmon> 06:51:46.935:  FATAL ERROR: Uncaught exception: Cannot read property 'supportedSettings' of undefined
+2019-03-11T15:38:29  <Bosmon> TypeError: Cannot read property 'supportedSettings' of undefined
+2019-03-11T15:38:29  <Bosmon>     at Function.gpii.lifecycleManager.specToSettingsHandler (V:\node_modules\gpii-universal\gpii\node_modules\lifecycleManager\src\LifecycleManager.js:574:25)
+2019-03-11T15:38:43  <Bosmon> This is at line 2197 in the pad which the-t-in-rtf pasted just before you arrived
+2019-03-11T15:38:59  <Bosmon> He is just getting the last couple of tests working in the gpii-app
+2019-03-11T15:39:11  <Bosmon> And it looks like there is some last source of misconfiguration
+2019-03-11T15:45:00  <cindyli> this is when the value of "expanded" generated from this line is undefined - https://github.com/GPII/universal/blob/master/gpii/node_modules/lifecycleManager/src/LifecycleManager.js#L749
+2019-03-11T15:45:16  <cindyli> but i cannot think of a route why this is happening
+2019-03-11T15:45:44  <cindyli> going to debug the-t-in-rtf's branch
+2019-03-11T15:45:50  <the-t-in-rtf> thank you both.
+2019-03-11T15:46:13  <the-t-in-rtf> hopefully it is something simple, looking forward to unsticking this.
+2019-03-11T15:57:13  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-03-11T16:05:30  *** the-t-in-rtf <the-t-in-rtf!~Adium@212.78.169.180> has quit IRC (Quit: Leaving.)
+2019-03-11T16:09:14  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2019-03-11T16:09:20  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-03-11T16:46:20  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-phlcqskwvqxrccpa> has quit IRC (Remote host closed the connection)
+2019-03-11T16:46:50  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-baxhuxarpuhyrere> has joined #fluid-work
+2019-03-11T16:52:11  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-baxhuxarpuhyrere> has quit IRC (Remote host closed the connection)
+2019-03-11T16:52:21  *** alanharnum2 <alanharnum2!alanharnum@nat/ocadu/x-gfwinxwkyxmpknby> has joined #fluid-work
+2019-03-11T17:02:40  *** the-t-in-rtf <the-t-in-rtf!~Adium@2a02:a210:2142:3480:f079:3c9a:9143:5f43> has joined #fluid-work
+2019-03-11T17:12:39  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-flfjhpnzbirtnmbr> has joined #fluid-work
+2019-03-11T17:15:43  *** alanharnum2 <alanharnum2!alanharnum@nat/ocadu/x-gfwinxwkyxmpknby> has quit IRC (Ping timeout: 268 seconds)
+2019-03-11T17:42:15  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-11T17:48:15  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-flfjhpnzbirtnmbr> has quit IRC (Remote host closed the connection)
+2019-03-11T17:48:49  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-jltidkrrnxrbfpit> has joined #fluid-work
+2019-03-11T18:04:37  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-03-11T18:07:06  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has joined #fluid-work
+2019-03-11T18:08:36  *** danayo <danayo!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo)
+2019-03-11T18:08:38  *** danayo_ is now known as danayo
+2019-03-11T18:10:28  *** clown is now known as clown_afk
+2019-03-11T18:10:51  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-11T18:10:59  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Client Quit)
+2019-03-11T18:14:46  *** clown_afk <clown_afk!~clown@ckvlon1747w-140-01-65-94-140-209.dsl.bell.ca> has quit IRC (Ping timeout: 250 seconds)
+2019-03-11T18:28:06  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-03-11T18:29:21  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has joined #fluid-work
+2019-03-11T18:31:36  *** clown <clown!~clown@ckvlon1747w-140-01-65-94-140-209.dsl.bell.ca> has joined #fluid-work
+2019-03-11T18:42:37  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has joined #fluid-work
+2019-03-11T18:42:46  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-hdyrjvhlhcvpiuwc> has quit IRC (Ping timeout: 255 seconds)
+2019-03-11T18:57:51  *** kris_HA <kris_HA!~kris@95.111.73.80> has joined #fluid-work
+2019-03-11T18:58:46  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-03-11T18:59:04  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has joined #fluid-work
+2019-03-11T19:02:17  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-jltidkrrnxrbfpit> has quit IRC (Remote host closed the connection)
+2019-03-11T19:02:47  *** alanharnum <alanharnum!alanharnum@nat/ocadu/x-maxqkzrfocynwaha> has joined #fluid-work
+2019-03-11T20:33:58  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2019-03-11T20:37:23  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-pqnuvudzmlhkdbwd> has joined #fluid-work
+2019-03-11T20:53:23  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-pqnuvudzmlhkdbwd> has left #fluid-work
+2019-03-11T21:23:04  *** cherylhjli <cherylhjli!~Adium@lnsm1-toronto10-142-116-148-21.internet.virginmobile.ca> has quit IRC (Quit: Leaving.)
+2019-03-11T21:26:53  *** michelled <michelled!~Adium@192.0.151.7> has quit IRC (Quit: Leaving.)
+2019-03-11T21:34:02  *** clown <clown!~clown@ckvlon1747w-140-01-65-94-140-209.dsl.bell.ca> has quit IRC (Quit: Leaving.)
+2019-03-11T21:40:02  *** kris_HA <kris_HA!~kris@95.111.73.80> has quit IRC (Ping timeout: 246 seconds)
+2019-03-11T22:23:48  *** danayo_ <danayo_!~danayo@S0106f81d0f5cda43.vc.shawcable.net> has quit IRC (Quit: danayo_)
+2019-03-11T22:29:41  *** colinclark <colinclark!~colinclar@205.211.168.101> has quit IRC (Quit: colinclark)
+2019-03-11T22:52:28  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ee2:5d00:5d5e:36ed:a5da:a682> has quit IRC (Remote host closed the connection)

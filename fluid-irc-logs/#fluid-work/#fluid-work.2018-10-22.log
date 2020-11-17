@@ -1,0 +1,186 @@
+2018-10-22T08:35:49  *** kasparnet <kasparnet!~kasper@0189602784.0.fullrate.ninja> has joined #fluid-work
+2018-10-22T08:36:08  *** kasparnet <kasparnet!~kasper@0189602784.0.fullrate.ninja> has quit IRC (Remote host closed the connection)
+2018-10-22T09:18:40  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has joined #fluid-work
+2018-10-22T09:59:17  *** stegru <stegru!~ste@cpc120296-warr7-2-0-cust79.1-1.cable.virginm.net> has joined #fluid-work
+2018-10-22T10:50:30  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has quit IRC (Read error: Connection reset by peer)
+2018-10-22T10:50:47  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has joined #fluid-work
+2018-10-22T11:12:05  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-ngmlkttiuciqkgpc> has joined #fluid-work
+2018-10-22T11:16:23  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has quit IRC (Quit: dandimitrov)
+2018-10-22T11:31:33  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has joined #fluid-work
+2018-10-22T11:35:02  *** dandimitrov_ <dandimitrov_!~danailbd@37.157.190.158> has joined #fluid-work
+2018-10-22T11:35:02  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has quit IRC (Read error: Connection reset by peer)
+2018-10-22T11:35:03  *** dandimitrov_ is now known as dandimitrov
+2018-10-22T11:49:47  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:78c2:67f9:e3a9:354c> has joined #fluid-work
+2018-10-22T11:50:23  <dandimitrov> Hey, the-t-in-rtf1
+2018-10-22T11:50:41  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:78c2:67f9:e3a9:354c> has quit IRC (Client Quit)
+2018-10-22T11:50:44  <the-t-in-rtf1> Howdy.
+2018-10-22T11:50:50  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:78c2:67f9:e3a9:354c> has joined #fluid-work
+2018-10-22T11:51:04  <dandimitrov> Could you take a look at my progress on coverage report for the renderer processes?
+2018-10-22T11:51:16  <dandimitrov> Here’s a PR: https://github.com/danailbd/gpii-app/pull/51
+2018-10-22T11:51:22  <the-t-in-rtf1> sure
+2018-10-22T11:51:48  <dandimitrov> I’ve included descriptions with the basic idea of the approach
+2018-10-22T11:52:48  <dandimitrov> If you have some problem with github use: https://github.com/danailbd/gpii-app/pull/51/files to see the diff
+2018-10-22T11:53:51  <dandimitrov> Something strange is happening with gihub there all morning…
+2018-10-22T11:55:38  <the-t-in-rtf1> well, it'll be a bit before I'm there
+2018-10-22T11:55:51  <the-t-in-rtf1> I have to provision a Windows VM before I can even run npm install against your work... :)
+2018-10-22T11:56:33  <dandimitrov> the-t-in-rtf1: I was wondering whether you can take a look at the code
+2018-10-22T11:56:52  <the-t-in-rtf1> Sure, but I also want to look at the report.
+2018-10-22T11:56:55  <dandimitrov> I’m still having trouble with stability (it hangs sometimes)
+2018-10-22T11:57:08  <the-t-in-rtf1> if you wanted to save some time, I often put reports on my github pages site.
+2018-10-22T11:57:39  <the-t-in-rtf1> that way I can look at completeness while I'm looking at your settings, etc.
+2018-10-22T11:59:26  <dandimitrov> the-t-in-rtf1: ok then, I’ll generate one and include it in the branch
+2018-10-22T12:00:05  <the-t-in-rtf1> cool
+2018-10-22T12:00:11  <the-t-in-rtf1> why did you have to fork the coverage sender?
+2018-10-22T12:00:31  <the-t-in-rtf1> I mean, it should have worked with the right options passed to the client-serving middleware?
+2018-10-22T12:00:48  <the-t-in-rtf1> I can comment on the pull as to what options you'd need, but wanted to know if you tried it.
+2018-10-22T12:00:59  *** georgitodorov <georgitodorov!~Georgi@78.90.164.13> has joined #fluid-work
+2018-10-22T12:04:13  <dandimitrov> the-t-in-rtf1: I’ve included the report as well
+2018-10-22T12:05:19  <the-t-in-rtf1> I see it.
+2018-10-22T12:05:59  <dandimitrov> from what I understood the coverage sender hooks to the qunit in the BrowserWindow, but we don’t have it there
+2018-10-22T12:17:01  <the-t-in-rtf1> interesting, what are your tests written in, then?
+2018-10-22T12:19:11  <dandimitrov> I was thinking of collecting coverage on the basis of the tests in the main process
+2018-10-22T12:24:29  <the-t-in-rtf1> so, right now the "afterCallback" that sends the data is only designed to hook into Testem or QUnit, but if that's the only reason you use it, I could update the bit that creates the coverage sender to expose a function you could use to trigger the sending.
+2018-10-22T12:24:54  <the-t-in-rtf1> trying to see if we can avoid your having to figure out the IPC stuff and write a new client.
+2018-10-22T12:25:09  <the-t-in-rtf1> just figuring out the IPC stuff will be headache enough.
+2018-10-22T12:25:50  <the-t-in-rtf1> if the coverage sending function was available, could you just trigger that from the master process?
+2018-10-22T12:26:07  <dandimitrov> that sound reasonable
+2018-10-22T12:26:42  <dandimitrov> yes, sending function with a callback argument
+2018-10-22T12:27:04  *** jhung <jhung!~Adium@dhcp-108-168-100-210.cable.user.start.ca> has joined #fluid-work
+2018-10-22T12:27:34  <the-t-in-rtf1> we do something very similar with the webdriver library I use in some of my work
+2018-10-22T12:27:54  <the-t-in-rtf1> just thinking through how to keep this simple and how to test it.
+2018-10-22T12:28:50  <the-t-in-rtf1> I can probably have it stash the callback in its existing namespace
+2018-10-22T12:29:03  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2018-10-22T12:29:10  <the-t-in-rtf1> so that way you're not having to assign variables and I don't have to return anything.
+2018-10-22T12:36:00  <dandimitrov> the-t-in-rtf1: hmm, adding an options arg and binding it in the current usages might be enough :?
+2018-10-22T12:37:21  <the-t-in-rtf1> yes, something like options.exposeCallback?
+2018-10-22T12:43:49  <Bosmon> Hi there the-t-in-rtf1 - it looks like our CI has gone mad and is rebuilding the same jobs endlessly?
+2018-10-22T12:44:15  <the-t-in-rtf1> sorry to hear it.
+2018-10-22T12:44:40  <the-t-in-rtf1> if you can give an example I can confirm whether I have any access to help (likely not)
+2018-10-22T12:45:09  <the-t-in-rtf1> I had escalated powers for various proof-of-concept setups, but not really for the main builds.
+2018-10-22T12:45:25  <the-t-in-rtf1> @dandimitrov https://issues.gpii.net/browse/GPII-3467
+2018-10-22T12:45:37  <the-t-in-rtf1> I've already actually done the work, it'll take a few minutes to write the tests.
+2018-10-22T12:46:20  <Bosmon> the-t-in-rtf1 - https://ci.fluidproject.org/job/infusion-pull-request/
+2018-10-22T12:48:01  <the-t-in-rtf1> OK, @Bosmon, I can disable the jobs, apparently.
+2018-10-22T12:48:09  <the-t-in-rtf1> should I kill the ones waiting?
+2018-10-22T12:48:13  <Bosmon> the-t-in-rtf1 - please
+2018-10-22T12:48:43  <the-t-in-rtf1> should I leave 103 running?
+2018-10-22T12:48:59  <the-t-in-rtf1> does it serve a purpose, or is it retesting something we already know is good or bad?
+2018-10-22T12:49:34  <the-t-in-rtf1> (the others are already dead)
+2018-10-22T12:51:41  <the-t-in-rtf1> argh, the github outage is making it hard to actually look at the PR itself.
+2018-10-22T12:52:03  <Bosmon> the-t-in-rtf1 - it passed many times in the past
+2018-10-22T12:52:17  <Bosmon> It was only ever a minor update to move our CI to node 10.x
+2018-10-22T12:52:58  <the-t-in-rtf1> OK, that one is gone as well.
+2018-10-22T12:53:03  <the-t-in-rtf1> I don't see it triggering new ones
+2018-10-22T12:55:50  <Bosmon> phew
+2018-10-22T12:55:52  <Bosmon> Thanks for that
+2018-10-22T13:01:41  <Bosmon> the-t-in-rtf1 - looks like it is continuing to endlessly trigger new jobs
+2018-10-22T13:02:55  <the-t-in-rtf1> yes, I see that.
+2018-10-22T13:03:09  <Bosmon> Justin_o - who is in charge of the IDRC CI these days?
+2018-10-22T13:03:22  <Justin_o> Bosmon: Alan is, but he's away today
+2018-10-22T13:03:29  <Bosmon> Justin_o - oops
+2018-10-22T13:03:31  <the-t-in-rtf1> I can disable it for the day.
+2018-10-22T13:03:36  <the-t-in-rtf1> but I know that's not handy.
+2018-10-22T13:06:00  <Bosmon> Actually it seems to be a global phenomenon
+2018-10-22T13:06:05  <Bosmon> I think GPII pulls are rebuilding endlessly too
+2018-10-22T13:06:17  <Bosmon> Look at https://github.com/GPII/windows/pull/153#issuecomment-431829246
+2018-10-22T13:06:37  <Bosmon> We've had a build every 15 minutes for the last 3 hours
+2018-10-22T13:07:03  <Justin_o> the robots are taking over
+2018-10-22T13:07:36  <Justin_o> Bosmon: i wonder if it's related to the github issues.. maybe they are sending the web hook continuously
+2018-10-22T13:09:41  <Justin_o> Bosmon: looking at the recent deliveries for infusion's web hook there were quite a few sent recently.. So i'm thinking it may be an issue from the GitHub side.
+2018-10-22T13:16:18  *** Kavya <Kavya!4672a77b@gateway/web/freenode/ip.70.114.167.123> has joined #fluid-work
+2018-10-22T13:17:18  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has joined #fluid-work
+2018-10-22T13:34:41  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-dcrwqcepbzxcpwax> has joined #fluid-work
+2018-10-22T13:49:43  *** georgi_todorov <georgi_todorov!~Georgi@78.90.164.13> has joined #fluid-work
+2018-10-22T13:52:59  *** georgitodorov <georgitodorov!~Georgi@78.90.164.13> has quit IRC (Ping timeout: 250 seconds)
+2018-10-22T14:02:49  *** jhung is now known as jhung_away
+2018-10-22T14:04:32  <the-t-in-rtf1> @dandimitrov, just finished the tests, will create the docs and cut a dev release so you can try it out.
+2018-10-22T14:05:13  <the-t-in-rtf1> the tests should be much more instructive this time, they use the same options you'll need to when configuring the middleware that serves up the client.
+2018-10-22T14:05:15  *** clown <clown!clown@nat/ocadu/x-gvjxlwspradcmegb> has joined #fluid-work
+2018-10-22T14:07:30  <dandimitrov> the-t-in-rtf1: that was fast, great, thanks : )
+2018-10-22T14:08:07  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has joined #fluid-work
+2018-10-22T14:08:11  <the-t-in-rtf1> it was good timing, you caught me right between something I wanted to finish and something I didn't quite want to start
+2018-10-22T14:08:20  <the-t-in-rtf1> ;)
+2018-10-22T14:10:33  <dandimitrov> my pleasure : ))
+2018-10-22T14:12:39  *** georgi_todorov <georgi_todorov!~Georgi@78.90.164.13> has quit IRC (Quit: Leaving)
+2018-10-22T14:18:40  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:78c2:67f9:e3a9:354c> has quit IRC (Quit: jhernandez)
+2018-10-22T14:18:52  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:78c2:67f9:e3a9:354c> has joined #fluid-work
+2018-10-22T14:20:56  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has quit IRC (Quit: dandimitrov)
+2018-10-22T14:25:50  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:78c2:67f9:e3a9:354c> has quit IRC (Quit: jhernandez)
+2018-10-22T14:26:03  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:78c2:67f9:e3a9:354c> has joined #fluid-work
+2018-10-22T14:41:10  *** jhung_away is now known as jhung
+2018-10-22T14:41:37  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has joined #fluid-work
+2018-10-22T14:53:31  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has quit IRC (Quit: dandimitrov)
+2018-10-22T14:57:04  *** the-t-in-rtf1 is now known as the-t-in-rtf
+2018-10-22T15:04:14  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has quit IRC (Quit: colinclark)
+2018-10-22T15:18:09  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has joined #fluid-work
+2018-10-22T15:23:19  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has joined #fluid-work
+2018-10-22T15:34:51  <clown> cindyli:  standup?
+2018-10-22T15:34:54  <clown> or are you busy?
+2018-10-22T15:35:30  <cindyli> clown: thanks for the reminder. i'm in a GPII meeting. have to skip the standup.
+2018-10-22T15:35:46  <clown> okay.  we'll carry on without you.
+2018-10-22T15:35:51  <clown> somehow.
+2018-10-22T15:35:56  <cindyli> sorry and thanks
+2018-10-22T15:40:04  *** danayo <danayo!~danayo@S01069050ca694f23.vc.shawcable.net> has joined #fluid-work
+2018-10-22T15:50:23  *** Kavya <Kavya!4672a77b@gateway/web/freenode/ip.70.114.167.123> has quit IRC (Ping timeout: 256 seconds)
+2018-10-22T16:01:02  <dandimitrov> Hey, jhernandez, here’s the branch with the configurable QSS hiding - https://github.com/danailbd/gpii-app/tree/GPII-3181 . I’ve updated it with the latest feature/QSS1.1
+2018-10-22T16:01:28  <jhernandez> dandimitrov: great, tthanks
+2018-10-22T16:01:32  <jhernandez> just a quick question
+2018-10-22T16:01:44  <jhernandez> why it's not part of the main branch?
+2018-10-22T16:01:51  <jhernandez> (just curious)
+2018-10-22T16:02:27  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has quit IRC (Quit: Leaving.)
+2018-10-22T16:02:29  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has quit IRC (Quit: colinclark)
+2018-10-22T16:03:16  <dandimitrov> jhernandez: well, it’s missing tests as we’ve changed priorities…
+2018-10-22T16:03:25  <jhernandez> okay
+2018-10-22T16:03:28  <jhernandez> no prob
+2018-10-22T16:10:18  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has quit IRC (Quit: dandimitrov)
+2018-10-22T16:12:25  <stegru> jhernandez: In QSS I set the high-contrast to white, in windows settings theme is white. I then reset, and in windows settings the theme is black
+2018-10-22T16:12:50  <jhernandez> stegru: can you set it to yellowBlack?
+2018-10-22T16:13:16  <jhernandez> I mean, reset it to yellowBlack?
+2018-10-22T16:13:22  <stegru> same again
+2018-10-22T16:13:47  <stegru> so when reset is click, you want it to go to yellowBlack?
+2018-10-22T16:16:09  <jhernandez> yup
+2018-10-22T16:16:24  <stegru> why would you want that?
+2018-10-22T16:16:47  <jhernandez> that's what I was saying in the meeting
+2018-10-22T16:16:49  <stegru> shouldn't it be setting it to the default?
+2018-10-22T16:16:52  <jhernandez> is that worth?
+2018-10-22T16:16:56  <stegru> sorry, i probably wasn't listening
+2018-10-22T16:17:37  <stegru> oh ok ok, you want the ability to reset to a specific theme
+2018-10-22T16:17:51  <stegru> I don't see the point in that
+2018-10-22T16:54:25  *** colinclark <colinclark!~colinclar@205.211.168.101> has joined #fluid-work
+2018-10-22T17:01:28  *** danayo <danayo!~danayo@S01069050ca694f23.vc.shawcable.net> has quit IRC (Quit: danayo)
+2018-10-22T17:13:52  *** Hassany2 <Hassany2!cdd3a902@gateway/web/cgi-irc/kiwiirc.com/ip.205.211.169.2> has joined #fluid-work
+2018-10-22T17:15:25  <jhernandez> neither do I, that's why I was asking to people whether they see this as a blocker or not
+2018-10-22T17:15:27  <jhernandez> stegru: ^
+2018-10-22T17:17:07  <jhernandez> what I can tell is that I'm having problems setting a highContrast theme as default configuration
+2018-10-22T17:17:20  *** Hassany24 <Hassany24!cdd3a902@gateway/web/cgi-irc/kiwiirc.com/ip.205.211.169.2> has joined #fluid-work
+2018-10-22T17:17:24  *** Hassany24 <Hassany24!cdd3a902@gateway/web/cgi-irc/kiwiirc.com/ip.205.211.169.2> has quit IRC (Remote host closed the connection)
+2018-10-22T17:19:59  <jhernandez> what I can't tell is whether we should spend our time on this or not, at least I can see what's going on, but can't tell who's guilty
+2018-10-22T17:40:37  *** danayo <danayo!~danayo@S01069050ca694f23.vc.shawcable.net> has joined #fluid-work
+2018-10-22T17:55:44  <stegru> I don't think it's important, jhernandez
+2018-10-22T17:55:54  <stegru> we have bigger fish to fry
+2018-10-22T17:56:43  <stegru> I'll submit a PR in a minute, I have not been able to test it - maybe I'm doing something wrong
+2018-10-22T17:58:31  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has joined #fluid-work
+2018-10-22T18:04:55  *** sepidehshahi_ <sepidehshahi_!~sepidehsh@205.211.168.101> has joined #fluid-work
+2018-10-22T18:07:00  *** sepidehshahi <sepidehshahi!sepidehsha@nat/ocadu/x-dcrwqcepbzxcpwax> has quit IRC (Ping timeout: 268 seconds)
+2018-10-22T18:07:00  *** sepidehshahi_ is now known as sepidehshahi
+2018-10-22T18:08:00  <stegru> https://github.com/javihernandez/universal/pull/27
+2018-10-22T18:41:53  <jhernandez> stegru: okay thanks, will try it later
+2018-10-22T19:03:43  *** danayo_ <danayo_!~danayo@S01069050ca694f23.vc.shawcable.net> has joined #fluid-work
+2018-10-22T19:03:54  *** danayo_ <danayo_!~danayo@S01069050ca694f23.vc.shawcable.net> has left #fluid-work
+2018-10-22T19:06:01  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.101> has quit IRC (Quit: sepidehshahi)
+2018-10-22T19:06:20  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.101> has joined #fluid-work
+2018-10-22T19:08:51  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.101> has quit IRC (Client Quit)
+2018-10-22T19:10:30  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.101> has joined #fluid-work
+2018-10-22T19:12:37  *** sepidehshahi <sepidehshahi!~sepidehsh@205.211.168.101> has quit IRC (Client Quit)
+2018-10-22T19:50:07  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2018-10-22T20:39:07  *** jhung <jhung!~Adium@dhcp-108-168-100-210.cable.user.start.ca> has quit IRC (Quit: Leaving.)
+2018-10-22T20:55:57  *** Hassany2 <Hassany2!cdd3a902@gateway/web/cgi-irc/kiwiirc.com/ip.205.211.169.2> has quit IRC (Remote host closed the connection)
+2018-10-22T20:58:41  *** clown <clown!clown@nat/ocadu/x-gvjxlwspradcmegb> has quit IRC (Quit: Leaving.)
+2018-10-22T21:07:00  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:78c2:67f9:e3a9:354c> has quit IRC (Quit: jhernandez)
+2018-10-22T21:59:08  *** danayo <danayo!~danayo@S01069050ca694f23.vc.shawcable.net> has quit IRC (Quit: danayo)
+2018-10-22T22:04:39  *** michelled <michelled!~Adium@192-0-151-7.cpe.teksavvy.com> has quit IRC (Quit: Leaving.)
+2018-10-22T22:25:00  *** colinclark <colinclark!~colinclar@205.211.168.101> has quit IRC (Quit: colinclark)
+2018-10-22T23:08:17  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:78c2:67f9:e3a9:354c> has joined #fluid-work
+2018-10-22T23:11:30  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:78c2:67f9:e3a9:354c> has quit IRC (Client Quit)
+2018-10-22T23:11:46  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3ea7:d200:78c2:67f9:e3a9:354c> has joined #fluid-work
+2018-10-22T23:52:45  *** stegru <stegru!~ste@cpc120296-warr7-2-0-cust79.1-1.cable.virginm.net> has quit IRC (Ping timeout: 252 seconds)

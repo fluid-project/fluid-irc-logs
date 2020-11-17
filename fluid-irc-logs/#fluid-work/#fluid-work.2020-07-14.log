@@ -1,0 +1,50 @@
+2020-07-14T13:28:06  <Justin_o> gtirloni: I was taking a look at the coveralls GitHub action but it will suffer from the same issue that I had with trying to integrate lighthouse ci and have it provide status checks. That is, it requires a secret to access the PR to write the checks and comments but those aren't available to PRs from forks. https://github.com/coverallsapp/github-action/issues/7
+2020-07-14T13:28:53  <Justin_o> gtirloni: perhaps this app might work https://github.com/marketplace/coveralls
+2020-07-14T13:29:14  <Justin_o> gtirloni: Alternatively, do you know of other options for adding the code coverage to the PRs?
+2020-07-14T13:53:47  <gtirloni> Justin_o: I'm not aware of any way to add it, unfortunately. I think we should probably try coveralls or some other apps... it seems to be the recommended way
+2020-07-14T14:03:26  <the-t-in_> Morning, @gtirloni.
+2020-07-14T14:03:37  <gtirloni> hey, good morning!
+2020-07-14T14:03:42  <the-t-in_> I am still trying to get GitHub Actions set up for projects that use a CouchDB instance for testing.
+2020-07-14T14:03:45  <the-t-in_> Such as this one.
+2020-07-14T14:03:45  <the-t-in_> https://github.com/fluid-project/fluid-couchdb-test-harness/blob/master/.github/workflows/main.yml
+2020-07-14T14:03:53  <the-t-in_> I couldn't get it working with straight services.
+2020-07-14T14:04:15  <the-t-in_> I tried this as well, but couldn't verify that it did what we wanted.
+2020-07-14T14:04:16  <the-t-in_> https://github.com/marketplace/actions/setup-couchdb
+2020-07-14T14:05:44  <the-t-in_> I was looking through the repos you'd worked on trying to see if you had one and looking at other examples online, but couldn't find a useful one yet.
+2020-07-14T14:06:21  <the-t-in_> I've been testing my work with this package
+2020-07-14T14:06:22  <the-t-in_> https://github.com/nektos/act
+2020-07-14T14:06:40  <gtirloni> yeah, we haven't used services yet in any pipeline that I'm aware of. let me check
+2020-07-14T14:07:22  <the-t-in_> @Justin_o wanted to use fluid-express-user, which currently depends on fluid-couchdb-test-harness
+2020-07-14T14:07:40  <the-t-in_> if we can figure out a working config they'll all come into line
+2020-07-14T14:07:50  <the-t-in_> anyway, any ideas are appreciated
+2020-07-14T14:09:49  <gtirloni> it looks like Github is creating a separate docker network and giving the container the same name as specified in the services clause. so maybe instead of connecting to localhost:25984, if you could try connecting to couchdb:25984 (might have to make that configurable for people running the tests outside GitHub Actions, I guess)
+2020-07-14T14:30:13  <gtirloni> ah, scratch that.. the docs say "You can access the service container using localhost and the mapped port."
+2020-07-14T14:30:20  <Justin_o> gtirloni: should we just try using the Coveralls app and potentially the GitHub action? I'm not sure if the just one or the combination of those will allow us to properly add the status checks for PRs from Forks. It's possible that it won't work, but we'd be able to view the results from Coveralls manually, I think.
+2020-07-14T14:30:38  <Justin_o> the-t-in_: Let me know when you have time to chat about using fluid-express-user with kettle.
+2020-07-14T14:31:17  <gtirloni> Justin_o: that makes sense to me :)
+2020-07-14T14:32:13  <Justin_o> gtirloni: okay, I'll write up a JIRA and look into that for Infusion. We'll need to modify nyc a bit to output an lcov file, but I think that's just a command line argument that needs to be added.
+2020-07-14T14:45:57  <Justin_o> gtirloni: is this PR ready for more review? https://github.com/fluid-project/infusion/pull/996
+2020-07-14T14:55:48  <the-t-in_> @Justin_o, I have really good availability tomorrow.
+2020-07-14T14:55:59  <the-t-in_> we have childcare all day.
+2020-07-14T14:56:08  <the-t-in_> first time in four months.
+2020-07-14T14:56:27  <Justin_o> the-t-in_: congratulations :)
+2020-07-14T14:56:32  <the-t-in_> thanks.
+2020-07-14T14:56:46  <the-t-in_> Yeah, @gtirloni, I'm not even 100% convinced it's actually provisioning the couchdb part.
+2020-07-14T14:56:49  <Justin_o> the-t-in_: I'm pretty open tomorrow as well, what times work for you?
+2020-07-14T14:57:03  <the-t-in_> early as you like until 17:00 CET?
+2020-07-14T14:57:32  <the-t-in_> @gtirloni, I was trying to make sense of the examples here: https://github.com/actions/example-services
+2020-07-14T14:58:20  <gtirloni> Justin_o: it's ready
+2020-07-14T14:59:13  <gtirloni> the-t-in_: this is the interesting bit.. they say localhost should be used but the example seems to be using the service's name -- https://github.com/actions/example-services/blob/main/.github/workflows/mongodb-service.yml#L37
+2020-07-14T14:59:43  <the-t-in_> yes, I might try that.  It would mean rewriting my library slightly, just to add a new environment variable, but it's a feature I should have added already.
+2020-07-14T15:00:57  <Justin_o> the-t-in_: how about 8am ET ( I think that's 14:00 CET)?
+2020-07-14T15:02:31  <the-t-in_> sounds good, can you send an invite?
+2020-07-14T15:02:38  <Justin_o> the-t-in_: will do
+2020-07-14T15:04:57  <Justin_o>  the-t-in_: I sent the invite, let me know if you don't get it
+2020-07-14T15:17:19  <Justin_o> gtirloni: I left one comment on the https://github.com/fluid-project/infusion/pull/996 PR
+2020-07-14T15:59:51  <Justin_o> fluid-everyone: clown is going to be talking about debugging at the chat today. please join the standup room to join the discussion.
+2020-07-14T17:56:53  <gmoss> Justin_o: I'm available for pairing until 17:00 today, so whenever you're free from your meeting we can sync up
+2020-07-14T17:57:07  <gmoss> re FLUID-6523
+2020-07-14T17:59:17  <Justin_o> gmoss: thanks. I have to meet with jhung after my 2pm meeting, but hopefully I'll have time between then and when you are off to meet.
+2020-07-14T18:18:18  <gmoss> Justin_o: I'm actually beginning to feel pretty unwell again, i'm going to sign off for now
+2020-07-14T19:30:14  <Justin_o> gmoss: hope you feel better soon.
+2020-07-14T19:30:21  <Justin_o> we can chat tomorrow

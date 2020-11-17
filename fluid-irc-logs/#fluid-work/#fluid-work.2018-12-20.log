@@ -1,0 +1,121 @@
+2018-12-20T00:25:53  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has joined #fluid-work
+2018-12-20T00:29:13  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has quit IRC (Client Quit)
+2018-12-20T00:38:56  *** avtar <avtar!avtar@nat/ocadu/x-ozprfakfqtaiuktz> has quit IRC (Read error: Connection reset by peer)
+2018-12-20T01:47:06  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-hivhvuboodedpmld> has quit IRC (Quit: Connection closed for inactivity)
+2018-12-20T03:09:01  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has joined #fluid-work
+2018-12-20T03:09:20  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has quit IRC (Client Quit)
+2018-12-20T07:43:18  *** kasparnet <kasparnet!~kasper@ip-5-186-120-225.cgn.fibianet.dk> has joined #fluid-work
+2018-12-20T07:43:23  *** kasparnet <kasparnet!~kasper@ip-5-186-120-225.cgn.fibianet.dk> has quit IRC (Remote host closed the connection)
+2018-12-20T08:02:55  *** georgit <georgit!~georgi.to@37.157.190.158> has joined #fluid-work
+2018-12-20T09:04:10  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has joined #fluid-work
+2018-12-20T09:29:10  <dandimitrov> Hey, stegru, I’m looking at GPII-3597. From what we've seen in Electron, once a BrowserWindow is hidden its DOM is frozen. From testing it locally it seems to me that when the waitDialog is hidden there's no CPU load coming from :/
+2018-12-20T09:30:40  <dandimitrov> Probably the spinner animation gets frozen utill re-showing the its BrowerWindow
+2018-12-20T09:52:52  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has quit IRC (Quit: dandimitrov)
+2018-12-20T10:11:40  *** dandimitrov <dandimitrov!~danailbd@212.50.12.84> has joined #fluid-work
+2018-12-20T10:11:41  *** dandimitrov <dandimitrov!~danailbd@212.50.12.84> has quit IRC (Client Quit)
+2018-12-20T10:32:11  <stegru> d
+2018-12-20T12:21:03  *** georgit <georgit!~georgi.to@37.157.190.158> has quit IRC (Read error: Connection reset by peer)
+2018-12-20T12:34:00  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-wwutjzwpbwdbnvkt> has joined #fluid-work
+2018-12-20T12:47:06  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has joined #fluid-work
+2018-12-20T13:05:19  <stegru> hi dandimitrov, that explains why I only had high CPU usage before I made the spinner show - after it was displayed, CPU was low. So, it looks like it freezes only after it's hidden - but not when it's initially hidden
+2018-12-20T13:06:37  <stegru> I've made a quick fix in https://github.com/GPII/gpii-app/pull/76, but I might make it be initially not-animated until it's shown
+2018-12-20T13:08:37  <dandimitrov> Hmm, strange, let me give it a try again
+2018-12-20T13:09:26  <stegru> the cpu usage isn't instant, it takes a few minutes to increase
+2018-12-20T13:09:41  <stegru> this is probably a chromium bug
+2018-12-20T13:11:19  <stegru> 5 minutes: https://i.imgur.com/zoDBexv.png
+2018-12-20T13:12:03  <stegru> and the gap in this one is where I disabled the image in chrome inspector: https://i.imgur.com/Jsp1UjE.png
+2018-12-20T13:12:45  <stegru> I didn't touch the QSS
+2018-12-20T13:24:19  *** jhung <jhung!~Adium@dhcp-108-168-100-210.cable.user.start.ca> has joined #fluid-work
+2018-12-20T13:24:29  *** jhernandez <jhernandez!~jhernande@2a02:a03f:3fc2:1300:4841:f2f8:b86d:5ea5> has joined #fluid-work
+2018-12-20T13:26:08  <dandimitrov> And this is before the wait dialog is shown :?
+2018-12-20T13:26:43  <dandimitrov> does it normalize after its first appearance?
+2018-12-20T13:34:58  *** cindyli <cindyli!~Adium@198.52.177.167> has joined #fluid-work
+2018-12-20T14:00:07  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has joined #fluid-work
+2018-12-20T14:05:55  *** cherylhjli <cherylhjli!~Adium@142.122.106.129> has joined #fluid-work
+2018-12-20T14:25:13  <stegru> yes to both, dandimitrov
+2018-12-20T14:25:54  <jhernandez> dandimitrov: stegru (and to anyone using the win vagrant box)
+2018-12-20T14:27:00  <jhernandez> did you miss your installed languages pack after a recent windows update?
+2018-12-20T14:27:47  <jhernandez> just happened to me and Gregg has just experienced the same with his windows vm
+2018-12-20T14:27:51  <jhernandez> just curious
+2018-12-20T14:33:14  <jhernandez> this is the last one my vm received https://support.microsoft.com/en-us/help/4471324/windows-10-update-kb4471324
+2018-12-20T14:38:01  <dandimitrov> jhernandez, meaning that there were no languages listed in the language setting in the QS :?
+2018-12-20T14:38:54  <jhernandez> in the OS
+2018-12-20T14:38:59  <jhernandez> :)
+2018-12-20T14:39:24  <jhernandez> so yeah, the QS displays whatever is available at OS level, which is fine
+2018-12-20T14:39:49  <dandimitrov> hmm, no I haven’t but I’m still using the old VM
+2018-12-20T14:41:20  <jhernandez> I stumbled upon this https://thinksmartbox.com/answer/languages-reset-windows-10-anniversary-update/ so I wouldn't be surprised if that is happening again
+2018-12-20T14:41:57  <jhernandez> dandimitrov: is your vm up to date on Windows Updates?
+2018-12-20T14:43:23  <dandimitrov> yep, I think it is
+2018-12-20T14:43:29  <dandimitrov> I haven’t disabled it
+2018-12-20T14:43:40  <jhernandez> and you had installed languages and they're still there, right?
+2018-12-20T14:43:43  <jhernandez> okay okay
+2018-12-20T14:44:08  <dandimitrov> looks like a new update is on the way - KB4483234 - I’ll install it and see what happens
+2018-12-20T14:49:03  <stegru> can't they get anything right?
+2018-12-20T14:51:52  <dandimitrov> jhernandez: with the latest update I have all the installed languages listed. One thing to note is that the OS language that was set when installing the update was not English (not Bulgarian)
+2018-12-20T14:54:58  *** clown <clown!clown@nat/ocadu/x-jsnkqldtwoyxtisv> has joined #fluid-work
+2018-12-20T15:01:56  <jhernandez> okay, interesting
+2018-12-20T15:02:28  <jhernandez> Gregg is updating a snapshot he had and we'll figure out if it
+2018-12-20T15:02:44  <jhernandez> *if it's indeed related to a win update
+2018-12-20T15:08:51  *** michelled <michelled!Adium@nat/ocadu/x-rxamfckflxhcmvoy> has joined #fluid-work
+2018-12-20T15:24:48  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2018-12-20T15:43:15  *** cherylhjli <cherylhjli!~Adium@142.122.106.129> has quit IRC (Quit: Leaving.)
+2018-12-20T15:45:54  *** cherylhjli <cherylhjli!~Adium@142.122.106.129> has joined #fluid-work
+2018-12-20T15:46:45  *** michelled <michelled!Adium@nat/ocadu/x-rxamfckflxhcmvoy> has quit IRC (Quit: Leaving.)
+2018-12-20T15:46:59  *** michelled <michelled!Adium@nat/ocadu/x-fndjacvcmlbrhlcf> has joined #fluid-work
+2018-12-20T15:58:51  *** jhung is now known as jhung_away
+2018-12-20T16:04:45  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has quit IRC (Quit: colinclark)
+2018-12-20T16:11:47  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC (Ping timeout: 240 seconds)
+2018-12-20T16:16:48  *** simonjb <simonjb!~simonjb@198.178.118.18> has joined #fluid-work
+2018-12-20T16:28:38  *** dandimitrov <dandimitrov!~danailbd@37.157.190.158> has quit IRC (Quit: dandimitrov)
+2018-12-20T16:31:53  *** jhung_away is now known as jhung
+2018-12-20T16:51:20  *** michelled <michelled!Adium@nat/ocadu/x-fndjacvcmlbrhlcf> has quit IRC (Quit: Leaving.)
+2018-12-20T17:11:24  <stegru> #fluid-work: fyi, VirtualBox 6.0 is out - but unable to provision a new vagrant box due to the guest not having the network drivers (even after updating guest additions) and unable to download them because their is no network.
+2018-12-20T17:11:51  *** avtar <avtar!~avtar@ip-45-3-1-34.user.start.ca> has joined #fluid-work
+2018-12-20T17:11:53  <stegru> works ok with my existing vms, but there's no compelling reason to upgrade
+2018-12-20T17:16:09  *** jhung is now known as jhung_away
+2018-12-20T17:28:09  *** cherylhjli <cherylhjli!~Adium@142.122.106.129> has quit IRC (Quit: Leaving.)
+2018-12-20T17:28:27  *** cherylhjli <cherylhjli!~Adium@142.122.106.129> has joined #fluid-work
+2018-12-20T17:29:42  *** cherylhjli <cherylhjli!~Adium@142.122.106.129> has quit IRC (Client Quit)
+2018-12-20T17:32:26  *** dandimitrov <dandimitrov!~danailbd@87.121.114.143> has joined #fluid-work
+2018-12-20T17:35:34  *** michelled <michelled!~Adium@205.211.168.105> has joined #fluid-work
+2018-12-20T17:38:37  *** michelled <michelled!~Adium@205.211.168.105> has quit IRC (Client Quit)
+2018-12-20T17:39:41  *** cherylhjli <cherylhjli!~Adium@142.122.106.129> has joined #fluid-work
+2018-12-20T17:42:30  *** cherylhjli <cherylhjli!~Adium@142.122.106.129> has quit IRC (Client Quit)
+2018-12-20T17:43:25  *** dandimitrov <dandimitrov!~danailbd@87.121.114.143> has quit IRC (Quit: dandimitrov)
+2018-12-20T17:48:28  *** jhung_away <jhung_away!~Adium@dhcp-108-168-100-210.cable.user.start.ca> has quit IRC (Quit: Leaving.)
+2018-12-20T17:49:56  *** michelled <michelled!Adium@nat/ocadu/x-vwpuwqwjndvabici> has joined #fluid-work
+2018-12-20T17:50:20  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has joined #fluid-work
+2018-12-20T17:56:31  *** cherylhjli <cherylhjli!~Adium@142.122.106.129> has joined #fluid-work
+2018-12-20T17:56:52  *** cherylhjli <cherylhjli!~Adium@142.122.106.129> has quit IRC (Client Quit)
+2018-12-20T18:05:53  <Justin_o> gmoss: I have a PR for the localization preference. https://github.com/fluid-project/infusion/pull/949
+2018-12-20T18:06:14  <Justin_o> gmoss: if you are able, could you test that out with the story telling tool.
+2018-12-20T18:09:51  *** dandimitrov <dandimitrov!~danailbd@87.121.114.143> has joined #fluid-work
+2018-12-20T18:09:56  *** dandimitrov <dandimitrov!~danailbd@87.121.114.143> has quit IRC (Client Quit)
+2018-12-20T18:10:50  *** colinclark <colinclark!~colinclar@135-23-98-140.cpe.pppoe.ca> has quit IRC (Quit: colinclark)
+2018-12-20T18:10:53  <gmoss> Justin_o: that's great. I'll try it out in a little bit :) thanks for picking up where I left off, I was spinning my wheels for sure
+2018-12-20T18:11:06  *** jhung <jhung!~Adium@dhcp-108-168-100-210.cable.user.start.ca> has joined #fluid-work
+2018-12-20T18:12:34  <Justin_o> gmoss: no worries, i think you had most of it there. Please let me know if there is anything missing too.
+2018-12-20T18:31:55  *** michelled <michelled!Adium@nat/ocadu/x-vwpuwqwjndvabici> has quit IRC (Quit: Leaving.)
+2018-12-20T18:33:45  *** michelled <michelled!Adium@nat/ocadu/x-vrezbmvktvkriljo> has joined #fluid-work
+2018-12-20T18:37:02  <jhernandez> stegru: thanks for the heads up on VirtualBox
+2018-12-20T18:45:42  *** colinclark <colinclark!colinclark@nat/ocadu/x-cbyzyhdowaqqttbz> has joined #fluid-work
+2018-12-20T18:50:37  *** cherylhjli <cherylhjli!~Adium@205.211.168.105> has joined #fluid-work
+2018-12-20T19:23:41  <jhernandez> FYI, I think that we can get rid of the nan dep in gpii-app as the fix for the problem we had the other day with it was released 2 days ago
+2018-12-20T19:26:35  <colinclark> cherylhjli: Avtar's link in today's meeting: https://stripe.com/atlas/guides/landing-page-copy
+2018-12-20T20:42:19  *** cherylhjli <cherylhjli!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2018-12-20T20:51:46  *** cindyli <cindyli!~Adium@198.52.177.167> has quit IRC (Quit: Leaving.)
+2018-12-20T20:55:26  *** cherylhjli <cherylhjli!~Adium@205.211.168.105> has joined #fluid-work
+2018-12-20T21:00:07  *** michelled1 <michelled1!~Adium@205.211.168.105> has joined #fluid-work
+2018-12-20T21:02:11  *** michelled <michelled!Adium@nat/ocadu/x-vrezbmvktvkriljo> has quit IRC (Ping timeout: 250 seconds)
+2018-12-20T21:02:52  *** jhung <jhung!~Adium@dhcp-108-168-100-210.cable.user.start.ca> has quit IRC (Quit: Leaving.)
+2018-12-20T21:07:47  *** cherylhjli <cherylhjli!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2018-12-20T21:10:22  <gmoss> Justin_o: finally starting to integrate your FLUID-6303 branch of infusion into the ST
+2018-12-20T21:13:50  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-dhqwktdliraefddq> has joined #fluid-work
+2018-12-20T21:22:36  <Justin_o> gmoss: thanks.. hope it goes well.. i'll be heading off now, and won't likely be online tomorrow either. But do send me an e-mail if you run into anything and I'll try to get back to you asap.
+2018-12-20T21:57:12  *** michelled1 <michelled1!~Adium@205.211.168.105> has quit IRC (Quit: Leaving.)
+2018-12-20T22:00:50  *** clown <clown!clown@nat/ocadu/x-jsnkqldtwoyxtisv> has quit IRC (Quit: Leaving.)
+2018-12-20T22:04:24  *** avtar <avtar!~avtar@ip-45-3-1-34.user.start.ca> has quit IRC (Quit: Leaving.)
+2018-12-20T22:20:07  *** cherylhjli <cherylhjli!Adium@nat/ocadu/x-dhqwktdliraefddq> has quit IRC (Ping timeout: 240 seconds)
+2018-12-20T23:29:07  *** colinclark <colinclark!colinclark@nat/ocadu/x-cbyzyhdowaqqttbz> has quit IRC (Ping timeout: 240 seconds)
+2018-12-20T23:30:05  *** Justin_o <Justin_o!uid14648@gateway/web/irccloud.com/x-wwutjzwpbwdbnvkt> has quit IRC (Quit: Connection closed for inactivity)
+2018-12-20T23:35:50  *** simonjb <simonjb!~simonjb@198.178.118.18> has quit IRC ()
